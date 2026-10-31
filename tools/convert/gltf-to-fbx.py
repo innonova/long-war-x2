@@ -22,6 +22,12 @@ mesh = max((o for o in bpy.data.objects if o.type == 'MESH'), key=lambda o: len(
 for o in [o for o in bpy.data.objects if o.type == 'MESH' and o is not mesh]:
     bpy.data.objects.remove(o)
 print('armature', arm.name, len(arm.data.bones), 'bones; mesh', mesh.name, len(mesh.data.vertices), 'vertices; actions', len(bpy.data.actions))
+# The glTF importer names each action "<animation>_<mesh>": back to EW's own names
+# ("AC_NO_IdleA"), which XCOM 2's sequences will be called.
+suffix = '_' + mesh.name.split('.')[0]
+for act in bpy.data.actions:
+    if act.name.endswith(suffix):
+        act.name = act.name[:-len(suffix)]
 
 if anim and arm.animation_data is not None:
     act = bpy.data.actions.get(anim) or next((a for a in bpy.data.actions if a.name.startswith(anim)), None)
@@ -68,6 +74,10 @@ if preview:
 # The armature object is named Root and exported as a root node: with the name of a bone EW's
 # skeletons do not have, it does not clash with RigRoot.
 arm.name = 'Root'
+# Blender names each FBX take "<object>|<action>": the action's name alone.
+import io_scene_fbx.export_fbx_bin as fbx_bin
+_name = fbx_bin.get_blenderID_name
+fbx_bin.get_blenderID_name = lambda bid: bid[1].name if isinstance(bid, tuple) and len(bid) == 2 and isinstance(bid[1], bpy.types.Action) else _name(bid)
 bpy.ops.export_scene.fbx(
     filepath=dst,
     apply_unit_scale=False,
