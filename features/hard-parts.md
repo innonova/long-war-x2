@@ -281,3 +281,74 @@ read those, so far).
 
 **So experiment 1 is answered**: EW's aliens come across, animated, with
 their effects, from the player's own install, by a step a mod can run.
+
+## Report (2026-10-31 night, experiment 2: a map's geometry and textures) — seen, not yet playable
+
+**Seen in the game**: Enemy Within's `CSmallScout_Badlands` (the small scout
+crash site on the badlands) on XCOM 2's Tactical Quick Launch screen: its
+ground, rocks, plateaus, bushes, trees, rubble, the three Skyranger drop
+zones and the crashed Small Scout, 1312 of its 1313 placed meshes, where EW
+put them, **with EW's own textures** on XCOM 2 materials. Screenshots in the
+conversation (game art: not in the repository). Not yet: EW's lighting,
+collision, cover, pathing.
+
+**What did not work, and why**
+- *The map as a map*: XCOM 2 loads EW's map package but cannot read its
+  level ("Bad export index"); the copies of shared packages it carries
+  (`FX_Shared` …) also clash with XCOM 2's packages of the same names.
+- *The world given no data* (serial size 0): XCOM 2 still reads every object
+  of a package it loads ("Serial size mismatch").
+- *EW's materials*: XCOM 2 has no shaders for them and the retail game does
+  not compile any; the SDK's shader precompiler cannot load the converted
+  package at all ("Invalid linker index"). And XCOM 2 reads no material from
+  EW's static meshes (their element data differs): the pieces drew XCOM 2's
+  checker.
+- *EW's textures as they are*: XCOM 2 reads the same mip records but not
+  EW's LZO compression: colourful noise.
+
+**What works** (`tools/convert/ew-map.ts`, on the player's machine, then the
+mod's `LWX2EWMapPieces`):
+- the map package becomes a content package: every object of its world is
+  turned into an empty object of a simple class (a `PhysicalMaterial`
+  header, 12 bytes of data appended to the file), the carried packages
+  renamed (first letter `Q`: `Qush_A_Dry` …);
+- every placed static mesh written as config (mesh path, location, rotation,
+  scale, and its materials, which EW keeps on the placed component or its
+  archetype, not on the mesh); the mod spawns them;
+- each material's diffuse and normal maps read (an instance's parameters,
+  its parents' for those it leaves, a material's texture expressions; EW's
+  ground blends give their main layer); the mod makes an instance of an
+  XCOM 2 parent (`Materials.Approved.Props_SD`, `Vegetations_VO`,
+  `Alien_Props`, by kind) with them;
+- every texture rewritten with its mips uncompressed in the package
+  (`tools/convert/inline-textures.ts`; 117 MB for this map), its texture
+  cache name cleared: XCOM 2 then needs no EW cache file for the map.
+
+**Driving the screen** took two finds: the screen's debug camera toggle does
+nothing in the retail game (it needs the console), and the tactical camera
+is an `XComCamera`, not the `XComBaseCamera` the toggle casts to. The mod
+holds the camera itself (`LWX2CameraHold`, free-look state, a configured
+view). The screen draws the world only once it has generated a map, so the
+EW map sits beside it (`Origin`), under its light.
+
+### Decisions
+
+- **Rebuild the map from its pieces, not convert the level**: the level's
+  data is what XCOM 2 cannot read; the pieces (meshes, materials, textures)
+  are what it can. EW's level-only data (lighting, BSP, volumes, kismet)
+  will have to be rebuilt from XCOM 2's.
+- **Stand-in materials made at run time from XCOM 2's parents** rather than
+  materials converted or made in the editor: no SDK on a player's machine,
+  every EW material covered by three parents. Lost: EW's specular and
+  emissive maps, its vertex-colour ground blends (one layer shown), its
+  decals and glass (13 materials kept as EW's, shown as XCOM 2's checker).
+  To improve with more parents and parameters.
+- **Textures inline and uncompressed** rather than a new texture cache:
+  simplest that works; the package is larger (136 MB). A cache of our own
+  (uncompressed or in XCOM 2's compression) is the later, smaller form.
+- **The Quick Launch screen for looking**, rather than a mission: it starts
+  in a minute and the camera can be held anywhere. Playability needs a
+  mission (next).
+
+**Left for experiment 2**: collision on the pieces, XCOM 2's tile data
+(cover, pathing) built over them, a unit walking there; then lighting.
