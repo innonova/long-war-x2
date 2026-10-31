@@ -56,10 +56,3 @@ function bool ShowBeside(Actor Next)
 	`log("LongWarX2: EW unit: shown at" @ Location, , 'LongWarX2');
 	return true;
 }
-
-defaultproperties
-{
-	MeshPath="LWX2_Floater.SM_MedFloater"
-	AnimSetPath="LWX2_Floater.AS_MedFloater"
-	IdleAnim="AC_NO_IdleA"
-}

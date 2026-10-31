@@ -34,5 +34,5 @@ for (const c of air.ufo_changes) {
   out.push(`+UfoChanges=(Ship=${c.ship}, AboveCategory=${c.above_category}${c.weapons ? `, Weapons=${list(c.weapons)}` : ''}${c.size ? `, Size=${q(c.size)}` : ''}${stats})`)
 }
 out.push('', '; For development: the main menu\'s test campaign (a new campaign without its first mission).', '[LongWarX2.UIScreenListener_LongWarX2Shell]', 'ShowTestCampaign=true')
-out.push('', '; For development: an Enemy Within unit beside the first soldier in a mission, when its converted', '; package is in the mod\'s Content folder (features/hard-parts.md, experiment 1).', '[LongWarX2.UIScreenListener_LongWarX2Tactical]', 'ShowEWUnit=true', '[LongWarX2.LWX2EWUnitDisplay]', 'MaterialPath="LWX2_Floater.MedFloater_DIF_Mat"')
+out.push('', '; For development: an Enemy Within unit beside the first soldier in a mission, when its converted', '; package is in the mod\'s Content folder (features/hard-parts.md, experiment 1).', '[LongWarX2.UIScreenListener_LongWarX2Tactical]', 'ShowEWUnit=true', '[LongWarX2.LWX2EWUnitDisplay]', 'MeshPath="LWX2_Floater.SM_MedFloater"', 'AnimSetPath="LWX2_Floater.AS_MedFloater"', 'IdleAnim="AC_NO_IdleA"', 'MaterialPath="LWX2_Floater.MedFloater_DIF_Mat"')
 console.log(out.join('\r\n'))
