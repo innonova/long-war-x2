@@ -21,8 +21,19 @@ event OnInit(UIScreen Screen)
 		Button = Screen.Spawn(class'UIButton', Screen);
 		Button.InitButton('LWX2TestCampaign', "TEST CAMPAIGN (NO FIRST MISSION)", OnTestCampaign);
 		Button.SetPosition(40, 90);
+		Button = Screen.Spawn(class'UIButton', Screen);
+		Button.InitButton('LWX2TestTactical', "TEST TACTICAL (QUICK LAUNCH)", OnTestTactical);
+		Button.SetPosition(40, 140);
 	}
 	`log("LongWarX2: air war button on" @ Screen.Class.Name, , 'LongWarX2');
+}
+
+/** The game's own tactical quick launch (what the development menu's "Tactical" opens). */
+simulated function OnTestTactical(UIButton Button)
+{
+	`XCOMHISTORY.ResetHistory(, false);
+	Button.ConsoleCommand("open TacticalQuickLaunch");
+	`log("LongWarX2: test tactical: TacticalQuickLaunch", , 'LongWarX2');
 }
 
 simulated function OnTestCampaign(UIButton Button)
