@@ -249,7 +249,7 @@ simulated event Tick(float DeltaTime)
 	while (Shown < Result.Events.Length && Result.Events[Shown].Time <= Clock)
 	{
 		E = Result.Events[Shown++];
-		Show(E);
+		ShowEvent(E);
 		if (E.Kind == eLWEvent_End)
 		{
 			Finished();
@@ -258,7 +258,7 @@ simulated event Tick(float DeltaTime)
 	}
 }
 
-simulated function Show(LWAirWar.LWEvent E)
+simulated function ShowEvent(LWAirWar.LWEvent E)
 {
 	local string Who, Line;
 
