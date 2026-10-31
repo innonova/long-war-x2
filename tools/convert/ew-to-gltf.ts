@@ -14,7 +14,9 @@
 //
 // Unreal is left-handed with Z up, glTF right-handed with Y up: positions and
 // normals go (x, y, z) → (x, z, y), rotations (x, y, z, w) → (−x, −z, −y, w).
-// Units are kept (Unreal's).
+// Lengths are divided by 100: glTF's unit is the metre and Unreal's the centimetre,
+// so Blender exports FBX in Unreal's units with no scale on the skeleton (XCOM 2's
+// animation importer ignores such a scale).
 import { readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync } from 'node:zlib'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
@@ -39,7 +41,9 @@ const find = (type: string, name: string) => {
   return i
 }
 
-const v3 = (x: number, y: number, z: number): Vec3 => [x, z, y]
+const UNIT = 0.01
+const v3 = (x: number, y: number, z: number): Vec3 => [x * UNIT, z * UNIT, y * UNIT]
+const dir3 = (x: number, y: number, z: number): Vec3 => [x, z, y]
 const q4 = (q: Quat): Quat => [-q[0], -q[2], -q[1], q[3]]
 
 // --- The mesh -----------------------------------------------------------------------
@@ -53,10 +57,10 @@ const joints = new Uint16Array(4 * n)
 const weights = new Float32Array(4 * n)
 for (let i = 0; i < n; i++) {
   positions.set(v3(mesh.positions[3 * i]!, mesh.positions[3 * i + 1]!, mesh.positions[3 * i + 2]!), 3 * i)
-  const nm = v3(mesh.normals[3 * i]!, mesh.normals[3 * i + 1]!, mesh.normals[3 * i + 2]!)
+  const nm = dir3(mesh.normals[3 * i]!, mesh.normals[3 * i + 1]!, mesh.normals[3 * i + 2]!)
   const len = Math.hypot(...nm) || 1
   normals.set(nm.map((c) => c / len), 3 * i)
-  const t = v3(mesh.tangents[4 * i]!, mesh.tangents[4 * i + 1]!, mesh.tangents[4 * i + 2]!)
+  const t = dir3(mesh.tangents[4 * i]!, mesh.tangents[4 * i + 1]!, mesh.tangents[4 * i + 2]!)
   const tl = Math.hypot(...t) || 1
   tangents.set([...t.map((c) => c / tl), -(mesh.tangents[4 * i + 3]! < 0 ? -1 : 1)], 4 * i)
   let sum = 0
