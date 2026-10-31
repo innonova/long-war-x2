@@ -6,6 +6,8 @@ class UIScreenListener_LongWarX2Shell extends UIScreenListener config(LWAirWar);
 
 /** The test campaign's button; for development, never in a release. */
 var config bool ShowTestCampaign;
+/** An Enemy Within map to open as it is (experiment 2), with its URL options. */
+var config string TestMapURL;
 
 event OnInit(UIScreen Screen)
 {
@@ -24,6 +26,12 @@ event OnInit(UIScreen Screen)
 		Button = Screen.Spawn(class'UIButton', Screen);
 		Button.InitButton('LWX2TestTactical', "TEST TACTICAL (QUICK LAUNCH)", OnTestTactical);
 		Button.SetPosition(40, 140);
+		if (default.TestMapURL != "")
+		{
+			Button = Screen.Spawn(class'UIButton', Screen);
+			Button.InitButton('LWX2TestMap', "TEST EW MAP", OnTestMap);
+			Button.SetPosition(40, 190);
+		}
 	}
 	`log("LongWarX2: air war button on" @ Screen.Class.Name, , 'LongWarX2');
 }
@@ -34,6 +42,13 @@ simulated function OnTestTactical(UIButton Button)
 	`XCOMHISTORY.ResetHistory(, false);
 	Button.ConsoleCommand("open TacticalQuickLaunch");
 	`log("LongWarX2: test tactical: TacticalQuickLaunch", , 'LongWarX2');
+}
+
+/** Experiment 2: an Enemy Within map, converted on this machine (tools/convert/ew-package.ts), opened as it is. */
+simulated function OnTestMap(UIButton Button)
+{
+	`log("LongWarX2: test map: open" @ default.TestMapURL, , 'LongWarX2');
+	Button.ConsoleCommand("open" @ default.TestMapURL);
 }
 
 simulated function OnTestCampaign(UIButton Button)
