@@ -188,3 +188,49 @@ the Floater spawned in a tactical mission in the game.
 at 100 %); `am exec` runs in the desktop session, where typing into file
 dialogs works; windows are closed by title, never with Alt+F4 (that once
 closed the editor with an import unsaved).
+
+## Report (2026-10-31 evening, experiment 1: the Floater in the game) — answered: yes, for the content
+
+**Seen in War of the Chosen** on wingpu: in a tactical mission (the game's
+Tactical Quick Launch, a test button on the main menu), Enemy Within's
+Floater stands beside the squad, in its own textures (the glowing thruster
+eye, the armour), lit by XCOM 2's renderer, at the right size against a
+soldier. From the log: `mesh LWX2_Floater.SM_MedFloater loaded`, `material
+… loaded`, `shown at …`. Screenshots in the conversation (game art: not in
+the repository).
+
+**The way through**: EW package → glTF (`ew-to-gltf.ts`) → FBX (Blender,
+`gltf-to-fbx.py`) → the SDK editor's import (mesh, textures, a material) →
+saved as a package in the mod's `Content/` (git-ignored) → the mod build
+compiles its shader cache → `LWX2EWUnitDisplay` loads it by name at run time.
+
+**Not yet**: the animations. The editor's FBX animation import crashes every
+time (an assertion, `InSynchObject`, after "Default Mesh is NULL!
+PreviewSkelMeshName: None": it compresses the new sequence against a preview
+mesh the new AnimSet does not have). Tried: one FBX with all takes, one per
+animation, the mesh import's "Import Animations"; same crash. The Floater
+stands in its rest pose.
+
+### Decisions
+
+- **The rest pose first, animations after**: the question was whether EW's
+  content can come across and draw; it can. Spending the night on the
+  editor's animation import was not the best use of it.
+- **Units converted in the glTF step** (lengths / 100), not by a scale on the
+  FBX: XCOM 2's importer ignores a skeleton's scale for animations.
+- **One animation per FBX**, named after it: the editor names a sequence after
+  its file.
+- **The package lives in the SDK's `Content/Mods/LongWarX2`** while editing
+  and is copied to the mod's `Content/` to build. Neither is in git.
+- **A plain diffuse material for now** (the editor's "Create Material" from
+  the texture). XCOM 2's alien material (`Alien_SD_SSS` with Diffuse, Masks,
+  Normal) wants a Masks texture EW does not have; a later step.
+- **Test buttons on the main menu** (test campaign, test tactical) behind a
+  config switch; they never ship.
+
+**Next**: animations by another route (candidates: the editor's COLLADA
+import; setting the AnimSet's preview mesh before importing, through the
+editor's console or a property the viewer exposes; or writing the AnimSet
+object ourselves with upkit, since both games' packages are version 845),
+then the Floater as a unit (archetype, character template) that moves and
+fights.
