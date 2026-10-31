@@ -15,6 +15,7 @@ var config vector CameraDirection;
 event OnInit(UIScreen Screen)
 {
 	local LWX2CameraHold Hold;
+	local LWX2PartPlacer Placer;
 
 	if (!default.PlaceEWMap || Screen.Class.Name != 'UITacticalQuickLaunch')
 		return;
@@ -28,6 +29,14 @@ event OnInit(UIScreen Screen)
 	Hold.View.Location = default.Origin + default.CameraPosition;
 	Hold.View.Rotation = rotator(default.CameraDirection);
 	Hold.View.FOV = 70;
+	if (class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapPart)
+	{
+		Placer = Screen.Spawn(class'LWX2PartPlacer', Screen.PC);
+		Placer.Screen = UITacticalQuickLaunch(Screen);
+		Placer.Center = class'UIScreenListener_LongWarX2Tactical'.default.PartCenter;
+		Placer.Radius = class'UIScreenListener_LongWarX2Tactical'.default.PartRadius;
+		Placer.Offset = class'UIScreenListener_LongWarX2Tactical'.default.PartOffset;
+	}
 }
 
 defaultproperties

@@ -45,43 +45,100 @@ var config array<LWX2Piece> Pieces;
 /** Spawns the pieces with their positions relative to Origin; returns how many were placed. */
 static function int PlaceAll(Actor Spawner, vector Origin)
 {
-	local LWX2Piece P;
-	local StaticMesh Mesh;
-	local DynamicSMActor_Spawnable A;
-	local int Placed, Missing, i;
-	local Object Loaded;
-	local array<LWX2Standin> Standins;
-	local MaterialInterface M;
+	local array<Actor> Placed;
 
 	if (default.Pieces.Length == 0)
 		return 0;
-	// Any object of the package loads it whole: then the meshes are found by their paths.
-	Loaded = DynamicLoadObject(default.MapPackage $ ".TheWorld", class'Object', true);
-	`log("LongWarX2: EW map: package" @ default.MapPackage @ (Loaded != none ? "loaded" : "not loaded (its meshes may still be found)"), , 'LongWarX2');
+	LoadPackage();
+	Place(Spawner, vect(0, 0, 0), 0, Origin, class'DynamicSMActor_Spawnable', Placed);
+	return Placed.Length;
+}
+
+/**
+ * Spawns the pieces within Radius of Center (all when Radius is 0), moved so Center lands
+ * on At, as actors of the given class (a StaticMeshActor or a DynamicSMActor).
+ */
+static function Place(Actor Spawner, vector Center, float Radius, vector At, class<Actor> ActorClass, out array<Actor> Placed)
+{
+	local LWX2Piece P;
+	local StaticMesh Mesh;
+	local Actor A;
+	local StaticMeshComponent Comp;
+	local int Missing, i;
+	local array<LWX2Standin> Standins;
+	local MaterialInterface M;
+
 	foreach default.Pieces(P)
 	{
+		if (Radius > 0 && VSize2D(P.Loc - Center) > Radius)
+			continue;
 		Mesh = StaticMesh(DynamicLoadObject(P.Mesh, class'StaticMesh', true));
 		if (Mesh == none)
 		{
 			Missing++;
 			continue;
 		}
-		A = Spawner.Spawn(class'DynamicSMActor_Spawnable', , , Origin + P.Loc, P.Rot);
+		A = Spawner.Spawn(ActorClass, , , At + P.Loc - Center, P.Rot);
 		if (A == none)
 			continue;
-		A.SetStaticMesh(Mesh);
+		if (DynamicSMActor(A) != none)
+		{
+			DynamicSMActor(A).SetStaticMesh(Mesh);
+			Comp = DynamicSMActor(A).StaticMeshComponent;
+			A.SetCollision(false, false);
+		}
+		else
+		{
+			Comp = StaticMeshActor(A).StaticMeshComponent;
+			Comp.SetStaticMesh(Mesh);
+		}
 		A.SetDrawScale3D(P.Scale);
-		A.SetCollision(false, false);
 		for (i = 0; i < P.Materials.Length; i++)
 		{
 			M = MaterialFor(P.Materials[i], A, Standins);
 			if (M != none)
-				A.StaticMeshComponent.SetMaterial(i, M);
+				Comp.SetMaterial(i, M);
 		}
-		Placed++;
+		Placed.AddItem(A);
 	}
-	`log("LongWarX2: EW map:" @ Placed @ "pieces placed," @ Missing @ "meshes not found, of" @ default.Pieces.Length $ ";" @ Standins.Length @ "materials", , 'LongWarX2');
-	return Placed;
+	`log("LongWarX2: EW map:" @ Placed.Length @ "pieces placed as" @ ActorClass.Name $ "," @ Missing @ "meshes not found;" @ Standins.Length @ "materials", , 'LongWarX2');
+}
+
+/** Loads the converted map package (any of its objects loads it whole: then its meshes are found by their paths). */
+static function LoadPackage()
+{
+	local Object Loaded;
+
+	Loaded = DynamicLoadObject(default.MapPackage $ ".TheWorld", class'Object', true);
+	`log("LongWarX2: EW map: package" @ default.MapPackage @ (Loaded != none ? "loaded" : "not loaded (its meshes may still be found)"), , 'LongWarX2');
+}
+
+/** XCOM 2's cover points within Radius of At (for the experiment's log). */
+static function int CountCover(XComWorldData World, vector At, float Radius)
+{
+	local array<XComCoverPoint> Points;
+
+	World.GetCoverPoints(At, Radius, 256, Points);
+	return Points.Length;
+}
+
+/** Of the 7x7 tiles around At, how many units cannot enter (a solid hull blocks them). */
+static function int CountBlocked(XComWorldData World, vector At)
+{
+	local TTile Centre, T;
+	local int dx, dy, n;
+
+	Centre = World.GetTileCoordinatesFromPosition(At);
+	for (dx = -3; dx <= 3; dx++)
+		for (dy = -3; dy <= 3; dy++)
+		{
+			T = Centre;
+			T.X += dx;
+			T.Y += dy;
+			if (!World.CanUnitsEnterTile(T))
+				n++;
+		}
+	return n;
 }
 
 /** The material a slot gets: the EW material's XCOM 2 stand-in, made once; the EW material itself when it has none. */
