@@ -8,17 +8,19 @@
 //   - every placed static mesh (StaticMeshActor, XComLevelActor, XComDestructibleActor
 //     …) is written out: its mesh's path, its location, rotation and scale, as config
 //     for the mod to spawn (LWX2EWMapPieces).
-// The texture caches are renamed as ew-package.ts does.
+// The textures are rewritten with their mips uncompressed in the package (inline-textures.ts:
+// XCOM 2 does not read EW's compression), so the map needs no texture cache.
 //
 // Run from the Long War Tech Tree's checkout (it has upkit):
 //   cd ../xcom-ew-lw-tree
 //   npx vite-node ../long-war-x2/tools/convert/ew-map.ts -- <EW map .upk> <out .upk> <out pieces .ini>
 import { readFileSync, writeFileSync } from 'node:fs'
-import { basename } from 'node:path'
+import { basename, dirname } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
 import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
+import { inlineTextures } from './inline-textures.ts'
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -85,7 +87,32 @@ function meshOf(index: number, tags: Tag[]): string {
   }
   return ''
 }
-interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[] }
+/** An object array property's references. */
+const refs = (t: Tag) => {
+  const dv = new DataView(t.value.buffer, t.value.byteOffset)
+  return Array.from({ length: dv.getInt32(0, true) }, (_, k) => dv.getInt32(4 + 4 * k, true))
+}
+/**
+ * A component's materials, slot by slot: its own overrides, then its archetype's for the
+ * slots it leaves empty. EW's meshes carry none that XCOM 2 can read: the archetypes do.
+ */
+function materialsOf(index: number, tags: Tag[]): number[] {
+  const slots: number[] = []
+  for (let depth = 0; depth < 8; depth++) {
+    const own = tags.find((t) => t.name === 'Materials')
+    if (own) refs(own).forEach((r, k) => { if (!slots[k] && r) slots[k] = r })
+    const arch = archetypeOf(index)
+    if (arch <= 0) break
+    index = arch - 1
+    try {
+      tags = tagsOf(index, 8)
+    } catch {
+      break
+    }
+  }
+  return Array.from(slots, (r) => r ?? 0)
+}
+interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[] }
 const pieces: Piece[] = []
 const skipped: Record<string, number> = {}
 exports.forEach((e, i) => {
@@ -116,8 +143,75 @@ exports.forEach((e, i) => {
     loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
     rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
     scale: ds3 ? [f32(ds3, 0) * s, f32(ds3, 1) * s, f32(ds3, 2) * s] : [s, s, s],
+    materials: materialsOf(ref(comp) - 1, ctags),
   })
 })
+
+// --- The materials' textures, for XCOM 2 stand-ins --------------------------------
+// XCOM 2 cannot draw EW's materials (no shaders for them in its caches, and the game does
+// not compile any), so the mod replaces each with an instance of an XCOM 2 parent given
+// the EW material's diffuse and normal maps. Read here: an instance's texture parameters
+// (its parents' for those it does not set), a material's texture expressions.
+interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Alien' }
+const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
+function texturesOf(r: number, into: Map<string, string>, depth = 0): string {
+  // returns the root material's name, for the kind
+  if (r <= 0 || depth > 8) return r < 0 ? pathOf(r) : ''
+  const e = exports[r - 1]
+  let tags: Tag[]
+  try {
+    tags = tagsOf(r - 1, 4)
+  } catch {
+    return e.fullName
+  }
+  if (e.type === 'Material') {
+    const ex = tags.find((t) => t.name === 'Expressions')
+    for (const x of ex ? refs(ex) : []) {
+      if (x <= 0) continue
+      let xt: Tag[]
+      try {
+        xt = tagsOf(x - 1, 4)
+      } catch {
+        continue
+      }
+      const tex = xt.find((t) => t.name === 'Texture')
+      if (!tex || ref(tex) === 0) continue
+      const pn = xt.find((t) => t.name === 'ParameterName')
+      const key = pn ? nameOf(pn) : pathOf(ref(tex)).split('.').pop()!
+      if (!into.has(key)) into.set(key, pathOf(ref(tex)))
+    }
+    return e.fullName
+  }
+  const tp = tags.find((t) => t.name === 'TextureParameterValues')
+  if (tp) {
+    const rd = new Reader(tp.value.subarray(4))
+    const count = new DataView(tp.value.buffer, tp.value.byteOffset).getInt32(0, true)
+    for (let k = 0; k < count; k++) {
+      const st = readTags(rd, pkg)
+      const pn = st.find((t) => t.name === 'ParameterName')
+      const pv = st.find((t) => t.name === 'ParameterValue')
+      if (pn && pv && ref(pv) !== 0 && !into.has(nameOf(pn))) into.set(nameOf(pn), pathOf(ref(pv)))
+    }
+  }
+  const parent = tags.find((t) => t.name === 'Parent')
+  return parent ? texturesOf(ref(parent), into, depth + 1) : e.fullName
+}
+function lookOf(r: number): Look {
+  const tex = new Map<string, string>()
+  const root = texturesOf(r, tex)
+  if (process.env.LWX2_LOOKS) console.log('look', pathOf(r), root, JSON.stringify([...tex]))
+  // The parameter names EW's parents use, the main layer first (the ground blends take their
+  // Grass layer: one texture where EW blends four by vertex colour); else by the texture's name.
+  const pick = (params: string[], re: RegExp) =>
+    params.map((p) => tex.get(p)).find(Boolean) ?? [...tex.values()].find((p) => re.test(p.split('.').pop()!)) ?? ''
+  return {
+    diffuse: pick(['Diffuse', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock'], /(_DIF|_D|Diffuse|_Dif)\d*$/i),
+    normal: pick(['Normal', 'Leaves_Normal', 'Dirt_Normal', 'Rock_Normal'], /(_NRM|_N|Normal|_Nrm)\d*$/i),
+    kind: /Foliage|Grass|Veget/i.test(root) ? 'Foliage' : /ALIEN/i.test(root) ? 'Alien' : 'Prop',
+  }
+}
+const looks = new Map<number, Look>()
+for (const p of pieces) for (const m of p.materials) if (m && !looks.has(m)) looks.set(m, lookOf(m))
 
 // --- The package: the world neutralized, the carried packages and the caches renamed -
 // XCOM 2 reads every object of a package it loads, and reads EW's level objects wrong.
@@ -158,30 +252,41 @@ meta.nameEntries.forEach((n: { name: string; offset: number }) => {
   bytes.set(new TextEncoder().encode(to), at)
   if (carried.has(n.name)) renamedPackages.set(n.name, to)
 })
-const outBytes = new Uint8Array(bytes.length + stub.length)
+// The textures with their mips uncompressed in the package (inline-textures.ts), after the stub.
+const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'))
+const outBytes = new Uint8Array(bytes.length + stub.length + tex.appended.length)
 outBytes.set(bytes)
 outBytes.set(stub, stubAt)
+outBytes.set(tex.appended, stubAt + stub.length)
 writeFileSync(out, outBytes)
 
 // --- The pieces as config ------------------------------------------------------------
-const rename = (path: string) => {
-  const [top, ...rest] = path.split('.')
-  return [renamedPackages.get(top!) ?? top, ...rest].join('.')
-}
+// Names are shared by everything in the package: a mesh named like a carried package was renamed with it.
+const rename = (path: string) => path.split('.').map((part) => renamedPackages.get(part) ?? CACHES[part] ?? part).join('.')
 const n = (x: number) => (Math.abs(x) < 1e-4 ? '0' : String(Math.round(x * 1000) / 1000))
 const lines = [
   `; The static meshes of ${basename(src)}, converted on this machine by tools/convert/ew-map.ts.`,
   '; Not in the repository: generated from the player\'s own Enemy Within install.',
   '[LongWarX2.LWX2EWMapPieces]',
   `MapPackage="${basename(out, '.upk')}"`,
+  '; XCOM 2 cannot draw EW\'s materials: each is replaced by an instance of one of these parents',
+  '; (by the kind of the EW material) given the EW textures. Empty: the EW materials are kept.',
+  'PropParent="Materials.Approved.Props_SD"',
+  'FoliageParent="Materials.Approved.Vegetations_VO"',
+  'AlienParent="Materials.Approved.Alien_Props"',
+  ...[...looks].map(
+    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}")`,
+  ),
   ...pieces.map(
     (p) =>
-      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)}))`,
+      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''})`,
   ),
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')
 const meshes = new Set(pieces.map((p) => p.mesh))
-console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed`)
+console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed, ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB)`)
+const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
+console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
 console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
 
 function fixHeader(compressed: Uint8Array, outBytes: Uint8Array) {

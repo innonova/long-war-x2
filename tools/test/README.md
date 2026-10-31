@@ -10,6 +10,13 @@ clicks runs in the logged-in user's session as a scheduled task
     pwsh tools\test\desktop.ps1 shot.ps1 C:\path\shot.png
     pwsh tools\test\desktop.ps1 click.ps1 960 540   # a point in the game's 1920x1080 UI
     pwsh tools\test\stop-game.ps1             # stops it; the player's mod list put back
+    pwsh tools\test\desktop.ps1 key.ps1 W 1500    # holds a key (scan code) in the focused window
+
+From this machine, `tools/test/on.sh '<line>' …` runs lines in the desktop session
+(through `am exec`), and `tools/test/quick-launch-view.sh <png>` runs the whole check of
+experiment 2: build, start, the Tactical Quick Launch screen, a generated map (the screen
+draws the world only then), the debug camera held by the mod at the view in
+`Config/XComLWAirWar.ini`, a screenshot copied back.
 
 The game runs windowed at 1600x900, so a whole screenshot shows it; clicks
 are given in the UI's own 1920x1080 coordinates and scaled to the window.
