@@ -5,6 +5,7 @@ ssh (wingpu). An ssh session has no desktop, so anything that shows or
 clicks runs in the logged-in user's session as a scheduled task
 (`desktop.ps1`). Run from the repository's checkout there:
 
+    pwsh tools\test\build.ps1                 # the mod built into the game; errors and warnings
     pwsh tools\test\start-game.ps1            # only our mod enabled; waits for the main menu
     pwsh tools\test\desktop.ps1 shot.ps1 C:\path\shot.png
     pwsh tools\test\desktop.ps1 click.ps1 960 540   # a point in the game's 1920x1080 UI
@@ -12,3 +13,8 @@ clicks runs in the logged-in user's session as a scheduled task
 
 The game runs windowed at 1600x900, so a whole screenshot shows it; clicks
 are given in the UI's own 1920x1080 coordinates and scaled to the window.
+
+The main menu has a test campaign button (behind `ShowTestCampaign` in
+`Config/XComLWAirWar.ini`): the game's own "Debug NonCheat Start", a new
+campaign without its first mission. It saves like any campaign; back up the
+player's `SaveData` first and remove the test saves after.
