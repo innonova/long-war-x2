@@ -444,6 +444,9 @@ static function LWResult PlayBack(LWShip TheUfo, LWShip TheCraft, int Stance, ar
 
 	HpUfo = TheUfo.Hp;
 	HpCraft = TheCraft.Hp;
+	si = 0;
+	ui = 0;
+	Aborted = false;
 	End = EscapeTime(TheUfo, TheCraft, 0);
 	// The player's actions in time order: 0 Aim, 1 Dodge, 2 Boost, 3 break off.
 	if (Act.Aim >= 0) { UseTime.AddItem(Act.Aim); UseKind.AddItem(0); }
