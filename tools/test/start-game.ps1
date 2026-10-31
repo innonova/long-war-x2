@@ -20,4 +20,6 @@ do {
 Unregister-ScheduledTask -TaskName lwx2-game -Confirm:$false
 Start-Sleep 5
 & (Join-Path $PSScriptRoot 'desktop.ps1') focus.ps1
+# The game takes the first click after it starts only to activate its window: spend it on empty menu.
+& (Join-Path $PSScriptRoot 'desktop.ps1') click.ps1 1000 650
 if ($ready) { "main menu up after {0:N0} s" -f ((Get-Date) - $t0).TotalSeconds } else { "no main menu after $TimeoutSeconds s"; exit 1 }
