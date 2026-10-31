@@ -62,10 +62,16 @@ if preview:
     scene.render.filepath = preview
     bpy.ops.render.render(write_still=True)
 
+# Unreal reads FBX in centimetres and Blender writes metres: 1 glTF unit (an Unreal unit, read
+# by Blender as a metre) would arrive as 100. Scaled back by 0.01 (seen in the editor: the
+# pelvis at 9264 instead of 92.6).
+# The armature object is named Root and exported as a root node: with the name of a bone EW's
+# skeletons do not have, it does not clash with RigRoot.
+arm.name = 'Root'
 bpy.ops.export_scene.fbx(
     filepath=dst,
     apply_unit_scale=False,
-    global_scale=1.0,
+    global_scale=0.01,
     axis_forward='X',
     axis_up='Z',
     add_leaf_bones=False,

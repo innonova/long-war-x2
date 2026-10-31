@@ -1,5 +1,6 @@
-# Brings a window to the front by its title (a regular expression), maximized: for the editor and its dialogs.
-param([Parameter(Mandatory)][string]$Title, [switch]$NoMaximize)
+# Brings a window to the front by its title (a regular expression), maximized, or closes it
+# (-Close): for the editor and its dialogs.
+param([Parameter(Mandatory)][string]$Title, [switch]$NoMaximize, [switch]$Close)
 Add-Type @"
 using System; using System.Runtime.InteropServices; using System.Text;
 public class WW {
@@ -9,10 +10,13 @@ public class WW {
   [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
   [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int c);
   [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
+  [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
 }
 "@
 $found = [IntPtr]::Zero
 [WW]::EnumWindows({ param($h, $l) $sb = New-Object Text.StringBuilder 256; [WW]::GetWindowText($h, $sb, 256) | Out-Null; if ([WW]::IsWindowVisible($h) -and $sb.ToString() -match $Title) { $script:found = $h; return $false }; return $true }, [IntPtr]::Zero) | Out-Null
-if ($found -eq [IntPtr]::Zero) { exit 1 }
+if ($found -eq [IntPtr]::Zero) { "no window $Title"; exit 1 }
+# -Close: that window only (WM_CLOSE), never whatever has the focus (Alt+F4 once closed the editor).
+if ($Close) { [WW]::PostMessage($found, 0x10, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null; "closed $Title"; exit }
 [WW]::ShowWindow($found, $(if ($NoMaximize) { 9 } else { 3 })) | Out-Null
 [WW]::SetForegroundWindow($found) | Out-Null
