@@ -33,4 +33,5 @@ for (const c of air.ufo_changes) {
     : ''
   out.push(`+UfoChanges=(Ship=${c.ship}, AboveCategory=${c.above_category}${c.weapons ? `, Weapons=${list(c.weapons)}` : ''}${c.size ? `, Size=${q(c.size)}` : ''}${stats})`)
 }
+out.push('', '; For development: the main menu\'s test campaign (a new campaign without its first mission).', '[LongWarX2.UIScreenListener_LongWarX2Shell]', 'ShowTestCampaign=true')
 console.log(out.join('\r\n'))
