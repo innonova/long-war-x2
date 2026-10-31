@@ -290,8 +290,9 @@ simulated function ShowEvent(LWAirWar.LWEvent E)
 		default: return;
 	}
 	LogLines.AddItem(Seconds(E.Time) $ " s   " $ Line);
-	if (LogLines.Length > 9)
-		LogLines.Remove(0, LogLines.Length - 9);
+	// What the box shows: the newest lines.
+	if (LogLines.Length > 6)
+		LogLines.Remove(0, LogLines.Length - 6);
 	LogText.SetText(JoinLines(LogLines));
 }
 
