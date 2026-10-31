@@ -3,8 +3,10 @@
 #
 #   blender -b -P tools/convert/gltf-to-fbx.py -- in.glb out.fbx [preview.png [animation [frame]]]
 #
-# LWX2_ANIMS (a comma-separated list) keeps only those animations: the editor's
-# import of all of them at once crashed (an assertion in its threading code).
+# LWX2_ANIMS (a comma-separated list) keeps only those animations.
+# LWX2_ANIM_DIR: instead of out.fbx, one FBX per animation in that folder, named after
+# it (AC_NO_IdleA.fbx), the skeleton only: the editor names a sequence after its file,
+# and crashed importing a second take of one file (an assertion in its threading code).
 #
 # The FBX keeps Unreal's units (1 Blender unit = 1 Unreal unit, scale 1, no unit
 # conversion), Z up and X forward as Unreal has them, the skeleton without an
@@ -87,8 +89,7 @@ arm.name = 'Root'
 import io_scene_fbx.export_fbx_bin as fbx_bin
 _name = fbx_bin.get_blenderID_name
 fbx_bin.get_blenderID_name = lambda bid: bid[1].name if isinstance(bid, tuple) and len(bid) == 2 and isinstance(bid[1], bpy.types.Action) else _name(bid)
-bpy.ops.export_scene.fbx(
-    filepath=dst,
+common = dict(
     apply_unit_scale=False,
     global_scale=0.01,
     axis_forward='X',
@@ -106,4 +107,18 @@ bpy.ops.export_scene.fbx(
     path_mode='COPY',
     embed_textures=True,
 )
-print('wrote', dst)
+anim_dir = os.environ.get('LWX2_ANIM_DIR')
+if anim_dir:
+    os.makedirs(anim_dir, exist_ok=True)
+    common.update(object_types={'ARMATURE'}, bake_anim_use_all_actions=False, embed_textures=False, path_mode='AUTO')
+    bpy.ops.object.select_all(action='DESELECT')
+    for act in list(bpy.data.actions):
+        arm.animation_data.action = act
+        start, end = act.frame_range
+        bpy.context.scene.frame_start, bpy.context.scene.frame_end = int(start), int(end)
+        path = os.path.join(anim_dir, act.name + '.fbx')
+        bpy.ops.export_scene.fbx(filepath=path, **common)
+        print('wrote', path)
+else:
+    bpy.ops.export_scene.fbx(filepath=dst, **common)
+    print('wrote', dst)
