@@ -89,4 +89,63 @@ What it took, for whoever builds next:
   -nostartupmovies`. A mod's `` `log `` lines are in `Launch.log`.
 
 Left on the screen: the panel header's title does not draw (only its
-stripes); next, the air war.
+stripes); the air war's screen uses a title-font text instead.
+
+## Report (2026-10-31, experiment 3: the air war) — answered: yes
+
+**What was built** (`LongWarX2/`):
+- `LWAirWar`: Long War 1.0's interception rules in UnrealScript, ported from
+  the Long War Tech Tree's model of `XGInterceptionEngagement` and
+  `UIInterceptionEngagement`: every shot of the first 60 seconds rolled
+  before anything is shown, then played back with hits landing 0.3 s late,
+  Aim (the next two missed shots of the jet's own weapon hit), Dodge (the
+  next two hits on the jet miss), Boost (keeping up longer), breaking off;
+  stances (−15/0/+15 aim, no Aim when defensive, no Dodge when aggressive),
+  armour against penetration, crits, kills' aim and damage, crashed or
+  broken up by overkill.
+- Its data generated from the Long War Tech Tree's (`scripts/airwar-config.mjs`
+  → `Config/XComLWAirWar.ini`): ships, weapons, growth per category, UFOs
+  re-armed past categories. Foundry projects and Friendly Skies not yet.
+- `XComGameState_LWAirWar`: the campaign's jets in XCOM 2's game state,
+  made when a campaign starts (or is first loaded with the mod).
+- `UILWInterception`: the screen, from XCOM 2's UI pieces (background, text,
+  progress bars, buttons): the jet and the UFO, stance, the odds from 1000
+  fights, ENGAGE, AIM / DODGE / BOOST / BREAK OFF during the fight, a log.
+  Opened from the geoscape with the campaign's jets and the month's
+  category, or from the main menu as a demo.
+
+**Seen on wingpu** (screenshots in the conversation):
+- The demo: Interceptor with Avalanche Missiles against a Scout at
+  category 4; a fight played out (two hits, the Scout broke up).
+- The rules against the Long War Tech Tree's model, same jet, UFO and
+  stance (balanced): the game's odds from 1000 fights, down 11 % (broke up
+  5 %), jet lost 6 %, keeps up for 7 s; the model's from 20000, 11.8 %
+  (5.7 %), 5.3 %, 7.1 s.
+- A campaign (a test one, `tools/test/`): the button on the geoscape; the
+  campaign's Raven-1; aggressive against a Destroyer, Aim used mid-fight
+  (a miss turned into a 33-point hit through 18 armour); the Destroyer got
+  away, Raven-1 at 1955 of 2500 HP, recorded. The screen reopened read
+  1955 from the game state; saved, exited to the main menu, loaded: 1955.
+
+**What it took**: the rules are about 600 lines and compiled on the
+second try (one name clash with `UIPanel.Show`); the screen and state
+about 400. The time went into the toolchain and driving the game over ssh
+(`tools/test/`), which the next experiments reuse.
+
+**What the whole strategy layer would take**, by this measure: each Long War
+system is rules we already have modelled and checked (research, Foundry,
+council, funding, the air war), a game-state object, and screens built
+from XCOM 2's pieces. The air war is among the harder ones (real-time
+playback); most are lists, numbers and choices. What does not exist in XCOM
+2 at all is the scaffolding around them: UFOs appearing over countries,
+interceptors based on continents, satellites and panic, the base grid. Those
+are design choices about how much of XCOM 2's strategy to replace, more
+than technical questions.
+
+**What stands in the way**: nothing technical found. Plain screens look
+plain: a real one wants the jet's and UFO's pictures and an animated view
+of the fight, which is art (Flash movies or our own), not code. XCOM 2 has
+no interceptor or EW UFO models of its own (experiment 1's question).
+
+**Left**: experiments 1 (an EW alien into XCOM 2) and 2 (an EW map), which
+need the SDK's `full_content` branch.
