@@ -1,6 +1,6 @@
 ---
 title: "The hard parts first: Enemy Within's content, one of its maps, and one Long War strategy system, each in XCOM 2"
-status: planned
+status: in-progress
 priority: 1
 dependsOn: []
 ---
@@ -63,3 +63,30 @@ and how, the port goes on.
 Each experiment ends with what was seen in the game or the editor on
 wingpu (a screenshot), what it took, what it would take to do for all of
 it, and what stands in the way.
+
+## Report (2026-10-31, the toolchain)
+
+Before experiment 3, the toolchain on its own: a mod (`LongWarX2/`) whose
+screen opens on the main menu, built from XCOM 2's UI pieces (a background
+box, a panel header, text, a button). Built over ssh on wingpu with
+X2ModBuildCommon v1.2.1 (`.scripts/`), loaded by War of the Chosen, seen on
+the main menu (screenshot in the conversation). Our UnrealScript compiled
+with no errors or warnings the first time it was compiled at all.
+
+What it took, for whoever builds next:
+- **Windows PowerShell 5.1** (`powershell.exe`) runs the build, as ModBuddy
+  does; under PowerShell 7 a folder becomes its full path where the script
+  wants its name.
+- **The mod's own package** in `Config/XComEngine.ini` under
+  `[UnrealEd.EditorEngine] +ModEditPackages`: without it the SDK's
+  `make -mods` compiles nothing of ours and still says "Success".
+- **Enabling it for a test**: `ActiveMods="LongWarX2"` under
+  `[Engine.XComModOptions]` in `My Games\XCOM2 War of the Chosen\XComGame\Config\XComModOptions.ini`,
+  keeping the file's `[IniVersion]`; without it the game regenerates the
+  file and the mod is not loaded. Backed up before, restored after.
+- **The game over ssh**: started as a scheduled task in the desktop session;
+  its menus draw only once its window has focus. `-review -noRedScreens
+  -nostartupmovies`. A mod's `` `log `` lines are in `Launch.log`.
+
+Left on the screen: the panel header's title does not draw (only its
+stripes); next, the air war.
