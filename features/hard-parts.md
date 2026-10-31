@@ -1,0 +1,65 @@
+---
+title: "The hard parts first: Enemy Within's content, one of its maps, and one Long War strategy system, each in XCOM 2"
+status: planned
+priority: 1
+dependsOn: []
+---
+
+## Purpose
+
+The person, 2026-10-31: "porting long war 1.0 to the xcom 2 engine, and not
+the cheap way but building the actual strategic layer with new SWFs or
+whatever it is, and the air war and porting the handmade maps". The draw is
+"the customizable soldiers and the looks - i recognize that we may have to
+accept xcom 1 looks for a lot of things but we can iterate". XCOM 2 rather
+than UE5 as "the less radical move"; and "i like the idea of validating the
+hard parts first".
+
+The soldiers are what XCOM 2 does well, and Long War's classes and perks fit
+its ability system; that part is not in doubt. Three things are: whether
+Enemy Within's content can come across at all, whether its handmade maps
+can, and whether a Long War strategy system can be rebuilt with XCOM 2's
+UI. Each gets one small experiment here. What they find decides whether,
+and how, the port goes on.
+
+## Facts (2026-10-31)
+
+- **The test machine** is wingpu (ssh wingpu, Windows): XCOM 2 with War of
+  the Chosen (Steam), the War of the Chosen SDK (ModBuddy, the editor; the
+  Visual Studio 2013 isolated shell), an Intel Arc integrated GPU, 31 GB.
+  The SDK is on Steam's default branch (1.6 GB): the editor starts, without
+  the game's editor content (materials, effects, sounds), which the
+  `full_content` branch brings.
+- **XCOM 2's SDK** ships the game's whole UnrealScript source
+  (`Development/SrcOrig`); mods are built with ModBuddy and shared on the
+  Workshop.
+- **Enemy Within's packages** are read by upkit and by the Long War Tech
+  Tree: textures, materials, skeletal meshes and animations (its 3D
+  soldier), and every script. Its maps ship cooked.
+- **Content:** a mod may ship our code and use XCOM 2's content. Enemy
+  Within's content (the aliens XCOM 2 lacks, its maps) is Firaxis's and 2K's
+  and is not shipped: it is converted from the player's own install, on
+  their machine.
+
+## The experiments
+
+1. **An alien XCOM 2 lacks.** A Floater (or a Thin Man): its mesh,
+   textures and one animation, read from an Enemy Within install, written
+   as something XCOM 2's editor imports, and seen there, then in the game
+   on a tactical map. Answers: can EW's content come across, and how much
+   does a player have to do for it.
+2. **One handmade map.** A small one (a crash site): from the cooked
+   package to something XCOM 2 can load and play on, with cover and
+   pathing. Answers: can the maps come across, and as what (a whole plot,
+   or rebuilt).
+3. **One strategy system.** The air war: Long War's exact rules
+   (`XGInterceptionEngagement`, as the Long War Tech Tree models and checks
+   them), as an XCOM 2 screen started from an XCOM 2 campaign, with a jet
+   and a UFO. Answers: can a Long War strategy screen be built with XCOM 2's
+   UI, and does its state live well in XCOM 2's game state.
+
+## Verification
+
+Each experiment ends with what was seen in the game or the editor on
+wingpu (a screenshot), what it took, what it would take to do for all of
+it, and what stands in the way.
