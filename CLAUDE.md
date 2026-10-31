@@ -1,0 +1,39 @@
+# Working in long-war-x2
+
+## How the person wants work done here
+
+- **Carry on without asking.** Once a direction is agreed (the features/
+  files), work through it without stopping for a go-ahead between steps.
+  The person, 2026-10-31, before an overnight session: "if you document any
+  decisions along the way please keep going ... get as far as you can
+  towards the end goal".
+- **Log decisions as they are made**, in the feature file being worked on:
+  a `### Decisions` list in the day's report, each one line with its reason
+  ("Floater shown as a plain actor first, not a unit: proves the content in
+  the game before the archetype work"). The person reads these and may
+  overrule them; make each easy to undo.
+- **Reports** go in the feature file as dated `## Report (YYYY-MM-DD, …)`
+  sections: what was done, what was seen (in the game or editor, with
+  screenshots taken), what is left, what stands in the way.
+
+## Hard rules
+
+- **Nothing of either game in the repository**: no Enemy Within or XCOM 2
+  assets, decompiled code, converted packages or screenshots of game art.
+  Converted content lives outside the checkout (`C:\Users\aekms\lwx2-work` on
+  the test machine, `/tmp/lwtree-x2conv` here). Hashes and names are fine.
+- Our code is MIT (`LICENSE`).
+
+## The test machine: wingpu
+
+- `ssh wingpu` (Windows 11, Intel Arc, display 1920x1080 at 100 %: the SDK
+  editor is not DPI-aware). Its Steam games and the SDK were installed for
+  this work only: saves, settings and mod lists there need not be kept.
+- Anything that shows or clicks runs in the desktop session:
+  `tools/test/on.sh '<PowerShell line>' …` (through `am exec`). The tools
+  are in `tools/test/` (README there); the game is started with
+  `tools/test/start-game.ps1`, the editor with `start-editor.ps1`.
+- Build: `pwsh tools\test\build.ps1` on wingpu (X2ModBuildCommon under
+  Windows PowerShell 5.1).
+- In the editor: close windows by title (`window.ps1 <title> -Close`),
+  never Alt+F4; save a package right after changing it.
