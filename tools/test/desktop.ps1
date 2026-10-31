@@ -3,7 +3,8 @@ param([Parameter(Mandatory)][string]$Script, [Parameter(ValueFromRemainingArgume
 $path = Join-Path $PSScriptRoot $Script
 $argsLine = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$path`" " + (($Rest | ForEach-Object { "`"$_`"" }) -join ' ')
 $name = "lwx2-" + [IO.Path]::GetFileNameWithoutExtension($Script)
-$a = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $argsLine
+# Through a headless console host: Windows Terminal would otherwise show a window even for -WindowStyle Hidden.
+$a = New-ScheduledTaskAction -Execute "conhost.exe" -Argument "--headless powershell.exe $argsLine"
 $p = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive
 Register-ScheduledTask -TaskName $name -Action $a -Principal $p -Force | Out-Null
 Start-ScheduledTask -TaskName $name
