@@ -3,6 +3,9 @@
 #
 #   blender -b -P tools/convert/gltf-to-fbx.py -- in.glb out.fbx [preview.png [animation [frame]]]
 #
+# LWX2_ANIMS (a comma-separated list) keeps only those animations: the editor's
+# import of all of them at once crashed (an assertion in its threading code).
+#
 # The FBX keeps Unreal's units (1 Blender unit = 1 Unreal unit, scale 1, no unit
 # conversion), Z up and X forward as Unreal has them, the skeleton without an
 # armature root bone of Blender's own ("Armature" nodes are not written as bones).
@@ -28,6 +31,12 @@ suffix = '_' + mesh.name.split('.')[0]
 for act in bpy.data.actions:
     if act.name.endswith(suffix):
         act.name = act.name[:-len(suffix)]
+import os
+keep = [a for a in os.environ.get('LWX2_ANIMS', '').split(',') if a]
+if keep:
+    for act in [a for a in bpy.data.actions if a.name not in keep]:
+        bpy.data.actions.remove(act)
+    print('animations kept:', sorted(a.name for a in bpy.data.actions))
 
 if anim and arm.animation_data is not None:
     act = bpy.data.actions.get(anim) or next((a for a in bpy.data.actions if a.name.startswith(anim)), None)
