@@ -6,8 +6,10 @@ param([Parameter(Mandatory)][string]$Title, [Parameter(Mandatory)][string]$Actio
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
 $A = [System.Windows.Automation.AutomationElement]
 $root = $A::RootElement
-$win = $root.FindAll([System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition) |
-  Where-Object { $_.Current.Name -match $Title } | Select-Object -First 1
+# Top-level windows first; then any window (dialogs hang under their owner).
+$isWindow = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::Window)
+$win = $root.FindAll([System.Windows.Automation.TreeScope]::Children, $isWindow) | Where-Object { $_.Current.Name -match $Title } | Select-Object -First 1
+if (-not $win) { $win = $root.FindAll([System.Windows.Automation.TreeScope]::Descendants, $isWindow) | Where-Object { $_.Current.Name -match $Title } | Select-Object -First 1 }
 if (-not $win) { "no window $Title"; exit 1 }
 $all = $win.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
 if ($Action -eq 'list') {
