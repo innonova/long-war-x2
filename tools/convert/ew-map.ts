@@ -2,7 +2,7 @@
 // XCOM 2 cannot load an EW map as a map (its level data is serialized differently),
 // but it reads EW's static meshes. So:
 //   - the map package is made a content package: its world (the level, its actors,
-//     their components, lighting) blanked, so nothing of it is read; the packages it
+//     their components, lighting) turned into empty objects XCOM 2 can read; the packages it
 //     carries copies of (FX_Shared, UFO_SmallScout …) renamed, so they do not clash
 //     with XCOM 2's packages of the same names (the first letter becomes "Q");
 //   - every placed static mesh (StaticMeshActor, XComLevelActor, XComDestructibleActor
@@ -119,12 +119,33 @@ exports.forEach((e, i) => {
   })
 })
 
-// --- The package: the world blanked, the carried packages and the caches renamed -
-let blanked = 0
+// --- The package: the world neutralized, the carried packages and the caches renamed -
+// XCOM 2 reads every object of a package it loads, and reads EW's level objects wrong.
+// So each object of the world becomes a plain object of a simple class the package
+// already uses (PhysicalMaterial): no archetype, plain flags, and as data a stub
+// appended to the file: a net index and "None" (no properties).
+const donor = exports.find((e) => e.type === 'PhysicalMaterial')
+if (!donor) throw new Error('no PhysicalMaterial in the package to borrow a class from')
+const donorClass = v.getInt32(donor.entryOffset + 0, true)
+const donorFlagsLo = v.getUint32(donor.entryOffset + 24, true)
+const donorFlagsHi = v.getUint32(donor.entryOffset + 28, true)
+const noneIndex = meta.names.indexOf('None')
+const stubAt = bytes.length
+const stub = new Uint8Array(12)
+new DataView(stub.buffer).setInt32(0, -1, true)
+new DataView(stub.buffer).setInt32(4, noneIndex, true)
+let neutralized = 0
 exports.forEach((e) => {
   if (e.fullName.split('.')[0] !== 'TheWorld') return
-  v.setInt32(e.entryOffset + 32, 0, true) // serial size: nothing to read
-  blanked++
+  const at = e.entryOffset
+  v.setInt32(at + 0, donorClass, true) // class
+  v.setInt32(at + 4, 0, true) // super
+  v.setInt32(at + 20, 0, true) // archetype
+  v.setUint32(at + 24, donorFlagsLo, true)
+  v.setUint32(at + 28, donorFlagsHi, true)
+  v.setInt32(at + 32, stub.length, true) // serial size
+  v.setInt32(at + 36, stubAt, true) // serial offset
+  neutralized++
 })
 const carried = new Set(exports.filter((e) => e.type === 'Package' && e.outer === 0).map((e) => e.name as string))
 const renamedPackages = new Map<string, string>()
@@ -137,7 +158,10 @@ meta.nameEntries.forEach((n: { name: string; offset: number }) => {
   bytes.set(new TextEncoder().encode(to), at)
   if (carried.has(n.name)) renamedPackages.set(n.name, to)
 })
-writeFileSync(out, bytes)
+const outBytes = new Uint8Array(bytes.length + stub.length)
+outBytes.set(bytes)
+outBytes.set(stub, stubAt)
+writeFileSync(out, outBytes)
 
 // --- The pieces as config ------------------------------------------------------------
 const rename = (path: string) => {
@@ -157,7 +181,7 @@ const lines = [
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')
 const meshes = new Set(pieces.map((p) => p.mesh))
-console.log(`${out}: world blanked (${blanked} objects), ${renamedPackages.size} carried packages renamed`)
+console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed`)
 console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
 
 function fixHeader(compressed: Uint8Array, outBytes: Uint8Array) {
