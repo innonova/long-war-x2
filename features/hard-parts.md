@@ -234,3 +234,50 @@ editor's console or a property the viewer exposes; or writing the AnimSet
 object ourselves with upkit, since both games' packages are version 845),
 then the Floater as a unit (archetype, character template) that moves and
 fights.
+
+## Report (2026-10-31 night, experiment 1: EW's own package, animated) — the better way
+
+**Seen in the game**: the Floater in a tactical mission, **animated** (its
+idle; two frames 0.7 s apart differ), with Enemy Within's own particle
+effects (its thruster flames and jet trail, fired by the animation's
+notifies). Mesh and animations come straight from EW's package, not
+through the editor. Screenshots in the conversation.
+
+**What XCOM 2 reads of an EW package** (same package version, 845; EW's
+licensee version 64, XCOM 2's 120): its SkeletalMesh, its AnimSet (154
+sequences), its particle systems: loaded in milliseconds. What it cannot
+use: EW's materials (their compiled shaders are EW's); the Floater wears the
+material made in the editor (`LWX2_Floater.MedFloater_DIF_Mat`), and one
+particle material shows as a checkered square.
+
+**The patch** (`tools/convert/ew-package.ts`, upkit), on the player's
+machine:
+- decompressed, with the header fixed (see below);
+- its texture caches renamed (`CharTextures` → `EWCharTextrs`, `Textures`
+  → `EWTextrs`: same lengths, only the name table changes) and the player's
+  EW cache files hard-linked into the mod's `Content` under those names (no
+  copy: a link on the same disk). Without it, an EW texture is read from
+  XCOM 2's own `CharTextures.tfc` and the game stops ("I/O failure").
+
+**A bug found in upkit**: `decompressPackage` zeroes the chunk count but
+leaves the chunk entries in the header, so a reader takes the fields after
+the table (package source, packages to cook, texture allocations) from them.
+XCOM 2 hung on it. Fixed in the converter; to fix in upkit itself (with a
+test), since the Long War Tech Tree writes decompressed packages too (EW
+read those, so far).
+
+### Decisions
+
+- **EW's packages, patched, over the editor's import**: no SDK needed on a
+  player's machine (60 GB, and its animation import crashes), every
+  animation as EW made it, and conversion is a small upkit step. The editor
+  remains for what EW's packages cannot give: materials XCOM 2 can render.
+- **Hard links for the texture caches** rather than copies (0.5 and 1.7 GB).
+  A player's EW and XCOM 2 on different disks would need copies; a later
+  detail.
+- **Our editor-made material on EW's mesh**: until materials are converted
+  (next: build an XCOM 2 material from EW's textures automatically, or one
+  material in the mod that takes EW's textures as parameters).
+
+**So experiment 1 is answered**: EW's aliens come across, animated, with
+their effects, from the player's own install, by a step a mod can run.
