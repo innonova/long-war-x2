@@ -8,6 +8,9 @@ class UILWInterception extends UIScreen;
 /** Opened from a campaign's geoscape: its jets, its month; else a demo jet. */
 var bool bCampaign;
 
+/** How many fights the odds are counted from. */
+var int OddsRuns;
+
 var int JetIndex;
 var int UfoIndex;
 var int Stance;
@@ -66,12 +69,12 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 		StanceButtons[i] = Spawn(class'UIButton', self).InitButton(name("LWStance" $ i), "", OnStance);
 		StanceButtons[i].SetPosition(390 + i * 200, 450);
 	}
-	PrevUfoButton = Spawn(class'UIButton', self).InitButton('LWPrevUfo', "< UFO", OnPrevUfo);
+	PrevUfoButton = Spawn(class'UIButton', self).InitButton('LWPrevUfo', "PREV UFO", OnPrevUfo);
 	PrevUfoButton.SetPosition(990, 450);
-	NextUfoButton = Spawn(class'UIButton', self).InitButton('LWNextUfo', "UFO >", OnNextUfo);
-	NextUfoButton.SetPosition(1130, 450);
-	NextJetButton = Spawn(class'UIButton', self).InitButton('LWNextJet', "JET >", OnNextJet);
-	NextJetButton.SetPosition(1270, 450);
+	NextUfoButton = Spawn(class'UIButton', self).InitButton('LWNextUfo', "NEXT UFO", OnNextUfo);
+	NextUfoButton.SetPosition(1150, 450);
+	NextJetButton = Spawn(class'UIButton', self).InitButton('LWNextJet', "NEXT JET", OnNextJet);
+	NextJetButton.SetPosition(1310, 450);
 
 	OddsText = Spawn(class'UIText', self).InitText('LWOdds', "");
 	OddsText.SetPosition(390, 510);
@@ -146,8 +149,8 @@ simulated function Setup()
 	LogLines.Length = 0;
 
 	SubTitle.SetText((bCampaign ? "This campaign" : "Demo (no campaign)") $ ": the aliens at category" @ Category $ ". Long War 1.0's rules and numbers.");
-	JetInfo = Callsign @ "·" @ Jet.Name @ "·" @ WeaponsOf(Jet) $ "\n" $ "Armor" @ Jet.Armor $ ", penetration" @ Jet.Ap $ ", speed" @ int(Jet.BattleSpeed) $ ", kills" @ Jet.Kills;
-	UfoInfo = TheUfo.Name @ "(" $ TheUfo.Size $ ") ·" @ WeaponsOf(TheUfo) $ "\n" $ "Armor" @ TheUfo.Armor $ ", penetration" @ TheUfo.Ap $ ", speed" @ int(TheUfo.BattleSpeed);
+	JetInfo = Callsign @ "-" @ Jet.Name @ "-" @ WeaponsOf(Jet) $ "\n" $ "Armor" @ Jet.Armor $ ", penetration" @ Jet.Ap $ ", speed" @ int(Jet.BattleSpeed) $ ", kills" @ Jet.Kills;
+	UfoInfo = TheUfo.Name @ "(" $ TheUfo.Size $ ") -" @ WeaponsOf(TheUfo) $ "\n" $ "Armor" @ TheUfo.Armor $ ", penetration" @ TheUfo.Ap $ ", speed" @ int(TheUfo.BattleSpeed);
 	for (i = 0; i < 3; i++)
 		StanceButtons[i].SetText(i == Stance ? "[" @ Caps(class'LWAirWar'.static.StanceName(i)) @ "]" : Caps(class'LWAirWar'.static.StanceName(i)));
 	NextJetButton.SetDisabled(!bCampaign);
@@ -156,8 +159,8 @@ simulated function Setup()
 		OddsText.SetText("This jet is lost.");
 	else
 	{
-		class'LWAirWar'.static.Odds(TheUfo, Jet, Stance, 300, Crashed, Destroyed, Escaped, Lost);
-		OddsText.SetText("Of 300 fights at this stance, with no consumables: down" @ Pct(Crashed + Destroyed) $ " (broke up" @ Pct(Destroyed) $ "), got away" @ Pct(Escaped) $ "; the jet lost" @ Pct(Lost) $ ". It keeps up for" @ int(class'LWAirWar'.static.EscapeTime(TheUfo, Jet, 0)) @ "s.");
+		class'LWAirWar'.static.Odds(TheUfo, Jet, Stance, OddsRuns, Crashed, Destroyed, Escaped, Lost);
+		OddsText.SetText("Of" @ OddsRuns @ "fights at this stance, with no consumables: down" @ Pct(Crashed + Destroyed) $ " (broke up" @ Pct(Destroyed) $ "), got away" @ Pct(Escaped) $ "; the jet lost" @ Pct(Lost) $ ". It keeps up for" @ int(class'LWAirWar'.static.EscapeTime(TheUfo, Jet, 0)) @ "s.");
 	}
 	OutcomeText.SetText("");
 	LogText.SetText("");
@@ -167,7 +170,7 @@ simulated function Setup()
 
 simulated function string Pct(int n)
 {
-	return string(int(n * 100.0 / 300.0 + 0.5)) $ "%";
+	return string(int(n * 100.0 / OddsRuns + 0.5)) $ "%";
 }
 
 simulated function string WeaponsOf(LWAirWar.LWShip S)
@@ -367,4 +370,5 @@ simulated function OnClose(UIButton Button)
 defaultproperties
 {
 	InputState = eInputState_Consume;
+	OddsRuns = 1000;
 }
