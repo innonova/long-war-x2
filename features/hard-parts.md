@@ -149,3 +149,42 @@ no interceptor or EW UFO models of its own (experiment 1's question).
 
 **Left**: experiments 1 (an EW alien into XCOM 2) and 2 (an EW map), which
 need the SDK's `full_content` branch.
+
+## Report (2026-10-31, experiment 1: an alien, so far)
+
+**Converted** (`tools/convert/`, run on this machine from the player's EW
+install; nothing of the game's in the repository):
+- `ew-to-gltf.ts`: an Enemy Within unit as glTF, with the Long War Tech
+  Tree's readers: the Floater (`SM_MedFloater`, 87 bones, 3286 vertices,
+  4852 triangles), its diffuse and normal textures (2048², from the texture
+  cache), and the 154 animations of its rifle set. Checked by rendering:
+  the mesh matches the Tech Tree's own skinning; the winding agrees with
+  the stored normals once the axis swap is the only flip.
+- `gltf-to-fbx.py` (Blender, headless): FBX for the editor, in Unreal's units
+  (Blender writes metres, Unreal reads centimetres: scaled by 0.01, seen in
+  the editor as a pelvis at 9264 before and 92.6 after).
+
+**In XCOM 2's editor** on wingpu: the FBX imports as a skeletal mesh (88
+bones with our Root, 4852 triangles, sizes right), the textures import
+(the normal map as TC_Normalmap), and the mesh shows in the AnimSet
+editor. XCOM 2's aliens use a material instance of
+`Materials.Approved.Alien_SD_SSS` with Diffuse, Masks and Normal
+(read from the SDK's uncooked `Sectoid.upk`); an instance of it is made
+for the Floater. Saved as a package outside the repository.
+
+**In the way, for now**: this editor on this machine does not render
+XCOM 2's character materials: our material shows magenta, and XCOM 2's
+own Sectoid shows flat blue. Its renderer is DX10 (SM4; the SDK ships SM4
+shader caches only; `AllowD3D11` and `-d3d11` do not change it). In the
+first editor session a plain diffuse material did render the Floater
+textured; why it stopped is not known yet. The real check is the game,
+which renders through DX11.
+
+**Next**: the animations as an AnimSet (EW's skeleton is the Floater's
+own, so they import onto it), a pawn archetype, a character template, and
+the Floater spawned in a tactical mission in the game.
+
+**Tooling learnt**: the editor is not DPI-aware (wingpu now runs 1920x1080
+at 100 %); `am exec` runs in the desktop session, where typing into file
+dialogs works; windows are closed by title, never with Alt+F4 (that once
+closed the editor with an import unsaved).
