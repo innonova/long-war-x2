@@ -5,7 +5,7 @@ $path = Join-Path $PSScriptRoot $Script
 $id = [guid]::NewGuid().ToString('N')
 $out = Join-Path $env:TEMP "lwx2-desktop-$id.txt"
 $wrapper = Join-Path $env:TEMP "lwx2-desktop-$id.ps1"
-$quoted = ($Rest | ForEach-Object { "'" + ($_ -replace "'", "''") + "'" }) -join ' '
+$quoted = if (-not $Rest) { '' } else { ($Rest | ForEach-Object { "'" + ($_ -replace "'", "''") + "'" }) -join ' ' }
 Set-Content $wrapper "& '$path' $quoted *> '$out'"
 $name = "lwx2-" + [IO.Path]::GetFileNameWithoutExtension($Script)
 # Through a headless console host: Windows Terminal would otherwise show a window even for -WindowStyle Hidden.
