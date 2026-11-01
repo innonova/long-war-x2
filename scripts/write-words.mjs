@@ -32,7 +32,15 @@ export function wordsFrom(ew, researchIni) {
   }
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// Run as a script (not when the setup program's bundle imports it: there import.meta.url is not a file URL).
+const self = (() => {
+  try {
+    return fileURLToPath(import.meta.url)
+  } catch {
+    return ''
+  }
+})()
+if (self && process.argv[1] === self) {
   const ew = process.argv[2]
   const mod = process.argv[3] ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'LongWarX2')
   const w = wordsFrom(ew, readFileSync(join(mod, 'Config', 'XComLWResearch.ini'), 'utf8'))
