@@ -43,6 +43,8 @@ struct LWPlanCell
 	var int Terror;
 	var array<int> Ufos;
 	var array<int> MaybeUfos;
+	/** From month 4 the aliens may go for XCOM's headquarters (every third such month). */
+	var bool HQAssault;
 };
 
 struct LWUfoValue
@@ -203,6 +205,7 @@ static function string ObjectiveName(int Objective)
 	case 7: return "Infiltration";
 	case 8: return "Air raid";
 	case 3: return "Flyby";
+	case 9: return "Assault on XCOM";
 	}
 	return "Unknown";
 }
@@ -297,6 +300,7 @@ static function Phases(int Objective, out array<LWPhase> Out)
 		break;
 	case 8: AddPhase(Out, 0, 5, -1, 1, 6); break; // air raid: a long scout
 	case 3: AddPhase(Out, 0, 3, 9, 2, 0); break; // flyby: an Overseer passes over and leaves (eUM_Flyby), no landing
+	case 9: AddPhase(Out, 2, 1, 14, 3, 0); break; // the HQ assault: an Assault Carrier comes down on XCOM (Infiltrate_1)
 	}
 }
 

@@ -96,3 +96,32 @@ The rules, read from Long War's code:
   defence, from month 4); the council's own missions.
 - Act 3 (no more Outsider commanders once the Overseer is down) and the
   EXALT story.
+
+## Report (2026-11-01, the assault on XCOM's headquarters)
+
+**Long War's HQ assault** (`AddHQAssaultMission`), read from its monthly
+plan:
+- **When:** in the plan cells that bring it (tier 3 and 4 at aggression
+  4, now marked `HQAssault=true` by `scripts/strategy-config.mjs`), every
+  third time such a month comes. At month 12 it comes anyway if none has
+  (Long War's `eRecap_ContinentsCovered` counter).
+- **How:**
+  - a Battleship hunts over XCOM's home country (day 2 to 7);
+  - an Assault Carrier comes down on the headquarters (day 8 to 25;
+    `Infiltrate_1`, a direct landing);
+  - shot down first, it never lands.
+- **Landed:** "DEFEND: XCOM's headquarters" (24 hours on the Geoscape).
+  - Held: the carrier crew's kill loot.
+  - Lost or unanswered: the war is lost. Long War forces the mission; an
+    unanswered assault counts as lost.
+
+**Checked in the game** (the test aid `hqassault`):
+- the Battleship hunted over the United States, then "The aliens are
+  assaulting XCOM's headquarters!";
+- unanswered, a day later: "XCOM's headquarters has fallen. The war is
+  lost.";
+- defended in another campaign: "XCOM's headquarters held."
+
+Also seen: thirteen months of `auto … 90 % … sats` lost the campaign in
+month 10, sixteen countries gone, before any HQ assault. Long War's pace
+with a player who builds nothing but satellites and uplinks.

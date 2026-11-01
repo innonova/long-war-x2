@@ -56,7 +56,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
-		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid)");
+		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid) | hqassault: the HQ assault from now (a test aid)");
 		Out.AddItem("base: the base's tiles, numbers and facilities | base set <column> <row> <facility>: placed at once (a test aid) | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
 		Out.AddItem("hangar: the jets (index first), orders, bays | order [continent 0-4] [n] | transfer <jet> <continent> | equip <jet> <weapon 1-7>");
 		Out.AddItem("dump [class name part]: every game state object with all its fields (tools/test/lw-dump.sh saves it)");
@@ -221,6 +221,10 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem(class'LWBase'.static.Work(int(Args[1]) - 1, int(Args[2]) - 1, Args.Length > 3 ? int(Args[3]) : 0, Why) ? "ok" : "ERR" @ Why);
 		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
 		Refreshed();
+		return;
+	case "hqassault":
+		HQAssaultNow();
+		Out.AddItem("the aliens go for XCOM's headquarters from now (a test aid)");
 		return;
 	case "foundry":
 		if (Args.Length < 2)
@@ -459,6 +463,18 @@ function bool AutoResearch(out string What)
 	XComHQ.SetNewResearchProject(Refs[Best]);
 	What = XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(Refs[Best].ObjectID)).GetMyTemplate().DisplayName @ "(" $ BestHours $ "h)";
 	return true;
+}
+
+/** The HQ assault planned from this hour (a test aid). */
+function HQAssaultNow()
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: the HQ assault (control port)");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID));
+	S.AddHQAssault(S.Hours - 48);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 }
 
 /** A facility put on a tile at once, whatever the tile (a test aid). */

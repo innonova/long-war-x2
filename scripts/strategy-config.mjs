@@ -281,6 +281,10 @@ function monthlyPlan(upk) {
   let roll = false
   let rollDepth = 0
   const shared = new Map()
+  // The cells that may bring the HQ assault (AddHQAssaultMission under iMonth == or >= n).
+  const hq = new Set()
+  let hqPhase = -1
+  let hqDepth = 0
   for (const l of src.slice(start + 1)) {
     if (l === '{') {
       depth++
@@ -288,6 +292,7 @@ function monthlyPlan(upk) {
     }
     if (l === '}') {
       depth--
+      if (hqPhase >= 0 && depth < hqDepth) hqPhase = -1
       if (roll && depth < rollDepth) roll = false
       if (phase >= 0 && depth < phaseDepth) phase = -1
       if (tier >= 0 && depth < tierDepth) tier = -1
@@ -305,6 +310,18 @@ function monthlyPlan(upk) {
       phase = Number(m[1])
       phaseDepth = depth + 1
       cells.set(`${tier}:${phase}`, { abductions: [0, 0], terror: 0, ufos: [...shared.get(tier)], maybe: [] })
+      continue
+    }
+    if ((m = /^if \(iMonth >= (\d+)\)$/.exec(l)) && tier >= 0) {
+      hqPhase = Number(m[1])
+      hqDepth = depth + 1
+      continue
+    }
+    if (l === 'AddHQAssaultMission();' && tier >= 0) {
+      for (let a = phase >= 0 ? phase : hqPhase; a >= 0 && a <= 4; a++) {
+        hq.add(`${tier}:${a}`)
+        if (phase >= 0) break
+      }
       continue
     }
     if (/^if \(Rand\(2\) == 0\)$/.test(l)) {
@@ -327,9 +344,10 @@ function monthlyPlan(upk) {
   return [
     "; The aliens' monthly plan (Long War's XGStrategyAI.AIAddNewObjectives): by resource tier (resources / 50)",
     '; and aggression (0 to 4): abductions (a 50/50 between two numbers), terror missions, UFOs by objective',
-    '; (0 recon, 1 scout, 2 harvest, 4 hunt, 7 and 8 infiltration) and those under a 50% roll.',
+    '; (0 recon, 1 scout, 2 harvest, 4 hunt, 7 and 8 infiltration) and those under a 50% roll; HQAssault: from',
+    '; month 4, every third time such a month comes, the aliens go for XCOM\'s headquarters (AddHQAssaultMission).',
     ...[...cells].map(
-      ([k, c]) => `+Plan=(Tier=${k.split(':')[0]}, Aggression=${k.split(':')[1]}, Abductions=${c.abductions[0]}, AbductionsAlt=${c.abductions[1]}, Terror=${c.terror}, Ufos=(${c.ufos.join(',')})${c.maybe.length ? `, MaybeUfos=(${c.maybe.join(',')})` : ''})`,
+      ([k, c]) => `+Plan=(Tier=${k.split(':')[0]}, Aggression=${k.split(':')[1]}, Abductions=${c.abductions[0]}, AbductionsAlt=${c.abductions[1]}, Terror=${c.terror}, Ufos=(${c.ufos.join(',')})${c.maybe.length ? `, MaybeUfos=(${c.maybe.join(',')})` : ''}${hq.has(k) ? ', HQAssault=true' : ''})`,
     ),
   ]
 }

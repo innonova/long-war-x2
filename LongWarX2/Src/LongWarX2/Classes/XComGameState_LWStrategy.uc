@@ -39,10 +39,11 @@ struct LWUfo
 	var bool bAttacked;
 };
 
-/** An abduction or a terror site. Status: 1 on the map, 2 over. */
+/** An abduction or a terror site, or the aliens at XCOM's headquarters (bHQ). Status: 1 on the map, 2 over. */
 struct LWSite
 {
 	var bool bTerror;
+	var bool bHQ;
 	var int Country;
 	var int Hour;
 	var int Status;
@@ -115,6 +116,9 @@ var bool bPendingCapture;
 /** The story (features/lw-story.md): the countries with an alien base, the Hyperwave Beacon and the Ethereal
  * Device ever held, the campaign won. */
 var array<int> AlienBases;
+/** The HQ assault: the times a month that could bring it came (Long War's eRecap_ContinentsCovered), and whether one came. */
+var int HQAssaultCounter;
+var bool bHQAssaultCame;
 var bool bHadHyperwaveBeacon;
 var bool bHadPsiLink;
 var bool bCampaignWon;
@@ -458,6 +462,19 @@ function PlanMonth()
 			AddObjective(6, Start, 1 + Rand(23), Tier < 4 ? TerrorTarget() : RandomCountry(), -1);
 		if (Cell.Terror >= 2)
 			AddObjective(6, Start, 1 + Rand(23), RandomCountry(), -1);
+		// The HQ assault (AddHQAssaultMission): every third time such a month comes.
+		if (Cell.HQAssault)
+		{
+			if (HQAssaultCounter % 3 == 2)
+				AddHQAssault(Start);
+			HQAssaultCounter++;
+		}
+	}
+	// And at month 12 if none has come.
+	if (Month == 12 && !bHQAssaultCame && HQAssaultCounter != 3)
+	{
+		AddHQAssault(Start);
+		HQAssaultCounter = 3;
 	}
 	AlienAggression = Clamp(AlienAggression - 2, 0, 4);
 	AddOverseers(Start);
@@ -469,6 +486,14 @@ function PlanMonth()
 		AddObjective(7, Start, 5 + Rand(5), k, -1);
 	}
 	`log("LongWarX2: Long War month" @ Month @ "planned: resources" @ AlienResources @ "tier" @ Tier @ "aggression" @ Cell.Aggression $ ";" @ Ufos.Length @ "UFOs," @ n @ "abductions," @ Cell.Terror @ "terror", , 'LongWarX2');
+}
+
+/** The aliens go for XCOM's headquarters (AddHQAssaultMission): a Battleship hunts over its country on day 2 to 7, an Assault Carrier comes down on it on day 8 to 25. */
+function AddHQAssault(int Start)
+{
+	AddObjective(4, Start, 2 + Rand(6), HomeCountry(), 8);
+	AddObjective(9, Start, 8 + Rand(18), HomeCountry(), -1);
+	`log("LongWarX2: Long War month" @ Month @ "brings the HQ assault", , 'LongWarX2');
 }
 
 /**
@@ -829,6 +854,9 @@ function UfoDone(int i)
 			bStop = true;
 		}
 		break;
+	case 9:
+		AddHQSite();
+		break;
 	}
 }
 
@@ -936,6 +964,22 @@ function AddSite(bool bTerror, int Country)
 	bStop = true;
 }
 
+/** The Assault Carrier is down at XCOM's headquarters: the base must be defended (Long War forces the mission; unanswered, it is lost). */
+function AddHQSite()
+{
+	local LWSite Site;
+
+	Site.bHQ = true;
+	Site.Country = HomeCountry();
+	Site.Hour = Hours;
+	Site.Status = 1;
+	Site.Until = Hours + class'LWStrategyRules'.default.TerrorHours;
+	Sites.AddItem(Site);
+	bHQAssaultCame = true;
+	Note("The aliens are assaulting XCOM's headquarters! Defend it within" @ (Site.Until - Hours) @ "hours.");
+	bStop = true;
+}
+
 function TickSite(int i)
 {
 	if (Sites[i].Status == 1 && Hours >= Sites[i].Until)
@@ -955,6 +999,13 @@ function SiteIgnored(int i)
 	local int d;
 
 	d = class'LWStrategyRules'.static.Difficulty();
+	if (Sites[i].bHQ)
+	{
+		bLost = true;
+		bStop = true;
+		Note("XCOM's headquarters has fallen. The war is lost.");
+		return;
+	}
 	if (NotHelped.Find(Sites[i].Country) == INDEX_NONE)
 		NotHelped.AddItem(Sites[i].Country);
 	if (Sites[i].bTerror)
@@ -996,7 +1047,7 @@ static function MissionSent(int Kind, int Index, optional bool bCapture)
 	S.bPendingCapture = bCapture;
 	if (Kind <= 2)
 		S.Ufos[Index].Status = 5;
-	else if (Kind <= 4)
+	else if (Kind <= 4 || Kind == 7)
 		S.Sites[Index].Status = 2;
 	// An alien base takes a Skeleton Key, whatever comes of it (XGStrategy: STORAGE().RemoveItem(184)).
 	if (Kind == 5)
@@ -1040,7 +1091,7 @@ static function MissionBack(bool bWon)
 		return;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission back");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
-	Country = S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Country : (S.PendingKind <= 4 ? S.Sites[S.PendingIndex].Country : (S.PendingKind == 5 ? S.PendingIndex : S.HomeCountry()));
+	Country = S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Country : ((S.PendingKind <= 4 || S.PendingKind == 7) ? S.Sites[S.PendingIndex].Country : (S.PendingKind == 5 ? S.PendingIndex : S.HomeCountry()));
 	if (S.PendingKind >= 5)
 	{
 		S.StoryMissionBack(NewGameState, bWon, Country);
@@ -1107,7 +1158,7 @@ static function MissionBack(bool bWon)
 }
 
 /**
- * A story mission back (features/lw-story.md). An alien base (kind 5) taken: the country rejoins the council
+ * A story mission back (features/lw-story.md). The HQ assault (kind 7): held, or the war is lost. An alien base (kind 5) taken: the country rejoins the council
  * at 98 panic less PanicAlienBaseCountry, its continent PanicAlienBaseContinent (XGStrategyAI: CostTest, the
  * mission's results); its artifacts (CreateAlienBase), and the first time the Hyperwave Beacon. The Temple
  * Ship (kind 6): won, the campaign is won; lost, it is lost (XGStrategy: YouWin, YouLose).
@@ -1116,6 +1167,22 @@ function StoryMissionBack(XComGameState NewGameState, bool bSuccess, int Country
 {
 	local int d;
 
+	if (PendingKind == 7)
+	{
+		if (bSuccess)
+		{
+			// What the aliens killed leave: the Assault Carrier's crew (APPROXIMATION: Long War's HQ assault squad is its own).
+			GiveKillLoot(NewGameState, class'LWAlienSquads'.static.SquadFor(2, 14, Days(), AlienAggression, AlienResources, 0, TerrorsTaken));
+			Note("XCOM's headquarters held.");
+		}
+		else
+		{
+			bLost = true;
+			bStop = true;
+			Note("XCOM's headquarters has fallen. The war is lost.");
+		}
+		return;
+	}
 	if (PendingKind == 6)
 	{
 		if (bSuccess)
@@ -1581,7 +1648,9 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 			AddDecision(Kinds, Indexes, Labels, 3, i, "ASSAULT: landed UFO in" @ CountryName(Ufos[i].Country) @ "(" $ (Ufos[i].Until - Hours) $ "h)");
 	}
 	for (i = 0; i < Sites.Length; i++)
-		if (Sites[i].Status == 1)
+		if (Sites[i].Status == 1 && Sites[i].bHQ)
+			AddDecision(Kinds, Indexes, Labels, 8, i, "DEFEND: XCOM's headquarters (" $ (Sites[i].Until - Hours) $ "h)");
+		else if (Sites[i].Status == 1)
 			AddDecision(Kinds, Indexes, Labels, Sites[i].bTerror ? 5 : 4, i, (Sites[i].bTerror ? "RESPOND: terror in" : "RESPOND: abductions in") @ CountryName(Sites[i].Country) @ "(" $ (Sites[i].Until - Hours) $ "h)");
 	// The story: an alien base, with a Skeleton Key to open it; the Temple Ship, once the Gollop Chamber stands.
 	if (class'LWEngineering'.static.Held('LWItem_Skeleton_Key') > 0)
