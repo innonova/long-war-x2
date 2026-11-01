@@ -50,6 +50,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("ping | screens | geo | decisions | geoscape | run <hours> [all] | act <n> | intercepted <ufo> <outcome 0 crashed 1 destroyed 2 escaped> <ufo hp>");
 		Out.AddItem("resolve <decision> won|lost [stance]: a decision taken without playing it (an interception fought by the air war's rules, a mission's result given)");
 		Out.AddItem("auto <hours> [mission win %, default 100] [stance 0-2, default 1] [sats]: time at full speed, every decision taken (interceptions fought, missions won at the %), satellites bought and launched with sats");
+		Out.AddItem("research [n]: XCOM 2's research list (Long War's techs: hours, affordable), the project under way; with n, that tech started");
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
@@ -82,6 +83,9 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "campaign":
 		Out.AddItem(NewCampaign(Args.Length > 1 ? int(Args[1]) : 1, Args.Length > 2 && Args[2] ~= "first"));
+		return;
+	case "research":
+		Research(Args.Length > 1 ? Args[1] : "", Out);
 		return;
 	case "geoscape":
 		Out.AddItem(OpenGeoscape() != none ? "ok" : "ERR not on the Avenger");
@@ -220,6 +224,51 @@ function string Press(int Code)
 	Pres().ScreenStack.OnInput(Code, class'UIUtilities_Input'.const.FXS_ACTION_PRESS);
 	Pres().ScreenStack.OnInput(Code, class'UIUtilities_Input'.const.FXS_ACTION_RELEASE);
 	return "pressed" @ Code @ "on" @ Before;
+}
+
+/** XCOM 2's research: the techs available, with their hours and whether they can be paid for; or one started (as the research screen starts it). */
+function Research(string Which, out array<string> Out)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_Tech Tech;
+	local array<StateObjectReference> Refs;
+	local int i;
+
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	if (XComHQ == none)
+	{
+		Out.AddItem("ERR not in a campaign");
+		return;
+	}
+	Refs = XComHQ.GetAvailableTechsForResearch();
+	if (Which != "")
+	{
+		i = int(Which);
+		if (i < 0 || i >= Refs.Length)
+		{
+			Out.AddItem("ERR no such tech");
+			return;
+		}
+		Tech = XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(Refs[i].ObjectID));
+		if (!XComHQ.MeetsRequirmentsAndCanAffordCost(Tech.GetMyTemplate().Requirements, Tech.GetMyTemplate().Cost, XComHQ.ResearchCostScalars, 0.0, Tech.GetMyTemplate().AlternateRequirements))
+		{
+			Out.AddItem("ERR cannot pay for" @ Tech.GetMyTemplate().DisplayName);
+			return;
+		}
+		XComHQ.SetNewResearchProject(Refs[i]);
+		Out.AddItem("started" @ Tech.GetMyTemplateName() @ Tech.GetMyTemplate().DisplayName);
+		return;
+	}
+	Tech = XComHQ.GetCurrentResearchTech();
+	if (Tech != none)
+		Out.AddItem("under way" @ Tech.GetMyTemplateName() @ "hours" @ XComHQ.GetHoursLeftOnResearchProject() @ "|" @ Tech.GetMyTemplate().DisplayName);
+	for (i = 0; i < Refs.Length; i++)
+	{
+		Tech = XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(Refs[i].ObjectID));
+		Out.AddItem("tech" @ i @ Tech.GetMyTemplateName() @ "hours" @ XComHQ.GetResearchHours(Refs[i])
+			@ "affordable" @ int(XComHQ.MeetsRequirmentsAndCanAffordCost(Tech.GetMyTemplate().Requirements, Tech.GetMyTemplate().Cost, XComHQ.ResearchCostScalars, 0.0, Tech.GetMyTemplate().AlternateRequirements))
+			@ "inspired" @ int(Tech.bInspired) @ "|" @ Tech.GetMyTemplate().DisplayName);
+	}
 }
 
 function XComPresentationLayerBase Pres()
@@ -424,7 +473,8 @@ function Dump(XComGameState_LWStrategy S, out array<string> Out)
 
 	XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
 	Out.AddItem("date" @ S.DateText() @ "| xcom2" @ class'X2StrategyGameRulesetDataStructures'.static.GetDateString(`STRATEGYRULES.GameTime) @ class'X2StrategyGameRulesetDataStructures'.static.GetTimeString(`STRATEGYRULES.GameTime) @ "lost" @ int(S.bLost) @ "| month" @ S.Month @ "hours" @ S.Hours @ "money" @ XComHQ.GetSupplies() @ "resources" @ S.AlienResources @ "aggression" @ S.AlienAggression
-		@ "satellites_ready" @ S.SatellitesReady @ "satellites_building" @ S.SatellitesDue.Length @ "pending" @ S.PendingKind @ "events" @ S.EventCount);
+		@ "satellites_ready" @ S.SatellitesReady @ "satellites_building" @ S.SatellitesDue.Length @ "pending" @ S.PendingKind @ "events" @ S.EventCount
+		@ "scientists" @ S.Scientists @ "engineers" @ S.Engineers @ "research_per_hour" @ class'UIUtilities_Strategy'.static.GetXComHQ().GetScienceScore(true) @ "credits" @ S.Credits.Length);
 	for (i = 0; i < S.Countries.Length; i++)
 		Out.AddItem("country" @ i @ S.Countries[i].Id @ "panic" @ S.Countries[i].Panic @ "satellite" @ int(S.Countries[i].bSatellite) @ "left" @ int(S.Countries[i].bLeft) @ "hunted" @ int(S.Countries[i].bHunted));
 	for (i = 0; i < S.Ufos.Length; i++)

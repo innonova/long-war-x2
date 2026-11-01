@@ -60,6 +60,11 @@ var int NextGroup;
 var array<LWSite> Sites;
 /** The countries XCOM left alone this month (Long War's arrCountriesNotHelped): abductions or terror unanswered or lost. */
 var array<int> NotHelped;
+/** Long War's staff (features/lw-research.md): the research rate is the scientists' (SyncResearch). */
+var int Scientists;
+var int Engineers;
+/** The research credits held (LWResearchRules.CreditShare): interrogations done. */
+var array<int> Credits;
 /** Enough countries have left: the campaign is lost (the Geoscape shows XCOM 2's defeat). */
 var bool bLost;
 /** Satellites built and waiting for a country, and the hours the ones in the works are ready. */
@@ -96,6 +101,7 @@ static function XComGameState_LWStrategy GetOrCreate()
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: the Geoscape");
 	S = XComGameState_LWStrategy(NewGameState.CreateNewStateObject(class'XComGameState_LWStrategy'));
 	S.Begin();
+	S.SyncResearchIn(NewGameState);
 	// Long War's starting money: the home country's starting cash x StartingCashBalance, in place of XCOM 2's.
 	XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
@@ -133,6 +139,8 @@ function Begin()
 			Open.RemoveItem(k);
 		Points -= Step;
 	}
+	Scientists = class'LWResearchRules'.default.StartingScientists;
+	Engineers = class'LWResearchRules'.default.StartingEngineers;
 	// Long War (XGWorld.SetStartingContinent): a satellite over the home country. The choice of
 	// home is not offered yet: the United States.
 	Countries[0].bSatellite = true;
@@ -176,7 +184,83 @@ static function int Run(int MaxHours, optional bool bThrough)
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	XCom2TimePasses(n);
+	SyncResearch();
 	return n;
+}
+
+/**
+ * XCOM 2's research runs at Long War's rate (XGFacility_Labs.GetResearchPerHour: scientists x (1 +
+ * the labs' bonus); no labs yet): XCOM 2's science score is its research points an hour, so its
+ * bonus is set to make up the difference from what XCOM 2's own staff gives (and its difficulty's
+ * research time scalar is made up for).
+ */
+static function SyncResearch()
+{
+	local XComGameState NewGameState;
+
+	if (Get() == none)
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: Long War's research rate");
+	Get().SyncResearchIn(NewGameState);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom')).HandlePowerOrStaffingChange();
+}
+
+function SyncResearchIn(XComGameState NewGameState)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local int Target, Base;
+
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	if (XComHQ == none)
+		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	Target = Round(ResearchPerHour() * class'X2StrategyGameRulesetDataStructures'.default.ResearchProject_TimeScalar[class'LWStrategyRules'.static.Difficulty()]);
+	Base = XComHQ.GetScienceScore(true) - XComHQ.BonusScienceScore;
+	XComHQ.BonusScienceScore = Target - Base;
+	// No XCOM 2 inspirations or breakthroughs (Long War has neither): their timers never run out, and
+	// one already given is taken back.
+	class'X2StrategyGameRulesetDataStructures'.static.SetTime(XComHQ.InspiredTechTimer, 0, 0, 0, 1, 1, 9999);
+	class'X2StrategyGameRulesetDataStructures'.static.SetTime(XComHQ.BreakthroughTechTimer, 0, 0, 0, 1, 1, 9999);
+	if (XComHQ.CurrentInspiredTech.ObjectID != 0)
+	{
+		XComGameState_Tech(NewGameState.ModifyStateObject(class'XComGameState_Tech', XComHQ.CurrentInspiredTech.ObjectID)).bInspired = false;
+		XComHQ.CurrentInspiredTech.ObjectID = 0;
+	}
+	if (XComHQ.CurrentBreakthroughTech.ObjectID != 0)
+	{
+		XComGameState_Tech(NewGameState.ModifyStateObject(class'XComGameState_Tech', XComHQ.CurrentBreakthroughTech.ObjectID)).bBreakthrough = false;
+		XComHQ.CurrentBreakthroughTech.ObjectID = 0;
+	}
+}
+
+/** Long War's research points an hour. */
+function float ResearchPerHour()
+{
+	return Scientists * (1.0 + 0 * class'LWResearchRules'.default.LabBonus);
+}
+
+/** A research credit held (an interrogation done): every Long War tech it covers costs less from now on (LWResearchRules.CreditCut). */
+static function CreditHeld(XComGameState NewGameState, int Credit)
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_Tech Tech;
+	local LWResearchRules.LWTechDef T;
+
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
+	if (S.Credits.Find(Credit) == INDEX_NONE)
+		S.Credits.AddItem(Credit);
+	S.Note("A research credit is held: research it covers will cost less.");
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Tech', Tech)
+	{
+		foreach class'LWResearchRules'.default.Techs(T)
+		{
+			if (class'LWResearchRules'.static.TemplateFor(T) != Tech.GetMyTemplateName())
+				continue;
+			Tech = XComGameState_Tech(NewGameState.ModifyStateObject(class'XComGameState_Tech', Tech.ObjectID));
+			Tech.TimeReductionScalar = class'LWResearchRules'.static.CreditCut(T, S.Credits);
+			break;
+		}
+	}
 }
 
 /**
@@ -965,6 +1049,9 @@ function EndMonth()
 		Funding += Round(Def.Funding * class'LWStrategyRules'.default.FundingBalance[d] * (Countries[i].bSatellite ? 1.0 : class'LWStrategyRules'.default.BaseFundingPct[d] / 100.0));
 		if (!Countries[i].bSatellite)
 			continue;
+		// The staff a watched country sends (XGWorld's council meeting).
+		Scientists += Def.Scientists;
+		Engineers += Def.Engineers;
 		Blocks = Countries[i].Panic + 1;
 		if ((Blocks >= 95 && Rand(100) < class'LWStrategyRules'.default.Panic5ReductionChance[d])
 			|| (Blocks >= 80 && Rand(100) < class'LWStrategyRules'.default.Panic4ReductionChance[d])

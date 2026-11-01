@@ -56,6 +56,14 @@ if (council.length !== 16) throw new Error(`${council.length} council countries,
 const sat = /^Itembalance_Normal=\(eItem=eItem_Satellite,\s*iCash=(\d+),.*?iTime=(\d+)/im.exec(core)
 
 const neighbours = strategyUpk ? terrorNeighbours(strategyUpk) : {}
+// The staff a country under a satellite sends each month (XGWorld's council meeting: ContBalance_Easy by ECountry).
+const staff = {}
+for (const l of lines) {
+  const m = /^ContBalance_Easy\[(\d+)\]\s*=\s*\(([^)]*)\)/.exec(l)
+  if (!m || !COUNTRY[Number(m[1])]) continue
+  const f = Object.fromEntries(m[2].split(',').map((p) => p.split('=').map((x) => x.trim())))
+  staff[COUNTRY[Number(m[1])]] = { scientists: Number(f.iScientists1 ?? 0), engineers: Number(f.iEngineers1 ?? 0) }
+}
 
 const q = (s) => `"${s}"`
 const arr = (key, v) => v.map((x, i) => `${key}[${i}]=${x}`)
@@ -67,6 +75,7 @@ const out = [
   ...council.map(
     (c) =>
       `+Countries=(Id=${c.id}, Name=${q(NAME[c.id] ?? c.id)}, Continent=${CONTINENT[c.id]}, Funding=${c.funding}, StartingCash=${c.cash}` +
+      `, Scientists=${staff[c.id]?.scientists ?? 0}, Engineers=${staff[c.id]?.engineers ?? 0}` +
       (neighbours[c.id] ? `, Neighbours=(${neighbours[c.id].join(',')})` : '') +
       ')',
   ),
@@ -232,7 +241,7 @@ function monthlyPlan(upk) {
     '; and aggression (0 to 4): abductions (a 50/50 between two numbers), terror missions, UFOs by objective',
     '; (0 recon, 1 scout, 2 harvest, 4 hunt, 7 and 8 infiltration) and those under a 50% roll.',
     ...[...cells].map(
-      ([k, c]) => `+Plan=(Tier=${k.split(':')[0]}, Aggression=${k.split(':')[1]}, Abductions=${c.abductions[0]}, AbductionsAlt=${c.abductions[1]}, Terror=${c.terror}, Ufos=(${c.ufos.join(',')}), MaybeUfos=(${c.maybe.join(',')}))`,
+      ([k, c]) => `+Plan=(Tier=${k.split(':')[0]}, Aggression=${k.split(':')[1]}, Abductions=${c.abductions[0]}, AbductionsAlt=${c.abductions[1]}, Terror=${c.terror}, Ufos=(${c.ufos.join(',')})${c.maybe.length ? `, MaybeUfos=(${c.maybe.join(',')})` : ''})`,
     ),
   ]
 }

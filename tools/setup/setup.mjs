@@ -11,8 +11,7 @@ import { cpSync, existsSync, readFileSync, rmSync, writeFileSync, mkdirSync, sta
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { execFileSync } from 'node:child_process'
-import { makeWords, readConsts } from '../../scripts/lw-words.mjs'
-import plan from '../../scripts/words-plan.json' with { type: 'json' }
+import { wordsFrom } from '../../scripts/write-words.mjs'
 
 const MOD = 'LongWarX2'
 const args = process.argv.slice(2)
@@ -210,23 +209,14 @@ async function main() {
   // Long War's words, from the player's Long War install.
   const eu = findSteamApp(EU_APP, 'XCom-Enemy-Unknown', 'XEW')
   const ew = opt('--ew') ?? (eu && join(eu, 'XEW'))
-  const core = ew && join(ew, 'XComGame', 'Config', 'DefaultGameCore.ini')
-  const loc = ew && join(ew, 'XComGame', 'Localization', 'INT', 'XComGame.int')
-  const upk = ew && join(ew, 'XComGame', 'CookedPCConsole', 'XComGame.upk')
-  if (!ew || !existsSync(core) || !existsSync(loc)) {
-    say('XCOM: Enemy Within was not found (give its XEW folder with --ew). The classes will show without their names and words.')
+  const words = ew ? wordsFrom(ew, readFileSync(join(target, 'Config', 'XComLWResearch.ini'), 'utf8')) : { missing: 'XCOM: Enemy Within was not found' }
+  if (words.missing) {
+    say(`${words.missing}${ew ? ` (${ew})` : ''}: give its XEW folder with --ew. The classes and techs will show without Long War's names and words.`)
     return 0
   }
-  const coreText = readFileSync(core, 'latin1')
-  if (!/^SoldierPerkTrees=\(SoldierType=11,/m.test(coreText)) {
-    say(`Enemy Within at ${ew} does not have Long War installed: the classes' names and words come from Long War's files, so they are left out.`)
-    return 0
-  }
-  const consts = existsSync(upk) ? readConsts(new Uint8Array(readFileSync(upk))) : new Map()
-  const words = makeWords({ plan, core: coreText, loc: readFileSync(loc, 'latin1'), consts })
   mkdirSync(join(target, 'Localization'), { recursive: true })
   writeFileSync(join(target, 'Localization', 'XComGame.int'), words.text)
-  say(`Long War's words written from ${ew}: ${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}.`)
+  say(`Long War's words written from ${ew}: ${words.report}.`)
   say('')
   say('Next: start XCOM 2: War of the Chosen from Steam. (With a mod launcher such as the Alternative Mod Launcher, tick "Long War X2" there: it rewrites the list when it starts the game.)')
   return 0

@@ -11,6 +11,9 @@ struct LWCountryDef
 	var int Continent;
 	var int Funding;
 	var int StartingCash;
+	/** The staff it sends each month while a satellite watches it (ContBalance_Easy). */
+	var int Scientists;
+	var int Engineers;
 	/** The countries the aliens turn to when this one has left (Long War's DetermineBestTerrorTarget). */
 	var array<name> Neighbours;
 };

@@ -13,8 +13,9 @@ static event OnLoadedSavedGameToStrategy()
 	class'XComGameState_LWAirWar'.static.EnsureExists();
 }
 
-/** Templates are built: Long War's classes armed in War of the Chosen's Skirmish Mode. */
+/** Templates are built: Long War's classes armed in War of the Chosen's Skirmish Mode; XCOM 2's techs hidden behind Long War's. */
 static event OnPostTemplatesCreated()
 {
 	class'LWX2SkirmishWeapons'.static.AddClasses();
+	class'X2StrategyElement_LWTechs'.static.HideXCom2Techs();
 }

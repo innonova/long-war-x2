@@ -106,3 +106,40 @@ export function makeWords({ plan, core, loc, consts }) {
   ]
   return { text: lines.join('\r\n') + '\r\n', unfilled: [...unfilled], perks: plan.standins.length, ranks: rankNames.length }
 }
+
+/** An Unreal .int file's text: UTF-16 (with its byte order mark) or 8-bit. */
+export function decodeInt(bytes) {
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) return new TextDecoder('utf-16le').decode(bytes.subarray(2))
+  return new TextDecoder('latin1').decode(bytes)
+}
+
+/**
+ * The mod's tech template for a Long War tech (X2StrategyElement_LWTechs.TemplateFor): LWTech_ and the
+ * enum's name; Long War's own techs (enum eTech_Placeholder…, keyed by number in its words): LWTech_ and the id.
+ */
+export const techTemplate = (techEnum, id) => 'LWTech_' + (/Placeholder/.test(techEnum) ? id : techEnum.replace(/^eTech_/, ''))
+
+/**
+ * Long War's words for its techs (features/lw-research.md), from its XComStrategyGame.int
+ * ([XGLocalizedData] TechTypeNames, TechTypeSummary, TechTypeCodeName, TechTypeReport) as the
+ * localization of the mod's tech templates. `techs`: { id, enum } (XComLWResearch.ini). Long War's
+ * own techs are keyed by number.
+ */
+export function makeTechWords({ strategyLoc, techs }) {
+  const one = (key, k) => strategyLoc.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1]
+  const out = []
+  let named = 0
+  for (const t of techs) {
+    const of = (key) => one(key, t.enum) ?? one(key, t.id)
+    const name = of('TechTypeNames')
+    if (!name) continue
+    named++
+    out.push(`[${techTemplate(t.enum, t.id)} X2TechTemplate]`, `DisplayName="${name}"`)
+    for (const [field, key] of [['Summary', 'TechTypeSummary'], ['CodeName', 'TechTypeCodeName'], ['LongDescription', 'TechTypeReport']]) {
+      const v = of(key)
+      if (v) out.push(`${field}="${v}"`)
+    }
+    out.push('')
+  }
+  return { text: out.join('\r\n'), named }
+}
