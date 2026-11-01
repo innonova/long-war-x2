@@ -13,7 +13,7 @@ var array<UIText> CountryTexts;
 var UIButton ActionButtons[MAX_ACTIONS];
 /** Beside each mission: won without playing it (to try the strategy layer). */
 var UIButton WinButtons[MAX_ACTIONS];
-var UIButton StoresButton;
+var UIButton StoresButton, EngineeringButton;
 /** The right-hand text shows the stores instead of the events. */
 var bool bShowStores;
 /** For each action button: 1 intercept, 2 crash site, 3 landed UFO, 4 abduction, 5 terror; and the index. */
@@ -81,6 +81,8 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	AirButton.SetPosition(1390, 960);
 	StoresButton = Spawn(class'UIButton', self).InitButton('LWGeoStores', "STORES", OnStores);
 	StoresButton.SetPosition(1540, 960);
+	EngineeringButton = Spawn(class'UIButton', self).InitButton('LWGeoEngineering', "ENGINEERING", OnEngineering);
+	EngineeringButton.SetPosition(1640, 75);
 	CloseGeoButton = Spawn(class'UIButton', self).InitButton('LWGeoClose', "CLOSE", OnAvenger);
 	CloseGeoButton.SetPosition(1700, 960);
 	Refresh();
@@ -231,7 +233,7 @@ simulated function OnLaunchSat(UIButton Button)
 
 // --- Decisions ------------------------------------------------------------------------------
 
-/** XCOM's stores, Long War's part of them: staff, alloys, elerium, fragments, artifacts, corpses. */
+/** XCOM's stores, Long War's part of them: staff, alloys, elerium, fragments, artifacts, corpses, weapons; and engineering's projects. */
 simulated function string StoresText(XComGameState_LWStrategy S)
 {
 	local XComGameState_HeadquartersXCom XComHQ;
@@ -247,11 +249,18 @@ simulated function string StoresText(XComGameState_LWStrategy S)
 		if (Item == none || Item.Quantity <= 0)
 			continue;
 		ItemName = string(Item.GetMyTemplateName());
-		if (!(Left(ItemName, 7) == "LWItem_" || ItemName == "AlienAlloy" || ItemName == "EleriumDust"))
+		if (!(Left(ItemName, 7) == "LWItem_" || Left(ItemName, 9) == "LWWeapon_" || ItemName == "AlienAlloy" || ItemName == "EleriumDust"))
 			continue;
 		Text $= Item.Quantity @ (Item.GetMyTemplate().GetItemFriendlyName() != "" ? Item.GetMyTemplate().GetItemFriendlyName() : ItemName) $ "\n";
 	}
+	if (S.Builds.Length > 0)
+		Text $= "ENGINEERING:\n" $ class'LWEngineering'.static.ProjectsText(S);
 	return Text;
+}
+
+simulated function OnEngineering(UIButton Button)
+{
+	Movie.Pres.ScreenStack.Push(Spawn(class'UILWEngineering', Movie.Pres));
 }
 
 simulated function OnStores(UIButton Button)

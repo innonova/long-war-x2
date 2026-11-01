@@ -3,7 +3,7 @@
 // month's plan (UFOs, abductions, terror); what happened. Saved with the campaign. The rules are
 // Long War's (LWStrategyRules, its numbers); where a rule is not read from Long War yet, the
 // function says APPROXIMATION.
-class XComGameState_LWStrategy extends XComGameState_BaseObject;
+class XComGameState_LWStrategy extends XComGameState_BaseObject dependson(LWAirWar, LWResearchRules, LWStrategyRules);
 
 struct LWCountry
 {
@@ -49,6 +49,15 @@ struct LWSite
 	var int Until;
 };
 
+/** An engineering project (LWEngineering): Quantity of Long War's item Item, the work left in engineer hours, the engineers on it. */
+struct LWBuild
+{
+	var int Item;
+	var int Quantity;
+	var int WorkLeft;
+	var int Engineers;
+};
+
 var array<LWCountry> Countries;
 /** Hours since the campaign began; its first hour is the first of a month. */
 var int Hours;
@@ -72,6 +81,8 @@ var bool bLost;
 /** Satellites built and waiting for a country, and the hours the ones in the works are ready. */
 var int SatellitesReady;
 var array<int> SatellitesDue;
+/** Engineering's projects (LWEngineering). */
+var array<LWBuild> Builds;
 var array<string> Events;
 /** Events noted since the campaign began (Events keeps the last 40). */
 var int EventCount;
@@ -185,7 +196,7 @@ static function int Run(int MaxHours, optional bool bThrough)
 	S.bStop = false;
 	while (n < MaxHours && (bThrough || !S.bStop) && !S.bLost)
 	{
-		S.Tick();
+		S.Tick(NewGameState);
 		n++;
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
@@ -329,11 +340,22 @@ static function XCom2TimePasses(int PassedHours)
 	}
 }
 
-function Tick()
+function Tick(XComGameState NewGameState)
 {
 	local int i;
 
 	Hours++;
+	// Engineering: a project whose work is done delivers its items.
+	for (i = Builds.Length - 1; i >= 0; i--)
+	{
+		Builds[i].WorkLeft -= class'LWEngineering'.static.WorkPerHour(Builds[i].Engineers, Engineers);
+		if (Builds[i].WorkLeft <= 0)
+		{
+			class'LWEngineering'.static.Deliver(NewGameState, self, Builds[i]);
+			Builds.Remove(i, 1);
+			bStop = true;
+		}
+	}
 	// Satellites finished.
 	for (i = SatellitesDue.Length - 1; i >= 0; i--)
 	{

@@ -1,17 +1,22 @@
 // Long War's weapons as the mod's config (features/lw-gear.md): LongWarX2/Config/XComLWGear.ini, from the
 // player's Long War DefaultGameCore.ini (its Weapons= lines) and the shared rules (lw-gear.mjs): each
 // weapon of Long War's soldier families with its numbers, XCOM 2 category (who may carry it), slot,
-// look (the XCOM 2 weapon whose model it takes) and tech; the starting kit unlimited. Numbers only: the names are Long War's words, written on
-// the player's machine (lw-words.mjs).
+// look (the XCOM 2 weapon whose model it takes) and tech; the starting kit unlimited. Then what engineering
+// builds (+Builds): each item's cost, days and engineers (ItemBalance_Normal) and what it needs first (the
+// Tree's data/itemtree.json, read from Long War's XGItemTree.BuildItems). Numbers only: the names are Long
+// War's words, written on the player's machine (lw-words.mjs).
 //
 //   node scripts/gear-config.mjs <Long War's DefaultGameCore.ini> > LongWarX2/Config/XComLWGear.ini
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { CLASS_PROPERTY, FAMILIES, RANGE, TECH, TIERS, categoryFor, familyOf, readWeapons, startingKit } from './lw-gear.mjs'
+import { CLASS_PROPERTY, FAMILIES, RANGE, TECH, TIERS, categoryFor, familyOf, itemTemplate, readBalance, readWeapons, startingKit } from './lw-gear.mjs'
 
 const core = readFileSync(process.argv[2], 'latin1')
-const ITEMS = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'xcom-ew-lw-tree', 'data', 'enums.json'), 'utf8')).enums.EItemType
+const treeData = (f) => JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'xcom-ew-lw-tree', 'data', f), 'utf8'))
+const ITEMS = treeData('enums.json').enums.EItemType
+const itemTree = new Map(treeData('itemtree.json').items.map((i) => [i.id, i]))
+const balance = readBalance(core, ITEMS)
 const weapons = readWeapons(core, ITEMS)
 const infinite = new Set(Object.keys(CLASS_PROPERTY).flatMap(startingKit))
 const out = [
@@ -33,6 +38,32 @@ for (const items of Object.values(FAMILIES)) {
         `Ammo=${Number(w.iSuppression) % 100}, Environment=${w.iEnvironmentDamage ?? 0}, Category=${categoryFor(w.props, item)}, ` +
         `Slot=${secondary ? 'eInvSlot_SecondaryWeapon' : 'eInvSlot_PrimaryWeapon'}, Kind=${kind}, Look=${look}, Tech=${TECH[tier]}, ` +
         `Range=${RANGE[family]}, Infinite=${infinite.has(item)})`,
+    )
+  }
+}
+
+// Engineering's pace (XGFacility_Engineering.GetWorkPerHour, XGItemTree.GetItemBuildTime, ScaleCost).
+const ini = (k) => Number(core.match(new RegExp(`^${k}=([\\d.]+)`, 'm'))[1])
+out.push(`EngineerRate=${ini('ABDUCTION_REWARD_ENG')}`, `TimeBalance=${ini('ITEM_TIME_BALANCE')}`, `WorkshopBonus=${ini('WORKSHOP_ENG_BONUS')}`)
+// What engineering builds: the weapons (armour to come) with a cost; -1 (the starting kit) is never built.
+out.push(
+  '; Builds: Cash (\u00a7), Elerium, Alloys, Meld; Days and Engineers: a unit is Days x Engineers x 24 hours of work;',
+  '; Tech: the Long War tech id researched first; ItemReq: one consumed per item built; Foundry: the project done first.',
+)
+for (const items of Object.values(FAMILIES)) {
+  for (const item of items) {
+    if (item === null) continue
+    const b = balance.get(item)
+    const t = itemTree.get(item)
+    if (!t) throw new Error(`item ${item} is not in data/itemtree.json`)
+    if (!b || b.cash < 0 || b.days < 0) continue
+    out.push(
+      `+Builds=(Item=${item}, Template=${itemTemplate(item, ITEMS)}, Cash=${b.cash}, Elerium=${b.elerium}, Alloys=${b.alloys}, Meld=${b.meld}, ` +
+        `Days=${b.days}, Engineers=${Math.abs(b.engineers)}` +
+        (t.tech ? `, Tech=${t.tech.id}` : '') +
+        (t.item ? `, ItemReq=${itemTemplate(t.item.id, ITEMS)}` : '') +
+        (t.foundry ? `, Foundry=${t.foundry}` : '') +
+        ')',
     )
   }
 }

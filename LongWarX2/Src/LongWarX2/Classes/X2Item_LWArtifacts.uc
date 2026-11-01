@@ -42,6 +42,10 @@ static function array<X2DataTemplate> CreateTemplates()
 		for (j = 0; j < class'LWResearchRules'.default.Techs[i].InStores.Length; j++)
 			AddName(All, class'LWResearchRules'.default.Techs[i].InStores[j]);
 	}
+	// And the items engineering consumes (LWGearRules.Builds), Long War's alien weapons.
+	for (i = 0; i < class'LWGearRules'.default.Builds.Length; i++)
+		if (Left(string(class'LWGearRules'.default.Builds[i].ItemReq), 7) == "LWItem_")
+			AddName(All, name(Mid(string(class'LWGearRules'.default.Builds[i].ItemReq), 7)));
 	foreach All(A)
 	{
 		if (ItemFor(A) != name("LWItem_" $ A))

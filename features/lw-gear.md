@@ -169,3 +169,69 @@ rules in `scripts/lw-gear.mjs`).
 - **Armour** (phase 2), and **building** what research unlocks (phase
   3): every weapon but the starting kit exists but cannot be built yet.
 - Rockets, grenades and other small items.
+
+## Report (2026-11-01, phase 3: engineering)
+
+**Engineering builds what research unlocks, by Long War's rules**
+(`LWEngineering`, the projects in the Geoscape's state, an ENGINEERING
+screen from the Geoscape). Its data:
+- costs, days and engineers are `ItemBalance_Normal`, generated into
+  `XComLWGear.ini` (`+Builds`);
+- what each item needs first is read from Long War's
+  `XGItemTree.BuildItems` into the Tree's `data/itemtree.json`
+  (`scripts/upk_itemtree.py`, numbers only).
+
+Its rules, read from Long War's code:
+- **An item can be built** once its tech is researched and its Foundry
+  project done.
+- **The cost is paid when the project starts:** money, alloys, elerium and
+  meld, plus one of the item it needs per item built (the alien weapon for
+  plasma, the shotgun for the sawed-off).
+- **The engineers set the pace, they are not a gate.** Long War took out
+  the original's "Not Enough Engineers!" (diffed against Enemy Within).
+  - A project of n items has n × the item's engineers on it, however many
+    XCOM has.
+  - Its work is days × engineers × 24 hours, done at Long War's
+    `GetWorkPerHour`: about all of XCOM's engineers an hour when the
+    project has that many, and less and less the further it is short of
+    them.
+  - The whole batch is done together.
+  - So at the start (10 engineers): a laser pistol takes 15 days, a laser
+    rifle 18, two laser rifles 26, a gauss carbine 105.
+- **A finished project stops the clock**, as a ready satellite does, and
+  its items go to the stores (shown under STORES, with the projects).
+
+**Checked in the game** (new campaign, control port):
+- the sawed-off was built in a day;
+- `GiveTech LWTech_LaserWeapons` unlocked the seven laser weapons, short
+  of alloys;
+- with 50 alloys given, two laser rifles were begun (26 days, 30
+  engineers on them) and arrived on day 27, two in the stores;
+- Alloy Cannon unlocked the gauss carbine at 105 days.
+
+New control port commands:
+- `builds`;
+- `build <item> [n]`;
+- `give <template> <n>`, a test aid.
+
+### Decisions
+
+- **Long War's timed projects, not XCOM 2's instant building.** XCOM 2's
+  own Build Items screen still lists none of Long War's gear (it cannot be
+  built there). Engineering is a screen of the Long War Geoscape, whose
+  clock it runs on.
+- **No rush** (Long War's "rush" at 1.5× the cost) and no workshops yet:
+  the cash cost already takes the workshop cut (`ScaleCost`), with none
+  built.
+- **Items that wait on a Foundry project** (the arc thrower rifle) stay
+  locked until the Foundry is ported.
+
+### Left open
+
+- Alien weapons are not looted yet (captives and stun), so plasma, which
+  consumes one, cannot be built.
+- Armour (phase 2) and its builds; the Foundry (phase 4); workshops (the
+  base).
+- Long War's weapon perks while carried (`ItemBalance_Normal`'s high
+  alloy digits are a perk, not a cost: `XGStorage` grants it) and
+  `BalanceMods` (mobility, will by weapon).

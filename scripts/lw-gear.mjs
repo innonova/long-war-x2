@@ -114,3 +114,21 @@ export function classCategories(cls, weapons) {
     }
   return out
 }
+
+/** Long War's ItemBalance_Normal lines by item number (BalanceItems): cash, elerium (low) and meld (high: / 1000),
+ * alloys (low; the high part is not a cost), days and engineers. The INI's keys are not case-sensitive. */
+export function readBalance(core, ITEMS) {
+  const out = new Map()
+  for (const m of core.matchAll(/^ItemBalance_Normal=\((.*?)\)/gim)) {
+    const f = Object.fromEntries(m[1].split(',').filter((p) => p.includes('=')).map((p) => p.split('=').map((s) => s.trim())))
+    const id = /^\d+$/.test(f.eItem) ? Number(f.eItem) : ITEMS.indexOf(f.eItem)
+    const n = (k) => Number(f[k])
+    out.set(id, { cash: n('iCash'), elerium: n('iElerium') % 1000, meld: Math.trunc(n('iElerium') / 1000), alloys: n('iAlloys') % 1000, days: n('iTime'), engineers: n('iEng') })
+  }
+  return out
+}
+
+/** The mod's XCOM 2 item for a Long War item: its weapon, else an item of its own (X2Item_LWArtifacts). */
+export function itemTemplate(item, ITEMS) {
+  return familyOf(item) ? weaponTemplate(item) : `LWItem_${ITEMS[item].replace(/^eItem_/, '')}`
+}

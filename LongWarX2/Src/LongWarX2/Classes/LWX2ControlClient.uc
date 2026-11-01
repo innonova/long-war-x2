@@ -1,6 +1,6 @@
 // For development: one connection to the control port (LWX2Control): a command a line, the
 // answer's lines, then ".". "help" lists the commands. Text mode, lines split here.
-class LWX2ControlClient extends TcpLink;
+class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy);
 
 /** What came in and is not yet a whole line. */
 var string Pending;
@@ -36,7 +36,7 @@ function Handle(string Line, out array<string> Out)
 	local array<string> Args;
 	local XComGameState_LWStrategy S;
 	local UILWGeoscape Geo;
-	local string Cmd;
+	local string Cmd, Why;
 	local int Before;
 
 	ParseStringIntoArray(Line, Args, " ", true);
@@ -55,6 +55,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
+		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
 		Out.AddItem("dump [class name part]: every game state object with all its fields (tools/test/lw-dump.sh saves it)");
 		return;
 	case "ping":
@@ -87,6 +88,14 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "research":
 		Research(Args.Length > 1 ? Args[1] : "", Out);
+		return;
+	case "give":
+		if (Args.Length < 3)
+		{
+			Out.AddItem("ERR give <template> <n>");
+			return;
+		}
+		Give(name(Args[1]), int(Args[2]), Out);
 		return;
 	case "arm":
 		if (Args.Length > 1 && Args[1] ~= "now")
@@ -151,6 +160,20 @@ function Handle(string Line, out array<string> Out)
 		}
 		Before = S.EventCount;
 		class'XComGameState_LWStrategy'.static.Intercepted(int(Args[1]), int(Args[2]), int(Args[3]));
+		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
+		Refreshed();
+		return;
+	case "builds":
+		Builds(S, Out);
+		return;
+	case "build":
+		if (Args.Length < 2)
+		{
+			Out.AddItem("ERR build <item> [n]");
+			return;
+		}
+		Before = S.EventCount;
+		Out.AddItem(class'LWEngineering'.static.Start(int(Args[1]), Args.Length > 2 ? int(Args[2]) : 1, Why) ? "ok" : "ERR" @ Why);
 		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
 		Refreshed();
 		return;
@@ -261,6 +284,36 @@ function Squad(XComGameState_LWStrategy S, int Kind, int Which, int Day, out arr
 }
 
 /** XCOM 2's research: the techs available, with their hours and whether they can be paid for; or one started (as the research screen starts it). */
+/** Engineering: each unlocked item (its number first, for build), then the projects. */
+function Builds(XComGameState_LWStrategy S, out array<string> Out)
+{
+	local array<int> Items;
+	local int Item;
+	local XComGameState_LWStrategy.LWBuild P;
+
+	Items = class'LWEngineering'.static.Buildable();
+	foreach Items(Item)
+		Out.AddItem("item" @ Item @ class'LWEngineering'.static.BuildLine(Item, S.Engineers));
+	foreach S.Builds(P)
+		Out.AddItem("project item" @ P.Item @ "quantity" @ P.Quantity @ "work" @ P.WorkLeft @ "engineers" @ P.Engineers @ "hours" @ class'LWEngineering'.static.HoursFor(P.WorkLeft, P.Engineers, S.Engineers));
+	Out.AddItem("engineers" @ S.Engineers);
+}
+
+function Give(name ItemName, int n, out array<string> Out)
+{
+	local XComGameState NewGameState;
+
+	if (class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(ItemName) == none)
+	{
+		Out.AddItem("ERR no item template" @ ItemName);
+		return;
+	}
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: items given (control port)");
+	class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, ItemName, n);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	Out.AddItem("held" @ class'LWEngineering'.static.Held(ItemName));
+}
+
 function Research(string Which, out array<string> Out)
 {
 	local XComGameState_HeadquartersXCom XComHQ;
