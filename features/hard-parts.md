@@ -1,6 +1,6 @@
 ---
 title: "The hard parts first: Enemy Within's content, one of its maps, and one Long War strategy system, each in XCOM 2"
-status: in-progress
+status: review
 priority: 1
 dependsOn: []
 ---
