@@ -45,7 +45,7 @@ event Tick(float DeltaTime)
 
 function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 {
-	local vector Center, At, Mid, Size, Spawn, DropZone;
+	local vector EWFloor, At, Mid, Size, Spawn, DropZone;
 	local array<Actor> Placed;
 	local Actor A;
 	local PrimitiveComponent Prim;
@@ -76,15 +76,15 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 		Hidden++;
 	}
 	// EW's floor (the bottom of its play area) on the generated map's floor at its spawn.
-	Center = class'LWX2EWMapPieces'.default.PlayCenter;
-	Center.Z -= class'LWX2EWMapPieces'.default.PlayExtent.Z;
+	EWFloor = class'LWX2EWMapPieces'.default.PlayCenter;
+	EWFloor.Z -= class'LWX2EWMapPieces'.default.PlayExtent.Z;
 	At = Mid;
 	At.Z = World.GetFloorZForPosition(Parcels.SoldierSpawn.Location);
-	class'LWX2EWMapPieces'.static.Place(self, Center, 0, At, class'LWX2LevelActor', Placed, true);
+	class'LWX2EWMapPieces'.static.Place(self, EWFloor, 0, At, class'LWX2LevelActor', Placed, true);
 	// The first EW drop zone inside the generated map's level volume (two tiles in from its edge).
 	foreach class'LWX2EWMapPieces'.default.DropZones(DropZone)
 	{
-		Spawn = At + DropZone - Center;
+		Spawn = At + DropZone - EWFloor;
 		if (Spawn.X > World.WorldBounds.Min.X + 192 && Spawn.X < World.WorldBounds.Max.X - 192
 			&& Spawn.Y > World.WorldBounds.Min.Y + 192 && Spawn.Y < World.WorldBounds.Max.Y - 192)
 		{

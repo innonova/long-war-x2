@@ -159,7 +159,7 @@ static function int CountBlocked(XComWorldData World, vector At)
 }
 
 /** The material a slot gets: the EW material's XCOM 2 stand-in, made once; the EW material itself when it has none. */
-static function MaterialInterface MaterialFor(string Path, Object Outer, out array<LWX2Standin> Standins)
+static function MaterialInterface MaterialFor(string Path, Object InOuter, out array<LWX2Standin> Standins)
 {
 	local int k;
 	local LWX2Look L;
@@ -185,7 +185,7 @@ static function MaterialInterface MaterialFor(string Path, Object Outer, out arr
 		Parent = Material(DynamicLoadObject(ParentPath, class'Material', true));
 	if (Parent != none)
 	{
-		MIC = new(Outer) class'MaterialInstanceConstant';
+		MIC = new(InOuter) class'MaterialInstanceConstant';
 		MIC.SetParent(Parent);
 		T = Texture(DynamicLoadObject(L.Diffuse, class'Texture', true));
 		if (T != none)
