@@ -146,3 +146,20 @@ the mod launchers write the base file. Checked on wingpu: with the mod only
 in the base file, the game rebuilt the copy with it and loaded the mod. The
 setup now writes the base file (other lines kept, the original kept as
 `.before-lwx2`), and the copy too; `--uninstall` takes it out of both.
+
+**Then, the real cause** (the person: "the xcom2 mod launcher does not touch
+the default mods … maybe worth checking what X2CommunityCore/xcom2-launcher
+does"): the Alternative Mod Launcher writes My Games' `XComModOptions.ini`
+and sets its `[IniVersion]` stamp to the modification time of the game
+folder's `DefaultModOptions.ini`. The game compares the two at start and,
+when they differ, rebuilds the file from the default: the active mods are
+gone. Reproduced on wingpu (a wrong stamp: the list cleared at start, the
+stamp reset). The setup now does what AML does and leaves the game folder's
+file alone (the line the previous build added there is taken out again).
+Checked on wingpu with a stale stamp: the setup fixed it, the game kept the
+list and loaded the mod (the main menu's button, the final shell).
+
+### Decisions
+
+- **AML's way, not the default file**: it is what a launcher does, it does
+  not change the game's files, and Steam's file check cannot undo it.
