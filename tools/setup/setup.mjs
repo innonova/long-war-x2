@@ -132,6 +132,36 @@ function setActive(xcom2, on) {
   return file
 }
 
+/**
+ * Where the game looks for local mods: ModRootDirs in My Games' XComEngine.ini (mod launchers set
+ * it: the Alternative Mod Launcher puts the base game's XCOM 2\XComGame\Mods there, seen on the
+ * person's PC), else the game's DefaultEngine.ini (..\..\XComGame\Mods, War of the Chosen's own),
+ * resolved from the game's Binaries\Win64; Steam's Workshop folders left out.
+ */
+function modRoots(xcom2) {
+  const read = (file) => {
+    if (!existsSync(file)) return []
+    let inSection = false
+    const dirs = []
+    for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+      if (line.startsWith('[')) inSection = line.trim() === '[Engine.DownloadableContentEnumerator]'
+      else if (inSection) {
+        const m = /^\s*[+]?ModRootDirs\s*=\s*(.+?)\s*$/i.exec(line)
+        if (m) dirs.push(m[1].replace(/^"|"$/g, ''))
+      }
+    }
+    return dirs
+  }
+  const docs = documents()
+  let dirs = docs ? read(join(docs, 'My Games', 'XCOM2 War of the Chosen', 'XComGame', 'Config', 'XComEngine.ini')) : []
+  if (!dirs.length) dirs = read(join(xcom2, 'XComGame', 'Config', 'DefaultEngine.ini'))
+  const bin = join(xcom2, 'Binaries', 'Win64')
+  const roots = dirs
+    .map((d) => (/^([A-Za-z]:)?[\\/]/.test(d) ? d : join(bin, d)))
+    .filter((d) => !/[\\/]workshop[\\/]/i.test(d))
+  return roots.length ? roots : [join(xcom2, 'XComGame', 'Mods')]
+}
+
 async function main() {
   // The mod to install: beside this program (the download), or --mod.
   const here = process.execPath.toLowerCase().endsWith('node.exe') || process.execPath.endsWith('/node') ? process.cwd() : dirname(process.execPath)
@@ -142,12 +172,19 @@ async function main() {
     say('XCOM 2: War of the Chosen was not found through Steam (its uninstall entry and library list). Give its folder with --xcom2 "<…\\XCOM 2\\XCom2-WarOfTheChosen>".')
     return 1
   }
-  const target = join(xcom2, 'XComGame', 'Mods', MOD)
   say(`XCOM 2: War of the Chosen: ${xcom2}`)
+  // Into the first folder the game looks in for mods; a copy elsewhere (an earlier setup's) removed.
+  const roots = modRoots(xcom2)
+  const target = join(roots[0], MOD)
+  const elsewhere = [...new Set([...roots.slice(1), join(xcom2, 'XComGame', 'Mods'), join(xcom2, '..', 'XComGame', 'Mods')].map((r) => join(r, MOD)))].filter(
+    (p) => p.toLowerCase() !== target.toLowerCase() && existsSync(join(p, `${MOD}.XComMod`)),
+  )
 
   if (flag('--uninstall')) {
-    rmSync(target, { recursive: true, force: true })
-    say(`Removed ${target}.`)
+    for (const p of [target, ...elsewhere]) if (existsSync(p)) {
+      rmSync(p, { recursive: true, force: true })
+      say(`Removed ${p}.`)
+    }
     const file = setActive(xcom2, false)
     if (file) say(`Taken out of the game's active mods (${file}).`)
     return 0
@@ -162,6 +199,10 @@ async function main() {
     mkdirSync(dirname(target), { recursive: true })
     cpSync(source, target, { recursive: true })
     say(`Installed the mod: ${target}`)
+  }
+  for (const p of elsewhere) {
+    rmSync(p, { recursive: true, force: true })
+    say(`Removed an older copy the game would not use: ${p}`)
   }
   // Made active where the game takes its list from (2K's launcher is gone: Steam starts the game).
   say(`Enabled in the game's active mods: ${setActive(xcom2, true)}`)
