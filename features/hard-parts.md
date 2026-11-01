@@ -282,7 +282,7 @@ read those, so far).
 **So experiment 1 is answered**: EW's aliens come across, animated, with
 their effects, from the player's own install, by a step a mod can run.
 
-## Report (2026-10-31 night, experiment 2: a map's geometry and textures) — seen, not yet playable
+## Report (2026-10-31 night, experiment 2: a map's geometry and textures) — seen
 
 **Seen in the game**: Enemy Within's `CSmallScout_Badlands` (the small scout
 crash site on the badlands) on XCOM 2's Tactical Quick Launch screen: its
@@ -350,5 +350,78 @@ EW map sits beside it (`Origin`), under its light.
   in a minute and the camera can be held anywhere. Playability needs a
   mission (next).
 
-**Left for experiment 2**: collision on the pieces, XCOM 2's tile data
-(cover, pathing) built over them, a unit walking there; then lighting.
+**Left for experiment 2** then: collision on the pieces, XCOM 2's tile data
+(cover, pathing) built over them, a unit walking there; then lighting. Done
+in the next report.
+
+## Report (2026-11-01 night, experiment 2: the EW map as a mission's ground) — answered: yes
+
+**Seen in the game**: a Tactical Quick Launch mission (XCOM 2's own mission
+and enemies) played on Enemy Within's `CSmallScout_Badlands`: the squad
+starts at an EW drop zone beside EW's grounded Skyranger, in cover (XCOM 2's
+shields, from EW's rocks), the movement range drawn over EW's ground with
+holes around its rocks and plateaus, a soldier moved across it (right
+click; the range then turns to the dash range). Logged: each soldier can
+reach 429 to 533 tiles, 110 of the 120 tiles around it. Screenshots in the
+conversation.
+
+**How** (the mod, behind switches in `Config/XComLWAirWar.ini`; the
+converter as before plus the play area, the drop zones and each mesh's
+bounds):
+- the screen generates one of XCOM 2's maps as usual (it brings the light,
+  the mission, the enemies); then `LWX2PartPlacer` hides that map's geometry
+  and takes away its collision, places the EW map as `LWX2LevelActor`s
+  (XCOM 2's `XComLevelActor`: cover, the building visibility system) with
+  EW's play area (its level volume, read from the brush's bounds) centred in
+  the generated map's level volume, moves the soldiers' spawn to the first
+  EW drop zone (its player starts) inside it, and tells the screen to
+  rebuild the tile data when the battle starts;
+- XCOM 2 builds its tiles, cover and paths over EW's meshes as over its own.
+
+**What it took**
+- The tile data rebuilt *before* units exist: rebuilding it once the
+  mission had started crashed the game at the end of the intro.
+  `AddActorTileData` alone changed nothing.
+- Collision off the backdrop: EW's sky dome has a collision box that holds
+  the whole map, and no tile could be entered inside it. The converter reads
+  every mesh's bounds; the huge ones are marked `Backdrop` and the mod turns
+  their collision and trace blocking off.
+- The hidden map's actors still blocked traces through their components:
+  each primitive component's trace blocking and collision is turned off.
+- A drop zone inside the generated map's volume: units spawn on its floor
+  tiles; outside it they were put elsewhere.
+- (A false alarm: the soldiers' reach read from script is 1 until XCOM's
+  turn has begun; the first measurements were taken during the intro.)
+
+**Not yet** (the next steps of a real map port, none of them a doubt):
+- *Lighting*: the generated map's lights and time of day, not EW's (the map
+  is dark; EW's lights are in the converted package's world, unread).
+- *A host map of our own*: the generated map's level volume is 76 x 52
+  tiles here, EW's play area 73 x 74: the rest of EW's map is drawn but not
+  playable. A plot of our own (a map with only a level volume, light and a
+  spawn, made once in the editor and shipped in the mod) removes the generated
+  map entirely.
+- *The mission's contents at EW's places*: objectives and enemy pods stand
+  where XCOM 2's map had them. EW's map has its own (`XComAlienPod`,
+  `XComSpawnPoint`, the UFO's power source …) to read and use.
+- *Destructibility*: EW's destructible pieces are placed as plain level
+  actors.
+
+### Decisions
+
+- **The EW map placed into an XCOM 2 mission at run time**, rather than
+  converted to an XCOM 2 map file: what XCOM 2 needs from a map (tiles,
+  cover, paths) it builds itself from geometry, so geometry is enough; no
+  editor step, every EW map by the same converter.
+- **XCOM 2's generated map as the host for now**, hidden: it gives a
+  working mission (light, enemies, objectives) without any authoring. A
+  host plot of our own is the next step (above).
+- **`XComLevelActor` for the pieces**: XCOM 2's class for level geometry,
+  spawnable (not static), so cover and building visibility come with it.
+- **Backdrop by size** (half sizes over 24 tiles across or 12 high): simple
+  and covers the sky dome and the mountains here; to revisit per map.
+
+**So experiment 2 is answered**: Enemy Within's handmade maps come across as
+the ground of XCOM 2 missions, playable, from the player's own install, by
+the converter and the mod. With experiments 1 and 3 answered too, the hard
+parts are validated.
