@@ -254,3 +254,49 @@ soldiers reached 529 to 656 tiles.
   their tiles before the units exist. XCOM 2's group spawn picks the tiles
   itself, and two earlier tries to pick a spot beforehand did not see what
   walled the two in (`hard-parts.md`).
+
+## Report (2026-11-01, step 2: the truck stop; pods in sub-levels)
+
+**Long War's truck stop (`URB_TruckStop`) keeps its pods in its
+sub-levels**, which the converter did not read:
+- the main map: 4 abduction pods (`XComAlienPod_Abduction`);
+- `_Stream`: 4 pods;
+- `_EWI` (Enemy Within's abduction variant): 4 abduction pods;
+- `_CNH`: 2 pods.
+
+The converter now reads the pods from the map's sibling packages as well,
+each noted with its level (`Level=Stream`, `EWI`, `CNH`; `Abduction` for
+the map's own abduction pods). The mod uses the map's own ordinary pods
+and `_Stream`'s first, then the abduction ones, then any.
+- Checked: 4 pods spawned on the truck stop, the squad of 9 shared out over
+  them.
+- The truck stop's lights: 21, with a warm low sun (brightness 4).
+
+**The converter ran out of memory on the truck stop** (12 GB heap) after
+the sun change. Reading tags at every offset of a component made bogus
+arrays. It now tries only dominant lights' components, and only offsets
+that start with a property name.
+
+**The boxed-in fix waited for the soldiers' paths.** Three seconds after
+the HUD came up, every soldier still reached 1 tile. The check is now
+repeated every 3 seconds (on a looping timer on the HUD screen; a timer on
+`WorldInfo` never fired) until the best soldier reaches 40 tiles, for a
+minute at most.
+- Reproduced once: two soldiers reached 14 tiles, inside a rectangle with
+  no visible wall. Most likely it is EW's Skyranger beside the drop zone,
+  or a hidden XCOM 2 volume.
+- The first version of the fix found no free tile.
+  `XComWorldData.IsTileOccupied` counts more than units, so only the tiles
+  units stand on now count as taken.
+- In the six truck stop missions that followed, nobody landed boxed in, so
+  the move itself is still untested in a real landing. The `unbox <min>`
+  test aid runs the check at a higher threshold.
+
+**Found, left open: XCOM 2 crashed loading the mission map twice in about
+eight loads with the truck stop placed.** Both times it was an access
+violation at the same address (`XCom2.exe+0x6d0695`), with 23 GB of memory
+free, at `LoadMap`, before any of the mod's placing. It never happened in
+over a dozen loads with the badlands map. The truck stop's package is
+larger (346 MB, 217 carried packages against 80). The test machine is back
+on the badlands map; its truck stop config is kept beside the checkout
+(`lwx2-truckstop.ini`).

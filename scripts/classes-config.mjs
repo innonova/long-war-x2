@@ -70,7 +70,7 @@ const SAME = {
   ePerk_Opportunist: 'CoolUnderPressure',
 }
 /** XCOM 2's abilities that work through a weapon: given with it, as XCOM 2's own classes give them (DefaultClassData.ini). */
-const WEAPON_SLOT = { LW_SnapShot: 'eInvSlot_PrimaryWeapon', InTheZone: 'eInvSlot_PrimaryWeapon', CoveringFire: 'eInvSlot_PrimaryWeapon', RapidFire: 'eInvSlot_PrimaryWeapon', HoloTargeting: 'eInvSlot_PrimaryWeapon', Suppression: 'eInvSlot_PrimaryWeapon' }
+const WEAPON_SLOT = { LW_SnapShot: 'eInvSlot_PrimaryWeapon', LW_PrecisionShot: 'eInvSlot_PrimaryWeapon', LW_DisablingShot: 'eInvSlot_PrimaryWeapon', InTheZone: 'eInvSlot_PrimaryWeapon', CoveringFire: 'eInvSlot_PrimaryWeapon', RapidFire: 'eInvSlot_PrimaryWeapon', HoloTargeting: 'eInvSlot_PrimaryWeapon', Suppression: 'eInvSlot_PrimaryWeapon' }
 const RANKS = ['Corporal1', 'Sergeant1', 'Lieutenant1', 'Captain1', 'Major', 'Colonel1']
 const RANK_NAMES = ['eRank_Squaddie', 'eRank_Corporal', 'eRank_Sergeant', 'eRank_Lieutenant', 'eRank_Captain', 'eRank_Major', 'eRank_Colonel']
 
@@ -158,6 +158,17 @@ const REAL = {
   // The sniper classes' Snap Shot: a one-action shot at Long War's penalty (the Rocketeer's is another perk: LW_SnapShotRocket).
   LW_SnapShot: () => ({ Kind: 'SnapShot', Aim: consts.has('SNAP_SHOT_AIM_PENALTY') ? -c('SNAP_SHOT_AIM_PENALTY') : undefined }),
   LW_Steadfast: () => ({ ImmuneTo: ['Panic'] }),
+  // Active shots with the primary weapon. EW's BuildAbility gives both a cooldown of 5, counted on every side's
+  // turn: 2 of the soldier's own (APPROXIMATION). Precision Shot's crit damage grows with the weapon's tech in
+  // Long War; its constant (2) is used for every weapon.
+  LW_PrecisionShot: () => ({ Kind: 'PrecisionShot', Crit: c('PRECISION_SHOT_CRITICAL_CHANCE_BONUS'), Damage: c('PRECISION_SHOT_DAMAGE_BONUS'), Param: 2 }),
+  LW_DisablingShot: () => ({ Kind: 'DisablingShot', Aim: consts.has('DISABLINGSHOT_AIM_PENALTY') ? -c('DISABLINGSHOT_AIM_PENALTY') : undefined, Param: 2 }),
+  // "Once per turn, this unit may use a medikit without spending an action."
+  LW_Paramedic: () => ({ FreeShotIf: 'Medikit' }),
+  // "Medikits restore four more health per use" (and two more charges: X2Effect_LWCharges).
+  LW_Savior: () => ({ Heal: c('MEDIKIT_SAVIOR_BONUS') }),
+  // "Gain +15 aim against flying targets."
+  LW_Deadeye: () => ({ Aim: 15, AimIf: 'TargetFlying' }),
   // "Bonus damage on critical hits, with additional bonuses (up to +6) based on how many enemies your squad can see."
   LW_BringEmOn: () => ({ Damage: 1, DamageIf: 'CritPerSquadVisibleEnemy', MaxStacks: 6 }),
 }

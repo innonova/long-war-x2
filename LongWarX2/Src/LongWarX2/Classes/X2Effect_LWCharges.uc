@@ -8,6 +8,7 @@
 // - Smoke Bomb (LW_SmokeGrenade) and Battle Scanner: +1 smoke, +2 scans (Long War gives them without an item: here
 //   only to a soldier who carries one, APPROXIMATION);
 // - Shock and Awe (Long War's Rocketeer perk): a second rocket.
+// - Savior: +2 medikit charges (Long War gives them without an item: here only to a soldier who carries one).
 // Carried by every Long War armour's stat ability (X2Ability_LWArmorStats), so every Long War soldier has it.
 class X2Effect_LWCharges extends X2Effect;
 
@@ -73,7 +74,8 @@ static function int ChargesFor(XComGameState_Unit Unit, int Item, int n, int Cur
 	case 73:
 		return n + (bDeep ? n : 0) + (Unit.HasSoldierAbility('LW_Repair') ? 2 * n : 0);
 	case 69:
-		return n + (bDeep ? n : 0);
+		// Savior: two charges more (Long War's are on no item; here on the medikit the soldier carries).
+		return n + (bDeep ? n : 0) + (Unit.HasSoldierAbility('LW_Savior') ? 2 : 0);
 	case 82:
 		c = n + (bDeep ? n : 0) + (bSmoke ? n : 0);
 		if (Unit.HasSoldierAbility('LW_SmokeGrenade'))

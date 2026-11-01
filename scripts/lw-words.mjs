@@ -62,6 +62,11 @@ export function makeWords({ plan, core, loc, consts }) {
     KillerInstinctCritDamageBonus: () => c('KILLERINSTINCT_CRIT_DMG_MULT', 100),
     GrenadierCharges: () => c('GRENADIER_CHARGES'),
     DoubleTapCooldown: () => c('DOUBLETAP_COOLDOWN'),
+    HeadshotCritBonus: () => c('PRECISION_SHOT_CRITICAL_CHANCE_BONUS'),
+    // EW's BuildAbility gives Precision and Disabling Shot a cooldown of 5, counted on every side's turn: the
+    // soldier's own turns, as the mod's abilities count them (X2Ability_LWStandins.ActiveShot), 2.
+    HeadshotCooldown: () => 2,
+    DisablingShotCooldown: () => 2,
     DamnGoodGroundAimBonus: () => c('DAMN_GOOD_GROUND_OFFENSE_BONUS'),
     DamnGoodGroundDefenseBonus: () => c('DAMN_GOOD_GROUND_DEFENSE_BONUS'),
     CombatDrugsWillBonus: () => c('COMBAT_DRUGS_WILL_BONUS'),

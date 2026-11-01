@@ -14,8 +14,8 @@
 // Run from the Long War Tech Tree's checkout (it has upkit):
 //   cd ../xcom-ew-lw-tree
 //   npx vite-node ../long-war-x2/tools/convert/ew-map.ts -- <EW map .upk> <out .upk> <out pieces .ini>
-import { readFileSync, writeFileSync } from 'node:fs'
-import { basename, dirname } from 'node:path'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { basename, dirname, join } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
 import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
@@ -179,7 +179,7 @@ if (process.env.LWX2_EXTENTS) for (const [m, e] of [...extents].sort((a, b) => M
 let play: { center: number[]; extent: number[] } | undefined
 const starts: number[][] = []
 // EW's alien pods (where its aliens stand: the commander's pod, how many) and its spawn points.
-const pods: { loc: number[]; commander: boolean; min: number; max: number }[] = []
+const pods: { loc: number[]; commander: boolean; min: number; max: number; level: string }[] = []
 const spawnPoints: number[][] = []
 // EW's lights (lw-missions.md, step 2): baked into its lightmaps, which XCOM 2 cannot use, so
 // the mod spawns each as a movable light. Kind, place, direction, and its component's values
@@ -203,13 +203,18 @@ const LIGHTS: Record<string, EWLight['kind']> = {
   DirectionalLight: 'Sun', DominantDirectionalLight: 'Sun', SkyLight: 'Sky',
 }
 /**
- * A component's properties: after its leading fields (net index, template names), found by trying;
- * a dominant light's come after its shadow map, so after that the whole component is tried.
+ * A component's properties: after its leading fields (net index, template names), found by trying.
+ * A dominant light's come after its shadow map: there every offset that holds a property name
+ * (a name index followed by 0) is tried, so no bytes are read as a property that are not one.
  */
 function componentTags(r: number): Tag[] {
   if (r <= 0) return []
   const data = pkg.data(r)
-  for (const start of [4, 8, 12, 16, 20, 0, ...Array.from({ length: data.length }, (_, k) => k)]) {
+  const dv = new DataView(data.buffer, data.byteOffset, data.byteLength)
+  const isName = (k: number) => k + 8 <= data.length && dv.getInt32(k + 4, true) === 0 && dv.getInt32(k, true) > 0 && dv.getInt32(k, true) < meta.names.length
+  const starts = [4, 8, 12, 16, 20, 0]
+  if (/^Dominant/.test(exports[r - 1].type)) for (let k = 0; k < data.length; k++) if (isName(k)) starts.push(k)
+  for (const start of starts) {
     try {
       const t = readTags(new Reader(data.subarray(start)), pkg)
       if (t.some((x) => x.name === 'LightGuid' || x.name === 'Brightness' || x.name === 'LightColor')) return t
@@ -227,7 +232,7 @@ exports.forEach((e, i) => {
     const loc = t?.find((x) => x.name === 'Location')
     if (loc) starts.push([f32(loc, 0), f32(loc, 1), f32(loc, 2)])
   }
-  if (e.type === 'XComAlienPod' || e.type === 'XComSpawnPoint') {
+  if (e.type === 'XComAlienPod' || e.type === 'XComAlienPod_Abduction' || e.type === 'XComSpawnPoint') {
     const t = actorTags(i)
     const loc = t?.find((x) => x.name === 'Location')
     if (!loc) return
@@ -238,6 +243,7 @@ exports.forEach((e, i) => {
         commander: t!.some((x) => x.name === 'bCommanderPod'),
         min: i32(t!.find((x) => x.name === 'NumAliens_Min'), 0),
         max: i32(t!.find((x) => x.name === 'NumAliens_Max'), 0),
+        level: e.type === 'XComAlienPod_Abduction' ? 'Abduction' : '',
       })
   }
   if (LIGHTS[e.type]) {
@@ -280,6 +286,39 @@ exports.forEach((e, i) => {
     play = { center: [f32(loc, 0) + b[0]!, f32(loc, 1) + b[1]!, f32(loc, 2) + b[2]!], extent: [b[3]!, b[4]!, b[5]!] }
   }
 })
+
+// EW keeps a map's pods in its sub-levels too (URB_TruckStop: _Stream, the abduction variant _EWI,
+// _CNH), streamed in with it by mission: their pods read from the packages beside the map, each
+// noted with its level (the part of its name after the map's).
+const mapName = basename(src, '.upk')
+for (const level of ['Stream', 'EWI', 'CNH']) {
+  const file = join(dirname(src), `${mapName}_${level}.upk`)
+  if (!existsSync(file)) continue
+  const subBytes = decompressPackage(new Uint8Array(readFileSync(file)))
+  const subMeta: any = new Package(subBytes)
+  const sub: any = openPackage(subBytes)
+  ;(subMeta.exports as any[]).forEach((e, i) => {
+    if (!/^XComAlienPod/.test(e.type) || e.fullName.split('.').length !== 3) return
+    const data = sub.data(i + 1)
+    for (const start of [26, ...Array.from({ length: 81 }, (_, k) => k)]) {
+      try {
+        const t = readTags(new Reader(data.subarray(start)), sub)
+        const loc = t.find((x) => x.name === 'Location')
+        if (!loc) continue
+        pods.push({
+          loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
+          commander: t.some((x) => x.name === 'bCommanderPod'),
+          min: i32(t.find((x) => x.name === 'NumAliens_Min'), 0),
+          max: i32(t.find((x) => x.name === 'NumAliens_Max'), 0),
+          level,
+        })
+        break
+      } catch {
+        // not here
+      }
+    }
+  })
+}
 
 // --- The materials' textures, for XCOM 2 stand-ins --------------------------------
 // XCOM 2 cannot draw EW's materials (no shaders for them in its caches, and the game does
@@ -411,8 +450,8 @@ const lines = [
       ]
     : []),
   ...starts.map((p) => `+DropZones=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
-  "; EW's alien pods (the commander's, how many aliens) and its spawn points.",
-  ...pods.map((p) => `+Pods=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Commander=${p.commander},Min=${p.min},Max=${p.max})`),
+  "; EW's alien pods (the commander's, how many aliens; Level: the sub-level it is in, none: the map's own) and its spawn points.",
+  ...pods.map((p) => `+Pods=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Commander=${p.commander},Min=${p.min},Max=${p.max}${p.level ? `,Level=${p.level}` : ''})`),
   ...spawnPoints.map((p) => `+SpawnPoints=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
   "; EW's lights (point, spot, its sun and sky), spawned as movable lights: the kinds placed and a scale on their",
   "; brightness (3: EW's lightmaps carried bounced light too; judged by eye on CSmallScout_Badlands).",

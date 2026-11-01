@@ -124,6 +124,12 @@ function Handle(string Line, out array<string> Out)
 	case "capture":
 		Out.AddItem(CaptureNearest());
 		return;
+	case "near":
+		Out.AddItem(MoveNear(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? int(Args[2]) : 8));
+		return;
+	case "unbox":
+		Out.AddItem("moved" @ class'LWX2PartPlacer'.static.FreeBoxedIn(Args.Length > 1 ? int(Args[1]) : 40));
+		return;
 	case "endturn":
 		if (XComTacticalController(GetALocalPlayerController()) == none)
 		{
@@ -570,6 +576,7 @@ function string GivePerk(int Index, name AbilityName)
 	local XComGameState_Unit Unit;
 	local StateObjectReference Ref;
 	local ClassAgnosticAbility Perk;
+	local X2AbilityTemplate Template;
 	local int n;
 
 	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
@@ -580,6 +587,10 @@ function string GivePerk(int Index, name AbilityName)
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a perk given (control port)");
 		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
 		Perk.AbilityType.AbilityName = AbilityName;
+		// Shots with the weapon (as the classes' trees give them: ApplyToWeaponSlot).
+		Template = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate(AbilityName);
+		if (Template != none && X2AbilityTarget_Single(Template.AbilityTargetStyle) != none && Template.AbilityToHitCalc != none && X2AbilityToHitCalc_StandardAim(Template.AbilityToHitCalc) != none)
+			Perk.AbilityType.ApplyToWeaponSlot = eInvSlot_PrimaryWeapon;
 		Perk.bUnlocked = true;
 		Unit.AWCAbilities.AddItem(Perk);
 		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
@@ -849,6 +860,49 @@ function Enemies(out array<string> Out)
 }
 
 /** In a mission: a soldier's ability used on a target (its index among the available targets; -1: list them). */
+/** A soldier moved to a floor tile Tiles from the nearest living alien, on the side towards the soldier (a test aid: a target in view). */
+function string MoveNear(string Who, int Tiles)
+{
+	local XComGameState_Unit Unit, Target, Other;
+	local XComWorldData World;
+	local XComGameState NewGameState;
+	local vector From, To, Dir;
+	local TTile T;
+	local int Best, d;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_XCom && !Unit.bRemovedFromPlay && (InStr(Caps(Unit.GetFullName()), Caps(Who)) != INDEX_NONE || InStr(Caps(string(Unit.GetSoldierClassTemplateName())), Caps(Who)) != INDEX_NONE))
+			break;
+	if (Unit == none)
+		return "ERR no such soldier";
+	Best = MaxInt;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Other)
+		if (Other.GetTeam() == eTeam_Alien && Other.IsAlive() && !Other.bRemovedFromPlay)
+		{
+			d = Unit.TileDistanceBetween(Other);
+			if (d < Best)
+			{
+				Best = d;
+				Target = Other;
+			}
+		}
+	if (Target == none)
+		return "ERR no alien";
+	World = `XWORLD;
+	From = World.GetPositionFromTileCoordinates(Target.TileLocation);
+	Dir = Normal(World.GetPositionFromTileCoordinates(Unit.TileLocation) - From);
+	To = From + Dir * Tiles * class'XComWorldData'.const.WORLD_StepSize;
+	if (!World.GetFloorTileForPosition(To, T, false))
+		return "ERR no floor there";
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a soldier moved near an alien (control port)");
+	XComGameStateContext_ChangeContainer(NewGameState.GetContext()).BuildVisualizationFn = class'LWMissionSquads'.static.BuildPodVisualization;
+	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+	Unit.bRequiresVisibilityUpdate = true;
+	Unit.SetVisibilityLocation(T);
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	return "ok" @ Unit.GetFullName() @ "at" @ T.X $ "," $ T.Y $ "," $ T.Z @ "," @ Tiles @ "tiles from" @ Target.GetMyTemplateName();
+}
+
 function string UseAbility(string Who, name AbilityName, int TargetIndex)
 {
 	local XComGameState_Unit Unit, Target;

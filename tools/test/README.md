@@ -60,6 +60,8 @@ And around it:
                                                # in the checkout's Content and Config: tools/convert/README.md)
     tools/test/lw.sh enemies                   # in a mission: the aliens, their templates, tiles away
     tools/test/lw.sh endturn                   # in a mission: XCOM's turn ended (as the button)
+    tools/test/lw.sh 'unbox 500'                 # soldiers reaching fewer than 500 tiles moved beside the best placed (-1: paths unknown)
+    tools/test/lw.sh 'near Sniper 8'           # a soldier put 8 tiles from the nearest alien (a target in view)
     tools/test/lw.sh 'look -7440 2544 200'     # the camera to an EW map place (EW's coordinates; 'look pod 1'), fog off
 
 The dump is every XCOM 2 game state object, newest version, with all its fields

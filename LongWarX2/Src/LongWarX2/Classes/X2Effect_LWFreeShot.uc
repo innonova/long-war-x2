@@ -1,11 +1,11 @@
 // A Long War perk that makes a standard shot free under a condition, once a turn
 // (features/lw-classes.md): Hit and Run (an exposed or flanked target), Close Encounters (a
 // target within Param tiles), Light 'Em Up (the turn's first action: the shot no longer ends
-// the turn, it costs one action). After XCOM 2 has taken the shot's cost, the action points are
-// given back: all of them, or all but one (bKeepOne).
+// the turn, it costs one action); Paramedic (a medikit used, Medikit). After XCOM 2 has taken the
+// ability's cost, the action points are given back: all of them, or all but one (bKeepOne).
 class X2Effect_LWFreeShot extends X2Effect_Persistent;
 
-/** TargetExposed, Within, FirstAction. */
+/** TargetExposed, Within, FirstAction (a standard shot); Medikit (a medikit's heal or stabilize). */
 var name Condition;
 var float Param;
 var bool bKeepOne;
@@ -17,7 +17,9 @@ function bool PostAbilityCostPaid(XComGameState_Effect EffectState, XComGameStat
 	local UnitValue Used;
 	local bool bHolds;
 
-	if (kAbility.GetMyTemplateName() != 'StandardShot' || SourceUnit.ActionPoints.Length >= PreCostActionPoints.Length)
+	if (SourceUnit.ActionPoints.Length >= PreCostActionPoints.Length)
+		return false;
+	if (Condition == 'Medikit' ? !IsMedikit(kAbility.GetMyTemplateName()) : kAbility.GetMyTemplateName() != 'StandardShot')
 		return false;
 	if (SourceUnit.GetUnitValue(EffectName, Used) && Used.fValue > 0)
 		return false;
@@ -33,6 +35,9 @@ function bool PostAbilityCostPaid(XComGameState_Effect EffectState, XComGameStat
 	case 'Within':
 		bHolds = Target != none && SourceUnit.TileDistanceBetween(Target) <= Param;
 		break;
+	case 'Medikit':
+		bHolds = true;
+		break;
 	case 'FirstAction':
 		bHolds = PreCostActionPoints.Length >= class'X2CharacterTemplateManager'.default.StandardActionsPerTurn;
 		break;
@@ -44,6 +49,11 @@ function bool PostAbilityCostPaid(XComGameState_Effect EffectState, XComGameStat
 		SourceUnit.ActionPoints.Remove(0, 1);
 	SourceUnit.SetUnitFloatValue(EffectName, 1, eCleanup_BeginTurn);
 	return true;
+}
+
+static function bool IsMedikit(name Ability)
+{
+	return Ability == 'MedikitHeal' || Ability == 'NanoMedikitHeal' || Ability == 'MedikitStabilize';
 }
 
 defaultproperties

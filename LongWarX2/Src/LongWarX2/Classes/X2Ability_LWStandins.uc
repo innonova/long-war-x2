@@ -30,6 +30,8 @@ struct LWStandin
 	var name Kind;
 	/** Immunities (Panic …), as XCOM 2's damage immunity effect has them. */
 	var array<name> ImmuneTo;
+	/** Hit points more per medikit use (Savior; added to XCOM 2's medikit abilities: AddHealBonuses). */
+	var int Heal;
 };
 
 var config array<LWStandin> Standins;
@@ -43,6 +45,8 @@ static function array<X2DataTemplate> CreateTemplates()
 	{
 		if (S.Kind == 'SnapShot')
 			Templates.AddItem(SnapShot(S));
+		else if (S.Kind == 'PrecisionShot' || S.Kind == 'DisablingShot')
+			Templates.AddItem(ActiveShot(S));
 		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.Damage2 != 0 || S.DamageTaken != 0 || S.CritDamagePct != 0 || S.BonusRadius != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0)
 			Templates.AddItem(Passive(S));
 		else
@@ -67,6 +71,49 @@ static function X2AbilityTemplate SnapShot(LWStandin S)
 	Aim = new class'X2AbilityToHitCalc_StandardAim';
 	Aim.BuiltInHitMod = S.Aim;
 	Template.AbilityToHitCalc = Aim;
+	return Template;
+}
+
+/**
+ * Long War's Precision Shot (more critical chance, more damage on a critical hit) and Disabling Shot (the target's
+ * weapon emptied: XCOM 2's X2Effect_DisableWeapon; no critical hits): shots with the weapon beside the standard one,
+ * Param their cooldown.
+ */
+static function X2AbilityTemplate ActiveShot(LWStandin S)
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityToHitCalc_StandardAim Aim;
+	local X2Effect_ApplyWeaponDamage Bonus;
+	local X2AbilityCooldown Cooldown;
+
+	Template = class'X2Ability_WeaponCommon'.static.Add_StandardShot(S.Name);
+	Template.IconImage = S.Icon;
+	Template.bDontDisplayInAbilitySummary = false;
+	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.STANDARD_SHOT_PRIORITY + 2;
+	Aim = new class'X2AbilityToHitCalc_StandardAim';
+	Aim.BuiltInHitMod = S.Aim;
+	Aim.BuiltInCritMod = S.Crit;
+	if (S.Kind == 'DisablingShot')
+	{
+		Aim.bAllowCrit = false;
+		Template.AddTargetEffect(new class'X2Effect_DisableWeapon');
+	}
+	if (S.Kind == 'PrecisionShot' && S.Damage > 0)
+	{
+		// Damage on a critical hit only: no base damage of its own.
+		Bonus = new class'X2Effect_ApplyWeaponDamage';
+		Bonus.bIgnoreBaseDamage = true;
+		Bonus.EffectDamageValue.Crit = S.Damage;
+		Template.AddTargetEffect(Bonus);
+	}
+	Template.AbilityToHitCalc = Aim;
+	Template.AbilityTargetConditions.AddItem(new class'X2Condition_LWSniperReady');
+	if (S.Param > 0)
+	{
+		Cooldown = new class'X2AbilityCooldown';
+		Cooldown.iNumTurns = S.Param;
+		Template.AbilityCooldown = Cooldown;
+	}
 	return Template;
 }
 
@@ -145,6 +192,38 @@ static function X2AbilityTemplate Passive(LWStandin S)
 
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	return Template;
+}
+
+/** Savior and its like: XCOM 2's medikit abilities heal more for a soldier with the perk (OnPostTemplatesCreated). */
+static function AddHealBonuses()
+{
+	local X2AbilityTemplateManager Manager;
+	local X2AbilityTemplate Medikit;
+	local X2Effect_ApplyMedikitHeal Heal;
+	local X2Condition_AbilityProperty Owner;
+	local LWStandin S;
+	local name Ability;
+	local array<name> Medikits;
+
+	Medikits.AddItem('MedikitHeal');
+	Medikits.AddItem('NanoMedikitHeal');
+	Manager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+	foreach Medikits(Ability)
+	{
+		Medikit = Manager.FindAbilityTemplate(Ability);
+		if (Medikit == none)
+			continue;
+		foreach default.Standins(S)
+			if (S.Heal != 0)
+			{
+				Heal = new class'X2Effect_ApplyMedikitHeal';
+				Heal.PerUseHP = S.Heal;
+				Owner = new class'X2Condition_AbilityProperty';
+				Owner.OwnerHasSoldierAbilities.AddItem(S.Name);
+				Heal.TargetConditions.AddItem(Owner);
+				Medikit.AddTargetEffect(Heal);
+			}
+	}
 }
 
 /** Danger Zone and its like: the rocket launcher's blast wider for a soldier with the perk (OnPostTemplatesCreated). */

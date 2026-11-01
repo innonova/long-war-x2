@@ -13,6 +13,8 @@ var config vector PartCenter;
 var config float PartRadius;
 /** Where the part's centre goes, from the soldiers' spawn (its floor). */
 var config vector PartOffset;
+var int BoxedTries;
+var UIScreen BoxedScreen;
 
 event OnInit(UIScreen Screen)
 {
@@ -39,7 +41,9 @@ event OnInit(UIScreen Screen)
 	{
 		class'LWMissionSquads'.static.SpawnAtEWPods();
 		// Soldiers boxed in by EW's walls moved out, once their paths are known.
-		Screen.SetTimer(3.0, false, nameof(FreeBoxedIn), self);
+		BoxedTries = 0;
+		BoxedScreen = Screen;
+		Screen.SetTimer(3.0, true, nameof(FreeBoxedIn), self);
 	}
 	if (default.PlaceEWMapPart || default.PlaceEWMapWhole)
 	{
@@ -156,9 +160,18 @@ function int CountReachableAround(XGUnit Unit)
 	return n;
 }
 
+/** Tried every 3 seconds, for a minute at most, until the soldiers' paths are known. */
 function FreeBoxedIn()
 {
-	class'LWX2PartPlacer'.static.FreeBoxedIn();
+	local int Moved;
+
+	Moved = class'LWX2PartPlacer'.static.FreeBoxedIn();
+	`log("LongWarX2: EW map: boxed-in try" @ BoxedTries @ "->" @ Moved, , 'LongWarX2');
+	if ((Moved >= 0 || ++BoxedTries >= 20) && BoxedScreen != none)
+	{
+		BoxedScreen.ClearTimer(nameof(FreeBoxedIn), self);
+		BoxedScreen = none;
+	}
 }
 
 /** Later, once the mission has settled: how far each soldier can move. */

@@ -232,11 +232,11 @@ function bool Contains(const out array<TTile> Tiles, TTile T)
 /**
  * Once the squad stands on the EW map (lw-missions.md, step 2): each soldier who can reach fewer than MinReach tiles
  * (boxed in by EW's walls and wrecks, which XCOM 2's group spawn does not see) is moved to the free floor tile
- * nearest to the soldier who can reach the most, among the tiles that soldier can reach. Returns how many moved.
+ * nearest to the soldier who can reach the most, among the tiles that soldier can reach. Returns how many moved;
+ * -1 while the soldiers' paths are not known yet (none reaches MinReach: they have not taken their places).
  */
 static function int FreeBoxedIn(optional int MinReach = 40)
 {
-	local XComWorldData World;
 	local XGUnit Unit, Best;
 	local XComGameState_Unit UnitState;
 	local array<XGUnit> Boxed;
@@ -246,7 +246,6 @@ static function int FreeBoxedIn(optional int MinReach = 40)
 	local int Most, Dist, Nearest, Moved;
 
 	Taken.Length = 0;
-	World = `XWORLD;
 	foreach class'WorldInfo'.static.GetWorldInfo().AllActors(class'XGUnit', Unit)
 	{
 		UnitState = Unit.GetVisualizedGameState();
@@ -265,7 +264,14 @@ static function int FreeBoxedIn(optional int MinReach = 40)
 		if (Tiles.Length < MinReach)
 			Boxed.AddItem(Unit);
 	}
-	if (Best == none || Most < MinReach || Boxed.Length == 0)
+	if (Best == none || Most < MinReach)
+		return -1;
+	// The tiles units stand on (XComWorldData.IsTileOccupied counts more than units).
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', UnitState)
+		if (!UnitState.bRemovedFromPlay && UnitState.IsAlive())
+			Taken.AddItem(UnitState.TileLocation);
+	`log("LongWarX2: EW map: boxed-in check:" @ Boxed.Length @ "soldiers reach fewer than" @ MinReach @ "tiles; the best reaches" @ Most, , 'LongWarX2');
+	if (Boxed.Length == 0)
 		return 0;
 	From = Best.GetVisualizedGameState().TileLocation;
 	foreach Boxed(Unit)
@@ -273,7 +279,7 @@ static function int FreeBoxedIn(optional int MinReach = 40)
 		Nearest = MaxInt;
 		foreach BestTiles(T)
 		{
-			if (World.IsTileOccupied(T) || TakenAt(Taken, T))
+			if (TakenAt(Taken, T))
 				continue;
 			Dist = (T.X - From.X) * (T.X - From.X) + (T.Y - From.Y) * (T.Y - From.Y) + (T.Z - From.Z) * (T.Z - From.Z);
 			if (Dist > 0 && Dist < Nearest)

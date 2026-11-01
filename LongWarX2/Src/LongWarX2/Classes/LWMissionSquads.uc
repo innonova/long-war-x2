@@ -55,23 +55,33 @@ static function SpawnAtEWPods()
 	local array<LWX2EWMapPieces.LWX2Pod> Pods;
 	local LWX2EWMapPieces.LWX2Pod Pod;
 	local XComGameState_Unit Unit;
-	local array<name> Names;
+	local array<name> Names, Levels;
+	local name Level;
 	local int i, k, n, Size;
 
+	Levels.AddItem('Stream');
+	Levels.AddItem('EWI');
+	Levels.AddItem('Any');
 	S = class'XComGameState_LWStrategy'.static.Get();
 	if (!class'LWX2PartPlacer'.default.bEWPlaced || S == none || S.PendingSquad.Length == 0)
 		return;
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 		if (Unit.GetTeam() == eTeam_Alien && Unit.IsAlive() && !Unit.bRemovedFromPlay)
 			return;
-	foreach class'LWX2EWMapPieces'.default.Pods(Pod)
-		if (Pod.Max > 0)
-		{
-			if (Pod.Commander)
-				Pods.InsertItem(0, Pod);
-			else
-				Pods.AddItem(Pod);
-		}
+	// The map's own pods and its always streamed sub-level's; else the abduction ones (the map's, its EWI variant's); else any.
+	foreach Levels(Level)
+	{
+		foreach class'LWX2EWMapPieces'.default.Pods(Pod)
+			if (Pod.Max > 0 && (Level == 'Any' || Pod.Level == Level || Level == 'Stream' && Pod.Level == '' || Level == 'EWI' && Pod.Level == 'Abduction'))
+			{
+				if (Pod.Commander)
+					Pods.InsertItem(0, Pod);
+				else
+					Pods.AddItem(Pod);
+			}
+		if (Pods.Length > 0)
+			break;
+	}
 	if (Pods.Length == 0)
 		Pods = class'LWX2EWMapPieces'.default.Pods;
 	if (Pods.Length == 0)

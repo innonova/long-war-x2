@@ -54,6 +54,8 @@ struct LWX2Pod
 	var bool Commander;
 	var int Min;
 	var int Max;
+	/** The sub-level it is in (Stream, EWI: the abduction variant, CNH); Abduction: the map's own abduction pods; none: the map's own. */
+	var name Level;
 };
 var config array<LWX2Pod> Pods;
 var config array<vector> SpawnPoints;

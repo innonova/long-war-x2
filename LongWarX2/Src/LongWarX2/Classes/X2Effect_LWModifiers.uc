@@ -78,6 +78,9 @@ function int Holds(name Condition, XComGameState_Unit Attacker, XComGameState_Un
 		return MaxStacks > 0 ? Min(n, MaxStacks) : n;
 	case 'TargetRobotic':
 		return (Target != none && Target.IsRobotic()) ? 1 : 0;
+	// Deadeye: Long War's flying aliens; in XCOM 2, the units that can fly.
+	case 'TargetFlying':
+		return (Target != none && Target.GetMyTemplate().bCanUse_eTraversal_Flying) ? 1 : 0;
 	case 'Primary':
 		Weapon = AbilityState != none ? AbilityState.GetSourceWeapon() : none;
 		return (Weapon != none && Weapon.InventorySlot == eInvSlot_PrimaryWeapon) ? 1 : 0;

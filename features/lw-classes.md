@@ -330,3 +330,70 @@ the control port can't aim yet, and dropped units never became visible.
 - smoke and rockets: Dense Smoke, Combat Drugs, Bombard, Javelin Rockets,
   HEAT Warheads, Fire in the Hole, Sapper, Shredder Ammo;
 - Deadeye (flying targets), Extra Conditioning, Snap Shot (rockets).
+
+## Report (2026-11-01 night, more perks: Precision Shot, Disabling Shot, Paramedic, Savior, Deadeye)
+
+Long War's numbers come from EW's code constants (read from the player's
+`XComGame.upk`, as the words already were) and from its ability table
+(`XGAbilityTree.BuildAbilities`):
+
+- **Precision Shot**: a shot beside the standard one, with +30 critical
+  chance (`PRECISION_SHOT_CRITICAL_CHANCE_BONUS`) and +2 damage on a
+  critical hit (`PRECISION_SHOT_DAMAGE_BONUS`). The bonus is a second
+  damage effect that has only a critical part. Cooldown 2.
+- **Disabling Shot**: a shot at −10 aim (`DISABLINGSHOT_AIM_PENALTY`)
+  that cannot crit and empties the target's weapon. A reload fixes it,
+  exactly as Long War's text says; XCOM 2's own `X2Effect_DisableWeapon`
+  does this. Cooldown 2.
+- **Both shots with a sniper rifle** (`lw_sniper`) need the whole turn,
+  as the rifle's own shot does, unless the soldier has Snap Shot
+  (`X2Condition_LWSniperReady`).
+- **Paramedic**: one medikit use a turn costs no action (the free-action
+  effect, condition `Medikit`: heal, nano heal, stabilize).
+- **Savior**: medikits heal +4 (`MEDIKIT_SAVIOR_BONUS`; an extra heal
+  effect on XCOM 2's medikit abilities, applied only when the medic has the
+  perk), and +2 medikit charges.
+- **Deadeye**: +15 aim against flying targets; in XCOM 2, units whose
+  template can fly.
+- The words' missing numbers are filled: Headshot crit bonus 30, both
+  cooldowns 2.
+
+**Checked in the game** (perks given by the test aid, which now binds shots
+to the primary weapon):
+- Both shots are on the soldiers' bars with their weapons. Fired from
+  8 and 9 tiles at a Sectoid, both were used and both then reported
+  `AA_CoolingDown`. The sniper condition passed with a full turn.
+- **Both missed**, so the hit effects (the weapon emptied, the crit
+  damage) are not seen in play yet.
+- The medic with Savior and one medikit had 3 charges (1 + 2).
+- **Paramedic's free use and Savior's extra heal are not tried yet**: they
+  need a wounded soldier.
+
+**Test aids:**
+- `near <soldier> [tiles]`: puts a soldier at a floor tile that many tiles
+  from the nearest alien.
+- Aliens dropped by `spawn` never become visible, on XCOM 2's maps as well
+  as EW's (their tile is not floor, and they get no visibility update).
+  `near` is the way to get a target in view.
+
+### Decisions
+
+- **Cooldown 2 for both shots.** EW's ability table gives them 5,
+  counted, as EW counts cooldowns, on every side's turn. That is read as 2
+  of the soldier's own turns (APPROXIMATION).
+- **Precision Shot's crit damage is +2 for every weapon.** Long War's
+  grows with the weapon's tech; only the base constant is known.
+- **"Ignores long-range critical penalties"** has nothing to act on:
+  XCOM 2 has no such penalty.
+- **Savior's two charges are on the medikit the soldier carries.** Long
+  War's are on no item; XCOM 2 keeps charges on items.
+
+### Left open (perks)
+
+- Still stand-ins: Flush, Double Tap, Rapid Reaction, Ready for Anything,
+  Close Combat Specialist, Lock N' Load, Concealment, Field Surgeon,
+  Revive, Dense Smoke, Combat Drugs, Bombard, Javelin, HEAT Warheads, Fire
+  in the Hole, Sapper, Shredder Ammo, Extra Conditioning, Snap Shot
+  (rockets). Long War's constants for several are now known (Flush +30
+  aim at half damage, Dense Smoke +20 defence, Combat Drugs +20 will and
+  +10 crit, Shredder 4 turns, Double Tap cooldown 3, Revive 33 %).
