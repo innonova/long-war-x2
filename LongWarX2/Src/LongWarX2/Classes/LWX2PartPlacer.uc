@@ -1,7 +1,8 @@
-// On the Tactical Quick Launch screen: once the screen has generated its map, the EW map
-// placed as XCOM 2 level geometry, and the screen told to rebuild the tile data when the
-// battle starts (the game's own path, before any unit is on the map) (features/hard-parts.md,
-// experiment 2). Either a part of it in front of the soldiers' spawn, or the whole map in
+// Once XCOM 2 has generated a mission's map, the EW map placed as XCOM 2 level geometry and the
+// tile data rebuilt before any unit is on the map (features/hard-parts.md, experiment 2). On the
+// Tactical Quick Launch screen the screen rebuilds it when the battle starts; in a campaign's
+// mission (bCampaign, spawned from the dropship's briefing) it is rebuilt at once, while the game
+// waits for the player to launch. Either a part of it in front of the soldiers' spawn, or the whole map in
 // place of the generated one: that one's geometry hidden and without collision, the EW play
 // area centred in its level volume, the soldiers' spawn moved to an EW drop zone.
 class LWX2PartPlacer extends Actor config(LWAirWar);
@@ -12,6 +13,7 @@ var float Radius;
 var vector Offset;
 var bool bPlaced;
 var bool bWhole;
+var bool bCampaign;
 /** Where the last part went: for the count in the battle, at the same place (config only so its default can be set; never saved). */
 var config vector PlacedAt;
 
@@ -22,10 +24,10 @@ event Tick(float DeltaTime)
 	local vector At;
 	local array<Actor> Placed;
 
-	if (bPlaced || Screen == none)
+	if (bPlaced || (Screen == none && !bCampaign))
 		return;
-	Parcels = Screen.ParcelManager;
-	if (Parcels == none || Parcels.IsGeneratingMap() || Parcels.SoldierSpawn == none)
+	Parcels = bCampaign ? `PARCELMGR : Screen.ParcelManager;
+	if (Parcels == none || Parcels.IsGeneratingMap() || Parcels.SoldierSpawn == none || (bCampaign && !`MAPS.IsStreamingComplete()))
 		return;
 	bPlaced = true;
 	World = `XWORLD;
@@ -38,7 +40,7 @@ event Tick(float DeltaTime)
 	At.Z = World.GetFloorZForPosition(Parcels.SoldierSpawn.Location);
 	`log("LongWarX2: EW map part: before, cover points" @ class'LWX2EWMapPieces'.static.CountCover(World, At, Radius) $ ", tiles units cannot enter near its centre" @ class'LWX2EWMapPieces'.static.CountBlocked(World, At) @ "of 49", , 'LongWarX2');
 	class'LWX2EWMapPieces'.static.Place(self, Center, Radius, At, class'LWX2LevelActor', Placed);
-	Screen.bPathingNeedsRebuilt = true;
+	Rebuild(Parcels);
 	default.PlacedAt = At;
 	`log("LongWarX2: EW map part placed at" @ At $ "; the tile data is rebuilt when the battle starts", , 'LongWarX2');
 }
@@ -89,13 +91,26 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 			&& Spawn.Y > World.WorldBounds.Min.Y + 192 && Spawn.Y < World.WorldBounds.Max.Y - 192)
 		{
 			Parcels.SoldierSpawn.SetLocation(Spawn);
-			Screen.BattleDataState.MapData.SoldierSpawnLocation = Spawn;
+			if (Screen != none)
+				Screen.BattleDataState.MapData.SoldierSpawnLocation = Spawn;
 			break;
 		}
 	}
-	Screen.bPathingNeedsRebuilt = true;
+	Rebuild(Parcels);
 	default.PlacedAt = Spawn;
 	`log("LongWarX2: EW map whole:" @ Hidden @ "actors of the generated map hidden; EW's map centred at" @ At $ "; the soldiers' spawn moved to" @ Parcels.SoldierSpawn.Location, , 'LongWarX2');
+}
+
+/** The tile data rebuilt over the new geometry: by the quick launch screen when its battle starts, else now. */
+function Rebuild(XComParcelManager Parcels)
+{
+	if (Screen != none)
+	{
+		Screen.bPathingNeedsRebuilt = true;
+		return;
+	}
+	Parcels.RebuildWorldData();
+	`log("LongWarX2: EW map: tile data rebuilt for the mission", , 'LongWarX2');
 }
 
 defaultproperties
