@@ -12,3 +12,9 @@ static event OnLoadedSavedGameToStrategy()
 {
 	class'XComGameState_LWAirWar'.static.EnsureExists();
 }
+
+/** Templates are built: Long War's classes armed in War of the Chosen's Skirmish Mode. */
+static event OnPostTemplatesCreated()
+{
+	class'LWX2SkirmishWeapons'.static.AddClasses();
+}
