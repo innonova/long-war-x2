@@ -49,7 +49,7 @@ function Handle(string Line, out array<string> Out)
 	case "help":
 		Out.AddItem("ping | screens | geo | decisions | geoscape | run <hours> [all] | act <n> | intercepted <ufo> <outcome 0 crashed 1 destroyed 2 escaped> <ufo hp>");
 		Out.AddItem("resolve <decision> won|captive|lost [stance]: a decision taken without playing it (an interception fought by the air war's rules, a mission's result given; captive: won with an alien taken alive)");
-		Out.AddItem("auto <hours> [mission win %, default 100] [stance 0-2, default 1] [sats]: time at full speed, every decision taken (interceptions fought, missions won at the %), satellites bought and launched with sats");
+		Out.AddItem("auto <hours> [mission win %, default 100] [stance 0-2, default 1] [sats]: time at full speed, every decision taken (interceptions fought, missions won at the %, an alien taken alive when it can be); with sats also satellites bought and launched (the base grown for uplinks), two interceptors kept at home, research kept going");
 		Out.AddItem("squad <kind 1 crash 2 landed 3 abduction 4 terror> [ufo or abduction difficulty] [day]: a squad Long War would send (its species, counted)");
 		Out.AddItem("research [n]: XCOM 2's research list (Long War's techs: hours, affordable), the project under way; with n, that tech started");
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
@@ -423,6 +423,38 @@ function Foundry(XComGameState_LWStrategy S, out array<string> Out)
 	Out.AddItem("done" $ Done);
 }
 
+/** For auto play: the quickest tech XCOM can pay for started, if none is under way. What in What. */
+function bool AutoResearch(out string What)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_Tech Tech;
+	local array<StateObjectReference> Refs;
+	local int i, Best, Hours, BestHours;
+
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	if (XComHQ == none || XComHQ.GetCurrentResearchTech() != none)
+		return false;
+	Refs = XComHQ.GetAvailableTechsForResearch();
+	Best = -1;
+	for (i = 0; i < Refs.Length; i++)
+	{
+		Tech = XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(Refs[i].ObjectID));
+		if (!XComHQ.MeetsRequirmentsAndCanAffordCost(Tech.GetMyTemplate().Requirements, Tech.GetMyTemplate().Cost, XComHQ.ResearchCostScalars, 0.0, Tech.GetMyTemplate().AlternateRequirements))
+			continue;
+		Hours = XComHQ.GetResearchHours(Refs[i]);
+		if (Best < 0 || Hours < BestHours)
+		{
+			Best = i;
+			BestHours = Hours;
+		}
+	}
+	if (Best < 0)
+		return false;
+	XComHQ.SetNewResearchProject(Refs[Best]);
+	What = XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(Refs[Best].ObjectID)).GetMyTemplate().DisplayName @ "(" $ BestHours $ "h)";
+	return true;
+}
+
 /** A Foundry project marked done (a test aid). */
 function FoundryDone(int Id)
 {
@@ -612,7 +644,10 @@ function AutoPlay(int Hours, int WinPct, int Stance, bool bSatellites, out array
 			if (Kinds[k] != 1 || class'LWHangar'.static.BestFor(Indexes[k]) >= 0)
 				break;
 		if (k < Kinds.Length)
-			Out.AddItem("day" @ S.Days() @ ResolveDecision(k, Rand(100) < WinPct, Stance));
+			Out.AddItem("day" @ S.Days() @ ResolveDecision(k, Rand(100) < WinPct, Stance, true));
+		// Research kept going: the quickest affordable tech when none is under way.
+		if (bSatellites && AutoResearch(Why))
+			Out.AddItem("day" @ S.Days() @ "research:" @ Why);
 		else if (Passed == 0)
 			break;
 	}

@@ -40,8 +40,9 @@ single `.`. From this machine:
     tools/test/lw-dump.sh /tmp/state.txt [Unit]  # the whole game state, all fields, to grep
     tools/test/lw.sh 'run 720 all'             # a month with the player answering nothing
     tools/test/lw.sh 'resolve 0 won'           # a decision taken without playing it (air war fought, mission result given)
-    tools/test/lw.sh 'auto 2160 70 2 sats'     # three months at full speed: every decision taken, missions won 70 %,
-                                               # interceptions fought on Aggressive, satellites bought (about a second)
+    tools/test/lw.sh 'auto 2160 70 2 sats'     # three months at full speed: every decision taken, missions won 70 % (a captive when it can),
+                                               # interceptions fought on Aggressive, satellites bought, the base grown for uplinks,
+                                               # interceptors replaced, research kept going (about a second)
     tools/test/lw.sh research 'research 0'     # XCOM 2's research list (Long War's techs, hours, affordable); one started
     tools/test/lw.sh builds 'build 215 2'      # engineering: what can be built (Long War's item numbers); 2 laser rifles begun
     tools/test/lw.sh 'give AlienAlloy 50'      # items put in the stores (a test aid; any item template)
