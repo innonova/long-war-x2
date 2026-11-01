@@ -83,3 +83,91 @@ fragments in Long War's way. Research that needs them can then start.
 - **Research gates** (fragments, consumed items, held or captured) are
   still not enforced: next, once kills bring fragments and corpses.
 - **Selling artifacts** (Long War's grey market).
+
+## Report (2026-11-01, phase 2: the aliens, their loot; research's gates enforced)
+
+**Long War's squads** (`LWAlienSquads`, ported from `XGStrategyAI` and
+XComGame's `XGBattleDesc`):
+- **The squad code:**
+  - every UFO type's crew (`DetermineSmallScoutSquad` …
+    `DetermineOverseerSquad`), abductions by difficulty, terror by the
+    terror missions taken;
+  - the pods, the aliens shared out over them, the species chosen by pod
+    type from Long War's table by month (`GetPossibleAliens`);
+  - each pod's supports (`GetSupportingAlien`, with the month-dependent
+    "+32" sets, and `GetSupportAlien`).
+- **A landed UFO's crew is chosen a month ahead**, as in Long War.
+- **Long War's hand-patched code packs counts into its pods' fields.**
+  Read here as: the main alien, one more of it when its flag is set,
+  then up to two kinds of support. Each step adds one alien, so the
+  pod's size comes out right.
+- **What is not kept yet:** the act (1, so Outsider commanders) and
+  alien bases assaulted (none).
+- **Abduction difficulty** is Long War's: act, the country's panic,
+  chance.
+
+**What the aliens leave** (`XGSummaryUI.CollectArtifactsFromDeadAliens`,
+`XGUnit`, `GenerateWeaponFragments`; a species table generated into
+`XComLWStrategy.ini`):
+- each one's corpse;
+- each weapon's fragments × `FragmentBalance`, at least one;
+- the mechanical aliens' elerium, alloys and meld;
+- 0.3 meld for every other kill;
+- an abduction pays Long War's cash × its difficulty.
+
+On a mission won (real, or `resolve` and `auto`), every alien of the
+squad counts as killed, none by an explosion and none taken alive, since
+our missions do not tell yet. The squad is drawn when the mission comes
+back, not when it appears. Corpses are items with Long War's names.
+
+**Research's gates, enforced** (`X2StrategyElement_LWTechs`):
+- weapon fragments, and the items a tech consumes (its `eItemReq` ×
+  `iNumItems`: Xenobiology, 5 Sectoid corpses), are costs;
+- "one of these in stores" and "one of these techs" become XCOM 2's
+  alternate requirements, crossed;
+- the UFO analyses ask for their UFO type captured: a hidden marker item,
+  given when a crash site or landed UFO of it is taken;
+- "must have been held" is asked as "held now", since XCOM 2 keeps no
+  archive. The two are the same whenever the tech consumes the item.
+
+**Checked** (new campaign without its first mission, control port):
+- **Sample squads:**
+  - an early Scout crash: an Outsider with 6 Sectoids and Drones;
+  - landed (a month ahead): Floaters, Thin Men, a Seeker;
+  - a landed Battleship on day 100: 30 aliens;
+  - the first terror site: 4 Chryssalids and 8 Floaters, as Long War's
+    code sets.
+- **Loot:** three months with every mission won left, among others, 54
+  Sectoid and 58 Floater corpses, 185 weapon fragments, 49 meld and 249
+  elerium.
+- **Research:**
+  - at the start only Alien Weaponry, Alien Materials and Alien Computers
+    show, none affordable, and Xenobiology is hidden until a corpse is
+    held;
+  - after a month of missions won, Xenobiology shows, and Weaponry and
+    Materials can be paid for;
+  - Alien Computers waits for a navigation computer.
+
+### Decisions
+
+- **Every alien of the squad counts as killed on a win.** Until our
+  missions are Long War's (its aliens on its maps), the squad is Long
+  War's strategic answer to "who was there", and the fight's details
+  (explosions, stuns, retreats) are not ours to read yet.
+- **Long War's code, ported literally where it is odd.**
+  - Chryssalids are possible in secondary pods from month 0.
+  - An upgraded Sectoid pod can bring an EXALT Elite.
+  - The minimum pod count uses Long War's `(n % f) * 2`.
+  - The person's memory of playing is the check.
+
+### Left open
+
+- **Captives and alien weapons** (from aliens taken alive): the
+  interrogations and the plasma research that ask for them stay locked
+  until missions can stun.
+- **The tactical side:** explosions destroying corpses and weapons, and
+  aliens left behind.
+- **Terror rewards**, and the first mission's loot. A campaign that skips
+  its first mission starts with no corpses, so Xenobiology waits for the
+  first win.
+- **What only sells:** damaged artifacts, and the grey market.

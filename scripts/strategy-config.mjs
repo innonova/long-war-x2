@@ -166,6 +166,46 @@ out.push(
   `+Survive=(Item=AlienStasisTank, Percent=${one('UFO_STASIS_SURVIVE')})`,
   `+Survive=(Item=AlienSurgery, Percent=${one('UFO_SURGERY_SURVIVE')})`,
 )
+// What each alien leaves when killed, not by an explosion (features/lw-loot.md): its corpse
+// (XGGameData.CharToCorpse), its weapons' fragments (XGTacticalGameCore.GenerateWeaponFragments by the
+// weapon's base type, x FragmentBalance), the elerium, alloys and meld points a mechanical alien leaves
+// (XGSummaryUI.CollectArtifactsFromDeadAliens; ten points make one), meld for every other kill.
+const ITEMS = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'xcom-ew-lw-tree', 'data', 'enums.json'), 'utf8')).enums.EItemType
+const CORPSE = { 1: 131, 2: 133, 3: 132, 4: 134, 5: 136, 6: 138, 7: 139, 8: 142, 9: 135, 10: 137, 11: 140, 12: 143, 19: 143, 13: 144, 15: 141, 16: 146, 17: 147, 21: 187, 23: 188 }
+const FRAGMENTS_BY_BASE = { PlasmaPistol: 8, PlasmaLightRifle: 8, PlasmaAssaultRifle: 12, HeavyPlasma: 20, AlienGrenade: 4, CyberdiscWeapon: 16, DroneBeam: 4, TargetingModule: 4, SectopodChestCannon: 24, MechtoidPlasmaCannon: 14 }
+const baseOf = (item) =>
+  /PlasmaPistol/.test(item) ? 'PlasmaPistol' : /LightRifle|OutsiderWeapon/.test(item) ? 'PlasmaLightRifle' : /AssaultRifle/.test(item) ? 'PlasmaAssaultRifle'
+    : /HeavyPlasma/.test(item) ? 'HeavyPlasma' : /Grenade/.test(item) ? 'AlienGrenade' : item.replace(/^eItem_/, '')
+const loadouts = readFileSync(join(dirname(process.argv[2]), 'DefaultLoadouts.ini'), 'latin1')
+const loadoutOf = Object.fromEntries([...loadouts.matchAll(/^LoadoutTemplates=\(eLoadoutType=(\w+),Inventory=\((.*)\)\)/gm)].map((m) => [m[1], [...m[2].matchAll(/=(eItem_\w+)/g)].map((x) => x[1])]))
+const CHAR = ['None', 'Civilian', 'Soldier', 'Tank', 'Sectoid', 'Floater', 'ThinMan', 'Muton', 'Cyberdisc', 'SectoidCommander', 'FloaterHeavy', 'MutonElite', 'Ethereal', 'Chryssalid', 'Zombie', 'MutonBerserker', 'Sectopod', 'Drone', 'Outsider', 'EtherealUber', 'BattleScanner', 'Mechtoid', 'Mechtoid_Alt', 'Seeker']
+const charLoadout = {}
+for (const m of loadouts.matchAll(/^CharacterLoadouts=\(eCharacterType=eChar_(\w+),eLoadoutType=(\w+)\)/gm)) (charLoadout[m[1].toLowerCase()] ??= []).push(m[2])
+const MECH = {
+  5: [one('HFLOATER_ELERIUM') / 100 | 0, one('HFLOATER_ALLOYS') / 100 | 0, one('HFLOATER_MELD') / 100 | 0],
+  10: [one('HFLOATER_ELERIUM') % 100, one('HFLOATER_ALLOYS') % 100, one('HFLOATER_MELD') % 100],
+  23: [one('DRONE_ELERIUM') / 100 | 0, one('DRONE_ALLOYS') / 100 | 0, 0],
+  17: [one('DRONE_ELERIUM') % 100, one('DRONE_ALLOYS') % 100, 0],
+  8: [one('CYBERDISC_ELERIUM'), one('CYBERDISC_ALLOYS'), 0],
+  16: [one('SECTOPOD_ELERIUM'), one('SECTOPOD_ALLOYS'), 0],
+  21: [one('MECHTOID_ELERIUM'), one('MECHTOID_ALLOYS'), one('MECHTOID_MELD')],
+}
+out.push(
+  "; Each alien species: the corpse it leaves, each weapon's fragments (x FragmentBalance by difficulty, at least",
+  '; one), the elerium, alloys and meld points it leaves (ten points make one; EXALT and the rest: meld only).',
+  ...four('FragmentBalance').map((v, i) => `FragmentBalance[${i}]=${v}`),
+  ...CHAR.map((name, id) => [name, id]).filter(([, id]) => id >= 4).map(([name, id]) => {
+    const [el, al, me] = MECH[id] ?? [0, 0, one('CB_FUTURECOMBAT_BONUS')]
+    const corpse = CORPSE[id] ? ITEMS[CORPSE[id]].replace(/^eItem_/, '') : ''
+    // A species with several loadouts (the Muton): the first one's weapons.
+    const items = loadoutOf[(charLoadout[name.toLowerCase()] ?? [])[0]] ?? []
+    const frags = items.map((i) => FRAGMENTS_BY_BASE[baseOf(i)] ?? 0).filter((f) => f > 0)
+    return `+Species=(Char=${id}, Name=${name}${corpse ? `, Corpse=${corpse}` : ''}${frags.length ? `, Fragments=(${frags.join(',')})` : ''}, Elerium=${el}, Alloys=${al}, Meld=${me}${id === 21 ? ', ExtraCorpse=SectoidCorpse' : ''})`
+  }),
+  `; An abduction won pays cash (XGStrategyAI.DetermineAbductionReward), x 0.8, 0.9, 1, 1.15 by its difficulty.`,
+  `AbductionRewardCash=${one('ABDUCTION_REWARD_CASH')}`,
+  ...[28, 29, 30, 31].map((id) => `+Species=(Char=${id}, Name=ExaltElite${id}, Elerium=0, Alloys=0, Meld=${one('CB_FUNDING_BONUS')})`),
+)
 if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk))
 console.log(out.join('\r\n'))
 

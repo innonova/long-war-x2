@@ -34,6 +34,9 @@ for (const l of lines) {
 }
 
 const pointsPerDay = one('TECH_TIME_BALANCE') * 72
+// Long War's items by number (EItemType), named as the mod's items are (X2Item_LWArtifacts.ItemFor).
+const ITEM = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'xcom-ew-lw-tree', 'data', 'enums.json'), 'utf8')).enums.EItemType
+const itemName = (id) => ({ AlienAlloys: 'Alloys', Elerium115: 'Elerium' })[ITEM[id].replace(/^eItem_/, '')] ?? ITEM[id].replace(/^eItem_/, '')
 
 // A picture for XCOM 2's research screen, by kind of tech: XCOM 2's own (the player has the game).
 const R = (n) => `img:///UILibrary_StrategyImages.ResearchTech.${n}`
@@ -69,14 +72,15 @@ const out = [
   '; Each research credit\'s share off a covered tech (%), by credit (XGTechTree.BuildResearchCredits).',
   ...Object.entries(tree.credit_bonus).map(([k, v]) => `+CreditShare=(Credit=${k}, Percent=${v})`),
   '; Each tech: Long War\'s id and enum; the techs it requires (all), and of which one is enough; its',
-  '; time in TechBalance days and costs; the credits that cover it, and the one it grants; what must',
-  '; have been held (EverHad), be in stores (InStores, any of) or captured (Captured, a UFO type).',
+  '; time in TechBalance days and costs (Items: of its EverHad item, consumed); the credits that cover it, and',
+  '; the one it grants; what must have been held (EverHad), be in stores (InStores, any of), or captured (a UFO type).',
   ...tree.techs.map((t) => {
     const b = balance.get(t.id) ?? { time: 0, alloys: 0, elerium: 0, fragments: 0, items: 0 }
     return (
       `+Techs=(Id=${t.id}, Enum=${t.enum}, ${arr('Requires', t.requires)}${arr('AnyOf', t.any_of)}Days=${b.time}, Alloys=${b.alloys}, Elerium=${b.elerium}, ` +
       `Fragments=${b.fragments}, Items=${b.items}, ${arr('Credits', t.credits)}GrantsCredit=${t.grants_credit ?? 0}, ` +
-      `${arr('EverHad', items(t.ever_had))}${arr('InStores', items(t.in_stores))}${arr('Captured', items(t.captured))}Image="${imageFor(t)}")`
+      `${t.ever_had ? `EverHad=${itemName(t.ever_had.id)}, ` : ''}${arr('InStores', items(t.in_stores).map(itemName))}` +
+      `${t.captured ? `CapturedUfo=${t.captured.id}, ` : ''}Image="${imageFor(t)}")`
     )
   }),
 ]

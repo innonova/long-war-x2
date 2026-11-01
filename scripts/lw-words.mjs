@@ -148,14 +148,14 @@ export function makeTechWords({ strategyLoc, techs }) {
 export const ARTIFACTS = ['UFONavigation', 'UFOPowerSource', 'AlienSurgery', 'AlienStasisTank', 'AlienFood', 'AlienEntertainment', 'UFOFusionLauncher', 'PsiLink', 'HyperwaveBeacon', 'Meld']
 
 /**
- * Long War's words for its artifacts (features/lw-loot.md): names from its XComGame.int
+ * Long War's words for its artifacts and, in `more`, its corpses (features/lw-loot.md): names from its XComGame.int
  * (m_aItemNames, m_aItemNamesPlural), summaries from its XComStrategyGame.int (ItemTypeSummary).
  */
-export function makeItemWords({ loc, strategyLoc }) {
+export function makeItemWords({ loc, strategyLoc, more = [] }) {
   const one = (text, key, k) => text.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1]
   const out = []
   let named = 0
-  for (const a of ARTIFACTS) {
+  for (const a of [...ARTIFACTS, ...more.filter((m) => !ARTIFACTS.includes(m))]) {
     const name = one(loc, 'm_aItemNames', `eItem_${a}`)
     if (!name) continue
     named++

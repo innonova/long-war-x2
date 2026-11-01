@@ -50,6 +50,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("ping | screens | geo | decisions | geoscape | run <hours> [all] | act <n> | intercepted <ufo> <outcome 0 crashed 1 destroyed 2 escaped> <ufo hp>");
 		Out.AddItem("resolve <decision> won|lost [stance]: a decision taken without playing it (an interception fought by the air war's rules, a mission's result given)");
 		Out.AddItem("auto <hours> [mission win %, default 100] [stance 0-2, default 1] [sats]: time at full speed, every decision taken (interceptions fought, missions won at the %), satellites bought and launched with sats");
+		Out.AddItem("squad <kind 1 crash 2 landed 3 abduction 4 terror> [ufo or abduction difficulty] [day]: a squad Long War would send (its species, counted)");
 		Out.AddItem("research [n]: XCOM 2's research list (Long War's techs: hours, affordable), the project under way; with n, that tech started");
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
@@ -118,6 +119,9 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem("ERR not on the Avenger");
 		else
 			Out.AddItem(Geo.Act(Args.Length > 1 ? int(Args[1]) : 0) ? "ok" : "ERR no such decision");
+		return;
+	case "squad":
+		Squad(S, Args.Length > 1 ? int(Args[1]) : 1, Args.Length > 2 ? int(Args[2]) : 4, Args.Length > 3 ? int(Args[3]) : S.Days(), Out);
 		return;
 	case "resolve":
 		if (Args.Length < 3)
@@ -224,6 +228,31 @@ function string Press(int Code)
 	Pres().ScreenStack.OnInput(Code, class'UIUtilities_Input'.const.FXS_ACTION_PRESS);
 	Pres().ScreenStack.OnInput(Code, class'UIUtilities_Input'.const.FXS_ACTION_RELEASE);
 	return "pressed" @ Code @ "on" @ Before;
+}
+
+/** A squad as Long War would make it now (or on the given day): its species, counted. */
+function Squad(XComGameState_LWStrategy S, int Kind, int Which, int Day, out array<string> Out)
+{
+	local array<int> Aliens, Kinds, Counts;
+	local int a, k;
+	local string Line;
+
+	Aliens = class'LWAlienSquads'.static.SquadFor(Kind, Which, Day, S.AlienAggression, S.AlienResources, Which, S.TerrorsTaken);
+	foreach Aliens(a)
+	{
+		k = Kinds.Find(a);
+		if (k == INDEX_NONE)
+		{
+			Kinds.AddItem(a);
+			Counts.AddItem(1);
+		}
+		else
+			Counts[k]++;
+	}
+	for (k = 0; k < Kinds.Length; k++)
+		Line @= Counts[k] @ (class'LWStrategyRules'.default.Species.Find('Char', Kinds[k]) != INDEX_NONE
+			? string(class'LWStrategyRules'.default.Species[class'LWStrategyRules'.default.Species.Find('Char', Kinds[k])].Name) : string(Kinds[k])) $ ",";
+	Out.AddItem("squad of" @ Aliens.Length $ ":" $ Line);
 }
 
 /** XCOM 2's research: the techs available, with their hours and whether they can be paid for; or one started (as the research screen starts it). */

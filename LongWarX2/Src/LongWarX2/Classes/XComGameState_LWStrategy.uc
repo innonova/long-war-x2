@@ -65,6 +65,8 @@ var int Scientists;
 var int Engineers;
 /** The research credits held (LWResearchRules.CreditShare): interrogations done. */
 var array<int> Credits;
+/** Terror missions XCOM has taken (Long War's GetNumMissionsTaken(9): its terror squads grow with them). */
+var int TerrorsTaken;
 /** Enough countries have left: the campaign is lost (the Geoscape shows XCOM 2's defeat). */
 var bool bLost;
 /** Satellites built and waiting for a country, and the hours the ones in the works are ready. */
@@ -918,6 +920,14 @@ static function MissionBack(bool bWon)
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission back");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	Country = S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Country : S.Sites[S.PendingIndex].Country;
+	// What the aliens killed leave (all of them, a mission won: our missions do not count them yet).
+	if (bWon)
+		S.GiveKillLoot(NewGameState, class'LWAlienSquads'.static.SquadFor(S.PendingKind, S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Ufo : 0, S.Days(),
+			S.AlienAggression, S.AlienResources, S.PendingKind == 3 ? S.AbductionDifficulty(Country) : 0, S.TerrorsTaken));
+	if (S.PendingKind == 4)
+		S.TerrorsTaken++;
+	if (S.PendingKind == 3 && bWon)
+		S.GiveAbductionReward(NewGameState, Country);
 	if (S.PendingKind == 1)
 	{
 		if (bWon)
@@ -1014,7 +1024,93 @@ function GiveSalvage(XComGameState NewGameState, int Ufo, bool bCrashed)
 	Elerium = Max(0, int(Elerium * Bonus));
 	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Alloys', Alloys);
 	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Elerium', Elerium);
+	// The UFO type counts as captured (the UFO analyses ask for it).
+	if (class'UIUtilities_Strategy'.static.GetXComHQ().GetItemByName(class'X2Item_LWArtifacts'.static.CapturedMarker(Ufo)) == none)
+		class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, class'X2Item_LWArtifacts'.static.CapturedMarker(Ufo), 1);
 	Note("Salvage:" @ Alloys @ "alloys," @ Elerium @ "elerium," $ Got);
+}
+
+/**
+ * What the aliens of a mission won leave (XGSummaryUI.CollectArtifactsFromDeadAliens, XGUnit's death):
+ * each its corpse, its weapons' fragments (x FragmentBalance, at least one each), the elerium, alloys
+ * and meld points of the mechanical ones and meld for the rest (ten points make one). As if none
+ * was killed by an explosion and none taken alive: our missions do not tell yet.
+ */
+function GiveKillLoot(XComGameState NewGameState, array<int> Squad)
+{
+	local LWStrategyRules.LWSpecies Sp;
+	local array<name> Corpses;
+	local array<int> CorpseCounts;
+	local int a, k, f, d, Fragments, Elerium, Alloys, Meld;
+	local string Got;
+
+	d = class'LWStrategyRules'.static.Difficulty();
+	foreach Squad(a)
+	{
+		k = class'LWStrategyRules'.default.Species.Find('Char', a);
+		if (k == INDEX_NONE)
+			continue;
+		Sp = class'LWStrategyRules'.default.Species[k];
+		foreach Sp.Fragments(f)
+			Fragments += Max(1, int(f * class'LWStrategyRules'.default.FragmentBalance[d]));
+		Elerium += Sp.Elerium;
+		Alloys += Sp.Alloys;
+		Meld += Sp.Meld;
+		AddCount(Corpses, CorpseCounts, Sp.Corpse);
+		AddCount(Corpses, CorpseCounts, Sp.ExtraCorpse);
+	}
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'WeaponFragment', Fragments);
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Elerium', Elerium / 10);
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Alloys', Alloys / 10);
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Meld', Meld / 10);
+	for (k = 0; k < Corpses.Length; k++)
+	{
+		class'X2Item_LWArtifacts'.static.Give(NewGameState, Corpses[k], CorpseCounts[k]);
+		Got @= CorpseCounts[k] @ Corpses[k] $ ",";
+	}
+	Note("The aliens killed (" $ Squad.Length $ ") left:" @ Fragments @ "weapon fragments," @ Elerium / 10 @ "elerium," @ Alloys / 10 @ "alloys," @ Meld / 10 @ "meld," $ Got);
+}
+
+static function AddCount(out array<name> Names, out array<int> Counts, name N)
+{
+	local int k;
+
+	if (N == '')
+		return;
+	k = Names.Find(N);
+	if (k == INDEX_NONE)
+	{
+		Names.AddItem(N);
+		Counts.AddItem(1);
+	}
+	else
+		Counts[k]++;
+}
+
+/** An abduction's difficulty (XGStrategyAI.GetAbductionDifficulty): the act (1 for now) and the country's panic, 0-3. */
+function int AbductionDifficulty(int Country)
+{
+	local int Diff;
+
+	Diff = 1 - 1 + (Countries[Country].Panic + 1) / 20 - 1 + Rand(2);
+	if (Days() > 210)
+		Diff += Rand(2);
+	return Clamp(Diff, 0, 3);
+}
+
+/** An abduction won: Long War's cash (DetermineAbductionReward: every abduction pays cash), by its difficulty. */
+function GiveAbductionReward(XComGameState NewGameState, int Country)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local int Cash, Diff;
+
+	Diff = AbductionDifficulty(Country);
+	Cash = int(class'LWStrategyRules'.default.AbductionRewardCash * (Diff == 0 ? 0.8 : (Diff == 1 ? 0.9 : (Diff == 2 ? 1.0 : 1.15))));
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	if (XComHQ == none)
+		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	XComHQ.AddResource(NewGameState, 'Supplies', Cash);
+	Note("The abduction's reward:" @ class'LWStrategyRules'.static.Money(Cash) $ ".");
 }
 
 // --- Satellites ------------------------------------------------------------------------------

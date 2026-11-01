@@ -28,17 +28,50 @@ static function array<X2DataTemplate> CreateTemplates()
 	local X2ItemTemplate Template;
 	local array<name> All;
 	local name A;
+	local int i, j;
 
 	All = Artifacts();
+	// And the corpses (LWStrategyRules.Species), and every item research asks for (LWResearchRules).
+	for (i = 0; i < class'LWStrategyRules'.default.Species.Length; i++)
+		AddName(All, class'LWStrategyRules'.default.Species[i].Corpse);
+	for (i = 0; i < class'LWResearchRules'.default.Techs.Length; i++)
+	{
+		AddName(All, class'LWResearchRules'.default.Techs[i].EverHad);
+		for (j = 0; j < class'LWResearchRules'.default.Techs[i].InStores.Length; j++)
+			AddName(All, class'LWResearchRules'.default.Techs[i].InStores[j]);
+	}
 	foreach All(A)
 	{
+		if (ItemFor(A) != name("LWItem_" $ A))
+			continue; // XCOM 2's own
 		`CREATE_X2TEMPLATE(class'X2ItemTemplate', Template, ItemFor(A));
 		Template.ItemCat = 'resource';
 		Template.strImage = "img:///UILibrary_StrategyImages.X2InventoryIcons.Inv_Elerium_Core";
 		Template.CanBeBuilt = false;
 		Templates.AddItem(Template);
 	}
+	// A UFO type captured (a crash site or landed UFO of it taken): a marker research asks for, not shown.
+	for (i = 4; i <= 14; i++)
+	{
+		`CREATE_X2TEMPLATE(class'X2ItemTemplate', Template, CapturedMarker(i));
+		Template.ItemCat = 'resource';
+		Template.HideInInventory = true;
+		Template.CanBeBuilt = false;
+		Templates.AddItem(Template);
+	}
 	return Templates;
+}
+
+static function AddName(out array<name> All, name N)
+{
+	if (N != '' && All.Find(N) == INDEX_NONE)
+		All.AddItem(N);
+}
+
+/** The marker for a UFO type captured. */
+static function name CapturedMarker(int Ufo)
+{
+	return name("LWCapturedUfo" $ Ufo);
 }
 
 /** The XCOM 2 item for a Long War artifact: XCOM 2's own for alloys, elerium and fragments. */
@@ -56,6 +89,12 @@ static function name ItemFor(name Artifact)
 /** Some of an item added to XCOM's stores (a resource's count raised; one not held yet made). */
 static function Give(XComGameState NewGameState, name Artifact, int Count)
 {
+	GiveItem(NewGameState, ItemFor(Artifact), Count);
+}
+
+/** Some of an item, by its XCOM 2 template name, added to XCOM's stores. */
+static function GiveItem(XComGameState NewGameState, name ItemName, int Count)
+{
 	local XComGameState_HeadquartersXCom XComHQ;
 	local XComGameState_Item Item;
 	local X2ItemTemplate Template;
@@ -65,14 +104,14 @@ static function Give(XComGameState NewGameState, name Artifact, int Count)
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
 	if (XComHQ == none)
 		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
-	Item = XComHQ.GetItemByName(ItemFor(Artifact));
+	Item = XComHQ.GetItemByName(ItemName);
 	if (Item != none)
 	{
 		Item = XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Item.ObjectID));
 		Item.Quantity += Count;
 		return;
 	}
-	Template = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(ItemFor(Artifact));
+	Template = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(ItemName);
 	if (Template == none)
 		return;
 	Item = Template.CreateInstanceFromTemplate(NewGameState);

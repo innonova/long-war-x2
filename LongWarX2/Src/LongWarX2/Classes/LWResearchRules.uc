@@ -16,9 +16,12 @@ struct LWTechDef
 	var int Items;
 	var array<int> Credits;
 	var int GrantsCredit;
-	var array<int> EverHad;
-	var array<int> InStores;
-	var array<int> Captured;
+	/** The item that must have been held (and that Items counts, consumed). */
+	var name EverHad;
+	/** Items of which one must be in stores. */
+	var array<name> InStores;
+	/** A UFO type that must have been captured (a crash site or landed UFO of it taken). */
+	var int CapturedUfo;
 	var string Image;
 };
 

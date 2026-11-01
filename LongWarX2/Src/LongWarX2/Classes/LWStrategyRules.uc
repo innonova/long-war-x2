@@ -105,6 +105,22 @@ var config int EleriumPerPowerSource[4];
 var config float MinWreckedAlloys, MaxWreckedAlloys, MinLostWreckedElerium, MaxLostWreckedElerium;
 /** Each artifact's chance (%) to come through a crash (XGStrategyAI.DetermineCrashLoot). */
 var config array<LWSurvive> Survive;
+
+/** What an alien species leaves when killed (not by an explosion): XGSummaryUI.CollectArtifactsFromDeadAliens. */
+struct LWSpecies
+{
+	var int Char;
+	var name Name;
+	var name Corpse;
+	var name ExtraCorpse;
+	var array<int> Fragments;
+	var int Elerium;
+	var int Alloys;
+	var int Meld;
+};
+var config array<LWSpecies> Species;
+var config float FragmentBalance[4];
+var config int AbductionRewardCash;
 /** The campaign is lost when this many countries have left (Long War's LOSE_CONDITION_NUM_DESERTERS). */
 var config int LoseCountries;
 

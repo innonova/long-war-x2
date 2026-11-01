@@ -126,3 +126,9 @@ build's techs "instant". The generators now leave empty arrays out.
   with phases 2 to 4.
 - **Existing campaigns** started before this build have no state for
   Long War's techs; only new campaigns do.
+
+## Report (2026-11-01, research's gates)
+
+Weapon fragments, consumed items, "one of these in stores", UFO types
+captured, and "held" (asked as "held now") are now enforced, since
+missions bring loot. See `lw-loot.md`, phase 2.

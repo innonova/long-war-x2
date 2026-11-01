@@ -1,9 +1,11 @@
 // Long War's techs as XCOM 2's (features/lw-research.md): a tech template each, from LWResearchRules,
 // researched on XCOM 2's research screen at Long War's rate (XComGameState_LWStrategy.SyncResearch).
 // Its points are Long War's (TechBalance days x 720); it requires Long War's techs (all of Requires,
-// one of AnyOf: XCOM 2's alternate requirements); it costs Long War's alloys and elerium in XCOM 2's
-// own resources. Not yet: weapon fragments, the items a tech consumes, and what must have been held
-// or captured first: missions bring no loot yet. Its words are Long War's, written on the player's
+// one of AnyOf) and items (one of InStores; the item it counts if it consumes none; a marker for a UFO
+// type captured), XCOM 2's alternate requirements making the "one of"s; it costs Long War's alloys,
+// elerium, weapon fragments and the items it consumes, in XCOM 2's own resources and the mod's items.
+// What must have been held is asked as held now (XCOM 2 keeps no archive of what was held): the same
+// whenever the tech consumes it. Its words are Long War's, written on the player's
 // machine (lw-words.mjs makeTechWords). XCOM 2's own techs are hidden (HideXCom2Techs).
 class X2StrategyElement_LWTechs extends X2StrategyElement;
 
@@ -20,27 +22,40 @@ static function array<X2DataTemplate> CreateTemplates()
 static function X2TechTemplate TechTemplate(LWResearchRules.LWTechDef T)
 {
 	local X2TechTemplate Template;
-	local StrategyRequirement Alternate;
+	local StrategyRequirement Base, Option;
+	local array<StrategyRequirement> Options;
 	local ArtifactCost Resource;
-	local int i;
+	local int i, j, nTechs, nItems;
 
 	`CREATE_X2TEMPLATE(class'X2TechTemplate', Template, class'LWResearchRules'.static.TemplateFor(T));
 	Template.PointsToComplete = T.Days * class'LWResearchRules'.default.PointsPerDay;
 	Template.strImage = T.Image;
 	Template.SortingTier = 1;
 	for (i = 0; i < T.Requires.Length; i++)
-		Template.Requirements.RequiredTechs.AddItem(class'LWResearchRules'.static.TemplateForId(T.Requires[i]));
-	// One of AnyOf as well: the first in the requirements, each other as an alternative with the same rest.
-	for (i = 0; i < T.AnyOf.Length; i++)
+		Base.RequiredTechs.AddItem(class'LWResearchRules'.static.TemplateForId(T.Requires[i]));
+	if (T.EverHad != '' && T.Items <= 0)
+		Base.RequiredItems.AddItem(class'X2Item_LWArtifacts'.static.ItemFor(T.EverHad));
+	if (T.CapturedUfo > 0)
+		Base.RequiredItems.AddItem(class'X2Item_LWArtifacts'.static.CapturedMarker(T.CapturedUfo));
+	// The "one of"s: a requirement for each tech of AnyOf with each item of InStores; the first is the
+	// tech's requirements, the others XCOM 2's alternates.
+	nTechs = Max(1, T.AnyOf.Length);
+	nItems = Max(1, T.InStores.Length);
+	for (i = 0; i < nTechs; i++)
 	{
-		if (i == 0)
-			continue;
-		Alternate = Template.Requirements;
-		Alternate.RequiredTechs.AddItem(class'LWResearchRules'.static.TemplateForId(T.AnyOf[i]));
-		Template.AlternateRequirements.AddItem(Alternate);
+		for (j = 0; j < nItems; j++)
+		{
+			Option = Base;
+			if (T.AnyOf.Length > 0)
+				Option.RequiredTechs.AddItem(class'LWResearchRules'.static.TemplateForId(T.AnyOf[i]));
+			if (T.InStores.Length > 0)
+				Option.RequiredItems.AddItem(class'X2Item_LWArtifacts'.static.ItemFor(T.InStores[j]));
+			Options.AddItem(Option);
+		}
 	}
-	if (T.AnyOf.Length > 0)
-		Template.Requirements.RequiredTechs.AddItem(class'LWResearchRules'.static.TemplateForId(T.AnyOf[0]));
+	Template.Requirements = Options[0];
+	for (i = 1; i < Options.Length; i++)
+		Template.AlternateRequirements.AddItem(Options[i]);
 	if (T.Alloys > 0)
 	{
 		Resource.ItemTemplateName = 'AlienAlloy';
@@ -52,6 +67,18 @@ static function X2TechTemplate TechTemplate(LWResearchRules.LWTechDef T)
 		Resource.ItemTemplateName = 'EleriumDust';
 		Resource.Quantity = T.Elerium;
 		Template.Cost.ResourceCosts.AddItem(Resource);
+	}
+	if (T.Fragments > 0)
+	{
+		Resource.ItemTemplateName = 'WeaponFragment';
+		Resource.Quantity = T.Fragments;
+		Template.Cost.ResourceCosts.AddItem(Resource);
+	}
+	if (T.EverHad != '' && T.Items > 0)
+	{
+		Resource.ItemTemplateName = class'X2Item_LWArtifacts'.static.ItemFor(T.EverHad);
+		Resource.Quantity = T.Items;
+		Template.Cost.ArtifactCosts.AddItem(Resource);
 	}
 	if (T.GrantsCredit > 0)
 		Template.ResearchCompletedFn = CreditGranted;
