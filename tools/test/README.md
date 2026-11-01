@@ -17,6 +17,9 @@ From this machine, `tools/test/on.sh '<line>' …` runs lines in the desktop ses
 experiment 2: build, start, the Tactical Quick Launch screen, a generated map (the screen
 draws the world only then), the debug camera held by the mod at the view in
 `Config/XComLWAirWar.ini`, a screenshot copied back.
+`tools/test/campaign-mission.sh <png> [--launch]` does the same for a campaign:
+a new test campaign, the LONG WAR HQ, and with `--launch` a mission played
+until the soldiers can move.
 
 The game runs windowed at 1600x900, so a whole screenshot shows it; clicks
 are given in the UI's own 1920x1080 coordinates and scaled to the window.
