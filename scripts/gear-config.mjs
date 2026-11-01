@@ -10,7 +10,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { ARMOURS, CLASS_PROPERTY, FAMILIES, INFINITE, RANGE, STARTING_ARMOUR, TECH, TIERS, categoryFor, familyOf, itemTemplate, readArmours, readBalance, readWeapons, startingKit } from './lw-gear.mjs'
+import { ARMOURS, CLASS_PROPERTY, FAMILIES, INFINITE, RANGE, SMALL, STARTING_ARMOUR, TECH, TIERS, equippable, smallTemplate, categoryFor, familyOf, itemTemplate, readArmours, readBalance, readWeapons, startingKit } from './lw-gear.mjs'
 
 const core = readFileSync(process.argv[2], 'latin1')
 const treeData = (f) => JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'xcom-ew-lw-tree', 'data', f), 'utf8'))
@@ -56,6 +56,25 @@ for (const [id, look] of Object.entries(ARMOURS)) {
   )
 }
 out.push(`StartingArmor=${STARTING_ARMOUR}`)
+// The small items and the Rocketeer's launcher (lw-gear.mjs SMALL): Long War's numbers from their Weapons= lines.
+out.push(
+  '; SmallItems: Kind (Grenade, Medikit, Launcher, Rocket, Passive); Look: the XCOM 2 item whose abilities, effects and look it',
+  '; takes; Damage, Environment; Radius and Range in tiles; Aim, Crit, HP while carried; Ammo: shots x this; Classes: who may carry it.',
+)
+for (const x of SMALL) {
+  const w = weapons.get(x.item)
+  if (!w) throw new Error(`no Weapons= line for small item ${x.item}`)
+  const n = (k) => Number(w[k] ?? 0)
+  const classes = Object.entries(CLASS_PROPERTY).filter(([, p]) => equippable(p, w.props.includes('AnyClass') || w.props.length === 0 ? ['AnyClass'] : w.props, x.item)).map(([c]) => c)
+  const anyone = classes.length === Object.keys(CLASS_PROPERTY).length
+  out.push(
+    `+SmallItems=(Item=${x.item}, Template=${smallTemplate(x.item)}, Enum=${ITEMS[x.item]}, Kind=${x.kind}, Look=${x.look}, Damage=${Math.max(0, n('iDamage'))}, Environment=${n('iEnvironmentDamage')}, ` +
+      `Radius=${Math.round(n('iRadius') / 96 - 0.01)}, Range=${Math.round(n('iRange') / 1.5)}, Aim=${n('iOffenseBonus')}, Crit=${x.crit ?? n('iCritical')}, HP=${n('iHPBonus')}, ` +
+      `Ammo=${x.ammo ?? 1}, Pierce=${x.pierce ?? 0}, CritAgainstReaction=${x.critAgainstReaction ?? 0}, Infinite=${INFINITE.includes(x.item)}` +
+      (anyone ? '' : `, Classes=(${classes.map((c) => `LWS_${c}`).join(',')})`) +
+      ')',
+  )
+}
 // Engineering's pace (XGFacility_Engineering.GetWorkPerHour, XGItemTree.GetItemBuildTime, ScaleCost).
 const ini = (k) => Number(core.match(new RegExp(`^${k}=([\\d.]+)`, 'm'))[1])
 out.push(`EngineerRate=${ini('ABDUCTION_REWARD_ENG')}`, `TimeBalance=${ini('ITEM_TIME_BALANCE')}`, `WorkshopBonus=${ini('WORKSHOP_ENG_BONUS')}`)
@@ -69,7 +88,7 @@ out.push(
   '; Builds: Cash (\u00a7), Elerium, Alloys, Meld; Days and Engineers: a unit is Days x Engineers x 24 hours of work;',
   '; Tech: the Long War tech id researched first; ItemReq: one consumed per item built; Foundry: the project done first.',
 )
-for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number), CRAFT]) {
+for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number), CRAFT, SMALL.map((x) => x.item)]) {
   for (const item of items) {
     if (item === null) continue
     const b = balance.get(item)

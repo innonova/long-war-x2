@@ -248,3 +248,25 @@ export function makeFacilityWords({ strategyLoc, facilities }) {
   }
   return { text: out.join('\r\n'), named }
 }
+
+/** Long War's small items' names (by enum or item number) for the mod's LWSmall_ templates, each under its template class. */
+export function makeSmallWords({ loc, strategyLoc, items }) {
+  const one = (text, key, k) => text.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1]
+  const weaponLook = ['BattleScanner', 'MimicBeacon', 'Medikit', 'RocketLauncher']
+  const out = []
+  let named = 0
+  for (const x of items) {
+    const of = (text, key) => (text ? one(text, key, x.enum) ?? one(text, key, x.item) : undefined)
+    const name = of(loc, 'm_aItemNames')
+    if (!name) continue
+    named++
+    const cls = x.kind === 'Passive' || x.kind === 'Rocket' ? 'X2EquipmentTemplate' : x.kind === 'Grenade' && !weaponLook.includes(x.look) ? 'X2GrenadeTemplate' : 'X2WeaponTemplate'
+    out.push(`[LWSmall_${x.item} ${cls}]`, `FriendlyName="${name}"`)
+    const plural = of(loc, 'm_aItemNamesPlural')
+    if (plural) out.push(`FriendlyNamePlural="${plural}"`)
+    const summary = of(strategyLoc, 'ItemTypeSummary')
+    if (summary) out.push(`BriefSummary="${summary}"`, `TacticalText="${summary}"`)
+    out.push('')
+  }
+  return { text: out.join('\r\n'), named }
+}

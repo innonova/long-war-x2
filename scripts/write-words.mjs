@@ -7,7 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { decodeInt, makeArmourWords, makeFacilityWords, makeFoundryWords, makeItemWords, makeTechWords, makeWeaponWords, makeWords, readConsts } from './lw-words.mjs'
+import { decodeInt, makeArmourWords, makeFacilityWords, makeFoundryWords, makeItemWords, makeSmallWords, makeTechWords, makeWeaponWords, makeWords, readConsts } from './lw-words.mjs'
 import plan from './words-plan.json' with { type: 'json' }
 
 /** The words for an XEW folder, as { text, report }; undefined (with the reason) if Long War is not there. */
@@ -58,9 +58,14 @@ export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '', baseI
   const facilities = strategyText
     ? makeFacilityWords({ strategyLoc: strategyText, facilities: [...baseIni.matchAll(/^\+Facilities=\(Id=(\d+), Enum=(\w+)/gm)].map((m) => ({ id: Number(m[1]), enum: m[2] })) })
     : { text: '', named: 0 }
+  const small = makeSmallWords({
+    loc: decodeInt(readFileSync(loc)),
+    strategyLoc: strategyText,
+    items: [...gearIni.matchAll(/^\+SmallItems=\(Item=(\d+), Template=\w+, Enum=(\w+), Kind=(\w+), Look=(\w+)/gm)].map((m) => ({ item: Number(m[1]), enum: m[2], kind: m[3], look: m[4] })),
+  })
   return {
-    text: words.text + '\r\n' + tech.text + '\r\n' + items.text + '\r\n' + gear.text + '\r\n' + armour.text + '\r\n' + foundry.text + '\r\n' + facilities.text,
-    report: `${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}, ${tech.named} techs, ${items.named} artifacts and corpses, ${gear.named} weapons, ${armour.named} armours, ${foundry.named} Foundry projects, ${facilities.named} facilities`,
+    text: words.text + '\r\n' + tech.text + '\r\n' + items.text + '\r\n' + gear.text + '\r\n' + armour.text + '\r\n' + foundry.text + '\r\n' + facilities.text + '\r\n' + small.text,
+    report: `${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}, ${tech.named} techs, ${items.named} artifacts and corpses, ${gear.named} weapons, ${armour.named} armours, ${foundry.named} Foundry projects, ${facilities.named} facilities, ${small.named} small items`,
   }
 }
 

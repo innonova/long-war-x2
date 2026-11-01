@@ -331,3 +331,62 @@ battle rifle and LMG could be neither built nor carried. Fixed:
   adds its starting items only when a campaign begins.
 
 Checked: a new campaign's stores hold all six.
+
+## Report (2026-11-01, phase 5: small items and the rocket launcher)
+
+**Long War's small items are XCOM 2 utility items** (`X2Item_LWSmallItems`,
+`X2Ability_LWSmallItems`, `X2Effect_LWSmallItem`; the table in
+`scripts/lw-gear.mjs` `SMALL`, generated into `XComLWGear.ini`
+`+SmallItems`). Each takes an XCOM 2 item's abilities, effects and look,
+with Long War's numbers from its `Weapons=` line, its units converted
+(metres at 1.5 a tile, radii at 96 units a tile):
+- **Grenades:** HE (3 damage, radius 3), AP (4, armour ignored), Alien
+  (5), Flashbang, Smoke, Chem; plus the Mimic Beacon and the Battle
+  Scanner.
+- **The medikit**, one charge an item (`XGUnit.UpdateItemCharges`).
+- **The Rocketeer's rocket launcher**, its secondary weapon and starting
+  kit (`GetInfiniteSecondary`): XCOM 2's rocket launcher with Long War's
+  7 damage and radius 4. The Rocket item adds a rocket.
+- **Passive items**, a stat ability each:
+  - Laser Sight: +4 aim and +4 crit;
+  - Ceramic Plating: +1 HP;
+  - Hi-Cap and Drum Mags: a shot costs half, a third of a round
+    (`XGAbility_Targeted`): every second shot, or two in three, gets its
+    round back; Drum Mags also −4 aim;
+  - Chameleon Suit: reaction shots never crit its wearer.
+- **Which classes:** Long War's properties say who may carry each. The
+  battle scanner goes to Scouts (and Engineers), Drum Mags to the rifle
+  classes, the Chameleon Suit to Scouts, rockets to Rocketeers. A soldier
+  carrying what their class may not has it taken back when armed.
+- **Unlimited** are those Long War holds without limit. Engineering
+  builds the Chem Grenade, the Mimic Beacon and the Chameleon Suit.
+- **XCOM 2's one-grenade, one-medikit rule is lifted** (Long War stacks
+  them, a charge each). XCOM 2's frag grenade on a Long War soldier
+  becomes Long War's HE grenade.
+
+**Checked in a mission:**
+- the Sniper given a second HE grenade threw with two charges;
+- the Rocketeer's launcher had two rockets with the Rocket item;
+- HP included Tac Armor.
+
+New control port test aids:
+- `give-to <soldier> <item>`;
+- `abilities` (each soldier's usable abilities and charges, in a
+  mission).
+
+### Decisions
+
+- **Grenades and rockets do fixed damage** (spread 0), as Enemy
+  Within's explosives do.
+- **The Laser Sight's crit counts for every weapon.** Long War gives it
+  only to non-pistols.
+- **Class limits on small items are enforced when soldiers are armed.**
+  XCOM 2's armory has no per-class limit for utility items.
+
+### Left open
+
+- The perks that change charges or add items (Grenadier, Packmaster,
+  Smoke Grenade, Battle Scanner, Fire Rocket's second rocket and the
+  rest), and the Shredder Rocket.
+- The arc thrower (next), the Shadow Device, SCOPE, the Battle Computer
+  and the other built items.

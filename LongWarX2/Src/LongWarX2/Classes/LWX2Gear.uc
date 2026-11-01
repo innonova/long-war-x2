@@ -14,6 +14,7 @@ static function EnsureInfinite()
 	local XComGameState_HeadquartersXCom XComHQ;
 	local LWGearRules.LWWeaponDef W;
 	local LWGearRules.LWArmorDef A;
+	local LWGearRules.LWSmallDef D;
 	local array<name> Missing;
 	local name N;
 	local X2ItemTemplate Template;
@@ -27,6 +28,9 @@ static function EnsureInfinite()
 	foreach class'LWGearRules'.default.Armors(A)
 		if (A.Infinite && XComHQ.GetItemByName(class'LWGearRules'.static.ArmorTemplateFor(A.Item)) == none)
 			Missing.AddItem(class'LWGearRules'.static.ArmorTemplateFor(A.Item));
+	foreach class'LWGearRules'.default.SmallItems(D)
+		if (D.Infinite && XComHQ.GetItemByName(D.Template) == none)
+			Missing.AddItem(D.Template);
 	if (Missing.Length == 0)
 		return;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: Long War's unlimited items in the stores");
@@ -121,9 +125,46 @@ static function bool NeedsArming(XComGameState_Unit Unit)
 	// An armour not Long War's (XCOM 2's Kevlar): Long War's starting armour instead.
 	if (!IsLongWarArmor(Unit.GetItemInSlot(eInvSlot_Armor)))
 		return true;
+	// A small item the class may not carry (the battle scanner for a Gunner): back to the stores.
+	if (ForbiddenSmallItems(Unit).Length > 0)
+		return true;
 	// A slot the class may not use at all (a Rocketeer's or Gunner's pistol): emptied.
 	Held = Unit.GetItemInSlot(eInvSlot_SecondaryWeapon);
 	return Held != none && X2WeaponTemplate(Held.GetMyTemplate()) != none && !Unit.GetSoldierClassTemplate().IsWeaponAllowedByClass(X2WeaponTemplate(Held.GetMyTemplate()));
+}
+
+static function string SmallText(XComGameState_Unit Unit)
+{
+	local array<XComGameState_Item> Items;
+	local XComGameState_Item Item;
+	local string S;
+
+	Items = Unit.GetAllItemsInSlot(eInvSlot_Utility);
+	foreach Items(Item)
+		S @= string(Item.GetMyTemplateName());
+	return S == "" ? "-" : S;
+}
+
+/** The small items a soldier carries that their class may not (LWGearRules.SmallItems' Classes). */
+static function array<XComGameState_Item> ForbiddenSmallItems(XComGameState_Unit Unit, optional XComGameState NewGameState)
+{
+	local array<XComGameState_Item> Items, Out;
+	local XComGameState_Item Item;
+	local LWGearRules.LWSmallDef D;
+
+	Items = Unit.GetAllItemsInSlot(eInvSlot_Utility, NewGameState);
+	foreach Items(Item)
+	{
+		if (class'LWGearRules'.static.SmallFor(Item.GetMyTemplateName(), D))
+		{
+			if (D.Classes.Length > 0 && D.Classes.Find(Unit.GetSoldierClassTemplateName()) == INDEX_NONE)
+				Out.AddItem(Item);
+		}
+		// XCOM 2's own small items (its frag grenade), the XPad apart (it takes no slot).
+		else if (X2EquipmentTemplate(Item.GetMyTemplate()) != none && X2EquipmentTemplate(Item.GetMyTemplate()).iItemSize > 0)
+			Out.AddItem(Item);
+	}
+	return Out;
 }
 
 static function bool IsLongWarArmor(XComGameState_Item Item)
@@ -138,7 +179,22 @@ static function Arm(XComGameState_Unit Unit, XComGameState NewGameState, XComGam
 	local XComGameState_Item Held, Item;
 	local EInventorySlot Slot;
 	local X2ItemTemplate Armor;
+	local array<XComGameState_Item> Forbidden;
+	local X2ItemTemplate Small;
+	local bool bSwap;
 
+	Forbidden = ForbiddenSmallItems(Unit, NewGameState);
+	foreach Forbidden(Held)
+	{
+		bSwap = Held.GetMyTemplateName() == 'FragGrenade';
+		Held = XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Held.ObjectID));
+		Unit.RemoveItemFromInventory(Held, NewGameState);
+		XComHQ.PutItemInInventory(NewGameState, Held);
+		// XCOM 2's frag grenade: Long War's HE grenade in its place.
+		Small = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate('LWSmall_81');
+		if (bSwap && Small != none)
+			Unit.AddItemToInventory(Small.CreateInstanceFromTemplate(NewGameState), eInvSlot_Utility, NewGameState);
+	}
 	Held = Unit.GetItemInSlot(eInvSlot_Armor, NewGameState);
 	Armor = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(class'LWGearRules'.static.ArmorTemplateFor(class'LWGearRules'.default.StartingArmor));
 	if (!IsLongWarArmor(Held) && Armor != none)
@@ -196,7 +252,8 @@ static function Report(out array<string> Out)
 		Line @= "| holds" @ (Unit.GetItemInSlot(eInvSlot_PrimaryWeapon) != none ? string(Unit.GetItemInSlot(eInvSlot_PrimaryWeapon).GetMyTemplateName()) : "-")
 			@ (Unit.GetItemInSlot(eInvSlot_SecondaryWeapon) != none ? string(Unit.GetItemInSlot(eInvSlot_SecondaryWeapon).GetMyTemplateName()) : "-")
 			@ "| wears" @ (Unit.GetItemInSlot(eInvSlot_Armor) != none ? string(Unit.GetItemInSlot(eInvSlot_Armor).GetMyTemplateName()) : "-")
-			@ "hp" @ int(Unit.GetMaxStat(eStat_HP)) @ "mobility" @ int(Unit.GetMaxStat(eStat_Mobility)) @ "defense" @ int(Unit.GetMaxStat(eStat_Defense));
+			@ "hp" @ int(Unit.GetMaxStat(eStat_HP)) @ "mobility" @ int(Unit.GetMaxStat(eStat_Mobility)) @ "defense" @ int(Unit.GetMaxStat(eStat_Defense))
+			@ "| small" @ SmallText(Unit) @ "slots" @ Unit.GetCurrentStat(eStat_UtilityItems);
 		Out.AddItem(Line);
 	}
 }

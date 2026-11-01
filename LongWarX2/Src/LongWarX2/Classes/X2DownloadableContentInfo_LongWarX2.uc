@@ -20,4 +20,5 @@ static event OnPostTemplatesCreated()
 	class'X2StrategyElement_LWTechs'.static.HideXCom2Techs();
 	class'X2Item_LWWeapons'.static.CopyLooks();
 	class'X2Item_LWArmors'.static.CopyLooks();
+	class'X2Item_LWSmallItems'.static.CopyLooks();
 }

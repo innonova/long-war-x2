@@ -81,8 +81,8 @@ export function familyOf(item) {
   return undefined
 }
 
-/** The mod's template for a Long War weapon. */
-export const weaponTemplate = (item) => `LWWeapon_${item}`
+/** The mod's template for a Long War weapon (the launcher: a small item's). */
+export const weaponTemplate = (item) => (item === 218 ? `LWSmall_${item}` : `LWWeapon_${item}`)
 
 /** Long War's soldier armours (Armors= lines, MEC and SHIV left out) and the XCOM 2 armour each looks like (a
  * taste decision: Kevlar, plated and powered by tier and weight). Those Long War never builds (Tac Vest, Tac
@@ -113,12 +113,18 @@ export function readArmours(core, ITEMS) {
  * the basic armours and small items, the interceptors' missiles. */
 export const INFINITE = [2, 4, 28, 32, 57, 59, 66, 69, 77, 79, 80, 81, 82, 83, 87, 89, 95, 98, 97, 109, 116, 118, 123, 212, 213, 214, 218, 226, 231, 236, 241, 246]
 
-/** GetInfinitePrimary by the class's weapon property; everyone with a pistol slot a pistol (2). */
+/** GetInfinitePrimary by the class's weapon property; everyone with a pistol slot a pistol (2); the Rocketeer the rocket
+ * launcher (GetInfiniteSecondary: its Fire Rocket perk). */
 export function startingKit(cls) {
   const p = CLASS_PROPERTY[cls]
   const primary = p === 'Support' ? 214 : p === 'Assault' ? 4 : p === 'Sniper' ? 213 : 212
+  if (p === 'Heavy') return [primary, LAUNCHER]
   return equippable(p, ['Pistol'], 2) ? [primary, 2] : [primary]
 }
+/** The Rocketeer's launcher (Long War's eItem_ExaltRocketLauncher), a secondary weapon here. */
+export const LAUNCHER = 218
+/** Its XCOM 2 category: the classes Long War lets carry it (Heavy, UnlimitedAmmo). */
+export const LAUNCHER_CATEGORY = 'lw_rocketeer_engineer'
 
 /** Long War's Weapons= lines by item number: their fields, and properties without eWP_ (items: EItemType names). */
 export function readWeapons(core, ITEMS) {
@@ -141,6 +147,9 @@ export function classCategories(cls, weapons) {
       if (!w || !equippable(CLASS_PROPERTY[cls], w.props, item)) continue
       out[w.props.includes('Pistol') ? 'eInvSlot_SecondaryWeapon' : 'eInvSlot_PrimaryWeapon'].add(categoryFor(w.props, item))
     }
+  // The rocket launcher, a secondary weapon for the classes Long War lets carry it.
+  const launcher = weapons.get(LAUNCHER)
+  if (launcher && equippable(CLASS_PROPERTY[cls], launcher.props, LAUNCHER)) out.eInvSlot_SecondaryWeapon.add(LAUNCHER_CATEGORY)
   return out
 }
 
@@ -161,5 +170,40 @@ export function readBalance(core, ITEMS) {
 export function itemTemplate(item, ITEMS) {
   if (familyOf(item)) return weaponTemplate(item)
   if (ARMOURS[item]) return armourTemplate(item)
+  if (SMALL.some((x) => x.item === item)) return smallTemplate(item)
   return `LWItem_${ITEMS[item].replace(/^eItem_/, '')}`
 }
+
+/**
+ * Long War's small items and the Rocketeer's launcher (features/lw-gear.md, phase 5): each with the XCOM 2 item whose
+ * abilities, effects and look it takes, Long War's numbers from its Weapons= line (ranges in metres, 1.5 a tile;
+ * radii in units, 96 a tile) and from its code where they are there:
+ * - charges: one per item (XGUnit.UpdateItemCharges);
+ * - Laser Sight: +4 aim (its line) and half the SCOPE's crit with a non-pistol (XGAbility_Targeted, FOUNDRY_SCOPE_CRIT_BONUS / 2);
+ * - Hi-Cap Mags and Drum Mags: a shot costs half, a third of the ammo (XGAbility_Targeted): twice, three times the shots;
+ * - Ceramic Plating: +1 HP (its line); Chameleon Suit: reaction shots never crit its wearer (XGAbility_Targeted).
+ * Kind: Grenade (thrown), Medikit, Launcher (the Rocketeer's secondary weapon), Passive (a stat item), Rocket (another
+ * rocket for the launcher). Class: the classes that may carry it by Long War's properties (Overheats: Scouts, Heavy:
+ * Rocketeers, Rifle: the rifle classes), empty for any.
+ */
+const MIMIC = 88
+export const SMALL = [
+  { item: 81, kind: 'Grenade', look: 'FragGrenade' },
+  { item: 87, kind: 'Grenade', look: 'FragGrenade', pierce: 99 },
+  { item: 84, kind: 'Grenade', look: 'AlienGrenade' },
+  { item: 83, kind: 'Grenade', look: 'FlashbangGrenade' },
+  { item: 82, kind: 'Grenade', look: 'SmokeGrenade' },
+  { item: 86, kind: 'Grenade', look: 'GasGrenade' },
+  { item: MIMIC, kind: 'Grenade', look: 'MimicBeacon' },
+  { item: 97, kind: 'Grenade', look: 'BattleScanner' },
+  { item: 69, kind: 'Medikit', look: 'Medikit' },
+  { item: 218, kind: 'Launcher', look: 'RocketLauncher' },
+  { item: 77, kind: 'Rocket', look: 'RocketLauncher' },
+  { item: 79, kind: 'Passive', look: 'CommonPCSPerception', crit: 4 },
+  { item: 80, kind: 'Passive', look: 'CommonPCSFocus', ammo: 2 },
+  { item: 123, kind: 'Passive', look: 'CommonPCSFocus', ammo: 3 },
+  { item: 95, kind: 'Passive', look: 'CommonPCSConditioning' },
+  { item: 94, kind: 'Passive', look: 'CommonPCSAgility', critAgainstReaction: 100 },
+]
+/** The mod's template for a small item (its words by Long War's item number, as the weapons'). */
+export const smallTemplate = (item) => `LWSmall_${item}`

@@ -71,6 +71,34 @@ struct LWBuildDef
 	var int Foundry;
 };
 
+/** A small item or the Rocketeer's launcher (features/lw-gear.md, phase 5; lw-gear.mjs SMALL). */
+struct LWSmallDef
+{
+	var int Item;
+	var name Template;
+	var name Enum;
+	/** Grenade, Medikit, Launcher, Rocket, Passive. */
+	var name Kind;
+	/** The XCOM 2 item whose abilities, effects and look it takes. */
+	var name Look;
+	var int Damage;
+	var int Environment;
+	/** In tiles. */
+	var int Radius;
+	var int Range;
+	var int Aim;
+	var int Crit;
+	var int HP;
+	/** Shots x this (Hi-Cap and Drum Mags: a shot costs a half, a third of the ammo). */
+	var int Ammo;
+	var int Pierce;
+	/** Reaction shots' crit chance taken off its wearer (the Chameleon Suit). */
+	var int CritAgainstReaction;
+	var bool Infinite;
+	/** The classes that may carry it; empty: any. */
+	var array<name> Classes;
+};
+
 /** A Foundry project (Long War's FoundryBalance, its requirements from XGTechTree.HasFoundryPrereqs). */
 struct LWFoundryDef
 {
@@ -96,6 +124,7 @@ struct LWFoundryDef
 };
 
 var config array<LWWeaponDef> Weapons;
+var config array<LWSmallDef> SmallItems;
 var config array<LWFoundryDef> Foundry;
 var config array<LWArmorDef> Armors;
 /** What a Long War soldier wears unless given another (Long War's item number). */
@@ -146,4 +175,15 @@ static function bool FoundryFor(int Id, out LWFoundryDef F)
 static function name FoundryTemplateFor(int Id)
 {
 	return name("LWFoundry_" $ Id);
+}
+
+static function bool SmallFor(name Template, out LWSmallDef D)
+{
+	local int k;
+
+	k = default.SmallItems.Find('Template', Template);
+	if (k == INDEX_NONE)
+		return false;
+	D = default.SmallItems[k];
+	return true;
 }

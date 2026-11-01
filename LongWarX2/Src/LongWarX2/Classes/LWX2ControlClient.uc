@@ -55,6 +55,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
+		Out.AddItem("give-to <soldier> <item template>: an item put on a soldier (a test aid) | abilities: in a mission, each soldier's abilities and charges");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
 		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid) | hqassault: the HQ assault from now (a test aid)");
 		Out.AddItem("base: the base's tiles, numbers and facilities | base set <column> <row> <facility>: placed at once (a test aid) | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
@@ -91,6 +92,17 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "research":
 		Research(Args.Length > 1 ? Args[1] : "", Out);
+		return;
+	case "give-to":
+		if (Args.Length < 3)
+		{
+			Out.AddItem("ERR give-to <soldier index (arm's order)> <item template>");
+			return;
+		}
+		Out.AddItem(GiveTo(int(Args[1]), name(Args[2])));
+		return;
+	case "abilities":
+		Abilities(Out);
 		return;
 	case "give":
 		if (Args.Length < 3)
@@ -502,6 +514,66 @@ function FoundryDone(int Id)
 	if (S.FoundryDone.Find(Id) == INDEX_NONE)
 		S.FoundryDone.AddItem(Id);
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+}
+
+/** An item from the stores (made if none) put on a soldier, in its own slot (a test aid). */
+function string GiveTo(int Index, name ItemName)
+{
+	local XComGameState NewGameState;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_Unit Unit;
+	local X2EquipmentTemplate Template;
+	local XComGameState_Item Item;
+	local array<XComGameState_Unit> Soldiers;
+	local StateObjectReference Ref;
+	local EInventorySlot Slot;
+
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	foreach XComHQ.Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit != none && Unit.IsSoldier())
+			Soldiers.AddItem(Unit);
+	}
+	Template = X2EquipmentTemplate(class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(ItemName));
+	if (Index < 0 || Index >= Soldiers.Length || Template == none)
+		return "ERR no such soldier or item";
+	Slot = Template.InventorySlot;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: an item given to a soldier (control port)");
+	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Soldiers[Index].ObjectID));
+	Item = Template.CreateInstanceFromTemplate(NewGameState);
+	if (Slot != eInvSlot_Utility && Unit.GetItemInSlot(Slot, NewGameState) != none)
+		Unit.RemoveItemFromInventory(XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Unit.GetItemInSlot(Slot, NewGameState).ObjectID)), NewGameState);
+	if (!Unit.AddItemToInventory(Item, Slot, NewGameState))
+	{
+		`XCOMHISTORY.CleanupPendingGameState(NewGameState);
+		return "ERR the slot takes no more";
+	}
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	return "ok" @ Unit.GetFullName() @ "carries" @ ItemName @ "in" @ Slot;
+}
+
+/** In a mission: each of XCOM's units with the abilities it can use (and their charges). */
+function Abilities(out array<string> Out)
+{
+	local XComGameState_Unit Unit;
+	local XComGameState_Ability Ability;
+	local StateObjectReference Ref;
+	local string Line;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Unit.GetTeam() != eTeam_XCom || !Unit.IsSoldier() || Unit.bRemovedFromPlay)
+			continue;
+		Line = Unit.GetFullName() @ "(" $ Unit.GetSoldierClassTemplateName() $ ") hp" @ int(Unit.GetCurrentStat(eStat_HP)) @ "aim" @ int(Unit.GetCurrentStat(eStat_Offense)) $ ":";
+		foreach Unit.Abilities(Ref)
+		{
+			Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+			if (Ability != none && Ability.GetMyTemplate().eAbilityIconBehaviorHUD != eAbilityIconBehavior_NeverShow)
+				Line @= Ability.GetMyTemplateName() $ (Ability.GetSourceWeapon() != none ? "[" $ Ability.GetSourceWeapon().GetMyTemplateName() $ " " $ Ability.GetSourceWeapon().Ammo $ "]" : "");
+		}
+		Out.AddItem(Line);
+	}
 }
 
 function Give(name ItemName, int n, out array<string> Out)

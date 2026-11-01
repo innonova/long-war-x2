@@ -179,6 +179,9 @@ writeFileSync(
     '; from scripts/lw-gear.mjs (GetInfinitePrimary). Do not edit by hand.',
     '[XComGame.X2ItemTemplateManager]',
     ...Object.entries(LOADOUTS).map(([n, items]) => `+Loadouts=(LoadoutName=${q('LWS_Squaddie' + n)}, ${items.map((it, k) => `Items[${k}]=(Item=${q(it)})`).join(', ')})`),
+    "; Long War's soldiers carry as many grenades and medikits as they have small slots (a charge each): XCOM 2's one-each rule lifted.",
+    '-UniqueEquipCategories=grenade',
+    '-UniqueEquipCategories=heal',
     "; A recruit costs Long War's SOLDIER_COST on every difficulty (XCOM 2 asks more on Legend).",
     '[XComGame.XComGameState_HeadquartersResistance]',
     ...[0, 1, 2, 3].map((d) => `RecruitSupplyCosts[${d}]=${Number(core.match(/^SOLDIER_COST\s*=\s*(\d+)/m)[1])}`),
@@ -221,7 +224,7 @@ for (const c of CLASSES) {
     'BaseAbilityPointsPerPromotion=3',
     `; squaddie: ${titleOf(c.squaddie)}`,
     `+SoldierRanks=(AbilitySlots=(${slot(abilityForClass(c.squaddie, c), WEAPON_SLOT[abilityForClass(c.squaddie, c)])}` +
-      `${startingKit(c.name).length > 1 ? `, ${slot('PistolStandardShot', 'eInvSlot_SecondaryWeapon')}` : ''}), ${stats(c.id, RANK_NAMES[0])})`,
+      `${startingKit(c.name).includes(2) ? `, ${slot('PistolStandardShot', 'eInvSlot_SecondaryWeapon')}` : ''}), ${stats(c.id, RANK_NAMES[0])})`,
   )
   RANKS.forEach((rank, k) => {
     const perks = rows.map((r) => r[rank]).filter((p) => p && p !== '0')
