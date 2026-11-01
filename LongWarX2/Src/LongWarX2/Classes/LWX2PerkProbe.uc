@@ -64,6 +64,7 @@ function Report()
 			ShotName = 'SniperStandardFire';
 			Shot = Unit.FindAbility(ShotName);
 		}
+		Out $= Perks(Unit, Enemies.Length > 0 ? Enemies[0] : none);
 		for (i = 0; i < Enemies.Length; i++)
 		{
 			class'XComGameState_Ability'.static.LookupShotBreakdown(Unit.GetReference(), Enemies[i].GetReference(), Shot, Breakdown);
@@ -78,6 +79,33 @@ function Report()
 		return;
 	LastReport = Out;
 	`log("LongWarX2: perk probe:\n" $ Out, , 'LongWarX2');
+}
+
+/** The unit's Long War bonus effects, each with its numbers and whether its conditions hold against Target now. */
+function string Perks(XComGameState_Unit Unit, XComGameState_Unit Target)
+{
+	local StateObjectReference Ref;
+	local XComGameState_Effect EffectState;
+	local X2Effect_LWModifiers E;
+	local string Out;
+
+	Out = "  " $ Unit.GetSoldierClassTemplateName() @ Unit.GetFullName() @ "rank" @ Unit.GetRank() $ ":";
+	foreach Unit.AffectedByEffects(Ref)
+	{
+		EffectState = XComGameState_Effect(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		E = EffectState != none ? X2Effect_LWModifiers(EffectState.GetX2Effect()) : none;
+		if (E == none)
+			continue;
+		Out @= string(E.EffectName) $ "[";
+		if (E.Aim != 0) Out $= "aim" $ E.Aim $ "x" $ E.Holds(E.AimIf, Unit, Target, none, false) $ " ";
+		if (E.Crit != 0) Out $= "crit" $ E.Crit $ "x" $ E.Holds(E.CritIf, Unit, Target, none, false) $ " ";
+		if (E.Defense != 0) Out $= "def" $ E.Defense $ "x" $ E.Holds(E.DefenseIf, Target, Unit, none, true) $ " ";
+		if (E.Damage != 0) Out $= "dmg" $ E.Damage $ (E.DamageIf != '' ? "if" $ E.DamageIf : "") $ " ";
+		if (E.DamagePct != 0) Out $= "dmg" $ E.DamagePct $ "%if" $ E.DamageIf $ " ";
+		if (E.CritAgainst != 0) Out $= "critimmune ";
+		Out $= "]";
+	}
+	return Out $ "\n";
 }
 
 defaultproperties

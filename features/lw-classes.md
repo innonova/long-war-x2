@@ -235,3 +235,33 @@ War's own):
 - **Bring 'Em On's count is the most enemies any one squad member sees**:
   close to "how many enemies your squad can see" without counting the same
   alien twice.
+
+## Report (2026-11-01, Skirmish Mode and the perk probe)
+
+**Skirmish Mode** (War of the Chosen's Legacy Hub > Skirmish) works with
+Long War's classes: they are in its class list by name, a soldier can be
+given any rank, and its abilities screen lists Long War's tree with Long
+War's words, one perk a rank picked. It arms a soldier from weapon tables
+built in code; Long War's classes are now added to them
+(`LWX2SkirmishWeapons`, each armed like an XCOM 2 class: Sniper and Scout
+like the Sharpshooter, Gunner like the Grenadier, Assault like the Ranger,
+the rest like the Specialist; everyone a pistol). **This is the quick way
+for the person to see the soldiers in a fight**, without a campaign.
+(Long War's In The Zone shows XCOM 2's name for the ability it maps to,
+"Serial".)
+
+**The perk probe** (`LWX2PerkProbe`, development switch `ProbePerks`): in
+any mission, each Long War soldier's perks with their numbers and whether
+each condition holds against the nearest enemy, and the real shot
+breakdown against the two nearest enemies, logged when they change.
+`tools/test/skirmish.sh <classes>` runs a Skirmish Mode mission with the
+given classes and prints it. First run: a Sniper's Sharpshooter adds +10
+aim and +10 crit in the game's own breakdown; Lone Wolf, Damn Good Ground,
+Aggression, Executioner and Platform Stability listed with their conditions
+not holding at the start of the mission, as expected.
+
+### Decisions
+
+- **War of the Chosen's Skirmish Mode instead of a skirmish of our own**:
+  it already does everything asked (squad, ranks, perks, map, enemies);
+  only the weapon tables needed Long War's classes.
