@@ -491,16 +491,20 @@ an abandoned city, arid where it can be), making the mission again up to
 eight times until one fits: XCOM 2's guerrilla ops are never in the
 wilderness, and a sewer plot left the map unlit.
 
-**Not yet**: light. The map takes the generated plot's lighting and time of
-day (the last run was at night, and dark); EW's own lights are in the
-converted package's world, unread. Next: read EW's lights into the config
-and place them, or force daylight for these missions.
+**Light**: the map takes the generated plot's lighting and time of day,
+which XCOM 2 picks from the mission's local time; the headquarters now puts
+these missions in a region where it is day (noon in the last run: the
+ground and the Skyranger read, still dim). EW's own lights are in the
+converted package's world, unread; the stand-in materials have no mask maps
+(XCOM 2's Props_SD then shades them flat and dark). Both are next.
 
 ### Decisions
 
 - **The briefing's wait as the moment to swap the map**: the only point in
   XCOM 2's tactical start where the map is complete and no unit is placed,
   without changing XCOM 2's ruleset.
+- **Daylight by choosing the mission's region**, rather than changing the
+  lighting: XCOM 2 lights a mission by its local time.
 - **Outdoor plots preferred, by making the mission again**: XCOM 2 chooses
   the mission type before the plot; re-rolling the whole mission is simpler
   than editing a generated mission's type.

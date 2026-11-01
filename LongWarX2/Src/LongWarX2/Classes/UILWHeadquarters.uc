@@ -93,6 +93,7 @@ function OnLaunch(UIButton Button)
 	local XComGameState_Unit Unit;
 	local XGStrategy Game;
 	local int Attempt;
+	local Vector2D Where;
 
 	Soldiers = ReadySoldiers(4);
 	if (Soldiers.Length == 0)
@@ -102,6 +103,9 @@ function OnLaunch(UIButton Button)
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
 	ResHQ = XComGameState_HeadquartersResistance(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersResistance'));
 	Region = XComGameState_WorldRegion(History.GetGameStateForObjectID(XComHQ.StartingRegion.ObjectID));
+	Where = Region.GetRandom2DLocationInRegion();
+	if (class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole)
+		DaylightRegion(Region, Where);
 
 	// A mission site, as XCOM 2's calendar makes a guerrilla op; and the squad. With the EW map,
 	// made again (up to eight times) until its mission can be played on an outdoor plot.
@@ -114,7 +118,7 @@ function OnLaunch(UIButton Button)
 		Rewards.Length = 0;
 		Rewards.AddItem(Reward);
 		Mission = XComGameState_MissionSite(NewGameState.CreateNewStateObject(class'XComGameState_MissionSite'));
-		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate('MissionSource_GuerillaOp')), Region.GetRandom2DLocationInRegion(), Region.GetReference(), Rewards, true, false);
+		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate('MissionSource_GuerillaOp')), Where, Region.GetReference(), Rewards, true, false);
 		if (!class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole || PreferOutdoorPlot(Mission) || Attempt == 7)
 			break;
 		History.CleanupPendingGameState(NewGameState);
@@ -165,6 +169,35 @@ function bool PreferOutdoorPlot(XComGameState_MissionSite Mission)
 	if (Best.ValidBiomes.Length > 0)
 		Mission.GeneratedMission.Biome = Parcels.GetBiomeDefinition(Best.ValidBiomes.Find("Arid") != INDEX_NONE ? "Arid" : Best.ValidBiomes[0]);
 	return true;
+}
+
+/**
+ * A region where it is day now, and a place in it: the mission's light follows its local time
+ * (XCOM 2 picks the plot's lighting by it), and the EW map has none of its own yet.
+ */
+function DaylightRegion(out XComGameState_WorldRegion Region, out Vector2D Where)
+{
+	local XComGameState_GameTime Time;
+	local XComGameState_WorldRegion Candidate;
+	local Vector2D Place;
+	local TDateTime LocalTime;
+	local ETimeOfDay TimeOfDay;
+
+	Time = XComGameState_GameTime(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_GameTime'));
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_WorldRegion', Candidate)
+	{
+		Place = Candidate.GetRandom2DLocationInRegion();
+		LocalTime = Time.CurrentTime;
+		class'X2StrategyGameRulesetDataStructures'.static.GetLocalizedTime(Place, LocalTime);
+		TimeOfDay = class'X2StrategyGameRulesetDataStructures'.static.GetTimeOfDay(LocalTime);
+		if (TimeOfDay == eTimeOfDay_Morning || TimeOfDay == eTimeOfDay_Noon || TimeOfDay == eTimeOfDay_Afternoon)
+		{
+			Region = Candidate;
+			Where = Place;
+			`log("LongWarX2: Long War HQ: daylight in" @ Candidate.GetMyTemplateName() @ "(" $ TimeOfDay $ ")", , 'LongWarX2');
+			return;
+		}
+	}
 }
 
 /** How well a plot type suits EW's outdoor maps: wilderness, then small towns, then abandoned cities; 0 for the rest. */
