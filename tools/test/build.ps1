@@ -7,5 +7,18 @@ $log = Join-Path $repo 'BuildCache\build.log'
 New-Item -ItemType Directory -Force (Split-Path $log) | Out-Null
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$repo\.scripts\build.ps1" -srcDirectory $repo -sdkPath $sdk -gamePath $game -config default *> $log
 $code = $LASTEXITCODE
+# Enemy Within's texture caches, under the names converted EW packages use (tools/convert/README.md),
+# linked into the built mod's Content: the build replaces that folder each time. Hard links, no copies.
+$ew = "C:\Program Files (x86)\Steam\steamapps\common\XCom-Enemy-Unknown\XEW\XComGame\CookedPCConsole"
+if (Test-Path $ew) {
+  foreach ($content in @("$game\XComGame\Mods\LongWarX2\Content", "$sdk\XComGame\Mods\LongWarX2\Content")) {
+    if (-not (Test-Path $content)) { continue }
+    foreach ($pair in @(@('CharTextures', 'EWCharTextrs'), @('Textures', 'EWTextrs'), @('Lighting', 'EWLightg'), @('Textures_startup', 'EWTextrs_startup'))) {
+      $link = Join-Path $content "$($pair[1]).tfc"
+      $target = Join-Path $ew "$($pair[0]).tfc"
+      if ((Test-Path $target) -and -not (Test-Path $link)) { New-Item -ItemType HardLink -Path $link -Target $target | Out-Null }
+    }
+  }
+}
 Select-String -Path $log -Pattern ': Error|: Warning|SUCCESS|Failed' | ForEach-Object { $_.Line.Replace("$repo\", '') }
 exit $code
