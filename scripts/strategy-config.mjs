@@ -130,6 +130,42 @@ out.push(
   ...HARVEST_UFO.map((t, i) => `+Harvest=(Ufo=${t}, Resources=${alloys[6 + i]})`),
   ...Array.from({ length: 11 }, (_, i) => `+UfoWorth=(Ufo=${4 + i}, Resources=${alloys[10 + i]})`),
 )
+// A UFO's salvage (XGItemTree.DetermineShipSalvage): the artifacts each type carries, its alloys (UFOAlloys
+// by size, the first six of the list) and power sources; then what a crash leaves (XGStrategyAI.DetermineCrashLoot).
+const SALVAGE = {
+  4: { alloys: 0, items: { UFONavigation: 2, UFOPowerSource: 1 } }, // Scout
+  10: { alloys: 0, items: { UFONavigation: 2, UFOPowerSource: 1 } }, // Fighter
+  5: { alloys: 1, items: { UFONavigation: 4, UFOPowerSource: 4 } }, // Destroyer
+  11: { alloys: 1, items: { UFONavigation: 4, UFOPowerSource: 2 } }, // Raider
+  6: { alloys: 2, items: { UFONavigation: 4, UFOPowerSource: 2, AlienSurgery: 2, AlienStasisTank: 6 } }, // Abductor
+  12: { alloys: 2, items: { UFONavigation: 4, UFOPowerSource: 2, AlienSurgery: 2, AlienStasisTank: 6 } }, // Harvester
+  7: { alloys: 3, items: { UFONavigation: 4, UFOPowerSource: 4, AlienSurgery: 2, AlienStasisTank: 8, AlienFood: 10, AlienEntertainment: 2 } }, // Transport
+  13: { alloys: 3, items: { UFONavigation: 4, UFOPowerSource: 4, AlienSurgery: 2, AlienStasisTank: 8, AlienFood: 10, AlienEntertainment: 2 } }, // Terror Ship
+  8: { alloys: 4, items: { UFONavigation: 6, UFOPowerSource: 4, UFOFusionLauncher: 2 } }, // Battleship
+  14: { alloys: 4, items: { UFONavigation: 6, UFOPowerSource: 4, UFOFusionLauncher: 2 } }, // Assault Carrier
+  9: { alloys: 5, items: { UFONavigation: 4, UFOPowerSource: 4, PsiLink: 1 } }, // Overseer
+}
+out.push(
+  "; A UFO's salvage (XGItemTree.DetermineShipSalvage): its alloys before ALLOY_UFO_BALANCE, and its artifacts",
+  ...Object.entries(SALVAGE).flatMap(([ufo, v]) => [
+    `+Salvage=(Ufo=${ufo}, Item=Alloys, Count=${alloys[v.alloys]})`,
+    ...Object.entries(v.items).map(([item, n]) => `+Salvage=(Ufo=${ufo}, Item=${item}, Count=${n})`),
+  ]),
+  '; Alloys by difficulty, elerium per power source by difficulty; a crash leaves 30-45 % of the alloys, each',
+  '; artifact at its chance (%), and loses 70-100 % of a power source\'s elerium for each one destroyed.',
+  ...arr('AlloyBalance', four('ALLOY_UFO_BALANCE')),
+  ...arr('EleriumPerPowerSource', four('UFO_ELERIUM_PER_POWER_SOURCE')),
+  `MinWreckedAlloys=${one('MIN_WRECKED_ALLOYS')}`,
+  `MaxWreckedAlloys=${one('MAX_WRECKED_ALLOYS')}`,
+  `MinLostWreckedElerium=${one('MIN_LOST_WRECKED_ELERIUM')}`,
+  `MaxLostWreckedElerium=${one('MAX_LOST_WRECKED_ELERIUM')}`,
+  `+Survive=(Item=UFOPowerSource, Percent=${one('UFO_PS_SURVIVE')})`,
+  `+Survive=(Item=UFONavigation, Percent=${one('UFO_NAV_SURVIVE')})`,
+  `+Survive=(Item=AlienFood, Percent=${one('UFO_FOOD_SURVIVE')})`,
+  '+Survive=(Item=AlienEntertainment, Percent=100)',
+  `+Survive=(Item=AlienStasisTank, Percent=${one('UFO_STASIS_SURVIVE')})`,
+  `+Survive=(Item=AlienSurgery, Percent=${one('UFO_SURGERY_SURVIVE')})`,
+)
 if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk))
 console.log(out.join('\r\n'))
 

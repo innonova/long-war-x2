@@ -86,6 +86,25 @@ var config int SatelliteCost, SatelliteDays;
 var config array<LWUfoValue> Harvest;
 var config array<LWUfoValue> UfoWorth;
 var config array<LWPlanCell> Plan;
+
+/** A UFO's salvage (XGItemTree.DetermineShipSalvage): an artifact (or Alloys, before AlloyBalance) and how many. */
+struct LWSalvage
+{
+	var int Ufo;
+	var name Item;
+	var int Count;
+};
+struct LWSurvive
+{
+	var name Item;
+	var int Percent;
+};
+var config array<LWSalvage> Salvage;
+var config float AlloyBalance[4];
+var config int EleriumPerPowerSource[4];
+var config float MinWreckedAlloys, MaxWreckedAlloys, MinLostWreckedElerium, MaxLostWreckedElerium;
+/** Each artifact's chance (%) to come through a crash (XGStrategyAI.DetermineCrashLoot). */
+var config array<LWSurvive> Survive;
 /** The campaign is lost when this many countries have left (Long War's LOSE_CONDITION_NUM_DESERTERS). */
 var config int LoseCountries;
 

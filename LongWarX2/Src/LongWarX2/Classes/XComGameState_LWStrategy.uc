@@ -921,7 +921,10 @@ static function MissionBack(bool bWon)
 	if (S.PendingKind == 1)
 	{
 		if (bWon)
+		{
 			S.AddPanic(Country, class'LWStrategyRules'.default.PanicUfoAssault);
+			S.GiveSalvage(NewGameState, S.Ufos[S.PendingIndex].Ufo, true);
+		}
 	}
 	else if (S.PendingKind == 2)
 	{
@@ -933,6 +936,7 @@ static function MissionBack(bool bWon)
 			S.AddPanic(Country, class'LWStrategyRules'.default.PanicUfoAssault);
 			S.UfoDowned(U);
 			S.AlienResources -= class'LWStrategyRules'.static.WorthOf(U.Ufo);
+			S.GiveSalvage(NewGameState, U.Ufo, false);
 		}
 		else
 		{
@@ -954,6 +958,63 @@ static function MissionBack(bool bWon)
 	S.PendingKind = 0;
 	S.PendingMission = 0;
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+}
+
+// --- Salvage ------------------------------------------------------------------------------
+
+/**
+ * A UFO's salvage to XCOM's stores (XGItemTree.DetermineShipSalvage, XGStrategyAI.DetermineCrashLoot):
+ * its artifacts, alloys (x AlloyBalance) and elerium (power sources x EleriumPerPowerSource), 20 % more
+ * of both once its UFO analysis is researched. Crashed: 30-45 % of the alloys, each artifact at its
+ * chance, and 70-100 % of a power source's elerium lost with each power source destroyed.
+ */
+function GiveSalvage(XComGameState NewGameState, int Ufo, bool bCrashed)
+{
+	local LWStrategyRules.LWSalvage Item;
+	local int d, j, k, Count, Total, Alloys, Elerium;
+	local float Bonus;
+	local string Got;
+
+	d = class'LWStrategyRules'.static.Difficulty();
+	Bonus = class'UIUtilities_Strategy'.static.GetXComHQ().IsTechResearched(class'LWResearchRules'.static.TemplateForId(57 + Ufo)) ? 1.2 : 1.0;
+	foreach class'LWStrategyRules'.default.Salvage(Item)
+	{
+		if (Item.Ufo != Ufo)
+			continue;
+		if (Item.Item == 'Alloys')
+		{
+			Alloys = int(Item.Count * class'LWStrategyRules'.default.AlloyBalance[d]);
+			if (bCrashed)
+				Alloys = int(Alloys * RandRange(class'LWStrategyRules'.default.MinWreckedAlloys, class'LWStrategyRules'.default.MaxWreckedAlloys));
+			continue;
+		}
+		Total = Item.Count;
+		Count = Total;
+		if (bCrashed)
+		{
+			// Each one survives at its chance (GetSurvivingCollectibles).
+			k = class'LWStrategyRules'.default.Survive.Find('Item', Item.Item);
+			Count = 0;
+			for (j = 0; j < Total; j++)
+				if (Rand(100) < (k == INDEX_NONE ? 100 : class'LWStrategyRules'.default.Survive[k].Percent))
+					Count++;
+		}
+		if (Item.Item == 'UFOPowerSource')
+		{
+			Elerium = Total * class'LWStrategyRules'.default.EleriumPerPowerSource[d];
+			if (bCrashed)
+				Elerium -= int(RandRange(class'LWStrategyRules'.default.MinLostWreckedElerium * class'LWStrategyRules'.default.EleriumPerPowerSource[d],
+					class'LWStrategyRules'.default.MaxLostWreckedElerium * class'LWStrategyRules'.default.EleriumPerPowerSource[d]) * (Total - Count));
+		}
+		class'X2Item_LWArtifacts'.static.Give(NewGameState, Item.Item, Count);
+		if (Count > 0)
+			Got @= Count @ Item.Item $ ",";
+	}
+	Alloys = int(Alloys * Bonus);
+	Elerium = Max(0, int(Elerium * Bonus));
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Alloys', Alloys);
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Elerium', Elerium);
+	Note("Salvage:" @ Alloys @ "alloys," @ Elerium @ "elerium," $ Got);
 }
 
 // --- Satellites ------------------------------------------------------------------------------

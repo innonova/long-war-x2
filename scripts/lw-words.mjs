@@ -143,3 +143,28 @@ export function makeTechWords({ strategyLoc, techs }) {
   }
   return { text: out.join('\r\n'), named }
 }
+
+/** Long War's artifacts the mod has as items of its own (X2Item_LWArtifacts.Artifacts). */
+export const ARTIFACTS = ['UFONavigation', 'UFOPowerSource', 'AlienSurgery', 'AlienStasisTank', 'AlienFood', 'AlienEntertainment', 'UFOFusionLauncher', 'PsiLink', 'HyperwaveBeacon', 'Meld']
+
+/**
+ * Long War's words for its artifacts (features/lw-loot.md): names from its XComGame.int
+ * (m_aItemNames, m_aItemNamesPlural), summaries from its XComStrategyGame.int (ItemTypeSummary).
+ */
+export function makeItemWords({ loc, strategyLoc }) {
+  const one = (text, key, k) => text.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1]
+  const out = []
+  let named = 0
+  for (const a of ARTIFACTS) {
+    const name = one(loc, 'm_aItemNames', `eItem_${a}`)
+    if (!name) continue
+    named++
+    out.push(`[LWItem_${a} X2ItemTemplate]`, `FriendlyName="${name}"`)
+    const plural = one(loc, 'm_aItemNamesPlural', `eItem_${a}`)
+    if (plural) out.push(`FriendlyNamePlural="${plural}"`)
+    const summary = strategyLoc && one(strategyLoc, 'ItemTypeSummary', `eItem_${a}`)
+    if (summary) out.push(`BriefSummary="${summary}"`)
+    out.push('')
+  }
+  return { text: out.join('\r\n'), named }
+}
