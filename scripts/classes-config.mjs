@@ -179,6 +179,9 @@ writeFileSync(
     '; from scripts/lw-gear.mjs (GetInfinitePrimary). Do not edit by hand.',
     '[XComGame.X2ItemTemplateManager]',
     ...Object.entries(LOADOUTS).map(([n, items]) => `+Loadouts=(LoadoutName=${q('LWS_Squaddie' + n)}, ${items.map((it, k) => `Items[${k}]=(Item=${q(it)})`).join(', ')})`),
+    "; A recruit costs Long War's SOLDIER_COST on every difficulty (XCOM 2 asks more on Legend).",
+    '[XComGame.XComGameState_HeadquartersResistance]',
+    ...[0, 1, 2, 3].map((d) => `RecruitSupplyCosts[${d}]=${Number(core.match(/^SOLDIER_COST\s*=\s*(\d+)/m)[1])}`),
   ].join('\r\n') + '\r\n',
 )
 const decode = (v) => {
