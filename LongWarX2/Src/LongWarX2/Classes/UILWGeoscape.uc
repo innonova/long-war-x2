@@ -11,6 +11,11 @@ var UIText Header, EventsText, StatusText;
 var array<UIButton> CountryButtons;
 var array<UIText> CountryTexts;
 var UIButton ActionButtons[MAX_ACTIONS];
+/** Beside each mission: won without playing it (to try the strategy layer). */
+var UIButton WinButtons[MAX_ACTIONS];
+var UIButton StoresButton;
+/** The right-hand text shows the stores instead of the events. */
+var bool bShowStores;
 /** For each action button: 1 intercept, 2 crash site, 3 landed UFO, 4 abduction, 5 terror; and the index. */
 var int ActionKind[MAX_ACTIONS];
 var int ActionIndex[MAX_ACTIONS];
@@ -58,6 +63,9 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	{
 		ActionButtons[i] = Spawn(class'UIButton', self).InitButton(name("LWGeoAction" $ i), "", OnAction);
 		ActionButtons[i].SetPosition(940, 220 + i * 46);
+		WinButtons[i] = Spawn(class'UIButton', self).InitButton(name("LWGeoWin" $ i), "WIN (SKIP MISSION)", OnWin);
+		WinButtons[i].SetPosition(1560, 220 + i * 46);
+		WinButtons[i].Hide();
 	}
 	EventsText = Spawn(class'UIText', self).InitText('LWGeoEvents', "");
 	EventsText.SetPosition(940, 520);
@@ -71,6 +79,8 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	RunButton.SetPosition(1230, 960);
 	AirButton = Spawn(class'UIButton', self).InitButton('LWGeoAir', "AIR WAR", OnAirWar);
 	AirButton.SetPosition(1390, 960);
+	StoresButton = Spawn(class'UIButton', self).InitButton('LWGeoStores', "STORES", OnStores);
+	StoresButton.SetPosition(1540, 960);
 	CloseGeoButton = Spawn(class'UIButton', self).InitButton('LWGeoClose', "CLOSE", OnAvenger);
 	CloseGeoButton.SetPosition(1700, 960);
 	Refresh();
@@ -145,10 +155,13 @@ function Refresh()
 		ActionButtons[n].Hide();
 		ActionKind[n] = 0;
 	}
+	for (n = 0; n < MAX_ACTIONS; n++)
+		WinButtons[n].SetVisible(ActionKind[n] >= 2);
 	StatusText.SetText(S.PendingKind != 0 ? "A squad is out on a mission." : (ActiveCount(S) > 0 ? "XCOM's decision:" : "Nothing waits on XCOM. Run time to see the aliens move."));
 	for (i = S.Events.Length - 1; i >= 0 && i >= S.Events.Length - 14; i--)
 		Events $= S.Events[i] $ "\n";
-	EventsText.SetText(Events);
+	EventsText.SetText(bShowStores ? StoresText(S) : Events);
+	StoresButton.SetText(bShowStores ? "EVENTS" : "STORES");
 	if (S.bLost && !bLossShown && XComHQPresentationLayer(Movie.Pres) != none)
 	{
 		bLossShown = true;
@@ -217,6 +230,51 @@ simulated function OnLaunchSat(UIButton Button)
 }
 
 // --- Decisions ------------------------------------------------------------------------------
+
+/** XCOM's stores, Long War's part of them: staff, alloys, elerium, fragments, artifacts, corpses. */
+simulated function string StoresText(XComGameState_LWStrategy S)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_Item Item;
+	local StateObjectReference Ref;
+	local string Text, ItemName;
+
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	Text = "STORES:" @ S.Scientists @ "scientists," @ S.Engineers @ "engineers.\n";
+	foreach XComHQ.Inventory(Ref)
+	{
+		Item = XComGameState_Item(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Item == none || Item.Quantity <= 0)
+			continue;
+		ItemName = string(Item.GetMyTemplateName());
+		if (!(Left(ItemName, 7) == "LWItem_" || ItemName == "AlienAlloy" || ItemName == "EleriumDust"))
+			continue;
+		Text $= Item.Quantity @ (Item.GetMyTemplate().GetItemFriendlyName() != "" ? Item.GetMyTemplate().GetItemFriendlyName() : ItemName) $ "\n";
+	}
+	return Text;
+}
+
+simulated function OnStores(UIButton Button)
+{
+	bShowStores = !bShowStores;
+	Refresh();
+}
+
+/** A mission won without playing it. */
+simulated function OnWin(UIButton Button)
+{
+	local int n;
+
+	for (n = 0; n < MAX_ACTIONS; n++)
+		if (WinButtons[n] == Button && ActionKind[n] >= 2)
+		{
+			class'XComGameState_LWStrategy'.static.WonWithoutPlaying(ActionKind[n] - 1, ActionIndex[n]);
+			if (XComHQPresentationLayer(Movie.Pres) != none && XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD != none)
+				XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD.UpdateResources();
+			Refresh();
+			return;
+		}
+}
 
 simulated function OnAction(UIButton Button)
 {

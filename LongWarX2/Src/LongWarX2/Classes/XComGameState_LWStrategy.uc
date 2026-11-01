@@ -871,6 +871,13 @@ function SiteIgnored(int i)
 
 // --- Missions sent from here -------------------------------------------------------------
 
+/** A mission won without playing it (the Geoscape's WIN, the control port's resolve): sent and come back won. */
+static function WonWithoutPlaying(int Kind, int Index)
+{
+	MissionSent(Kind, Index);
+	MissionBack(true);
+}
+
 /** A mission is sent to a crash site (1), landed UFO (2), abduction (3) or terror site (4). */
 static function MissionSent(int Kind, int Index)
 {
@@ -1022,7 +1029,7 @@ function GiveSalvage(XComGameState NewGameState, int Ufo, bool bCrashed)
 		}
 		class'X2Item_LWArtifacts'.static.Give(NewGameState, Item.Item, Count);
 		if (Count > 0)
-			Got @= Count @ Item.Item $ ",";
+			Got $= "," @ Count @ class'X2Item_LWArtifacts'.static.DisplayName(Item.Item);
 	}
 	Alloys = int(Alloys * Bonus);
 	Elerium = Max(0, int(Elerium * Bonus));
@@ -1031,7 +1038,7 @@ function GiveSalvage(XComGameState NewGameState, int Ufo, bool bCrashed)
 	// The UFO type counts as captured (the UFO analyses ask for it).
 	if (class'UIUtilities_Strategy'.static.GetXComHQ().GetItemByName(class'X2Item_LWArtifacts'.static.CapturedMarker(Ufo)) == none)
 		class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, class'X2Item_LWArtifacts'.static.CapturedMarker(Ufo), 1);
-	Note("Salvage:" @ Alloys @ "alloys," @ Elerium @ "elerium," $ Got);
+	Note("Salvage:" @ Alloys @ "alloys," @ Elerium @ "elerium" $ Got $ ".");
 }
 
 /**
@@ -1070,9 +1077,9 @@ function GiveKillLoot(XComGameState NewGameState, array<int> Squad)
 	for (k = 0; k < Corpses.Length; k++)
 	{
 		class'X2Item_LWArtifacts'.static.Give(NewGameState, Corpses[k], CorpseCounts[k]);
-		Got @= CorpseCounts[k] @ Corpses[k] $ ",";
+		Got $= "," @ CorpseCounts[k] @ class'X2Item_LWArtifacts'.static.DisplayName(Corpses[k]);
 	}
-	Note("The aliens killed (" $ Squad.Length $ ") left:" @ Fragments @ "weapon fragments," @ Elerium / 10 @ "elerium," @ Alloys / 10 @ "alloys," @ Meld / 10 @ "meld," $ Got);
+	Note("The aliens killed (" $ Squad.Length $ ") left:" @ Fragments @ "weapon fragments," @ Elerium / 10 @ "elerium," @ Alloys / 10 @ "alloys," @ Meld / 10 @ "meld" $ Got $ ".");
 }
 
 static function AddCount(out array<name> Names, out array<int> Counts, name N)

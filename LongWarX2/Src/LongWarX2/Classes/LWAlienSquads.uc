@@ -5,7 +5,9 @@
 // its aliens' species (ECharacter numbers), one entry an alien. Long War's hand-patched code packs
 // counts into its pods' "alt weapon" fields; read here as: a pod is its main alien, one more of it
 // when its flag (64) is set, and its supports. What the code leaves to state not kept yet: the act
-// (1: Outsider commanders), alien bases assaulted (none).
+// (1: Outsider commanders), alien bases assaulted (none). No EXALT: none before EXALT is revealed and
+// none in the aliens' pods before its HQ is taken (the person), and the campaign has no EXALT yet:
+// where Long War's tables bring one, the pod's main alien comes instead.
 class LWAlienSquads extends Object;
 
 /** Pod types (EAlienPodType): soldier, commander, secondary, roaming. */
@@ -403,13 +405,15 @@ static function AddPod(out array<int> Out, int Type, int Main, int n, int Days)
 /** XGStrategyAI.GetSupportingAlien: some main aliens' supports change with the months (their +32 sets), then XGBattleDesc.GetSupportAlien. */
 static function int SupportingAlien(int Main, bool bAlt, int Days)
 {
-	local int Month;
+	local int Month, Support;
 
 	Month = Days / 28;
 	if ((Main == 4 && Month >= 11) || (Main == 5 && Month >= 12) || (Main == 7 && Month >= 8) || (Main == 10 && Month >= 13)
 		|| (Main == 11 && Month >= 14) || (Main == 28 && Month >= 6))
-		Main += 32;
-	return SupportAlien(Main, bAlt);
+		Support = SupportAlien(Main + 32, bAlt);
+	else
+		Support = SupportAlien(Main, bAlt);
+	return (Support >= 24 && Support <= 31) ? (Main > 31 ? Main - 32 : Main) : Support;
 }
 
 /** XComGame's XGBattleDesc.GetSupportAlien (as Long War's package has it). */
@@ -549,14 +553,7 @@ static function LWPossible PossibleAliens(int Month)
 	{
 		AddPossible(P.Soldiers, 10, Month <= 9 ? 100 : 75);
 		AddPossible(P.Secondaries, 10, 50);
-		AddPossible(P.Secondaries, 24, 5);
-		AddPossible(P.Secondaries, 25, 5);
-		AddPossible(P.Secondaries, 26, 5);
-		AddPossible(P.Secondaries, 27, 5);
-		AddPossible(P.Secondaries, 28, 10);
-		AddPossible(P.Secondaries, 29, 10);
-		AddPossible(P.Secondaries, 30, 10);
-		AddPossible(P.Secondaries, 31, 10);
+		// Long War adds EXALT's eight here (5 and 10): none until EXALT's HQ is taken, and no EXALT yet.
 	}
 	if (Month >= 9)
 	{

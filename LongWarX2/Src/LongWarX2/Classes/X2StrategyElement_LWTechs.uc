@@ -70,7 +70,7 @@ static function X2TechTemplate TechTemplate(LWResearchRules.LWTechDef T)
 	}
 	if (T.Fragments > 0)
 	{
-		Resource.ItemTemplateName = 'WeaponFragment';
+		Resource.ItemTemplateName = class'X2Item_LWArtifacts'.static.ItemFor('WeaponFragment');
 		Resource.Quantity = T.Fragments;
 		Template.Cost.ResourceCosts.AddItem(Resource);
 	}

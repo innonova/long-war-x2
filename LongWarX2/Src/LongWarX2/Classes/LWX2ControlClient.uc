@@ -334,8 +334,13 @@ function string ResolveDecision(int n, bool bWon, int Stance)
 		return "ERR no such decision";
 	if (Kinds[n] != 1)
 	{
-		class'XComGameState_LWStrategy'.static.MissionSent(Kinds[n] - 1, Indexes[n]);
-		class'XComGameState_LWStrategy'.static.MissionBack(bWon);
+		if (bWon)
+			class'XComGameState_LWStrategy'.static.WonWithoutPlaying(Kinds[n] - 1, Indexes[n]);
+		else
+		{
+			class'XComGameState_LWStrategy'.static.MissionSent(Kinds[n] - 1, Indexes[n]);
+			class'XComGameState_LWStrategy'.static.MissionBack(false);
+		}
 		return "resolved" @ Labels[n] @ (bWon ? "won" : "lost");
 	}
 	class'XComGameState_LWAirWar'.static.EnsureExists();

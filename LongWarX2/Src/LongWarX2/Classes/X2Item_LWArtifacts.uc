@@ -1,7 +1,8 @@
 // Long War's artifacts as XCOM 2's resources (features/lw-loot.md): what a UFO's salvage brings
 // (LWStrategyRules.Salvage). Elerium and alloys are XCOM 2's own (EleriumDust, AlienAlloy), weapon
-// fragments XCOM 2's WeaponFragment; the rest are LWItem_<Long War's name>. Their words are Long
-// War's, written on the player's machine (lw-words.mjs makeItemWords).
+// the rest are LWItem_<Long War's name>. Their words are Long
+// War's, written on the player's machine (lw-words.mjs makeItemWords). (XCOM 2's own WeaponFragment
+// has no name in War of the Chosen: Long War's fragments are an item of the mod's.)
 class X2Item_LWArtifacts extends X2Item;
 
 /** Long War's artifacts the mod has as items of its own (EItemType names without eItem_). */
@@ -19,6 +20,7 @@ static function array<name> Artifacts()
 	A.AddItem('PsiLink');
 	A.AddItem('HyperwaveBeacon');
 	A.AddItem('Meld');
+	A.AddItem('WeaponFragment');
 	return A;
 }
 
@@ -81,9 +83,17 @@ static function name ItemFor(name Artifact)
 	{
 	case 'Alloys': return 'AlienAlloy';
 	case 'Elerium': return 'EleriumDust';
-	case 'WeaponFragment': return 'WeaponFragment';
 	}
 	return name("LWItem_" $ Artifact);
+}
+
+/** An item's name as the game shows it. */
+static function string DisplayName(name Artifact)
+{
+	local X2ItemTemplate Template;
+
+	Template = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(ItemFor(Artifact));
+	return (Template != none && Template.GetItemFriendlyName() != "") ? Template.GetItemFriendlyName() : string(Artifact);
 }
 
 /** Some of an item added to XCOM's stores (a resource's count raised; one not held yet made). */

@@ -32,7 +32,7 @@ export function wordsFrom(ew, researchIni, strategyIni = '') {
       ...[...researchIni.matchAll(/EverHad=(\w+)/g)].map((m) => m[1]),
       ...[...researchIni.matchAll(/InStores=\(([^)]*)\)/g)].flatMap((m) => m[1].split(',')),
     ]),
-  ].filter((n) => !['Alloys', 'Elerium', 'WeaponFragment'].includes(n))
+  ].filter((n) => !['Alloys', 'Elerium'].includes(n))
   const items = makeItemWords({ loc: decodeInt(readFileSync(loc)), strategyLoc: strategyText, more: corpses })
   return {
     text: words.text + '\r\n' + tech.text + '\r\n' + items.text,

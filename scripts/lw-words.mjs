@@ -145,7 +145,7 @@ export function makeTechWords({ strategyLoc, techs }) {
 }
 
 /** Long War's artifacts the mod has as items of its own (X2Item_LWArtifacts.Artifacts). */
-export const ARTIFACTS = ['UFONavigation', 'UFOPowerSource', 'AlienSurgery', 'AlienStasisTank', 'AlienFood', 'AlienEntertainment', 'UFOFusionLauncher', 'PsiLink', 'HyperwaveBeacon', 'Meld']
+export const ARTIFACTS = ['UFONavigation', 'UFOPowerSource', 'AlienSurgery', 'AlienStasisTank', 'AlienFood', 'AlienEntertainment', 'UFOFusionLauncher', 'PsiLink', 'HyperwaveBeacon', 'Meld', 'WeaponFragment']
 
 /**
  * Long War's words for its artifacts and, in `more`, its corpses (features/lw-loot.md): names from its XComGame.int

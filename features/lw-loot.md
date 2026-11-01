@@ -174,3 +174,32 @@ back, not when it appears. Corpses are items with Long War's names.
   played or skipped, leaves nothing of Long War's. Xenobiology and Alien
   Weaponry can start at once, as in Long War.
 - **What only sells:** damaged artifacts, and the grey market.
+
+## Response handled (2026-11-01): EXALT, a win from the Geoscape, the stores
+
+The person, after trying it:
+- No EXALT before EXALT is revealed, and none in the aliens' pods until
+  their HQ has been taken.
+- A month-1 landed UFO is a suicide mission anyway; Chryssalids would not
+  shock.
+- There is no win button on the Geoscape, the in-mission one did not
+  seem to bring loot, and the stores are nowhere to be seen.
+
+What changed:
+- **No EXALT at all**, since the campaign has none yet. Long War's eight
+  EXALT secondaries (month 8 on) are left out, and where a support table
+  brings an EXALT (an upgraded Sectoid pod) the pod's main alien comes
+  instead. The person's rule becomes the gate when EXALT is in.
+- **WIN (SKIP MISSION)** beside each mission on the Geoscape: the mission
+  counts as won without being played, its loot and rewards booked at
+  once.
+- **STORES** on the Geoscape: the right-hand text switches to Long War's
+  stores (staff, alloys, elerium, fragments, artifacts, corpses).
+- **Weapon fragments are an item of the mod's.** XCOM 2's own
+  WeaponFragment has no name in War of the Chosen, and showed as an
+  error.
+- **The events name items as the game does** ("Sectoid Corpse").
+- **A mission played** books its loot when the Geoscape next opens: that
+  is where the result is read. The Avenger's alloys and elerium can
+  rightly stay at 0 after an early abduction: Sectoids leave corpses,
+  fragments and meld, not elerium.
