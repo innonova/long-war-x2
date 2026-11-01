@@ -109,3 +109,30 @@ mission with the mod on.
   setup later.
 - **A preview tag (`v0.1.0-preview.1`) on a draft release**: published, it
   becomes a public download of the mod; the person decides when.
+
+## Report (2026-11-01, after the person's first try)
+
+**The person**: "the detection of where either game is installed failed -
+adding them manually it did add the mod to I:\Steam\…\Mods but it does not
+show up in the list of mods"; and "don't search the drives we solved this
+for the tree".
+
+**Fixed**:
+- The setup finds the games as the Long War Tech Tree does
+  (`desktop/src/game.ts`): Steam's uninstall entry for the app (XCOM 2:
+  268500, Enemy Unknown/Within: 200510), both registry views, else the
+  library Steam's own `libraryfolders.vdf` says holds the app. It only
+  looked under `C:\Program Files` before.
+- 2K's launcher has been removed from XCOM 2 (`2kLauncherRemoved.txt` in the
+  game folder): Steam starts the game, which loads the mods listed in
+  `My Games\XCOM2 War of the Chosen\XComGame\Config\XComModOptions.ini`.
+  The setup now adds the mod there itself (the player's other mods kept, a
+  copy of the file before kept as `.before-lwx2`); `--uninstall` takes it
+  out.
+- Checked on wingpu: no paths given, both games found, the mod enabled; the
+  game started directly (as Steam does), the mod loaded. (A red "redscreen"
+  overlay about a multiplayer test map shows on wingpu with or without the
+  mod: wingpu's own, likely from the SDK.)
+
+**Open**: which mod list the person was looking at (a mod launcher such as
+AML keeps its own and writes the game's list when it starts the game).

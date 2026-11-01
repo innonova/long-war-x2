@@ -14,15 +14,17 @@ What it needs
 
 Install
 1. Unpack this whole folder anywhere.
-2. Run LongWarX2-setup.exe. It finds the games in your Steam libraries, copies
-   the mod into War of the Chosen's Mods folder and writes Long War's words.
+2. Run LongWarX2-setup.exe. It finds the games through Steam, copies the mod
+   into War of the Chosen's Mods folder, turns it on in the game's list of
+   active mods (your other mods stay on) and writes Long War's words.
    (Windows may warn about an unknown publisher: the program is not signed.)
    If a game is elsewhere: LongWarX2-setup.exe --xcom2 "<…\XCOM 2\XCom2-WarOfTheChosen>" --ew "<…\XCom-Enemy-Unknown\XEW>"
-3. Start XCOM 2 through its launcher, tick "Long War X2" in the mod list, play
-   War of the Chosen. Start a new campaign: rookies promote into Long War's
-   classes.
+3. Start XCOM 2: War of the Chosen from Steam and begin a new campaign: rookies
+   promote into Long War's classes. (2K's launcher is gone; if you use a mod
+   launcher such as the Alternative Mod Launcher, tick "Long War X2" there, as
+   it rewrites the list of active mods when it starts the game.)
 
-Remove: LongWarX2-setup.exe --uninstall (or delete the Mods\LongWarX2 folder).
+Remove: LongWarX2-setup.exe --uninstall (removes the folder and takes it off the list).
 
 Not yet: most perks show their name and words but do nothing yet (25 of 66
 work); weapons, research and the strategy layer are XCOM 2's. Saves made with
