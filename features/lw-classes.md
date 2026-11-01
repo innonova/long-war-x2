@@ -206,3 +206,32 @@ Class, Specialist, Lance Corporal, Corporal, Sergeant, Tech Sergeant,
 Gunnery Sergeant, Master Sergeant (abbreviated PFC … MSGT). XCOM 2 lets a
 class carry its own rank names; the generator writes Long War's from its
 `XComGame.int` into the local words file.
+
+## Report (2026-11-01, the person's first feedback; more perks)
+
+**The person**, on their own PC with the first build: "it promoted my
+rookies into classes that seem to match the expected, i can open the hq
+screen and the air war, nothing obviously wrong so far".
+
+**Since**: 29 of 66 perks have effects (10 as XCOM 2's own, 19 of Long
+War's own):
+- **Snap Shot** for the Sniper and Scout: an active shot with the sniper
+  rifle for one action at Long War's -10 aim (XCOM 2's sniper rifle
+  otherwise needs both actions). **Seen** on a Sniper's ability bar in a
+  mission, with Long War's words. Not yet fired (no enemy in sight). The
+  Rocketeer's Snap Shot is a separate stand-in (`LW_SnapShotRocket`): in
+  Long War it is about rockets.
+- **Suppression** is XCOM 2's (Long War's sits in EW's Focused Suppression
+  slot).
+- **Steadfast**: immune to panic.
+- **Bring 'Em On**: on a critical hit, +1 damage per enemy the squad sees,
+  up to +6.
+- XCOM 2's weapon-bound abilities (Covering Fire, Holo-Targeting, In The
+  Zone, Rapid Fire, Suppression) now come with the primary weapon, as XCOM
+  2's own classes give them; without it they may not have worked.
+
+### Decisions
+
+- **Bring 'Em On's count is the most enemies any one squad member sees**:
+  close to "how many enemies your squad can see" without counting the same
+  alien twice.
