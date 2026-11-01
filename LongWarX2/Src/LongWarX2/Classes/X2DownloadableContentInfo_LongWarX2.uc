@@ -5,6 +5,47 @@ class X2DownloadableContentInfo_LongWarX2 extends X2DownloadableContentInfo;
 static event InstallNewCampaign(XComGameState StartState)
 {
 	class'XComGameState_LWAirWar'.static.CreateIn(StartState);
+	ReplaceFactionHeroes(StartState);
+}
+
+/**
+ * War of the Chosen's starting faction soldier (a Reaper, Skirmisher or Templar, without its narrative) replaced by
+ * a recruit as the other starting soldiers are made: Long War has no factions (lw-missions.md).
+ */
+static function ReplaceFactionHeroes(XComGameState StartState)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_Unit Unit, Recruit;
+	local array<XComGameState_Unit> Heroes;
+	local StateObjectReference Ref;
+	local int k;
+
+	foreach StartState.IterateByClassType(class'XComGameState_HeadquartersXCom', XComHQ)
+		break;
+	if (XComHQ == none)
+		return;
+	foreach XComHQ.Crew(Ref)
+	{
+		Unit = XComGameState_Unit(StartState.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit != none && Unit.GetMyTemplate().bIsResistanceHero)
+			Heroes.AddItem(Unit);
+	}
+	foreach Heroes(Unit)
+	{
+		Recruit = `CHARACTERPOOLMGR.CreateCharacter(StartState, `XPROFILESETTINGS.Data.m_eCharPoolUsage);
+		Recruit.RandomizeStats();
+		Recruit.ApplyInventoryLoadout(StartState);
+		Recruit.bIsFamous = true;
+		Recruit.SetHQLocation(eSoldierLoc_Barracks);
+		// The hero's unit is left out of the crew only (nothing else refers to it at the start).
+		XComHQ.RemoveFromCrew(Unit.GetReference());
+		XComHQ.AddToCrew(StartState, Recruit);
+		Recruit.m_RecruitDate = Unit.m_RecruitDate;
+		k = XComHQ.Squad.Find('ObjectID', Unit.ObjectID);
+		if (k != INDEX_NONE)
+			XComHQ.Squad[k] = Recruit.GetReference();
+		`log("LongWarX2: the starting faction soldier" @ Unit.GetFullName() @ "replaced by a recruit," @ Recruit.GetFullName(), , 'LongWarX2');
+	}
 }
 
 /** A campaign from before the mod gets them when it is loaded. */

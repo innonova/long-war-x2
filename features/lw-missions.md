@@ -202,7 +202,15 @@ person's suggestion). The tint was gone in the next mission.
 
 - **The campaign's squad held 'Stiletto', a Reaper** (War of the Chosen's
   starting faction soldier, with its own concealment). Long War has no
-  factions: to be removed from a Long War campaign.
+  factions. Fixed the same evening: a new campaign's faction soldier is
+  replaced by a recruit, made as XCOM 2 makes the other starting soldiers
+  (`ReplaceFactionHeroes`, in `InstallNewCampaign`). A new campaign then
+  had 13 soldiers, all in Long War's classes and none of them a Reaper.
+  - Decision: replaced, not just removed, so the crew keeps XCOM 2's
+    starting number.
+  - Still open: the hero's unit is only left out of the crew, not deleted.
+  - Still open: faction soldiers XCOM 2 might give later (covert actions)
+    are not handled; Long War's strategy layer gives no such rewards.
 - The UFO's interior and its hull are dark; whether EW lit them by
   lightmap only or by lights not read (the `GeneratedMeshAreaLight`s,
   emissive surfaces) is not known yet.
