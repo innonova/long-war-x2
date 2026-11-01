@@ -8,6 +8,9 @@ class UILWInterception extends UIScreen;
 /** Opened from a campaign's geoscape: its jets, its month; else a demo jet. */
 var bool bCampaign;
 
+/** A UFO of the Long War Geoscape (its index there) to fight, at the HP it has left; -1: any UFO. */
+var int StrategyUfo;
+
 /** How many fights the odds are counted from. */
 var int OddsRuns;
 
@@ -46,6 +49,16 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	UfoTypes = class'LWAirWar'.static.UfoTypes();
 	Stance = 1;
 	Category = bCampaign ? CampaignCategory() : 4;
+	if (StrategyUfo >= 0)
+	{
+		Category = class'XComGameState_LWStrategy'.static.Get().Category();
+		UfoIndex = UfoTypes.Find(class'XComGameState_LWStrategy'.static.Get().Ufos[StrategyUfo].Ufo);
+		if (UfoIndex == INDEX_NONE)
+		{
+			UfoTypes.AddItem(class'XComGameState_LWStrategy'.static.Get().Ufos[StrategyUfo].Ufo);
+			UfoIndex = UfoTypes.Length - 1;
+		}
+	}
 
 	Spawn(class'UIBGBox', self).InitBG('LWBg', 360, 120, 1200, 840);
 	Title = Spawn(class'UIText', self).InitText('LWTitle', "LONG WAR: AIR WAR", true);
@@ -142,6 +155,8 @@ simulated function Setup()
 		Callsign = "Demo";
 	}
 	TheUfo = class'LWAirWar'.static.Ufo(UfoTypes[UfoIndex], Category);
+	if (StrategyUfo >= 0)
+		TheUfo.Hp = class'XComGameState_LWStrategy'.static.Get().Ufos[StrategyUfo].Hp;
 	HpJet = Jet.Hp;
 	HpUfo = TheUfo.Hp;
 	bFighting = false;
@@ -202,8 +217,11 @@ simulated function UpdateButtons()
 	AbortButton.SetDisabled(!bFighting || Act.Abort >= 0);
 	for (i = 0; i < 3; i++)
 		StanceButtons[i].SetDisabled(bFighting);
-	PrevUfoButton.SetDisabled(bFighting);
-	NextUfoButton.SetDisabled(bFighting);
+	PrevUfoButton.SetDisabled(bFighting || StrategyUfo >= 0);
+	NextUfoButton.SetDisabled(bFighting || StrategyUfo >= 0);
+	// The Geoscape's UFO: one engagement, then back to the Geoscape.
+	if (StrategyUfo >= 0 && bDone)
+		EngageButton.SetDisabled(true);
 }
 
 // --- The fight, played back ------------------------------------------------------
@@ -326,11 +344,13 @@ simulated function Finished()
 	if (bCampaign)
 	{
 		class'XComGameState_LWAirWar'.static.Record(JetIndex, Result.CraftHp, Kill);
+		if (StrategyUfo >= 0)
+			class'XComGameState_LWStrategy'.static.Intercepted(StrategyUfo, int(Result.Outcome), Result.UfoHp);
 		`log("LongWarX2: interception recorded: jet" @ JetIndex @ "HP" @ Result.CraftHp @ "kill" @ Kill, , 'LongWarX2');
 	}
-	UpdateButtons();
 	EngageButton.SetText("AGAIN");
 	EngageButton.SetDisabled(false);
+	UpdateButtons();
 }
 
 // --- Choices ----------------------------------------------------------------------
@@ -372,4 +392,5 @@ defaultproperties
 {
 	InputState = eInputState_Consume;
 	OddsRuns = 1000;
+	StrategyUfo = -1;
 }

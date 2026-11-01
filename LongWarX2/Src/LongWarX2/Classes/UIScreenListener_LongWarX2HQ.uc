@@ -15,7 +15,7 @@ event OnInit(UIScreen Screen)
 	if (!default.ShowLWHeadquarters || UIAvengerHUD(Screen) == none)
 		return;
 	Button = Screen.Spawn(class'UIButton', Screen);
-	Button.InitButton('LWX2HQButton', "LONG WAR HQ", OnOpen);
+	Button.InitButton('LWX2HQButton', "LONG WAR GEOSCAPE", OnOpen);
 	Button.SetPosition(40, 120);
 }
 
@@ -24,9 +24,9 @@ function OnOpen(UIButton Button)
 	local XComHQPresentationLayer Pres;
 
 	Pres = `HQPRES;
-	if (Pres.ScreenStack.IsInStack(class'UILWHeadquarters'))
+	if (Pres.ScreenStack.IsInStack(class'UILWHeadquarters') || Pres.ScreenStack.IsInStack(class'UILWGeoscape'))
 		return;
-	Pres.ScreenStack.Push(Pres.Spawn(class'UILWHeadquarters', Pres));
+	Pres.ScreenStack.Push(Pres.Spawn(class'UILWGeoscape', Pres));
 	`log("LongWarX2: Long War HQ shown", , 'LongWarX2');
 }
 

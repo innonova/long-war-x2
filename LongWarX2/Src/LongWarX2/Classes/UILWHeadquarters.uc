@@ -132,6 +132,8 @@ function OnLaunch(UIButton Button)
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	`log("LongWarX2: Long War HQ: launching" @ Mission.GeneratedMission.Mission.sType @ "on" @ Mission.GeneratedMission.Plot.MapName @ "with" @ Soldiers.Length @ "soldiers", , 'LongWarX2');
 
+	if (class'XComGameState_LWStrategy'.static.Get() != none && class'XComGameState_LWStrategy'.static.Get().PendingKind != 0)
+		class'XComGameState_LWStrategy'.static.MissionLaunched(Mission.ObjectID);
 	Game = `GAME;
 	Game.PrepareTacticalBattle(Mission.ObjectID);
 	Game.LaunchTacticalBattle(Mission.ObjectID);
