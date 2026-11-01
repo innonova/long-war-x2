@@ -149,3 +149,33 @@ carry only a pistol.
   number under a condition, so each becomes a line of config.
 - **XCOM 2's cover values for Low Profile** (low cover counted as full:
   +20 defence), since XCOM 2's cover numbers replace EW's.
+
+## Report (2026-11-01 night, five more perks; not yet seen in a fight)
+
+Sixteen of Long War's own perks now have effects (plus nine as XCOM 2's
+own abilities). New tonight, built and compiled, **not yet seen in a shot**
+(that needs an enemy in sight; the runs so far had none):
+- **Hit and Run, Close Encounters, Light 'Em Up**: `X2Effect_LWFreeShot`
+  gives a standard shot's action points back after XCOM 2 has taken them,
+  once a turn, when the condition holds (an exposed or flanked target; a
+  target within 6 tiles; the turn's first action, where the shot then costs
+  one action instead of ending the turn).
+- **HEAT Ammo**: +50% damage against robotic targets.
+- **Vital Point Targeting**: +2 damage with primary weapons (Long War's
+  autopsy condition and the sidearms' +1 not yet).
+
+**Icons**: where Long War reused an EW perk's slot under a new name (Hit
+and Run is EW's Reinforced Armor slot), the slot's icon belonged to another
+perk; those perks now take the standard icon unless XCOM 2 has one by Long
+War's name.
+
+**Found**: six of Long War's renamed perks have no words in its
+`XComGame.int` under their slot (Lock N' Load, Smoke and Mirrors, HEAT
+Warheads, Will to Survive, Javelin Rockets, Sapper): Long War keeps their
+text elsewhere. To find.
+
+### Decisions
+
+- **Free shots by refunding the cost**, the way XCOM 2's own Serial does,
+  rather than new shot abilities: the soldier keeps XCOM 2's standard shot,
+  its animations and its targeting.

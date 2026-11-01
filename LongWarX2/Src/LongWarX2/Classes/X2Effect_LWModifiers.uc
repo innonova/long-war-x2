@@ -5,10 +5,12 @@
 //   Always; NoAllyWithin (Param tiles); TargetHealthBelow (Param, a fraction of its maximum);
 //   PerVisibleEnemy (times the enemies the soldier sees, up to MaxStacks); HeightAdvantage;
 //   NoActionTaken (the soldier has not acted this turn); TargetInFullCover; InLowCover (as the
-//   target); PrimaryOrPistol (the shot's weapon).
+//   target); PrimaryOrPistol, Primary (the shot's weapon); TargetRobotic.
 class X2Effect_LWModifiers extends X2Effect_Persistent;
 
 var int Aim, Crit, Defense, Damage, CritAgainst;
+/** Extra damage as a percentage of the shot's, under DamageIf (HEAT Ammo). */
+var int DamagePct;
 var name AimIf, CritIf, DefenseIf, DamageIf;
 var float Param;
 var int MaxStacks;
@@ -53,6 +55,11 @@ function int Holds(name Condition, XComGameState_Unit Attacker, XComGameState_Un
 		if (Condition == 'InLowCover')
 			return VisInfo.TargetCover == CT_MidLevel ? 1 : 0;
 		return VisInfo.TargetCover == CT_Standing ? 1 : 0;
+	case 'TargetRobotic':
+		return (Target != none && Target.IsRobotic()) ? 1 : 0;
+	case 'Primary':
+		Weapon = AbilityState != none ? AbilityState.GetSourceWeapon() : none;
+		return (Weapon != none && Weapon.InventorySlot == eInvSlot_PrimaryWeapon) ? 1 : 0;
 	case 'PrimaryOrPistol':
 		Weapon = AbilityState != none ? AbilityState.GetSourceWeapon() : none;
 		return (Weapon != none && (Weapon.InventorySlot == eInvSlot_PrimaryWeapon || Weapon.InventorySlot == eInvSlot_SecondaryWeapon)) ? 1 : 0;
@@ -90,8 +97,10 @@ function GetToHitAsTargetModifiers(XComGameState_Effect EffectState, XComGameSta
 
 function int GetAttackingDamageModifier(XComGameState_Effect EffectState, XComGameState_Unit Attacker, Damageable TargetDamageable, XComGameState_Ability AbilityState, const out EffectAppliedData AppliedData, const int CurrentDamage, optional XComGameState NewGameState)
 {
-	if (Damage == 0 || CurrentDamage <= 0)
+	if ((Damage == 0 && DamagePct == 0) || CurrentDamage <= 0)
 		return 0;
+	if (DamagePct != 0)
+		return (CurrentDamage * DamagePct / 100) * Holds(DamageIf, Attacker, XComGameState_Unit(TargetDamageable), AbilityState, false);
 	return Damage * Holds(DamageIf, Attacker, XComGameState_Unit(TargetDamageable), AbilityState, false);
 }
 

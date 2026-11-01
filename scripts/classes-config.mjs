@@ -143,7 +143,9 @@ function abilityFor(perk) {
   const title = titleOf(perk)
   const name = 'LW_' + title.replace(/[^A-Za-z0-9]+/g, ' ').trim().split(' ').map((w) => w[0].toUpperCase() + w.slice(1)).join('')
   if (!standins.has(name)) {
-    const candidates = [title.replace(/[^A-Za-z0-9]/g, ''), perk.replace(/^ePerk_/, '')].map((c) => `uiperk_${c.toLowerCase()}`)
+    // By Long War's name; by EW's slot only where Long War kept the perk (a renamed slot's icon is another perk's).
+    const names = [title.replace(/[^A-Za-z0-9]/g, ''), ...(renamed.has(perk) ? [] : [perk.replace(/^ePerk_/, '')])]
+    const candidates = names.map((c) => `uiperk_${c.toLowerCase()}`)
     const icon = candidates.map((c) => x2Icons.get(c)).find(Boolean) ?? 'UIPerk_standard'
     standins.set(name, { perk, icon })
   }
@@ -166,11 +168,18 @@ const REAL = {
   // XCOM 2's low cover gives 20 defence, its full cover 40.
   LW_LowProfile: () => ({ Defense: 20, DefenseIf: 'InLowCover' }),
   LW_Ranger: () => ({ Damage: 1, DamageIf: 'PrimaryOrPistol' }),
+  // The autopsy condition is not modelled yet: +2 with primary weapons against everyone (sidearms' +1 left out).
+  LW_VitalPointTargeting: () => ({ Damage: 2, DamageIf: 'Primary' }),
+  LW_HEATAmmo: () => ({ DamagePct: 50, DamageIf: 'TargetRobotic' }),
+  // Free standard shots, once a turn (X2Effect_LWFreeShot).
+  LW_HitAndRun: () => ({ FreeShotIf: 'TargetExposed' }),
+  LW_CloseEncounters: () => ({ FreeShotIf: 'Within', Param: 6 }),
+  LW_LightEmUp: () => ({ FreeShotIf: 'FirstAction', KeepOne: true }),
 }
 const realFields = (name) => {
   const f = REAL[name]?.()
   if (!f || Object.values(f).some((v) => v === undefined)) return ''
-  return Object.entries(f).map(([k, v]) => `, ${k}=${typeof v === 'string' ? v : v}`).join('')
+  return Object.entries(f).map(([k, v]) => `, ${k}=${v === true ? 'true' : v}`).join('')
 }
 
 // --- The classes -----------------------------------------------------------------------

@@ -9,10 +9,13 @@ struct LWStandin
 {
 	var name Name;
 	var string Icon;
-	var int Aim, Crit, Defense, Damage, CritAgainst, Mobility;
+	var int Aim, Crit, Defense, Damage, DamagePct, CritAgainst, Mobility;
 	var name AimIf, CritIf, DefenseIf, DamageIf;
 	var float Param;
 	var int MaxStacks;
+	/** A free standard shot under this condition, once a turn (X2Effect_LWFreeShot); KeepOne: it costs one action. */
+	var name FreeShotIf;
+	var bool KeepOne;
 };
 
 var config array<LWStandin> Standins;
@@ -24,7 +27,7 @@ static function array<X2DataTemplate> CreateTemplates()
 
 	foreach default.Standins(S)
 	{
-		if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.CritAgainst != 0 || S.Mobility != 0)
+		if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '')
 			Templates.AddItem(Passive(S));
 		else
 			Templates.AddItem(PurePassive(S.Name, S.Icon, false, 'eAbilitySource_Perk', true));
@@ -38,6 +41,7 @@ static function X2AbilityTemplate Passive(LWStandin S)
 	local X2AbilityTemplate Template;
 	local X2Effect_LWModifiers Effect;
 	local X2Effect_PersistentStatChange Stats;
+	local X2Effect_LWFreeShot Free;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, S.Name);
 	Template.IconImage = S.Icon;
@@ -61,10 +65,22 @@ static function X2AbilityTemplate Passive(LWStandin S)
 	Effect.Damage = S.Damage;
 	Effect.DamageIf = S.DamageIf;
 	Effect.CritAgainst = S.CritAgainst;
+	Effect.DamagePct = S.DamagePct;
 	Effect.Param = S.Param;
 	Effect.MaxStacks = S.MaxStacks;
 	Effect.Reason = Template.LocFriendlyName;
 	Template.AddTargetEffect(Effect);
+
+	if (S.FreeShotIf != '')
+	{
+		Free = new class'X2Effect_LWFreeShot';
+		Free.BuildPersistentEffect(1, true, false, false);
+		Free.EffectName = name(S.Name $ "_Free");
+		Free.Condition = S.FreeShotIf;
+		Free.Param = S.Param;
+		Free.bKeepOne = S.KeepOne;
+		Template.AddTargetEffect(Free);
+	}
 
 	if (S.Mobility != 0)
 	{
