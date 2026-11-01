@@ -46,6 +46,14 @@ static function array<X2DataTemplate> CreateTemplates()
 	for (i = 0; i < class'LWGearRules'.default.Builds.Length; i++)
 		if (Left(string(class'LWGearRules'.default.Builds[i].ItemReq), 7) == "LWItem_")
 			AddName(All, name(Mid(string(class'LWGearRules'.default.Builds[i].ItemReq), 7)));
+	// And the items the Foundry asks for.
+	for (i = 0; i < class'LWGearRules'.default.Foundry.Length; i++)
+	{
+		if (Left(string(class'LWGearRules'.default.Foundry[i].Item), 7) == "LWItem_")
+			AddName(All, name(Mid(string(class'LWGearRules'.default.Foundry[i].Item), 7)));
+		if (Left(string(class'LWGearRules'.default.Foundry[i].EverHad), 7) == "LWItem_")
+			AddName(All, name(Mid(string(class'LWGearRules'.default.Foundry[i].EverHad), 7)));
+	}
 	foreach All(A)
 	{
 		if (ItemFor(A) != name("LWItem_" $ A))

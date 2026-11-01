@@ -14,8 +14,19 @@ static function array<X2DataTemplate> CreateTemplates()
 	local array<X2DataTemplate> Templates;
 	local LWResearchRules.LWTechDef T;
 
+	local LWGearRules.LWFoundryDef F;
+	local X2TechTemplate Words;
+
 	foreach class'LWResearchRules'.default.Techs(T)
 		Templates.AddItem(TechTemplate(T));
+	// The Foundry's projects carry their words here (LWEngineering.FoundryName); never researched.
+	foreach class'LWGearRules'.default.Foundry(F)
+	{
+		`CREATE_X2TEMPLATE(class'X2TechTemplate', Words, class'LWGearRules'.static.FoundryTemplateFor(F.Id));
+		Words.Requirements.SpecialRequirementsFn = Never;
+		Words.PointsToComplete = 1;
+		Templates.AddItem(Words);
+	}
 	return Templates;
 }
 

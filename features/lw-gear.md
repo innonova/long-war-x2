@@ -235,3 +235,82 @@ New control port commands:
 - Long War's weapon perks while carried (`ItemBalance_Normal`'s high
   alloy digits are a perk, not a cost: `XGStorage` grants it) and
   `BalanceMods` (mobility, will by weapon).
+
+## Report (2026-11-01, phases 2 and 4: armour and the Foundry)
+
+**Long War's 14 soldier armours are XCOM 2's** (`X2Item_LWArmors`,
+`X2Ability_LWArmorStats`, generated with the weapons into `XComLWGear.ini`):
+- **Long War's numbers** (HP, defence, will, mobility) are a stat ability
+  of the armour, shown in the armory's stat lines.
+- Fire and poison immunity (Titan, Archangel) is an immunity effect;
+  grapple (Kestrel, Banshee, Corsair, Shadow) is XCOM 2's `Grapple`.
+- Two small items, which every Long War armour has, are XCOM 2's second
+  utility slot.
+- **Tac Vest and Tac Armor are unlimited**, as Long War never builds them.
+  Long War soldiers wear Tac Armor: one in XCOM 2's Kevlar is changed
+  when the soldiers are armed (`LWX2Gear`), as the weapons are.
+- **The rest are built in engineering**, at Long War's costs and with its
+  requirements. Archangel consumes a Titan Armor, as Long War's
+  "hardcoded to require Titan Suit".
+- **The looks:**
+  - each armour takes an XCOM 2 armour's images and sounds;
+  - XCOM 2 picks a soldier's torso, arms, legs and helmet by the armour's
+    template name, so that armour's body parts are cloned for each Long
+    War armour (884 parts).
+  - Checked in a mission: the squad in Tac Armor renders whole, with the
+    HP bars including the armour's.
+- **Names:** Long War's (`makeArmourWords`).
+
+**The Foundry** (`LWEngineering`, the ENGINEERING screen's FOUNDRY view,
+control port `foundry [id]`). Its 46 projects come from `FoundryBalance`,
+with what each needs first from the Tree's `data/techtree.json`. Long
+War's rules:
+- **To start a project:**
+  - its tech must be researched;
+  - its item must be in stores.
+- **The cost is paid at the start:** money, alloys, elerium, fragments
+  and meld (the high digits of `iFragments`), and the item, `iNumItems`
+  of it.
+- **The time:**
+  - its work is days × engineers × 24 hours;
+  - each research credit held that covers it takes its share off, at
+    least a day each;
+  - the work is done at the same `GetWorkPerHour` as items.
+- **A finished project** stops the clock, is remembered, and unlocks what
+  waits on it.
+  - Checked: New Combat Systems (60 days at 10 engineers) unlocked the
+    Arc Rifle.
+- **Names and summaries:** Long War's (`makeFoundryWords`), carried by
+  never-researchable tech templates (`LWFoundry_<id>`).
+
+### Decisions
+
+- **The armours' looks (a taste decision):**
+  - Tac Vest and Tac Armor look like Kevlar;
+  - Phalanx and Carapace like medium plated, Kestrel and Banshee like
+    light plated (Spider), Aegis like heavy plated (EXO);
+  - Corsair, Seraph and Shadow like light powered (Wraith), Titan like
+    heavy powered (W.A.R.);
+  - Archangel, Aurora and Vortex like medium powered (Warden).
+- **Long War soldiers wear Tac Armor**, Enemy Within's Kevlar, rather
+  than the Tac Vest.
+- **No heavy weapon slot** from XCOM 2's heavy armours: a Long War
+  Rocketeer's launcher is its own matter.
+- **One Foundry project at a time.** Long War allows one per Foundry
+  built, and the base where Foundries are built is not ported yet. XCOM
+  counts as having one.
+- **A research credit gained cuts a Foundry project's time only if it
+  starts later.** Long War also cuts the one under way.
+
+### Left open
+
+- **What Foundry projects do:**
+  - Each project is remembered when done, and the items that wait on one
+    unlock.
+  - Their effects are not ported yet: better ballistics, pistols, SCOPE,
+    medikit, salvage, interceptor upgrades and the rest. Each needs its
+    own hook, tactical or strategic.
+- **Armours' Fly** (Archangel, Seraph), **Ghost** (Shadow), air evasion
+  and the psi property; the MEC suits and SHIV decks.
+- The council's Future Combat bonus (a cheaper Foundry), with the
+  council's bonuses.

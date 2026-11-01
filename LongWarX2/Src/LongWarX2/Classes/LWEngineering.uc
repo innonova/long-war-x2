@@ -22,8 +22,7 @@ static function bool Unlocked(LWGearRules.LWBuildDef B)
 		if (Tech == '' || !class'UIUtilities_Strategy'.static.GetXComHQ().IsTechResearched(Tech))
 			return false;
 	}
-	// The Foundry is not ported yet (phase 4): what waits on one of its projects waits.
-	return B.Foundry == 0;
+	return B.Foundry == 0 || (class'XComGameState_LWStrategy'.static.Get() != none && class'XComGameState_LWStrategy'.static.Get().FoundryDone.Find(B.Foundry) != INDEX_NONE);
 }
 
 /** The cash an item costs: less with workshops (XGItemTree.ScaleCost; none yet). */
@@ -175,7 +174,7 @@ static function bool Start(int Item, int n, out string Why)
 	}
 	if (!Unlocked(B))
 	{
-		Why = ItemName(B.Template) @ "is not unlocked yet" $ (B.Foundry != 0 ? " (it waits on a Foundry project)." : ".");
+		Why = ItemName(B.Template) @ "is not unlocked yet" $ (B.Foundry != 0 ? " (it waits on the Foundry's" @ FoundryName(B.Foundry) $ ")." : ".");
 		return false;
 	}
 	Why = Short(B, n);
@@ -259,4 +258,185 @@ static function string BuildLine(int Item, int Engineers)
 	class'LWGearRules'.static.BuildFor(Item, B);
 	Missing = Short(B, 1);
 	return ItemName(B.Template) $ ":" @ CostText(B) $ "; " $ HoursText(HoursFor(UnitWork(B), B.Engineers, Engineers)) $ (Missing != "" ? "  (short of" @ Missing $ ")" : "");
+}
+
+// --- The Foundry ------------------------------------------------------------------------------
+// Long War's Foundry (XGFacility_Engineering's Foundry projects): a project needs its tech researched
+// and its item in stores (XGTechTree.HasFoundryPrereqs); it costs money, alloys, elerium, fragments,
+// meld and Items of that item, paid at the start; its work is Days x Engineers x 24 hours, less what
+// the research credits held take off (GetCreditAdjustedTechHours), done at GetWorkPerHour with its
+// engineers on it. One project at a time: Long War allows one per Foundry built, and the base, where
+// Foundries are built, is not ported yet (XCOM has one).
+
+static function string FoundryName(int Id)
+{
+	local X2TechTemplate Template;
+
+	Template = X2TechTemplate(class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager().FindStrategyElementTemplate(class'LWGearRules'.static.FoundryTemplateFor(Id)));
+	return (Template != none && Template.DisplayName != "") ? Template.DisplayName : "project" @ Id;
+}
+
+/** Can the project be started (its tech researched, its item in stores, not done or under way)? */
+static function bool FoundryUnlocked(LWGearRules.LWFoundryDef F)
+{
+	local XComGameState_LWStrategy S;
+	local name Tech;
+	local int i;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S.FoundryDone.Find(F.Id) != INDEX_NONE)
+		return false;
+	for (i = 0; i < S.FoundryProjects.Length; i++)
+		if (S.FoundryProjects[i].Item == F.Id)
+			return false;
+	Tech = class'LWResearchRules'.static.TemplateForId(F.Tech);
+	if (Tech == '' || !class'UIUtilities_Strategy'.static.GetXComHQ().IsTechResearched(Tech))
+		return false;
+	if (F.Item != '' && Held(F.Item) <= 0)
+		return false;
+	return F.EverHad == '' || Held(F.EverHad) > 0;
+}
+
+static function array<int> FoundryAvailable()
+{
+	local array<int> Out;
+	local LWGearRules.LWFoundryDef F;
+
+	foreach class'LWGearRules'.default.Foundry(F)
+		if (FoundryUnlocked(F))
+			Out.AddItem(F.Id);
+	return Out;
+}
+
+static function string FoundryShort(LWGearRules.LWFoundryDef F)
+{
+	local array<string> Out;
+
+	if (class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies() < F.Cash)
+		Out.AddItem(class'LWStrategyRules'.static.Money(F.Cash));
+	if (Held('AlienAlloy') < F.Alloys)
+		Out.AddItem(F.Alloys @ class'X2Item_LWArtifacts'.static.DisplayName('Alloys'));
+	if (Held('EleriumDust') < F.Elerium)
+		Out.AddItem(F.Elerium @ class'X2Item_LWArtifacts'.static.DisplayName('Elerium'));
+	if (Held(class'X2Item_LWArtifacts'.static.ItemFor('WeaponFragment')) < F.Fragments)
+		Out.AddItem(F.Fragments @ class'X2Item_LWArtifacts'.static.DisplayName('WeaponFragment'));
+	if (Held(class'X2Item_LWArtifacts'.static.ItemFor('Meld')) < F.Meld)
+		Out.AddItem(F.Meld @ class'X2Item_LWArtifacts'.static.DisplayName('Meld'));
+	if (F.Item != '' && Held(F.Item) < F.Items)
+		Out.AddItem(F.Items @ ItemName(F.Item));
+	return JoinStrings(Out);
+}
+
+static function string FoundryCostText(LWGearRules.LWFoundryDef F)
+{
+	local array<string> Out;
+
+	Out.AddItem(class'LWStrategyRules'.static.Money(F.Cash));
+	if (F.Alloys > 0)
+		Out.AddItem(F.Alloys @ class'X2Item_LWArtifacts'.static.DisplayName('Alloys'));
+	if (F.Elerium > 0)
+		Out.AddItem(F.Elerium @ class'X2Item_LWArtifacts'.static.DisplayName('Elerium'));
+	if (F.Fragments > 0)
+		Out.AddItem(F.Fragments @ class'X2Item_LWArtifacts'.static.DisplayName('WeaponFragment'));
+	if (F.Meld > 0)
+		Out.AddItem(F.Meld @ class'X2Item_LWArtifacts'.static.DisplayName('Meld'));
+	if (F.Item != '' && F.Items > 0)
+		Out.AddItem(F.Items @ ItemName(F.Item));
+	return JoinStrings(Out);
+}
+
+/** A project's work: Days x Engineers x 24 hours (FoundryDaysToHours), less each research credit held that covers it (at least a day each). */
+static function int FoundryWork(LWGearRules.LWFoundryDef F, array<int> Held)
+{
+	local int Work, c, k;
+
+	Work = F.Days * F.Engineers * 24;
+	foreach Held(c)
+	{
+		if (F.Credits.Find(c) == INDEX_NONE)
+			continue;
+		k = class'LWResearchRules'.default.CreditShare.Find('Credit', c);
+		if (k != INDEX_NONE)
+			Work -= Max(24, Work * class'LWResearchRules'.default.CreditShare[k].Percent / 100);
+	}
+	return Max(0, Work);
+}
+
+static function string FoundryLine(int Id, XComGameState_LWStrategy S)
+{
+	local LWGearRules.LWFoundryDef F;
+	local string Missing;
+
+	class'LWGearRules'.static.FoundryFor(Id, F);
+	Missing = FoundryShort(F);
+	return FoundryName(Id) $ ":" @ FoundryCostText(F) $ "; " $ HoursText(HoursFor(FoundryWork(F, S.Credits), F.Engineers, S.Engineers)) $ (Missing != "" ? "  (short of" @ Missing $ ")" : "");
+}
+
+static function bool StartFoundry(int Id, out string Why)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local LWGearRules.LWFoundryDef F;
+	local XComGameState_LWStrategy.LWBuild P;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (!class'LWGearRules'.static.FoundryFor(Id, F))
+	{
+		Why = "Long War has no Foundry project" @ Id $ ".";
+		return false;
+	}
+	if (S.FoundryProjects.Length > 0)
+	{
+		Why = "The Foundry is busy (one project at a time).";
+		return false;
+	}
+	if (!FoundryUnlocked(F))
+	{
+		Why = FoundryName(Id) @ "is not available.";
+		return false;
+	}
+	Why = FoundryShort(F);
+	if (Why != "")
+	{
+		Why = "Short of" @ Why $ ".";
+		return false;
+	}
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a Foundry project begins");
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	XComHQ.AddResource(NewGameState, 'Supplies', -F.Cash);
+	Take(NewGameState, 'AlienAlloy', F.Alloys);
+	Take(NewGameState, 'EleriumDust', F.Elerium);
+	Take(NewGameState, class'X2Item_LWArtifacts'.static.ItemFor('WeaponFragment'), F.Fragments);
+	Take(NewGameState, class'X2Item_LWArtifacts'.static.ItemFor('Meld'), F.Meld);
+	if (F.Item != '')
+		Take(NewGameState, F.Item, F.Items);
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	P.Item = Id;
+	P.Quantity = 1;
+	P.WorkLeft = FoundryWork(F, S.Credits);
+	P.Engineers = F.Engineers;
+	if (P.WorkLeft <= 0)
+	{
+		S.FoundryDone.AddItem(Id);
+		S.Note("The Foundry finished" @ FoundryName(Id) $ ".");
+	}
+	else
+	{
+		S.FoundryProjects.AddItem(P);
+		S.Note("The Foundry began" @ FoundryName(Id) $ ", done in" @ HoursText(HoursFor(P.WorkLeft, P.Engineers, S.Engineers)) $ ".");
+	}
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	Why = "";
+	return true;
+}
+
+static function string FoundryProjectsText(XComGameState_LWStrategy S)
+{
+	local XComGameState_LWStrategy.LWBuild P;
+	local string Text;
+
+	foreach S.FoundryProjects(P)
+		Text $= "Foundry:" @ FoundryName(P.Item) $ ":" @ HoursText(HoursFor(P.WorkLeft, P.Engineers, S.Engineers)) @ "left\n";
+	return Text;
 }

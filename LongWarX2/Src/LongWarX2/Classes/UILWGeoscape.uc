@@ -253,8 +253,8 @@ simulated function string StoresText(XComGameState_LWStrategy S)
 			continue;
 		Text $= Item.Quantity @ (Item.GetMyTemplate().GetItemFriendlyName() != "" ? Item.GetMyTemplate().GetItemFriendlyName() : ItemName) $ "\n";
 	}
-	if (S.Builds.Length > 0)
-		Text $= "ENGINEERING:\n" $ class'LWEngineering'.static.ProjectsText(S);
+	if (S.Builds.Length + S.FoundryProjects.Length > 0)
+		Text $= "ENGINEERING:\n" $ class'LWEngineering'.static.ProjectsText(S) $ class'LWEngineering'.static.FoundryProjectsText(S);
 	return Text;
 }
 

@@ -83,6 +83,9 @@ var int SatellitesReady;
 var array<int> SatellitesDue;
 /** Engineering's projects (LWEngineering). */
 var array<LWBuild> Builds;
+/** The Foundry's projects under way (Item: the project's id) and those done. */
+var array<LWBuild> FoundryProjects;
+var array<int> FoundryDone;
 var array<string> Events;
 /** Events noted since the campaign began (Events keeps the last 40). */
 var int EventCount;
@@ -353,6 +356,17 @@ function Tick(XComGameState NewGameState)
 		{
 			class'LWEngineering'.static.Deliver(NewGameState, self, Builds[i]);
 			Builds.Remove(i, 1);
+			bStop = true;
+		}
+	}
+	for (i = FoundryProjects.Length - 1; i >= 0; i--)
+	{
+		FoundryProjects[i].WorkLeft -= class'LWEngineering'.static.WorkPerHour(FoundryProjects[i].Engineers, Engineers);
+		if (FoundryProjects[i].WorkLeft <= 0)
+		{
+			FoundryDone.AddItem(FoundryProjects[i].Item);
+			Note("The Foundry finished" @ class'LWEngineering'.static.FoundryName(FoundryProjects[i].Item) $ ".");
+			FoundryProjects.Remove(i, 1);
 			bStop = true;
 		}
 	}

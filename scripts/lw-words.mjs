@@ -194,3 +194,44 @@ export function makeWeaponWords({ loc, strategyLoc, weapons }) {
   }
   return { text: out.join('\r\n'), named }
 }
+
+/** Long War's armour names (by item number or enum) for the mod's LWArmor_ templates; the summary as its tactical
+ * info, else a line from its numbers. */
+export function makeArmourWords({ loc, strategyLoc, armours }) {
+  const one = (text, key, k) => text.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1]
+  const out = []
+  let named = 0
+  for (const a of armours) {
+    const of = (text, key) => (text ? one(text, key, a.enum) ?? one(text, key, a.item) : undefined)
+    const name = of(loc, 'm_aItemNames')
+    if (!name) continue
+    named++
+    out.push(`[LWArmor_${a.item} X2ArmorTemplate]`, `FriendlyName="${name}"`)
+    const plural = of(loc, 'm_aItemNamesPlural')
+    if (plural) out.push(`FriendlyNamePlural="${plural}"`)
+    const summary = of(strategyLoc, 'ItemTypeSummary')
+    if (summary) out.push(`BriefSummary="${summary}"`)
+    out.push(`TacticalText="${summary ?? `+${a.hp} HP, ${a.defense} defense, ${a.mobility} mobility.`}"`)
+    out.push('')
+  }
+  return { text: out.join('\r\n'), named }
+}
+
+/** Long War's Foundry projects' names and summaries (FoundryTechNames, FoundryTechSummary, by number or enum) for the
+ * templates that carry them (LWFoundry_<id>, X2TechTemplate). */
+export function makeFoundryWords({ strategyLoc, projects }) {
+  const one = (key, k) => strategyLoc.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1]
+  const out = []
+  let named = 0
+  for (const p of projects) {
+    const of = (key) => (p.enum ? one(key, p.enum) : undefined) ?? one(key, p.id)
+    const name = of('FoundryTechNames')
+    if (!name) continue
+    named++
+    out.push(`[LWFoundry_${p.id} X2TechTemplate]`, `DisplayName="${name}"`)
+    const summary = of('FoundryTechSummary')
+    if (summary) out.push(`Summary="${summary}"`)
+    out.push('')
+  }
+  return { text: out.join('\r\n'), named }
+}

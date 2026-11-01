@@ -1,6 +1,7 @@
 // Long War's soldiers carry what Long War lets them (features/lw-gear.md). XCOM 2 gives a promoted
 // soldier their class's starting kit only in empty slots (ApplySquaddieLoadout), so a rookie becoming a
-// Long War soldier keeps XCOM 2's rifle. Here a Long War soldier's weapon their class may not carry (or
+// Long War soldier keeps XCOM 2's rifle (and armour: a Long War soldier not in Long War's armour is put
+// in its starting one, Tac Armor). Here a Long War soldier's weapon their class may not carry (or
 // none where their kit has one) is put back in the stores and replaced by their kit's (the class's
 // SquaddieLoadout, Long War's unlimited starting weapons). Run when soldiers are looked at or sent out
 // (UIScreenListener_LWX2Gear) and after the test promotions.
@@ -81,9 +82,17 @@ static function bool NeedsArming(XComGameState_Unit Unit)
 		if (Held == none || X2WeaponTemplate(Held.GetMyTemplate()) == none || !Unit.GetSoldierClassTemplate().IsWeaponAllowedByClass(X2WeaponTemplate(Held.GetMyTemplate())))
 			return true;
 	}
+	// An armour not Long War's (XCOM 2's Kevlar): Long War's starting armour instead.
+	if (!IsLongWarArmor(Unit.GetItemInSlot(eInvSlot_Armor)))
+		return true;
 	// A slot the class may not use at all (a Rocketeer's or Gunner's pistol): emptied.
 	Held = Unit.GetItemInSlot(eInvSlot_SecondaryWeapon);
 	return Held != none && X2WeaponTemplate(Held.GetMyTemplate()) != none && !Unit.GetSoldierClassTemplate().IsWeaponAllowedByClass(X2WeaponTemplate(Held.GetMyTemplate()));
+}
+
+static function bool IsLongWarArmor(XComGameState_Item Item)
+{
+	return Item != none && Left(string(Item.GetMyTemplateName()), 8) == "LWArmor_";
 }
 
 static function Arm(XComGameState_Unit Unit, XComGameState NewGameState, XComGameState_HeadquartersXCom XComHQ)
@@ -92,7 +101,20 @@ static function Arm(XComGameState_Unit Unit, XComGameState NewGameState, XComGam
 	local X2WeaponTemplate T;
 	local XComGameState_Item Held, Item;
 	local EInventorySlot Slot;
+	local X2ItemTemplate Armor;
 
+	Held = Unit.GetItemInSlot(eInvSlot_Armor, NewGameState);
+	Armor = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(class'LWGearRules'.static.ArmorTemplateFor(class'LWGearRules'.default.StartingArmor));
+	if (!IsLongWarArmor(Held) && Armor != none)
+	{
+		if (Held != none)
+		{
+			Held = XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Held.ObjectID));
+			Unit.RemoveItemFromInventory(Held, NewGameState);
+			XComHQ.PutItemInInventory(NewGameState, Held);
+		}
+		Unit.AddItemToInventory(Armor.CreateInstanceFromTemplate(NewGameState), eInvSlot_Armor, NewGameState);
+	}
 	Templates = Kit(Unit);
 	for (Slot = eInvSlot_PrimaryWeapon; Slot <= eInvSlot_SecondaryWeapon; Slot = EInventorySlot(Slot + 1))
 	{
@@ -136,7 +158,9 @@ static function Report(out array<string> Out)
 		foreach Templates(T)
 			Line @= T.DataName;
 		Line @= "| holds" @ (Unit.GetItemInSlot(eInvSlot_PrimaryWeapon) != none ? string(Unit.GetItemInSlot(eInvSlot_PrimaryWeapon).GetMyTemplateName()) : "-")
-			@ (Unit.GetItemInSlot(eInvSlot_SecondaryWeapon) != none ? string(Unit.GetItemInSlot(eInvSlot_SecondaryWeapon).GetMyTemplateName()) : "-");
+			@ (Unit.GetItemInSlot(eInvSlot_SecondaryWeapon) != none ? string(Unit.GetItemInSlot(eInvSlot_SecondaryWeapon).GetMyTemplateName()) : "-")
+			@ "| wears" @ (Unit.GetItemInSlot(eInvSlot_Armor) != none ? string(Unit.GetItemInSlot(eInvSlot_Armor).GetMyTemplateName()) : "-")
+			@ "hp" @ int(Unit.GetMaxStat(eStat_HP)) @ "mobility" @ int(Unit.GetMaxStat(eStat_Mobility)) @ "defense" @ int(Unit.GetMaxStat(eStat_Defense));
 		Out.AddItem(Line);
 	}
 }

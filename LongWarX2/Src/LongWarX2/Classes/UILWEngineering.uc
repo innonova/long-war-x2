@@ -1,5 +1,6 @@
-// Long War's engineering screen (features/lw-gear.md, phase 3), opened from the Geoscape: what research
-// has unlocked with its cost and time, a button to build it, and the projects under way. The rules are
+// Long War's engineering screen (features/lw-gear.md, phases 3 and 4), opened from the Geoscape: what
+// research has unlocked with its cost and time, a button to build it, and the projects under way; and
+// the same for the Foundry's projects. The rules are
 // LWEngineering's; time passes on the Geoscape.
 class UILWEngineering extends UIScreen;
 
@@ -9,7 +10,9 @@ var UIText Header, ProjectsText, StatusText;
 var UIButton BuildButtons[ROWS];
 var UIText BuildTexts[ROWS];
 var int RowItem[ROWS];
-var UIButton QuantityButton, PrevButton, NextButton, CloseButton;
+var UIButton QuantityButton, ModeButton, PrevButton, NextButton, CloseButton;
+/** The Foundry's projects listed instead of the items. */
+var bool bFoundry;
 var int Page;
 var int Quantity;
 var string Status;
@@ -40,6 +43,8 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	StatusText.SetWidth(1700);
 	QuantityButton = Spawn(class'UIButton', self).InitButton('LWEngQuantity', "", OnQuantity);
 	QuantityButton.SetPosition(90, 970);
+	ModeButton = Spawn(class'UIButton', self).InitButton('LWEngMode', "", OnMode);
+	ModeButton.SetPosition(330, 970);
 	PrevButton = Spawn(class'UIButton', self).InitButton('LWEngPrev', "PREVIOUS", OnPrev);
 	PrevButton.SetPosition(1260, 970);
 	NextButton = Spawn(class'UIButton', self).InitButton('LWEngNext', "NEXT", OnNext);
@@ -58,20 +63,23 @@ function Refresh()
 	S = class'XComGameState_LWStrategy'.static.Get();
 	if (S == none)
 		return;
-	Items = class'LWEngineering'.static.Buildable();
+	Items = bFoundry ? class'LWEngineering'.static.FoundryAvailable() : class'LWEngineering'.static.Buildable();
 	Pages = Max(1, (Items.Length + ROWS - 1) / ROWS);
 	Page = Clamp(Page, 0, Pages - 1);
-	Header.SetText("LONG WAR: ENGINEERING -" @ S.Engineers @ "engineers    " $ class'LWStrategyRules'.static.Money(class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies()) $ "    page" @ (Page + 1) @ "of" @ Pages);
+	Header.SetText((bFoundry ? "LONG WAR: FOUNDRY -" : "LONG WAR: ENGINEERING -") @ S.Engineers @ "engineers    " $ class'LWStrategyRules'.static.Money(class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies()) $ "    page" @ (Page + 1) @ "of" @ Pages);
 	for (i = 0; i < ROWS; i++)
 	{
 		k = Page * ROWS + i;
 		RowItem[i] = k < Items.Length ? Items[k] : -1;
 		BuildButtons[i].SetVisible(RowItem[i] >= 0);
-		BuildTexts[i].SetText(RowItem[i] >= 0 ? class'LWEngineering'.static.BuildLine(RowItem[i], S.Engineers) : "");
+		BuildButtons[i].SetText(bFoundry ? "BEGIN" : "BUILD");
+		BuildTexts[i].SetText(RowItem[i] < 0 ? "" : (bFoundry ? class'LWEngineering'.static.FoundryLine(RowItem[i], S) : class'LWEngineering'.static.BuildLine(RowItem[i], S.Engineers)));
 	}
-	ProjectsText.SetText("UNDER WAY:\n" $ (S.Builds.Length > 0 ? class'LWEngineering'.static.ProjectsText(S) : "nothing"));
-	StatusText.SetText(Items.Length == 0 ? "Research has unlocked nothing to build yet." : Status);
+	ProjectsText.SetText("UNDER WAY:\n" $ (S.Builds.Length + S.FoundryProjects.Length > 0 ? class'LWEngineering'.static.ProjectsText(S) $ class'LWEngineering'.static.FoundryProjectsText(S) : "nothing"));
+	StatusText.SetText(Items.Length == 0 ? (bFoundry ? "No Foundry project is available." : "Research has unlocked nothing to build yet.") : Status);
 	QuantityButton.SetText("QUANTITY:" @ Quantity);
+	QuantityButton.SetVisible(!bFoundry);
+	ModeButton.SetText(bFoundry ? "ITEMS" : "FOUNDRY");
 	PrevButton.SetDisabled(Page == 0);
 	NextButton.SetDisabled(Page >= Pages - 1);
 }
@@ -83,7 +91,7 @@ simulated function OnBuild(UIButton Button)
 	for (i = 0; i < ROWS; i++)
 		if (BuildButtons[i] == Button && RowItem[i] >= 0)
 		{
-			if (class'LWEngineering'.static.Start(RowItem[i], Quantity, Status))
+			if (bFoundry ? class'LWEngineering'.static.StartFoundry(RowItem[i], Status) : class'LWEngineering'.static.Start(RowItem[i], Quantity, Status))
 				Status = "Begun.";
 			if (XComHQPresentationLayer(Movie.Pres) != none && XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD != none)
 				XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD.UpdateResources();
@@ -95,6 +103,14 @@ simulated function OnBuild(UIButton Button)
 simulated function OnQuantity(UIButton Button)
 {
 	Quantity = Quantity >= 10 ? 1 : (Quantity == 5 ? 10 : Quantity + 1);
+	Refresh();
+}
+
+simulated function OnMode(UIButton Button)
+{
+	bFoundry = !bFoundry;
+	Page = 0;
+	Status = "";
 	Refresh();
 }
 

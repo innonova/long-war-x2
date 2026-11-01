@@ -84,6 +84,31 @@ export function familyOf(item) {
 /** The mod's template for a Long War weapon. */
 export const weaponTemplate = (item) => `LWWeapon_${item}`
 
+/** Long War's soldier armours (Armors= lines, MEC and SHIV left out) and the XCOM 2 armour each looks like (a
+ * taste decision: Kevlar, plated and powered by tier and weight). Those Long War never builds (Tac Vest, Tac
+ * Armor) are unlimited; new soldiers wear Tac Armor. */
+export const ARMOURS = {
+  57: 'KevlarArmor', 59: 'KevlarArmor',
+  159: 'MediumPlatedArmor', 60: 'MediumPlatedArmor', 182: 'LightPlatedArmor',
+  160: 'HeavyPlatedArmor', 58: 'LightPlatedArmor', 61: 'LightPoweredArmor',
+  62: 'HeavyPoweredArmor', 67: 'LightPoweredArmor', 63: 'MediumPoweredArmor', 64: 'LightPoweredArmor',
+  68: 'MediumPoweredArmor', 65: 'MediumPoweredArmor',
+}
+export const STARTING_ARMOUR = 59
+export const armourTemplate = (item) => `LWArmor_${item}`
+
+/** Long War's Armors= lines by item number: their fields, properties without eAP_ and abilities without eAbility_. */
+export function readArmours(core, ITEMS) {
+  const out = new Map()
+  for (const m of core.matchAll(/^Armors=\((.*)\)/gm)) {
+    const f = Object.fromEntries(m[1].split(',').filter((p) => p.includes('=')).map((p) => p.split('=').map((s) => s.trim())))
+    const id = /^\d+$/.test(f.iType) ? Number(f.iType) : ITEMS.indexOf(f.iType)
+    const list = (k, pre) => Object.entries(f).filter(([key, v]) => key.startsWith(k) && v !== '0').map(([, v]) => v.replace(pre, ''))
+    out.set(id, { ...f, props: list('Properties', /^eAP_/), abilities: list('ABILITIES', /^eAbility_/) })
+  }
+  return out
+}
+
 /** GetInfinitePrimary by the class's weapon property; everyone with a pistol slot a pistol (2). */
 export function startingKit(cls) {
   const p = CLASS_PROPERTY[cls]
@@ -121,14 +146,16 @@ export function readBalance(core, ITEMS) {
   const out = new Map()
   for (const m of core.matchAll(/^ItemBalance_Normal=\((.*?)\)/gim)) {
     const f = Object.fromEntries(m[1].split(',').filter((p) => p.includes('=')).map((p) => p.split('=').map((s) => s.trim())))
-    const id = /^\d+$/.test(f.eItem) ? Number(f.eItem) : ITEMS.indexOf(f.eItem)
+    const id = /^\d+$/.test(f.eItem) ? Number(f.eItem) : ITEMS.findIndex((e) => e.toLowerCase() === f.eItem.toLowerCase())
     const n = (k) => Number(f[k])
     out.set(id, { cash: n('iCash'), elerium: n('iElerium') % 1000, meld: Math.trunc(n('iElerium') / 1000), alloys: n('iAlloys') % 1000, days: n('iTime'), engineers: n('iEng') })
   }
   return out
 }
 
-/** The mod's XCOM 2 item for a Long War item: its weapon, else an item of its own (X2Item_LWArtifacts). */
+/** The mod's XCOM 2 item for a Long War item: its weapon or armour, else an item of its own (X2Item_LWArtifacts). */
 export function itemTemplate(item, ITEMS) {
-  return familyOf(item) ? weaponTemplate(item) : `LWItem_${ITEMS[item].replace(/^eItem_/, '')}`
+  if (familyOf(item)) return weaponTemplate(item)
+  if (ARMOURS[item]) return armourTemplate(item)
+  return `LWItem_${ITEMS[item].replace(/^eItem_/, '')}`
 }

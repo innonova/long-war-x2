@@ -1,7 +1,7 @@
 // Long War's weapons as the mod's config (features/lw-gear.md): LongWarX2/Config/XComLWGear.ini, from the
 // player's Long War DefaultGameCore.ini (its Weapons= lines) and the shared rules (lw-gear.mjs): each
 // weapon of Long War's soldier families with its numbers, XCOM 2 category (who may carry it), slot,
-// look (the XCOM 2 weapon whose model it takes) and tech; the starting kit unlimited. Then what engineering
+// look (the XCOM 2 weapon whose model it takes) and tech; the starting kit unlimited. The armours. Then what engineering
 // builds (+Builds): each item's cost, days and engineers (ItemBalance_Normal) and what it needs first (the
 // Tree's data/itemtree.json, read from Long War's XGItemTree.BuildItems). Numbers only: the names are Long
 // War's words, written on the player's machine (lw-words.mjs).
@@ -10,7 +10,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { CLASS_PROPERTY, FAMILIES, RANGE, TECH, TIERS, categoryFor, familyOf, itemTemplate, readBalance, readWeapons, startingKit } from './lw-gear.mjs'
+import { ARMOURS, CLASS_PROPERTY, FAMILIES, RANGE, STARTING_ARMOUR, TECH, TIERS, categoryFor, familyOf, itemTemplate, readArmours, readBalance, readWeapons, startingKit } from './lw-gear.mjs'
 
 const core = readFileSync(process.argv[2], 'latin1')
 const treeData = (f) => JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'xcom-ew-lw-tree', 'data', f), 'utf8'))
@@ -42,15 +42,29 @@ for (const items of Object.values(FAMILIES)) {
   }
 }
 
+// The armours: HP, defence, will and mobility; grapple and immunities (the rest of their properties, flight and
+// ghost, not yet); the XCOM 2 armour each looks like; those never built (cost -1) unlimited.
+const armours = readArmours(core, ITEMS)
+out.push('; Armors: HP, Defense, Will, Mobility; Look: the XCOM 2 armour whose body parts and images it takes.')
+for (const [id, look] of Object.entries(ARMOURS)) {
+  const a = armours.get(Number(id))
+  if (!a) throw new Error(`no Armors= line for item ${id}`)
+  out.push(
+    `+Armors=(Item=${id}, Enum=${ITEMS[id]}, HP=${a.iHPBonus}, Defense=${a.iDefenseBonus}, Will=${a.iWillBonus}, Mobility=${a.iMobilityBonus}, ` +
+      `SmallItems=${a.iSmallItems}, Look=${look}, Grapple=${a.props.includes('Grapple')}, FireImmune=${a.props.includes('FireImmunity')}, ` +
+      `PoisonImmune=${a.props.includes('PoisonImmunity')}, Infinite=${(balance.get(Number(id))?.cash ?? -1) < 0})`,
+  )
+}
+out.push(`StartingArmor=${STARTING_ARMOUR}`)
 // Engineering's pace (XGFacility_Engineering.GetWorkPerHour, XGItemTree.GetItemBuildTime, ScaleCost).
 const ini = (k) => Number(core.match(new RegExp(`^${k}=([\\d.]+)`, 'm'))[1])
 out.push(`EngineerRate=${ini('ABDUCTION_REWARD_ENG')}`, `TimeBalance=${ini('ITEM_TIME_BALANCE')}`, `WorkshopBonus=${ini('WORKSHOP_ENG_BONUS')}`)
-// What engineering builds: the weapons (armour to come) with a cost; -1 (the starting kit) is never built.
+// What engineering builds: the weapons and armours with a cost; -1 (the starting kit) is never built.
 out.push(
   '; Builds: Cash (\u00a7), Elerium, Alloys, Meld; Days and Engineers: a unit is Days x Engineers x 24 hours of work;',
   '; Tech: the Long War tech id researched first; ItemReq: one consumed per item built; Foundry: the project done first.',
 )
-for (const items of Object.values(FAMILIES)) {
+for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number)]) {
   for (const item of items) {
     if (item === null) continue
     const b = balance.get(item)
@@ -66,5 +80,29 @@ for (const items of Object.values(FAMILIES)) {
         ')',
     )
   }
+}
+
+// The Foundry's projects (FoundryBalance; what each needs first, from the Tree's data/techtree.json): iFragments
+// packs fragments (low) and meld (high: / 1000); the item in stores is also consumed, Items of it.
+const foundryRules = new Map(treeData('techtree.json').foundry.map((f) => [f.id, f]))
+const FOUNDRY = treeData('enums.json').enums.EFoundryTech
+out.push(
+  '; Foundry: Days and Engineers as for Builds; Cash, Elerium, Alloys, Fragments, Meld; Tech: researched first;',
+  '; Item: in stores and consumed, Items of it; EverHad: an item that must have been held; Credits: the research credits that cut its time.',
+)
+for (const m of core.matchAll(/^FoundryBalance=\((.*?)\)/gm)) {
+  const f = Object.fromEntries(m[1].split(',').filter((p) => p.includes('=')).map((p) => p.split('=').map((x) => x.trim())))
+  const id = /^\d+$/.test(f.eTech) ? Number(f.eTech) : FOUNDRY.indexOf(f.eTech)
+  const rule = foundryRules.get(id)
+  if (!rule) throw new Error(`Foundry project ${f.eTech} is not in data/techtree.json`)
+  const n = (k) => Number(f[k])
+  out.push(
+    `+Foundry=(Id=${id}, Enum=${rule.enum ?? 'none'}, Days=${n('iTime')}, Engineers=${n('iEngineers')}, Cash=${n('iCash')}, Elerium=${n('iElerium')}, Alloys=${n('iAlloys')}, ` +
+      `Fragments=${n('iFragments') % 1000}, Meld=${Math.trunc(n('iFragments') / 1000)}, Tech=${rule.requires}` +
+      (rule.in_stores ? `, Item=${itemTemplate(rule.in_stores.id, ITEMS)}, Items=${n('iNumItems')}` : '') +
+      (rule.ever_had ? `, EverHad=${itemTemplate(rule.ever_had.id, ITEMS)}` : '') +
+      (rule.credits?.length ? `, Credits=(${rule.credits.join(',')})` : '') +
+      ')',
+  )
 }
 console.log(out.join('\r\n'))

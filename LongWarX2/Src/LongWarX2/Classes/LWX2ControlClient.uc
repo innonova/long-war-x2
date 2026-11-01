@@ -56,6 +56,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
+		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun");
 		Out.AddItem("dump [class name part]: every game state object with all its fields (tools/test/lw-dump.sh saves it)");
 		return;
 	case "ping":
@@ -174,6 +175,17 @@ function Handle(string Line, out array<string> Out)
 		}
 		Before = S.EventCount;
 		Out.AddItem(class'LWEngineering'.static.Start(int(Args[1]), Args.Length > 2 ? int(Args[2]) : 1, Why) ? "ok" : "ERR" @ Why);
+		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
+		Refreshed();
+		return;
+	case "foundry":
+		if (Args.Length < 2)
+		{
+			Foundry(S, Out);
+			return;
+		}
+		Before = S.EventCount;
+		Out.AddItem(class'LWEngineering'.static.StartFoundry(int(Args[1]), Why) ? "ok" : "ERR" @ Why);
 		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
 		Refreshed();
 		return;
@@ -297,6 +309,24 @@ function Builds(XComGameState_LWStrategy S, out array<string> Out)
 	foreach S.Builds(P)
 		Out.AddItem("project item" @ P.Item @ "quantity" @ P.Quantity @ "work" @ P.WorkLeft @ "engineers" @ P.Engineers @ "hours" @ class'LWEngineering'.static.HoursFor(P.WorkLeft, P.Engineers, S.Engineers));
 	Out.AddItem("engineers" @ S.Engineers);
+}
+
+/** The Foundry: each available project (its id first, for foundry <id>), the one under way, those done. */
+function Foundry(XComGameState_LWStrategy S, out array<string> Out)
+{
+	local array<int> Ids;
+	local int Id;
+	local XComGameState_LWStrategy.LWBuild P;
+	local string Done;
+
+	Ids = class'LWEngineering'.static.FoundryAvailable();
+	foreach Ids(Id)
+		Out.AddItem("project" @ Id @ class'LWEngineering'.static.FoundryLine(Id, S));
+	foreach S.FoundryProjects(P)
+		Out.AddItem("under_way" @ P.Item @ "work" @ P.WorkLeft @ "engineers" @ P.Engineers @ "hours" @ class'LWEngineering'.static.HoursFor(P.WorkLeft, P.Engineers, S.Engineers));
+	foreach S.FoundryDone(Id)
+		Done @= string(Id);
+	Out.AddItem("done" $ Done);
 }
 
 function Give(name ItemName, int n, out array<string> Out)
