@@ -1,6 +1,7 @@
 // Long War's promotion rules on XCOM 2's heroes' promotion screen (features/lw-classes.md):
 // the whole tree is shown from the start, names and icons, ranks not reached yet greyed;
-// a rank's three perks are equal, free, and exactly one may be chosen. The screen's look and
+// a rank's three perks are equal, free, and exactly one may be chosen; a choice brings Long
+// War's stat bonus for it (LWX2PerkBonuses). The screen's look and
 // its confirmation and purchase are XCOM 2's.
 class LWX2PromotionScreen extends UIArmory_PromotionHero;
 
@@ -87,7 +88,8 @@ function PreviewAbility(int Rank, int Branch)
 	local X2AbilityTemplate Template;
 	local XComGameState_Unit Unit;
 	local array<SoldierClassAbilityType> Tree;
-	local string Cost, CostLabel, Points;
+	local string Cost, CostLabel, Points, Description;
+	local LWX2PerkBonuses.LWPerkBonus Bonus;
 
 	Unit = GetUnit();
 	Tree = Unit.GetRankAbilities(Rank);
@@ -103,5 +105,37 @@ function PreviewAbility(int Rank, int Branch)
 		Cost = "0";
 		Points = m_strAPLabel;
 	}
-	AS_SetDescriptionData(Template.IconImage, Template.LocFriendlyName, Template.HasLongDescription() ? Template.GetMyLongDescription(, Unit) : "", "", CostLabel, Cost, Points);
+	Description = Template.HasLongDescription() ? Template.GetMyLongDescription(, Unit) : "";
+	if (class'LWX2PerkBonuses'.static.Find(Unit.GetSoldierClassTemplateName(), Rank, Branch, Bonus))
+		Description $= "\n" $ class'UIUtilities_Text'.static.GetColoredText("With it:" @ class'LWX2PerkBonuses'.static.Describe(Bonus), eUIState_Good);
+	AS_SetDescriptionData(Template.IconImage, Template.LocFriendlyName, Description, "", CostLabel, Cost, Points);
+}
+
+/** XCOM 2's purchase, and Long War's stat bonus for the choice in the same change. */
+simulated function ComfirmAbilityCallback(Name Action)
+{
+	local XComGameStateHistory History;
+	local XComGameState UpdateState;
+	local XComGameState_Unit Unit;
+	local LWX2PerkBonuses.LWPerkBonus Bonus;
+
+	if (Action != 'eUIAction_Accept')
+	{
+		Movie.Pres.PlayUISound(eSUISound_MenuClickNegative);
+		return;
+	}
+	History = `XCOMHISTORY;
+	UpdateState = History.CreateNewGameState(true, class'XComGameStateContext_ChangeContainer'.static.CreateEmptyChangeContainer("Long War promotion"));
+	Unit = XComGameState_Unit(UpdateState.ModifyStateObject(class'XComGameState_Unit', GetUnit().ObjectID));
+	if (Unit.BuySoldierProgressionAbility(UpdateState, PendingRank, PendingBranch, 0))
+	{
+		if (class'LWX2PerkBonuses'.static.Find(Unit.GetSoldierClassTemplateName(), PendingRank, PendingBranch, Bonus))
+			class'LWX2PerkBonuses'.static.Apply(Unit, Bonus);
+		`GAMERULES.SubmitGameState(UpdateState);
+		Header.PopulateData();
+		PopulateData();
+	}
+	else
+		History.CleanupPendingGameState(UpdateState);
+	Movie.Pres.PlayUISound(eSUISound_SoldierPromotion);
 }

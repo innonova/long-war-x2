@@ -179,3 +179,21 @@ text elsewhere. To find.
 - **Free shots by refunding the cost**, the way XCOM 2's own Serial does,
   rather than new shot abilities: the soldier keeps XCOM 2's standard shot,
   its animations and its targeting.
+
+## Report (2026-11-01 night, Long War's stat bonuses for perk choices)
+
+**Seen in the game**: a Rocketeer Corporal's promotion screen shows, under
+Will to Survive, "With it: +3 Will"; bought, her Will went from 50/60 to
+56/63 (the maximum +3 as Long War has it; the current Will rose twice, from
+an explicit raise the game already does: fixed, not yet seen again).
+
+Long War's "perk tree-dependent bonus stat increases" (its tree types
+15–18 and 25–28: per class, rank and which of the rank's perks; mobility,
+aim, will) are generated into `LWX2PerkBonuses` (30 of them) and applied
+when a perk is bought, in the same change; the Squaddie column (the Scout's
++1 mobility) goes into the class's Squaddie stats.
+
+**Seen too**: XCOM 2's "soldier promoted" popup names the rank's first
+ability, not the one chosen; and the Long War headquarters opens on top of
+the after-action screens (the facility grid starts underneath them). Both
+to fix.
