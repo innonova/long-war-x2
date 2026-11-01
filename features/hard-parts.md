@@ -424,4 +424,53 @@ bounds):
 **So experiment 2 is answered**: Enemy Within's handmade maps come across as
 the ground of XCOM 2 missions, playable, from the player's own install, by
 the converter and the mod. With experiments 1 and 3 answered too, the hard
-parts are validated.
+parts are validated (and a fourth, below, for the strategy layer).
+
+## Report (2026-11-01 night, experiment 4: our own strategy screen sends a squad and takes the result back) — answered: yes
+
+The person: XCOM 2's whole strategic layer has to be replaced. Experiment 3
+showed a Long War screen running on XCOM 2's game state; what it did not
+show is the seam a replacement depends on: whether a strategy layer of our
+own can send soldiers into XCOM 2's tactical game and take the outcome back,
+without XCOM 2's Geoscape, squad select or Skyranger flight. A fourth small
+experiment, added tonight.
+
+**Seen in the game** (screenshots in the conversation): in a test
+campaign, a Long War headquarters screen (`UILWHeadquarters`) comes up over
+the Avenger: the date, the soldiers able to go, the last mission, the squad
+for the next one (four soldiers of Long War's classes and the starting
+Reaper). LAUNCH MISSION goes straight to the mission's loading screen
+(Recover Item, ADVENT train, `Plot_SLM_Train_Overpass`, the same mission
+the screen made), the squad plays it, a test button ends it, and back on
+the Avenger the screen comes up again: "Last mission: Operation Northern
+Corpse (Recover Item - ADVENT Train, Plot_SLM_Train_Overpass): LOST", and
+each soldier's missions count went from 1 to 2.
+
+**How**: the screen makes a mission site as XCOM 2's calendar makes a
+guerrilla op (`BuildMission`, a supplies reward), sets XCOM HQ's squad, and
+calls XCOM 2's `PrepareTacticalBattle` and `LaunchTacticalBattle`. Back in
+strategy the outcome is in the battle's state (`XComGameState_BattleData`)
+and the soldiers' own state.
+
+**Found**
+- A screen listener must not keep an actor (it kept the Avenger's HUD to
+  remember having shown the screen): the old world could not be unloaded
+  and the game stopped at the map change. A marker actor in the world now
+  remembers (`LWX2SessionMarker`).
+- The base view's top screen is the facility grid, not the Avenger's HUD.
+- XCOM 2 judges a mission by its objectives: ended as "won" by the
+  ruleset with the objective undone, it counts as lost.
+
+### Decisions
+
+- **XCOM 2's mission path, entered from our screen**, rather than a launch of
+  our own: the mission site, the squad and the two calls are all XCOM 2's,
+  so its tactical game, its after-action screen and its soldiers' records
+  work unchanged. Long War's strategy layer decides which missions exist and
+  who goes; XCOM 2 plays them.
+- **XCOM 2's mission sources for now** (a guerrilla op): Long War's
+  missions (UFO crash, landed UFO, abduction, terror, council) become our
+  own mission sources and EW maps in the strategy work.
+- **The screen over the Avenger, not instead of it**, for now: the
+  Avenger stays reachable (TO XCOM 2'S AVENGER) while the rest of XCOM 2's
+  base is still needed (armory, promotions).

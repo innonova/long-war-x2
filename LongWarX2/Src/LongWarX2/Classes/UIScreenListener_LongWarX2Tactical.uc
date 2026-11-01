@@ -21,6 +21,8 @@ event OnInit(UIScreen Screen)
 
 	if (UITacticalHUD(Screen) == none)
 		return;
+	if (class'UIScreenListener_LongWarX2HQ'.default.ShowLWHeadquarters && XGBattle_SP(`BATTLE) != none && !`BATTLE.m_kDesc.bIsTacticalQuickLaunch)
+		AddEndButton(Screen);
 	foreach Screen.WorldInfo.AllActors(class'LWX2EWUnitDisplay', Display)
 		return;
 	foreach Screen.WorldInfo.AllActors(class'XComUnitPawn', Pawn)
@@ -41,6 +43,22 @@ event OnInit(UIScreen Screen)
 	Display = Screen.WorldInfo.Spawn(class'LWX2EWUnitDisplay');
 	if (!Display.ShowBeside(Pawn))
 		Display.Destroy();
+}
+
+/** For development (experiment 4): a button that ends a campaign's mission as won, through the ruleset, as XCOM 2's cheat does. */
+function AddEndButton(UIScreen Screen)
+{
+	local UIButton Button;
+
+	Button = Screen.Spawn(class'UIButton', Screen);
+	Button.InitButton('LWX2EndMission', "LONG WAR TEST: END MISSION AS WON", OnEndMission);
+	Button.SetPosition(40, 200);
+}
+
+function OnEndMission(UIButton Button)
+{
+	`log("LongWarX2: test: mission ended as won", , 'LongWarX2');
+	`TACTICALRULES.EndBattle(XGBattle_SP(`BATTLE).GetHumanPlayer());
 }
 
 /** After the battle started: the EW map's effect on the tile data around the placement, and whether its pieces collide. */

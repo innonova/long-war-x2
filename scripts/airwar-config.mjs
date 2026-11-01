@@ -33,6 +33,7 @@ for (const c of air.ufo_changes) {
     : ''
   out.push(`+UfoChanges=(Ship=${c.ship}, AboveCategory=${c.above_category}${c.weapons ? `, Weapons=${list(c.weapons)}` : ''}${c.size ? `, Size=${q(c.size)}` : ''}${stats})`)
 }
+out.push('', '; For development: the Long War headquarters screen on the Avenger (experiment 4).', '[LongWarX2.UIScreenListener_LongWarX2HQ]', 'ShowLWHeadquarters=true')
 out.push('', '; For development: on the Avenger, rookies promoted to Corporal in Long War\'s classes, to look at them.', '[LongWarX2.UIScreenListener_LongWarX2TestBarracks]', 'PromoteRookies=true')
 out.push('', '; For development: the main menu\'s test campaign (a new campaign without its first mission).', '[LongWarX2.UIScreenListener_LongWarX2Shell]', 'ShowTestCampaign=true', '; An Enemy Within map converted on this machine, opened as it is (experiment 2).', 'TestMapURL="CSmallScout_Badlands?game=Engine.GameInfo"')
 out.push('', '; For development: an EW map\'s geometry on the Tactical Quick Launch screen (experiment 2;', '; tools/convert/ew-map.ts writes its pieces to XComLWX2EWMap.ini in the mod\'s Config).', '[LongWarX2.UIScreenListener_LongWarX2QuickLaunch]', 'PlaceEWMap=false', '; Away from the map the screen generates; the debug camera (from there) south of the EW map\'s UFO, above it, looking at it.', 'Origin=(X=-20000, Y=-20000, Z=0)', 'CameraPosition=(X=-7440, Y=-500, Z=1700)', 'CameraDirection=(X=0, Y=2, Z=-1)')
