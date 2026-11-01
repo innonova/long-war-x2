@@ -21,6 +21,7 @@ event OnInit(UIScreen Screen)
 
 	if (UITacticalHUD(Screen) == none)
 		return;
+	class'LWX2PerkProbe'.static.Start(Screen);
 	if (class'UIScreenListener_LongWarX2HQ'.default.ShowTestEndMission && XGBattle_SP(`BATTLE) != none && !`BATTLE.m_kDesc.bIsTacticalQuickLaunch)
 		AddEndButton(Screen);
 	foreach Screen.WorldInfo.AllActors(class'LWX2EWUnitDisplay', Display)
