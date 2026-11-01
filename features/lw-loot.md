@@ -167,7 +167,10 @@ back, not when it appears. Corpses are items with Long War's names.
   until missions can stun.
 - **The tactical side:** explosions destroying corpses and weapons, and
   aliens left behind.
-- **Terror rewards**, and the first mission's loot. A campaign that skips
-  its first mission starts with no corpses, so Xenobiology waits for the
-  first win.
+- **Terror rewards.**
+- **The first mission:** a Long War campaign now begins with what Long
+  War's first mission left (`DetermineFirstMissionSquad`: 10 Sectoids, so
+  10 corpses, 10 fragments and some meld). XCOM 2's own first mission,
+  played or skipped, leaves nothing of Long War's. Xenobiology and Alien
+  Weaponry can start at once, as in Long War.
 - **What only sells:** damaged artifacts, and the grey market.

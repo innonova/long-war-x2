@@ -194,6 +194,17 @@ static function array<int> UfoSquad(int Ufo, bool bLanded, int Days, int Aggress
 	return Out;
 }
 
+/** XGStrategyAI.DetermineFirstMissionSquad: three pods of Sectoids. */
+static function array<int> FirstMissionSquad()
+{
+	local array<int> Out;
+
+	AddPod(Out, POD_SOLDIER, 4, 4, 1);
+	AddPod(Out, POD_SOLDIER, 4, 3, 1);
+	AddPod(Out, POD_SOLDIER, 4, 3, 1);
+	return Out;
+}
+
 /** XGStrategyAI.DetermineAbductionSquad, by the mission's difficulty (0-3). */
 static function array<int> AbductionSquad(int Diff, int Days, int Resources)
 {
