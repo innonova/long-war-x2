@@ -30,7 +30,6 @@ if (!out) {
 }
 const original = new Uint8Array(readFileSync(src))
 const bytes = decompressPackage(original)
-fixHeader(original, bytes)
 const pkg = new Package(bytes)
 const renamed: string[] = []
 pkg.nameEntries.forEach((e: { name: string; offset: number }) => {
@@ -53,27 +52,4 @@ outBytes.set(bytes)
 outBytes.set(tex.appended, bytes.length)
 writeFileSync(out, outBytes)
 
-/**
- * upkit's decompressPackage zeroes the chunk count but leaves the old chunk entries in
- * the header, so the fields after the table (the package source, the packages to cook,
- * the texture allocations) are read from them: XCOM 2 then loops on the garbage. The
- * fields are moved up to follow the count; the rest of the header is left as it is (the
- * tables are found by their offsets).
- */
-function fixHeader(compressed: Uint8Array, out: Uint8Array) {
-  const v = new DataView(compressed.buffer, compressed.byteOffset, compressed.byteLength)
-  if (v.getInt32(4, true) === 0x20000) return // compressed whole: no chunk table
-  let o = 4 + 2 + 2 + 4 // tag, versions, header size
-  o += 4 + v.getInt32(o, true) // folder name (an FString)
-  o += 4 + 4 * 7 + 16 + 16 // package flags; names, exports, imports, depends; 845's extra and the GUID
-  const generations = v.getInt32(o, true)
-  o += 4 + 12 * generations + 8 // generations; engine and cooker versions
-  const flagsAt = o
-  const count = v.getInt32(o + 4, true)
-  if (v.getInt32(o, true) === 0 || count === 0) return
-  const tableEnd = flagsAt + 8 + 16 * count
-  const firstChunk = v.getInt32(flagsAt + 8, true) // where the uncompressed data starts: the header's end
-  out.copyWithin(flagsAt + 8, tableEnd, firstChunk)
-  out.fill(0, firstChunk - 16 * count, firstChunk)
-}
 console.log(`${out}: ${outBytes.length} bytes, decompressed; caches ${renamed.join(', ') || 'none named'}; ${tex.textures} textures rewritten (${tex.mips} mips)`)

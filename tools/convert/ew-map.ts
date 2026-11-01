@@ -36,7 +36,6 @@ if (!iniOut) {
 }
 const original = new Uint8Array(readFileSync(src))
 const bytes = decompressPackage(original)
-fixHeader(original, bytes)
 // Two readers of the same bytes: upk's for names, paths and table entries; package's for object data.
 const meta: any = new Package(bytes)
 const pkg: any = openPackage(bytes)
@@ -353,18 +352,3 @@ const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
 console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
 
-function fixHeader(compressed: Uint8Array, outBytes: Uint8Array) {
-  const cv = new DataView(compressed.buffer, compressed.byteOffset, compressed.byteLength)
-  if (cv.getInt32(4, true) === 0x20000) return
-  let o = 12
-  o += 4 + cv.getInt32(o, true)
-  o += 4 + 4 * 7 + 16 + 16
-  o += 4 + 12 * cv.getInt32(o, true) + 8
-  const flagsAt = o
-  const count = cv.getInt32(o + 4, true)
-  if (cv.getInt32(o, true) === 0 || count === 0) return
-  const tableEnd = flagsAt + 8 + 16 * count
-  const firstChunk = cv.getInt32(flagsAt + 8, true)
-  outBytes.copyWithin(flagsAt + 8, tableEnd, firstChunk)
-  outBytes.fill(0, firstChunk - 16 * count, firstChunk)
-}
