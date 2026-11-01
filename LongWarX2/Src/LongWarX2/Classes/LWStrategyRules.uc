@@ -80,6 +80,9 @@ var config int InterceptorDetectPct;
 var config int UfoFindSatPct;
 /** The same for a country hunted before (UFO_SECOND_PASS_FIND_SAT). */
 var config int UfoSecondPassFindSatPct;
+/** An alien base taken: the country back at 98 panic plus this, its continent this (features/lw-story.md). */
+var config int PanicAlienBaseCountry;
+var config int PanicAlienBaseContinent;
 /** The same once the Foundry's Stealth Satellites are done. */
 var config int UfoFindStealthSatPct;
 var config int UfoSecondPassFindStealthSatPct;
@@ -199,6 +202,7 @@ static function string ObjectiveName(int Objective)
 	case 6: return "Terror";
 	case 7: return "Infiltration";
 	case 8: return "Air raid";
+	case 3: return "Flyby";
 	}
 	return "Unknown";
 }
@@ -292,6 +296,7 @@ static function Phases(int Objective, out array<LWPhase> Out)
 		AddPhase(Out, 4, 3, 9, 3, 0);
 		break;
 	case 8: AddPhase(Out, 0, 5, -1, 1, 6); break; // air raid: a long scout
+	case 3: AddPhase(Out, 0, 3, 9, 2, 0); break; // flyby: an Overseer passes over and leaves (eUM_Flyby), no landing
 	}
 }
 

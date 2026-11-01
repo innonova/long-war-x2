@@ -23,6 +23,7 @@ var int ActionIndex[MAX_ACTIONS];
 var UIButton HourButton, SixHoursButton, RunButton, BuildSatButton, LaunchSatButton, SquadButton, AirButton, CloseGeoButton;
 var int SelectedCountry;
 var bool bLossShown;
+var bool bWinShown;
 
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
@@ -179,6 +180,11 @@ function Refresh()
 	{
 		bLossShown = true;
 		XComHQPresentationLayer(Movie.Pres).UIYouLose();
+	}
+	if (S.bCampaignWon && !bWinShown && XComHQPresentationLayer(Movie.Pres) != none)
+	{
+		bWinShown = true;
+		XComHQPresentationLayer(Movie.Pres).UIYouWin();
 	}
 }
 

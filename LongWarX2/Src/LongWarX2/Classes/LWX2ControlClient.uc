@@ -57,7 +57,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
 		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid)");
-		Out.AddItem("base: the base's tiles, numbers and facilities | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
+		Out.AddItem("base: the base's tiles, numbers and facilities | base set <column> <row> <facility>: placed at once (a test aid) | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
 		Out.AddItem("hangar: the jets (index first), orders, bays | order [continent 0-4] [n] | transfer <jet> <continent> | equip <jet> <weapon 1-7>");
 		Out.AddItem("dump [class name part]: every game state object with all its fields (tools/test/lw-dump.sh saves it)");
 		return;
@@ -181,6 +181,12 @@ function Handle(string Line, out array<string> Out)
 		Refreshed();
 		return;
 	case "base":
+		if (Args.Length > 4 && Args[1] ~= "set")
+		{
+			BaseSet(int(Args[2]) - 1, int(Args[3]) - 1, int(Args[4]));
+			S = class'XComGameState_LWStrategy'.static.Get();
+			Refreshed();
+		}
 		Base(S, Out);
 		return;
 	case "hangar":
@@ -453,6 +459,20 @@ function bool AutoResearch(out string What)
 	XComHQ.SetNewResearchProject(Refs[Best]);
 	What = XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(Refs[Best].ObjectID)).GetMyTemplate().DisplayName @ "(" $ BestHours $ "h)";
 	return true;
+}
+
+/** A facility put on a tile at once, whatever the tile (a test aid). */
+function BaseSet(int X, int Y, int Facility)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+
+	if (!class'LWBase'.static.IsValid(X, Y))
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a facility placed (control port)");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID));
+	class'LWBase'.static.SetFacility(S, Facility, X, Y);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 }
 
 /** A Foundry project marked done (a test aid). */

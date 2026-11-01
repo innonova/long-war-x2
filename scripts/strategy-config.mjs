@@ -118,6 +118,9 @@ const out = [
   `UfoFindSatPct=${Math.round(one('UFO_FIND_SAT') * 100)}`,
   `UfoSecondPassFindSatPct=${Math.round(one('UFO_SECOND_PASS_FIND_SAT') * 100)}`,
   `UfoFindStealthSatPct=${Math.round(one('UFO_FIND_STEALTH_SAT') * 100)}`,
+  // An alien base taken (XGStrategyAI, an alien base won): the country back at 98 panic and this, its continent this.
+  `PanicAlienBaseCountry=${one('PANIC_ALIENBASE_CONQUERED_CLASSIC_AND_IMPOSSIBLE')}`,
+  `PanicAlienBaseContinent=${one('PANIC_ALIENBASE_CONQUERED')}`,
   `UfoSecondPassFindStealthSatPct=${Math.round(one('UFO_SECOND_PASS_FIND_STEALTH_SAT') * 100)}`,
   `TerrorizeMostPanickedPct=${one('AI_TERRORIZE_MOST_PANICKED')}`,
   `SatelliteCost=${sat ? sat[1] : 200}`,
@@ -198,7 +201,8 @@ out.push(
   ...four('FragmentBalance').map((v, i) => `FragmentBalance[${i}]=${v}`),
   ...CHAR.map((name, id) => [name, id]).filter(([, id]) => id >= 4).map(([name, id]) => {
     const [el, al, me] = MECH[id] ?? [0, 0, one('CB_FUTURECOMBAT_BONUS')]
-    const corpse = CORPSE[id] ? ITEMS[CORPSE[id]].replace(/^eItem_/, '') : ''
+    // A downed Outsider leaves its shard (XGUnit: the shard, not a corpse; XGGameData.CharToCorpse has none).
+    const corpse = id === 18 ? 'Base_Shard' : CORPSE[id] ? ITEMS[CORPSE[id]].replace(/^eItem_/, '') : ''
     // A species with several loadouts (the Muton): the first one's weapons.
     const items = loadoutOf[(charLoadout[name.toLowerCase()] ?? [])[0]] ?? []
     const frags = items.map((i) => FRAGMENTS_BY_BASE[baseOf(i)] ?? 0).filter((f) => f > 0)

@@ -112,6 +112,12 @@ var int PendingIndex;
 var int PendingMission;
 /** The mission sent is to come back with an alien taken alive (won without playing it, with a captive). */
 var bool bPendingCapture;
+/** The story (features/lw-story.md): the countries with an alien base, the Hyperwave Beacon and the Ethereal
+ * Device ever held, the campaign won. */
+var array<int> AlienBases;
+var bool bHadHyperwaveBeacon;
+var bool bHadPsiLink;
+var bool bCampaignWon;
 
 // --- Making it ------------------------------------------------------------------------------
 
@@ -454,6 +460,7 @@ function PlanMonth()
 			AddObjective(6, Start, 1 + Rand(23), RandomCountry(), -1);
 	}
 	AlienAggression = Clamp(AlienAggression - 2, 0, 4);
+	AddOverseers(Start);
 	if (Month == 0)
 	{
 		do
@@ -462,6 +469,33 @@ function PlanMonth()
 		AddObjective(7, Start, 5 + Rand(5), k, -1);
 	}
 	`log("LongWarX2: Long War month" @ Month @ "planned: resources" @ AlienResources @ "tier" @ Tier @ "aggression" @ Cell.Aggression $ ";" @ Ufos.Length @ "UFOs," @ n @ "abductions," @ Cell.Terror @ "terror", , 'LongWarX2');
+}
+
+/**
+ * Long War's Overseers (XGStrategyAI.AddNewOverseers): until XCOM has an Ethereal Device, up to three
+ * Overseers fly over watched countries each month, on days 5, 15 and 25; and one over each country that
+ * has left, any day from the 5th to the 24th.
+ */
+function AddOverseers(int Start)
+{
+	local array<int> Visible;
+	local int i, k, n;
+
+	if (!bHadPsiLink)
+	{
+		Visible = VisibleTargets();
+		n = Min(3, Visible.Length);
+		for (i = 0; i < n; i++)
+		{
+			k = Rand(Visible.Length);
+			AddObjective(3, Start, 5 + 10 * i, Visible[k], -1);
+			if (Visible.Length > 1)
+				Visible.Remove(k, 1);
+		}
+	}
+	for (k = 0; k < Countries.Length; k++)
+		if (Countries[k].bLeft)
+			AddObjective(3, Start, 5 + Rand(20), k, -1);
 }
 
 /** Finished UFOs and sites dropped at the month's turn (none while a mission is out: it holds an index). */
@@ -814,9 +848,14 @@ function bool FoundSatellite(LWUfo U)
 	return Rand(100) < Chance;
 }
 
-/** A country leaves the council (XGCountry.LeaveXComProject): its satellite lost, the aliens 50 resources poorer after the first month. */
+/** A country leaves the council (XGCountry.LeaveXComProject): its satellite lost, the aliens 50 resources poorer after the first month; the aliens build a base there (XGStrategyAI.AddToAssets, CreateAlienBase). */
 function Leave(int Country)
 {
+	if (AlienBases.Find(Country) == INDEX_NONE)
+	{
+		AlienBases.AddItem(Country);
+		Note("The aliens are building a base in" @ CountryName(Country) $ ". A Skeleton Key would open it.");
+	}
 	Countries[Country].bLeft = true;
 	Countries[Country].bSatellite = false;
 	if (Month != 0)
@@ -957,8 +996,11 @@ static function MissionSent(int Kind, int Index, optional bool bCapture)
 	S.bPendingCapture = bCapture;
 	if (Kind <= 2)
 		S.Ufos[Index].Status = 5;
-	else
+	else if (Kind <= 4)
 		S.Sites[Index].Status = 2;
+	// An alien base takes a Skeleton Key, whatever comes of it (XGStrategy: STORAGE().RemoveItem(184)).
+	if (Kind == 5)
+		class'LWEngineering'.static.Take(NewGameState, 'LWItem_Skeleton_Key', 1);
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 }
 
@@ -998,7 +1040,16 @@ static function MissionBack(bool bWon)
 		return;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission back");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
-	Country = S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Country : S.Sites[S.PendingIndex].Country;
+	Country = S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Country : (S.PendingKind <= 4 ? S.Sites[S.PendingIndex].Country : (S.PendingKind == 5 ? S.PendingIndex : S.HomeCountry()));
+	if (S.PendingKind >= 5)
+	{
+		S.StoryMissionBack(NewGameState, bWon, Country);
+		S.PendingKind = 0;
+		S.PendingMission = 0;
+		S.bPendingCapture = false;
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		return;
+	}
 	// What the aliens killed leave (all of them, a mission won: our missions do not count them yet).
 	if (bWon)
 	{
@@ -1055,6 +1106,61 @@ static function MissionBack(bool bWon)
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 }
 
+/**
+ * A story mission back (features/lw-story.md). An alien base (kind 5) taken: the country rejoins the council
+ * at 98 panic less PanicAlienBaseCountry, its continent PanicAlienBaseContinent (XGStrategyAI: CostTest, the
+ * mission's results); its artifacts (CreateAlienBase), and the first time the Hyperwave Beacon. The Temple
+ * Ship (kind 6): won, the campaign is won; lost, it is lost (XGStrategy: YouWin, YouLose).
+ */
+function StoryMissionBack(XComGameState NewGameState, bool bSuccess, int Country)
+{
+	local int d;
+
+	if (PendingKind == 6)
+	{
+		if (bSuccess)
+		{
+			bCampaignWon = true;
+			bStop = true;
+			Note("The Temple Ship is destroyed. XCOM has won the war.");
+		}
+		else
+		{
+			bLost = true;
+			bStop = true;
+			Note("The assault on the Temple Ship failed. The war is lost.");
+		}
+		return;
+	}
+	if (!bSuccess)
+	{
+		Note("The assault on the alien base in" @ CountryName(Country) @ "failed; the Skeleton Key is lost.");
+		return;
+	}
+	d = class'LWStrategyRules'.static.Difficulty();
+	// What the aliens killed leave: APPROXIMATION, a Battleship's crew for Long War's base squad (DetermineAlienBaseSquad).
+	GiveKillLoot(NewGameState, class'LWAlienSquads'.static.SquadFor(2, 8, Days(), AlienAggression, AlienResources, 0, TerrorsTaken));
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Alloys', Cargo('Alloys', 100));
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'UFOPowerSource', 3);
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Elerium', Cargo('Elerium', 3 * class'LWStrategyRules'.default.EleriumPerPowerSource[d]));
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'AlienSurgery', 4);
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'AlienStasisTank', 15);
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'AlienFood', 10);
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'AlienEntertainment', 1);
+	if (!bHadHyperwaveBeacon)
+	{
+		class'X2Item_LWArtifacts'.static.Give(NewGameState, 'HyperwaveBeacon', 1);
+		bHadHyperwaveBeacon = true;
+		Note("In the alien base: a Hyperwave Beacon.");
+	}
+	AlienBases.RemoveItem(Country);
+	Countries[Country].bLeft = false;
+	Countries[Country].Panic = 98;
+	AddPanic(Country, class'LWStrategyRules'.default.PanicAlienBaseCountry);
+	AddContinentPanic(CountryContinent(Country), class'LWStrategyRules'.default.PanicAlienBaseContinent);
+	Note("The alien base in" @ CountryName(Country) @ "is destroyed, and" @ CountryName(Country) @ "rejoins the council.");
+}
+
 // --- Salvage ------------------------------------------------------------------------------
 
 /**
@@ -1102,6 +1208,8 @@ function GiveSalvage(XComGameState NewGameState, int Ufo, bool bCrashed)
 					class'LWStrategyRules'.default.MaxLostWreckedElerium * class'LWStrategyRules'.default.EleriumPerPowerSource[d]) * (Total - Count));
 		}
 		class'X2Item_LWArtifacts'.static.Give(NewGameState, Item.Item, Cargo(Item.Item, Count));
+		if (Item.Item == 'PsiLink' && Count > 0)
+			bHadPsiLink = true;
 		if (Count > 0)
 			Got $= "," @ Count @ class'X2Item_LWArtifacts'.static.DisplayName(Item.Item);
 	}
@@ -1475,6 +1583,12 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 	for (i = 0; i < Sites.Length; i++)
 		if (Sites[i].Status == 1)
 			AddDecision(Kinds, Indexes, Labels, Sites[i].bTerror ? 5 : 4, i, (Sites[i].bTerror ? "RESPOND: terror in" : "RESPOND: abductions in") @ CountryName(Sites[i].Country) @ "(" $ (Sites[i].Until - Hours) $ "h)");
+	// The story: an alien base, with a Skeleton Key to open it; the Temple Ship, once the Gollop Chamber stands.
+	if (class'LWEngineering'.static.Held('LWItem_Skeleton_Key') > 0)
+		for (i = 0; i < AlienBases.Length; i++)
+			AddDecision(Kinds, Indexes, Labels, 6, AlienBases[i], "ASSAULT: the alien base in" @ CountryName(AlienBases[i]) @ "(a Skeleton Key)");
+	if (!bCampaignWon && TileFacility.Length > 0 && class'LWBase'.static.Count(self, 19) > 0)
+		AddDecision(Kinds, Indexes, Labels, 7, 0, "ASSAULT: the Temple Ship");
 }
 
 static function AddDecision(out array<int> Kinds, out array<int> Indexes, out array<string> Labels, int Kind, int Index, string Label)

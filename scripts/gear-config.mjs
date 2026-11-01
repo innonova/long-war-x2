@@ -60,10 +60,11 @@ out.push(`StartingArmor=${STARTING_ARMOUR}`)
 const ini = (k) => Number(core.match(new RegExp(`^${k}=([\\d.]+)`, 'm'))[1])
 out.push(`EngineerRate=${ini('ABDUCTION_REWARD_ENG')}`, `TimeBalance=${ini('ITEM_TIME_BALANCE')}`, `WorkshopBonus=${ini('WORKSHOP_ENG_BONUS')}`)
 // What engineering builds: the weapons and armours with a cost; -1 (the starting kit) is never built. And the
-// interceptors' weapons and the Firestorm (the hangar, features/lw-hangar.md).
-const CRAFT = [117, 119, 120, 121, 122, 104]
-// XGFacility_Engineering.GetItemProjectCost's own cases: items consumed beyond the item requirement.
-const SPECIAL = { 104: [[170, 4], [168, 8]] }
+// interceptors' weapons and the Firestorm (the hangar, features/lw-hangar.md), the Skeleton Key (lw-story.md).
+const CRAFT = [117, 119, 120, 121, 122, 104, 184]
+// XGFacility_Engineering.GetItemProjectCost's own cases: items consumed beyond the item requirement (the
+// Firestorm UFO power sources and navigation computers, the Skeleton Key the Outsider Shard).
+const SPECIAL = { 104: [[170, 4], [168, 8]], 184: [[183, 1]] }
 out.push(
   '; Builds: Cash (\u00a7), Elerium, Alloys, Meld; Days and Engineers: a unit is Days x Engineers x 24 hours of work;',
   '; Tech: the Long War tech id researched first; ItemReq: one consumed per item built; Foundry: the project done first.',
@@ -80,7 +81,8 @@ for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number
         `Days=${b.days}, Engineers=${Math.abs(b.engineers)}` +
         (t.tech ? `, Tech=${t.tech.id}` : '') +
         (SPECIAL[item]
-          ? `, ItemReq=${itemTemplate(SPECIAL[item][0][0], ITEMS)}, ItemReqCount=${SPECIAL[item][0][1]}, ItemReq2=${itemTemplate(SPECIAL[item][1][0], ITEMS)}, ItemReq2Count=${SPECIAL[item][1][1]}`
+          ? `, ItemReq=${itemTemplate(SPECIAL[item][0][0], ITEMS)}, ItemReqCount=${SPECIAL[item][0][1]}` +
+            (SPECIAL[item][1] ? `, ItemReq2=${itemTemplate(SPECIAL[item][1][0], ITEMS)}, ItemReq2Count=${SPECIAL[item][1][1]}` : '')
           : t.item
             ? `, ItemReq=${itemTemplate(t.item.id, ITEMS)}`
             : '') +
