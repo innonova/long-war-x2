@@ -121,7 +121,7 @@ out.push(
   ...HARVEST_UFO.map((t, i) => `+Harvest=(Ufo=${t}, Resources=${alloys[6 + i]})`),
   ...Array.from({ length: 11 }, (_, i) => `+UfoWorth=(Ufo=${4 + i}, Resources=${alloys[10 + i]})`),
 )
-if (strategyUpk) out.push(...monthlyPlan(strategyUpk))
+if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk))
 console.log(out.join('\r\n'))
 
 /**
@@ -161,6 +161,15 @@ function terrorNeighbours(upk) {
   }
   if (Object.keys(result).length !== 16) throw new Error(`DetermineBestTerrorTarget: ${Object.keys(result).length} countries read, expected 16`)
   return result
+}
+
+/** The countries gone that lose the campaign (XGStrategy.CheckForLoseGame): a default of XGStrategyActorNativeBase's, in the package. */
+function loseCondition(upk) {
+  const upkit = process.env.UPKIT ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', '@innonova', 'upkit', 'dist', 'upkit.mjs')
+  const src = execFileSync(process.execPath, [upkit, 'class', upk, 'XGStrategyActorNativeBase'], { encoding: 'utf8', maxBuffer: 64 << 20 })
+  const m = /^\s*LOSE_CONDITION_NUM_DESERTERS=(\d+)/m.exec(src)
+  if (!m) throw new Error('LOSE_CONDITION_NUM_DESERTERS not in XGStrategyActorNativeBase')
+  return ["; The campaign is lost when this many countries have left (Long War's LOSE_CONDITION_NUM_DESERTERS).", `LoseCountries=${m[1]}`]
 }
 
 function monthlyPlan(upk) {

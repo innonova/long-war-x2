@@ -83,6 +83,8 @@ var config int SatelliteCost, SatelliteDays;
 var config array<LWUfoValue> Harvest;
 var config array<LWUfoValue> UfoWorth;
 var config array<LWPlanCell> Plan;
+/** The campaign is lost when this many countries have left (Long War's LOSE_CONDITION_NUM_DESERTERS). */
+var config int LoseCountries;
 
 static function string ContinentName(int Continent)
 {

@@ -22,7 +22,8 @@ function Answer(string Line)
 	local array<string> Out;
 	local string L;
 
-	`log("LongWarX2: control:" @ Line, , 'LongWarX2');
+	if (!(Line ~= "ping" || Line ~= "screens" || Line ~= "geo" || Line ~= "decisions" || Line ~= "continue"))
+		`log("LongWarX2: control:" @ Line, , 'LongWarX2');
 	Handle(Line, Out);
 	// A line at a time: a dump is thousands of them.
 	foreach Out(L)
@@ -47,6 +48,8 @@ function Handle(string Line, out array<string> Out)
 	{
 	case "help":
 		Out.AddItem("ping | screens | geo | decisions | geoscape | run <hours> [all] | act <n> | intercepted <ufo> <outcome 0 crashed 1 destroyed 2 escaped> <ufo hp>");
+		Out.AddItem("resolve <decision> won|lost [stance]: a decision taken without playing it (an interception fought by the air war's rules, a mission's result given)");
+		Out.AddItem("auto <hours> [mission win %, default 100] [stance 0-2, default 1] [sats]: time at full speed, every decision taken (interceptions fought, missions won at the %), satellites bought and launched with sats");
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
@@ -112,6 +115,21 @@ function Handle(string Line, out array<string> Out)
 		else
 			Out.AddItem(Geo.Act(Args.Length > 1 ? int(Args[1]) : 0) ? "ok" : "ERR no such decision");
 		return;
+	case "resolve":
+		if (Args.Length < 3)
+		{
+			Out.AddItem("ERR resolve <decision> won|lost [stance 0-2]");
+			return;
+		}
+		Before = S.EventCount;
+		Out.AddItem(ResolveDecision(int(Args[1]), Args[2] ~= "won", Args.Length > 3 ? int(Args[3]) : 1));
+		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
+		Refreshed();
+		return;
+	case "auto":
+		AutoPlay(Args.Length > 1 ? int(Args[1]) : 720, Args.Length > 2 ? int(Args[2]) : 100, Args.Length > 3 ? int(Args[3]) : 1, InStr(Locs(Line), " sats") != INDEX_NONE, Out);
+		Refreshed();
+		return;
 	case "intercepted":
 		if (Args.Length < 4 || int(Args[1]) < 0 || int(Args[1]) >= S.Ufos.Length)
 		{
@@ -165,26 +183,31 @@ function string NewCampaign(int Difficulty, bool bFirstMission)
 }
 
 /**
- * The top screen passed the way its continue button would: the after-action report's Continue,
- * an alert's confirm, the loot and mission summary closed; any other screen gets Enter (on the
- * after-action report Enter promotes the soldier in focus instead). Nothing on the screens that
- * wait for the player's own choice: the base, the maps, a mission's HUD, the main menu.
+ * The top screen passed the way its continue button would, for the screens that only report:
+ * the Skyranger's briefing launched or left, the after-action report's Continue, an alert's
+ * confirm, the loot, mission summary, tips and rewards recap closed. Nothing on the screens where
+ * the player decides (the base, a facility, the maps, a mission's HUD, the main menu), and nothing on
+ * a screen it does not know: a blind Enter there takes decisions (it bonded two soldiers once).
  */
 function string Continue()
 {
 	local UIScreen Top;
 
 	Top = Pres().ScreenStack.GetCurrentScreen();
-	if (Top == none || UIFacilityGrid(Top) != none || UIStrategyMap(Top) != none || UILWGeoscape(Top) != none || UITacticalHUD(Top) != none || UIShell(Top) != none)
+	if (Top == none || UIFacilityGrid(Top) != none || UIFacility(Top) != none || UIStrategyMap(Top) != none || UILWGeoscape(Top) != none
+		|| UITacticalHUD(Top) != none || UISpecialMissionHUD(Top) != none || UIShell(Top) != none)
 		return "nothing to continue:" @ (Top != none ? string(Top.Class.Name) : "no screen");
-	if (UIAfterAction(Top) != none)
+	if (UIDropShipBriefing_MissionStart(Top) != none || UIDropShipBriefing_MissionEnd(Top) != none)
+		WorldInfo.bContinueToSeamlessTravelDestination = true; // what the Skyranger's "press any key" sets (X2TacticalGameRuleset waits on it)
+	else if (UIAfterAction(Top) != none)
 		UIAfterAction(Top).OnContinue();
 	else if (UIAlert(Top) != none)
 		UIAlert(Top).OnConfirmClicked(none);
-	else if (UIInventory_LootRecovered(Top) != none || UIMissionSummary(Top) != none || UITutorialBox(Top) != none)
+	else if (UIInventory_LootRecovered(Top) != none || UIMissionSummary(Top) != none || UITutorialBox(Top) != none || UIRewardsRecap(Top) != none
+		|| UISoldierBondAlert(Top) != none || UIArmory_Photobooth(Top) != none || UIMissionIntro(Top) != none)
 		Top.CloseScreen();
 	else
-		return Press(class'UIUtilities_Input'.const.FXS_KEY_ENTER);
+		return "unknown screen, not touched:" @ Top.Class.Name;
 	return "continued" @ Top.Class.Name;
 }
 
@@ -210,6 +233,118 @@ function Screens(out array<string> Out)
 
 	foreach Pres().ScreenStack.Screens(Screen)
 		Out.AddItem(string(Screen.Class.Name));
+}
+
+/**
+ * A decision taken without playing it: an interception fought by the air war's rules with the
+ * healthiest jet at the stance (its result recorded for the jet and the Geoscape), a mission given
+ * its result (sent and come back, as XCOM 2's mission path would report it).
+ */
+function string ResolveDecision(int n, bool bWon, int Stance)
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_LWAirWar AirWar;
+	local array<int> Kinds, Indexes;
+	local array<string> Labels;
+	local LWAirWar.LWResult R;
+	local LWAirWar.LWShip Jet, TheUfo;
+	local int i, Best;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	S.Decisions(Kinds, Indexes, Labels);
+	if (n < 0 || n >= Kinds.Length)
+		return "ERR no such decision";
+	if (Kinds[n] != 1)
+	{
+		class'XComGameState_LWStrategy'.static.MissionSent(Kinds[n] - 1, Indexes[n]);
+		class'XComGameState_LWStrategy'.static.MissionBack(bWon);
+		return "resolved" @ Labels[n] @ (bWon ? "won" : "lost");
+	}
+	class'XComGameState_LWAirWar'.static.EnsureExists();
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	Best = -1;
+	for (i = 0; i < AirWar.Jets.Length; i++)
+		if (AirWar.Jets[i].Hp > 0 && (Best < 0 || AirWar.Jets[i].Hp > AirWar.Jets[Best].Hp))
+			Best = i;
+	if (Best < 0)
+		return "no jet fit to fly:" @ Labels[n];
+	Jet = class'LWAirWar'.static.Craft(AirWar.Jets[Best].Type, AirWar.Jets[Best].Weapon, S.Category());
+	Jet.Hp = AirWar.Jets[Best].Hp;
+	TheUfo = class'LWAirWar'.static.Ufo(S.Ufos[Indexes[n]].Ufo, S.Category());
+	TheUfo.Hp = S.Ufos[Indexes[n]].Hp;
+	R = class'LWAirWar'.static.Fight(TheUfo, Jet, Clamp(Stance, 0, 2), class'LWAirWar'.static.NoActions());
+	class'XComGameState_LWAirWar'.static.Record(Best, R.CraftHp, R.Outcome == eLWOutcome_Crashed || R.Outcome == eLWOutcome_Destroyed);
+	class'XComGameState_LWStrategy'.static.Intercepted(Indexes[n], int(R.Outcome), R.UfoHp);
+	return "fought" @ Labels[n] @ "with" @ AirWar.Jets[Best].Callsign $ ":" @ R.Outcome @ "ufo hp" @ R.UfoHp @ "jet hp" @ R.CraftHp;
+}
+
+/**
+ * The campaign at full speed: time runs, and every decision is taken as it comes: interceptions
+ * fought (resolve), missions won at WinPct %; with bSatellites, a satellite bought whenever there is
+ * the money and launched over the most panicked country without one. A line a decision, then the
+ * Geoscape's summary line.
+ */
+function AutoPlay(int Hours, int WinPct, int Stance, bool bSatellites, out array<string> Out)
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local array<int> Kinds, Indexes;
+	local array<string> Labels;
+	local int Done, Passed, k, Best, Guard;
+
+	Done = 0;
+	while (Done < Hours && Guard++ < 5000)
+	{
+		Passed = class'XComGameState_LWStrategy'.static.Run(Hours - Done);
+		Done += Passed;
+		S = class'XComGameState_LWStrategy'.static.Get();
+		if (S.bLost)
+			break;
+		if (bSatellites)
+		{
+			XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
+			if (XComHQ.GetSupplies() >= class'LWStrategyRules'.default.SatelliteCost && class'XComGameState_LWStrategy'.static.BuildSatellite())
+				Out.AddItem("satellite ordered");
+			S = class'XComGameState_LWStrategy'.static.Get();
+			while (S.SatellitesReady > 0)
+			{
+				Best = -1;
+				for (k = 0; k < S.Countries.Length; k++)
+					if (!S.Countries[k].bLeft && !S.Countries[k].bSatellite && (Best < 0 || S.Countries[k].Panic > S.Countries[Best].Panic))
+						Best = k;
+				if (Best < 0 || !class'XComGameState_LWStrategy'.static.LaunchSatellite(Best))
+					break;
+				Out.AddItem("satellite launched over" @ S.CountryName(Best));
+				S = class'XComGameState_LWStrategy'.static.Get();
+			}
+		}
+		// The decisions, the first each time (taking one can change the others); an interception
+		// only with a jet fit to fly.
+		S.Decisions(Kinds, Indexes, Labels);
+		for (k = 0; k < Kinds.Length; k++)
+			if (Kinds[k] != 1 || JetFit())
+				break;
+		if (k < Kinds.Length)
+			Out.AddItem("day" @ S.Days() @ ResolveDecision(k, Rand(100) < WinPct, Stance));
+		else if (Passed == 0)
+			break;
+	}
+	Dump(class'XComGameState_LWStrategy'.static.Get(), Labels);
+	Out.AddItem(Labels[0]);
+}
+
+/** A jet with HP left. */
+function bool JetFit()
+{
+	local XComGameState_LWAirWar AirWar;
+	local int i;
+
+	class'XComGameState_LWAirWar'.static.EnsureExists();
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	for (i = 0; i < AirWar.Jets.Length; i++)
+		if (AirWar.Jets[i].Hp > 0)
+			return true;
+	return false;
 }
 
 /** The Geoscape screen, opened if it is not up (only on the Avenger). */
@@ -288,7 +423,7 @@ function Dump(XComGameState_LWStrategy S, out array<string> Out)
 	local int i;
 
 	XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
-	Out.AddItem("date" @ S.DateText() @ "| month" @ S.Month @ "hours" @ S.Hours @ "money" @ XComHQ.GetSupplies() @ "resources" @ S.AlienResources @ "aggression" @ S.AlienAggression
+	Out.AddItem("date" @ S.DateText() @ "| xcom2" @ class'X2StrategyGameRulesetDataStructures'.static.GetDateString(`STRATEGYRULES.GameTime) @ class'X2StrategyGameRulesetDataStructures'.static.GetTimeString(`STRATEGYRULES.GameTime) @ "lost" @ int(S.bLost) @ "| month" @ S.Month @ "hours" @ S.Hours @ "money" @ XComHQ.GetSupplies() @ "resources" @ S.AlienResources @ "aggression" @ S.AlienAggression
 		@ "satellites_ready" @ S.SatellitesReady @ "satellites_building" @ S.SatellitesDue.Length @ "pending" @ S.PendingKind @ "events" @ S.EventCount);
 	for (i = 0; i < S.Countries.Length; i++)
 		Out.AddItem("country" @ i @ S.Countries[i].Id @ "panic" @ S.Countries[i].Panic @ "satellite" @ int(S.Countries[i].bSatellite) @ "left" @ int(S.Countries[i].bLeft) @ "hunted" @ int(S.Countries[i].bHunted));

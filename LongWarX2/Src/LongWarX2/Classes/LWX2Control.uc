@@ -18,12 +18,6 @@ event PostBeginPlay()
 	`log("LongWarX2: control: listening on" @ ControlPort, , 'LongWarX2');
 }
 
-event GainedChild(Actor Child)
-{
-	super.GainedChild(Child);
-	`log("LongWarX2: control: a connection", , 'LongWarX2');
-}
-
 /** The listener in this world, made if the switch is on and there is none. */
 static function Ensure(Actor Anywhere)
 {

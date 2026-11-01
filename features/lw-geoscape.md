@@ -244,3 +244,77 @@ What the person saw on their machine, and what changed:
   ssh, the same way as the other test tools.
 - **The dump is every game state object's `ToString(true)`**, XCOM 2's
   own full printout, rather than a format of ours, so nothing is left out.
+
+## Report (2026-11-01, the Geoscape is the strategy layer; simulating campaigns)
+
+**XCOM 2's strategy clock is gone; Long War's runs everything.**
+
+- **XCOM 2's world map is replaced** (`UIScreenListener_LWX2StrategyMap`,
+  switch `ReplaceStrategyMap`, on in both builds).
+  - XCOM 2's whole strategy clock runs only while its world map is open:
+    dark events, supply drops, the Avatar project, its missions, and also
+    healing and building.
+  - Whatever opens the map (the Avenger's globe button, the bridge) now
+    sees it paused, closed the way its back button closes it, and Long
+    War's Geoscape opened instead. Tested with the globe button.
+- **XCOM 2's clock follows Long War's** (`XCom2TimePasses`). The hours the
+  Geoscape runs move XCOM 2's date too, and its headquarters projects
+  complete when due, as its world map would complete them. Nothing else
+  of its tick runs. Tested:
+  - a soldier wounded in the skipped first mission was healed on XCOM
+    2's due date (HP 5 of 5);
+  - XCOM 2's "soldier recovered" notice came through.
+- **Missions pay no XCOM 2 reward.** It stays XCOM 2's supplies reward,
+  with the amount set to 0: `Reward_None` has no mission family, and the
+  mission then never started. Tested: the money stayed at §500 through a
+  won abduction mission. Long War's rewards by mission kind come with the
+  missions.
+- **Long War's lose condition** (`XGStrategy.CheckForLoseGame`): when
+  `LoseCountries` have left, the campaign is lost and XCOM 2's DEFEAT
+  screen shows (tested).
+  - The number is generated from Long War's package
+    (`LOSE_CONDITION_NUM_DESERTERS`), and it is **16**: Long War loses
+    only when the whole council has gone. I believe it was 8 in vanilla,
+    but have not checked; the person can confirm from memory.
+
+**Simulating the strategy layer at full speed** (the person's request),
+through the control port:
+
+- `resolve <decision> won|lost` takes one decision without playing it:
+  - an interception is fought by the air war's own rules (`LWAirWar.Fight`)
+    with the healthiest jet, and the result is recorded for the jet and the
+    Geoscape;
+  - a mission is sent and comes back with the result given.
+- `auto <hours> <mission win %> [stance] [sats]` runs time and takes
+  every decision as it comes, and with `sats` buys satellites and launches
+  them over the most panicked country. Three months: 27 decisions, about
+  a second.
+- What the first runs show:
+  - **jets are never repaired or replaced**: after a few fights they are
+    at negative HP and nothing can intercept from then on (Long War
+    repairs them over days: the hangar, still to come);
+  - an Interceptor is sent at a Terror Ship, as the player could.
+
+**Test tools:**
+
+- `continue` launches the Skyranger itself, by setting what its "press
+  any key" sets.
+- It passes only screens it knows, and leaves unknown screens alone: a
+  blind Enter press confirmed a soldier bond once.
+
+### Decisions
+
+- **The world map is closed when it opens, rather than overriding XCOM
+  2's presentation layer** (a class override). That route is smaller,
+  and the camera's trip to the map and back is the only cost. If it shows
+  in play, the override is the next step.
+- **XCOM 2's research still completes on XCOM 2's rules** until Long
+  War's research replaces it (the next feature).
+
+### Left open
+
+- XCOM 2's resource bar still shows its income (+§175) and supply-drop
+  countdown. Neither is ever paid now; they go when the Avenger's HUD
+  does.
+- XCOM 2's objectives and narrative still point at its world map.
+- Jet repair and replacement, and jets based per continent.

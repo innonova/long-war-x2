@@ -114,9 +114,12 @@ function OnLaunch(UIButton Button)
 	for (Attempt = 0; Attempt < 8; Attempt++)
 	{
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("LongWarX2: a mission from the Long War headquarters");
+		// XCOM 2's supplies reward with nothing in it: Long War's missions pay their own (rewards by kind
+		// still to come). (Reward_None has no mission family, and the mission then never starts.)
 		RewardTemplate = X2RewardTemplate(Strategy.FindStrategyElementTemplate('Reward_Supplies'));
 		Reward = RewardTemplate.CreateInstanceFromTemplate(NewGameState);
 		Reward.GenerateReward(NewGameState, ResHQ.GetMissionResourceRewardScalar(Reward), Region.GetReference());
+		Reward.Quantity = 0;
 		Rewards.Length = 0;
 		Rewards.AddItem(Reward);
 		Mission = XComGameState_MissionSite(NewGameState.CreateNewStateObject(class'XComGameState_MissionSite'));

@@ -15,6 +15,6 @@ tools/test/lw.sh "campaign $d $first" | grep -v '^>'
 for _ in $(seq 1 40); do
   sleep 4
   r=$(tools/test/lw.sh continue 2>/dev/null | grep -v '^>' || true)
-  case "$r" in *"nothing to continue: UIFacilityGrid"*) break ;; esac
+  case "$r" in *"nothing to continue"*|*"unknown screen"*) echo "$r"; break ;; esac
 done
 tools/test/lw.sh geoscape geo | grep -v '^>' | sed -n 2p

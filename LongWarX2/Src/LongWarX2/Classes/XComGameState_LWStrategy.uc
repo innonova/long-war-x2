@@ -60,6 +60,8 @@ var int NextGroup;
 var array<LWSite> Sites;
 /** The countries XCOM left alone this month (Long War's arrCountriesNotHelped): abductions or terror unanswered or lost. */
 var array<int> NotHelped;
+/** Enough countries have left: the campaign is lost (the Geoscape shows XCOM 2's defeat). */
+var bool bLost;
 /** Satellites built and waiting for a country, and the hours the ones in the works are ready. */
 var int SatellitesReady;
 var array<int> SatellitesDue;
@@ -167,13 +169,74 @@ static function int Run(int MaxHours, optional bool bThrough)
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: time passes");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	S.bStop = false;
-	while (n < MaxHours && (bThrough || !S.bStop))
+	while (n < MaxHours && (bThrough || !S.bStop) && !S.bLost)
 	{
 		S.Tick();
 		n++;
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	XCom2TimePasses(n);
 	return n;
+}
+
+/**
+ * XCOM 2's clock moved on with Long War's, and its headquarters' projects done when due (healing,
+ * training, building, XCOM 2's research until Long War's replaces it): what XCOM 2's world map does
+ * as time passes (XComGameState_HeadquartersXCom.UpdateGameBoard), without the rest of its tick:
+ * no dark events, supply drops, Avatar project or XCOM 2 missions.
+ */
+static function XCom2TimePasses(int PassedHours)
+{
+	local XComGameStateHistory History;
+	local XComGameState NewGameState;
+	local XComGameState_GameTime TimeState;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_HeadquartersProject Project;
+	local int i, Guard;
+	local bool bDone;
+
+	if (PassedHours <= 0)
+		return;
+	History = `XCOMHISTORY;
+	TimeState = XComGameState_GameTime(History.GetSingleGameStateObjectForClass(class'XComGameState_GameTime'));
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: XCOM 2's clock follows");
+	TimeState = XComGameState_GameTime(NewGameState.ModifyStateObject(class'XComGameState_GameTime', TimeState.ObjectID));
+	class'X2StrategyGameRulesetDataStructures'.static.AddHours(TimeState.CurrentTime, PassedHours);
+	`STRATEGYRULES.GameTime = TimeState.CurrentTime;
+	if (`GAME.GetGeoscape() != none)
+		`GAME.GetGeoscape().m_kDateTime = TimeState.CurrentTime;
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+
+	// Projects done, one at a time as XCOM 2 does them (each completion may change the list).
+	for (Guard = 0; Guard < 500; Guard++)
+	{
+		XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
+		bDone = false;
+		for (i = 0; i < XComHQ.Projects.Length && !bDone; i++)
+		{
+			Project = XComGameState_HeadquartersProject(History.GetGameStateForObjectID(XComHQ.Projects[i].ObjectID));
+			if (Project == none)
+				continue;
+			if (!Project.bIncremental && class'X2StrategyGameRulesetDataStructures'.static.LessThan(Project.CompletionDateTime, TimeState.CurrentTime))
+			{
+				Project.OnProjectCompleted();
+				bDone = true;
+			}
+			else if (Project.bIncremental && Project.BlocksRemaining <= 0)
+			{
+				Project.OnProjectCompleted();
+				bDone = true;
+			}
+			else if (Project.bIncremental && class'X2StrategyGameRulesetDataStructures'.static.LessThan(Project.BlockCompletionDateTime, TimeState.CurrentTime))
+			{
+				Project.OnBlockCompleted();
+				bDone = true;
+			}
+		}
+		if (!bDone)
+			break;
+		XComHQ.HandlePowerOrStaffingChange();
+	}
 }
 
 function Tick()
@@ -602,6 +665,13 @@ function Leave(int Country)
 	Countries[Country].bSatellite = false;
 	if (Month != 0)
 		AlienResources -= 50;
+	// XGStrategy.CheckForLoseGame.
+	if (!bLost && NumLeft() >= class'LWStrategyRules'.default.LoseCountries)
+	{
+		bLost = true;
+		bStop = true;
+		Note("The council has fallen: the campaign is lost.");
+	}
 }
 
 /** The aliens' aggression for a UFO brought down (Long War's LogUFORecord): 1, and 1 more for the large ships. */
