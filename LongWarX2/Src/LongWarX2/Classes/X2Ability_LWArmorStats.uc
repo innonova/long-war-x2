@@ -1,5 +1,6 @@
 // Long War's armours' numbers as XCOM 2 stat abilities (features/lw-gear.md, phase 2): HP, defence,
-// will and mobility, and the immunities to fire and poison, for as long as the armour is worn.
+// will and mobility, and the immunities to fire and poison, for as long as the armour is worn; and Long War's item
+// charges (X2Effect_LWCharges), every Long War soldier wearing a Long War armour.
 class X2Ability_LWArmorStats extends X2Ability dependson(LWGearRules);
 
 static function array<X2DataTemplate> CreateTemplates()
@@ -54,6 +55,9 @@ static function X2AbilityTemplate Stats(LWGearRules.LWArmorDef A)
 			Immunity.ImmuneTypes.AddItem('Poison');
 		Template.AddTargetEffect(Immunity);
 	}
+
+	// Long War's item charges for the soldier's small items and perks.
+	Template.AddTargetEffect(new class'X2Effect_LWCharges');
 
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	return Template;

@@ -93,6 +93,14 @@ function Handle(string Line, out array<string> Out)
 	case "research":
 		Research(Args.Length > 1 ? Args[1] : "", Out);
 		return;
+	case "perk":
+		if (Args.Length < 3)
+		{
+			Out.AddItem("ERR perk <soldier index> <ability>");
+			return;
+		}
+		Out.AddItem(GivePerk(int(Args[1]), name(Args[2])));
+		return;
 	case "give-to":
 		if (Args.Length < 3)
 		{
@@ -537,6 +545,31 @@ function FoundryDone(int Id)
 	if (S.FoundryDone.Find(Id) == INDEX_NONE)
 		S.FoundryDone.AddItem(Id);
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+}
+
+/** A perk given to a soldier (XCOM 2's training-centre abilities; a test aid). */
+function string GivePerk(int Index, name AbilityName)
+{
+	local XComGameState NewGameState;
+	local XComGameState_Unit Unit;
+	local StateObjectReference Ref;
+	local ClassAgnosticAbility Perk;
+	local int n;
+
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier() || n++ != Index)
+			continue;
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a perk given (control port)");
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		Perk.AbilityType.AbilityName = AbilityName;
+		Perk.bUnlocked = true;
+		Unit.AWCAbilities.AddItem(Perk);
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		return "ok" @ Unit.GetFullName() @ "has" @ AbilityName;
+	}
+	return "ERR no such soldier";
 }
 
 /** An item from the stores (made if none) put on a soldier, in its own slot (a test aid). */

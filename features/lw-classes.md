@@ -265,3 +265,31 @@ not holding at the start of the mission, as expected.
 - **War of the Chosen's Skirmish Mode instead of a skirmish of our own**:
   it already does everything asked (squad, ranks, perks, map, enemies);
   only the weapon tables needed Long War's classes.
+
+## Report (2026-11-01, the item perks)
+
+With Long War's small items in (`lw-gear.md`, phase 5), the perks that change
+their charges work (`X2Effect_LWCharges`, carried by every Long War armour's
+stat ability, set at a mission's start from Long War's `XGUnit.UpdateItemCharges`):
+- **Grenadier** (LW_Grenadier): HE, Alien and AP grenades ×2.
+- **Smoke and Mirrors** (LW_SmokeandMirrors): flashbangs, chem grenades and
+  mimic beacons ×2; +1 smoke grenade and battle scanner an item.
+- **Packmaster** (LW_Packmaster, Long War's Deep Pockets): +1 charge an item
+  for grenades, beacons, the arc thrower, smoke, the scanner and the medikit.
+- **Repair** (LW_Repair): +2 arc thrower charges an item.
+- **Smoke Bomb** (LW_SmokeGrenade) and **Battle Scanner** (LW_BattleScanner):
+  +1 smoke, +2 scans.
+- **Shock and Awe** (LW_ShockAndAwe, Long War's Rocketeer perk): a second
+  rocket.
+- **Fire Rocket**, the Rocketeer's squaddie perk, is its launcher in the kit.
+
+**Checked in a mission** (the new test aid `perk <soldier> <ability>`):
+- two HE grenades with Grenadier and Packmaster threw with 6 charges;
+- a flashbang with Smoke and Mirrors had 2;
+- the Rocketeer's launcher with Shock and Awe had 2 rockets.
+
+### Decisions
+
+- **Smoke Bomb and Battle Scanner add to a carried item.** Long War gives
+  the soldier the smoke or scanner without one, outside the small slots.
+  Here a soldier with the perk needs the item (APPROXIMATION).
