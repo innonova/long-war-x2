@@ -55,9 +55,41 @@ struct LWUfoChange
 	var int Ap;
 };
 
+/** What a Foundry project done changes (features/lw-hangar.md): a weapon's or a craft's stat raised; a weapon remade; a second weapon. */
+struct LWFoundryMod
+{
+	var int Foundry;
+	var int Weapon;
+	var int Ship;
+	var int ToHit;
+	var int BattleSpeed;
+	var int Hp;
+	var int Ap;
+};
+
+struct LWFoundryWeapon
+{
+	var int Foundry;
+	var int Weapon;
+	var float FiringTime;
+	var int Damage;
+	var int Ap;
+	var int ToHit;
+};
+
+struct LWFoundrySecond
+{
+	var int Foundry;
+	var int Ship;
+	var int Weapon;
+};
+
 var config array<LWWeaponDef> Weapons;
 var config array<LWShipDef> Ships;
 var config array<LWUfoChange> UfoChanges;
+var config array<LWFoundryMod> FoundryMods;
+var config array<LWFoundryWeapon> FoundryWeapons;
+var config array<LWFoundrySecond> FoundrySecond;
 
 struct LWWeapon
 {
@@ -222,6 +254,8 @@ static function LWWeapon WeaponFor(int Id, int Category)
 {
 	local LWWeaponDef Def;
 	local LWWeapon W;
+	local LWFoundryWeapon FW;
+	local LWFoundryMod M;
 
 	if (!WeaponDef(Id, Def))
 		return W;
@@ -231,7 +265,28 @@ static function LWWeapon WeaponFor(int Id, int Category)
 	W.Damage = Def.Damage + Def.DamagePerCategory * Category;
 	W.Ap = Def.Ap;
 	W.ToHit = Def.ToHit + Def.ToHitPerCategory * Category;
+	// The Foundry's projects done in the campaign (none in the demo).
+	foreach default.FoundryWeapons(FW)
+		if (FW.Weapon == Id && FoundryDone(FW.Foundry))
+		{
+			W.FiringTime = FW.FiringTime;
+			W.Damage = FW.Damage;
+			W.Ap = FW.Ap;
+			W.ToHit = FW.ToHit;
+		}
+	foreach default.FoundryMods(M)
+		if (M.Weapon == Id && FoundryDone(M.Foundry))
+			W.ToHit += M.ToHit;
 	return W;
+}
+
+/** Has the campaign's Foundry done the project? */
+static function bool FoundryDone(int Foundry)
+{
+	local XComGameState_LWStrategy S;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	return S != none && S.FoundryDone.Find(Foundry) != INDEX_NONE;
 }
 
 static function LWShip ShipFrom(LWShipDef Def, array<int> WeaponIds, int Category)
@@ -260,9 +315,22 @@ static function LWShip Craft(int Type, int WeaponId, int Category)
 {
 	local LWShipDef Def;
 	local array<int> WeaponIds;
+	local LWFoundryMod M;
+	local LWFoundrySecond Second;
 
 	ShipDef(Type, Def);
 	WeaponIds.AddItem(WeaponId);
+	// The Foundry's projects done: speed, HP, penetration; a second weapon (Wingtip Sparrowhawks).
+	foreach default.FoundryMods(M)
+		if (M.Ship == Type && FoundryDone(M.Foundry))
+		{
+			Def.BattleSpeed += M.BattleSpeed;
+			Def.Hp += M.Hp;
+			Def.Ap += M.Ap;
+		}
+	foreach default.FoundrySecond(Second)
+		if (Second.Ship == Type && FoundryDone(Second.Foundry) && WeaponId != Second.Weapon)
+			WeaponIds.AddItem(Second.Weapon);
 	return ShipFrom(Def, WeaponIds, Category);
 }
 

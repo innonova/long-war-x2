@@ -689,6 +689,7 @@ function int Category()
 function TickUfo(int i)
 {
 	local int Legs;
+	local array<int> Ready;
 
 	switch (Ufos[i].Status)
 	{
@@ -698,7 +699,10 @@ function TickUfo(int i)
 		Legs = (Ufos[i].Flight == 0 || Ufos[i].Flight == 3) ? 1 : 3;
 		Ufos[i].Status = 1;
 		Ufos[i].Until = Hours + Legs * class'LWStrategyRules'.static.LegHours() + (Ufos[i].Flight == 1 ? Ufos[i].SpendHours : 0);
-		if (Countries[Ufos[i].Country].bSatellite || Rand(100) < class'LWStrategyRules'.default.InterceptorDetectPct * JetsOn(CountryContinent(Ufos[i].Country)))
+		// Without a satellite, each ready interceptor on the continent may spot it, twice as likely with the
+		// Foundry's Enhanced UFO Detection (35) (XGGeoscape: GetNumInterceptorsInRangeAndAvailable).
+		Ready = class'LWHangar'.static.ReadyOn(CountryContinent(Ufos[i].Country));
+		if (Countries[Ufos[i].Country].bSatellite || Rand(100) < class'LWStrategyRules'.default.InterceptorDetectPct * (FoundryDone.Find(35) != INDEX_NONE ? 2 : 1) * Ready.Length)
 		{
 			Ufos[i].bDetected = true;
 			Note("UFO detected over" @ CountryName(Ufos[i].Country) $ ":" @ ShipName(Ufos[i].Ufo) $ "," @ class'LWStrategyRules'.static.ObjectiveName(Ufos[i].Objective) $ ".");
@@ -800,7 +804,11 @@ function bool FoundSatellite(LWUfo U)
 	if (!Countries[U.Country].bSatellite)
 		return false;
 	Chance = Max(0, 200 * U.Hp / Max(1, U.MaxHp) - 100);
-	Chance = Chance * (Countries[U.Country].bHunted ? class'LWStrategyRules'.default.UfoSecondPassFindSatPct : class'LWStrategyRules'.default.UfoFindSatPct) / 100;
+	// Stealth Satellites (the Foundry's project 17) are harder to find (XGAlienObjective).
+	if (FoundryDone.Find(17) != INDEX_NONE)
+		Chance = Chance * (Countries[U.Country].bHunted ? class'LWStrategyRules'.default.UfoSecondPassFindStealthSatPct : class'LWStrategyRules'.default.UfoFindStealthSatPct) / 100;
+	else
+		Chance = Chance * (Countries[U.Country].bHunted ? class'LWStrategyRules'.default.UfoSecondPassFindSatPct : class'LWStrategyRules'.default.UfoFindSatPct) / 100;
 	return Rand(100) < Chance;
 }
 
@@ -1083,14 +1091,14 @@ function GiveSalvage(XComGameState NewGameState, int Ufo, bool bCrashed)
 				Elerium -= int(RandRange(class'LWStrategyRules'.default.MinLostWreckedElerium * class'LWStrategyRules'.default.EleriumPerPowerSource[d],
 					class'LWStrategyRules'.default.MaxLostWreckedElerium * class'LWStrategyRules'.default.EleriumPerPowerSource[d]) * (Total - Count));
 		}
-		class'X2Item_LWArtifacts'.static.Give(NewGameState, Item.Item, Count);
+		class'X2Item_LWArtifacts'.static.Give(NewGameState, Item.Item, Cargo(Item.Item, Count));
 		if (Count > 0)
 			Got $= "," @ Count @ class'X2Item_LWArtifacts'.static.DisplayName(Item.Item);
 	}
 	Alloys = int(Alloys * Bonus);
 	Elerium = Max(0, int(Elerium * Bonus));
-	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Alloys', Alloys);
-	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Elerium', Elerium);
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Alloys', Cargo('Alloys', Alloys));
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Elerium', Cargo('Elerium', Elerium));
 	// The UFO type counts as captured (the UFO analyses ask for it).
 	if (class'UIUtilities_Strategy'.static.GetXComHQ().GetItemByName(class'X2Item_LWArtifacts'.static.CapturedMarker(Ufo)) == none)
 		class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, class'X2Item_LWArtifacts'.static.CapturedMarker(Ufo), 1);
@@ -1126,9 +1134,9 @@ function GiveKillLoot(XComGameState NewGameState, array<int> Squad)
 		AddCount(Corpses, CorpseCounts, Sp.Corpse);
 		AddCount(Corpses, CorpseCounts, Sp.ExtraCorpse);
 	}
-	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'WeaponFragment', Fragments);
-	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Elerium', Elerium / 10);
-	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Alloys', Alloys / 10);
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'WeaponFragment', Cargo('WeaponFragment', Fragments));
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Elerium', Cargo('Elerium', Elerium / 10));
+	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Alloys', Cargo('Alloys', Alloys / 10));
 	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Meld', Meld / 10);
 	for (k = 0; k < Corpses.Length; k++)
 	{
@@ -1136,6 +1144,17 @@ function GiveKillLoot(XComGameState NewGameState, array<int> Squad)
 		Got $= "," @ CorpseCounts[k] @ class'X2Item_LWArtifacts'.static.DisplayName(Corpses[k]);
 	}
 	Note("The aliens killed (" $ Squad.Length $ ") left:" @ Fragments @ "weapon fragments," @ Elerium / 10 @ "elerium," @ Alloys / 10 @ "alloys," @ Meld / 10 @ "meld" $ Got $ ".");
+}
+
+/** What the Skyranger brings home, with the Foundry's Alien Metallurgy (alloys), Alien Nucleonics
+ * (elerium) and Improved Salvage (fragments): a fifth more each (XGFacility_Hangar.UnloadArtifacts). */
+function int Cargo(name Artifact, int Count)
+{
+	if ((Artifact == 'Alloys' && FoundryDone.Find(25) != INDEX_NONE)
+		|| (Artifact == 'Elerium' && FoundryDone.Find(38) != INDEX_NONE)
+		|| (Artifact == 'WeaponFragment' && FoundryDone.Find(39) != INDEX_NONE))
+		return int(Count * 1.2);
+	return Count;
 }
 
 static function AddCount(out array<name> Names, out array<int> Counts, name N)

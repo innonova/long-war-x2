@@ -308,9 +308,11 @@ War's rules:
 - **What Foundry projects do:**
   - Each project is remembered when done, and the items that wait on one
     unlock.
-  - Their effects are not ported yet: better ballistics, pistols, SCOPE,
-    medikit, salvage, interceptor upgrades and the rest. Each needs its
-    own hook, tactical or strategic.
+  - The air war's and the salvage projects are ported (`lw-hangar.md`,
+    second report).
+  - The soldiers' projects are not: better ballistics, pistols, SCOPE,
+    medikit, ammo conservation, tactical rigging and the rest. Each needs
+    a tactical hook.
 - **Armours' Fly** (Archangel, Seraph), **Ghost** (Shadow), air evasion
   and the psi property; the MEC suits and SHIV decks.
 - The council's Future Combat bonus (a cheaper Foundry), with the

@@ -80,6 +80,9 @@ var config int InterceptorDetectPct;
 var config int UfoFindSatPct;
 /** The same for a country hunted before (UFO_SECOND_PASS_FIND_SAT). */
 var config int UfoSecondPassFindSatPct;
+/** The same once the Foundry's Stealth Satellites are done. */
+var config int UfoFindStealthSatPct;
+var config int UfoSecondPassFindStealthSatPct;
 /** The chance (%) a terror target is the most panicked candidate rather than one of the top three. */
 var config int TerrorizeMostPanickedPct;
 var config int SatelliteCost, SatelliteDays;

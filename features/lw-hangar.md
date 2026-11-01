@@ -99,3 +99,40 @@ the count went through a local. Recorded as learning #214; the earlier
 - **Long War's "Friendly Skies"** and UFO analyses that change the air
   war; the Firestorm's own refits.
 - **Long War's fuel and refuelling:** jets here never run out on the way.
+
+## Report (2026-11-01, the Foundry's air and salvage projects)
+
+**What the Foundry's projects do to the air war**, from the Tree's air
+war data (generated into `XComLWAirWar.ini`: `FoundryMods`,
+`FoundryWeapons`, `FoundrySecond`), applied when a craft or weapon is
+assembled:
+- **Craft:**
+  - Armored Fighters: +1000 HP for interceptors and Firestorms;
+  - Elerium Afterburners: +5 battle speed;
+  - Penetrator Weapons: +5 penetration;
+  - Wingtip Sparrowhawks: a second weapon, Stingray missiles.
+- **Weapons:**
+  - Improved Avionics: +10 to hit for XCOM's weapons;
+  - UFO Countermeasures: −15 to hit for the UFOs';
+  - Phoenix Coilguns and Supercapacitors remake the Phoenix and Laser
+    cannons.
+- **A ready jet below its HP**, after Armored Fighters, goes in for
+  repair to the new maximum.
+
+**And the strategic ones**, from Long War's code:
+- **Brought home:** Alien Metallurgy, Alien Nucleonics and Improved
+  Salvage each add a fifth to the alloys, elerium and fragments from
+  salvage and kill loot (`UnloadArtifacts`).
+- **Stealth Satellites:** UFOs find a satellite at 30 % (50 % on a second
+  pass) instead of 60 % (90 %) (`XGAlienObjective`).
+- **Enhanced UFO Detection:** each ready interceptor on a continent
+  doubles its 4 % chance of spotting a UFO there.
+  - Detection now counts only ready interceptors, as Long War's
+    `GetNumInterceptorsInRangeAndAvailable` does.
+- **Advanced Repair:** two thirds of the repair time (already in the
+  first report).
+
+**Checked in the game:**
+- with Armored Fighters and Wingtip Sparrowhawks marked done (the new
+  test aid `foundry done <id>`), both jets went in for repair to 3500 HP;
+- a Scout was fought with two weapons.

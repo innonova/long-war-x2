@@ -137,6 +137,9 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 	AirWar = InState(NewGameState);
 	for (i = 0; i < AirWar.Jets.Length; i++)
 	{
+		// A ready jet below its HP (a Foundry project raised it) goes in for repair (DetermineInterceptorStatus).
+		if (AirWar.Jets[i].Status == 0 && AirWar.Jets[i].HoursDown <= 0 && AirWar.Jets[i].Hp < MaxHp(AirWar.Jets[i]))
+			AfterFight(AirWar, i);
 		if (AirWar.Jets[i].HoursDown <= 0)
 			continue;
 		AirWar.Jets[i].HoursDown--;

@@ -2,8 +2,9 @@
 // ships, weapons, how UFOs change as the aliens advance, and which UFOs crash
 // rather than break up. From the Long War Tech Tree's data/airwar.json (read
 // there from Long War's own DefaultGameCore.ini and script), with the base
-// values and their growth per category; Foundry projects and Friendly Skies
-// are not carried yet (features/hard-parts.md, experiment 3).
+// values and their growth per category; and what the Foundry's projects change (features/lw-hangar.md):
+// a stat raised by a project done (FoundryMods), a weapon remade (FoundryWeapons), a second weapon carried
+// (FoundrySecond). Friendly Skies is not carried yet (features/hard-parts.md, experiment 3).
 //
 //   node scripts/airwar-config.mjs <xcom-ew-lw-tree>/data/airwar.json > LongWarX2/Config/XComLWAirWar.ini
 import { readFileSync } from 'node:fs'
@@ -34,6 +35,19 @@ for (const c of air.ufo_changes) {
     ? `, HasStats=true, BattleSpeed=${v(st.battle_speed)}, Hp=${v(st.hp)}, HpPerCategory=${per(st.hp)}, Armor=${v(st.armor)}, Ap=${v(st.ap)}`
     : ''
   out.push(`+UfoChanges=(Ship=${c.ship}, AboveCategory=${c.above_category}${c.weapons ? `, Weapons=${list(c.weapons)}` : ''}${c.size ? `, Size=${q(c.size)}` : ''}${stats})`)
+}
+// The Foundry's changes: each stat's "foundry": {project: amount} (weapons: to-hit; craft: speed, HP, penetration).
+const STAT = { to_hit: 'ToHit', battle_speed: 'BattleSpeed', hp: 'Hp', ap: 'Ap', damage: 'Damage' }
+for (const [kind, list] of [['Weapon', air.weapons], ['Ship', air.ships]])
+  for (const x of list)
+    for (const [stat, value] of Object.entries(x.stats ?? x))
+      for (const [project, amount] of Object.entries(value?.foundry ?? {}))
+        if (STAT[stat]) out.push(`+FoundryMods=(Foundry=${project}, ${kind}=${x.id}, ${STAT[stat]}=${amount})`)
+for (const fv of air.foundry_variants) {
+  if (fv.weapon) {
+    const st = fv.stats
+    out.push(`+FoundryWeapons=(Foundry=${fv.foundry}, Weapon=${fv.weapon}, FiringTime=${v(st.firing_time)}, Damage=${v(st.damage)}, Ap=${v(st.ap)}, ToHit=${v(st.to_hit)})`)
+  } else if (fv.ship) out.push(`+FoundrySecond=(Foundry=${fv.foundry}, Ship=${fv.ship}, Weapon=${fv.weapons[fv.weapons.length - 1]})`)
 }
 out.push('', '; The Long War headquarters screen on the Avenger (experiment 4; a preview in the player\'s build).', '[LongWarX2.UIScreenListener_LongWarX2HQ]', 'ShowLWHeadquarters=true', '; and in a mission of a campaign, a button that ends it as won (in the player\'s build too, to try the strategy layer).', 'ShowTestEndMission=true')
 out.push('', "; Long War's Geoscape in place of XCOM 2's world map, whose clock (dark events, supply drops, its missions) then never runs.", '[LongWarX2.UIScreenListener_LWX2StrategyMap]', 'ReplaceStrategyMap=true')

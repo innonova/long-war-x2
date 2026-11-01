@@ -56,7 +56,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
-		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun");
+		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid)");
 		Out.AddItem("base: the base's tiles, numbers and facilities | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
 		Out.AddItem("hangar: the jets (index first), orders, bays | order [continent 0-4] [n] | transfer <jet> <continent> | equip <jet> <weapon 1-7>");
 		Out.AddItem("dump [class name part]: every game state object with all its fields (tools/test/lw-dump.sh saves it)");
@@ -220,6 +220,13 @@ function Handle(string Line, out array<string> Out)
 		if (Args.Length < 2)
 		{
 			Foundry(S, Out);
+			return;
+		}
+		if (Args[1] ~= "done" && Args.Length > 2)
+		{
+			FoundryDone(int(Args[2]));
+			Out.AddItem("done" @ class'LWEngineering'.static.FoundryName(int(Args[2])));
+			Refreshed();
 			return;
 		}
 		Before = S.EventCount;
@@ -414,6 +421,19 @@ function Foundry(XComGameState_LWStrategy S, out array<string> Out)
 	foreach S.FoundryDone(Id)
 		Done @= string(Id);
 	Out.AddItem("done" $ Done);
+}
+
+/** A Foundry project marked done (a test aid). */
+function FoundryDone(int Id)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a Foundry project done (control port)");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID));
+	if (S.FoundryDone.Find(Id) == INDEX_NONE)
+		S.FoundryDone.AddItem(Id);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 }
 
 function Give(name ItemName, int n, out array<string> Out)
