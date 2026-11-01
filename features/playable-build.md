@@ -136,3 +136,13 @@ for the tree".
 
 **Open**: which mod list the person was looking at (a mod launcher such as
 AML keeps its own and writes the game's list when it starts the game).
+
+**Then** (the person: "starting xcom2 directly clears the mod list in
+XComModOptions.ini … iirc there was always something about enabling mods in
+general"): the game rebuilds the My Games copy of its mod options from the
+game folder's base file (`XComGame\Config\DefaultModOptions.ini`) whenever
+it thinks the copy is out of date, which on the person's PC is every start;
+the mod launchers write the base file. Checked on wingpu: with the mod only
+in the base file, the game rebuilt the copy with it and loaded the mod. The
+setup now writes the base file (other lines kept, the original kept as
+`.before-lwx2`), and the copy too; `--uninstall` takes it out of both.

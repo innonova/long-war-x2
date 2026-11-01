@@ -86,21 +86,32 @@ function modOptionsFile() {
   return docs.map((d) => join(d, 'My Games', 'XCOM2 War of the Chosen', 'XComGame', 'Config', 'XComModOptions.ini')).find((p) => existsSync(p))
 }
 
-/** The mod made active (on) or taken out (off) in the game's list; the player's other mods kept, the file's own sections too. */
-function setActive(on) {
-  const file = modOptionsFile()
-  if (!file) return undefined
-  const lines = readFileSync(file, 'utf8').split(/\r?\n/)
-  const mine = `ActiveMods="${MOD}"`
-  const kept = lines.filter((l) => l.trim() !== mine)
+/** The mod's ActiveMods line added (on) or taken out (off) in one mod options file; the other lines kept, a copy of the file before kept once. */
+function setActiveIn(file, on, create) {
+  if (!existsSync(file) && !create) return undefined
+  const lines = existsSync(file) ? readFileSync(file, 'utf8').split(/\r?\n/) : []
+  const kept = lines.filter((l) => !/^\s*ActiveMods\s*=\s*"?LongWarX2"?\s*$/i.test(l))
   if (on) {
     const at = kept.findIndex((l) => l.trim() === '[Engine.XComModOptions]')
-    if (at < 0) kept.unshift('[Engine.XComModOptions]', mine)
-    else kept.splice(at + 1, 0, mine)
+    if (at < 0) kept.unshift('[Engine.XComModOptions]', `ActiveMods="${MOD}"`)
+    else kept.splice(at + 1, 0, `ActiveMods="${MOD}"`)
   }
-  if (!existsSync(`${file}.before-lwx2`)) writeFileSync(`${file}.before-lwx2`, lines.join('\r\n'))
+  if (existsSync(file) && !existsSync(`${file}.before-lwx2`)) writeFileSync(`${file}.before-lwx2`, lines.join('\r\n'))
   writeFileSync(file, kept.join('\r\n'))
   return file
+}
+
+/**
+ * The mod switched on (or off) where the game takes its list of active mods from: the game
+ * folder's base file (XComGame\Config\DefaultModOptions.ini, where the mod launchers write too):
+ * the game rebuilds the copy in My Games from it whenever it thinks that copy is out of date,
+ * which drops anything only added there. The My Games copy is changed too, for the next start.
+ */
+function setActive(xcom2, on) {
+  const base = setActiveIn(join(xcom2, 'XComGame', 'Config', 'DefaultModOptions.ini'), on, true)
+  const user = modOptionsFile()
+  if (user) setActiveIn(user, on, false)
+  return base
 }
 
 
@@ -120,7 +131,7 @@ async function main() {
   if (flag('--uninstall')) {
     rmSync(target, { recursive: true, force: true })
     say(`Removed ${target}.`)
-    const file = setActive(false)
+    const file = setActive(xcom2, false)
     if (file) say(`Taken out of the game's active mods (${file}).`)
     return 0
   }
@@ -135,11 +146,8 @@ async function main() {
     cpSync(source, target, { recursive: true })
     say(`Installed the mod: ${target}`)
   }
-  // Made active in the game's own list: since 2K's launcher was removed, Steam starts the game
-  // directly, and the game loads the mods listed there.
-  const options = setActive(true)
-  if (options) say(`Enabled in the game's active mods: ${options}`)
-  else say("The game's list of active mods (My Games\\XCOM2 War of the Chosen\\XComGame\\Config\\XComModOptions.ini) was not found: start War of the Chosen once, quit, and run this again.")
+  // Made active where the game takes its list from (2K's launcher is gone: Steam starts the game).
+  say(`Enabled in the game's active mods: ${setActive(xcom2, true)}`)
 
   // Long War's words, from the player's Long War install.
   const eu = findSteamApp(EU_APP, 'XCom-Enemy-Unknown', 'XEW')
