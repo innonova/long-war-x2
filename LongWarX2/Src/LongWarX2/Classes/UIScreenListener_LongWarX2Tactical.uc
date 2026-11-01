@@ -14,7 +14,7 @@ var config float PartRadius;
 /** Where the part's centre goes, from the soldiers' spawn (its floor). */
 var config vector PartOffset;
 var int BoxedTries;
-var UIScreen BoxedScreen;
+var bool bSwept;
 
 event OnInit(UIScreen Screen)
 {
@@ -26,6 +26,12 @@ event OnInit(UIScreen Screen)
 	class'LWX2PerkProbe'.static.Start(Screen);
 	if (class'UIScreenListener_LongWarX2HQ'.default.ShowTestEndMission && XGBattle_SP(`BATTLE) != none && !`BATTLE.m_kDesc.bIsTacticalQuickLaunch)
 		AddEndButton(Screen);
+	// A mission of the Long War Geoscape is won when its aliens are all dead or taken (lw-missions.md).
+	if (class'XComGameState_LWStrategy'.static.Get() != none && class'XComGameState_LWStrategy'.static.Get().PendingSquad.Length > 0)
+	{
+		bSwept = false;
+		Screen.SetTimer(2.0, true, nameof(CheckSwept), self);
+	}
 	foreach Screen.WorldInfo.AllActors(class'LWX2EWUnitDisplay', Display)
 		return;
 	foreach Screen.WorldInfo.AllActors(class'XComUnitPawn', Pawn)
@@ -42,7 +48,6 @@ event OnInit(UIScreen Screen)
 		class'LWMissionSquads'.static.SpawnAtEWPods();
 		// Soldiers boxed in by EW's walls moved out, once their paths are known.
 		BoxedTries = 0;
-		BoxedScreen = Screen;
 		Screen.SetTimer(3.0, true, nameof(FreeBoxedIn), self);
 	}
 	if (default.PlaceEWMapPart || default.PlaceEWMapWhole)
@@ -73,6 +78,35 @@ function OnEndMission(UIButton Button)
 }
 
 /** For development: the mission ended as won (its button; LWX2Control's "win"). */
+/**
+ * Long War's rule for its missions: when the aliens that came are all dead or taken (none alive on the field, after
+ * at least one was there), the mission is won, as by the test button (XCOM 2's objectives counted as done). XCOM 2
+ * leaves victory to each mission's kismet, which on an Enemy Within map has nothing to act on.
+ */
+function CheckSwept()
+{
+	local XComGameState_Unit Unit;
+	local int Came, Alive;
+
+	if (bSwept || `TACTICALRULES == none || `TACTICALRULES.HasTacticalGameEnded())
+		return;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Unit.GetTeam() != eTeam_Alien || Unit.GetMyTemplate().bIsCosmetic)
+			continue;
+		Came++;
+		if (Unit.IsAlive() && !Unit.bRemovedFromPlay)
+			Alive++;
+	}
+	if (Came == 0 || Alive > 0)
+		return;
+	bSwept = true;
+	if (HUD() != none)
+		HUD().ClearTimer(nameof(CheckSwept), self);
+	`log("LongWarX2: missions: all" @ Came @ "aliens dead or taken: the mission is won", , 'LongWarX2');
+	TestWin();
+}
+
 static function TestWin()
 {
 	local XComGameState NewGameState;
@@ -160,6 +194,19 @@ function int CountReachableAround(XGUnit Unit)
 	return n;
 }
 
+/**
+ * The tactical HUD, looked up when a timer on it is to be cleared. The listener outlives the mission, so it holds no
+ * screen: one held would keep the mission's world from being freed (XCOM 2 then stops: "not cleaned up by garbage
+ * collection").
+ */
+static function UIScreen HUD()
+{
+	local XComTacticalController Controller;
+
+	Controller = XComTacticalController(class'WorldInfo'.static.GetWorldInfo().GetALocalPlayerController());
+	return (Controller != none && Controller.Pres != none) ? Controller.Pres.ScreenStack.GetFirstInstanceOf(class'UITacticalHUD') : none;
+}
+
 /** Tried every 3 seconds, for a minute at most, until the soldiers' paths are known. */
 function FreeBoxedIn()
 {
@@ -167,11 +214,8 @@ function FreeBoxedIn()
 
 	Moved = class'LWX2PartPlacer'.static.FreeBoxedIn();
 	`log("LongWarX2: EW map: boxed-in try" @ BoxedTries @ "->" @ Moved, , 'LongWarX2');
-	if ((Moved >= 0 || ++BoxedTries >= 20) && BoxedScreen != none)
-	{
-		BoxedScreen.ClearTimer(nameof(FreeBoxedIn), self);
-		BoxedScreen = none;
-	}
+	if ((Moved >= 0 || ++BoxedTries >= 20) && HUD() != none)
+		HUD().ClearTimer(nameof(FreeBoxedIn), self);
 }
 
 /** Later, once the mission has settled: how far each soldier can move. */

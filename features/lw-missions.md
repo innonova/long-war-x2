@@ -309,3 +309,39 @@ with memory to spare (23 GB free).
   night, or with the mod off.
 - The test machine is back on the badlands map. The truck stop's config
   is kept beside the checkout (`lwx2-truckstop.ini`).
+
+## Report (2026-11-02 night, Long War's win: every alien dead or taken)
+
+**A mission from Long War's Geoscape is now won when the aliens that came
+are all dead or taken.** None may be alive on the field, after at least
+one was there (`CheckSwept`, every 2 seconds from the tactical HUD). The
+mission then ends as the test button ends it: XCOM 2's objectives marked
+done, `EndBattle` for XCOM.
+- XCOM 2 leaves victory to each mission's kismet, which on an Enemy
+  Within map has nothing to act on. Before this, EW-map missions could
+  only be ended by the test button.
+
+**Checked in the game** (an abduction, XCOM 2's map; the aliens killed by
+XCOM 2's `KillAllAIs` cheat): "all 14 aliens dead or taken: the mission is
+won", the mission summary, back to the Avenger. On Long War's Geoscape:
+"The aliens killed (14) left: 14 weapon fragments, 3 elerium, 3 alloys,
+3 meld, 11 Sectoid Corpse, 3 Drone Wreck. The abduction's reward: §90.
+The mission in France succeeded."
+
+**Found and fixed on the way: XCOM 2 stopped when leaving a mission**
+("World UMS_MissionCore.TheWorld not cleaned up by garbage collection").
+The tactical listener lives on after the mission, and it held the HUD
+screen for its timers (this check's, and the boxed-in check's). It now
+holds no screen and looks the HUD up when a timer is to be cleared.
+- The player's preview build of that night (270fcb8) has only the
+  boxed-in reference, which is set only with the development EW map on
+  (off in the player's config).
+
+### Decisions
+
+- **The rule applies to every mission sent from Long War's Geoscape**, on
+  XCOM 2's maps too: Long War's abductions, crashes and landings are won by
+  clearing the aliens.
+  - XCOM 2's own objectives can still end a mission first, or fail it:
+    their timers, for one.
+  - Units of other teams (the Lost, civilians) are not counted.
