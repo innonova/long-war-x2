@@ -154,8 +154,11 @@ function string DateText()
 	return class'X2StrategyGameRulesetDataStructures'.static.GetDateString(T) @ (HourOfDay() < 10 ? "0" : "") $ HourOfDay() $ ":00";
 }
 
-/** Time runs hour by hour until the hours are up or something wants a decision. Returns the hours that passed. */
-static function int Run(int MaxHours)
+/**
+ * Time runs hour by hour until the hours are up or something wants a decision (with bThrough, on
+ * regardless: the player answering nothing, for development). Returns the hours that passed.
+ */
+static function int Run(int MaxHours, optional bool bThrough)
 {
 	local XComGameState NewGameState;
 	local XComGameState_LWStrategy S;
@@ -164,7 +167,7 @@ static function int Run(int MaxHours)
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: time passes");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	S.bStop = false;
-	while (n < MaxHours && !S.bStop)
+	while (n < MaxHours && (bThrough || !S.bStop))
 	{
 		S.Tick();
 		n++;

@@ -8,7 +8,7 @@ host=${LWX2_HOST:-wingpu}
 port=${LWX2_PORT:-7531}
 cmds=$(printf '%s\n' "$@" | base64 -w0)
 ssh "$host" "\$c = New-Object Net.Sockets.TcpClient; try { \$c.Connect('127.0.0.1', $port) } catch { 'ERR the game is not listening on $port'; exit 1 };
-\$s = \$c.GetStream(); \$s.ReadTimeout = 120000; \$r = New-Object IO.StreamReader(\$s); \$w = New-Object IO.StreamWriter(\$s); \$w.NewLine = \"\`r\`n\";
+\$s = \$c.GetStream(); \$s.ReadTimeout = 120000; \$r = New-Object IO.StreamReader(\$s, [Text.Encoding]::GetEncoding(28591)); [Console]::OutputEncoding = [Text.Encoding]::UTF8; \$w = New-Object IO.StreamWriter(\$s); \$w.NewLine = \"\`r\`n\";
 foreach (\$cmd in [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$cmds')).Split([char]10)) {
   if (-not \$cmd) { continue }
   '> ' + \$cmd; \$w.WriteLine(\$cmd); \$w.Flush()

@@ -46,7 +46,9 @@ function Handle(string Line, out array<string> Out)
 	switch (Cmd)
 	{
 	case "help":
-		Out.AddItem("ping | screens | geo | decisions | geoscape | run <hours> | act <n> | intercepted <ufo> <outcome 0 crashed 1 destroyed 2 escaped> <ufo hp>");
+		Out.AddItem("ping | screens | geo | decisions | geoscape | run <hours> [all] | act <n> | intercepted <ufo> <outcome 0 crashed 1 destroyed 2 escaped> <ufo hp>");
+		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
+		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
 		Out.AddItem("dump [class name part]: every game state object with all its fields (tools/test/lw-dump.sh saves it)");
 		return;
@@ -71,6 +73,13 @@ function Handle(string Line, out array<string> Out)
 	case "dump":
 		DumpAll(Args.Length > 1 ? Args[1] : "", Out);
 		return;
+	case "continue":
+	case "key":
+		Out.AddItem(Cmd == "continue" ? Continue() : Press(int(Args.Length > 1 ? Args[1] : "0")));
+		return;
+	case "campaign":
+		Out.AddItem(NewCampaign(Args.Length > 1 ? int(Args[1]) : 1, Args.Length > 2 && Args[2] ~= "first"));
+		return;
 	case "geoscape":
 		Out.AddItem(OpenGeoscape() != none ? "ok" : "ERR not on the Avenger");
 		return;
@@ -91,7 +100,7 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "run":
 		Before = S.EventCount;
-		Out.AddItem("hours" @ class'XComGameState_LWStrategy'.static.Run(Args.Length > 1 ? int(Args[1]) : 1));
+		Out.AddItem("hours" @ class'XComGameState_LWStrategy'.static.Run(Args.Length > 1 ? int(Args[1]) : 1, Args.Length > 2 && Args[2] ~= "all"));
 		S = class'XComGameState_LWStrategy'.static.Get();
 		NewEvents(S, Before, Out);
 		Refreshed();
@@ -125,6 +134,69 @@ function Handle(string Line, out array<string> Out)
 		return;
 	}
 	Out.AddItem("ERR unknown command (help)");
+}
+
+/**
+ * A new campaign from the main menu, as the difficulty screen's Start makes one
+ * (UIShellDifficulty.OnDifficultyConfirm): no tutorial, no narrative, no intro movie; without its
+ * first mission unless asked (the development shell's "skip first tactical").
+ */
+function string NewCampaign(int Difficulty, bool bFirstMission)
+{
+	local XComGameState Start;
+	local XComGameState_CampaignSettings Settings;
+	local UIShellDifficulty.DifficultyConfiguration D;
+	local array<name> NoOptions;
+
+	if (XComShellPresentationLayer(Pres()) == none)
+		return "ERR not at the main menu";
+	Difficulty = Clamp(Difficulty, 0, 3);
+	D = class'UIShellDifficulty'.default.DifficultyConfigurations[Difficulty];
+	NoOptions.Length = 0;
+	`XCOMHISTORY.ResetHistory();
+	Start = class'XComGameStateContext_StrategyGameRule'.static.CreateStrategyGameStart(, , false, false, true, Difficulty,
+		D.TacticalDifficulty, D.StrategyDifficulty, D.GameLength, true, NoOptions, , false, , , NoOptions);
+	Settings = XComGameState_CampaignSettings(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_CampaignSettings'));
+	Settings.SetStartTime(Start.TimeStamp);
+	Settings.bSkipFirstTactical = !bFirstMission;
+	Settings.SetDifficulty(Difficulty, D.TacticalDifficulty, D.StrategyDifficulty, D.GameLength);
+	GetALocalPlayerController().ConsoleCommand("open Avenger_Root?game=XComGame.XComHeadQuartersGame");
+	return "ok difficulty" @ Difficulty @ (bFirstMission ? "with" : "without") @ "the first mission";
+}
+
+/**
+ * The top screen passed the way its continue button would: the after-action report's Continue,
+ * an alert's confirm, the loot and mission summary closed; any other screen gets Enter (on the
+ * after-action report Enter promotes the soldier in focus instead). Nothing on the screens that
+ * wait for the player's own choice: the base, the maps, a mission's HUD, the main menu.
+ */
+function string Continue()
+{
+	local UIScreen Top;
+
+	Top = Pres().ScreenStack.GetCurrentScreen();
+	if (Top == none || UIFacilityGrid(Top) != none || UIStrategyMap(Top) != none || UILWGeoscape(Top) != none || UITacticalHUD(Top) != none || UIShell(Top) != none)
+		return "nothing to continue:" @ (Top != none ? string(Top.Class.Name) : "no screen");
+	if (UIAfterAction(Top) != none)
+		UIAfterAction(Top).OnContinue();
+	else if (UIAlert(Top) != none)
+		UIAlert(Top).OnConfirmClicked(none);
+	else if (UIInventory_LootRecovered(Top) != none || UIMissionSummary(Top) != none || UITutorialBox(Top) != none)
+		Top.CloseScreen();
+	else
+		return Press(class'UIUtilities_Input'.const.FXS_KEY_ENTER);
+	return "continued" @ Top.Class.Name;
+}
+
+/** An input pressed and released on the screen stack, as the keyboard or a gamepad would: what was on top before and after. */
+function string Press(int Code)
+{
+	local string Before;
+
+	Before = Pres().ScreenStack.GetCurrentScreen() != none ? string(Pres().ScreenStack.GetCurrentScreen().Class.Name) : "none";
+	Pres().ScreenStack.OnInput(Code, class'UIUtilities_Input'.const.FXS_ACTION_PRESS);
+	Pres().ScreenStack.OnInput(Code, class'UIUtilities_Input'.const.FXS_ACTION_RELEASE);
+	return "pressed" @ Code @ "on" @ Before;
 }
 
 function XComPresentationLayerBase Pres()

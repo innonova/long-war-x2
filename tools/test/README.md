@@ -38,6 +38,15 @@ single `.`. From this machine:
     tools/test/lw.sh win                       # the mission ended as won (any campaign mission)
     tools/test/lw.sh 'exec <console command>'
     tools/test/lw-dump.sh /tmp/state.txt [Unit]  # the whole game state, all fields, to grep
+    tools/test/lw.sh 'run 720 all'             # a month with the player answering nothing
+    tools/test/lw.sh continue                  # the top screen passed (reports, loot, alerts, tips)
+    tools/test/lw.sh 'key 510'                 # any input (UIUtilities_Input codes: 510 Esc)
+
+And around it:
+
+    tools/test/sync-build.sh                   # this working tree built on wingpu (game stopped, patch applied)
+    tools/test/new-campaign.sh [0-3] [--first] # game started, new campaign, reports passed, Geoscape open (~45 s)
+    tools/test/shot.sh /tmp/shot.png           # a screenshot copied here
 
 The dump is every XCOM 2 game state object, newest version, with all its fields
 (about a thousand objects, 60,000 lines, a few seconds), and the screens up. Screenshots
