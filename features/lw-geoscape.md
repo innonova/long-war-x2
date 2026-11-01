@@ -1,6 +1,6 @@
 ---
 title: "Long War's Geoscape: the council's countries, panic, satellites, UFOs and the month"
-status: in-progress
+status: review
 priority: 2
 dependsOn:
   - hard-parts
