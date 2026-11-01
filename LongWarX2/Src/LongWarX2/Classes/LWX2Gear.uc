@@ -5,7 +5,41 @@
 // none where their kit has one) is put back in the stores and replaced by their kit's (the class's
 // SquaddieLoadout, Long War's unlimited starting weapons). Run when soldiers are looked at or sent out
 // (UIScreenListener_LWX2Gear) and after the test promotions.
-class LWX2Gear extends Object;
+class LWX2Gear extends Object dependson(LWGearRules);
+
+/** Every unlimited Long War item in XCOM's stores (XCOM 2 adds its starting items only when a campaign begins). */
+static function EnsureInfinite()
+{
+	local XComGameState NewGameState;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local LWGearRules.LWWeaponDef W;
+	local LWGearRules.LWArmorDef A;
+	local array<name> Missing;
+	local name N;
+	local X2ItemTemplate Template;
+
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	if (XComHQ == none)
+		return;
+	foreach class'LWGearRules'.default.Weapons(W)
+		if (W.Infinite && XComHQ.GetItemByName(class'LWGearRules'.static.TemplateFor(W.Item)) == none)
+			Missing.AddItem(class'LWGearRules'.static.TemplateFor(W.Item));
+	foreach class'LWGearRules'.default.Armors(A)
+		if (A.Infinite && XComHQ.GetItemByName(class'LWGearRules'.static.ArmorTemplateFor(A.Item)) == none)
+			Missing.AddItem(class'LWGearRules'.static.ArmorTemplateFor(A.Item));
+	if (Missing.Length == 0)
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: Long War's unlimited items in the stores");
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
+	foreach Missing(N)
+	{
+		Template = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(N);
+		if (Template != none)
+			XComHQ.PutItemInInventory(NewGameState, Template.CreateInstanceFromTemplate(NewGameState));
+	}
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	`log("LongWarX2: gear:" @ Missing.Length @ "unlimited Long War items put in the stores", , 'LongWarX2');
+}
 
 /** Every Long War soldier in XCOM's crew armed as their class allows. Returns how many were changed. */
 static function int ArmAll()
@@ -21,6 +55,8 @@ static function int ArmAll()
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom', true));
 	if (XComHQ == none)
 		return 0;
+	EnsureInfinite();
+	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom', true));
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: soldiers armed as Long War allows");
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 	foreach XComHQ.Crew(Ref)

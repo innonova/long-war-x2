@@ -109,6 +109,10 @@ export function readArmours(core, ITEMS) {
   return out
 }
 
+/** The items Long War's stores hold without limit (XGStorage.Init, m_arrInfiniteItems): every ballistic weapon,
+ * the basic armours and small items, the interceptors' missiles. */
+export const INFINITE = [2, 4, 28, 32, 57, 59, 66, 69, 77, 79, 80, 81, 82, 83, 87, 89, 95, 98, 97, 109, 116, 118, 123, 212, 213, 214, 218, 226, 231, 236, 241, 246]
+
 /** GetInfinitePrimary by the class's weapon property; everyone with a pistol slot a pistol (2). */
 export function startingKit(cls) {
   const p = CLASS_PROPERTY[cls]

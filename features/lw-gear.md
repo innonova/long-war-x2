@@ -317,3 +317,17 @@ War's rules:
   and the psi property; the MEC suits and SHIV decks.
 - The council's Future Combat bonus (a cheaper Foundry), with the
   council's bonuses.
+
+## Report (2026-11-01, unlimited weapons fixed)
+
+**Found while reading Long War's stores for the small items:** Long War
+holds every ballistic weapon without limit (`XGStorage.Init`,
+`m_arrInfiniteItems`), not only the starting kit. Phase 1 made only the
+kit unlimited, so the carbine, SMG, marksman's rifle, machine pistol,
+battle rifle and LMG could be neither built nor carried. Fixed:
+- unlimited is now Long War's list;
+- the unlimited items are put in the stores of a campaign that lacks them
+  whenever soldiers are armed (`LWX2Gear.EnsureInfinite`), since XCOM 2
+  adds its starting items only when a campaign begins.
+
+Checked: a new campaign's stores hold all six.
