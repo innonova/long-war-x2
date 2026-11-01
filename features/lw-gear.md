@@ -390,3 +390,49 @@ New control port test aids:
   rest), and the Shredder Rocket.
 - The arc thrower (next), the Shadow Device, SCOPE, the Battle Computer
   and the other built items.
+
+## Report (2026-11-01, the arc thrower; invisible bodies fixed)
+
+**The arc thrower takes aliens alive in played missions** (`X2Ability_LWArcThrower`,
+`X2AbilityToHitCalc_LWStun`, `X2Condition_LWStunnable`, `X2Effect_LWCapture`). It
+is a small item, built in engineering once the Arc Thrower is researched (§100,
+10 days, 20 engineers), with one charge an item.
+- **The shot** targets a visible alien within 4 tiles and ends the soldier's
+  turn. It never targets robots, chryssalids, zombies (Long War's
+  `CanBeStunned`), the Lost, the Chosen or the Avatar.
+- **Its chance** is Enemy Within's stun chance × Long War's 0.85
+  (`UFO_PSI_LINK_SURVIVE`, `TryStunned`). Enemy Within's own part is in its
+  native code and can't be read, so it is an APPROXIMATION: 100 − 50 × the
+  alien's health share. A full-health alien is 42 %.
+- **A stun takes the alien off the field** and notes it in the Geoscape's
+  state, which XCOM 2 brings back from the mission.
+  - When the mission is won, it comes home as Long War's captive of that
+    kind, to Alien Containment with its plasma weapon, or dead without
+    containment.
+  - XCOM 2's kinds stand in for Long War's species until Enemy Within's
+    aliens are the missions' (`+CaptureAs` in `XComLWStrategy.ini`,
+    APPROXIMATION): Sectoid as Sectoid, Viper and ADVENT as Thin Man, Muton,
+    Archon as Heavy Floater, Berserker, Andromedon as Muton Elite, Codex as
+    Sectoid Commander.
+- **Checked in a mission:**
+  - the stun was offered on the Sniper's arc thrower (one charge), and its
+    roll logged "42 % → miss" for a full-health Sectoid;
+  - the capture applied to a Sectoid took it off the field, and the won
+    mission brought home "Taken alive: Sectoid Captive to Alien Containment,
+    Alien Pistol".
+  - Not checked: a stun from start to finish on a visible alien. Units
+    dropped by XCOM 2's cheat never became visible in the missions tried, so
+    even a standard shot couldn't target them; the roll and the capture were
+    checked separately.
+
+**Invisible torsos and arms, which the person saw, are fixed.** XCOM 2's
+base-game torsos, arms and legs share names across part types. The armours'
+clones of them were named objects, so a torso's clone was overwritten by the
+legs' and loaded a legs mesh. They are now made unnamed, as XCOM 2 makes its
+own. Checked in the armory: a soldier in the base-game torso and arms, whole.
+
+New control port aids:
+- `parts`, each soldier's body parts;
+- `armory <n>`, XCOM 2's armory on a soldier;
+- in missions, `enemies`, `spawn`, `capture` and `use <soldier> <ability>`;
+- `tools/test/to-mission.sh`, a fresh campaign into a mission.

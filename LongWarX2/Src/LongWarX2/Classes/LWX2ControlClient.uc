@@ -55,7 +55,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
-		Out.AddItem("give-to <soldier> <item template>: an item put on a soldier (a test aid) | abilities: in a mission, each soldier's abilities and charges | use <soldier> <ability> [target, 99: force the nearest enemy]: an ability used (no target: the targets) | enemies | spawn [alien] [tiles]: an alien dropped near the squad (a test aid)");
+		Out.AddItem("give-to <soldier> <item template>: an item put on a soldier (a test aid) | abilities: in a mission, each soldier's abilities and charges | use <soldier> <ability> [target, 99: force the nearest enemy]: an ability used (no target: the targets) | enemies | spawn [alien] [tiles]: an alien dropped near the squad | capture: the arc thrower's capture on the nearest enemy (test aids)");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
 		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid) | hqassault: the HQ assault from now (a test aid)");
 		Out.AddItem("base: the base's tiles, numbers and facilities | base set <column> <row> <facility>: placed at once (a test aid) | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
@@ -112,6 +112,9 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "armory":
 		Out.AddItem(OpenArmory(Args.Length > 1 ? int(Args[1]) : 0));
+		return;
+	case "capture":
+		Out.AddItem(CaptureNearest());
 		return;
 	case "spawn":
 		Out.AddItem(SpawnAlien(Args.Length > 1 ? name(Args[1]) : 'Sectoid', Args.Length > 2 ? int(Args[2]) : 2));
@@ -682,6 +685,33 @@ function string WhyNoTargets(XComGameState_Unit Source, XComGameState_Ability Ab
 		}
 	}
 	return Out;
+}
+
+/** In a mission: the arc thrower's capture applied to the nearest enemy (a test aid: what a successful stun does). */
+function string CaptureNearest()
+{
+	local XComGameState NewGameState;
+	local XComGameState_Unit Target, Soldier;
+	local EffectAppliedData Data;
+	local X2Effect_LWCapture Effect;
+	local name Result;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Soldier)
+		if (Soldier.GetTeam() == eTeam_XCom && Soldier.IsSoldier() && !Soldier.bRemovedFromPlay)
+			break;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Target)
+		if (Target.GetTeam() != eTeam_XCom && !Target.bRemovedFromPlay && Target.IsAlive())
+			break;
+	if (Soldier == none || Target == none)
+		return "ERR no soldier or enemy";
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a capture (control port)");
+	Target = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Target.ObjectID));
+	Data.SourceStateObjectRef = Soldier.GetReference();
+	Data.TargetStateObjectRef = Target.GetReference();
+	Effect = new class'X2Effect_LWCapture';
+	Result = Effect.ApplyEffect(Data, Target, NewGameState);
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	return "capture" @ Result @ Target.GetMyTemplateName();
 }
 
 /** In a mission: an alien dropped on the aliens' team a few tiles from the first soldier (a test aid, XCOM 2's cheat). */
