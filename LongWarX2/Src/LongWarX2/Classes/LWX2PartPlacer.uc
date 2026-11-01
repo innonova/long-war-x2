@@ -96,9 +96,61 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 			break;
 		}
 	}
+	// The tile data now (the quick launch screen rebuilds it again when the battle starts), so the
+	// spawn can be moved off anything EW placed on its drop zone (a trailer's roof is floor too).
+	Parcels.RebuildWorldData();
+	Spawn = OpenGround(World, Parcels.SoldierSpawn.Location, At.Z);
+	Parcels.SoldierSpawn.SetLocation(Spawn);
+	if (Screen != none)
+		Screen.BattleDataState.MapData.SoldierSpawnLocation = Spawn;
 	Rebuild(Parcels);
 	default.PlacedAt = Spawn;
 	`log("LongWarX2: EW map whole:" @ Hidden @ "actors of the generated map hidden; EW's map centred at" @ At $ "; the soldiers' spawn moved to" @ Parcels.SoldierSpawn.Location, , 'LongWarX2');
+}
+
+/**
+ * The nearest point to Start (in rings of a tile, up to six tiles out) whose spawn area (the
+ * floor tiles within two tiles, as XCOM 2's group spawn takes them) is all on the ground, at
+ * GroundZ, and holds six; else the one with the most ground and the least roof.
+ */
+function vector OpenGround(XComWorldData World, vector Start, float GroundZ)
+{
+	local vector Candidate, P;
+	local array<vector> Points;
+	local int Ring, Step, Steps, Ground, Best;
+	local vector BestPoint;
+	local float Angle;
+
+	BestPoint = Start;
+	Best = -1;
+	for (Ring = 0; Ring <= 6; Ring++)
+	{
+		Steps = Ring == 0 ? 1 : 8 * Ring;
+		for (Step = 0; Step < Steps; Step++)
+		{
+			Angle = 2 * Pi * Step / Steps;
+			Candidate = Start + vect(96, 0, 0) * Ring * Cos(Angle) + vect(0, 96, 0) * Ring * Sin(Angle);
+			Candidate.Z = GroundZ + 64;
+			Points.Length = 0;
+			World.GetFloorTilePositions(Candidate, 192, 128, Points, true);
+			Ground = 0;
+			foreach Points(P)
+				if (Abs(P.Z - GroundZ) < 48)
+					Ground++;
+			if (Ground == Points.Length && Ground >= 6)
+			{
+				`log("LongWarX2: EW map: spawn on open ground" @ Ring @ "tiles from the drop zone (" $ Ground @ "floor tiles)", , 'LongWarX2');
+				return Candidate;
+			}
+			if (Ground - 2 * (Points.Length - Ground) > Best)
+			{
+				Best = Ground - 2 * (Points.Length - Ground);
+				BestPoint = Candidate;
+			}
+		}
+	}
+	`log("LongWarX2: EW map: no open ground near the drop zone; the spawn with the most ground and the least roof (score " $ Best $ ")", , 'LongWarX2');
+	return BestPoint;
 }
 
 /** The tile data rebuilt over the new geometry: by the quick launch screen when its battle starts, else now. */

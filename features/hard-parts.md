@@ -568,3 +568,12 @@ needs is checking where the squad lands.
 **Next for maps**: a spawn that keeps the squad on open tiles (place each
 soldier on a reachable tile near EW's drop zone); smaller packages (a
 texture cache of our own instead of inline mips); EW's lights.
+
+**Then, the landing spot**: the placer now rebuilds the tile data right
+after placing the map and moves the spawn to the nearest point whose spawn
+area (the floor tiles XCOM 2's group spawn takes, within two tiles) is all
+at ground level (`LWX2PartPlacer.OpenGround`). On the truck stop the drop
+zone already was on the ground, and two soldiers still reached only 14
+tiles: walled in by trailers, not on a roof. The real check is
+reachability: a flood fill over enterable tiles from each candidate, before
+units exist. Next.
