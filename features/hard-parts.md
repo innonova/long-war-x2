@@ -474,3 +474,33 @@ and the soldiers' own state.
 - **The screen over the Avenger, not instead of it**, for now: the
   Avenger stays reachable (TO XCOM 2'S AVENGER) while the rest of XCOM 2's
   base is still needed (armory, promotions).
+
+### Then: the EW map in a campaign mission (2026-11-01 night)
+
+Experiments 2 and 4 together: a mission sent from the Long War headquarters
+plays on Enemy Within's `CSmallScout_Badlands`. While the dropship's
+briefing waits for the player (the map generated, no unit placed yet), the
+mod hides the generated map's geometry, places the EW map and rebuilds the
+tile data (`UIScreenListener_LongWarX2Dropship`, the same `LWX2PartPlacer`
+as on the quick launch screen); the squad is then positioned at EW's drop
+zone. Logged: each soldier reaches 337 to 536 tiles; seen: the squad at the
+drop zone, the movement range over EW's ground.
+
+The headquarters prefers outdoor plots for it (wilderness, a small town or
+an abandoned city, arid where it can be), making the mission again up to
+eight times until one fits: XCOM 2's guerrilla ops are never in the
+wilderness, and a sewer plot left the map unlit.
+
+**Not yet**: light. The map takes the generated plot's lighting and time of
+day (the last run was at night, and dark); EW's own lights are in the
+converted package's world, unread. Next: read EW's lights into the config
+and place them, or force daylight for these missions.
+
+### Decisions
+
+- **The briefing's wait as the moment to swap the map**: the only point in
+  XCOM 2's tactical start where the map is complete and no unit is placed,
+  without changing XCOM 2's ruleset.
+- **Outdoor plots preferred, by making the mission again**: XCOM 2 chooses
+  the mission type before the plot; re-rolling the whole mission is simpler
+  than editing a generated mission's type.

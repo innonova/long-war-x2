@@ -92,6 +92,7 @@ function OnLaunch(UIButton Button)
 	local array<XComGameState_Unit> Soldiers;
 	local XComGameState_Unit Unit;
 	local XGStrategy Game;
+	local int Attempt;
 
 	Soldiers = ReadySoldiers(4);
 	if (Soldiers.Length == 0)
@@ -102,14 +103,22 @@ function OnLaunch(UIButton Button)
 	ResHQ = XComGameState_HeadquartersResistance(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersResistance'));
 	Region = XComGameState_WorldRegion(History.GetGameStateForObjectID(XComHQ.StartingRegion.ObjectID));
 
-	// A mission site, as XCOM 2's calendar makes a guerrilla op; and the squad.
-	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("LongWarX2: a mission from the Long War headquarters");
-	RewardTemplate = X2RewardTemplate(Strategy.FindStrategyElementTemplate('Reward_Supplies'));
-	Reward = RewardTemplate.CreateInstanceFromTemplate(NewGameState);
-	Reward.GenerateReward(NewGameState, ResHQ.GetMissionResourceRewardScalar(Reward), Region.GetReference());
-	Rewards.AddItem(Reward);
-	Mission = XComGameState_MissionSite(NewGameState.CreateNewStateObject(class'XComGameState_MissionSite'));
-	Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate('MissionSource_GuerillaOp')), Region.GetRandom2DLocationInRegion(), Region.GetReference(), Rewards, true, false);
+	// A mission site, as XCOM 2's calendar makes a guerrilla op; and the squad. With the EW map,
+	// made again (up to eight times) until its mission can be played on an outdoor plot.
+	for (Attempt = 0; Attempt < 8; Attempt++)
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("LongWarX2: a mission from the Long War headquarters");
+		RewardTemplate = X2RewardTemplate(Strategy.FindStrategyElementTemplate('Reward_Supplies'));
+		Reward = RewardTemplate.CreateInstanceFromTemplate(NewGameState);
+		Reward.GenerateReward(NewGameState, ResHQ.GetMissionResourceRewardScalar(Reward), Region.GetReference());
+		Rewards.Length = 0;
+		Rewards.AddItem(Reward);
+		Mission = XComGameState_MissionSite(NewGameState.CreateNewStateObject(class'XComGameState_MissionSite'));
+		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate('MissionSource_GuerillaOp')), Region.GetRandom2DLocationInRegion(), Region.GetReference(), Rewards, true, false);
+		if (!class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole || PreferOutdoorPlot(Mission) || Attempt == 7)
+			break;
+		History.CleanupPendingGameState(NewGameState);
+	}
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 	XComHQ.Squad.Length = 0;
 	foreach Soldiers(Unit)
@@ -120,6 +129,54 @@ function OnLaunch(UIButton Button)
 	Game = `GAME;
 	Game.PrepareTacticalBattle(Mission.ObjectID);
 	Game.LaunchTacticalBattle(Mission.ObjectID);
+}
+
+/**
+ * The EW map goes in place of the generated map, under its light: an outdoor plot (wilderness,
+ * a small town or an abandoned city, arid where it can be, like EW's badlands) rather than a
+ * city centre or a sewer. False when the mission has none. (XCOM 2's guerrilla ops are never
+ * in the wilderness.)
+ */
+function bool PreferOutdoorPlot(XComGameState_MissionSite Mission)
+{
+	local XComParcelManager Parcels;
+	local array<PlotDefinition> Plots;
+	local PlotDefinition Plot, Best;
+	local bool bFound;
+	local string Types;
+
+	Parcels = `PARCELMGR;
+	Parcels.GetValidPlotsForMission(Plots, Mission.GeneratedMission.Mission);
+	foreach Plots(Plot)
+		Types $= " " $ Plot.strType;
+	`log("LongWarX2: Long War HQ:" @ Mission.GeneratedMission.Mission.sType @ "can be played on" @ Plots.Length @ "plots:" $ Types, , 'LongWarX2');
+	foreach Plots(Plot)
+	{
+		if (OutdoorRank(Plot) == 0 || Plot.ExcludeFromStrategy)
+			continue;
+		if (!bFound || OutdoorRank(Plot) > OutdoorRank(Best)
+			|| (OutdoorRank(Plot) == OutdoorRank(Best) && Best.ValidBiomes.Find("Arid") == INDEX_NONE && Plot.ValidBiomes.Find("Arid") != INDEX_NONE))
+			Best = Plot;
+		bFound = true;
+	}
+	if (!bFound)
+		return false;
+	Mission.GeneratedMission.Plot = Best;
+	if (Best.ValidBiomes.Length > 0)
+		Mission.GeneratedMission.Biome = Parcels.GetBiomeDefinition(Best.ValidBiomes.Find("Arid") != INDEX_NONE ? "Arid" : Best.ValidBiomes[0]);
+	return true;
+}
+
+/** How well a plot type suits EW's outdoor maps: wilderness, then small towns, then abandoned cities; 0 for the rest. */
+function int OutdoorRank(PlotDefinition Plot)
+{
+	switch (Plot.strType)
+	{
+	case "Wilderness": return 3;
+	case "SmallTown": return 2;
+	case "Abandoned": return 1;
+	}
+	return 0;
 }
 
 function OnAvenger(UIButton Button)
