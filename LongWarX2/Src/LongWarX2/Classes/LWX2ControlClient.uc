@@ -124,6 +124,14 @@ function Handle(string Line, out array<string> Out)
 	case "capture":
 		Out.AddItem(CaptureNearest());
 		return;
+	case "endturn":
+		if (XComTacticalController(GetALocalPlayerController()) == none)
+		{
+			Out.AddItem("ERR not in a mission");
+			return;
+		}
+		Out.AddItem(XComTacticalController(GetALocalPlayerController()).PerformEndTurn(ePlayerEndTurnType_PlayerInput) ? "ok turn ended" : "ERR the turn could not end");
+		return;
 	case "look":
 		if (Args.Length < 3)
 		{
@@ -808,8 +816,12 @@ function string SpawnAlien(name CharacterTemplate, int Tiles)
 function Enemies(out array<string> Out)
 {
 	local XComGameState_Unit Unit, Soldier;
-	local int Best;
+	local XComWorldData World;
+	local TTile T, N;
+	local vector Floor;
+	local int Best, dx, dy, Open;
 
+	World = `XWORLD;
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 	{
 		if (Unit.GetTeam() == eTeam_XCom || Unit.bRemovedFromPlay || !Unit.IsAlive())
@@ -818,7 +830,21 @@ function Enemies(out array<string> Out)
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Soldier)
 			if (Soldier.GetTeam() == eTeam_XCom && Soldier.IsSoldier() && !Soldier.bRemovedFromPlay)
 				Best = Min(Best, Soldier.TileDistanceBetween(Unit));
-		Out.AddItem(Unit.GetMyTemplateName() @ "(" $ Unit.GetMyTemplate().CharacterGroupName $ ") team" @ Unit.GetTeam() @ "hp" @ int(Unit.GetCurrentStat(eStat_HP)) $ "/" $ int(Unit.GetMaxStat(eStat_HP)) @ "tiles" @ Best);
+		// Its tile, whether that is floor, and how many of the 8 around it units can enter (0: stuck).
+		T = Unit.TileLocation;
+		Open = 0;
+		for (dx = -1; dx <= 1; dx++)
+			for (dy = -1; dy <= 1; dy++)
+			{
+				N = T;
+				N.X += dx;
+				N.Y += dy;
+				if ((dx != 0 || dy != 0) && World.CanUnitsEnterTile(N))
+					Open++;
+			}
+		Out.AddItem(Unit.GetMyTemplateName() @ "(" $ Unit.GetMyTemplate().CharacterGroupName $ ") team" @ Unit.GetTeam() @ "hp" @ int(Unit.GetCurrentStat(eStat_HP)) $ "/" $ int(Unit.GetMaxStat(eStat_HP)) @ "tiles" @ Best
+			@ "at" @ T.X $ "," $ T.Y $ "," $ T.Z @ (World.GetFloorPositionForTile(T, Floor) ? "floor" : "NOT floor") @ "open around" @ Open
+			@ "ai data" @ Unit.GetAIUnitDataID() @ "group" @ (Unit.GetGroupMembership() != none ? Unit.GetGroupMembership().ObjectID : 0) @ "ap" @ Unit.ActionPoints.Length);
 	}
 }
 

@@ -215,3 +215,42 @@ person's suggestion). The tint was gone in the next mission.
   lightmap only or by lights not read (the `GeneratedMeshAreaLight`s,
   emissive surfaces) is not known yet.
 - The landing spot; objectives at EW places.
+
+## Report (2026-11-01, step 2: the pods move; boxed-in soldiers moved out)
+
+**The pods spawned at EW's places did not move.** Three alien turns
+passed with every alien on the same tile. XCOM 2's own pods, in the same
+test with the EW map off, moved (two of three pods, 6 to 9 tiles in two
+turns).
+- The test aid now shows each alien's tile, whether it is floor, how many
+  tiles around it can be entered, its AI data, its group and its action
+  points. Our aliens stood on floor with open ground around them, but had
+  **no AI unit data** (`-1`).
+- The spawn manager makes none mid-mission. XCOM 2's reinforcements get
+  theirs after spawning, in `XComGameState_AIReinforcementSpawner`.
+- `SpawnPod` now creates it for each alien and rebuilds the AI player's
+  list. It also gives the pod an encounter zone (16 × 16 tiles, holding the
+  EW place; the offsets are found by trying with XCOM 2's
+  `BuildEncounterZone` / `PointInEncounterZone`) and tells the AI's patrol
+  groups of it.
+- **Checked:** after two alien turns all three pods had moved 10 to 13
+  tiles, towards the squad.
+
+**Boxed-in soldiers are moved out** (`LWX2PartPlacer.FreeBoxedIn`, 3 s
+after the HUD is up). Each soldier who can reach fewer than 40 tiles goes
+to the free floor tile nearest the soldier who reaches the most, among the
+tiles that soldier reaches. On the badlands map nobody needed it: the four
+soldiers reached 529 to 656 tiles.
+
+**Test aid:** `endturn` ends XCOM's turn as the button does.
+`XGPlayer.EndTurn` always answers false, so the answer says nothing.
+
+### Decisions
+
+- **A 16-tile patrol zone around EW's place** rather than XCOM 2's
+  36-tile default band. The pod stays near where EW's designers put it
+  until it sees XCOM, or until XCOM passes it (XCOM 2's intercept rule).
+- **The boxed-in fix moves soldiers after landing**, rather than choosing
+  their tiles before the units exist. XCOM 2's group spawn picks the tiles
+  itself, and two earlier tries to pick a spot beforehand did not see what
+  walled the two in (`hard-parts.md`).

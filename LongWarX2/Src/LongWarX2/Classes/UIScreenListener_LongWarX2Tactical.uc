@@ -36,7 +36,11 @@ event OnInit(UIScreen Screen)
 		return;
 	// On an Enemy Within map, Long War's pods at its places (lw-missions.md, step 2).
 	if (default.PlaceEWMapWhole)
+	{
 		class'LWMissionSquads'.static.SpawnAtEWPods();
+		// Soldiers boxed in by EW's walls moved out, once their paths are known.
+		Screen.SetTimer(3.0, false, nameof(FreeBoxedIn), self);
+	}
 	if (default.PlaceEWMapPart || default.PlaceEWMapWhole)
 	{
 		ReportMapPart(Screen, Pawn);
@@ -150,6 +154,11 @@ function int CountReachableAround(XGUnit Unit)
 				n++;
 		}
 	return n;
+}
+
+function FreeBoxedIn()
+{
+	class'LWX2PartPlacer'.static.FreeBoxedIn();
 }
 
 /** Later, once the mission has settled: how far each soldier can move. */

@@ -6,6 +6,9 @@
 // are left as they are.
 class LWMissionSquads extends Object dependson(LWStrategyRules, LWX2EWMapPieces);
 
+/** The patrol zone of a pod spawned at Enemy Within's pod (tiles a side). */
+const ZoneTiles = 16;
+
 static function name TemplateFor(int Char)
 {
 	local int k;
@@ -92,6 +95,8 @@ static function SpawnPod(name EncounterID, vector Location, array<name> Template
 	local PodSpawnInfo Info;
 	local XGAIGroup Group;
 	local XComWorldData World;
+	local XComGameState_Unit Unit;
+	local XComGameState_AIUnitData AIData;
 
 	World = `XWORLD;
 	Location.Z = World.GetFloorZForPosition(Location);
@@ -100,13 +105,60 @@ static function SpawnPod(name EncounterID, vector Location, array<name> Template
 	Info.SpawnLocation = Location;
 	Info.SelectedCharacterTemplateNames = Templates;
 	Info.MaxGroupSize = Templates.Length;
+	// Its patrol zone around where it stands: XCOM 2's pods patrol between the corners of their encounter zone.
+	ZoneAround(Location, Info);
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a Long War pod at Enemy Within's place");
 	XComGameStateContext_ChangeContainer(NewGameState.GetContext()).BuildVisualizationFn = BuildPodVisualization;
 	Group = `SPAWNMGR.SpawnPodAtLocation(NewGameState, Info, false, false, true);
+	// Each alien's AI data (the spawn manager makes none mid-mission; XCOM 2's reinforcements get theirs after
+	// spawning): without it the AI never moves the pod.
+	foreach NewGameState.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_Alien && Unit.GetAIUnitDataID() < 0)
+		{
+			AIData = XComGameState_AIUnitData(NewGameState.CreateNewStateObject(class'XComGameState_AIUnitData'));
+			AIData.Init(Unit.ObjectID);
+		}
 	`TACTICALRULES.SubmitGameState(NewGameState);
+	if (XGAIPlayer(`BATTLE.GetAIPlayer()) != none)
+		XGAIPlayer(`BATTLE.GetAIPlayer()).RebuildUnitAIIDList();
 	if (Group != none)
 		Group.InitTurn();
+	// The AI's patrol groups (made at the mission's start) told of the new one.
+	if (XGAIPlayer(`BATTLE.GetAIPlayer()) != none && XGAIPlayer(`BATTLE.GetAIPlayer()).m_kNav != none)
+		XGAIPlayer(`BATTLE.GetAIPlayer()).m_kNav.RefreshGroups();
 	`log("LongWarX2: missions: pod" @ EncounterID @ "of" @ Templates.Length @ "at" @ Location @ (Group != none ? "spawned" : "FAILED"), , 'LongWarX2');
+}
+
+/**
+ * An encounter zone of ZoneTiles x ZoneTiles holding Location: XCOM 2 builds a pod's zone from the line of play (from
+ * XCOM to the objective) and offsets from it and along it, in tiles; the offsets are found by trying.
+ */
+static function ZoneAround(vector Location, out PodSpawnInfo Info)
+{
+	local XComGameState_BattleData BattleData;
+	local XComAISpawnManager SpawnManager;
+	local EncounterZone Zone;
+	local vector Objective, XCom;
+	local float Along, From;
+
+	BattleData = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+	SpawnManager = `SPAWNMGR;
+	Objective = BattleData.MapData.ObjectiveLocation;
+	XCom = SpawnManager.GetCurrentXComLocation();
+	Info.EncounterZoneWidth = ZoneTiles;
+	Info.EncounterZoneDepth = ZoneTiles;
+	for (Along = -80; Along <= 80; Along += 4)
+		for (From = -60; From <= 60; From += 4)
+		{
+			Zone = class'XComAISpawnManager'.static.BuildEncounterZone(Objective, XCom, ZoneTiles, ZoneTiles, From, Along, '');
+			if (class'XComAISpawnManager'.static.PointInEncounterZone(Location, Zone))
+			{
+				Info.EncounterZoneOffsetAlongLOP = Along;
+				Info.EncounterZoneOffsetFromLOP = From;
+				return;
+			}
+		}
+	`log("LongWarX2: missions: no encounter zone found around" @ Location, , 'LongWarX2');
 }
 
 /** The spawned aliens' visualizers made and put where they are. */

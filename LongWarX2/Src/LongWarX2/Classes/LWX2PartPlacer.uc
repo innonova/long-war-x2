@@ -229,6 +229,84 @@ function bool Contains(const out array<TTile> Tiles, TTile T)
 	return false;
 }
 
+/**
+ * Once the squad stands on the EW map (lw-missions.md, step 2): each soldier who can reach fewer than MinReach tiles
+ * (boxed in by EW's walls and wrecks, which XCOM 2's group spawn does not see) is moved to the free floor tile
+ * nearest to the soldier who can reach the most, among the tiles that soldier can reach. Returns how many moved.
+ */
+static function int FreeBoxedIn(optional int MinReach = 40)
+{
+	local XComWorldData World;
+	local XGUnit Unit, Best;
+	local XComGameState_Unit UnitState;
+	local array<XGUnit> Boxed;
+	local array<TTile> Tiles, BestTiles, Taken;
+	local TTile From, T, Pick;
+	local XComGameState NewGameState;
+	local int Most, Dist, Nearest, Moved;
+
+	Taken.Length = 0;
+	World = `XWORLD;
+	foreach class'WorldInfo'.static.GetWorldInfo().AllActors(class'XGUnit', Unit)
+	{
+		UnitState = Unit.GetVisualizedGameState();
+		if (UnitState == none || UnitState.GetTeam() != eTeam_XCom || !UnitState.IsAlive() || UnitState.bRemovedFromPlay || Unit.m_kReachableTilesCache == none)
+			continue;
+		Unit.m_kReachableTilesCache.ForceCacheUpdate();
+		Unit.m_kReachableTilesCache.UpdateTileCacheIfNeeded();
+		Tiles.Length = 0;
+		Unit.m_kReachableTilesCache.GetAllPathableTiles(Tiles, 100000, true);
+		if (Tiles.Length > Most)
+		{
+			Most = Tiles.Length;
+			Best = Unit;
+			BestTiles = Tiles;
+		}
+		if (Tiles.Length < MinReach)
+			Boxed.AddItem(Unit);
+	}
+	if (Best == none || Most < MinReach || Boxed.Length == 0)
+		return 0;
+	From = Best.GetVisualizedGameState().TileLocation;
+	foreach Boxed(Unit)
+	{
+		Nearest = MaxInt;
+		foreach BestTiles(T)
+		{
+			if (World.IsTileOccupied(T) || TakenAt(Taken, T))
+				continue;
+			Dist = (T.X - From.X) * (T.X - From.X) + (T.Y - From.Y) * (T.Y - From.Y) + (T.Z - From.Z) * (T.Z - From.Z);
+			if (Dist > 0 && Dist < Nearest)
+			{
+				Nearest = Dist;
+				Pick = T;
+			}
+		}
+		if (Nearest == MaxInt)
+			break;
+		Taken.AddItem(Pick);
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a soldier boxed in on the EW map moved");
+		XComGameStateContext_ChangeContainer(NewGameState.GetContext()).BuildVisualizationFn = class'LWMissionSquads'.static.BuildPodVisualization;
+		UnitState = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		UnitState.bRequiresVisibilityUpdate = true;
+		UnitState.SetVisibilityLocation(Pick);
+		`TACTICALRULES.SubmitGameState(NewGameState);
+		Moved++;
+		`log("LongWarX2: EW map: soldier" @ UnitState.GetFullName() @ "boxed in, moved to tile" @ Pick.X $ "," $ Pick.Y $ "," $ Pick.Z @ "beside" @ Best.GetVisualizedGameState().GetFullName() @ "(who reaches" @ Most @ "tiles)", , 'LongWarX2');
+	}
+	return Moved;
+}
+
+static function bool TakenAt(array<TTile> Taken, TTile T)
+{
+	local TTile X;
+
+	foreach Taken(X)
+		if (X.X == T.X && X.Y == T.Y && X.Z == T.Z)
+			return true;
+	return false;
+}
+
 defaultproperties
 {
 	bHidden = true;
