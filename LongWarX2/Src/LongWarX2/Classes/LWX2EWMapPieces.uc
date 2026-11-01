@@ -47,6 +47,16 @@ var config array<LWX2Piece> Pieces;
 var config vector PlayCenter;
 var config vector PlayExtent;
 var config array<vector> DropZones;
+/** EW's alien pods (lw-missions.md, step 2): where its aliens stand, the commander's pod, how many. */
+struct LWX2Pod
+{
+	var vector Loc;
+	var bool Commander;
+	var int Min;
+	var int Max;
+};
+var config array<LWX2Pod> Pods;
+var config array<vector> SpawnPoints;
 
 /** Spawns the pieces with their positions relative to Origin; returns how many were placed. */
 static function int PlaceAll(Actor Spawner, vector Origin)

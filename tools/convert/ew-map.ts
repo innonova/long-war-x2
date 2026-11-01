@@ -178,6 +178,9 @@ if (process.env.LWX2_EXTENTS) for (const [m, e] of [...extents].sort((a, b) => M
 // and the player starts (one per drop zone), for placing the map as a mission's ground.
 let play: { center: number[]; extent: number[] } | undefined
 const starts: number[][] = []
+// EW's alien pods (where its aliens stand: the commander's pod, how many) and its spawn points.
+const pods: { loc: number[]; commander: boolean; min: number; max: number }[] = []
+const spawnPoints: number[][] = []
 exports.forEach((e, i) => {
   const parts = e.fullName.split('.')
   if (parts[0] !== 'TheWorld' || parts.length !== 3) return
@@ -185,6 +188,19 @@ exports.forEach((e, i) => {
     const t = actorTags(i)
     const loc = t?.find((x) => x.name === 'Location')
     if (loc) starts.push([f32(loc, 0), f32(loc, 1), f32(loc, 2)])
+  }
+  if (e.type === 'XComAlienPod' || e.type === 'XComSpawnPoint') {
+    const t = actorTags(i)
+    const loc = t?.find((x) => x.name === 'Location')
+    if (!loc) return
+    if (e.type === 'XComSpawnPoint') spawnPoints.push([f32(loc, 0), f32(loc, 1), f32(loc, 2)])
+    else
+      pods.push({
+        loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
+        commander: t!.some((x) => x.name === 'bCommanderPod'),
+        min: i32(t!.find((x) => x.name === 'NumAliens_Min'), 0),
+        max: i32(t!.find((x) => x.name === 'NumAliens_Max'), 0),
+      })
   }
   if (e.type === 'XComLevelVolume' && !play) {
     const t = actorTags(i)
@@ -332,6 +348,9 @@ const lines = [
       ]
     : []),
   ...starts.map((p) => `+DropZones=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
+  "; EW's alien pods (the commander's, how many aliens) and its spawn points.",
+  ...pods.map((p) => `+Pods=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Commander=${p.commander},Min=${p.min},Max=${p.max})`),
+  ...spawnPoints.map((p) => `+SpawnPoints=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
   '; XCOM 2 cannot draw EW\'s materials: each is replaced by an instance of one of these parents',
   '; (by the kind of the EW material) given the EW textures. Empty: the EW materials are kept.',
   'PropParent="Materials.Approved.Props_SD"',

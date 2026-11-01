@@ -75,3 +75,32 @@ drones (as ADVENT MECs), Long War's early abduction crew.
 - Kill loot from what was actually killed (now: the whole squad when the
   mission is won).
 - Steps 2 and 3.
+
+## Report (2026-11-01, step 2 begun: Enemy Within's pods read)
+
+**The map converter now exports Enemy Within's pods and spawn points**
+(`tools/convert/ew-map.ts` → the map's ini, `LWX2EWMapPieces.Pods`,
+`SpawnPoints`). Each `XComAlienPod` comes with its location, the commander
+flag and its min and max aliens; each `XComSpawnPoint` with its location.
+- Run on wingpu on `CSmallScout_Badlands`: 4 pods (the commander's beside
+  the crashed Small Scout, 1 to 3 aliens each) and 18 spawn points.
+- The same map also holds its lights (47 point, 13 spot, a directional, a
+  sky light), not yet read.
+
+**Next (the plan, with what XCOM 2 offers):**
+1. **Spawn Long War's pods at Enemy Within's pods** once the mission has
+   begun on the EW map, the commander's pod first.
+   - XCOM 2's `XComAISpawnManager.SpawnPodAtLocation(NewGameState,
+     SpawnInfo, …)` spawns a pod of the given templates at a location.
+     `XComGameState_AIReinforcementSpawner.SpawnReinforcements` shows the
+     rest: a change with `BuildVisualizationForUnitSpawning` for the units'
+     visuals.
+   - Its alert step (`AlertAndScamperUnits`) is to be left out: a pod at
+     the start doesn't know where XCOM is. The group's turn starts with
+     `XGAIGroup.InitTurn`.
+   - The EW coordinates are shifted by the placer's offset (the EW play
+     area centred in the generated map's level volume).
+2. **EW's lights** as movable XCOM 2 lights (point, spot), for the map's
+   darkness.
+3. **The landing spot** (two soldiers walled in on the truck stop) and a
+   host plot of our own, as `hard-parts.md` left them.
