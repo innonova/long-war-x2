@@ -292,11 +292,20 @@ minute at most.
   the move itself is still untested in a real landing. The `unbox <min>`
   test aid runs the check at a higher threshold.
 
-**Found, left open: XCOM 2 crashed loading the mission map twice in about
-eight loads with the truck stop placed.** Both times it was an access
-violation at the same address (`XCom2.exe+0x6d0695`), with 23 GB of memory
-free, at `LoadMap`, before any of the mod's placing. It never happened in
-over a dozen loads with the badlands map. The truck stop's package is
-larger (346 MB, 217 carried packages against 80). The test machine is back
-on the badlands map; its truck stop config is kept beside the checkout
-(`lwx2-truckstop.ini`).
+**Found, left open: XCOM 2 crashes now and then while loading a mission
+map.** It is an access violation at the same address every time
+(`XCom2.exe+0x6d0695`), at `LoadMap`, before any of the mod's placing,
+with memory to spare (23 GB free).
+- It happened twice with the truck stop placed. The third time, later
+  that night, the EW map was off entirely, so it is not the truck stop or
+  the EW map.
+- About 3 in 25 mission loads that night, on three plots
+  (`Plot_TWN_Guerilla_MdObj_Ravine`, `Plot_TWN_GOps_Cemetery_02`,
+  `Plot_SLM_Guerilla_MdObj_Overpass`).
+- The last lines before it are XCOM 2's own warnings about a missing
+  encounter list (`LIST_TheLost_PrePlaced`), which also appear in loads
+  that succeed.
+- Not yet known: whether the game did this before the mod's work of that
+  night, or with the mod off.
+- The test machine is back on the badlands map. The truck stop's config
+  is kept beside the checkout (`lwx2-truckstop.ini`).

@@ -70,7 +70,7 @@ const SAME = {
   ePerk_Opportunist: 'CoolUnderPressure',
 }
 /** XCOM 2's abilities that work through a weapon: given with it, as XCOM 2's own classes give them (DefaultClassData.ini). */
-const WEAPON_SLOT = { LW_SnapShot: 'eInvSlot_PrimaryWeapon', LW_PrecisionShot: 'eInvSlot_PrimaryWeapon', LW_DisablingShot: 'eInvSlot_PrimaryWeapon', InTheZone: 'eInvSlot_PrimaryWeapon', CoveringFire: 'eInvSlot_PrimaryWeapon', RapidFire: 'eInvSlot_PrimaryWeapon', HoloTargeting: 'eInvSlot_PrimaryWeapon', Suppression: 'eInvSlot_PrimaryWeapon' }
+const WEAPON_SLOT = { LW_SnapShot: 'eInvSlot_PrimaryWeapon', LW_CloseCombatSpecialist: 'eInvSlot_PrimaryWeapon', LW_PrecisionShot: 'eInvSlot_PrimaryWeapon', LW_DisablingShot: 'eInvSlot_PrimaryWeapon', InTheZone: 'eInvSlot_PrimaryWeapon', CoveringFire: 'eInvSlot_PrimaryWeapon', RapidFire: 'eInvSlot_PrimaryWeapon', HoloTargeting: 'eInvSlot_PrimaryWeapon', Suppression: 'eInvSlot_PrimaryWeapon' }
 const RANKS = ['Corporal1', 'Sergeant1', 'Lieutenant1', 'Captain1', 'Major', 'Colonel1']
 const RANK_NAMES = ['eRank_Squaddie', 'eRank_Corporal', 'eRank_Sergeant', 'eRank_Lieutenant', 'eRank_Captain', 'eRank_Major', 'eRank_Colonel']
 
@@ -172,10 +172,15 @@ const REAL = {
   // "Allows both actions to be used for Standard Shot, Precision Shot, or Disabling Shot, provided no costly actions
   // were taken. <DoubleTapCooldown> turn cooldown."
   LW_DoubleTap: () => ({ FreeShotIf: 'DoubleTap', Param: c('DOUBLETAP_COOLDOWN') }),
+  // "Confers a reaction shot against any enemy who closes to within 4 tiles. Does not require overwatch."
+  LW_CloseCombatSpecialist: () => ({ Kind: 'CloseCombat', Param: 4 }),
   // "If on Overwatch, confers a bonus reaction shot (to a maximum three shots total) for every reaction shot that is a hit."
   LW_RapidReaction: () => ({ FreeShotIf: 'OverwatchHit', Param: 2 }),
   // "If the unit fires without taking any other costly actions, it automatically enters overwatch at the end of its turn."
   LW_ReadyForAnything: () => ({ FreeShotIf: 'ReadyForAnything' }),
+  // "Any unit hit takes additional damage from all sources for the next <ShredderRocketDamageEffectDuration> turns."
+  // EW applies the shred natively; +33 % is EW's documented factor (APPROXIMATION).
+  LW_ShredderAmmo: () => ({ ShredPct: 33, ShredTurns: c('SHREDDER_ROCKET_DURATION') }),
   // In the cloud of the soldier's smoke grenades (X2Effect_LWSmoke, added to them: AddSmokeBonuses). Combat Drugs'
   // text says +20 critical chance; its constant (used here) is 10.
   LW_DenseSmoke: () => ({ SmokeDefense: c('DENSE_SMOKE_DEFENSE_BONUS') }),

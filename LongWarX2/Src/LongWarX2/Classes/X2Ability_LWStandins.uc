@@ -34,6 +34,8 @@ struct LWStandin
 	var int Heal;
 	/** In the cloud of the soldier's smoke grenades: defence, critical chance, will more (Dense Smoke, Combat Drugs: AddSmokeBonuses). */
 	var int SmokeDefense, SmokeCrit, SmokeWill;
+	/** Damage taken more (%) for ShredTurns turns by a unit this soldier hits with an LMG, a SAW or a rocket (Shredder Ammo: AddShredders). */
+	var int ShredPct, ShredTurns;
 };
 
 var config array<LWStandin> Standins;
@@ -49,6 +51,8 @@ static function array<X2DataTemplate> CreateTemplates()
 			Templates.AddItem(SnapShot(S));
 		else if (S.Kind == 'PrecisionShot' || S.Kind == 'DisablingShot')
 			Templates.AddItem(ActiveShot(S));
+		else if (S.Kind == 'CloseCombat')
+			Templates.AddItem(CloseCombatShot(S));
 		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.Damage2 != 0 || S.DamageTaken != 0 || S.CritDamagePct != 0 || S.BonusRadius != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0)
 			Templates.AddItem(Passive(S));
 		else
@@ -116,6 +120,83 @@ static function X2AbilityTemplate ActiveShot(LWStandin S)
 		Cooldown.iNumTurns = S.Param;
 		Template.AbilityCooldown = Cooldown;
 	}
+	return Template;
+}
+
+/**
+ * Long War's Close Combat Specialist: a reaction shot with the weapon at an enemy who moves or acts within Param
+ * tiles, without overwatch, once a turn for each enemy (as XCOM 2's Bladestorm, with a shot).
+ */
+static function X2AbilityTemplate CloseCombatShot(LWStandin S)
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityToHitCalc_StandardAim Aim;
+	local X2AbilityTrigger_EventListener Trigger;
+	local X2Condition_Visibility Visible;
+	local X2Condition_UnitProperty Near, NotSquadmates;
+	local X2AbilityCost_Ammo Ammo;
+	local X2Effect_Persistent Marked;
+	local X2Condition_UnitEffectsWithAbilitySource NotMarked;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, S.Name);
+	Template.IconImage = S.Icon;
+	Template.AbilitySourceName = 'eAbilitySource_Perk';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_NeverShow;
+	Template.Hostility = eHostility_Offensive;
+	Aim = new class'X2AbilityToHitCalc_StandardAim';
+	Aim.bReactionFire = true;
+	Template.AbilityToHitCalc = Aim;
+	Template.AbilityTargetStyle = default.SimpleSingleTarget;
+
+	Trigger = new class'X2AbilityTrigger_EventListener';
+	Trigger.ListenerData.EventID = 'ObjectMoved';
+	Trigger.ListenerData.Deferral = ELD_OnStateSubmitted;
+	Trigger.ListenerData.Filter = eFilter_None;
+	Trigger.ListenerData.EventFn = class'XComGameState_Ability'.static.TypicalOverwatchListener;
+	Template.AbilityTriggers.AddItem(Trigger);
+	Trigger = new class'X2AbilityTrigger_EventListener';
+	Trigger.ListenerData.EventID = 'AbilityActivated';
+	Trigger.ListenerData.Deferral = ELD_OnStateSubmitted;
+	Trigger.ListenerData.Filter = eFilter_None;
+	Trigger.ListenerData.EventFn = class'XComGameState_Ability'.static.TypicalAttackListener;
+	Template.AbilityTriggers.AddItem(Trigger);
+
+	Template.AbilityTargetConditions.AddItem(default.LivingHostileUnitDisallowMindControlProperty);
+	Visible = new class'X2Condition_Visibility';
+	Visible.bRequireGameplayVisible = true;
+	Visible.bRequireBasicVisibility = true;
+	Visible.bDisablePeeksOnMovement = true;
+	Template.AbilityTargetConditions.AddItem(Visible);
+	Near = new class'X2Condition_UnitProperty';
+	Near.RequireWithinRange = true;
+	Near.WithinRange = S.Param * class'XComWorldData'.const.WORLD_StepSize;
+	Template.AbilityTargetConditions.AddItem(Near);
+	Template.AbilityTargetConditions.AddItem(class'X2Ability_DefaultAbilitySet'.static.OverwatchTargetEffectsCondition());
+	NotSquadmates = new class'X2Condition_UnitProperty';
+	NotSquadmates.ExcludeSquadmates = true;
+	Template.AbilityTargetConditions.AddItem(NotSquadmates);
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Template.AddShooterEffectExclusions();
+
+	Ammo = new class'X2AbilityCost_Ammo';
+	Ammo.iAmmo = 1;
+	Template.AbilityCosts.AddItem(Ammo);
+	Template.bAllowBonusWeaponEffects = true;
+	Template.AddTargetEffect(new class'X2Effect_ApplyWeaponDamage');
+
+	// Once a turn for each enemy, hit or miss (as Bladestorm marks its targets).
+	Marked = new class'X2Effect_Persistent';
+	Marked.BuildPersistentEffect(1, false, true, true, eGameRule_PlayerTurnEnd);
+	Marked.EffectName = 'LWCloseCombatTarget';
+	Marked.bApplyOnMiss = true;
+	Template.AddTargetEffect(Marked);
+	NotMarked = new class'X2Condition_UnitEffectsWithAbilitySource';
+	NotMarked.AddExcludeEffect('LWCloseCombatTarget', 'AA_DuplicateEffectIgnored');
+	Template.AbilityTargetConditions.AddItem(NotMarked);
+
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = OverwatchShot_BuildVisualization;
+	Template.bShowActivation = true;
 	return Template;
 }
 
@@ -261,6 +342,50 @@ static function AddSmokeBonuses()
 					Grenade.ThrownGrenadeEffects.AddItem(Smoke);
 					Grenade.LaunchedGrenadeEffects.AddItem(Smoke);
 				}
+		}
+	}
+}
+
+/** Shredder Ammo: the shots of a Gunner's LMG or SAW and the rockets shred what they hit, for a soldier with the perk (OnPostTemplatesCreated). */
+static function AddShredders()
+{
+	local X2AbilityTemplateManager Manager;
+	local X2AbilityTemplate Template;
+	local X2Effect_LWShredded Shred;
+	local X2Condition_AbilityProperty Owner;
+	local X2Condition_LWSourceWeapon Weapon;
+	local LWStandin S;
+	local name Ability;
+	local array<name> Shots;
+
+	Shots.AddItem('StandardShot');
+	Shots.AddItem('OverwatchShot');
+	Shots.AddItem('RocketLauncher');
+	Manager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+	foreach default.Standins(S)
+	{
+		if (S.ShredPct == 0)
+			continue;
+		foreach Shots(Ability)
+		{
+			Template = Manager.FindAbilityTemplate(Ability);
+			if (Template == none)
+				continue;
+			Shred = new class'X2Effect_LWShredded';
+			Shred.BuildPersistentEffect(S.ShredTurns, false, true, false, eGameRule_PlayerTurnBegin);
+			Shred.SetDisplayInfo(ePerkBuff_Penalty, Template.LocFriendlyName, "", S.Icon, true);
+			Shred.Pct = S.ShredPct;
+			Owner = new class'X2Condition_AbilityProperty';
+			Owner.OwnerHasSoldierAbilities.AddItem(S.Name);
+			Shred.TargetConditions.AddItem(Owner);
+			Weapon = new class'X2Condition_LWSourceWeapon';
+			Weapon.Categories.AddItem('lw_gunner');
+			Weapon.Categories.AddItem('lw_rocketeer_engineer');
+			Shred.TargetConditions.AddItem(Weapon);
+			if (Template.AbilityMultiTargetStyle != none && Ability == 'RocketLauncher')
+				Template.AddMultiTargetEffect(Shred);
+			else
+				Template.AddTargetEffect(Shred);
 		}
 	}
 }

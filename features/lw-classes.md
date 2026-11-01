@@ -469,3 +469,33 @@ from a pod; the `effects` aid now shows action and reserve points):
   same, but XCOM 2's overwatch eye is not shown on the unit.
 - **Rapid Reaction's minimum distance (`RAPIDREACTION_MIN_DIST`, 2 tiles)
   is not applied.**
+
+## Report (2026-11-02 night, Close Combat Specialist and Shredder Ammo)
+
+- **Close Combat Specialist**: a reaction shot with the weapon at an enemy
+  who moves or acts within 4 tiles, without overwatch; once a turn for each
+  enemy, hit or miss. It is built as XCOM 2's Bladestorm is (triggered on
+  movement and on attacks, the target marked for the turn), with a shot.
+- **Shredder Ammo**: a unit hit by the Gunner's LMG or SAW (`lw_gunner`)
+  or by a rocket from a soldier with the perk takes 33 % more damage from
+  every source for 4 turns (`SHREDDER_ROCKET_DURATION`).
+  `X2Effect_LWShredded` is added to the standard shot, the overwatch shot
+  and the rocket launcher, under two conditions: the shooter has the perk,
+  and the weapon is one of those (`X2Condition_LWSourceWeapon`).
+
+**Checked in the game:**
+- Close Combat Specialist: soldiers put 3 and 4 tiles from a pod of
+  ADVENT MECs, the turn ended. The pod moved and was shot. The Gunner's
+  ammo went from 6 to 1, the Scout's from 3 to 2, and the MECs were left
+  at 3/7, 4/7 and 5/7.
+- Shredder Ammo: the Gunner's hit left a Sectoid at 2/8, carrying
+  `LWShredded`. The extra damage of a later hit was not measured.
+- The `enemies` aid now lists each alien's effects.
+
+### Decisions
+
+- **+33 % for Shredder.** EW applies the shred in native code (its script
+  only counts the turns down: `m_iShredderRocketCtr`, at most 4), so the
+  factor cannot be read. 33 % is EW's documented one (APPROXIMATION).
+- **Close Combat Specialist fires at every enemy that closes in**, once each
+  a turn, not once a turn in all.
