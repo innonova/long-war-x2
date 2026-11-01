@@ -6,7 +6,8 @@
 //
 // With Long War's XComStrategyGame.upk as well, the aliens' monthly plan (XGStrategyAI.AIAddNewObjectives,
 // read with upkit) is written too: by the aliens' resource tier and aggression, the abductions,
-// terror missions and UFOs of each objective they send that month.
+// terror missions and UFOs of each objective they send that month; and the countries the aliens
+// turn to once a country has left the council (DetermineBestTerrorTarget).
 //
 //   node scripts/strategy-config.mjs <Long War's DefaultGameCore.ini> [<XComStrategyGame.upk>] > LongWarX2/Config/XComLWStrategy.ini
 import { readFileSync } from 'node:fs'
@@ -54,6 +55,8 @@ if (council.length !== 16) throw new Error(`${council.length} council countries,
 // The satellite: its price and build time (days) from the item balance.
 const sat = /^Itembalance_Normal=\(eItem=eItem_Satellite,\s*iCash=(\d+),.*?iTime=(\d+)/im.exec(core)
 
+const neighbours = strategyUpk ? terrorNeighbours(strategyUpk) : {}
+
 const q = (s) => `"${s}"`
 const arr = (key, v) => v.map((x, i) => `${key}[${i}]=${x}`)
 const out = [
@@ -61,12 +64,17 @@ const out = [
   '; DefaultGameCore.ini. Do not edit by hand. Arrays are by XCOM 2 difficulty (Rookie, Veteran,',
   "; Commander, Legend = Long War's Normal, Classic, Brutal, Impossible).",
   '[LongWarX2.LWStrategyRules]',
-  ...council.map((c) => `+Countries=(Id=${c.id}, Name=${q(NAME[c.id] ?? c.id)}, Continent=${CONTINENT[c.id]}, Funding=${c.funding}, StartingCash=${c.cash})`),
+  ...council.map(
+    (c) =>
+      `+Countries=(Id=${c.id}, Name=${q(NAME[c.id] ?? c.id)}, Continent=${CONTINENT[c.id]}, Funding=${c.funding}, StartingCash=${c.cash}` +
+      (neighbours[c.id] ? `, Neighbours=(${neighbours[c.id].join(',')})` : '') +
+      ')',
+  ),
   ...arr('FundingBalance', values('FundingBalance').slice(0, 4)),
   ...arr('StartingCashBalance', values('FundingBalance').slice(4, 8)),
   ...arr('BaseFundingPct', four('BASE_FUNDING')),
   ...arr('StartingPanic', four('STARTING_PANIC')),
-  `StartingPanicChunks=${one('UFO_ENTERTAINMENT_SURVIVE')}`,
+  `StartingPanicStep=${one('UFO_ENTERTAINMENT_SURVIVE')}`,
   `PanicUfoIgnored=${one('PANIC_UFO_IGNORED')}`,
   `PanicAirRaid=${one('EARLY_UFO_CHANCE')}`,
   `PanicUfoShotDown=${one('PANIC_UFO_SHOOTDOWN')}`,
@@ -82,6 +90,7 @@ const out = [
   `PanicAbductionThwartedContinent=${one('PANIC_ABDUCTION_THWARTED_CONTINENT')}`,
   `PanicTerrorContinent=${one('PANIC_TERROR_CONTINENT')}`,
   ...arr('DefectThreshold', four('PANIC_DEFECT_THRESHHOLD')),
+  ...arr('DefectNotHelpedThreshold', four('PANIC_DEFECT_THRESHHOLD_NOT_HELPED')),
   ...arr('DefectChancePerPoint', four('PANIC_DEFECT_CHANCE_PER_BLOCK')),
   ...arr('DefectionsPerMonth', four('PANIC_DEFECTIONS_PER_MONTH')),
   ...arr('SatHelpDefect', four('SAT_HELP_DEFECT')),
@@ -89,6 +98,7 @@ const out = [
   ...arr('SatPanicReduction', four('SAT_PANIC_REDUCTION_PER_MONTH')),
   ...arr('Panic5ReductionChance', four('PANIC_5_REDUCTION_CHANCE')),
   ...arr('Panic4ReductionChance', four('PANIC_4_REDUCTION_CHANCE')),
+  ...arr('PanicLowReductionChance', four('PANIC_LOW_REDUCTION_CHANCE')),
   `AbductionLurkPct=${one('ABDUCTION_LURK_PCT')}`,
   "; Mission timers, in hours (Long War's are half-hours).",
   `CrashSiteHours=${one('UFO_CRASH_TIMER') / 2}`,
@@ -97,6 +107,8 @@ const out = [
   `TerrorHours=${one('TERROR_TIMER') / 2}`,
   `InterceptorDetectPct=${one('UFO_INTERCEPTION_PCT')}`,
   `UfoFindSatPct=${Math.round(one('UFO_FIND_SAT') * 100)}`,
+  `UfoSecondPassFindSatPct=${Math.round(one('UFO_SECOND_PASS_FIND_SAT') * 100)}`,
+  `TerrorizeMostPanickedPct=${one('AI_TERRORIZE_MOST_PANICKED')}`,
   `SatelliteCost=${sat ? sat[1] : 200}`,
   `SatelliteDays=${sat ? sat[2] : 25}`,
 ]
@@ -119,12 +131,40 @@ console.log(out.join('\r\n'))
  * missions, and an AddUFOs(objective) per UFO, some under a 50% roll; UFOs before the aggression
  * blocks come in every aggression of that tier.
  */
-function monthlyPlan(upk) {
+function decompile(upk, fn) {
   const upkit = process.env.UPKIT ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', '@innonova', 'upkit', 'dist', 'upkit.mjs')
-  const src = execFileSync(process.execPath, [upkit, 'decompile', upk, 'XGStrategyAI.AIAddNewObjectives'], { encoding: 'utf8', maxBuffer: 64 << 20 })
+  return execFileSync(process.execPath, [upkit, 'decompile', upk, fn], { encoding: 'utf8', maxBuffer: 64 << 20 })
     .split(/\r?\n/)
     .map((l) => l.replace(/__asm\(ByteConst, (\d+)\)/g, '$1').replace(/0x0*(\d+)/g, '$1').trim())
     .filter((l) => l && l !== ';')
+}
+
+/**
+ * The countries the aliens turn to once a country has left (XGStrategyAI.DetermineBestTerrorTarget):
+ * a switch on the country that left, each case adding its neighbours still in the council. Long War
+ * wrote the neighbours' country numbers where the code expects an alien (IsAssetPresent(eChar_…)),
+ * so the names are ECharacter's and the numbers ECountry's.
+ */
+function terrorNeighbours(upk) {
+  const CHAR = ['None', 'Civilian', 'Soldier', 'Tank', 'Sectoid', 'Floater', 'Thinman', 'Muton', 'Cyberdisc', 'SectoidCommander', 'FloaterHeavy', 'MutonElite', 'Ethereal', 'Chryssalid', 'Zombie', 'MutonBerserker', 'Sectopod', 'Drone', 'Outsider', 'EtherealUber', 'BattleScanner', 'Mechtoid', 'Mechtoid_Alt', 'Seeker', 'ExaltOperative', 'ExaltSniper']
+  const result = {}
+  let left
+  for (const l of decompile(upk, 'XGStrategyAI.DetermineBestTerrorTarget')) {
+    let m
+    if ((m = /^__asm\(Case, \d+, (\d+)\);$/.exec(l))) left = COUNTRY[Number(m[1])]
+    else if (/^__asm\(Case, \d+\);$/.test(l)) left = undefined
+    else if ((m = /^IsAssetPresent\(eChar_(\w+), arrAll\);$/.exec(l)) && left) {
+      const n = CHAR.indexOf(m[1])
+      if (n < 0 || !COUNTRY[n]) throw new Error(`DetermineBestTerrorTarget: ${m[1]} is no country`)
+      ;(result[left] ??= []).push(COUNTRY[n])
+    }
+  }
+  if (Object.keys(result).length !== 16) throw new Error(`DetermineBestTerrorTarget: ${Object.keys(result).length} countries read, expected 16`)
+  return result
+}
+
+function monthlyPlan(upk) {
+  const src = decompile(upk, 'XGStrategyAI.AIAddNewObjectives')
   const start = src.findIndex((l) => l.startsWith('if (!IsOptionEnabled(eGO_Marathon))'))
   const cells = new Map()
   let depth = 0

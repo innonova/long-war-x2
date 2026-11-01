@@ -37,9 +37,9 @@ sleep 8
 for _ in $(seq 1 20); do
   on 'tools\test\focus.ps1' 'tools\test\click.ps1 100 135'
   sleep 3
-  ssh "$host" "Get-Content '$log' | Select-String 'Long War HQ shown' -Quiet" 2>&1 | grep -q True && break
+  ssh "$host" "Get-Content '$log' | Select-String 'Long War (HQ|Geoscape) shown' -Quiet" 2>&1 | grep -q True && break
 done
-waitfor 'Long War HQ shown' 2
+waitfor 'Long War (HQ|Geoscape) shown' 2
 if [ "${2:-}" = --launch ]; then
   on 'tools\test\click-screen.ps1 399 778' # LAUNCH MISSION
   waitfor 'Long War HQ: launching' 6

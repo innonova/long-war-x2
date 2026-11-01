@@ -58,6 +58,17 @@ function AddEndButton(UIScreen Screen)
 
 function OnEndMission(UIButton Button)
 {
+	local XComGameState NewGameState;
+	local XComGameState_BattleData Battle;
+	local int i;
+
+	// XCOM 2 counts a mission won by its objectives (the mission source's WasMissionSuccessful): all done first.
+	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: test mission won");
+	Battle = XComGameState_BattleData(NewGameState.ModifyStateObject(class'XComGameState_BattleData', Battle.ObjectID));
+	for (i = 0; i < Battle.MapData.ActiveMission.MissionObjectives.Length; i++)
+		Battle.MapData.ActiveMission.MissionObjectives[i].bCompleted = true;
+	`TACTICALRULES.SubmitGameState(NewGameState);
 	`log("LongWarX2: test: mission ended as won", , 'LongWarX2');
 	`TACTICALRULES.EndBattle(XGBattle_SP(`BATTLE).GetHumanPlayer());
 }

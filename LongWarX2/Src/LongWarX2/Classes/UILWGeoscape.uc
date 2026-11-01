@@ -72,6 +72,26 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	CloseGeoButton = Spawn(class'UIButton', self).InitButton('LWGeoClose', "CLOSE", OnAvenger);
 	CloseGeoButton.SetPosition(1700, 960);
 	Refresh();
+	ShowAvengerButton(false);
+	`log("LongWarX2: Long War Geoscape shown", , 'LongWarX2');
+}
+
+simulated function OnRemoved()
+{
+	ShowAvengerButton(true);
+	super.OnRemoved();
+}
+
+/** The Avenger's LONG WAR GEOSCAPE button (UIScreenListener_LongWarX2HQ) is drawn above this screen: hidden while it is up. */
+simulated function ShowAvengerButton(bool bShow)
+{
+	local UIScreen Hud;
+	local UIPanel Button;
+
+	Hud = Movie.Pres.ScreenStack.GetScreen(class'UIAvengerHUD');
+	Button = Hud != none ? Hud.GetChildByName('LWX2HQButton', false) : none;
+	if (Button != none)
+		Button.SetVisible(bShow);
 }
 
 /** A country's row: by continent, with a gap between continents. */
@@ -99,7 +119,7 @@ function Refresh()
 	if (S == none || Header == none)
 		return;
 	XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
-	Header.SetText("LONG WAR: GEOSCAPE —" @ S.DateText() $ "    $" $ XComHQ.GetSupplies() $ "    Month" @ (S.Month + 1));
+	Header.SetText("LONG WAR: GEOSCAPE -" @ S.DateText() $ "    $" $ XComHQ.GetSupplies() $ "    Month" @ (S.Month + 1));
 	for (i = 0; i < CountryButtons.Length; i++)
 	{
 		CountryButtons[i].SetText((i == SelectedCountry ? "> " : "") $ class'LWStrategyRules'.default.Countries[i].Name);
@@ -112,11 +132,11 @@ function Refresh()
 	// What wants a decision.
 	for (i = 0; i < S.Ufos.Length && n < MAX_ACTIONS; i++)
 	{
-		if (S.Ufos[i].Status == 2 && !S.Ufos[i].bAttacked)
+		if ((S.Ufos[i].Status == 1 || S.Ufos[i].Status == 2) && S.Ufos[i].bDetected && !S.Ufos[i].bAttacked)
 			SetAction(n++, 1, i, "INTERCEPT:" @ S.ShipName(S.Ufos[i].Ufo) @ "over" @ S.CountryName(S.Ufos[i].Country) @ "(" $ (S.Ufos[i].Until - S.Hours) $ "h)");
 		else if (S.Ufos[i].Status == 3)
 			SetAction(n++, 2, i, "ASSAULT: crash site in" @ S.CountryName(S.Ufos[i].Country) @ "(" $ (S.Ufos[i].Until - S.Hours) $ "h)");
-		else if (S.Ufos[i].Status == 4)
+		else if (S.Ufos[i].Status == 4 && S.Ufos[i].bDetected)
 			SetAction(n++, 3, i, "ASSAULT: landed UFO in" @ S.CountryName(S.Ufos[i].Country) @ "(" $ (S.Ufos[i].Until - S.Hours) $ "h)");
 	}
 	for (i = 0; i < S.Sites.Length && n < MAX_ACTIONS; i++)
@@ -129,7 +149,7 @@ function Refresh()
 		ActionButtons[n].Hide();
 		ActionKind[n] = 0;
 	}
-	StatusText.SetText(S.PendingKind != 0 ? "A squad is out on a mission." : "Nothing waits on XCOM." @ (ActiveCount(S) > 0 ? "" : "Run time to see the aliens move."));
+	StatusText.SetText(S.PendingKind != 0 ? "A squad is out on a mission." : (ActiveCount(S) > 0 ? "XCOM's decision:" : "Nothing waits on XCOM. Run time to see the aliens move."));
 	for (i = S.Events.Length - 1; i >= 0 && i >= S.Events.Length - 14; i--)
 		Events $= S.Events[i] $ "\n";
 	EventsText.SetText(Events);
