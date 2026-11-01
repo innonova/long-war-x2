@@ -366,8 +366,13 @@ to the primary weapon):
 - **Both missed**, so the hit effects (the weapon emptied, the crit
   damage) are not seen in play yet.
 - The medic with Savior and one medikit had 3 charges (1 + 2).
-- **Paramedic's free use and Savior's extra heal are not tried yet**: they
-  need a wounded soldier.
+- **Paramedic and Savior, checked later that night.** Two frag grenades
+  thrown at the squad's feet left soldiers at 1 to 2 hit points. A medic
+  with both perks healed two of them, each from 2 to 8 (+6, capped at
+  their maximum; XCOM 2's medikit alone heals 4).
+  - After the first heal the medic still had both actions (Paramedic).
+    After the second, still one.
+  - The medikit's charges went from 3 to 1.
 
 **Test aids:**
 - `near <soldier> [tiles]`: puts a soldier at a floor tile that many tiles
