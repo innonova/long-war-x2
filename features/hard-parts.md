@@ -526,3 +526,29 @@ campaign's jets.
 
 - **A button, not an automatic screen**, until our strategy layer replaces
   XCOM 2's base view: XCOM 2's popup flow assumes its own screens.
+
+## Report (2026-11-01 night, experiment 1 again: the alien without the editor)
+
+The Floater's material is now made in the game, as the map's are: an
+instance of XCOM 2's `Materials.Approved.AlienUnit_TC` given the Floater's
+own diffuse and normal maps (`LWX2EWUnitDisplay`, `StandinParent`,
+`DiffusePath`, `NormalPath`). `ew-package.ts` now also rewrites the
+package's textures uncompressed into it (`inline-textures.ts`; 65 textures,
+the package 9 → 41 MB), so XCOM 2 reads their pixels and no texture cache
+is read for it.
+
+**Seen in the game**: a quick launch mission, the Floater beside the squad,
+dark-bodied with its eyes, thrusters and jet trail, no checker (logged:
+"material made from Materials.Approved.AlienUnit_TC and
+CHA_MedFloater_MOD.Maps.MedFloater_DIF"). Not looked at closely (the
+camera would not zoom onto it in the time).
+
+**So converting an EW alien needs no SDK and no editor**: one upkit step on
+the player's machine, then the mod does the rest. The editor-made material
+remains as a fallback (`MaterialPath`).
+
+### Decisions
+
+- **One XCOM 2 parent per kind of content** (AlienUnit_TC for units,
+  Props_SD, Vegetations_VO, Alien_Props for map pieces), given EW's maps:
+  the same approach for units and maps, improved in one place.

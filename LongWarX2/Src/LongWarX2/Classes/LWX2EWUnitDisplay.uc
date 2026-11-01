@@ -11,6 +11,34 @@ var config string AnimSetPath;
 var config name IdleAnim;
 /** The material to put on it; when it does not load, the mesh keeps its own. */
 var config string MaterialPath;
+/**
+ * Or a material made here, as for EW's maps: an instance of an XCOM 2 parent given the unit's own
+ * textures (from its converted package, textures uncompressed): no editor step. Used when set.
+ */
+var config string StandinParent;
+var config string DiffusePath;
+var config string NormalPath;
+
+/** An instance of StandinParent with the unit's diffuse and normal maps. */
+function MaterialInterface Standin()
+{
+	local Material Parent;
+	local MaterialInstanceConstant MIC;
+	local Texture T;
+
+	Parent = Material(DynamicLoadObject(StandinParent, class'Material', true));
+	if (Parent == none)
+		return none;
+	MIC = new(self) class'MaterialInstanceConstant';
+	MIC.SetParent(Parent);
+	T = Texture(DynamicLoadObject(DiffusePath, class'Texture', true));
+	if (T != none)
+		MIC.SetTextureParameterValue('Diffuse', T);
+	T = Texture(DynamicLoadObject(NormalPath, class'Texture', true));
+	if (T != none)
+		MIC.SetTextureParameterValue('Normal', T);
+	return MIC;
+}
 
 /** Shown beside a pawn, facing it: loads everything, says in the log what did and did not. */
 function bool ShowBeside(Actor Next)
@@ -26,7 +54,14 @@ function bool ShowBeside(Actor Next)
 	if (Mesh == none)
 		return false;
 	SkeletalMeshComponent.SetSkeletalMesh(Mesh);
-	if (MaterialPath != "")
+	if (StandinParent != "")
+	{
+		Mat = Standin();
+		`log("LongWarX2: EW unit: material made from" @ StandinParent @ "and" @ DiffusePath @ (Mat != none ? "" : "FAILED"), , 'LongWarX2');
+		if (Mat != none)
+			SkeletalMeshComponent.SetMaterial(0, Mat);
+	}
+	else if (MaterialPath != "")
 	{
 		Mat = MaterialInterface(DynamicLoadObject(MaterialPath, class'MaterialInterface', true));
 		`log("LongWarX2: EW unit: material" @ MaterialPath @ (Mat != none ? "loaded" : "NOT loaded, the mesh keeps its own"), , 'LongWarX2');
