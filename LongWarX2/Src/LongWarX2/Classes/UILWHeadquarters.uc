@@ -96,6 +96,7 @@ function OnLaunch(UIButton Button)
 	local XGStrategy Game;
 	local int Attempt;
 	local Vector2D Where;
+	local XComGameState_LWStrategy LW;
 
 	Soldiers = ReadySoldiers(4);
 	if (Soldiers.Length == 0)
@@ -127,6 +128,13 @@ function OnLaunch(UIButton Button)
 		if (!class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole || PreferOutdoorPlot(Mission) || Attempt == 7)
 			break;
 		History.CleanupPendingGameState(NewGameState);
+	}
+	// A mission of the Long War Geoscape: fought against Long War's squad for it (LWMissionSquads).
+	if (class'XComGameState_LWStrategy'.static.Get() != none && class'XComGameState_LWStrategy'.static.Get().PendingKind != 0)
+	{
+		LW = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID));
+		LW.PendingSquad = LW.MissionSquad();
+		class'LWMissionSquads'.static.ApplyTo(Mission, LW.PendingSquad);
 	}
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 	XComHQ.Squad.Length = 0;

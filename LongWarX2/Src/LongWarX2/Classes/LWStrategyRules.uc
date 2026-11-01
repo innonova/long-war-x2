@@ -132,6 +132,13 @@ struct LWSpecies
 var config array<LWSpecies> Species;
 var config float FragmentBalance[4];
 var config int AbductionRewardCash;
+/** Long War's species fought in XCOM 2's missions as this XCOM 2 alien (LWMissionSquads). */
+struct LWFightAs
+{
+	var int Char;
+	var name Template;
+};
+var config array<LWFightAs> FightAs;
 /** An alien stunned in a mission comes home as Long War's captive of this species (XCOM 2's character group). */
 struct LWCaptureAs
 {

@@ -218,6 +218,12 @@ out.push(
   `AbductionRewardCash=${one('ABDUCTION_REWARD_CASH')}`,
   // An alien stunned in a mission (the arc thrower) comes home as Long War's captive of the same kind: XCOM 2's alien
   // kinds (character groups) to Long War's species until Enemy Within's aliens are the missions' (APPROXIMATION).
+  // Long War's species fought in XCOM 2's missions as XCOM 2's nearest aliens (by role and weight), until Enemy
+  // Within's aliens are units (features/lw-missions.md, APPROXIMATION).
+  "; Fought in XCOM 2's missions: Long War's species (Char) as this XCOM 2 alien (its character template).",
+  ...[[4, 'Sectoid'], [5, 'Archon'], [6, 'Viper'], [7, 'Muton'], [8, 'Gatekeeper'], [9, 'Sectoid'], [10, 'Archon'], [11, 'Andromedon'],
+    [12, 'AdvPsiWitchM2'], [13, 'Chryssalid'], [14, 'PsiZombie'], [15, 'Berserker'], [16, 'Sectopod'], [17, 'AdvMEC_M1'], [18, 'Codex'],
+    [19, 'AdvPsiWitchM3'], [21, 'AdvMEC_M2'], [23, 'Faceless'], [24, 'AdvTrooperM1'], [25, 'AdvCaptainM1'], [26, 'AdvShieldBearerM2'], [27, 'AdvStunLancerM1']].map(([c, t]) => `+FightAs=(Char=${c}, Template=${t})`),
   '; Taken alive in a mission: XCOM 2\'s kind of alien (its character group) as Long War\'s species (Char).',
   ...[['Sectoid', 4], ['Viper', 6], ['AdventTrooper', 6], ['AdventCaptain', 6], ['AdventShieldbearer', 6], ['AdventStunLancer', 6], ['AdventPurifier', 6], ['AdventPriest', 6],
     ['Muton', 7], ['Archon', 10], ['Berserker', 15], ['Andromedon', 11], ['Codex', 9], ['AdventPsiWitch', 12]].map(([g, c]) => `+CaptureAs=(Group=${g}, Char=${c})`),

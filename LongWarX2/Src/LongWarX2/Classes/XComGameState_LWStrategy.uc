@@ -113,6 +113,8 @@ var int PendingIndex;
 var int PendingMission;
 /** The mission sent is to come back with an alien taken alive (won without playing it, with a captive). */
 var bool bPendingCapture;
+/** The squad the mission sent was given (LWMissionSquads): its kill loot is theirs. */
+var array<int> PendingSquad;
 /** The aliens stunned with the arc thrower in the mission under way (their XCOM 2 character groups; X2Effect_LWCapture). */
 var array<name> PendingCaptives;
 /** The story (features/lw-story.md): the countries with an alien base, the Hyperwave Beacon and the Ethereal
@@ -1036,6 +1038,21 @@ static function WonWithoutPlaying(int Kind, int Index, optional bool bCapture)
 	MissionBack(true);
 }
 
+/** The aliens of the mission sent (Long War's squad for it): a UFO's crew, an abduction's, a terror site's; for the story's
+ * missions, a Battleship's crew (the alien base) or an Assault Carrier's (the HQ assault, the Temple Ship; APPROXIMATION). */
+function array<int> MissionSquad()
+{
+	local int Country;
+
+	if (PendingKind == 5)
+		return class'LWAlienSquads'.static.SquadFor(2, 8, Days(), AlienAggression, AlienResources, 0, TerrorsTaken);
+	if (PendingKind >= 6)
+		return class'LWAlienSquads'.static.SquadFor(2, 14, Days(), AlienAggression, AlienResources, 0, TerrorsTaken);
+	Country = PendingKind <= 2 ? Ufos[PendingIndex].Country : Sites[PendingIndex].Country;
+	return class'LWAlienSquads'.static.SquadFor(PendingKind, PendingKind <= 2 ? Ufos[PendingIndex].Ufo : 0, Days(),
+		AlienAggression, AlienResources, PendingKind == 3 ? AbductionDifficulty(Country) : 0, TerrorsTaken);
+}
+
 /** A mission is sent to a crash site (1), landed UFO (2), abduction (3) or terror site (4). */
 static function MissionSent(int Kind, int Index, optional bool bCapture)
 {
@@ -1048,6 +1065,7 @@ static function MissionSent(int Kind, int Index, optional bool bCapture)
 	S.PendingIndex = Index;
 	S.bPendingCapture = bCapture;
 	S.PendingCaptives.Length = 0;
+	S.PendingSquad.Length = 0;
 	if (Kind <= 2)
 		S.Ufos[Index].Status = 5;
 	else if (Kind <= 4 || Kind == 7)
@@ -1107,8 +1125,8 @@ static function MissionBack(bool bWon)
 	// What the aliens killed leave (all of them, a mission won: our missions do not count them yet).
 	if (bWon)
 	{
-		Squad = class'LWAlienSquads'.static.SquadFor(S.PendingKind, S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Ufo : 0, S.Days(),
-			S.AlienAggression, S.AlienResources, S.PendingKind == 3 ? S.AbductionDifficulty(Country) : 0, S.TerrorsTaken);
+		// The squad the mission was given when it was played; else Long War's for it.
+		Squad = S.PendingSquad.Length > 0 ? S.PendingSquad : S.MissionSquad();
 		if (S.bPendingCapture)
 			S.TakeCaptive(NewGameState, Squad);
 		S.BringCaptivesHome(NewGameState, Squad);
