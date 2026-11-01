@@ -13,7 +13,8 @@ commit=$(git rev-parse --short HEAD)
 name="LongWarX2-$(date -u +%Y%m%d)-$commit"
 stage="dist/$name"
 
-# The build, of this commit.
+# The build, of this commit (the game stopped first: a running game keeps the mod's files).
+tools/test/on.sh 'tools\test\stop-game.ps1' >/dev/null 2>&1 || true
 ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git checkout -q -- .; git fetch -q origin main; git checkout -q $commit 2>&1; pwsh -File tools\\test\\build.ps1" | tr -d '\r' | grep -E ': Error|SUCCESS|FAIL' | tail -2
 rm -rf "$stage" && mkdir -p "$stage"
 scp -rq "$host:$game" "$stage/LongWarX2"
