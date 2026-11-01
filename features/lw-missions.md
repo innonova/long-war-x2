@@ -104,3 +104,42 @@ flag and its min and max aliens; each `XComSpawnPoint` with its location.
    darkness.
 3. **The landing spot** (two soldiers walled in on the truck stop) and a
    host plot of our own, as `hard-parts.md` left them.
+
+## Report (2026-11-01, step 2: Long War's pods at Enemy Within's pods)
+
+**When the whole EW map is placed in a mission, Long War's squad now
+spawns at Enemy Within's pods** (`LWMissionSquads.SpawnAtEWPods`, called
+by the tactical listener once the HUD is up).
+- The placer keeps its shift from EW's coordinates to the mission's
+  (`LWX2PartPlacer.EWShift`); each pod's location is shifted by it and put
+  on the floor there.
+- The aliens are those of the squad sent (`PendingSquad`), shared out over
+  the pods in order, the commander's pod first.
+- Each pod is spawned by XCOM 2's `SpawnPodAtLocation`, made visible by a
+  visualization of our own (each unit's visualizer made and synced), and
+  given its first turn by `XGAIGroup.InitTurn`.
+
+**Checked in the game** (wingpu, `CSmallScout_Badlands`, a first-month
+abduction): "pod LWX2_EWPod0 of 3 … spawned", Pod1 of 3, Pod2 of 2; the
+enemies list showed 6 Sectoids and 2 ADVENT MECs, 17 to 39 tiles from the
+squad. A screenshot showed the squad on the (dark) EW map.
+
+### Decisions
+
+- **Only pods with a Max above 0 are used**; all the map's pods if none
+  has. EW's empty pods (Max 0) are placeholders its level designers left.
+- **The commander's pod is first**, so it gets the squad's first alien, as
+  Long War's squad lists its commander first.
+- **No alert step**: a pod at the start does not know where XCOM is. This
+  leaves out XCOM 2's reinforcement scamper (`AlertAndScamperUnits`).
+- **Only once a mission, and only when no alien is alive on the field**, so
+  a reloaded save or a second HUD init does not spawn a second squad.
+- **The EW map stays off by default, in development too.** Pods spawn now,
+  but the map is still dark and the drop spot can wall the squad in. The
+  test machine's installed config turns it on for testing. It goes back on
+  in development when the lights and the landing spot are done.
+
+### Left open
+
+- EW's lights; the landing spot; objectives at EW places.
+- Pods use XCOM 2's stand-in templates until step 3.

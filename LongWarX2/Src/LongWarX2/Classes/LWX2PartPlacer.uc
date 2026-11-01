@@ -16,6 +16,9 @@ var bool bWhole;
 var bool bCampaign;
 /** Where the last part went: for the count in the battle, at the same place (config only so its default can be set; never saved). */
 var config vector PlacedAt;
+/** The whole EW map's shift from EW's coordinates to the mission's, once placed (for its pods: LWMissionSquads; never saved). */
+var config vector EWShift;
+var config bool bEWPlaced;
 
 event Tick(float DeltaTime)
 {
@@ -83,6 +86,8 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 	At = Mid;
 	At.Z = World.GetFloorZForPosition(Parcels.SoldierSpawn.Location);
 	class'LWX2EWMapPieces'.static.Place(self, EWFloor, 0, At, class'LWX2LevelActor', Placed, true);
+	default.EWShift = At - EWFloor;
+	default.bEWPlaced = true;
 	// The first EW drop zone inside the generated map's level volume (two tiles in from its edge).
 	foreach class'LWX2EWMapPieces'.default.DropZones(DropZone)
 	{

@@ -34,6 +34,9 @@ event OnInit(UIScreen Screen)
 	`log("LongWarX2: tactical HUD; first soldier pawn" @ Pawn, , 'LongWarX2');
 	if (Pawn == none)
 		return;
+	// On an Enemy Within map, Long War's pods at its places (lw-missions.md, step 2).
+	if (default.PlaceEWMapWhole)
+		class'LWMissionSquads'.static.SpawnAtEWPods();
 	if (default.PlaceEWMapPart || default.PlaceEWMapWhole)
 	{
 		ReportMapPart(Screen, Pawn);
