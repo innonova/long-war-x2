@@ -552,3 +552,19 @@ remains as a fallback (`MaterialPath`).
 - **One XCOM 2 parent per kind of content** (AlienUnit_TC for units,
   Props_SD, Vegetations_VO, Alien_Props for map pieces), given EW's maps:
   the same approach for units and maps, improved in one place.
+
+## Report (2026-11-01 night, experiment 2 again: a second map, unchanged tools)
+
+`URB_TruckStop` (Long War's classic truck stop, urban, no UFO), converted
+by the same `ew-map.ts` with no change: 897 pieces of 242 meshes, 259
+materials, 635 textures (the package 375 MB with them uncompressed; it took
+about a minute to load). **Seen in a quick launch mission**: the squad at
+the truck stop's drop zone among its trailers, the movement range over its
+ground; logged: two soldiers reach 355 and 363 tiles, two only 14 (XCOM 2
+spreads the squad around the spawn point, and EW's drop zone there is
+tighter: two landed boxed in). So the converter generalises; what each map
+needs is checking where the squad lands.
+
+**Next for maps**: a spawn that keeps the squad on open tiles (place each
+soldier on a reachable tile near EW's drop zone); smaller packages (a
+texture cache of our own instead of inline mips); EW's lights.
