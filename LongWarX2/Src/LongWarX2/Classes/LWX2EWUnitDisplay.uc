@@ -18,6 +18,8 @@ var config string MaterialPath;
 var config string StandinParent;
 var config string DiffusePath;
 var config string NormalPath;
+/** An XCOM 2 unit whose package brings StandinParent into memory, loaded first when the parent is not there. */
+var config string ParentCarrier;
 
 /** An instance of StandinParent with the unit's diffuse and normal maps. */
 function MaterialInterface Standin()
@@ -27,6 +29,13 @@ function MaterialInterface Standin()
 	local Texture T;
 
 	Parent = Material(DynamicLoadObject(StandinParent, class'Material', true));
+	if (Parent == none && ParentCarrier != "")
+	{
+		// XCOM 2's parents load only when something holds them already: an XCOM 2 alien's package does.
+		DynamicLoadObject(ParentCarrier, class'Object', true);
+		Parent = Material(DynamicLoadObject(StandinParent, class'Material', true));
+		`log("LongWarX2: EW unit: loaded" @ ParentCarrier @ "for the parent:" @ (Parent != none ? "found" : "still not found"), , 'LongWarX2');
+	}
 	if (Parent == none)
 		return none;
 	MIC = new(self) class'MaterialInstanceConstant';

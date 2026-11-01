@@ -595,3 +595,8 @@ holds them in memory: the props' parents come with every plot, the alien
 parent (`AlienUnit_TC`) did not in that mission. The display now falls back
 to the editor-made material. **Left open**: load an XCOM 2 alien's package
 first, or pick a parent the plots always bring.
+Tried: loading the Sectoid's pawn archetype first (`ParentCarrier`) did not
+bring `AlienUnit_TC` into memory either (its material must use another
+parent). XCOM 2's cooked packages use a compression upkit does not read, so
+which parent each unit uses is not visible from here yet; finding it is the
+next step (the SDK's uncooked content has it).
