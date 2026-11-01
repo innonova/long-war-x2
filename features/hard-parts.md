@@ -508,3 +508,21 @@ converted package's world, unread; the stand-in materials have no mask maps
 - **Outdoor plots preferred, by making the mission again**: XCOM 2 chooses
   the mission type before the plot; re-rolling the whole mission is simpler
   than editing a generated mission's type.
+
+### Then: opened from the Avenger, not by itself
+
+Shown by itself over the base view, the headquarters screen fought XCOM 2's
+popups (a soldier bond, after a mission): XCOM 2 takes screens above the
+base view off the stack to show them, and the screen, put back whenever the
+base view was on top again, came straight back, a hundred times a second.
+It now opens from a LONG WAR HQ button on the Avenger. The listener keeps
+no state (`LWX2SessionMarker` stays for later use). A strategy layer that
+replaces XCOM 2's will have to own the popup queue too: noted for that work.
+
+The headquarters also opens the air war (experiment 3's screen) with the
+campaign's jets.
+
+### Decisions
+
+- **A button, not an automatic screen**, until our strategy layer replaces
+  XCOM 2's base view: XCOM 2's popup flow assumes its own screens.

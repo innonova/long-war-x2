@@ -29,7 +29,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	LaunchButton.SetPosition(390, 880);
 	AirWarButton = Spawn(class'UIButton', self).InitButton('LWHQAirWar', "AIR WAR", OnAirWar);
 	AirWarButton.SetPosition(640, 880);
-	AvengerButton = Spawn(class'UIButton', self).InitButton('LWHQAvenger', "TO XCOM 2'S AVENGER", OnAvenger);
+	AvengerButton = Spawn(class'UIButton', self).InitButton('LWHQAvenger', "CLOSE", OnAvenger);
 	AvengerButton.SetPosition(840, 880);
 	Refresh();
 }

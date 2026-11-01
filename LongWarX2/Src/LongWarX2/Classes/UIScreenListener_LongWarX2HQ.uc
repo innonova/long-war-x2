@@ -1,28 +1,28 @@
-// On the Avenger of a campaign: the Long War headquarters screen (experiment 4) on top, when its
-// switch is on; once each time the strategy game starts (a campaign's start, a load, the return
-// from a mission), when the base view (the facility grid) comes up or gets the focus back.
+// On the Avenger of a campaign: a LONG WAR HQ button that opens the Long War headquarters screen
+// (experiment 4), when its switch is on. (Shown by itself over the base view, the screen fought
+// XCOM 2's popups: they take screens above the base view off the stack, and it came straight back,
+// in a loop.)
 class UIScreenListener_LongWarX2HQ extends UIScreenListener config(LWAirWar);
 
 var config bool ShowLWHeadquarters;
 
 event OnInit(UIScreen Screen)
 {
-	TryShow(Screen);
+	local UIButton Button;
+
+	if (!default.ShowLWHeadquarters || UIAvengerHUD(Screen) == none)
+		return;
+	Button = Screen.Spawn(class'UIButton', Screen);
+	Button.InitButton('LWX2HQButton', "LONG WAR HQ", OnOpen);
+	Button.SetPosition(40, 120);
 }
 
-event OnReceiveFocus(UIScreen Screen)
-{
-	TryShow(Screen);
-}
-
-function TryShow(UIScreen Screen)
+function OnOpen(UIButton Button)
 {
 	local XComHQPresentationLayer Pres;
 
-	if (!default.ShowLWHeadquarters || UIFacilityGrid(Screen) == none)
-		return;
 	Pres = `HQPRES;
-	if (Pres == none || Pres.ScreenStack.IsInStack(class'UILWHeadquarters') || class'LWX2SessionMarker'.static.Seen(Pres, 'LWHeadquartersShown'))
+	if (Pres.ScreenStack.IsInStack(class'UILWHeadquarters'))
 		return;
 	Pres.ScreenStack.Push(Pres.Spawn(class'UILWHeadquarters', Pres));
 	`log("LongWarX2: Long War HQ shown", , 'LongWarX2');
