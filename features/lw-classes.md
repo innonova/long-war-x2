@@ -91,3 +91,24 @@ against flying targets"), cost 0.
 soldier buy more with ability points); the whole tree visible; Long War's
 rank names; its per-perk stat bonuses (tree types 15–18, 25–28); the
 Rocketeer's rockets; class icons of their own.
+
+## Report (2026-11-01 night, Long War's promotion rules)
+
+**Seen in the game**: the whole tree shown from the first promotion (every
+rank's perks with their names and icons; ranks not reached greyed), any
+perk's words on hover (Mayhem, at Colonel); a Corporal's Lone Wolf learned
+for 0 points, after which the rank's other perks cannot be bought.
+
+`LWX2PromotionScreen` (on the heroes' screen): every perk costs nothing,
+a perk can be bought only at a reached rank where none is chosen yet, every
+column shows its perks and their words. Written for this mod, not copied
+from XCOM 2's screen.
+
+**Found**: Long War's perk texts have numbers filled in at run time from its
+ini (Lone Wolf reads "+ Aim and Critical Chance if not within tiles"); the
+generator copies them unfilled. To fill from Long War's ini values.
+
+### Decisions
+
+- **Free and one per rank**, as Long War has it; XCOM 2's ability points are
+  not used by these classes.
