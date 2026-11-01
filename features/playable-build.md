@@ -71,3 +71,41 @@ SDK's mod folder removed from the game, running the build as downloaded.
   the player's config and nothing of the games.
 - **Delivered as a draft GitHub release** (visible to the repository's
   members only) until the person says it may be public.
+
+## Report (2026-11-01, the first build)
+
+**The download**: a draft release on GitHub, *Preview 1: Long War's
+soldiers* (`LongWarX2-20261101-649a3ac.zip`, 34 MB; visible to the
+repository's members until it is published). Inside: the mod as built on
+the test machine with the player's config, `LongWarX2-setup.exe` and a
+README. Nothing of either game: no converted packages, no Long War words
+(`tools/release/package.sh` stops if a `.upk`, `.tfc` or `.png` gets in).
+
+**Checked on wingpu as a player would**: the zip unpacked, the game's copy
+of the mod removed, the setup run:
+- without Long War (wingpu's Enemy Within is plain EW): installs the mod and
+  says the names and words are left out;
+- with Long War's three files (from the person's install, in a stand-in EW
+  folder): installs the mod and writes the words (57 perks, 8 rank names),
+  byte for byte those of the test machine;
+- the game started: the main menu shows only the air war preview (no test
+  buttons); with two test switches turned on in the installed copy only, to
+  reach the barracks without playing the first mission: Long War's classes,
+  its rank names as the promotion screen's columns, Lone Wolf with its words.
+
+**The setup program**: `tools/setup/setup.mjs`, one Windows executable of
+93 MB (Node's official `node.exe`, its checksum checked, with the bundled
+script inside; `npm run setup:bundle`). It finds the games through Steam's
+library list, or `--xcom2` and `--ew`. Unsigned: Windows may warn.
+
+**Not checked**: a PC other than wingpu (other Steam library drives, a
+first start of the launcher with a new local mod), and playing the first
+mission with the mod on.
+
+### Decisions
+
+- **No EW content in the first build**: the classes are the point, and
+  they need none. The converted aliens and maps come as an opt-in in the
+  setup later.
+- **A preview tag (`v0.1.0-preview.1`) on a draft release**: published, it
+  becomes a public download of the mod; the person decides when.

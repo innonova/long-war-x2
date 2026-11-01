@@ -2,12 +2,14 @@
 
 Everything here runs on the player's machine, from their own Enemy Within
 install; nothing it writes is committed (`features/hard-parts.md`,
-experiments 1 and 2). The scripts use upkit and the Long War Tech Tree's
-readers, so they run from a checkout of `innonova/xcom-ew-lw-tree` beside
-this one:
+experiments 1 and 2). They use upkit (this repository's `package.json`:
+`npm install` once) and run with Node 24 as they are:
 
-    cd ../xcom-ew-lw-tree
-    npx vite-node ../long-war-x2/tools/convert/<script>.ts -- <arguments>
+    node tools/convert/<script>.ts <arguments>
+
+(`ew-to-gltf.ts` also uses the Long War Tech Tree's readers and still runs
+from a checkout of `innonova/xcom-ew-lw-tree` beside this one, with
+`npx vite-node`.)
 
 ## An EW package as it is (aliens, effects): `ew-package.ts`
 
