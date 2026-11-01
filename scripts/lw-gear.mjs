@@ -1,0 +1,116 @@
+// Long War's gear rules, shared by the config generators (features/lw-gear.md): the weapon families
+// by tier, who may carry what (XGStorage.IsClassEquippable with the classes' eWeaponType), the starting
+// kit (GetInfinitePrimary), and how each weapon looks in XCOM 2 (a taste decision, in the feature's report).
+
+export const TIERS = ['Ballistic', 'Laser', 'Gauss', 'Pulse', 'Plasma']
+
+/** Long War's item numbers of each family, ballistic to plasma (null: no such tier). */
+export const FAMILIES = {
+  Pistol: [2, 8, null, null, 13],
+  MachinePistol: [236, 237, 238, 239, 240],
+  SMG: [231, 232, 233, 234, 235],
+  Carbine: [32, 251, 53, 252, 14],
+  Rifle: [212, 215, 3, 9, 15],
+  BattleRifle: [241, 242, 243, 244, 245],
+  Marksman: [226, 227, 228, 229, 230],
+  Sniper: [213, 216, 6, 12, 18],
+  Shotgun: [4, 10, 16, 1, 99],
+  Autorifle: [214, 217, 5, 11, 17],
+  LMG: [246, 247, 248, 249, 250],
+  SawedOff: [254, null, null, null, null],
+  ArcRifle: [null, 253, null, null, null],
+}
+
+/** Each family's XCOM 2 look by tier: the XCOM 2 weapon whose model, attachments, images and sounds it
+ * takes. War of the Chosen's Legacy weapons (TLE_*: the originals' ballistic, laser and plasma) where it
+ * has them, else conventional, magnetic, beam; the Vektor rifle for marksman's rifles, the Templar's
+ * autopistol for machine pistols. */
+const tiers3 = (t) => [`${t}_CV`, `${t}_MG`, `${t}_MG`, `${t}_BM`, `${t}_BM`]
+const legacy = (tle, x2) => [`TLE_${tle}_CV`, `TLE_${tle}_MG`, `${x2}_MG`, `${x2}_BM`, `TLE_${tle}_BM`]
+const LOOKS = {
+  Pistol: legacy('Pistol', 'Pistol'),
+  MachinePistol: tiers3('Sidearm'),
+  SMG: tiers3('AssaultRifle'),
+  Carbine: tiers3('AssaultRifle'),
+  Rifle: legacy('AssaultRifle', 'AssaultRifle'),
+  BattleRifle: tiers3('AssaultRifle'),
+  Marksman: tiers3('VektorRifle'),
+  Sniper: legacy('SniperRifle', 'SniperRifle'),
+  Shotgun: legacy('Shotgun', 'Shotgun'),
+  Autorifle: tiers3('Cannon'),
+  LMG: legacy('Cannon', 'Cannon'),
+  SawedOff: ['Shotgun_CV'],
+  ArcRifle: [null, 'AssaultRifle_MG'],
+}
+
+/** XCOM 2's weapon tech by tier (its upgrade slots, its UI). */
+export const TECH = ['conventional', 'magnetic', 'magnetic', 'beam', 'beam']
+
+/** XCOM 2's range table by family (X2Item_DefaultWeapons' config arrays). */
+export const RANGE = {
+  Pistol: 'SHORT', MachinePistol: 'SHORT', SMG: 'SHORT', Carbine: 'MEDIUM', Rifle: 'MEDIUM', BattleRifle: 'MEDIUM', Marksman: 'LONG', Sniper: 'LONG',
+  Shotgun: 'SHORT', Autorifle: 'MEDIUM', LMG: 'MEDIUM', SawedOff: 'SHORT', ArcRifle: 'MEDIUM',
+}
+
+/** The mod's classes (classes-config.mjs CLASSES) and their weapon property (XGStrategySoldier, eWeaponType). */
+export const CLASS_PROPERTY = { Sniper: 'Sniper', Scout: 'Overheats', Rocketeer: 'Heavy', Gunner: 'Support', Medic: 'Rifle', Engineer: 'UnlimitedAmmo', Assault: 'Assault', Infantry: 'Rifle' }
+
+/** XGStorage.IsClassEquippable: can a class with this weapon property carry a weapon with these properties (item: Long War's number). */
+export function equippable(classProperty, props, item) {
+  if (props.includes('AnyClass')) return true
+  if (['Assault', 'Overheats', 'UnlimitedAmmo'].includes(classProperty) && props.includes('Rifle')) return true
+  if (props.includes('Pistol')) {
+    if (item === 254) return ['Rifle', 'Assault', 'Overheats', 'UnlimitedAmmo'].includes(classProperty)
+    return classProperty !== 'Heavy' && classProperty !== 'Support'
+  }
+  return props.includes(classProperty)
+}
+
+/** XCOM 2's weapon category for a weapon: the classes that may carry it (XCOM 2 allows by category). */
+export function categoryFor(props, item) {
+  const classes = Object.entries(CLASS_PROPERTY).filter(([, p]) => equippable(p, props, item)).map(([c]) => c)
+  return 'lw_' + classes.map((c) => c.toLowerCase()).join('_')
+}
+
+/** A weapon's family and tier by Long War's number. */
+export function familyOf(item) {
+  for (const [family, items] of Object.entries(FAMILIES)) {
+    const tier = items.indexOf(item)
+    if (tier >= 0) return { family, tier, look: LOOKS[family][tier] }
+  }
+  return undefined
+}
+
+/** The mod's template for a Long War weapon. */
+export const weaponTemplate = (item) => `LWWeapon_${item}`
+
+/** GetInfinitePrimary by the class's weapon property; everyone with a pistol slot a pistol (2). */
+export function startingKit(cls) {
+  const p = CLASS_PROPERTY[cls]
+  const primary = p === 'Support' ? 214 : p === 'Assault' ? 4 : p === 'Sniper' ? 213 : 212
+  return equippable(p, ['Pistol'], 2) ? [primary, 2] : [primary]
+}
+
+/** Long War's Weapons= lines by item number: their fields, and properties without eWP_ (items: EItemType names). */
+export function readWeapons(core, ITEMS) {
+  const weapons = new Map()
+  for (const m of core.matchAll(/^Weapons=\((.*)\)/gm)) {
+    const f = Object.fromEntries(m[1].split(',').filter((p) => p.includes('=')).map((p) => p.split('=').map((s) => s.trim())))
+    const id = /^\d+$/.test(f.iType) ? Number(f.iType) : ITEMS.indexOf(f.iType)
+    const props = Object.entries(f).filter(([k, v]) => k.startsWith('Properties') && v !== '0').map(([, v]) => v.replace(/^eWP_/, ''))
+    weapons.set(id, { ...f, props })
+  }
+  return weapons
+}
+
+/** A class's weapon categories by slot: every family weapon it may carry, by its slot (Pistol: the secondary). */
+export function classCategories(cls, weapons) {
+  const out = { eInvSlot_PrimaryWeapon: new Set(), eInvSlot_SecondaryWeapon: new Set() }
+  for (const items of Object.values(FAMILIES))
+    for (const item of items) {
+      const w = item !== null && weapons.get(item)
+      if (!w || !equippable(CLASS_PROPERTY[cls], w.props, item)) continue
+      out[w.props.includes('Pistol') ? 'eInvSlot_SecondaryWeapon' : 'eInvSlot_PrimaryWeapon'].add(categoryFor(w.props, item))
+    }
+  return out
+}

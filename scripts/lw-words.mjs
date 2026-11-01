@@ -168,3 +168,29 @@ export function makeItemWords({ loc, strategyLoc, more = [] }) {
   }
   return { text: out.join('\r\n'), named }
 }
+
+/**
+ * Long War's words for its soldier weapons (features/lw-gear.md): names from its XComGame.int
+ * (m_aItemNames, by enum name or, for Long War's own, by number), summaries from XComStrategyGame.int.
+ * `weapons`: { item, enum } (XComLWGear.ini).
+ */
+export function makeWeaponWords({ loc, strategyLoc, weapons }) {
+  const one = (text, key, k) => text.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1]
+  const out = []
+  let named = 0
+  for (const w of weapons) {
+    const of = (text, key) => (text ? one(text, key, w.enum) ?? one(text, key, w.item) : undefined)
+    const name = of(loc, 'm_aItemNames')
+    if (!name) continue
+    named++
+    out.push(`[LWWeapon_${w.item} X2WeaponTemplate]`, `FriendlyName="${name}"`)
+    const plural = of(loc, 'm_aItemNamesPlural')
+    if (plural) out.push(`FriendlyNamePlural="${plural}"`)
+    const summary = of(strategyLoc, 'ItemTypeSummary')
+    if (summary) out.push(`BriefSummary="${summary}"`)
+    // The loadout's tactical info: Long War's summary, else a line from the numbers.
+    out.push(`TacticalText="${summary ?? `${w.tier} ${w.family}: ${w.damage} damage, ${w.crit}% critical chance, ${w.aim >= 0 ? '+' : ''}${w.aim} aim, ${w.ammo} shots between reloads.`}"`)
+    out.push('')
+  }
+  return { text: out.join('\r\n'), named }
+}

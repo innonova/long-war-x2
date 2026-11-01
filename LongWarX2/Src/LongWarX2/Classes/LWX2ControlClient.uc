@@ -88,6 +88,11 @@ function Handle(string Line, out array<string> Out)
 	case "research":
 		Research(Args.Length > 1 ? Args[1] : "", Out);
 		return;
+	case "arm":
+		if (Args.Length > 1 && Args[1] ~= "now")
+			Out.AddItem("armed" @ class'LWX2Gear'.static.ArmAll());
+		class'LWX2Gear'.static.Report(Out);
+		return;
 	case "geoscape":
 		Out.AddItem(OpenGeoscape() != none ? "ok" : "ERR not on the Avenger");
 		return;

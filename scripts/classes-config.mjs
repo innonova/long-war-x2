@@ -16,6 +16,7 @@
 //   node scripts/classes-config.mjs <Long War's DefaultGameCore.ini> <Long War's XComGame.int> [<XComGame.upk>]
 import { readFileSync, writeFileSync } from 'node:fs'
 import { readConsts, makeWords } from './lw-words.mjs'
+import { classCategories, readWeapons, startingKit, weaponTemplate } from './lw-gear.mjs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -30,27 +31,26 @@ const lines = (p) => readFileSync(join(here, 'x2-names', p), 'utf8').split(/\r?\
 const x2Abilities = new Set(lines('abilities.txt'))
 const x2Icons = new Map(lines('perk-icons.txt').map((n) => [n.toLowerCase(), n]))
 const core = readFileSync(coreIni, 'latin1')
+// Long War's weapons (features/lw-gear.md): who may carry what, and the starting kit.
+const ITEM_NAMES = JSON.parse(readFileSync(join(here, '..', '..', 'xcom-ew-lw-tree', 'data', 'enums.json'), 'utf8')).enums.EItemType
+const weapons = readWeapons(core, ITEM_NAMES)
 const loc = readFileSync(gameInt, 'latin1')
 
 /** The subclasses: Long War's tree ids, its squaddie perk (from the base class's tree), XCOM 2's look. */
 /** In War of the Chosen's Skirmish Mode, which XCOM 2 class's weapons a Long War class carries (primary, secondary). */
 const SKIRMISH_LIKE = { Sniper: 'Sharpshooter', Scout: 'Sharpshooter', Gunner: 'Grenadier', Assault: 'Ranger' }
 const CLASSES = [
-  { id: 11, name: 'Sniper', squaddie: 'ePerk_SquadSight', weapons: ['sniper_rifle'], loadout: 'Sniper', icon: 'class_sharpshooter' },
-  { id: 21, name: 'Scout', squaddie: 'ePerk_LightningReflexes', weapons: ['sniper_rifle', 'rifle'], loadout: 'Rifle', icon: 'class_sharpshooter' },
-  { id: 12, name: 'Rocketeer', squaddie: 'ePerk_FireRocket', weapons: ['rifle'], loadout: 'Rifle', icon: 'class_grenadier' },
-  { id: 22, name: 'Gunner', squaddie: 'ePerk_FocusedSuppression', weapons: ['cannon'], loadout: 'Gunner', icon: 'class_grenadier' },
-  { id: 13, name: 'Medic', squaddie: 'ePerk_FieldMedic', weapons: ['rifle'], loadout: 'Rifle', icon: 'class_specialist' },
-  { id: 23, name: 'Engineer', squaddie: 'ePerk_Grenadier', weapons: ['rifle'], loadout: 'Rifle', icon: 'class_specialist' },
-  { id: 14, name: 'Assault', squaddie: 'ePerk_RunAndGun', weapons: ['shotgun', 'rifle'], loadout: 'Shotgun', icon: 'class_ranger' },
-  { id: 24, name: 'Infantry', squaddie: 'ePerk_PlasmaBarrage', weapons: ['rifle'], loadout: 'Rifle', icon: 'class_ranger' },
+  { id: 11, name: 'Sniper', squaddie: 'ePerk_SquadSight', icon: 'class_sharpshooter' },
+  { id: 21, name: 'Scout', squaddie: 'ePerk_LightningReflexes', icon: 'class_sharpshooter' },
+  { id: 12, name: 'Rocketeer', squaddie: 'ePerk_FireRocket', icon: 'class_grenadier' },
+  { id: 22, name: 'Gunner', squaddie: 'ePerk_FocusedSuppression', icon: 'class_grenadier' },
+  { id: 13, name: 'Medic', squaddie: 'ePerk_FieldMedic', icon: 'class_specialist' },
+  { id: 23, name: 'Engineer', squaddie: 'ePerk_Grenadier', icon: 'class_specialist' },
+  { id: 14, name: 'Assault', squaddie: 'ePerk_RunAndGun', icon: 'class_ranger' },
+  { id: 24, name: 'Infantry', squaddie: 'ePerk_PlasmaBarrage', icon: 'class_ranger' },
 ]
-const LOADOUTS = {
-  Sniper: ['SniperRifle_CV', 'Pistol_CV'],
-  Rifle: ['AssaultRifle_CV', 'Pistol_CV'],
-  Gunner: ['Cannon_CV', 'Pistol_CV'],
-  Shotgun: ['Shotgun_CV', 'Pistol_CV'],
-}
+/** Each class's starting kit: Long War's (GetInfinitePrimary; a pistol where the class may carry one). */
+const LOADOUTS = Object.fromEntries(CLASSES.map((c) => [c.name, startingKit(c.name).map(weaponTemplate)]))
 /**
  * Long War's perks that are XCOM 2's perks by the same name and the same idea (XCOM 2's
  * numbers, for now). Everything else becomes a stand-in.
@@ -74,7 +74,7 @@ const RANK_NAMES = ['eRank_Squaddie', 'eRank_Corporal', 'eRank_Sergeant', 'eRank
 
 /** A perk in a class's tree: as abilityFor, but Snap Shot is the sniper classes' shot only (for a Rocketeer it is about rockets). */
 function abilityForClass(perk, cls) {
-  if (perk !== 'ePerk_SnapShot' || cls.weapons.includes('sniper_rifle')) return abilityFor(perk)
+  if (perk !== 'ePerk_SnapShot' || cls.name === 'Sniper' || cls.name === 'Scout') return abilityFor(perk) // the classes that carry sniper and marksman's rifles
   const name = 'LW_SnapShotRocket'
   if (!standins.has(name)) standins.set(name, { perk, icon: 'UIPerk_standard' })
   return name
@@ -170,10 +170,17 @@ const out = [
   '',
   "; Recruits become Long War's classes, not XCOM 2's.",
   ...['Ranger', 'Sharpshooter', 'Grenadier', 'Specialist'].flatMap((n) => [`[${n} X2SoldierClassTemplate]`, 'NumInForcedDeck=0', 'NumInDeck=0']),
-  '',
-  '[XComGame.X2ItemTemplateManager]',
-  ...Object.entries(LOADOUTS).map(([n, items]) => `+Loadouts=(LoadoutName=${q('LWS_Squaddie' + n)}, ${items.map((it, k) => `Items[${k}]=(Item=${q(it)})`).join(', ')})`),
 ]
+// The classes' starting kits: the item manager reads GameData (XComGameData.ini), not ClassData.
+writeFileSync(
+  join(mod, 'Config', 'XComGameData.ini'),
+  [
+    "; Long War's starting kit for each of its classes (their SquaddieLoadout), generated by scripts/classes-config.mjs",
+    '; from scripts/lw-gear.mjs (GetInfinitePrimary). Do not edit by hand.',
+    '[XComGame.X2ItemTemplateManager]',
+    ...Object.entries(LOADOUTS).map(([n, items]) => `+Loadouts=(LoadoutName=${q('LWS_Squaddie' + n)}, ${items.map((it, k) => `Items[${k}]=(Item=${q(it)})`).join(', ')})`),
+  ].join('\r\n') + '\r\n',
+)
 const decode = (v) => {
   const n = Number(v)
   if (!Number.isFinite(n) || n === 0) return undefined
@@ -199,16 +206,19 @@ for (const c of CLASSES) {
     'NumInForcedDeck=1',
     'NumInDeck=4',
     'KillAssistsPerKill=5',
-    `SquaddieLoadout=${q('LWS_Squaddie' + c.loadout)}`,
-    ...c.weapons.map((w) => `+AllowedWeapons=(SlotType=eInvSlot_PrimaryWeapon, WeaponType=${q(w)})`),
-    '+AllowedWeapons=(SlotType=eInvSlot_SecondaryWeapon, WeaponType="pistol")',
+    `SquaddieLoadout=${q('LWS_Squaddie' + c.name)}`,
+    // Long War's categories (lw-gear.mjs): the weapons the class may carry, by slot.
+    ...Object.entries(classCategories(c.name, weapons)).flatMap(([slotType, cats]) =>
+      [...cats].map((w) => `+AllowedWeapons=(SlotType=${slotType}, WeaponType=${q(w)})`),
+    ),
     '+AllowedArmors="soldier"',
     'bAllowAWCAbilities=0',
     'bHasClassMovie=false',
     'bCanHaveBonds=true',
     'BaseAbilityPointsPerPromotion=3',
     `; squaddie: ${titleOf(c.squaddie)}`,
-    `+SoldierRanks=(AbilitySlots=(${slot(abilityForClass(c.squaddie, c), WEAPON_SLOT[abilityForClass(c.squaddie, c)])}, ${slot('PistolStandardShot', 'eInvSlot_SecondaryWeapon')}), ${stats(c.id, RANK_NAMES[0])})`,
+    `+SoldierRanks=(AbilitySlots=(${slot(abilityForClass(c.squaddie, c), WEAPON_SLOT[abilityForClass(c.squaddie, c)])}` +
+      `${startingKit(c.name).length > 1 ? `, ${slot('PistolStandardShot', 'eInvSlot_SecondaryWeapon')}` : ''}), ${stats(c.id, RANK_NAMES[0])})`,
   )
   RANKS.forEach((rank, k) => {
     const perks = rows.map((r) => r[rank]).filter((p) => p && p !== '0')

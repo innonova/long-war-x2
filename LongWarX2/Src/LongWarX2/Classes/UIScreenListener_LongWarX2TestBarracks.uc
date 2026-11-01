@@ -44,6 +44,7 @@ event OnInit(UIScreen Screen)
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	`log("LongWarX2: test barracks:" @ n @ "rookies promoted to Corporal in Long War's classes", , 'LongWarX2');
+	class'LWX2Gear'.static.ArmAll();
 }
 
 defaultproperties
