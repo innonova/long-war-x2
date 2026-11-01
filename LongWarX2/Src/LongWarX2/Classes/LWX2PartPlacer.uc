@@ -111,13 +111,14 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 /**
  * The nearest point to Start (in rings of a tile, up to six tiles out) whose spawn area (the
  * floor tiles within two tiles, as XCOM 2's group spawn takes them) is all on the ground, at
- * GroundZ, and holds six; else the one with the most ground and the least roof.
+ * GroundZ, holds six, and from each of whose tiles a unit can walk at least 40 tiles (not walled
+ * in); else the one with the most ground and the least roof.
  */
 function vector OpenGround(XComWorldData World, vector Start, float GroundZ)
 {
 	local vector Candidate, P;
 	local array<vector> Points;
-	local int Ring, Step, Steps, Ground, Best;
+	local int Ring, Step, Steps, Ground, Best, Room;
 	local vector BestPoint;
 	local float Angle;
 
@@ -139,8 +140,15 @@ function vector OpenGround(XComWorldData World, vector Start, float GroundZ)
 					Ground++;
 			if (Ground == Points.Length && Ground >= 6)
 			{
-				`log("LongWarX2: EW map: spawn on open ground" @ Ring @ "tiles from the drop zone (" $ Ground @ "floor tiles)", , 'LongWarX2');
-				return Candidate;
+				// Room from every tile the squad may be put on, not only the centre.
+				Room = 999;
+				foreach Points(P)
+					Room = Min(Room, RoomAround(World, P, GroundZ, 40));
+				if (Room >= 40)
+				{
+					`log("LongWarX2: EW map: spawn on open ground" @ Ring @ "tiles from the drop zone (" $ Ground @ "floor tiles, each with room for" @ Room $ "+)", , 'LongWarX2');
+					return Candidate;
+				}
 			}
 			if (Ground - 2 * (Points.Length - Ground) > Best)
 			{
@@ -163,6 +171,56 @@ function Rebuild(XComParcelManager Parcels)
 	}
 	Parcels.RebuildWorldData();
 	`log("LongWarX2: EW map: tile data rebuilt for the mission", , 'LongWarX2');
+}
+
+/**
+ * How many ground tiles a unit at Where could walk to (a flood fill over enterable floor tiles at
+ * GroundZ, four neighbours), counted up to Cap: whether the spot is walled in.
+ */
+function int RoomAround(XComWorldData World, vector Where, float GroundZ, int Cap)
+{
+	local array<TTile> Seen, Queue;
+	local TTile T, N;
+	local vector P;
+	local int Head, d;
+	local float FloorZ;
+
+	Where.Z = GroundZ + 32;
+	if (!World.GetFloorTileForPosition(Where, T, false))
+		return 0;
+	Seen.AddItem(T);
+	Queue.AddItem(T);
+	while (Head < Queue.Length && Seen.Length < Cap)
+	{
+		T = Queue[Head++];
+		for (d = 0; d < 4; d++)
+		{
+			N = T;
+			if (d == 0) N.X += 1;
+			else if (d == 1) N.X -= 1;
+			else if (d == 2) N.Y += 1;
+			else N.Y -= 1;
+			if (Seen.Find('X', N.X) != INDEX_NONE && Contains(Seen, N))
+				continue;
+			P = World.GetPositionFromTileCoordinates(N);
+			FloorZ = World.GetFloorZForPosition(P);
+			if (Abs(FloorZ - GroundZ) > 48 || !World.CanUnitsEnterTile(N))
+				continue;
+			Seen.AddItem(N);
+			Queue.AddItem(N);
+		}
+	}
+	return Seen.Length;
+}
+
+function bool Contains(const out array<TTile> Tiles, TTile T)
+{
+	local TTile X;
+
+	foreach Tiles(X)
+		if (X.X == T.X && X.Y == T.Y && X.Z == T.Z)
+			return true;
+	return false;
 }
 
 defaultproperties

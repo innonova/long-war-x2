@@ -577,3 +577,12 @@ zone already was on the ground, and two soldiers still reached only 14
 tiles: walled in by trailers, not on a roof. The real check is
 reachability: a flood fill over enterable tiles from each candidate, before
 units exist. Next.
+
+**Then, reachability** (an hour before morning): the spawn choice now also
+flood-fills over enterable ground tiles from each of the spawn's tiles and
+wants room for 40 from every one (`LWX2PartPlacer.RoomAround`). On the
+truck stop it found that at the drop zone itself, and two soldiers still
+reached only 14 tiles. So `CanUnitsEnterTile` does not see what walls them
+in (thin walls on tile edges, most likely), or XCOM 2 puts the squad
+elsewhere than the tiles counted. **Left open**: look at where the two land
+(the debug tile view) before trying again. The check stays (harmless).
