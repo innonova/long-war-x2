@@ -50,6 +50,27 @@ proposal: the person reorders or cuts.
 7. **EW's aliens as units**: pawns, animations through XCOM 2's anim tree,
    abilities, AI.
 
+## Where each step stands (2026-11-01, morning)
+
+1. **Soldiers** (`lw-classes.md`, in progress): the eight classes with Long
+   War's trees, one free perk a rank, its stat gains and perk-choice
+   bonuses, generated from Long War's config; 25 of 66 perks with effects
+   (9 as XCOM 2's own, 16 of Long War's own), the rest named stand-ins.
+2. **Weapons and items**: not started.
+3. **The strategy skeleton**: a first seam proven (experiment 4): a Long War
+   headquarters screen sends a squad through XCOM 2's mission path and reads
+   the outcome; it opens from the Avenger for now.
+4. **Research, Foundry, engineering**: not started (the data is in the Long
+   War Tech Tree).
+5. **The air war**: experiment 3's screen, opened from the headquarters with
+   the campaign's jets.
+6. **Maps as missions**: EW maps placed as a mission's ground, in quick
+   launch and in campaign missions, two maps converted by the same tools;
+   next: the squad's landing spot, EW's lights, smaller packages, EW's
+   mission contents.
+7. **EW's aliens as units**: the Floater shown, animated, with a material
+   made in the game (no editor); next: a pawn and character template.
+
 ## What is worth what
 
 Each step is days of agent time, not hours; the tail (every perk, every
