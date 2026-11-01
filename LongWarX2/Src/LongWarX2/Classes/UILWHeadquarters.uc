@@ -3,11 +3,11 @@
 // back? It shows the campaign's date, its soldiers, the last mission's outcome, and launches a
 // mission with the first four soldiers able to go, through XCOM 2's own mission path (a mission
 // site, PrepareTacticalBattle, LaunchTacticalBattle), skipping its Geoscape, squad select and
-// Skyranger.
+// Skyranger; and opens the air war (experiment 3) with the campaign's jets.
 class UILWHeadquarters extends UIScreen;
 
 var UIText Title, Info, Squad, Last;
-var UIButton LaunchButton, AvengerButton;
+var UIButton LaunchButton, AirWarButton, AvengerButton;
 
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
@@ -27,8 +27,10 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	Squad.SetSize(1140, 380);
 	LaunchButton = Spawn(class'UIButton', self).InitButton('LWHQLaunch', "LAUNCH MISSION", OnLaunch);
 	LaunchButton.SetPosition(390, 880);
+	AirWarButton = Spawn(class'UIButton', self).InitButton('LWHQAirWar', "AIR WAR", OnAirWar);
+	AirWarButton.SetPosition(640, 880);
 	AvengerButton = Spawn(class'UIButton', self).InitButton('LWHQAvenger', "TO XCOM 2'S AVENGER", OnAvenger);
-	AvengerButton.SetPosition(700, 880);
+	AvengerButton.SetPosition(840, 880);
 	Refresh();
 }
 
@@ -210,6 +212,16 @@ function int OutdoorRank(PlotDefinition Plot)
 	case "Abandoned": return 1;
 	}
 	return 0;
+}
+
+/** Experiment 3's interception screen, with the campaign's jets and month. */
+function OnAirWar(UIButton Button)
+{
+	local UILWInterception Air;
+
+	Air = Spawn(class'UILWInterception', Movie.Pres);
+	Air.bCampaign = true;
+	Movie.Pres.ScreenStack.Push(Air);
 }
 
 function OnAvenger(UIButton Button)
