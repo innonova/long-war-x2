@@ -205,3 +205,42 @@ the code says.
     site, landed UFO, terror), come with the missions feature.
   - The squad takes no time to fly out: the clock does not move while
     it is away.
+
+## Report (2026-11-01, the person's first try; the control port)
+
+What the person saw on their machine, and what changed:
+
+- **Money is written §** (Long War's sign, and XCOM 2's too), through
+  `LWStrategyRules.Money`, which writes the sign with `Chr(167)` so the
+  source stays ASCII.
+- **"Cash stays at 175"**: I could not reproduce it.
+  - An ordinary new campaign on wingpu (Gatecrasher won, then the
+    Geoscape) gives §500 in the Geoscape and on the Avenger's resource
+    bar.
+  - The bar did not refresh until something else changed it; it now
+    refreshes when the Geoscape opens.
+  - The bar also shows XCOM 2's own "INCOME (+§175)" and its supply drop
+    countdown. **XCOM 2's economy still runs beside Long War's council
+    funding.** It has to go when the strategy layer is replaced (next
+    under the Geoscape), and is the likely source of the 175.
+- **WIN THIS MISSION** (the person's request): the button that ends a
+  campaign mission as won is in the player's build now (it was
+  development only), so the strategy layer can be tried without playing
+  every mission. It marks the mission's objectives done first, since XCOM
+  2 judges a mission by them.
+- **The control port** (`LWX2Control`, development builds only): the game
+  driven from here without the mouse. It covers the Geoscape's state,
+  running time, taking decisions, interception results, satellites,
+  winning a mission and console commands, and the whole game state as a
+  text file to grep (`tools/test/lw-dump.sh`: about a thousand objects,
+  every field). See `tools/test/README.md`. Gatecrasher was won with one
+  command, `win`.
+
+### Decisions
+
+- **The control port is TCP** (`TcpLink`, which the game ships in
+  IpDrv), bound only in development builds. A text protocol (a command a
+  line, the answer ending with `.`) is driven by a PowerShell client over
+  ssh, the same way as the other test tools.
+- **The dump is every game state object's `ToString(true)`**, XCOM 2's
+  own full printout, rather than a format of ours, so nothing is left out.

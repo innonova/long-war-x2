@@ -52,11 +52,17 @@ function AddEndButton(UIScreen Screen)
 	local UIButton Button;
 
 	Button = Screen.Spawn(class'UIButton', Screen);
-	Button.InitButton('LWX2EndMission', "LONG WAR TEST: END MISSION AS WON", OnEndMission);
+	Button.InitButton('LWX2EndMission', "LONG WAR: WIN THIS MISSION", OnEndMission);
 	Button.SetPosition(40, 200);
 }
 
 function OnEndMission(UIButton Button)
+{
+	TestWin();
+}
+
+/** For development: the mission ended as won (its button; LWX2Control's "win"). */
+static function TestWin()
 {
 	local XComGameState NewGameState;
 	local XComGameState_BattleData Battle;

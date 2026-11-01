@@ -134,6 +134,12 @@ static function bool PlanFor(int Tier, int Aggression, out LWPlanCell Cell)
 	return false;
 }
 
+/** An amount of money as the game writes it: Long War's credits sign (§, written by its code so the source stays ASCII). */
+static function string Money(int Amount)
+{
+	return Chr(167) $ Amount;
+}
+
 /** An objective's name, as the Geoscape shows it (Long War's EAlienObjective). */
 static function string ObjectiveName(int Objective)
 {

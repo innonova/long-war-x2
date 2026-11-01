@@ -72,6 +72,9 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	CloseGeoButton = Spawn(class'UIButton', self).InitButton('LWGeoClose', "CLOSE", OnAvenger);
 	CloseGeoButton.SetPosition(1700, 960);
 	Refresh();
+	// The Avenger's resource bar shows the money the Geoscape may just have set (Long War's starting cash).
+	if (XComHQPresentationLayer(Movie.Pres) != none && XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD != none)
+		XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD.UpdateResources();
 	ShowAvengerButton(false);
 	`log("LongWarX2: Long War Geoscape shown", , 'LongWarX2');
 }
@@ -112,6 +115,8 @@ function Refresh()
 {
 	local XComGameState_LWStrategy S;
 	local XComGameState_HeadquartersXCom XComHQ;
+	local array<int> Kinds, Indexes;
+	local array<string> Labels;
 	local string Events;
 	local int i, n;
 
@@ -119,31 +124,20 @@ function Refresh()
 	if (S == none || Header == none)
 		return;
 	XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
-	Header.SetText("LONG WAR: GEOSCAPE -" @ S.DateText() $ "    $" $ XComHQ.GetSupplies() $ "    Month" @ (S.Month + 1));
+	Header.SetText("LONG WAR: GEOSCAPE -" @ S.DateText() $ "    " $ class'LWStrategyRules'.static.Money(XComHQ.GetSupplies()) $ "    Month" @ (S.Month + 1));
 	for (i = 0; i < CountryButtons.Length; i++)
 	{
 		CountryButtons[i].SetText((i == SelectedCountry ? "> " : "") $ class'LWStrategyRules'.default.Countries[i].Name);
 		CountryTexts[i].SetText(CountryLine(S, i));
 	}
-	BuildSatButton.SetText("BUILD SATELLITE ($" $ class'LWStrategyRules'.default.SatelliteCost $ ")");
+	BuildSatButton.SetText("BUILD SATELLITE (" $ class'LWStrategyRules'.static.Money(class'LWStrategyRules'.default.SatelliteCost) $ ")");
 	LaunchSatButton.SetText("LAUNCH SATELLITE (" $ S.SatellitesReady @ "ready" $ (S.SatellitesDue.Length > 0 ? "," @ S.SatellitesDue.Length @ "building" : "") $ ")");
 	LaunchSatButton.SetDisabled(S.SatellitesReady <= 0 || SelectedCountry < 0);
 
 	// What wants a decision.
-	for (i = 0; i < S.Ufos.Length && n < MAX_ACTIONS; i++)
-	{
-		if ((S.Ufos[i].Status == 1 || S.Ufos[i].Status == 2) && S.Ufos[i].bDetected && !S.Ufos[i].bAttacked)
-			SetAction(n++, 1, i, "INTERCEPT:" @ S.ShipName(S.Ufos[i].Ufo) @ "over" @ S.CountryName(S.Ufos[i].Country) @ "(" $ (S.Ufos[i].Until - S.Hours) $ "h)");
-		else if (S.Ufos[i].Status == 3)
-			SetAction(n++, 2, i, "ASSAULT: crash site in" @ S.CountryName(S.Ufos[i].Country) @ "(" $ (S.Ufos[i].Until - S.Hours) $ "h)");
-		else if (S.Ufos[i].Status == 4 && S.Ufos[i].bDetected)
-			SetAction(n++, 3, i, "ASSAULT: landed UFO in" @ S.CountryName(S.Ufos[i].Country) @ "(" $ (S.Ufos[i].Until - S.Hours) $ "h)");
-	}
-	for (i = 0; i < S.Sites.Length && n < MAX_ACTIONS; i++)
-	{
-		if (S.Sites[i].Status == 1)
-			SetAction(n++, S.Sites[i].bTerror ? 5 : 4, i, (S.Sites[i].bTerror ? "RESPOND: terror in" : "RESPOND: abductions in") @ S.CountryName(S.Sites[i].Country) @ "(" $ (S.Sites[i].Until - S.Hours) $ "h)");
-	}
+	S.Decisions(Kinds, Indexes, Labels);
+	for (n = 0; n < Kinds.Length && n < MAX_ACTIONS; n++)
+		SetAction(n, Kinds[n], Indexes[n], Labels[n]);
 	for (n = n; n < MAX_ACTIONS; n++)
 	{
 		ActionButtons[n].Hide();
@@ -184,7 +178,7 @@ simulated function string CountryLine(XComGameState_LWStrategy S, int i)
 	for (k = 0; k < 5; k++)
 		Bar $= S.Countries[i].Panic > k * 20 ? "#" : "-";
 	d = class'LWStrategyRules'.static.Difficulty();
-	return "Panic" @ Bar @ S.Countries[i].Panic @ (S.Countries[i].bSatellite ? " SATELLITE" : " no satellite") @ "  $" $ Round(class'LWStrategyRules'.default.Countries[i].Funding * class'LWStrategyRules'.default.FundingBalance[d] * (S.Countries[i].bSatellite ? 1.0 : class'LWStrategyRules'.default.BaseFundingPct[d] / 100.0)) $ "/month";
+	return "Panic" @ Bar @ S.Countries[i].Panic @ (S.Countries[i].bSatellite ? " SATELLITE" : " no satellite") @ "  " $ class'LWStrategyRules'.static.Money(Round(class'LWStrategyRules'.default.Countries[i].Funding * class'LWStrategyRules'.default.FundingBalance[d] * (S.Countries[i].bSatellite ? 1.0 : class'LWStrategyRules'.default.BaseFundingPct[d] / 100.0))) $ "/month";
 }
 
 // --- The clock ----------------------------------------------------------------------------
@@ -220,24 +214,33 @@ simulated function OnLaunchSat(UIButton Button)
 simulated function OnAction(UIButton Button)
 {
 	local int n;
-	local UILWInterception Air;
 
 	for (n = 0; n < MAX_ACTIONS; n++)
 		if (ActionButtons[n] == Button)
 			break;
-	if (n >= MAX_ACTIONS || ActionKind[n] == 0)
-		return;
+	if (n < MAX_ACTIONS)
+		Act(n);
+}
+
+/** The n-th decision taken (its button pressed; also LWX2Control's "act"): false if there is none. */
+simulated function bool Act(int n)
+{
+	local UILWInterception Air;
+
+	if (n < 0 || n >= MAX_ACTIONS || ActionKind[n] == 0)
+		return false;
 	if (ActionKind[n] == 1)
 	{
 		Air = Spawn(class'UILWInterception', Movie.Pres);
 		Air.bCampaign = true;
 		Air.StrategyUfo = ActionIndex[n];
 		Movie.Pres.ScreenStack.Push(Air);
-		return;
+		return true;
 	}
 	// A mission: crash site 1, landed UFO 2, abduction 3, terror 4 for the Geoscape's state.
 	class'XComGameState_LWStrategy'.static.MissionSent(ActionKind[n] - 1, ActionIndex[n]);
 	OnLaunch(none);
+	return true;
 }
 
 simulated function OnReceiveFocus()

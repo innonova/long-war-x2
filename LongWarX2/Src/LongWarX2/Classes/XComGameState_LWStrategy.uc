@@ -64,6 +64,8 @@ var array<int> NotHelped;
 var int SatellitesReady;
 var array<int> SatellitesDue;
 var array<string> Events;
+/** Events noted since the campaign began (Events keeps the last 40). */
+var int EventCount;
 /** Set when something wants the player's decision: the clock stops. */
 var bool bStop;
 /** A mission sent from here and not yet come back: 1 crash site, 2 landed UFO, 3 abduction, 4 terror. */
@@ -900,7 +902,7 @@ function EndMonth()
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
 	XComHQ = XComGameState_HeadquartersXCom(GetParentGameState().ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 	XComHQ.AddResource(GetParentGameState(), 'Supplies', Funding);
-	Note("Council report: funding $" $ Funding $ "." $ Report);
+	Note("Council report: funding" @ class'LWStrategyRules'.static.Money(Funding) $ "." $ Report);
 	`log("LongWarX2: Long War month" @ Month @ "ended: funding" @ Funding @ "countries left" @ NumLeft(), , 'LongWarX2');
 	Month++;
 	PlanMonth();
@@ -975,8 +977,41 @@ function string ShipName(int Ufo)
 	return class'LWAirWar'.static.Ufo(Ufo, Category()).Name;
 }
 
+/**
+ * What wants the player's decision, in the Geoscape's order: 1 intercept a detected UFO, 2 a crash
+ * site, 3 a landed UFO, 4 abductions, 5 terror; with the UFO's or site's index and the words.
+ */
+function Decisions(out array<int> Kinds, out array<int> Indexes, out array<string> Labels)
+{
+	local int i;
+
+	Kinds.Length = 0;
+	Indexes.Length = 0;
+	Labels.Length = 0;
+	for (i = 0; i < Ufos.Length; i++)
+	{
+		if ((Ufos[i].Status == 1 || Ufos[i].Status == 2) && Ufos[i].bDetected && !Ufos[i].bAttacked)
+			AddDecision(Kinds, Indexes, Labels, 1, i, "INTERCEPT:" @ ShipName(Ufos[i].Ufo) @ "over" @ CountryName(Ufos[i].Country) @ "(" $ (Ufos[i].Until - Hours) $ "h)");
+		else if (Ufos[i].Status == 3)
+			AddDecision(Kinds, Indexes, Labels, 2, i, "ASSAULT: crash site in" @ CountryName(Ufos[i].Country) @ "(" $ (Ufos[i].Until - Hours) $ "h)");
+		else if (Ufos[i].Status == 4 && Ufos[i].bDetected)
+			AddDecision(Kinds, Indexes, Labels, 3, i, "ASSAULT: landed UFO in" @ CountryName(Ufos[i].Country) @ "(" $ (Ufos[i].Until - Hours) $ "h)");
+	}
+	for (i = 0; i < Sites.Length; i++)
+		if (Sites[i].Status == 1)
+			AddDecision(Kinds, Indexes, Labels, Sites[i].bTerror ? 5 : 4, i, (Sites[i].bTerror ? "RESPOND: terror in" : "RESPOND: abductions in") @ CountryName(Sites[i].Country) @ "(" $ (Sites[i].Until - Hours) $ "h)");
+}
+
+static function AddDecision(out array<int> Kinds, out array<int> Indexes, out array<string> Labels, int Kind, int Index, string Label)
+{
+	Kinds.AddItem(Kind);
+	Indexes.AddItem(Index);
+	Labels.AddItem(Label);
+}
+
 function Note(string Text)
 {
+	EventCount++;
 	Events.AddItem("Day" @ DayOfMonth() $ "," @ (HourOfDay() < 10 ? "0" : "") $ HourOfDay() $ ":00 -" @ Text);
 	if (Events.Length > 40)
 		Events.Remove(0, Events.Length - 40);

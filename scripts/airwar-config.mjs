@@ -35,7 +35,8 @@ for (const c of air.ufo_changes) {
     : ''
   out.push(`+UfoChanges=(Ship=${c.ship}, AboveCategory=${c.above_category}${c.weapons ? `, Weapons=${list(c.weapons)}` : ''}${c.size ? `, Size=${q(c.size)}` : ''}${stats})`)
 }
-out.push('', '; The Long War headquarters screen on the Avenger (experiment 4; a preview in the player\'s build).', '[LongWarX2.UIScreenListener_LongWarX2HQ]', 'ShowLWHeadquarters=true', '; and in a mission of a campaign, a button that ends it as won.', `ShowTestEndMission=${dev}`)
+out.push('', '; The Long War headquarters screen on the Avenger (experiment 4; a preview in the player\'s build).', '[LongWarX2.UIScreenListener_LongWarX2HQ]', 'ShowLWHeadquarters=true', '; and in a mission of a campaign, a button that ends it as won (in the player\'s build too, to try the strategy layer).', 'ShowTestEndMission=true')
+out.push('', '; For development: the game driven from outside (tools/test/lw.sh): a TCP port taking commands, 0 = off.', '[LongWarX2.LWX2Control]', `ControlPort=${dev ? 7531 : 0}`)
 out.push('', '; For development: in a mission, each Long War soldier\'s shot breakdown against the nearest enemies, logged.', '[LongWarX2.LWX2PerkProbe]', `ProbePerks=${dev}`)
 out.push('', '; For development: on the Avenger, rookies promoted to Corporal in Long War\'s classes, to look at them.', '[LongWarX2.UIScreenListener_LongWarX2TestBarracks]', `PromoteRookies=${dev && true}`)
 out.push('', '; For development: the main menu\'s test campaign (a new campaign without its first mission).', '[LongWarX2.UIScreenListener_LongWarX2Shell]', `ShowTestCampaign=${dev && true}`, '; An Enemy Within map converted on this machine, opened as it is (experiment 2).', 'TestMapURL="CSmallScout_Badlands?game=Engine.GameInfo"')

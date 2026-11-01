@@ -21,6 +21,33 @@ draws the world only then), the debug camera held by the mod at the view in
 a new test campaign, the LONG WAR HQ, and with `--launch` a mission played
 until the soldiers can move.
 
+## Driving it without the mouse: the control port
+
+A development build listens on a TCP port on the test machine (`LWX2Control`,
+`ControlPort=7531` in `Config/XComLWAirWar.ini`; 0, off, in the player's build).
+It takes one command a line and answers in lines ending with a line holding a
+single `.`. From this machine:
+
+    tools/test/lw.sh help                      # the commands
+    tools/test/lw.sh ping screens              # the screen on top; the screen stack
+    tools/test/lw.sh geoscape geo              # the Geoscape opened; its state, a line a thing
+    tools/test/lw.sh 'run 720' decisions       # time run until something wants a decision
+    tools/test/lw.sh 'act 0'                   # that decision taken (intercept, assault, respond)
+    tools/test/lw.sh 'intercepted 3 0 0'       # an interception's result without the air war
+    tools/test/lw.sh 'sat build' 'sat launch 4'
+    tools/test/lw.sh win                       # the mission ended as won (any campaign mission)
+    tools/test/lw.sh 'exec <console command>'
+    tools/test/lw-dump.sh /tmp/state.txt [Unit]  # the whole game state, all fields, to grep
+
+The dump is every XCOM 2 game state object, newest version, with all its fields
+(about a thousand objects, 60,000 lines, a few seconds), and the screens up. Screenshots
+remain for what only they show: how a screen looks, its words, the 3D view.
+The game's FileWriter does not open files in the shipped game, so the dump comes
+over the socket. A firewall rule on wingpu lets XCom2.exe listen without a dialog
+(`netsh advfirewall firewall add rule name="XCOM 2 WotC (LWX2 control)" …`, made over ssh).
+
+## The window
+
 The game runs windowed at 1600x900, so a whole screenshot shows it; clicks
 are given in the UI's own 1920x1080 coordinates and scaled to the window.
 

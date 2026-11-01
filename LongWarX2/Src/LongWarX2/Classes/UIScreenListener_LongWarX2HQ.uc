@@ -5,7 +5,7 @@
 class UIScreenListener_LongWarX2HQ extends UIScreenListener config(LWAirWar);
 
 var config bool ShowLWHeadquarters;
-/** For development: in a campaign's mission, a button that ends it as won. */
+/** In a campaign's mission, a button that ends it as won (WIN THIS MISSION: to try the strategy layer without playing the mission). */
 var config bool ShowTestEndMission;
 
 event OnInit(UIScreen Screen)
