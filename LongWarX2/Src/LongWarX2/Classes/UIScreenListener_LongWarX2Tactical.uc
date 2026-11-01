@@ -131,6 +131,26 @@ function ReportReach()
 		Out @= Unit.GetVisualizedGameState().GetMyTemplateName() $ ":" $ Reachable.Length $ "/" $ CountReachableAround(Unit);
 	}
 	`log("LongWarX2: EW map in the battle, later: tiles each unit can reach:" $ Out, , 'LongWarX2');
+	ReportPerks();
+}
+
+/** Each soldier of a Long War class: its Long War effects in play (features/lw-classes.md). */
+function ReportPerks()
+{
+	local XComGameState_Unit Unit;
+	local name Effect;
+	local string Out;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Left(string(Unit.GetSoldierClassTemplateName()), 4) != "LWS_")
+			continue;
+		Out = "";
+		foreach Unit.AffectedByEffectNames(Effect)
+			if (Left(string(Effect), 3) == "LW_")
+				Out @= string(Effect);
+		`log("LongWarX2: Long War perks in play:" @ Unit.GetFullName() @ "(" $ Unit.GetSoldierClassTemplateName() @ "rank" @ Unit.GetRank() $ "): aim" @ Unit.GetCurrentStat(eStat_Offense) @ "mobility" @ Unit.GetCurrentStat(eStat_Mobility) $ ";" $ Out, , 'LongWarX2');
+	}
 }
 
 defaultproperties

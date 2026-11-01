@@ -112,3 +112,40 @@ generator copies them unfilled. To fill from Long War's ini values.
 
 - **Free and one per rank**, as Long War has it; XCOM 2's ability points are
   not used by these classes.
+
+## Report (2026-11-01 night, the first perks working)
+
+Eleven of Long War's own perks now work, with Long War's numbers:
+`X2Effect_LWModifiers` gives aim, critical chance, damage, defence and
+immunity to critical hits, each under a condition (no ally within N tiles,
+target below N% health, per enemy in sight up to a cap, height advantage, no
+action taken yet, target in full cover, in low cover, the shot's weapon);
+`X2Ability_LWStandins` builds a passive with that effect (and a mobility
+bonus) for each perk whose definition the generator gives. The numbers are
+EW's constants (`XGTacticalGameCoreNativeBase`, read with upkit from the
+player's `XComGame.upk`) and Long War's ini: Lone Wolf +10/+10 beyond 7
+tiles, Sharpshooter, Executioner +10/+10 at or below 50%, Aggression +10 per
+enemy (max 3), Tactical Sense +5 per enemy (max 4), Damn Good Ground +10/+10,
+Platform Stability +10/+10, Sprinter +4 mobility, Resilience, Low Profile,
+Ranger +1 damage.
+
+The same numbers now fill Long War's words (EW fills `<XGAbility:…/>` tags
+at run time; three tags have no value found yet).
+
+**Seen**: a Gunner Colonel made on the quick launch's squad screen (class,
+rank, a cannon, abilities ticked from Long War's tree) goes into a mission
+on the EW map with Ranger, Resilience, Platform Stability and Executioner in
+play (logged from the unit's effects). Not yet seen: the numbers in a shot's
+breakdown (no enemy in sight in that run).
+
+**Found**: a mod's class config must add to arrays with `+`
+(`+AllowedWeapons`): plain lines replaced each other and the classes could
+carry only a pistol.
+
+### Decisions
+
+- **One effect class with named conditions** for the bonus perks, the
+  conditions chosen by the generator: most of Long War's passives are a
+  number under a condition, so each becomes a line of config.
+- **XCOM 2's cover values for Low Profile** (low cover counted as full:
+  +20 defence), since XCOM 2's cover numbers replace EW's.
