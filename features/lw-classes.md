@@ -41,3 +41,53 @@ the XCOM row): seen in the game, with a screenshot.
   `ePerk_Medal_UrbanB` …).
 - XCOM 2's classes: `XComClassData.ini` and `X2SoldierClassTemplate` in the
   SDK.
+
+## Report (2026-11-01 night, the classes in the game) — the structure stands
+
+**Seen in the game** (a test campaign; screenshots in the conversation): the
+barracks list Long War's classes (Sniper, Scout, Rocketeer, Gunner, Medic,
+Engineer, Assault, Infantry); a Corporal Sniper carries a sniper rifle and
+a pistol and has Squadsight; Promote Soldier opens the heroes' screen with
+Long War's tree: Squaddie (Squadsight, the pistol shot), Corporal's three
+choices with their own icons and Long War's words ("Deadeye: Gain +15 aim
+against flying targets"), cost 0.
+
+**What there is**
+- `scripts/classes-config.mjs` writes, from the player's Long War install:
+  `Config/XComClassData.ini` (the eight classes, their trees, their stat
+  gains under Long War's normal settings, their weapons and squaddie
+  loadouts; XCOM 2's four classes taken out of the recruits' deck),
+  `Config/XComLWClasses.ini` (the stand-ins) and
+  `Localization/XComGame.int` (the words; not in the repository).
+- Nine perks are XCOM 2's own abilities (Squadsight, Lightning Reflexes,
+  Run & Gun, In The Zone, Covering Fire, Sentinel, Rapid Fire, Holo-Targeting,
+  Field Medic); 57 are stand-ins (`X2Ability_LWStandins`: a passive with
+  the name, words and icon, 44 with an icon of their own from XCOM 2's
+  perk icons, which still carry many of EW's).
+- `UIScreenListener_LongWarX2Promotion` opens the heroes' screen for Long
+  War's classes.
+- For development, `PromoteRookies` makes the rookies Corporals of the
+  eight classes on the Avenger.
+
+### Decisions
+
+- **The heroes' promotion screen** for three choices a rank: XCOM 2's normal
+  screen has two columns built into its movie; the heroes' screen takes four.
+  It hides the ranks not reached yet ("?"), where Long War shows the whole
+  tree; to change in a later round.
+- **XCOM 2's ability where the perk is the same**, with XCOM 2's numbers
+  for now; Long War's numbers when the abilities are written.
+- **Stand-ins rather than leaving gaps**: the trees are whole and readable
+  today; each stand-in is replaced by a real ability in its own round.
+- **Long War's words generated on the player's machine**, not committed:
+  they are Long War's text. The class config (structure, numbers, names of
+  abilities) is in the repository.
+- **Weapons by XCOM 2's categories**: Sniper and Scout sniper rifles (Scout
+  also rifles), Gunner cannons, Assault shotguns and rifles, the others
+  rifles, everyone a pistol. Rocketeers have no rocket launcher yet (XCOM
+  2's is a heavy weapon on armour).
+
+**Left**: the 57 abilities; one choice a rank (the heroes' screen lets a
+soldier buy more with ability points); the whole tree visible; Long War's
+rank names; its per-perk stat bonuses (tree types 15–18, 25–28); the
+Rocketeer's rockets; class icons of their own.
