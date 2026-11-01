@@ -182,7 +182,7 @@ export function itemTemplate(item, ITEMS) {
  * - Laser Sight: +4 aim (its line) and half the SCOPE's crit with a non-pistol (XGAbility_Targeted, FOUNDRY_SCOPE_CRIT_BONUS / 2);
  * - Hi-Cap Mags and Drum Mags: a shot costs half, a third of the ammo (XGAbility_Targeted): twice, three times the shots;
  * - Ceramic Plating: +1 HP (its line); Chameleon Suit: reaction shots never crit its wearer (XGAbility_Targeted).
- * Kind: Grenade (thrown), Medikit, Launcher (the Rocketeer's secondary weapon), Passive (a stat item), Rocket (another
+ * Kind: Grenade (thrown), Medikit, ArcThrower (stuns an alien to take it alive), Launcher (the Rocketeer's secondary weapon), Passive (a stat item), Rocket (another
  * rocket for the launcher). Class: the classes that may carry it by Long War's properties (Overheats: Scouts, Heavy:
  * Rocketeers, Rifle: the rifle classes), empty for any.
  */
@@ -197,6 +197,7 @@ export const SMALL = [
   { item: MIMIC, kind: 'Grenade', look: 'MimicBeacon' },
   { item: 97, kind: 'Grenade', look: 'BattleScanner' },
   { item: 69, kind: 'Medikit', look: 'Medikit' },
+  { item: 73, kind: 'ArcThrower', look: 'Medikit' },
   { item: 218, kind: 'Launcher', look: 'RocketLauncher' },
   { item: 77, kind: 'Rocket', look: 'RocketLauncher' },
   { item: 79, kind: 'Passive', look: 'CommonPCSPerception', crit: 4 },

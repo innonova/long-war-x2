@@ -110,7 +110,9 @@ static function CopyLooks()
 				if (Part.ArmorTemplate != A.Look)
 					continue;
 				CloneName = name(Part.DataName $ "_" $ class'LWGearRules'.static.ArmorTemplateFor(A.Item));
-				Clone = new(None, string(CloneName)) class'X2BodyPartTemplate'(Part);
+				// Unnamed, as XCOM 2 makes its own torsos, arms and legs: their names repeat across part types, and a
+				// named object of the same name would be the same object (a torso's clone overwritten by the legs').
+				Clone = new class'X2BodyPartTemplate'(Part);
 				Clone.SetTemplateName(CloneName);
 				Clone.ArmorTemplate = class'LWGearRules'.static.ArmorTemplateFor(A.Item);
 				if (Parts.AddUberTemplate(PartType, Clone, true))

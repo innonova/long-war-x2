@@ -61,6 +61,8 @@ static function X2ItemTemplate SmallTemplate(LWGearRules.LWSmallDef D)
 	{
 		`CREATE_X2TEMPLATE(class'X2WeaponTemplate', Weapon, D.Template);
 		Weapon.ItemCat = D.Kind == 'Launcher' ? 'weapon' : (D.Kind == 'Medikit' ? 'heal' : 'utility');
+		if (D.Kind == 'ArcThrower')
+			Weapon.Abilities.AddItem('LWArcThrowerStun');
 		Weapon.WeaponCat = D.Kind == 'Launcher' ? 'lw_rocketeer_engineer' : (D.Kind == 'Medikit' ? 'medikit' : 'utility');
 		Weapon.InventorySlot = D.Kind == 'Launcher' ? eInvSlot_SecondaryWeapon : eInvSlot_Utility;
 		Weapon.BaseDamage = Damage;
@@ -119,7 +121,7 @@ static function CopyLook(X2ItemTemplate Mine, X2ItemTemplate Look, LWGearRules.L
 		MyItem.GameArchetype = LookItem.GameArchetype;
 		MyItem.EquipSound = LookItem.EquipSound;
 		// The passive items are stats of their own; the rest act as XCOM 2's item does (not as the SPARK's).
-		if (D.Kind != 'Passive' && D.Kind != 'Rocket')
+		if (D.Kind != 'Passive' && D.Kind != 'Rocket' && D.Kind != 'ArcThrower')
 			foreach LookItem.Abilities(A)
 				if (MyItem.Abilities.Find(A) == INDEX_NONE && Left(string(A), 5) != "Spark")
 					MyItem.Abilities.AddItem(A);

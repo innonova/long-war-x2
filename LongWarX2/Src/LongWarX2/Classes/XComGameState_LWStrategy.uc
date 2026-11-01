@@ -113,6 +113,8 @@ var int PendingIndex;
 var int PendingMission;
 /** The mission sent is to come back with an alien taken alive (won without playing it, with a captive). */
 var bool bPendingCapture;
+/** The aliens stunned with the arc thrower in the mission under way (their XCOM 2 character groups; X2Effect_LWCapture). */
+var array<name> PendingCaptives;
 /** The story (features/lw-story.md): the countries with an alien base, the Hyperwave Beacon and the Ethereal
  * Device ever held, the campaign won. */
 var array<int> AlienBases;
@@ -1045,6 +1047,7 @@ static function MissionSent(int Kind, int Index, optional bool bCapture)
 	S.PendingKind = Kind;
 	S.PendingIndex = Index;
 	S.bPendingCapture = bCapture;
+	S.PendingCaptives.Length = 0;
 	if (Kind <= 2)
 		S.Ufos[Index].Status = 5;
 	else if (Kind <= 4 || Kind == 7)
@@ -1108,9 +1111,11 @@ static function MissionBack(bool bWon)
 			S.AlienAggression, S.AlienResources, S.PendingKind == 3 ? S.AbductionDifficulty(Country) : 0, S.TerrorsTaken);
 		if (S.bPendingCapture)
 			S.TakeCaptive(NewGameState, Squad);
+		S.BringCaptivesHome(NewGameState, Squad);
 		S.GiveKillLoot(NewGameState, Squad);
 	}
 	S.bPendingCapture = false;
+	S.PendingCaptives.Length = 0;
 	if (S.PendingKind == 4)
 		S.TerrorsTaken++;
 	if (S.PendingKind == 3 && bWon)
@@ -1340,10 +1345,7 @@ function GiveKillLoot(XComGameState NewGameState, array<int> Squad)
 function TakeCaptive(XComGameState NewGameState, out array<int> Squad)
 {
 	local array<int> Order;
-	local LWStrategyRules.LWSpecies Sp;
-	local name W;
-	local string Got;
-	local int i, j, k;
+	local int i, j;
 
 	if (!class'UIUtilities_Strategy'.static.GetXComHQ().IsTechResearched(class'LWResearchRules'.static.TemplateForId(2)))
 	{
@@ -1356,29 +1358,66 @@ function TakeCaptive(XComGameState NewGameState, out array<int> Squad)
 	for (i = 0; i < Order.Length; i++)
 	{
 		j = Squad.Find(Order[i]);
-		k = class'LWStrategyRules'.default.Species.Find('Char', Order[i]);
-		if (j == INDEX_NONE || k == INDEX_NONE || class'LWStrategyRules'.default.Species[k].Captive == '')
+		if (j == INDEX_NONE || !GiveCaptive(NewGameState, Order[i]))
 			continue;
-		Sp = class'LWStrategyRules'.default.Species[k];
 		Squad.Remove(j, 1);
-		foreach Sp.Weapons(W)
-		{
-			class'X2Item_LWArtifacts'.static.Give(NewGameState, W, 1);
-			Got $= "," @ class'X2Item_LWArtifacts'.static.DisplayName(W);
-		}
-		if (class'LWBase'.static.Count(self, 13) > 0)
-		{
-			class'X2Item_LWArtifacts'.static.Give(NewGameState, Sp.Captive, 1);
-			Note("Taken alive:" @ class'X2Item_LWArtifacts'.static.DisplayName(Sp.Captive) @ "to Alien Containment" $ Got $ ".");
-		}
-		else
-		{
-			class'X2Item_LWArtifacts'.static.Give(NewGameState, Sp.Corpse, 1);
-			Note("Taken alive, but without Alien Containment it died:" @ class'X2Item_LWArtifacts'.static.DisplayName(Sp.Corpse) $ Got $ ".");
-		}
 		return;
 	}
 	Note("No alien there could be taken alive.");
+}
+
+/** A captive of a Long War species home: its weapons intact; it to Alien Containment, or dead without one. False if the species is never taken alive. */
+function bool GiveCaptive(XComGameState NewGameState, int Char)
+{
+	local LWStrategyRules.LWSpecies Sp;
+	local name W;
+	local string Got;
+	local int k;
+
+	k = class'LWStrategyRules'.default.Species.Find('Char', Char);
+	if (k == INDEX_NONE || class'LWStrategyRules'.default.Species[k].Captive == '')
+		return false;
+	Sp = class'LWStrategyRules'.default.Species[k];
+	foreach Sp.Weapons(W)
+	{
+		class'X2Item_LWArtifacts'.static.Give(NewGameState, W, 1);
+		Got $= "," @ class'X2Item_LWArtifacts'.static.DisplayName(W);
+	}
+	if (TileFacility.Length == 0 || class'LWBase'.static.Count(self, 13) > 0)
+	{
+		class'X2Item_LWArtifacts'.static.Give(NewGameState, Sp.Captive, 1);
+		Note("Taken alive:" @ class'X2Item_LWArtifacts'.static.DisplayName(Sp.Captive) @ "to Alien Containment" $ Got $ ".");
+	}
+	else
+	{
+		class'X2Item_LWArtifacts'.static.Give(NewGameState, Sp.Corpse, 1);
+		Note("Taken alive, but without Alien Containment it died:" @ class'X2Item_LWArtifacts'.static.DisplayName(Sp.Corpse) $ Got $ ".");
+	}
+	return true;
+}
+
+/**
+ * The aliens stunned with the arc thrower in the mission (PendingCaptives) home as Long War's captives
+ * (LWStrategyRules.CaptureAs: XCOM 2's kind of alien as Long War's species, until Enemy Within's aliens
+ * are the missions'); one of that species is then not among the dead.
+ */
+function BringCaptivesHome(XComGameState NewGameState, out array<int> Squad)
+{
+	local name Group;
+	local int k, j;
+
+	foreach PendingCaptives(Group)
+	{
+		k = class'LWStrategyRules'.default.CaptureAs.Find('Group', Group);
+		if (k == INDEX_NONE || !GiveCaptive(NewGameState, class'LWStrategyRules'.default.CaptureAs[k].Char))
+		{
+			Note("A stunned" @ Group @ "came home, but Long War has no captive of its kind.");
+			continue;
+		}
+		j = Squad.Find(class'LWStrategyRules'.default.CaptureAs[k].Char);
+		if (j != INDEX_NONE)
+			Squad.Remove(j, 1);
+	}
 }
 
 /** What the Skyranger brings home, with the Foundry's Alien Metallurgy (alloys), Alien Nucleonics

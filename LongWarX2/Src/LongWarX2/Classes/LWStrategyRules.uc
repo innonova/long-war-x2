@@ -132,6 +132,13 @@ struct LWSpecies
 var config array<LWSpecies> Species;
 var config float FragmentBalance[4];
 var config int AbductionRewardCash;
+/** An alien stunned in a mission comes home as Long War's captive of this species (XCOM 2's character group). */
+struct LWCaptureAs
+{
+	var name Group;
+	var int Char;
+};
+var config array<LWCaptureAs> CaptureAs;
 /** The campaign is lost when this many countries have left (Long War's LOSE_CONDITION_NUM_DESERTERS). */
 var config int LoseCountries;
 

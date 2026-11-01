@@ -78,6 +78,9 @@ for (const x of SMALL) {
 // Engineering's pace (XGFacility_Engineering.GetWorkPerHour, XGItemTree.GetItemBuildTime, ScaleCost).
 const ini = (k) => Number(core.match(new RegExp(`^${k}=([\\d.]+)`, 'm'))[1])
 out.push(`EngineerRate=${ini('ABDUCTION_REWARD_ENG')}`, `TimeBalance=${ini('ITEM_TIME_BALANCE')}`, `WorkshopBonus=${ini('WORKSHOP_ENG_BONUS')}`)
+// The arc thrower: Long War's multiplier on Enemy Within's stun chance (UFO_PSI_LINK_SURVIVE, the name notwithstanding),
+// and its range in tiles (APPROXIMATION: Enemy Within's is not in its config).
+out.push('[LongWarX2.X2AbilityToHitCalc_LWStun]', `StunBalance=${ini('UFO_PSI_LINK_SURVIVE')}`, '[LongWarX2.X2Ability_LWArcThrower]', 'ArcThrowerRange=4', '[LongWarX2.LWGearRules]')
 // What engineering builds: the weapons and armours with a cost; -1 (the starting kit) is never built. And the
 // interceptors' weapons and the Firestorm (the hangar, features/lw-hangar.md), the Skeleton Key (lw-story.md).
 const CRAFT = [117, 119, 120, 121, 122, 104, 184]

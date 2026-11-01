@@ -216,6 +216,11 @@ out.push(
   }),
   `; An abduction won pays cash (XGStrategyAI.DetermineAbductionReward), x 0.8, 0.9, 1, 1.15 by its difficulty.`,
   `AbductionRewardCash=${one('ABDUCTION_REWARD_CASH')}`,
+  // An alien stunned in a mission (the arc thrower) comes home as Long War's captive of the same kind: XCOM 2's alien
+  // kinds (character groups) to Long War's species until Enemy Within's aliens are the missions' (APPROXIMATION).
+  '; Taken alive in a mission: XCOM 2\'s kind of alien (its character group) as Long War\'s species (Char).',
+  ...[['Sectoid', 4], ['Viper', 6], ['AdventTrooper', 6], ['AdventCaptain', 6], ['AdventShieldbearer', 6], ['AdventStunLancer', 6], ['AdventPurifier', 6], ['AdventPriest', 6],
+    ['Muton', 7], ['Archon', 10], ['Berserker', 15], ['Andromedon', 11], ['Codex', 9], ['AdventPsiWitch', 12]].map(([g, c]) => `+CaptureAs=(Group=${g}, Char=${c})`),
   ...[28, 29, 30, 31].map((id) => `+Species=(Char=${id}, Name=ExaltElite${id}, Elerium=0, Alloys=0, Meld=${one('CB_FUNDING_BONUS')})`),
 )
 if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk))

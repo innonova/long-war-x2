@@ -55,7 +55,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
-		Out.AddItem("give-to <soldier> <item template>: an item put on a soldier (a test aid) | abilities: in a mission, each soldier's abilities and charges");
+		Out.AddItem("give-to <soldier> <item template>: an item put on a soldier (a test aid) | abilities: in a mission, each soldier's abilities and charges | use <soldier> <ability> [target, 99: force the nearest enemy]: an ability used (no target: the targets) | enemies | spawn [alien] [tiles]: an alien dropped near the squad (a test aid)");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
 		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid) | hqassault: the HQ assault from now (a test aid)");
 		Out.AddItem("base: the base's tiles, numbers and facilities | base set <column> <row> <facility>: placed at once (a test aid) | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
@@ -103,6 +103,26 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "abilities":
 		Abilities(Out);
+		return;
+	case "enemies":
+		Enemies(Out);
+		return;
+	case "parts":
+		Parts(Out);
+		return;
+	case "armory":
+		Out.AddItem(OpenArmory(Args.Length > 1 ? int(Args[1]) : 0));
+		return;
+	case "spawn":
+		Out.AddItem(SpawnAlien(Args.Length > 1 ? name(Args[1]) : 'Sectoid', Args.Length > 2 ? int(Args[2]) : 2));
+		return;
+	case "use":
+		if (Args.Length < 3)
+		{
+			Out.AddItem("ERR use <soldier name or class part> <ability> [target index]");
+			return;
+		}
+		Out.AddItem(UseAbility(Args[1], name(Args[2]), Args.Length > 3 ? int(Args[3]) : -1));
 		return;
 	case "give":
 		if (Args.Length < 3)
@@ -574,6 +594,178 @@ function Abilities(out array<string> Out)
 		}
 		Out.AddItem(Line);
 	}
+}
+
+/** XCOM 2's armory opened on a soldier of the crew (by its index). */
+function string OpenArmory(int Index)
+{
+	local XComHQPresentationLayer HQ;
+	local StateObjectReference Ref;
+	local XComGameState_Unit Unit;
+	local int n;
+
+	HQ = XComHQPresentationLayer(Pres());
+	if (HQ == none)
+		return "ERR not on the Avenger";
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier())
+			continue;
+		if (n++ == Index)
+		{
+			HQ.UIArmory_MainMenu(Ref);
+			return "ok" @ Unit.GetFullName();
+		}
+	}
+	return "ERR no such soldier";
+}
+
+/** Each soldier's body parts: name, and the armour the part belongs to (MISSING: no such part). */
+function Parts(out array<string> Out)
+{
+	local XComGameState_Unit Unit;
+	local X2BodyPartTemplateManager Mgr;
+	local StateObjectReference Ref;
+	local string Line;
+
+	Mgr = class'X2BodyPartTemplateManager'.static.GetBodyPartTemplateManager();
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier())
+			continue;
+		Line = Unit.GetFullName() @ "wears" @ (Unit.GetItemInSlot(eInvSlot_Armor) != none ? string(Unit.GetItemInSlot(eInvSlot_Armor).GetMyTemplateName()) : "-") $ ":";
+		Line @= PartText(Mgr, "Torso", Unit.kAppearance.nmTorso);
+		Line @= PartText(Mgr, "Arms", Unit.kAppearance.nmArms);
+		Line @= PartText(Mgr, "LeftArm", Unit.kAppearance.nmLeftArm);
+		Line @= PartText(Mgr, "RightArm", Unit.kAppearance.nmRightArm);
+		Line @= PartText(Mgr, "LeftForearm", Unit.kAppearance.nmLeftForearm);
+		Line @= PartText(Mgr, "RightForearm", Unit.kAppearance.nmRightForearm);
+		Line @= PartText(Mgr, "Legs", Unit.kAppearance.nmLegs);
+		Line @= PartText(Mgr, "Thighs", Unit.kAppearance.nmThighs);
+		Line @= PartText(Mgr, "Shins", Unit.kAppearance.nmShins);
+		Line @= PartText(Mgr, "Helmets", Unit.kAppearance.nmHelmet);
+		Out.AddItem(Line);
+	}
+}
+
+function string PartText(X2BodyPartTemplateManager Mgr, string PartType, name PartName)
+{
+	local X2BodyPartTemplate Part;
+
+	if (PartName == '')
+		return PartType $ "=-";
+	Part = Mgr.FindUberTemplate(PartType, PartName);
+	return PartType $ "=" $ PartName $ "(" $ (Part != none ? string(Part.ArmorTemplate) $ "," @ Part.ArchetypeName $ "," @ Part.DLCName $ "," @ Part.Tech : "MISSING") $ ")";
+}
+
+/** Each target condition of an ability, tried against each enemy. */
+function string WhyNoTargets(XComGameState_Unit Source, XComGameState_Ability Ability)
+{
+	local XComGameState_Unit Enemy;
+	local X2Condition Condition;
+	local string Out;
+	local name Code;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Enemy)
+	{
+		if (Enemy.GetTeam() == eTeam_XCom || Enemy.bRemovedFromPlay)
+			continue;
+		Out @= string(Enemy.GetMyTemplateName()) $ ":";
+		foreach Ability.GetMyTemplate().AbilityTargetConditions(Condition)
+		{
+			Code = Condition.MeetsCondition(Enemy);
+			if (Code == 'AA_Success')
+				Code = Condition.MeetsConditionWithSource(Enemy, Source);
+			Out @= string(Condition.Class.Name) $ "=" $ Code;
+		}
+	}
+	return Out;
+}
+
+/** In a mission: an alien dropped on the aliens' team a few tiles from the first soldier (a test aid, XCOM 2's cheat). */
+function string SpawnAlien(name CharacterTemplate, int Tiles)
+{
+	local XComTacticalCheatManager Cheats;
+	local XComGameState_Unit Unit;
+	local vector Position;
+
+	Cheats = XComTacticalCheatManager(class'WorldInfo'.static.GetWorldInfo().GetALocalPlayerController().CheatManager);
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_XCom && Unit.IsSoldier() && !Unit.bRemovedFromPlay)
+			break;
+	if (Cheats == none || Unit == none)
+		return "ERR not in a mission (or no cheats)";
+	Position = `XWORLD.GetPositionFromTileCoordinates(Unit.TileLocation);
+	Position.X += Tiles * class'XComWorldData'.const.WORLD_StepSize;
+	Position.Z = `XWORLD.GetFloorZForPosition(Position);
+	Cheats.DropUnitAt(Position, CharacterTemplate, 1);
+	return "dropped" @ CharacterTemplate @ Tiles @ "tiles from" @ Unit.GetFullName();
+}
+
+/** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */
+function Enemies(out array<string> Out)
+{
+	local XComGameState_Unit Unit, Soldier;
+	local int Best;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Unit.GetTeam() == eTeam_XCom || Unit.bRemovedFromPlay || !Unit.IsAlive())
+			continue;
+		Best = 9999;
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Soldier)
+			if (Soldier.GetTeam() == eTeam_XCom && Soldier.IsSoldier() && !Soldier.bRemovedFromPlay)
+				Best = Min(Best, Soldier.TileDistanceBetween(Unit));
+		Out.AddItem(Unit.GetMyTemplateName() @ "(" $ Unit.GetMyTemplate().CharacterGroupName $ ") team" @ Unit.GetTeam() @ "hp" @ int(Unit.GetCurrentStat(eStat_HP)) $ "/" $ int(Unit.GetMaxStat(eStat_HP)) @ "tiles" @ Best);
+	}
+}
+
+/** In a mission: a soldier's ability used on a target (its index among the available targets; -1: list them). */
+function string UseAbility(string Who, name AbilityName, int TargetIndex)
+{
+	local XComGameState_Unit Unit, Target;
+	local GameRulesCache_Unit Cache;
+	local AvailableAction Action;
+	local AvailableTarget Forced;
+	local string Targets;
+	local int i;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_XCom && !Unit.bRemovedFromPlay && (InStr(Caps(Unit.GetFullName()), Caps(Who)) != INDEX_NONE || InStr(Caps(string(Unit.GetSoldierClassTemplateName())), Caps(Who)) != INDEX_NONE))
+			break;
+	if (Unit == none || `TACTICALRULES == none || !`TACTICALRULES.GetGameRulesCache_Unit(Unit.GetReference(), Cache))
+		return "ERR no such soldier in a mission";
+	foreach Cache.AvailableActions(Action)
+	{
+		if (XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Action.AbilityObjectRef.ObjectID)).GetMyTemplateName() != AbilityName)
+			continue;
+		// force: the nearest enemy as the target, whatever the conditions say (a test aid).
+		if (TargetIndex == 99 && Action.AvailableTargets.Length == 0)
+		{
+			foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Target)
+				if (Target.GetTeam() != eTeam_XCom && !Target.bRemovedFromPlay && Target.IsAlive())
+					break;
+			if (Target == none)
+				return "ERR no enemy";
+			Forced.PrimaryTarget = Target.GetReference();
+			Action.AvailableTargets.AddItem(Forced);
+			Action.AvailableCode = 'AA_Success';
+			TargetIndex = 0;
+		}
+		if (TargetIndex < 0 || TargetIndex >= Action.AvailableTargets.Length)
+		{
+			for (i = 0; i < Action.AvailableTargets.Length; i++)
+			{
+				Target = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Action.AvailableTargets[i].PrimaryTarget.ObjectID));
+				Targets @= i $ "=" $ (Target != none ? string(Target.GetMyTemplateName()) : string(Action.AvailableTargets[i].PrimaryTarget.ObjectID));
+			}
+			return AbilityName @ "available" @ Action.AvailableCode @ "targets:" $ Targets $ (Action.AvailableTargets.Length == 0 ? " |" $ WhyNoTargets(Unit, XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Action.AbilityObjectRef.ObjectID))) : "");
+		}
+		return class'XComGameStateContext_Ability'.static.ActivateAbility(Action, TargetIndex) ? "used" : "ERR it did not go";
+	}
+	return "ERR" @ Unit.GetFullName() @ "has no" @ AbilityName;
 }
 
 function Give(name ItemName, int n, out array<string> Out)
