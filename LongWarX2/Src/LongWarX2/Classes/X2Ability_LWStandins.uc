@@ -3,7 +3,7 @@
 // defence, damage, immunity to critical hits, mobility, each under a condition) work, through
 // X2Effect_LWModifiers; the others are stand-ins without effect for now. The list is
 // generated (scripts/classes-config.mjs).
-class X2Ability_LWStandins extends X2Ability config(LWClasses);
+class X2Ability_LWStandins extends X2Ability config(LWClasses) dependson(LWGearRules);
 
 struct LWStandin
 {
@@ -32,6 +32,8 @@ struct LWStandin
 	var array<name> ImmuneTo;
 	/** Hit points more per medikit use (Savior; added to XCOM 2's medikit abilities: AddHealBonuses). */
 	var int Heal;
+	/** In the cloud of the soldier's smoke grenades: defence, critical chance, will more (Dense Smoke, Combat Drugs: AddSmokeBonuses). */
+	var int SmokeDefense, SmokeCrit, SmokeWill;
 };
 
 var config array<LWStandin> Standins;
@@ -223,6 +225,43 @@ static function AddHealBonuses()
 				Heal.TargetConditions.AddItem(Owner);
 				Medikit.AddTargetEffect(Heal);
 			}
+	}
+}
+
+/** Dense Smoke and Combat Drugs: Long War's smoke grenades give more in their cloud when the thrower has the perk (OnPostTemplatesCreated). */
+static function AddSmokeBonuses()
+{
+	local X2ItemTemplateManager Manager;
+	local array<X2DataTemplate> Variants;
+	local X2DataTemplate Data;
+	local X2GrenadeTemplate Grenade;
+	local LWGearRules.LWSmallDef D;
+	local LWStandin S;
+	local X2Effect_LWSmoke Smoke;
+	local X2Condition_AbilityProperty Owner;
+
+	Manager = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
+	foreach class'LWGearRules'.default.SmallItems(D)
+	{
+		if (D.Look != 'SmokeGrenade')
+			continue;
+		Manager.FindDataTemplateAllDifficulties(D.Template, Variants);
+		foreach Variants(Data)
+		{
+			Grenade = X2GrenadeTemplate(Data);
+			if (Grenade == none)
+				continue;
+			foreach default.Standins(S)
+				if (S.SmokeDefense != 0 || S.SmokeCrit != 0 || S.SmokeWill != 0)
+				{
+					Smoke = class'X2Effect_LWSmoke'.static.Make(S.Name, S.SmokeDefense, S.SmokeCrit, S.SmokeWill);
+					Owner = new class'X2Condition_AbilityProperty';
+					Owner.OwnerHasSoldierAbilities.AddItem(S.Name);
+					Smoke.TargetConditions.AddItem(Owner);
+					Grenade.ThrownGrenadeEffects.AddItem(Smoke);
+					Grenade.LaunchedGrenadeEffects.AddItem(Smoke);
+				}
+		}
 	}
 }
 

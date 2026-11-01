@@ -73,4 +73,5 @@ static event OnPostTemplatesCreated()
 	class'X2Item_LWSmallItems'.static.CopyLooks();
 	class'X2Ability_LWStandins'.static.AddBonusRadii();
 	class'X2Ability_LWStandins'.static.AddHealBonuses();
+	class'X2Ability_LWStandins'.static.AddSmokeBonuses();
 }

@@ -37,6 +37,7 @@ function Handle(string Line, out array<string> Out)
 	local XComGameState_LWStrategy S;
 	local UILWGeoscape Geo;
 	local string Cmd, Why;
+	local XComGameState_Unit EffUnit;
 	local int Before;
 
 	ParseStringIntoArray(Line, Args, " ", true);
@@ -55,7 +56,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
-		Out.AddItem("give-to <soldier> <item template>: an item put on a soldier (a test aid) | abilities: in a mission, each soldier's abilities and charges | use <soldier> <ability> [target, 99: force the nearest enemy]: an ability used (no target: the targets) | enemies | spawn [alien] [tiles]: an alien dropped near the squad | capture: the arc thrower's capture on the nearest enemy (test aids)");
+		Out.AddItem("give-to <soldier> <item template>: an item put on a soldier (a test aid) | abilities: in a mission, each soldier's abilities and charges | use <soldier> <ability> [target, 99: force the nearest enemy, 98: at the soldier's feet]: an ability used (no target: the targets) | enemies | spawn [alien] [tiles]: an alien dropped near the squad | capture: the arc thrower's capture on the nearest enemy (test aids)");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
 		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid) | hqassault: the HQ assault from now (a test aid)");
 		Out.AddItem("base: the base's tiles, numbers and facilities | base set <column> <row> <facility>: placed at once (a test aid) | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
@@ -124,6 +125,11 @@ function Handle(string Line, out array<string> Out)
 	case "capture":
 		Out.AddItem(CaptureNearest());
 		return;
+	case "effects":
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', EffUnit)
+			if (EffUnit.GetTeam() == eTeam_XCom && EffUnit.IsSoldier() && !EffUnit.bRemovedFromPlay)
+				Out.AddItem(EffUnit.GetFullName() @ "will" @ int(EffUnit.GetCurrentStat(eStat_Will)) @ "hp" @ int(EffUnit.GetCurrentStat(eStat_HP)) $ "/" $ int(EffUnit.GetMaxStat(eStat_HP)) @ (EffUnit.IsInWorldEffectTile(class'X2Effect_ApplySmokeGrenadeToWorld'.Name) ? "IN SMOKE" : "") $ ":" @ JoinNames(EffUnit.AffectedByEffectNames));
+		return;
 	case "near":
 		Out.AddItem(MoveNear(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? int(Args[2]) : 8));
 		return;
@@ -155,7 +161,8 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem("ERR use <soldier name or class part> <ability> [target index]");
 			return;
 		}
-		Out.AddItem(UseAbility(Args[1], name(Args[2]), Args.Length > 3 ? int(Args[3]) : -1));
+		// <ability>:<item template>: the ability of that item (a soldier's grenades each have their ThrowGrenade).
+		Out.AddItem(UseAbility(Args[1], name(InStr(Args[2], ":") == INDEX_NONE ? Args[2] : Left(Args[2], InStr(Args[2], ":"))), Args.Length > 3 ? int(Args[3]) : -1, InStr(Args[2], ":") == INDEX_NONE ? '' : name(Mid(Args[2], InStr(Args[2], ":") + 1))));
 		return;
 	case "give":
 		if (Args.Length < 3)
@@ -860,6 +867,16 @@ function Enemies(out array<string> Out)
 }
 
 /** In a mission: a soldier's ability used on a target (its index among the available targets; -1: list them). */
+static function string JoinNames(array<name> Names)
+{
+	local string S;
+	local name N;
+
+	foreach Names(N)
+		S @= string(N);
+	return S;
+}
+
 /** A soldier moved to a floor tile Tiles from the nearest living alien, on the side towards the soldier (a test aid: a target in view). */
 function string MoveNear(string Who, int Tiles)
 {
@@ -903,13 +920,16 @@ function string MoveNear(string Who, int Tiles)
 	return "ok" @ Unit.GetFullName() @ "at" @ T.X $ "," $ T.Y $ "," $ T.Z @ "," @ Tiles @ "tiles from" @ Target.GetMyTemplateName();
 }
 
-function string UseAbility(string Who, name AbilityName, int TargetIndex)
+function string UseAbility(string Who, name AbilityName, int TargetIndex, optional name ItemName)
 {
 	local XComGameState_Unit Unit, Target;
 	local GameRulesCache_Unit Cache;
 	local AvailableAction Action;
 	local AvailableTarget Forced;
 	local string Targets;
+	local array<vector> Here;
+	local XComGameState_Ability Ability;
+	local AvailableTarget Area;
 	local int i;
 
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
@@ -919,7 +939,8 @@ function string UseAbility(string Who, name AbilityName, int TargetIndex)
 		return "ERR no such soldier in a mission";
 	foreach Cache.AvailableActions(Action)
 	{
-		if (XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Action.AbilityObjectRef.ObjectID)).GetMyTemplateName() != AbilityName)
+		Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Action.AbilityObjectRef.ObjectID));
+		if (Ability.GetMyTemplateName() != AbilityName || (ItemName != '' && (Ability.GetSourceWeapon() == none || Ability.GetSourceWeapon().GetMyTemplateName() != ItemName)))
 			continue;
 		// force: the nearest enemy as the target, whatever the conditions say (a test aid).
 		if (TargetIndex == 99 && Action.AvailableTargets.Length == 0)
@@ -933,6 +954,19 @@ function string UseAbility(string Who, name AbilityName, int TargetIndex)
 			Action.AvailableTargets.AddItem(Forced);
 			Action.AvailableCode = 'AA_Success';
 			TargetIndex = 0;
+		}
+		// 98: at the soldier's own feet (a grenade's smoke on the soldier: a test aid).
+		if (TargetIndex == 98)
+		{
+			Here.AddItem(`XWORLD.GetPositionFromTileCoordinates(Unit.TileLocation));
+			if (Action.AvailableTargets.Length == 0)
+				Action.AvailableTargets.Length = 1;
+			// The units in its area, as the targeting UI gathers them before it activates the ability.
+			Area = Action.AvailableTargets[0];
+			if (Ability.GetMyTemplate().AbilityMultiTargetStyle != none)
+				Ability.GetMyTemplate().AbilityMultiTargetStyle.GetMultiTargetsForLocation(Ability, Here[0], Area);
+			Action.AvailableTargets[0] = Area;
+			return class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, Here) ? "used at" @ Here[0] : "ERR it did not go";
 		}
 		if (TargetIndex < 0 || TargetIndex >= Action.AvailableTargets.Length)
 		{

@@ -397,3 +397,39 @@ to the primary weapon):
   (rockets). Long War's constants for several are now known (Flush +30
   aim at half damage, Dense Smoke +20 defence, Combat Drugs +20 will and
   +10 crit, Shredder 4 turns, Double Tap cooldown 3, Revive 33 %).
+
+## Report (2026-11-01 night, Dense Smoke and Combat Drugs)
+
+**Dense Smoke** (+20 defence, `DENSE_SMOKE_DEFENSE_BONUS`) and **Combat
+Drugs** (+20 will, `COMBAT_DRUGS_WILL_BONUS`; +10 critical chance,
+`COMBAT_DRUGS_CRITICAL_CHANCE_BONUS`) work in the cloud of Long War's smoke
+grenade.
+- `X2Effect_LWSmoke` is added to the grenade's thrown and launched
+  effects, and applies only when the thrower has the perk.
+- Like XCOM 2's smoke effect, it counts while the unit stands in smoke and
+  lasts as long as the smoke.
+
+**Checked in the game:** a smoke grenade thrown at a soldier's feet by a
+soldier with both perks.
+- The two soldiers in the cloud carried XCOM 2's `SmokeGrenade` effect and
+  `LW_DenseSmoke_Smoke` and `LW_CombatDrugs_Smoke`, with will 70 and 67
+  (+20).
+- The two outside the cloud had none of them.
+- The defence and crit modifiers themselves were not read from a shot's
+  breakdown.
+
+**Test aids:**
+- `use <soldier> <ability>:<item> 98`: an item's ability (each grenade has
+  its own ThrowGrenade), aimed at the soldier's own tile, with the units in
+  its area gathered as XCOM 2's targeting does. Without that gathering only
+  the world smoke appeared.
+- `effects`: each soldier's will, hit points, whether they stand in
+  smoke, and the effects on them.
+
+### Decisions
+
+- **Combat Drugs' crit is +10, its constant.** Long War's text says +20.
+- **The will is given for the effect's whole time**, and the stat change
+  stays until the effect ends. A stat change has no check for standing in
+  smoke; the defence and crit parts do have one.
+- **Dense Smoke's wider cloud (×1.25) is not done.**

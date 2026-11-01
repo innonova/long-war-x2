@@ -169,6 +169,10 @@ const REAL = {
   LW_Savior: () => ({ Heal: c('MEDIKIT_SAVIOR_BONUS') }),
   // "Gain +15 aim against flying targets."
   LW_Deadeye: () => ({ Aim: 15, AimIf: 'TargetFlying' }),
+  // In the cloud of the soldier's smoke grenades (X2Effect_LWSmoke, added to them: AddSmokeBonuses). Combat Drugs'
+  // text says +20 critical chance; its constant (used here) is 10.
+  LW_DenseSmoke: () => ({ SmokeDefense: c('DENSE_SMOKE_DEFENSE_BONUS') }),
+  LW_CombatDrugs: () => ({ SmokeCrit: c('COMBAT_DRUGS_CRITICAL_CHANCE_BONUS'), SmokeWill: c('COMBAT_DRUGS_WILL_BONUS') }),
   // "Bonus damage on critical hits, with additional bonuses (up to +6) based on how many enemies your squad can see."
   LW_BringEmOn: () => ({ Damage: 1, DamageIf: 'CritPerSquadVisibleEnemy', MaxStacks: 6 }),
 }
