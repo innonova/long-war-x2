@@ -11,6 +11,16 @@ struct LWStandin
 	var string Icon;
 	var int Aim, Crit, Defense, Damage, DamagePct, CritAgainst, Mobility;
 	var name AimIf, CritIf, DefenseIf, DamageIf;
+	/** A second damage bonus under its own condition (Mayhem: explosives, and the Gunner's shots). */
+	var int Damage2;
+	var name Damage2If;
+	/** Damage taken less (Will to Survive); crit damage more, a share of the weapon's (Killer Instinct). */
+	var int DamageTaken;
+	var name DamageTakenIf;
+	var int CritDamagePct;
+	var name CritDamageIf;
+	/** Tiles more for the rocket launcher's blast (Danger Zone; X2DownloadableContentInfo adds it to the ability). */
+	var float BonusRadius;
 	var float Param;
 	var int MaxStacks;
 	/** A free standard shot under this condition, once a turn (X2Effect_LWFreeShot); KeepOne: it costs one action. */
@@ -33,7 +43,7 @@ static function array<X2DataTemplate> CreateTemplates()
 	{
 		if (S.Kind == 'SnapShot')
 			Templates.AddItem(SnapShot(S));
-		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0)
+		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.Damage2 != 0 || S.DamageTaken != 0 || S.CritDamagePct != 0 || S.BonusRadius != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0)
 			Templates.AddItem(Passive(S));
 		else
 			Templates.AddItem(PurePassive(S.Name, S.Icon, false, 'eAbilitySource_Perk', true));
@@ -91,6 +101,12 @@ static function X2AbilityTemplate Passive(LWStandin S)
 	Effect.DefenseIf = S.DefenseIf;
 	Effect.Damage = S.Damage;
 	Effect.DamageIf = S.DamageIf;
+	Effect.Damage2 = S.Damage2;
+	Effect.Damage2If = S.Damage2If;
+	Effect.DamageTaken = S.DamageTaken;
+	Effect.DamageTakenIf = S.DamageTakenIf;
+	Effect.CritDamagePct = S.CritDamagePct;
+	Effect.CritDamageIf = S.CritDamageIf;
 	Effect.CritAgainst = S.CritAgainst;
 	Effect.DamagePct = S.DamagePct;
 	Effect.Param = S.Param;
@@ -129,4 +145,22 @@ static function X2AbilityTemplate Passive(LWStandin S)
 
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	return Template;
+}
+
+/** Danger Zone and its like: the rocket launcher's blast wider for a soldier with the perk (OnPostTemplatesCreated). */
+static function AddBonusRadii()
+{
+	local X2AbilityTemplateManager Manager;
+	local X2AbilityTemplate Rocket;
+	local X2AbilityMultiTarget_Radius Radius;
+	local LWStandin S;
+
+	Manager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+	Rocket = Manager.FindAbilityTemplate('RocketLauncher');
+	Radius = Rocket != none ? X2AbilityMultiTarget_Radius(Rocket.AbilityMultiTargetStyle) : none;
+	if (Radius == none)
+		return;
+	foreach default.Standins(S)
+		if (S.BonusRadius != 0)
+			Radius.AddAbilityBonusRadius(S.Name, S.BonusRadius);
 }

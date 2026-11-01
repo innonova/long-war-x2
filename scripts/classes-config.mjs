@@ -66,6 +66,8 @@ const SAME = {
   ePerk_TracerBeams: 'HoloTargeting',
   ePerk_FieldMedic: 'FieldMedic',
   ePerk_FocusedSuppression: 'Suppression', // Long War's Suppression is EW's Focused Suppression slot
+  // Reaction shots can crit and lose their penalty; XCOM 2's Cool Under Pressure: can crit and +10 aim (APPROXIMATION).
+  ePerk_Opportunist: 'CoolUnderPressure',
 }
 /** XCOM 2's abilities that work through a weapon: given with it, as XCOM 2's own classes give them (DefaultClassData.ini). */
 const WEAPON_SLOT = { LW_SnapShot: 'eInvSlot_PrimaryWeapon', InTheZone: 'eInvSlot_PrimaryWeapon', CoveringFire: 'eInvSlot_PrimaryWeapon', RapidFire: 'eInvSlot_PrimaryWeapon', HoloTargeting: 'eInvSlot_PrimaryWeapon', Suppression: 'eInvSlot_PrimaryWeapon' }
@@ -143,6 +145,12 @@ const REAL = {
   // The autopsy condition is not modelled yet: +2 with primary weapons against everyone (sidearms' +1 left out).
   LW_VitalPointTargeting: () => ({ Damage: 2, DamageIf: 'Primary' }),
   LW_HEATAmmo: () => ({ DamagePct: 50, DamageIf: 'TargetRobotic' }),
+  // Its words: +2 for explosive grenades and rockets, +2 for SAWs' and LMGs' standard and Rapid Fire shots (suppression and Flush not yet).
+  LW_Mayhem: () => ({ Damage: 2, DamageIf: 'Explosive', Damage2: 2, Damage2If: 'GunnerShot' }),
+  // EW's constants: damage taken less in cover and not flanked; crit damage more on a Run and Gun turn; rockets' radius more (tiles).
+  LW_WilltoSurvive: () => ({ DamageTaken: c('WILLTOSURVIVE_DMG_REDUCTION'), DamageTakenIf: 'InCover' }),
+  LW_KillerInstinct: () => ({ CritDamagePct: c('KILLERINSTINCT_CRIT_DMG_MULT', 100), CritDamageIf: 'AfterRunAndGun' }),
+  LW_DangerZone: () => ({ BonusRadius: c('DANGER_ZONE_RADIUS_BONUS') / 96 }),
   // Free standard shots, once a turn (X2Effect_LWFreeShot).
   LW_HitAndRun: () => ({ FreeShotIf: 'TargetExposed' }),
   LW_CloseEncounters: () => ({ FreeShotIf: 'Within', Param: 6 }),

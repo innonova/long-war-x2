@@ -293,3 +293,40 @@ stat ability, set at a mission's start from Long War's `XGUnit.UpdateItemCharges
 - **Smoke Bomb and Battle Scanner add to a carried item.** Long War gives
   the soldier the smoke or scanner without one, outside the small slots.
   Here a soldier with the perk needs the item (APPROXIMATION).
+
+## Report (2026-11-01, more perks)
+
+**Working now:**
+- **Mayhem:** +2 damage for explosive grenades and rockets, and for SAWs'
+  and LMGs' standard and Rapid Fire shots (its words). Suppression and
+  Flush bonuses wait for those shots.
+- **Will to Survive:** 2 damage less in cover and not flanked (Enemy
+  Within's `WILLTOSURVIVE_DMG_REDUCTION`).
+- **Killer Instinct:** crits do half the weapon's crit damage more on a
+  turn Run and Gun was used (`KILLERINSTINCT_CRIT_DMG_MULT`; Run and Gun
+  counts as used while its cooldown is at full length).
+- **Danger Zone:** the rocket launcher's blast 2 tiles wider
+  (`DANGER_ZONE_RADIUS_BONUS`, XCOM 2's bonus radius for the ability).
+- **Opportunist** is XCOM 2's Cool Under Pressure: reaction shots can crit,
+  with +10 aim where Long War removes their penalty (APPROXIMATION).
+- **Tandem Warheads** needs nothing: XCOM 2's explosives already do full
+  damage to the edge of their blast.
+
+**The count:**
+- 11 perks are XCOM 2's own abilities;
+- 23 of Long War's own work through bonuses;
+- 8 work through items and charges (Fire Rocket, Grenadier, Packmaster,
+  Smoke and Mirrors, Repair, Smoke Bomb, Battle Scanner, Shock and Awe);
+- about 42 of the 66.
+
+Not seen in a fight: the new damage bonuses. Grenades target ground, which
+the control port can't aim yet, and dropped units never became visible.
+
+**Left, needing shots or effects of their own:**
+- active shots: Precision Shot, Disabling Shot, Flush, Double Tap;
+- Rapid Reaction, Ready for Anything, Close Combat Specialist, Lock N' Load,
+  Concealment;
+- the medic's: Field Surgeon, Savior, Revive, Paramedic;
+- smoke and rockets: Dense Smoke, Combat Drugs, Bombard, Javelin Rockets,
+  HEAT Warheads, Fire in the Hole, Sapper, Shredder Ammo;
+- Deadeye (flying targets), Extra Conditioning, Snap Shot (rockets).
