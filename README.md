@@ -4,8 +4,30 @@ Long War 1.0, the mod for XCOM: Enemy Within, brought to XCOM 2: War of the
 Chosen: its strategy (the base, satellites, the council, the air war), its
 classes and rules, its aliens and maps, with XCOM 2's soldiers and looks.
 
-For now it is an exploration of the hard parts, each answered by a small
-experiment before anything is built on it (`features/hard-parts.md`).
+The hard parts were explored first, each answered by a small experiment
+before anything is built on it (`features/hard-parts.md`); the port's shape
+and order are proposed in `features/port-plan.md`.
+
+## Where it stands (2026-11-01)
+
+- **Enemy Within's aliens** load in XCOM 2 from the player's converted EW
+  packages: the Floater in a mission, animated, with its effects.
+- **Enemy Within's maps** come across as the ground of XCOM 2 missions: the
+  small scout crash site with EW's textures, cover and paths built by XCOM
+  2, played in a quick launch mission and in a campaign mission.
+- **Long War's air war** runs as an XCOM 2 screen with Long War's exact
+  rules, its state in the campaign.
+- **Long War's soldiers**: its eight subclasses as XCOM 2 classes with Long
+  War's perk trees (three choices a rank, one free), generated from Long
+  War's own config; eleven of its own perks working with its numbers
+  (`features/lw-classes.md`).
+- **A strategy layer of our own**: a Long War headquarters screen sends a
+  squad on a mission through XCOM 2's mission path and shows the outcome
+  when it comes back.
+
+Everything above is a first version behind development switches
+(`LongWarX2/Config/XComLWAirWar.ini`), checked on the test machine
+(`tools/test/`).
 
 ## What it is made of
 
