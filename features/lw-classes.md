@@ -197,3 +197,12 @@ when a perk is bought, in the same change; the Squaddie column (the Scout's
 ability, not the one chosen; and the Long War headquarters opens on top of
 the after-action screens (the facility grid starts underneath them). Both
 to fix.
+
+## Report (2026-11-01 night, Long War's rank names)
+
+**Seen in the game**: the barracks list the soldiers of Long War's classes
+as LCPL (the third rank), Long War's ranks rank for rank: Private 1st
+Class, Specialist, Lance Corporal, Corporal, Sergeant, Tech Sergeant,
+Gunnery Sergeant, Master Sergeant (abbreviated PFC … MSGT). XCOM 2 lets a
+class carry its own rank names; the generator writes Long War's from its
+`XComGame.int` into the local words file.

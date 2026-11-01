@@ -273,6 +273,11 @@ writeFileSync(
 )
 
 // --- The words (the player's machine only) ---------------------------------------------
+// Long War's rank names (Private 1st Class … Master Sergeant), rank for rank.
+const rankNames = Array.from({ length: 8 }, (_, k) => [
+  loc.match(new RegExp(`^m_aRankNames\\[${k}\\]="(.*)"`, 'm'))?.[1] ?? '',
+  loc.match(new RegExp(`^m_aRankAbbr\\[${k}\\]="(.*)"`, 'm'))?.[1] ?? '',
+]).filter(([n]) => n)
 const clean = (s) => s.replace(/"/g, "'")
 const words = [
   "; Long War's own words for its classes' perks, written from the player's install by",
@@ -284,6 +289,7 @@ const words = [
     `ClassSummary=${q(`Long War's ${c.name}.`)}`,
     `LeftAbilityTreeTitle=${q('')}`,
     `RightAbilityTreeTitle=${q('')}`,
+    ...rankNames.flatMap(([name, abbr], k) => [`RankNames[${k}]=${q(name)}`, `ShortNames[${k}]=${q(abbr)}`]),
   ]),
   ...[...standins].flatMap(([name, s]) => {
     const title = clean(titleOf(s.perk))
