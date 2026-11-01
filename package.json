@@ -1,0 +1,16 @@
+{
+  "name": "long-war-x2-tools",
+  "private": true,
+  "type": "module",
+  "description": "The tools beside the mod: config generators, Enemy Within content converters, the player's setup program.",
+  "license": "MIT",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "setup:bundle": "node tools/setup/bundle.mjs"
+  },
+  "devDependencies": {
+    "@innonova/upkit": "0.1.2",
+    "esbuild": "^0.25.0",
+    "postject": "^1.0.0-alpha.6"
+  }
+}

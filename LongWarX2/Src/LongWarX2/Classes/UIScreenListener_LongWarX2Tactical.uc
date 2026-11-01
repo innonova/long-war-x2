@@ -21,7 +21,7 @@ event OnInit(UIScreen Screen)
 
 	if (UITacticalHUD(Screen) == none)
 		return;
-	if (class'UIScreenListener_LongWarX2HQ'.default.ShowLWHeadquarters && XGBattle_SP(`BATTLE) != none && !`BATTLE.m_kDesc.bIsTacticalQuickLaunch)
+	if (class'UIScreenListener_LongWarX2HQ'.default.ShowTestEndMission && XGBattle_SP(`BATTLE) != none && !`BATTLE.m_kDesc.bIsTacticalQuickLaunch)
 		AddEndButton(Screen);
 	foreach Screen.WorldInfo.AllActors(class'LWX2EWUnitDisplay', Display)
 		return;

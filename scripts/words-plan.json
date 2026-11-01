@@ -1,0 +1,242 @@
+{
+ "classes": [
+  "Sniper",
+  "Scout",
+  "Rocketeer",
+  "Gunner",
+  "Medic",
+  "Engineer",
+  "Assault",
+  "Infantry"
+ ],
+ "standins": [
+  {
+   "name": "LW_LoneWolf",
+   "perk": "ePerk_Medal_CouncilB"
+  },
+  {
+   "name": "LW_Deadeye",
+   "perk": "ePerk_Foundry_MedikitII"
+  },
+  {
+   "name": "LW_LowProfile",
+   "perk": "ePerk_LowProfile"
+  },
+  {
+   "name": "LW_SnapShot",
+   "perk": "ePerk_SnapShot"
+  },
+  {
+   "name": "LW_PrecisionShot",
+   "perk": "ePerk_PrecisionShot"
+  },
+  {
+   "name": "LW_DisablingShot",
+   "perk": "ePerk_DisablingShot"
+  },
+  {
+   "name": "LW_Sharpshooter",
+   "perk": "ePerk_Medal_UrbanB"
+  },
+  {
+   "name": "LW_Ranger",
+   "perk": "ePerk_Gunslinger"
+  },
+  {
+   "name": "LW_DamnGoodGround",
+   "perk": "ePerk_DamnGoodGround"
+  },
+  {
+   "name": "LW_PlatformStability",
+   "perk": "ePerk_PlatformStability"
+  },
+  {
+   "name": "LW_VitalPointTargeting",
+   "perk": "ePerk_XenobiologyOverlays"
+  },
+  {
+   "name": "LW_Executioner",
+   "perk": "ePerk_Executioner"
+  },
+  {
+   "name": "LW_LockNLoad",
+   "perk": "ePerk_Disabled_DEPRECATED"
+  },
+  {
+   "name": "LW_BringEmOn",
+   "perk": "ePerk_BringEmOn"
+  },
+  {
+   "name": "LW_TacticalSense",
+   "perk": "ePerk_TacticalSense"
+  },
+  {
+   "name": "LW_DoubleTap",
+   "perk": "ePerk_DoubleTap"
+  },
+  {
+   "name": "LW_Mayhem",
+   "perk": "ePerk_Mayhem"
+  },
+  {
+   "name": "LW_BattleScanner",
+   "perk": "ePerk_BattleScanner"
+  },
+  {
+   "name": "LW_Aggression",
+   "perk": "ePerk_Aggression"
+  },
+  {
+   "name": "LW_Flush",
+   "perk": "ePerk_Flush"
+  },
+  {
+   "name": "LW_HitAndRun",
+   "perk": "ePerk_ReinforcedArmor"
+  },
+  {
+   "name": "LW_Concealment",
+   "perk": "ePerk_GeneMod_MimeticSkin"
+  },
+  {
+   "name": "LW_Sprinter",
+   "perk": "ePerk_Sprinter"
+  },
+  {
+   "name": "LW_SmokeandMirrors",
+   "perk": "ePerk_SmokeandMirrors"
+  },
+  {
+   "name": "LW_ExtraConditioning",
+   "perk": "ePerk_ExtraConditioning"
+  },
+  {
+   "name": "LW_FireRocket",
+   "perk": "ePerk_FireRocket"
+  },
+  {
+   "name": "LW_HEATWarheads",
+   "perk": "ePerk_Poisoned"
+  },
+  {
+   "name": "LW_WilltoSurvive",
+   "perk": "ePerk_WilltoSurvive"
+  },
+  {
+   "name": "LW_FireInTheHole",
+   "perk": "ePerk_Foundry_AdvancedFlight"
+  },
+  {
+   "name": "LW_RapidReaction",
+   "perk": "ePerk_RapidReaction"
+  },
+  {
+   "name": "LW_ShredderAmmo",
+   "perk": "ePerk_ShredderRocket"
+  },
+  {
+   "name": "LW_Suppression",
+   "perk": "ePerk_FocusedSuppression"
+  },
+  {
+   "name": "LW_Opportunist",
+   "perk": "ePerk_Opportunist"
+  },
+  {
+   "name": "LW_ShockAndAwe",
+   "perk": "ePerk_Rocketeer"
+  },
+  {
+   "name": "LW_DangerZone",
+   "perk": "ePerk_DangerZone"
+  },
+  {
+   "name": "LW_JavelinRockets",
+   "perk": "ePerk_Implanted"
+  },
+  {
+   "name": "LW_TandemWarheads",
+   "perk": "ePerk_Foundry_PistolIII"
+  },
+  {
+   "name": "LW_HEATAmmo",
+   "perk": "ePerk_HEATAmmo"
+  },
+  {
+   "name": "LW_ReadyForAnything",
+   "perk": "ePerk_BulletSwarm"
+  },
+  {
+   "name": "LW_Resilience",
+   "perk": "ePerk_Resilience"
+  },
+  {
+   "name": "LW_FieldSurgeon",
+   "perk": "ePerk_CovertPockets"
+  },
+  {
+   "name": "LW_Steadfast",
+   "perk": "ePerk_Medal_DefenderA"
+  },
+  {
+   "name": "LW_Revive",
+   "perk": "ePerk_Revive"
+  },
+  {
+   "name": "LW_Paramedic",
+   "perk": "ePerk_Dazed"
+  },
+  {
+   "name": "LW_SmokeGrenade",
+   "perk": "ePerk_SmokeBomb"
+  },
+  {
+   "name": "LW_CombatDrugs",
+   "perk": "ePerk_CombatDrugs"
+  },
+  {
+   "name": "LW_DenseSmoke",
+   "perk": "ePerk_DenseSmoke"
+  },
+  {
+   "name": "LW_Bombard",
+   "perk": "ePerk_Bombard"
+  },
+  {
+   "name": "LW_Savior",
+   "perk": "ePerk_Savior"
+  },
+  {
+   "name": "LW_Packmaster",
+   "perk": "ePerk_DeepPockets"
+  },
+  {
+   "name": "LW_Grenadier",
+   "perk": "ePerk_Grenadier"
+  },
+  {
+   "name": "LW_Sapper",
+   "perk": "ePerk_ImmuneToDisable_DEPRECATED"
+  },
+  {
+   "name": "LW_Repair",
+   "perk": "ePerk_Repair"
+  },
+  {
+   "name": "LW_CloseCombatSpecialist",
+   "perk": "ePerk_CloseCombatSpecialist"
+  },
+  {
+   "name": "LW_CloseEncounters",
+   "perk": "ePerk_CloseAndPersonal"
+  },
+  {
+   "name": "LW_KillerInstinct",
+   "perk": "ePerk_KillerInstinct"
+  },
+  {
+   "name": "LW_LightEmUp",
+   "perk": "ePerk_PlasmaBarrage"
+  }
+ ]
+}

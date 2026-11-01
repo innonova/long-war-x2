@@ -4,3 +4,5 @@ build.log
 LongWarX2/Content/
 LongWarX2/Config/XComLWX2EWMap.ini
 LongWarX2/Localization/XComGame.int
+node_modules/
+dist/

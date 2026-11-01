@@ -15,7 +15,7 @@
 //
 //   node scripts/classes-config.mjs <Long War's DefaultGameCore.ini> <Long War's XComGame.int> [<XComGame.upk>]
 import { readFileSync, writeFileSync } from 'node:fs'
-import { execFileSync } from 'node:child_process'
+import { readConsts, makeWords } from './lw-words.mjs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -89,53 +89,12 @@ const titleOf = (perk) => locOf('m_strPassiveTitle', perk) || renamed.get(perk) 
 // --- The numbers in the words -----------------------------------------------------------
 // EW's text expansion is native; these are the values it shows: its constants
 // (XGTacticalGameCoreNativeBase) and, where Long War made them settings, Long War's ini.
-const consts = new Map()
-if (gameUpk) {
-  const upkit = process.env.UPKIT ?? join(here, '..', '..', 'xcom-ew-lw-tree', 'node_modules', '@innonova', 'upkit', 'dist', 'upkit.mjs')
-  const src = execFileSync(process.execPath, [upkit, 'class', gameUpk, 'XGTacticalGameCoreNativeBase'], { encoding: 'utf8', maxBuffer: 64 << 20 })
-  for (const m of src.matchAll(/^const (\w+) = ([-\d.]+)f?;/gm)) consts.set(m[1], Number(m[2]))
-}
+const consts = gameUpk ? readConsts(new Uint8Array(readFileSync(gameUpk))) : new Map()
 const ini = (key) => {
   const m = core.match(new RegExp(`^${key}=([-\\d.]+)`, 'm'))
   return m ? Number(m[1]) : undefined
 }
 const c = (name, times = 1) => (consts.has(name) ? Math.round(consts.get(name) * times) : undefined)
-const TAGS = {
-  SmokeBombDefenseBonus: () => c('SMOKE_BOMB_DEFENSE_BONUS'),
-  DenseSmokeDefenseBonus: () => c('DENSE_SMOKE_DEFENSE_BONUS'),
-  ExecutionerAimBonus: () => c('EXECUTIONER_AIM_BONUS'),
-  ExecutionerHealthThreshold: () => c('EXECUTIONER_HP_MIN', 100),
-  TacticalSenseDefenseBonusPerEnemy: () => c('TACTICALSENSE_DEFENSE_BONUS'),
-  TacticalSenseDefenseBonusMax: () => (consts.has('TACTICALSENSE_DEFENSE_BONUS') ? c('TACTICALSENSE_DEFENSE_BONUS') * c('TACTICALSENSE_MAX_ENEMIES') : undefined),
-  AggressionCritBonusPerEnemy: () => c('AGGRESSION_CRIT_BONUS'),
-  AggressionCritBonusMax: () => (consts.has('AGGRESSION_CRIT_BONUS') ? c('AGGRESSION_CRIT_BONUS') * c('AGGRESSION_MAX_ENEMIES') : undefined),
-  SnapShotAimPenalty: () => c('SNAP_SHOT_AIM_PENALTY'),
-  ShredderRocketDamageEffectDuration: () => c('SHREDDER_ROCKET_DURATION'),
-  RocketeerExtraRockets: () => c('ROCKETEER_BONUS_ROCKETS'),
-  ReviveHealthPercent: () => c('REVIVE_HEALTH_AMOUNT', 100),
-  PlatformStabilityAim: () => c('PLATFORMSTABILITY_AIM'),
-  PlatformStabilityCrit: () => c('PLATFORMSTABILITY_CRIT'),
-  KillerInstinctCritDamageBonus: () => c('KILLERINSTINCT_CRIT_DMG_MULT', 100),
-  GrenadierCharges: () => c('GRENADIER_CHARGES'),
-  DoubleTapCooldown: () => c('DOUBLETAP_COOLDOWN'),
-  DamnGoodGroundAimBonus: () => c('DAMN_GOOD_GROUND_OFFENSE_BONUS'),
-  DamnGoodGroundDefenseBonus: () => c('DAMN_GOOD_GROUND_DEFENSE_BONUS'),
-  CombatDrugsWillBonus: () => c('COMBAT_DRUGS_WILL_BONUS'),
-  CloseAndPersonalDist: () => c('CLOSEANDPERSONAL_MAX_DIST'),
-  BattleScannerDuration: () => c('BATTLE_SCANNER_DURATION'),
-  CalcSuppression: () => c('SUPPRESSION_AIM_PENALTY'),
-  UrbanAim: () => ini('URBAN_AIM'),
-  CouncilMedalFightBonus: () => ini('COUNCIL_FIGHT_BONUS'),
-  CouncilMedalFightTiles: () => ini('COUNCIL_FIGHT_TILES'),
-}
-const unfilled = new Set()
-const fill = (text) =>
-  text.replace(/<XGAbility:(\w+)\/>/g, (all, tag) => {
-    const v = TAGS[tag]?.()
-    if (v === undefined) unfilled.add(tag)
-    return v === undefined ? '' : String(v)
-  })
-
 // --- Perks to abilities ---------------------------------------------------------------
 const standins = new Map() // name -> { perk, icon }
 function abilityFor(perk) {
@@ -273,33 +232,13 @@ writeFileSync(
 )
 
 // --- The words (the player's machine only) ---------------------------------------------
-// Long War's rank names (Private 1st Class … Master Sergeant), rank for rank.
-const rankNames = Array.from({ length: 8 }, (_, k) => [
-  loc.match(new RegExp(`^m_aRankNames\\[${k}\\]="(.*)"`, 'm'))?.[1] ?? '',
-  loc.match(new RegExp(`^m_aRankAbbr\\[${k}\\]="(.*)"`, 'm'))?.[1] ?? '',
-]).filter(([n]) => n)
-const clean = (s) => s.replace(/"/g, "'")
-const words = [
-  "; Long War's own words for its classes' perks, written from the player's install by",
-  '; scripts/classes-config.mjs. Not in the repository.',
-  ...CLASSES.flatMap((c) => [
-    '',
-    `[LWS_${c.name} X2SoldierClassTemplate]`,
-    `DisplayName=${q(c.name)}`,
-    `ClassSummary=${q(`Long War's ${c.name}.`)}`,
-    `LeftAbilityTreeTitle=${q('')}`,
-    `RightAbilityTreeTitle=${q('')}`,
-    ...rankNames.flatMap(([name, abbr], k) => [`RankNames[${k}]=${q(name)}`, `ShortNames[${k}]=${q(abbr)}`]),
-  ]),
-  ...[...standins].flatMap(([name, s]) => {
-    const title = clean(titleOf(s.perk))
-    const text = clean(fill(locOf('m_strPassiveTxt', s.perk)))
-    return ['', `[${name} X2AbilityTemplate]`, `LocFriendlyName=${q(title)}`, `LocLongDescription=${q(text)}`, `LocHelpText=${q(text)}`, `LocPromotionPopupText=${q(text)}`, `LocFlyOverText=${q(title)}`]
-  }),
-]
-writeFileSync(join(mod, 'Localization', 'XComGame.int'), words.join('\r\n') + '\r\n')
+// Which classes and perks get words: committed, for the setup program to write the same words on a player's machine.
+const plan = { classes: CLASSES.map((c) => c.name), standins: [...standins].map(([name, s]) => ({ name, perk: s.perk })) }
+writeFileSync(join(here, 'words-plan.json'), JSON.stringify(plan, null, 1) + '\n')
+const words = makeWords({ plan, core, loc, consts })
+writeFileSync(join(mod, 'Localization', 'XComGame.int'), words.text)
 const same = new Set(Object.values(SAME))
-if (unfilled.size) console.log(`numbers not filled in (no value known): ${[...unfilled].join(', ')}`)
+if (words.unfilled.length) console.log(`numbers not filled in (no value known): ${words.unfilled.join(', ')}`)
 const working = [...standins.keys()].filter((n) => realFields(n))
 console.log(`${bonusLines.length} stat bonuses for perk choices`)
 console.log(`${CLASSES.length} classes; ${[...trees.keys()].filter((k) => CLASSES.some((c) => c.id === k)).length} trees; ${same.size} perks as XCOM 2's own abilities, ${working.length} of Long War's own working (${working.join(', ')}), ${standins.size - working.length} stand-ins; ${[...standins.values()].filter((s) => s.icon !== 'UIPerk_standard').length} with their own icon`)
