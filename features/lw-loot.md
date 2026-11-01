@@ -203,3 +203,53 @@ What changed:
   is where the result is read. The Avenger's alloys and elerium can
   rightly stay at 0 after an early abduction: Sectoids leave corpses,
   fragments and meld, not elerium.
+
+## Report (2026-11-01, aliens taken alive)
+
+**Captives and intact alien weapons**, the gate to Long War's
+interrogations, plasma research and plasma engineering. Long War takes
+them with the arc thrower in a mission. XCOM 2 has nothing that stuns, so
+for now an alien is taken alive only in a **mission won without playing
+it, with a captive**:
+- on the Geoscape, the WIN + CAPTIVE button beside each mission;
+- on the control port, `resolve <n> captive`.
+
+The rules, from Long War's code:
+- **Who:** the species that can be stunned and have a captive item
+  (`CaptiveToCorpse` the other way). Chryssalids, zombies and the Uber
+  Ethereal never are (`TryStunned`).
+- **Which one:** the most valuable kind in the mission's squad,
+  - leaders first: Sectoid Commander, Ethereal, Muton Elite, Heavy
+    Floater, Berserker;
+  - then Muton, Thin Man, Floater, Sectoid.
+  - It is taken out of the dead, so its corpse and fragments are not
+    counted.
+- **What comes home:**
+  - its plasma weapons, intact (generated per species from Long War's
+    loadouts: `Weapons=` on each `+Species`);
+  - the captive, to Alien Containment. Without one it dies on the way
+    and its corpse comes home (`UnloadArtifacts`).
+- **The Arc Thrower** must be researched.
+- **The interrogation** (research, Long War's) consumes the captive, as
+  before.
+
+**Checked in the game:**
+- without the Arc Thrower: no capture, and the note says so;
+- with it, but no containment: "Taken alive, but without Alien
+  Containment it died: Sectoid Corpse, Alien Pistol";
+- with a Fission Generator and Alien Containment built in the base:
+  "Taken alive: Thin Man Captive to Alien Containment, Alien Carbine".
+
+### Decisions
+
+- **A captive by the skip-mission button**, as the WIN itself is: a
+  stand-in until missions are Long War's (an arc thrower, stun chances,
+  `CalcStunChance`).
+- **The most valuable alien is chosen** for the player. In Long War the
+  player chooses whom to stun.
+
+### Left open
+
+- The arc thrower in played missions.
+- The captive capacity: one per containment, which Long War itself does
+  not check on the way home.

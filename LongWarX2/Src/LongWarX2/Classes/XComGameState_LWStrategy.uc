@@ -110,6 +110,8 @@ var int PendingKind;
 var int PendingIndex;
 /** XCOM 2's mission site launched for it: its battle's result is the mission's. */
 var int PendingMission;
+/** The mission sent is to come back with an alien taken alive (won without playing it, with a captive). */
+var bool bPendingCapture;
 
 // --- Making it ------------------------------------------------------------------------------
 
@@ -936,14 +938,14 @@ function SiteIgnored(int i)
 // --- Missions sent from here -------------------------------------------------------------
 
 /** A mission won without playing it (the Geoscape's WIN, the control port's resolve): sent and come back won. */
-static function WonWithoutPlaying(int Kind, int Index)
+static function WonWithoutPlaying(int Kind, int Index, optional bool bCapture)
 {
-	MissionSent(Kind, Index);
+	MissionSent(Kind, Index, bCapture);
 	MissionBack(true);
 }
 
 /** A mission is sent to a crash site (1), landed UFO (2), abduction (3) or terror site (4). */
-static function MissionSent(int Kind, int Index)
+static function MissionSent(int Kind, int Index, optional bool bCapture)
 {
 	local XComGameState NewGameState;
 	local XComGameState_LWStrategy S;
@@ -952,6 +954,7 @@ static function MissionSent(int Kind, int Index)
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	S.PendingKind = Kind;
 	S.PendingIndex = Index;
+	S.bPendingCapture = bCapture;
 	if (Kind <= 2)
 		S.Ufos[Index].Status = 5;
 	else
@@ -989,6 +992,7 @@ static function MissionBack(bool bWon)
 	local XComGameState_LWStrategy S;
 	local LWUfo U;
 	local int Country;
+	local array<int> Squad;
 
 	if (Get() == none || Get().PendingKind == 0)
 		return;
@@ -997,8 +1001,14 @@ static function MissionBack(bool bWon)
 	Country = S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Country : S.Sites[S.PendingIndex].Country;
 	// What the aliens killed leave (all of them, a mission won: our missions do not count them yet).
 	if (bWon)
-		S.GiveKillLoot(NewGameState, class'LWAlienSquads'.static.SquadFor(S.PendingKind, S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Ufo : 0, S.Days(),
-			S.AlienAggression, S.AlienResources, S.PendingKind == 3 ? S.AbductionDifficulty(Country) : 0, S.TerrorsTaken));
+	{
+		Squad = class'LWAlienSquads'.static.SquadFor(S.PendingKind, S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Ufo : 0, S.Days(),
+			S.AlienAggression, S.AlienResources, S.PendingKind == 3 ? S.AbductionDifficulty(Country) : 0, S.TerrorsTaken);
+		if (S.bPendingCapture)
+			S.TakeCaptive(NewGameState, Squad);
+		S.GiveKillLoot(NewGameState, Squad);
+	}
+	S.bPendingCapture = false;
 	if (S.PendingKind == 4)
 		S.TerrorsTaken++;
 	if (S.PendingKind == 3 && bWon)
@@ -1144,6 +1154,56 @@ function GiveKillLoot(XComGameState NewGameState, array<int> Squad)
 		Got $= "," @ CorpseCounts[k] @ class'X2Item_LWArtifacts'.static.DisplayName(Corpses[k]);
 	}
 	Note("The aliens killed (" $ Squad.Length $ ") left:" @ Fragments @ "weapon fragments," @ Elerium / 10 @ "elerium," @ Alloys / 10 @ "alloys," @ Meld / 10 @ "meld" $ Got $ ".");
+}
+
+/**
+ * An alien of the squad taken alive (the arc thrower; in XCOM 2 a mission won without playing it, with a
+ * captive): the most valuable kind there, out of the squad's dead. Its weapons come home intact; the
+ * captive to Alien Containment, or, without one, dead (its corpse; XGFacility_Hangar.UnloadArtifacts).
+ * Needs the Arc Thrower researched.
+ */
+function TakeCaptive(XComGameState NewGameState, out array<int> Squad)
+{
+	local array<int> Order;
+	local LWStrategyRules.LWSpecies Sp;
+	local name W;
+	local string Got;
+	local int i, j, k;
+
+	if (!class'UIUtilities_Strategy'.static.GetXComHQ().IsTechResearched(class'LWResearchRules'.static.TemplateForId(2)))
+	{
+		Note("No alien could be taken alive: the Arc Thrower is not researched.");
+		return;
+	}
+	// The leaders first (the captives research most wants), then by toughness.
+	Order.AddItem(9); Order.AddItem(12); Order.AddItem(11); Order.AddItem(10); Order.AddItem(15);
+	Order.AddItem(7); Order.AddItem(6); Order.AddItem(5); Order.AddItem(4);
+	for (i = 0; i < Order.Length; i++)
+	{
+		j = Squad.Find(Order[i]);
+		k = class'LWStrategyRules'.default.Species.Find('Char', Order[i]);
+		if (j == INDEX_NONE || k == INDEX_NONE || class'LWStrategyRules'.default.Species[k].Captive == '')
+			continue;
+		Sp = class'LWStrategyRules'.default.Species[k];
+		Squad.Remove(j, 1);
+		foreach Sp.Weapons(W)
+		{
+			class'X2Item_LWArtifacts'.static.Give(NewGameState, W, 1);
+			Got $= "," @ class'X2Item_LWArtifacts'.static.DisplayName(W);
+		}
+		if (class'LWBase'.static.Count(self, 13) > 0)
+		{
+			class'X2Item_LWArtifacts'.static.Give(NewGameState, Sp.Captive, 1);
+			Note("Taken alive:" @ class'X2Item_LWArtifacts'.static.DisplayName(Sp.Captive) @ "to Alien Containment" $ Got $ ".");
+		}
+		else
+		{
+			class'X2Item_LWArtifacts'.static.Give(NewGameState, Sp.Corpse, 1);
+			Note("Taken alive, but without Alien Containment it died:" @ class'X2Item_LWArtifacts'.static.DisplayName(Sp.Corpse) $ Got $ ".");
+		}
+		return;
+	}
+	Note("No alien there could be taken alive.");
 }
 
 /** What the Skyranger brings home, with the Foundry's Alien Metallurgy (alloys), Alien Nucleonics

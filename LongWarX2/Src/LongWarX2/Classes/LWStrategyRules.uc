@@ -120,6 +120,9 @@ struct LWSpecies
 	var int Elerium;
 	var int Alloys;
 	var int Meld;
+	/** Taken alive: the captive, and its weapons intact (none: never stunned). */
+	var name Captive;
+	var array<name> Weapons;
 };
 var config array<LWSpecies> Species;
 var config float FragmentBalance[4];

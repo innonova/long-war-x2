@@ -168,7 +168,7 @@ out.push(
   `+Survive=(Item=AlienStasisTank, Percent=${one('UFO_STASIS_SURVIVE')})`,
   `+Survive=(Item=AlienSurgery, Percent=${one('UFO_SURGERY_SURVIVE')})`,
 )
-// What each alien leaves when killed, not by an explosion (features/lw-loot.md): its corpse
+// What each alien leaves when killed, not by an explosion (features/lw-loot.md), or taken alive: its corpse
 // (XGGameData.CharToCorpse), its weapons' fragments (XGTacticalGameCore.GenerateWeaponFragments by the
 // weapon's base type, x FragmentBalance), the elerium, alloys and meld points a mechanical alien leaves
 // (XGSummaryUI.CollectArtifactsFromDeadAliens; ten points make one), meld for every other kill.
@@ -202,7 +202,13 @@ out.push(
     // A species with several loadouts (the Muton): the first one's weapons.
     const items = loadoutOf[(charLoadout[name.toLowerCase()] ?? [])[0]] ?? []
     const frags = items.map((i) => FRAGMENTS_BY_BASE[baseOf(i)] ?? 0).filter((f) => f > 0)
-    return `+Species=(Char=${id}, Name=${name}${corpse ? `, Corpse=${corpse}` : ''}${frags.length ? `, Fragments=(${frags.join(',')})` : ''}, Elerium=${el}, Alloys=${al}, Meld=${me}${id === 21 ? ', ExtraCorpse=SectoidCorpse' : ''})`
+    // Taken alive (XGItemTree.CaptiveToCorpse, the other way): the captive, and its plasma weapons intact.
+    // Chryssalids, zombies and the Uber Ethereal are never stunned (XGTacticalGameCore.TryStunned).
+    const stunnable = /Corpse$/.test(corpse) && ![13, 14, 19].includes(id)
+    const captive = stunnable && ITEMS.includes(`eItem_${corpse.replace(/Corpse$/, 'Captive')}`) ? corpse.replace(/Corpse$/, 'Captive') : ''
+    const weapons = captive ? items.filter((i) => /Plasma/.test(i)).map((i) => i.replace(/^eItem_/, '')) : []
+    return `+Species=(Char=${id}, Name=${name}${corpse ? `, Corpse=${corpse}` : ''}${frags.length ? `, Fragments=(${frags.join(',')})` : ''}, Elerium=${el}, Alloys=${al}, Meld=${me}${id === 21 ? ', ExtraCorpse=SectoidCorpse' : ''}` +
+      `${captive ? `, Captive=${captive}` : ''}${weapons.length ? `, Weapons=(${weapons.join(',')})` : ''})`
   }),
   `; An abduction won pays cash (XGStrategyAI.DetermineAbductionReward), x 0.8, 0.9, 1, 1.15 by its difficulty.`,
   `AbductionRewardCash=${one('ABDUCTION_REWARD_CASH')}`,

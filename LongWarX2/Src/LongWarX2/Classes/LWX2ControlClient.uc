@@ -48,7 +48,7 @@ function Handle(string Line, out array<string> Out)
 	{
 	case "help":
 		Out.AddItem("ping | screens | geo | decisions | geoscape | run <hours> [all] | act <n> | intercepted <ufo> <outcome 0 crashed 1 destroyed 2 escaped> <ufo hp>");
-		Out.AddItem("resolve <decision> won|lost [stance]: a decision taken without playing it (an interception fought by the air war's rules, a mission's result given)");
+		Out.AddItem("resolve <decision> won|captive|lost [stance]: a decision taken without playing it (an interception fought by the air war's rules, a mission's result given; captive: won with an alien taken alive)");
 		Out.AddItem("auto <hours> [mission win %, default 100] [stance 0-2, default 1] [sats]: time at full speed, every decision taken (interceptions fought, missions won at the %), satellites bought and launched with sats");
 		Out.AddItem("squad <kind 1 crash 2 landed 3 abduction 4 terror> [ufo or abduction difficulty] [day]: a squad Long War would send (its species, counted)");
 		Out.AddItem("research [n]: XCOM 2's research list (Long War's techs: hours, affordable), the project under way; with n, that tech started");
@@ -143,11 +143,11 @@ function Handle(string Line, out array<string> Out)
 	case "resolve":
 		if (Args.Length < 3)
 		{
-			Out.AddItem("ERR resolve <decision> won|lost [stance 0-2]");
+			Out.AddItem("ERR resolve <decision> won|captive|lost [stance 0-2]");
 			return;
 		}
 		Before = S.EventCount;
-		Out.AddItem(ResolveDecision(int(Args[1]), Args[2] ~= "won", Args.Length > 3 ? int(Args[3]) : 1));
+		Out.AddItem(ResolveDecision(int(Args[1]), Args[2] ~= "won" || Args[2] ~= "captive", Args.Length > 3 ? int(Args[3]) : 1, Args[2] ~= "captive"));
 		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
 		Refreshed();
 		return;
@@ -513,7 +513,7 @@ function Screens(out array<string> Out)
  * healthiest jet at the stance (its result recorded for the jet and the Geoscape), a mission given
  * its result (sent and come back, as XCOM 2's mission path would report it).
  */
-function string ResolveDecision(int n, bool bWon, int Stance)
+function string ResolveDecision(int n, bool bWon, int Stance, optional bool bCapture)
 {
 	local XComGameState_LWStrategy S;
 	local XComGameState_LWAirWar AirWar;
@@ -530,7 +530,7 @@ function string ResolveDecision(int n, bool bWon, int Stance)
 	if (Kinds[n] != 1)
 	{
 		if (bWon)
-			class'XComGameState_LWStrategy'.static.WonWithoutPlaying(Kinds[n] - 1, Indexes[n]);
+			class'XComGameState_LWStrategy'.static.WonWithoutPlaying(Kinds[n] - 1, Indexes[n], bCapture);
 		else
 		{
 			class'XComGameState_LWStrategy'.static.MissionSent(Kinds[n] - 1, Indexes[n]);

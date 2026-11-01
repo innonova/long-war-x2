@@ -11,8 +11,9 @@ var UIText Header, EventsText, StatusText;
 var array<UIButton> CountryButtons;
 var array<UIText> CountryTexts;
 var UIButton ActionButtons[MAX_ACTIONS];
-/** Beside each mission: won without playing it (to try the strategy layer). */
+/** Beside each mission: won without playing it (to try the strategy layer), and won with an alien taken alive. */
 var UIButton WinButtons[MAX_ACTIONS];
+var UIButton CaptureButtons[MAX_ACTIONS];
 var UIButton StoresButton, EngineeringButton, BaseButton, HangarButton;
 /** The right-hand text shows the stores instead of the events. */
 var bool bShowStores;
@@ -63,9 +64,12 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	{
 		ActionButtons[i] = Spawn(class'UIButton', self).InitButton(name("LWGeoAction" $ i), "", OnAction);
 		ActionButtons[i].SetPosition(940, 220 + i * 46);
-		WinButtons[i] = Spawn(class'UIButton', self).InitButton(name("LWGeoWin" $ i), "WIN (SKIP MISSION)", OnWin);
+		WinButtons[i] = Spawn(class'UIButton', self).InitButton(name("LWGeoWin" $ i), "WIN", OnWin);
 		WinButtons[i].SetPosition(1560, 220 + i * 46);
 		WinButtons[i].Hide();
+		CaptureButtons[i] = Spawn(class'UIButton', self).InitButton(name("LWGeoCapture" $ i), "WIN + CAPTIVE", OnWin);
+		CaptureButtons[i].SetPosition(1640, 220 + i * 46);
+		CaptureButtons[i].Hide();
 	}
 	EventsText = Spawn(class'UIText', self).InitText('LWGeoEvents', "");
 	EventsText.SetPosition(940, 520);
@@ -162,7 +166,10 @@ function Refresh()
 		ActionKind[n] = 0;
 	}
 	for (n = 0; n < MAX_ACTIONS; n++)
+	{
 		WinButtons[n].SetVisible(ActionKind[n] >= 2);
+		CaptureButtons[n].SetVisible(ActionKind[n] >= 2);
+	}
 	StatusText.SetText(S.PendingKind != 0 ? "A squad is out on a mission." : (ActiveCount(S) > 0 ? "XCOM's decision:" : "Nothing waits on XCOM. Run time to see the aliens move."));
 	for (i = S.Events.Length - 1; i >= 0 && i >= S.Events.Length - 14; i--)
 		Events $= S.Events[i] $ "\n";
@@ -283,15 +290,15 @@ simulated function OnStores(UIButton Button)
 	Refresh();
 }
 
-/** A mission won without playing it. */
+/** A mission won without playing it (with a captive: its own button). */
 simulated function OnWin(UIButton Button)
 {
 	local int n;
 
 	for (n = 0; n < MAX_ACTIONS; n++)
-		if (WinButtons[n] == Button && ActionKind[n] >= 2)
+		if ((WinButtons[n] == Button || CaptureButtons[n] == Button) && ActionKind[n] >= 2)
 		{
-			class'XComGameState_LWStrategy'.static.WonWithoutPlaying(ActionKind[n] - 1, ActionIndex[n]);
+			class'XComGameState_LWStrategy'.static.WonWithoutPlaying(ActionKind[n] - 1, ActionIndex[n], CaptureButtons[n] == Button);
 			if (XComHQPresentationLayer(Movie.Pres) != none && XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD != none)
 				XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD.UpdateResources();
 			Refresh();

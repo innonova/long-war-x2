@@ -35,7 +35,12 @@ static function array<X2DataTemplate> CreateTemplates()
 	All = Artifacts();
 	// And the corpses (LWStrategyRules.Species), and every item research asks for (LWResearchRules).
 	for (i = 0; i < class'LWStrategyRules'.default.Species.Length; i++)
+	{
 		AddName(All, class'LWStrategyRules'.default.Species[i].Corpse);
+		AddName(All, class'LWStrategyRules'.default.Species[i].Captive);
+		for (j = 0; j < class'LWStrategyRules'.default.Species[i].Weapons.Length; j++)
+			AddName(All, class'LWStrategyRules'.default.Species[i].Weapons[j]);
+	}
 	for (i = 0; i < class'LWResearchRules'.default.Techs.Length; i++)
 	{
 		AddName(All, class'LWResearchRules'.default.Techs[i].EverHad);

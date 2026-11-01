@@ -29,6 +29,8 @@ export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '', baseI
   const corpses = [
     ...new Set([
       ...[...strategyIni.matchAll(/^\+Species=\(.*?Corpse=(\w+)/gm)].map((m) => m[1]),
+      ...[...strategyIni.matchAll(/Captive=(\w+)/g)].map((m) => m[1]),
+      ...[...strategyIni.matchAll(/Weapons=\(([^)]*)\)/g)].flatMap((m) => m[1].split(',')),
       ...[...researchIni.matchAll(/EverHad=(\w+)/g)].map((m) => m[1]),
       ...[...researchIni.matchAll(/InStores=\(([^)]*)\)/g)].flatMap((m) => m[1].split(',')),
       // What engineering, the Foundry and the base build or consume that is an item of the mod's own.
