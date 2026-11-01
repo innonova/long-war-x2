@@ -13,7 +13,7 @@ var array<UIText> CountryTexts;
 var UIButton ActionButtons[MAX_ACTIONS];
 /** Beside each mission: won without playing it (to try the strategy layer). */
 var UIButton WinButtons[MAX_ACTIONS];
-var UIButton StoresButton, EngineeringButton;
+var UIButton StoresButton, EngineeringButton, BaseButton;
 /** The right-hand text shows the stores instead of the events. */
 var bool bShowStores;
 /** For each action button: 1 intercept, 2 crash site, 3 landed UFO, 4 abduction, 5 terror; and the index. */
@@ -83,6 +83,8 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	StoresButton.SetPosition(1540, 960);
 	EngineeringButton = Spawn(class'UIButton', self).InitButton('LWGeoEngineering', "ENGINEERING", OnEngineering);
 	EngineeringButton.SetPosition(1640, 75);
+	BaseButton = Spawn(class'UIButton', self).InitButton('LWGeoBase', "BASE", OnBase);
+	BaseButton.SetPosition(1530, 75);
 	CloseGeoButton = Spawn(class'UIButton', self).InitButton('LWGeoClose', "CLOSE", OnAvenger);
 	CloseGeoButton.SetPosition(1700, 960);
 	Refresh();
@@ -256,6 +258,11 @@ simulated function string StoresText(XComGameState_LWStrategy S)
 	if (S.Builds.Length + S.FoundryProjects.Length > 0)
 		Text $= "ENGINEERING:\n" $ class'LWEngineering'.static.ProjectsText(S) $ class'LWEngineering'.static.FoundryProjectsText(S);
 	return Text;
+}
+
+simulated function OnBase(UIButton Button)
+{
+	Movie.Pres.ScreenStack.Push(Spawn(class'UILWBase', Movie.Pres));
 }
 
 simulated function OnEngineering(UIButton Button)

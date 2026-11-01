@@ -235,3 +235,16 @@ export function makeFoundryWords({ strategyLoc, projects }) {
   }
   return { text: out.join('\r\n'), named }
 }
+
+/** Long War's facility names (m_aFacilityNames, by enum) for the templates that carry them (LWFacility_<id>). */
+export function makeFacilityWords({ strategyLoc, facilities }) {
+  const out = []
+  let named = 0
+  for (const f of facilities) {
+    const name = strategyLoc.match(new RegExp(`^m_aFacilityNames\\[${f.enum}\\]="(.*)"\\s*$`, 'm'))?.[1]
+    if (!name) continue
+    named++
+    out.push(`[LWFacility_${f.id} X2TechTemplate]`, `DisplayName="${name}"`, '')
+  }
+  return { text: out.join('\r\n'), named }
+}

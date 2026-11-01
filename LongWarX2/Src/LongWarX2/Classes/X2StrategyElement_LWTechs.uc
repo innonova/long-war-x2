@@ -15,6 +15,7 @@ static function array<X2DataTemplate> CreateTemplates()
 	local LWResearchRules.LWTechDef T;
 
 	local LWGearRules.LWFoundryDef F;
+	local LWBaseRules.LWFacilityDef B;
 	local X2TechTemplate Words;
 
 	foreach class'LWResearchRules'.default.Techs(T)
@@ -23,6 +24,14 @@ static function array<X2DataTemplate> CreateTemplates()
 	foreach class'LWGearRules'.default.Foundry(F)
 	{
 		`CREATE_X2TEMPLATE(class'X2TechTemplate', Words, class'LWGearRules'.static.FoundryTemplateFor(F.Id));
+		Words.Requirements.SpecialRequirementsFn = Never;
+		Words.PointsToComplete = 1;
+		Templates.AddItem(Words);
+	}
+	// And the base's facilities (LWBase.FacilityName).
+	foreach class'LWBaseRules'.default.Facilities(B)
+	{
+		`CREATE_X2TEMPLATE(class'X2TechTemplate', Words, class'LWBaseRules'.static.FacilityTemplateFor(B.Id));
 		Words.Requirements.SpecialRequirementsFn = Never;
 		Words.PointsToComplete = 1;
 		Templates.AddItem(Words);

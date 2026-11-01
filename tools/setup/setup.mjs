@@ -210,7 +210,7 @@ async function main() {
   const eu = findSteamApp(EU_APP, 'XCom-Enemy-Unknown', 'XEW')
   const ew = opt('--ew') ?? (eu && join(eu, 'XEW'))
   const words = ew
-    ? wordsFrom(ew, ...['XComLWResearch.ini', 'XComLWStrategy.ini', 'XComLWGear.ini'].map((n) => readFileSync(join(target, 'Config', n), 'utf8')))
+    ? wordsFrom(ew, ...['XComLWResearch.ini', 'XComLWStrategy.ini', 'XComLWGear.ini', 'XComLWBase.ini'].map((n) => readFileSync(join(target, 'Config', n), 'utf8')))
     : { missing: 'XCOM: Enemy Within was not found' }
   if (words.missing) {
     say(`${words.missing}${ew ? ` (${ew})` : ''}: give its XEW folder with --ew. The classes and techs will show without Long War's names and words.`)

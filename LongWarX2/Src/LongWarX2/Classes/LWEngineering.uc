@@ -25,15 +25,10 @@ static function bool Unlocked(LWGearRules.LWBuildDef B)
 	return B.Foundry == 0 || (class'XComGameState_LWStrategy'.static.Get() != none && class'XComGameState_LWStrategy'.static.Get().FoundryDone.Find(B.Foundry) != INDEX_NONE);
 }
 
-/** The cash an item costs: less with workshops (XGItemTree.ScaleCost; none yet). */
+/** The cash an item costs: less with workshops and engineering adjacencies (XGItemTree.ScaleCost). */
 static function int CashCost(LWGearRules.LWBuildDef B)
 {
-	local float Scale;
-	local int Workshops;
-
-	Workshops = 0; // no workshops yet (the base, a later phase)
-	Scale = 0.5 + 0.5 * (1.0 - FMin(99, class'LWGearRules'.default.WorkshopBonus * 2) / 100.0) ** Workshops;
-	return int(B.Cash * Scale);
+	return int(B.Cash * class'LWBase'.static.WorkshopCashScale(class'XComGameState_LWStrategy'.static.Get()));
 }
 
 /** How many of an item are in XCOM's stores (its XCOM 2 template). */
@@ -228,10 +223,16 @@ static function Take(XComGameState NewGameState, name ItemName, int Count)
 static function Deliver(XComGameState NewGameState, XComGameState_LWStrategy S, XComGameState_LWStrategy.LWBuild P)
 {
 	local LWGearRules.LWBuildDef B;
+	local int Alloys, Elerium;
 
 	class'LWGearRules'.static.BuildFor(P.Item, B);
 	class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, B.Template, P.Quantity);
-	S.Note("Engineering built" @ P.Quantity @ ItemName(B.Template) $ ".");
+	// The workshops give back some of the alloys and elerium (OnItemCompleted, CalcWorkshopRebate).
+	Alloys = class'LWBase'.static.Rebate(S, B.Alloys) * P.Quantity;
+	Elerium = class'LWBase'.static.Rebate(S, B.Elerium) * P.Quantity;
+	class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, 'AlienAlloy', Alloys);
+	class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, 'EleriumDust', Elerium);
+	S.Note("Engineering built" @ P.Quantity @ ItemName(B.Template) $ ((Alloys + Elerium) > 0 ? "; the workshops gave back" @ Alloys @ "alloys and" @ Elerium @ "elerium." : "."));
 }
 
 /** A line per project, for the Geoscape. */
@@ -265,8 +266,7 @@ static function string BuildLine(int Item, int Engineers)
 // and its item in stores (XGTechTree.HasFoundryPrereqs); it costs money, alloys, elerium, fragments,
 // meld and Items of that item, paid at the start; its work is Days x Engineers x 24 hours, less what
 // the research credits held take off (GetCreditAdjustedTechHours), done at GetWorkPerHour with its
-// engineers on it. One project at a time: Long War allows one per Foundry built, and the base, where
-// Foundries are built, is not ported yet (XCOM has one).
+// engineers on it. One project per Foundry built in the base (CanAddFoundryProject).
 
 static function string FoundryName(int Id)
 {
@@ -386,9 +386,9 @@ static function bool StartFoundry(int Id, out string Why)
 		Why = "Long War has no Foundry project" @ Id $ ".";
 		return false;
 	}
-	if (S.FoundryProjects.Length > 0)
+	if (S.FoundryProjects.Length >= class'LWBase'.static.Count(S, 11))
 	{
-		Why = "The Foundry is busy (one project at a time).";
+		Why = class'LWBase'.static.Count(S, 11) == 0 ? "XCOM has no Foundry: build one in the base." : "The Foundry is busy.";
 		return false;
 	}
 	if (!FoundryUnlocked(F))

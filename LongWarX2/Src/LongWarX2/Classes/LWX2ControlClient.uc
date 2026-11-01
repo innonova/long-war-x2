@@ -1,6 +1,6 @@
 // For development: one connection to the control port (LWX2Control): a command a line, the
 // answer's lines, then ".". "help" lists the commands. Text mode, lines split here.
-class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy);
+class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy, LWBaseRules);
 
 /** What came in and is not yet a whole line. */
 var string Pending;
@@ -57,6 +57,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
 		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun");
+		Out.AddItem("base: the base's tiles, numbers and facilities | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
 		Out.AddItem("dump [class name part]: every game state object with all its fields (tools/test/lw-dump.sh saves it)");
 		return;
 	case "ping":
@@ -178,6 +179,20 @@ function Handle(string Line, out array<string> Out)
 		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
 		Refreshed();
 		return;
+	case "base":
+		Base(S, Out);
+		return;
+	case "work":
+		if (Args.Length < 3)
+		{
+			Out.AddItem("ERR work <column 1-7> <row 1-5> [facility id]");
+			return;
+		}
+		Before = S.EventCount;
+		Out.AddItem(class'LWBase'.static.Work(int(Args[1]) - 1, int(Args[2]) - 1, Args.Length > 3 ? int(Args[3]) : 0, Why) ? "ok" : "ERR" @ Why);
+		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
+		Refreshed();
+		return;
 	case "foundry":
 		if (Args.Length < 2)
 		{
@@ -193,7 +208,7 @@ function Handle(string Line, out array<string> Out)
 		if (Args.Length > 1 && Args[1] ~= "build")
 			Out.AddItem(class'XComGameState_LWStrategy'.static.BuildSatellite() ? "ok" : "ERR not enough money");
 		else if (Args.Length > 2 && Args[1] ~= "launch")
-			Out.AddItem(class'XComGameState_LWStrategy'.static.LaunchSatellite(int(Args[2])) ? "ok" : "ERR none ready, or the country has one or has left");
+			Out.AddItem(class'XComGameState_LWStrategy'.static.LaunchSatellite(int(Args[2])) ? "ok" : "ERR none ready, the uplinks are full, or the country has one or has left");
 		else
 			Out.AddItem("ERR sat build | sat launch <country>");
 		Refreshed();
@@ -309,6 +324,35 @@ function Builds(XComGameState_LWStrategy S, out array<string> Out)
 	foreach S.Builds(P)
 		Out.AddItem("project item" @ P.Item @ "quantity" @ P.Quantity @ "work" @ P.WorkLeft @ "engineers" @ P.Engineers @ "hours" @ class'LWEngineering'.static.HoursFor(P.WorkLeft, P.Engineers, S.Engineers));
 	Out.AddItem("engineers" @ S.Engineers);
+}
+
+/** The base: a line per row of tiles, its numbers, and each facility that could be built with what it needs. */
+function Base(XComGameState_LWStrategy S, out array<string> Out)
+{
+	local LWBaseRules.LWFacilityDef F;
+	local string Line, Why;
+	local int X, Y;
+
+	if (S.TileType.Length == 0)
+	{
+		class'XComGameState_LWStrategy'.static.Run(0);
+		S = class'XComGameState_LWStrategy'.static.Get();
+	}
+	for (Y = 0; Y < class'LWBase'.const.H; Y++)
+	{
+		Line = "row" @ (Y + 1) $ ":";
+		for (X = 0; X < class'LWBase'.const.W; X++)
+			Line @= "[" $ class'LWBase'.static.TileText(S, X, Y) $ "]";
+		Out.AddItem(Line);
+	}
+	Out.AddItem(class'LWBase'.static.Summary(S));
+	foreach class'LWBaseRules'.default.Facilities(F)
+	{
+		if (F.Cash < 0)
+			continue;
+		class'LWBase'.static.CanBuild(S, F, Why);
+		Out.AddItem("facility" @ F.Id @ class'LWBase'.static.FacilityName(F.Id) @ class'LWStrategyRules'.static.Money(F.Cash) @ "power" @ F.Power @ "days" @ F.Days @ (Why != "" ? "needs" @ Why : "ok"));
+	}
 }
 
 /** The Foundry: each available project (its id first, for foundry <id>), the one under way, those done. */
@@ -462,6 +506,7 @@ function AutoPlay(int Hours, int WinPct, int Stance, bool bSatellites, out array
 	local array<int> Kinds, Indexes;
 	local array<string> Labels;
 	local int Done, Passed, k, Best, Guard;
+	local string Why;
 
 	Done = 0;
 	while (Done < Hours && Guard++ < 5000)
@@ -474,7 +519,13 @@ function AutoPlay(int Hours, int WinPct, int Stance, bool bSatellites, out array
 		if (bSatellites)
 		{
 			XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
-			if (XComHQ.GetSupplies() >= class'LWStrategyRules'.default.SatelliteCost && class'XComGameState_LWStrategy'.static.BuildSatellite())
+			// Satellites up to what the uplinks hold; the base grown for more (an uplink, else a dig or a lift).
+			if (S.TileType.Length > 0 && class'LWBase'.static.SatellitesUp(S) + S.SatellitesReady + S.SatellitesDue.Length >= class'LWBase'.static.SatelliteLimit(S))
+			{
+				if (class'LWBase'.static.GrowForUplink(Why))
+					Out.AddItem("day" @ S.Days() @ "base:" @ Why);
+			}
+			else if (XComHQ.GetSupplies() >= class'LWStrategyRules'.default.SatelliteCost && class'XComGameState_LWStrategy'.static.BuildSatellite())
 				Out.AddItem("satellite ordered");
 			S = class'XComGameState_LWStrategy'.static.Get();
 			while (S.SatellitesReady > 0)

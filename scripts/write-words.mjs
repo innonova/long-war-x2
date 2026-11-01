@@ -7,11 +7,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { decodeInt, makeArmourWords, makeFoundryWords, makeItemWords, makeTechWords, makeWeaponWords, makeWords, readConsts } from './lw-words.mjs'
+import { decodeInt, makeArmourWords, makeFacilityWords, makeFoundryWords, makeItemWords, makeTechWords, makeWeaponWords, makeWords, readConsts } from './lw-words.mjs'
 import plan from './words-plan.json' with { type: 'json' }
 
 /** The words for an XEW folder, as { text, report }; undefined (with the reason) if Long War is not there. */
-export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '') {
+export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '', baseIni = '') {
   const file = (...p) => join(ew, 'XComGame', ...p)
   const core = file('Config', 'DefaultGameCore.ini')
   const loc = file('Localization', 'INT', 'XComGame.int')
@@ -51,9 +51,12 @@ export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '') {
   const foundry = strategyText
     ? makeFoundryWords({ strategyLoc: strategyText, projects: [...gearIni.matchAll(/^\+Foundry=\(Id=(\d+), Enum=(\w+)/gm)].map((m) => ({ id: Number(m[1]), enum: m[2] === 'none' ? '' : m[2] })) })
     : { text: '', named: 0 }
+  const facilities = strategyText
+    ? makeFacilityWords({ strategyLoc: strategyText, facilities: [...baseIni.matchAll(/^\+Facilities=\(Id=(\d+), Enum=(\w+)/gm)].map((m) => ({ id: Number(m[1]), enum: m[2] })) })
+    : { text: '', named: 0 }
   return {
-    text: words.text + '\r\n' + tech.text + '\r\n' + items.text + '\r\n' + gear.text + '\r\n' + armour.text + '\r\n' + foundry.text,
-    report: `${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}, ${tech.named} techs, ${items.named} artifacts and corpses, ${gear.named} weapons, ${armour.named} armours, ${foundry.named} Foundry projects`,
+    text: words.text + '\r\n' + tech.text + '\r\n' + items.text + '\r\n' + gear.text + '\r\n' + armour.text + '\r\n' + foundry.text + '\r\n' + facilities.text,
+    report: `${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}, ${tech.named} techs, ${items.named} artifacts and corpses, ${gear.named} weapons, ${armour.named} armours, ${foundry.named} Foundry projects, ${facilities.named} facilities`,
   }
 }
 
@@ -69,7 +72,7 @@ if (self && process.argv[1] === self) {
   const ew = process.argv[2]
   const mod = process.argv[3] ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'LongWarX2')
   const cfg = (n) => readFileSync(join(mod, 'Config', n), 'utf8')
-  const w = wordsFrom(ew, cfg('XComLWResearch.ini'), cfg('XComLWStrategy.ini'), cfg('XComLWGear.ini'))
+  const w = wordsFrom(ew, cfg('XComLWResearch.ini'), cfg('XComLWStrategy.ini'), cfg('XComLWGear.ini'), cfg('XComLWBase.ini'))
   if (w.missing) {
     console.error(`${w.missing}: ${ew}`)
     process.exit(1)

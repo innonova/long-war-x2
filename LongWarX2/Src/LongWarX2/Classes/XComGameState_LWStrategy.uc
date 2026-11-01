@@ -58,6 +58,16 @@ struct LWBuild
 	var int Engineers;
 };
 
+/** Work in the base (LWBase): 0 digging, 1 a facility; the tile; the hours left. */
+struct LWBaseJob
+{
+	var int Kind;
+	var int X;
+	var int Y;
+	var int Facility;
+	var int HoursLeft;
+};
+
 var array<LWCountry> Countries;
 /** Hours since the campaign began; its first hour is the first of a month. */
 var int Hours;
@@ -81,6 +91,10 @@ var bool bLost;
 /** Satellites built and waiting for a country, and the hours the ones in the works are ready. */
 var int SatellitesReady;
 var array<int> SatellitesDue;
+/** The base (LWBase): each tile's ground (rock, open, dug, a facility) and facility, and the work under way. */
+var array<int> TileType;
+var array<int> TileFacility;
+var array<LWBaseJob> BaseJobs;
 /** Engineering's projects (LWEngineering). */
 var array<LWBuild> Builds;
 /** The Foundry's projects under way (Item: the project's id) and those done. */
@@ -161,6 +175,7 @@ function Begin()
 	}
 	Scientists = class'LWResearchRules'.default.StartingScientists;
 	Engineers = class'LWResearchRules'.default.StartingEngineers;
+	class'LWBase'.static.Generate(self);
 	// Long War (XGWorld.SetStartingContinent): a satellite over the home country. The choice of
 	// home is not offered yet: the United States.
 	Countries[0].bSatellite = true;
@@ -197,6 +212,9 @@ static function int Run(int MaxHours, optional bool bThrough)
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: time passes");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	S.bStop = false;
+	// A campaign begun before the base was ported gets Long War's starting base.
+	if (S.TileType.Length == 0)
+		class'LWBase'.static.Generate(S);
 	while (n < MaxHours && (bThrough || !S.bStop) && !S.bLost)
 	{
 		S.Tick(NewGameState);
@@ -256,7 +274,7 @@ function SyncResearchIn(XComGameState NewGameState)
 /** Long War's research points an hour. */
 function float ResearchPerHour()
 {
-	return Scientists * (1.0 + 0 * class'LWResearchRules'.default.LabBonus);
+	return Scientists * (1.0 + class'LWBase'.static.LabBonus(self));
 }
 
 /** A research credit held (an interrogation done): every Long War tech it covers costs less from now on (LWResearchRules.CreditCut). */
@@ -348,6 +366,7 @@ function Tick(XComGameState NewGameState)
 	local int i;
 
 	Hours++;
+	class'LWBase'.static.Tick(self);
 	// Engineering: a project whose work is done delivers its items.
 	for (i = Builds.Length - 1; i >= 0; i--)
 	{
@@ -1189,6 +1208,9 @@ static function bool LaunchSatellite(int Country)
 
 	if (Get().SatellitesReady <= 0 || Get().Countries[Country].bSatellite || Get().Countries[Country].bLeft)
 		return false;
+	// The uplinks hold so many (Long War's satellite limit); a campaign without its base yet is not held back.
+	if (Get().TileType.Length > 0 && class'LWBase'.static.SatellitesUp(Get()) >= class'LWBase'.static.SatelliteLimit(Get()))
+		return false;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a satellite launched");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	S.SatellitesReady--;
@@ -1217,7 +1239,7 @@ function EndMonth()
 	local XComGameState_HeadquartersXCom XComHQ;
 	local LWStrategyRules.LWCountryDef Def;
 	local array<int> Leaving;
-	local int i, d, Blocks, Funding, Chance;
+	local int i, d, Blocks, Funding, Chance, Upkeep;
 	local string Report;
 
 	d = class'LWStrategyRules'.static.Difficulty();
@@ -1265,8 +1287,10 @@ function EndMonth()
 	History = `XCOMHISTORY;
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
 	XComHQ = XComGameState_HeadquartersXCom(GetParentGameState().ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
-	XComHQ.AddResource(GetParentGameState(), 'Supplies', Funding);
-	Note("Council report: funding" @ class'LWStrategyRules'.static.Money(Funding) $ "." $ Report);
+	// The base's upkeep, paid from it (XGHeadQuarters.PayMaintenance).
+	Upkeep = TileType.Length > 0 ? class'LWBase'.static.Upkeep(self) : 0;
+	XComHQ.AddResource(GetParentGameState(), 'Supplies', Funding - Upkeep);
+	Note("Council report: funding" @ class'LWStrategyRules'.static.Money(Funding) $ ", upkeep" @ class'LWStrategyRules'.static.Money(Upkeep) $ "." $ Report);
 	`log("LongWarX2: Long War month" @ Month @ "ended: funding" @ Funding @ "countries left" @ NumLeft(), , 'LongWarX2');
 	Month++;
 	PlanMonth();
