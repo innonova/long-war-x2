@@ -163,3 +163,13 @@ list and loaded the mod (the main menu's button, the final shell).
 
 - **AML's way, not the default file**: it is what a launcher does, it does
   not change the game's files, and Steam's file check cannot undo it.
+
+**Then, the folder** (the person's `logs/Launch.log`): the game looked for
+local mods only in the base game's `XCOM 2\XcomGame\Mods\` and the
+Workshop folder: `ModRootDirs` in My Games' `XComEngine.ini`, set by a mod
+launcher, had replaced War of the Chosen's own `..\..\XComGame\Mods\`
+(where the setup installed it, and where the SDK puts it on wingpu). The
+setup now installs into the first non-Workshop folder listed there (the
+game's default when none is), and removes a copy elsewhere. Checked on
+wingpu with the person's layout copied (the two folders, absolute): the
+mod installed into the base game's Mods folder and loaded.
