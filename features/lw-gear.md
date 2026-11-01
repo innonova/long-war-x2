@@ -1,6 +1,6 @@
 ---
 title: "Long War's gear: weapons, armour, and engineering"
-status: in-progress
+status: review
 priority: 2
 dependsOn:
   - lw-classes

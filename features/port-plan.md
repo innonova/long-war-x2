@@ -65,9 +65,20 @@ proposal: the person reorders or cuts.
    Long War's techs on XCOM 2's research screen at Long War's rate;
    engineering and the Foundry at Long War's costs and pace. The Foundry
    projects' effects are not done.
-5. **The air war**: interceptions fought by Long War's rules from the
-   Geoscape. Jets are on one continent, never repaired, never bought.
+5. **The air war** (`lw-hangar.md`): Long War's rules and its hangar:
+   - jets by continent, with repair, refits, orders and transfers;
+   - the Foundry's air projects.
 6. and 7.: as in the morning.
+
+Beyond the plan's steps, also done that evening:
+- **the story** (`lw-story.md`): Outsider Shards, the Skeleton Key, alien
+  bases in countries that left, Overseers, the HQ assault and the Temple
+  Ship, so a campaign can be won;
+- **aliens taken alive** (`lw-loot.md`);
+- Long War's soldier price.
+
+What is still XCOM 2's: the missions themselves (maps, aliens, the
+tactical rules beyond the perks), and with them the arc thrower.
 
 ## Where each step stood (2026-11-01, morning)
 
