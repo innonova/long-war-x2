@@ -37,3 +37,34 @@
   Windows PowerShell 5.1).
 - In the editor: close windows by title (`window.ps1 <title> -Close`),
   never Alt+F4; save a package right after changing it.
+
+## XCOM 2 modding: what cost time here
+
+- **Mod config arrays add with `+`** (`+AllowedWeapons=`, `+Pieces=`): plain
+  lines replace each other and only the last one stays.
+- **UnrealScript**: `State` and `Local` are reserved (not variable names);
+  `a && b ? x : y` needs parentheses round the condition; enum values in a
+  `?:` do not parse; only `config` variables' defaults can be set at run
+  time (`default.X = …`).
+- **A screen listener must not keep an actor** (or anything of the current
+  world) in a variable: the old world cannot be unloaded and the game stops
+  at the next map change. Leave a marker actor in the world instead
+  (`LWX2SessionMarker`).
+- **XCOM 2's popups take screens above the base view off the stack**: a
+  screen of ours pushed back whenever the base view is on top loops. Open
+  ours from a button.
+- **The Tactical Quick Launch screen** draws the world only once it has
+  generated a map; its debug camera toggle does nothing in the retail game
+  (`LWX2CameraHold` holds the camera instead).
+- **Tile data** (cover, paths) is rebuilt by XCOM 2 from geometry, but only
+  before units are positioned: rebuilding it during a mission crashed the
+  game. Place geometry while the dropship briefing waits (campaign) or on
+  the quick launch screen (`LWX2PartPlacer`).
+- **EW content**: XCOM 2 reads EW's meshes, animations and particles as they
+  are, but not EW's materials (no shaders) and not EW's texture compression
+  (noise): `tools/convert/` rewrites textures uncompressed and the mod makes
+  materials from XCOM 2's parents at run time.
+- **Driving the game**: right click moves a unit; clicks in the 1600x900
+  window are screen pixels (`click-screen.ps1`) or the UI's 1920x1080
+  coordinates (`click.ps1`); a soldier's reach read from script is 1 until
+  XCOM's turn has begun.
