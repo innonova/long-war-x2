@@ -61,9 +61,16 @@ static function string Short(LWGearRules.LWBuildDef B, int n)
 		Out.AddItem(B.Elerium * n @ class'X2Item_LWArtifacts'.static.DisplayName('Elerium'));
 	if (Held(class'X2Item_LWArtifacts'.static.ItemFor('Meld')) < B.Meld * n)
 		Out.AddItem(B.Meld * n @ class'X2Item_LWArtifacts'.static.DisplayName('Meld'));
-	if (B.ItemReq != '' && !IsInfinite(B.ItemReq) && Held(B.ItemReq) < n)
-		Out.AddItem(n @ ItemName(B.ItemReq));
+	if (B.ItemReq != '' && !IsInfinite(B.ItemReq) && Held(B.ItemReq) < ReqCount(B) * n)
+		Out.AddItem(ReqCount(B) * n @ ItemName(B.ItemReq));
+	if (B.ItemReq2 != '' && Held(B.ItemReq2) < B.ItemReq2Count * n)
+		Out.AddItem(B.ItemReq2Count * n @ ItemName(B.ItemReq2));
 	return JoinStrings(Out);
+}
+
+static function int ReqCount(LWGearRules.LWBuildDef B)
+{
+	return B.ItemReqCount > 0 ? B.ItemReqCount : 1;
 }
 
 static function string JoinStrings(array<string> Parts)
@@ -97,7 +104,9 @@ static function string CostText(LWGearRules.LWBuildDef B)
 	if (B.Meld > 0)
 		Out.AddItem(B.Meld @ class'X2Item_LWArtifacts'.static.DisplayName('Meld'));
 	if (B.ItemReq != '')
-		Out.AddItem("1" @ ItemName(B.ItemReq));
+		Out.AddItem(ReqCount(B) @ ItemName(B.ItemReq));
+	if (B.ItemReq2 != '')
+		Out.AddItem(B.ItemReq2Count @ ItemName(B.ItemReq2));
 	return JoinStrings(Out);
 }
 
@@ -185,7 +194,9 @@ static function bool Start(int Item, int n, out string Why)
 	Take(NewGameState, 'EleriumDust', B.Elerium * n);
 	Take(NewGameState, class'X2Item_LWArtifacts'.static.ItemFor('Meld'), B.Meld * n);
 	if (B.ItemReq != '' && !IsInfinite(B.ItemReq))
-		Take(NewGameState, B.ItemReq, n);
+		Take(NewGameState, B.ItemReq, ReqCount(B) * n);
+	if (B.ItemReq2 != '')
+		Take(NewGameState, B.ItemReq2, B.ItemReq2Count * n);
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID));
 	P.Item = Item;
 	P.Quantity = n;
@@ -226,7 +237,11 @@ static function Deliver(XComGameState NewGameState, XComGameState_LWStrategy S, 
 	local int Alloys, Elerium;
 
 	class'LWGearRules'.static.BuildFor(P.Item, B);
-	class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, B.Template, P.Quantity);
+	// A Firestorm is a craft: it joins the hangar at home (LWHangar).
+	if (B.Template == 'LWItem_Firestorm')
+		class'LWHangar'.static.AddCraft(NewGameState, 3, P.Quantity);
+	else
+		class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, B.Template, P.Quantity);
 	// The workshops give back some of the alloys and elerium (OnItemCompleted, CalcWorkshopRebate).
 	Alloys = class'LWBase'.static.Rebate(S, B.Alloys) * P.Quantity;
 	Elerium = class'LWBase'.static.Rebate(S, B.Elerium) * P.Quantity;

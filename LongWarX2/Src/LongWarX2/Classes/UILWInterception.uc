@@ -15,6 +15,8 @@ var int StrategyUfo;
 var int OddsRuns;
 
 var int JetIndex;
+/** Which of the jets that may fly is chosen (OnNextJet). */
+var int JetPick;
 var int UfoIndex;
 var int Stance;
 var int Category;
@@ -137,13 +139,20 @@ simulated function int CampaignCategory()
 simulated function Setup()
 {
 	local XComGameState_LWAirWar AirWar;
+	local array<int> Eligible;
 	local int Crashed, Destroyed, Escaped, Lost, i;
 	local string Callsign;
 
 	AirWar = bCampaign ? class'XComGameState_LWAirWar'.static.Get() : none;
-	if (AirWar != none && AirWar.Jets.Length > 0)
+	// A Geoscape UFO is met by the ready jets over its continent (LWHangar), any jet otherwise.
+	if (AirWar != none && StrategyUfo >= 0)
+		Eligible = class'LWHangar'.static.ReadyFor(StrategyUfo);
+	else if (AirWar != none)
+		for (i = 0; i < AirWar.Jets.Length; i++)
+			Eligible.AddItem(i);
+	if (AirWar != none && Eligible.Length > 0)
 	{
-		JetIndex = JetIndex % AirWar.Jets.Length;
+		JetIndex = Eligible[JetPick % Eligible.Length];
 		Jet = class'LWAirWar'.static.Craft(AirWar.Jets[JetIndex].Type, AirWar.Jets[JetIndex].Weapon, Category);
 		Jet.Hp = AirWar.Jets[JetIndex].Hp;
 		Jet.Kills = AirWar.Jets[JetIndex].Kills;
@@ -379,7 +388,7 @@ simulated function OnNextUfo(UIButton Button)
 
 simulated function OnNextJet(UIButton Button)
 {
-	JetIndex++;
+	JetPick++;
 	Setup();
 }
 

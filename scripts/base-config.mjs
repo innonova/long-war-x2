@@ -71,5 +71,14 @@ out.push(
   'InterceptorUpkeep=40',
   // XGTechTree.OTSRank: the Officer Training School needs a soldier of this rank.
   'OTSRank=3',
+  '; The hangar: an interceptor\'s price (ItemBalance_Normal), its repair, refit and transfer hours; in Long War\'s',
+  '; code: 72 hours to deliver an order, 6 bays a continent, a Firestorm\'s upkeep 50.',
+  `InterceptorCost=${Number(core.match(/^ItemBalance_Normal=\(eItem=eItem_Interceptor,\s*iCash=(\d+)/im)[1])}`,
+  `RepairHours=${one('INTERCEPTOR_REPAIR_HOURS')}`,
+  `RearmHours=${one('INTERCEPTOR_REARM_HOURS')}`,
+  `TransferHours=${one('INTERCEPTOR_TRANSFER_TIME')}`,
+  'OrderHours=72',
+  'HangarBays=6',
+  'FirestormUpkeep=50',
 )
 console.log(out.join('\r\n'))

@@ -42,10 +42,14 @@ static function array<X2DataTemplate> CreateTemplates()
 		for (j = 0; j < class'LWResearchRules'.default.Techs[i].InStores.Length; j++)
 			AddName(All, class'LWResearchRules'.default.Techs[i].InStores[j]);
 	}
-	// And the items engineering consumes (LWGearRules.Builds), Long War's alien weapons.
+	// And what engineering builds or consumes (LWGearRules.Builds) that is not a weapon or armour:
+	// Long War's alien weapons, the interceptors' weapons.
 	for (i = 0; i < class'LWGearRules'.default.Builds.Length; i++)
-		if (Left(string(class'LWGearRules'.default.Builds[i].ItemReq), 7) == "LWItem_")
-			AddName(All, name(Mid(string(class'LWGearRules'.default.Builds[i].ItemReq), 7)));
+	{
+		AddItemName(All, class'LWGearRules'.default.Builds[i].Template);
+		AddItemName(All, class'LWGearRules'.default.Builds[i].ItemReq);
+		AddItemName(All, class'LWGearRules'.default.Builds[i].ItemReq2);
+	}
 	// And the items the Foundry asks for.
 	for (i = 0; i < class'LWGearRules'.default.Foundry.Length; i++)
 	{
@@ -74,6 +78,13 @@ static function array<X2DataTemplate> CreateTemplates()
 		Templates.AddItem(Template);
 	}
 	return Templates;
+}
+
+/** An LWItem_ template name's artifact added (others are the mod's weapons and armours, or XCOM 2's). */
+static function AddItemName(out array<name> All, name Template)
+{
+	if (Left(string(Template), 7) == "LWItem_")
+		AddName(All, name(Mid(string(Template), 7)));
 }
 
 static function AddName(out array<name> All, name N)

@@ -367,6 +367,7 @@ function Tick(XComGameState NewGameState)
 
 	Hours++;
 	class'LWBase'.static.Tick(self);
+	class'LWHangar'.static.Hour(NewGameState, self);
 	// Engineering: a project whose work is done delivers its items.
 	for (i = Builds.Length - 1; i >= 0; i--)
 	{
@@ -1355,9 +1356,15 @@ function int NumLeft()
 function int JetsOn(int Continent)
 {
 	local XComGameState_LWAirWar AirWar;
+	local int i, n;
 
 	AirWar = class'XComGameState_LWAirWar'.static.Get();
-	return (AirWar != none && Continent == 0) ? AirWar.Jets.Length : 0;
+	if (AirWar == none)
+		return 0;
+	for (i = 0; i < AirWar.Jets.Length; i++)
+		if (AirWar.Jets[i].Continent == Continent)
+			n++;
+	return n;
 }
 
 function string ShipName(int Ufo)
@@ -1378,8 +1385,9 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 	Labels.Length = 0;
 	for (i = 0; i < Ufos.Length; i++)
 	{
-		if ((Ufos[i].Status == 1 || Ufos[i].Status == 2) && Ufos[i].bDetected && !Ufos[i].bAttacked)
-			AddDecision(Kinds, Indexes, Labels, 1, i, "INTERCEPT:" @ ShipName(Ufos[i].Ufo) @ "over" @ CountryName(Ufos[i].Country) @ "(" $ (Ufos[i].Until - Hours) $ "h)");
+		// An interception needs a ready jet over the UFO's continent (LWHangar).
+		if ((Ufos[i].Status == 1 || Ufos[i].Status == 2) && Ufos[i].bDetected && !Ufos[i].bAttacked && class'LWHangar'.static.CountReadyFor(i) > 0)
+			AddDecision(Kinds, Indexes, Labels, 1, i, "INTERCEPT:" @ ShipName(Ufos[i].Ufo) @ "over" @ CountryName(Ufos[i].Country) @ "(" $ (Ufos[i].Until - Hours) $ "h," @ class'LWHangar'.static.CountReadyFor(i) @ "jets ready)");
 		else if (Ufos[i].Status == 3)
 			AddDecision(Kinds, Indexes, Labels, 2, i, "ASSAULT: crash site in" @ CountryName(Ufos[i].Country) @ "(" $ (Ufos[i].Until - Hours) $ "h)");
 		else if (Ufos[i].Status == 4 && Ufos[i].bDetected)

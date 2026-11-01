@@ -45,6 +45,13 @@ var config int ExcavateDays;
 var config int SkyrangerUpkeep;
 var config int InterceptorUpkeep;
 var config int OTSRank;
+var config int InterceptorCost;
+var config int RepairHours;
+var config int RearmHours;
+var config int TransferHours;
+var config int OrderHours;
+var config int HangarBays;
+var config int FirestormUpkeep;
 
 static function bool FacilityFor(int Id, out LWFacilityDef F)
 {

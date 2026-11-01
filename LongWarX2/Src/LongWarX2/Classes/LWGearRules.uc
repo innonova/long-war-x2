@@ -62,8 +62,11 @@ struct LWBuildDef
 	var int Engineers;
 	/** The Long War tech researched first (its id; 0: none). */
 	var int Tech;
-	/** An item consumed, one per item built. */
+	/** An item consumed per item built: ItemReqCount of it (0: one); and a second, ItemReq2Count of it. */
 	var name ItemReq;
+	var int ItemReqCount;
+	var name ItemReq2;
+	var int ItemReq2Count;
 	/** The Foundry project done first (0: none). */
 	var int Foundry;
 };

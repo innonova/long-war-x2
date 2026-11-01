@@ -1,6 +1,6 @@
 // For development: one connection to the control port (LWX2Control): a command a line, the
 // answer's lines, then ".". "help" lists the commands. Text mode, lines split here.
-class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy, LWBaseRules);
+class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy, LWBaseRules, XComGameState_LWAirWar);
 
 /** What came in and is not yet a whole line. */
 var string Pending;
@@ -58,6 +58,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
 		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun");
 		Out.AddItem("base: the base's tiles, numbers and facilities | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
+		Out.AddItem("hangar: the jets (index first), orders, bays | order [continent 0-4] [n] | transfer <jet> <continent> | equip <jet> <weapon 1-7>");
 		Out.AddItem("dump [class name part]: every game state object with all its fields (tools/test/lw-dump.sh saves it)");
 		return;
 	case "ping":
@@ -181,6 +182,28 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "base":
 		Base(S, Out);
+		return;
+	case "hangar":
+		Hangar(Out);
+		return;
+	case "order":
+		Before = S.EventCount;
+		Out.AddItem(class'LWHangar'.static.Order(Args.Length > 1 ? int(Args[1]) : class'LWHangar'.static.HomeContinent(), Args.Length > 2 ? int(Args[2]) : 1, Why) ? "ok" : "ERR" @ Why);
+		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
+		return;
+	case "transfer":
+	case "equip":
+		if (Args.Length < 3)
+		{
+			Out.AddItem("ERR" @ Cmd @ "<jet> <" $ (Cmd == "equip" ? "weapon 1-7" : "continent 0-4") $ ">");
+			return;
+		}
+		Before = S.EventCount;
+		if (Cmd == "equip")
+			Out.AddItem(class'LWHangar'.static.Equip(int(Args[1]), int(Args[2]), Why) ? "ok" : "ERR" @ Why);
+		else
+			Out.AddItem(class'LWHangar'.static.Transfer(int(Args[1]), int(Args[2]), Why) ? "ok" : "ERR" @ Why);
+		NewEvents(class'XComGameState_LWStrategy'.static.Get(), Before, Out);
 		return;
 	case "work":
 		if (Args.Length < 3)
@@ -326,6 +349,26 @@ function Builds(XComGameState_LWStrategy S, out array<string> Out)
 	Out.AddItem("engineers" @ S.Engineers);
 }
 
+/** The hangar: a line per jet (its index first), the orders, the bays per continent. */
+function Hangar(out array<string> Out)
+{
+	local XComGameState_LWAirWar AirWar;
+	local int i;
+	local string Line;
+
+	class'XComGameState_LWAirWar'.static.EnsureExists();
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	for (i = 0; i < AirWar.Jets.Length; i++)
+		Out.AddItem("jet" @ i @ class'LWHangar'.static.JetText(AirWar.Jets[i]));
+	for (i = 0; i < AirWar.Orders.Length; i++)
+		Out.AddItem("order" @ AirWar.Orders[i].Count @ "to" @ class'LWStrategyRules'.static.ContinentName(AirWar.Orders[i].Continent) @ "in" @ AirWar.Orders[i].HoursLeft $ "h");
+	Line = "bays taken:";
+	for (i = 0; i < 5; i++)
+		Line @= i $ "=" $ class'LWStrategyRules'.static.ContinentName(i) @ class'LWHangar'.static.BaysTaken(AirWar, i) $ "/" $ class'LWBaseRules'.default.HangarBays $ ";";
+	Out.AddItem(Line);
+	Out.AddItem("interceptor" @ class'LWStrategyRules'.static.Money(class'LWBaseRules'.default.InterceptorCost) @ "upkeep" @ class'LWStrategyRules'.static.Money(class'LWHangar'.static.Upkeep()) $ "/month");
+}
+
 /** The base: a line per row of tiles, its numbers, and each facility that could be built with what it needs. */
 function Base(XComGameState_LWStrategy S, out array<string> Out)
 {
@@ -458,7 +501,7 @@ function string ResolveDecision(int n, bool bWon, int Stance)
 	local array<string> Labels;
 	local LWAirWar.LWResult R;
 	local LWAirWar.LWShip Jet, TheUfo;
-	local int i, Best;
+	local int Best;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
 	S.Decisions(Kinds, Indexes, Labels);
@@ -477,10 +520,7 @@ function string ResolveDecision(int n, bool bWon, int Stance)
 	}
 	class'XComGameState_LWAirWar'.static.EnsureExists();
 	AirWar = class'XComGameState_LWAirWar'.static.Get();
-	Best = -1;
-	for (i = 0; i < AirWar.Jets.Length; i++)
-		if (AirWar.Jets[i].Hp > 0 && (Best < 0 || AirWar.Jets[i].Hp > AirWar.Jets[Best].Hp))
-			Best = i;
+	Best = class'LWHangar'.static.BestFor(Indexes[n]);
 	if (Best < 0)
 		return "no jet fit to fly:" @ Labels[n];
 	Jet = class'LWAirWar'.static.Craft(AirWar.Jets[Best].Type, AirWar.Jets[Best].Weapon, S.Category());
@@ -496,7 +536,8 @@ function string ResolveDecision(int n, bool bWon, int Stance)
 /**
  * The campaign at full speed: time runs, and every decision is taken as it comes: interceptions
  * fought (resolve), missions won at WinPct %; with bSatellites, a satellite bought whenever there is
- * the money and launched over the most panicked country without one. A line a decision, then the
+ * the money and room in the uplinks (else the base grown for an uplink) and launched over the most
+ * panicked country without one, and two interceptors kept at home. A line a decision, then the
  * Geoscape's summary line.
  */
 function AutoPlay(int Hours, int WinPct, int Stance, bool bSatellites, out array<string> Out)
@@ -527,6 +568,10 @@ function AutoPlay(int Hours, int WinPct, int Stance, bool bSatellites, out array
 			}
 			else if (XComHQ.GetSupplies() >= class'LWStrategyRules'.default.SatelliteCost && class'XComGameState_LWStrategy'.static.BuildSatellite())
 				Out.AddItem("satellite ordered");
+			// Two interceptors kept at home: a lost one replaced.
+			if (class'LWHangar'.static.BaysTaken(class'XComGameState_LWAirWar'.static.Get(), class'LWHangar'.static.HomeContinent()) < 2
+				&& class'LWHangar'.static.Order(class'LWHangar'.static.HomeContinent(), 1, Why))
+				Out.AddItem("day" @ S.Days() @ "interceptor ordered");
 			S = class'XComGameState_LWStrategy'.static.Get();
 			while (S.SatellitesReady > 0)
 			{
@@ -544,7 +589,7 @@ function AutoPlay(int Hours, int WinPct, int Stance, bool bSatellites, out array
 		// only with a jet fit to fly.
 		S.Decisions(Kinds, Indexes, Labels);
 		for (k = 0; k < Kinds.Length; k++)
-			if (Kinds[k] != 1 || JetFit())
+			if (Kinds[k] != 1 || class'LWHangar'.static.BestFor(Indexes[k]) >= 0)
 				break;
 		if (k < Kinds.Length)
 			Out.AddItem("day" @ S.Days() @ ResolveDecision(k, Rand(100) < WinPct, Stance));
@@ -556,19 +601,6 @@ function AutoPlay(int Hours, int WinPct, int Stance, bool bSatellites, out array
 }
 
 /** A jet with HP left. */
-function bool JetFit()
-{
-	local XComGameState_LWAirWar AirWar;
-	local int i;
-
-	class'XComGameState_LWAirWar'.static.EnsureExists();
-	AirWar = class'XComGameState_LWAirWar'.static.Get();
-	for (i = 0; i < AirWar.Jets.Length; i++)
-		if (AirWar.Jets[i].Hp > 0)
-			return true;
-	return false;
-}
-
 /** The Geoscape screen, opened if it is not up (only on the Avenger). */
 function UILWGeoscape OpenGeoscape()
 {

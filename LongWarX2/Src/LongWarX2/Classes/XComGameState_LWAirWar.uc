@@ -10,9 +10,26 @@ struct LWJet
 	var int Weapon;
 	var int Hp;
 	var int Kills;
+	/** The continent it is based on (LWStrategyRules' numbering); where it is going while it transfers. */
+	var int Continent;
+	var int TransferTo;
+	/** 0 ready, 4 repairing, 6 transferring, 7 refitting (Long War's interceptor statuses); the hours until done. */
+	var int Status;
+	var int HoursDown;
+};
+
+/** Interceptors ordered (the hangar, LWHangar): how many, where to, the hours until they arrive. */
+struct LWJetOrder
+{
+	var int Continent;
+	var int Count;
+	var int HoursLeft;
 };
 
 var array<LWJet> Jets;
+var array<LWJetOrder> Orders;
+/** Craft made so far, for their callsigns. */
+var int Counter;
 
 static function XComGameState_LWAirWar Get()
 {
@@ -27,6 +44,7 @@ static function XComGameState_LWAirWar CreateIn(XComGameState NewGameState)
 	AirWar = XComGameState_LWAirWar(NewGameState.CreateNewStateObject(class'XComGameState_LWAirWar'));
 	AirWar.AddJet("Raven-1", 1, 3);
 	AirWar.AddJet("Raven-2", 1, 3);
+	AirWar.Counter = 2;
 	return AirWar;
 }
 
@@ -53,7 +71,7 @@ static function EnsureExists()
 	`XCOMHISTORY.AddGameStateToHistory(NewGameState);
 }
 
-/** A fight's result, committed: the jet's HP and kills. */
+/** A fight's result, committed: the jet's HP and kills; a damaged jet goes for repair, a destroyed one is lost (LWHangar). */
 static function Record(int Index, int Hp, bool Kill)
 {
 	local XComGameState NewGameState;
@@ -67,5 +85,6 @@ static function Record(int Index, int Hp, bool Kill)
 	AirWar.Jets[Index].Hp = Max(0, Hp);
 	if (Kill)
 		AirWar.Jets[Index].Kills++;
+	class'LWHangar'.static.AfterFight(AirWar, Index);
 	`GAMERULES.SubmitGameState(NewGameState);
 }

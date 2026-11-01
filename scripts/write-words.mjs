@@ -31,6 +31,8 @@ export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '', baseI
       ...[...strategyIni.matchAll(/^\+Species=\(.*?Corpse=(\w+)/gm)].map((m) => m[1]),
       ...[...researchIni.matchAll(/EverHad=(\w+)/g)].map((m) => m[1]),
       ...[...researchIni.matchAll(/InStores=\(([^)]*)\)/g)].flatMap((m) => m[1].split(',')),
+      // What engineering, the Foundry and the base build or consume that is an item of the mod's own.
+      ...[...(gearIni + baseIni).matchAll(/(?:Template|ItemReq|ItemReq2|Item|EverHad)=LWItem_(\w+)/g)].map((m) => m[1]),
     ]),
   ].filter((n) => !['Alloys', 'Elerium'].includes(n))
   const items = makeItemWords({ loc: decodeInt(readFileSync(loc)), strategyLoc: strategyText, more: corpses })

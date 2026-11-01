@@ -264,7 +264,7 @@ static function int Upkeep(XComGameState_LWStrategy S)
 	foreach class'LWBaseRules'.default.Facilities(F)
 		if (F.Upkeep > 0)
 			U += F.Upkeep * Count(S, F.Id);
-	return U + class'LWBaseRules'.default.SkyrangerUpkeep + S.JetsOn(0) * class'LWBaseRules'.default.InterceptorUpkeep;
+	return U + class'LWBaseRules'.default.SkyrangerUpkeep + class'LWHangar'.static.Upkeep();
 }
 
 /** The labs' share added to the scientists' research (XGFacility_Labs.UpdateLabBonus). */

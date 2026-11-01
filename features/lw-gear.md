@@ -298,7 +298,8 @@ War's rules:
   Rocketeer's launcher is its own matter.
 - **One Foundry project at a time.** Long War allows one per Foundry
   built, and the base where Foundries are built is not ported yet. XCOM
-  counts as having one.
+  counts as having one. *(Superseded the same day by `lw-base.md`: one
+  project per Foundry built in the base, none at the start.)*
 - **A research credit gained cuts a Foundry project's time only if it
   starts later.** Long War also cuts the one under way.
 

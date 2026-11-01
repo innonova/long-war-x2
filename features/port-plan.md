@@ -50,7 +50,26 @@ proposal: the person reorders or cuts.
 7. **EW's aliens as units**: pawns, animations through XCOM 2's anim tree,
    abilities, AI.
 
-## Where each step stands (2026-11-01, morning)
+## Where each step stands (2026-11-01, evening)
+
+1. **Soldiers**: as in the morning, below.
+2. **Weapons and items** (`lw-gear.md`): Long War's 55 soldier weapons and
+   14 armours, with their numbers, the classes' rules and starting kit.
+   Small items, MECs and SHIVs are not done.
+3. **The strategy skeleton** (`lw-geoscape.md`, `lw-base.md`, `lw-loot.md`):
+   - Long War's Geoscape replaces XCOM 2's world map: the council, panic,
+     the aliens' months, UFOs, abductions, terror and missions;
+   - salvage and kill loot;
+   - the base: its grid, facilities, power and upkeep.
+4. **Research, Foundry, engineering** (`lw-research.md`, `lw-gear.md`):
+   Long War's techs on XCOM 2's research screen at Long War's rate;
+   engineering and the Foundry at Long War's costs and pace. The Foundry
+   projects' effects are not done.
+5. **The air war**: interceptions fought by Long War's rules from the
+   Geoscape. Jets are on one continent, never repaired, never bought.
+6. and 7.: as in the morning.
+
+## Where each step stood (2026-11-01, morning)
 
 1. **Soldiers** (`lw-classes.md`, in progress): the eight classes with Long
    War's trees, one free perk a rank, its stat gains and perk-choice
