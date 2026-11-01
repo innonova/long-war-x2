@@ -438,3 +438,34 @@ soldier with both perks.
   stays until the effect ends. A stat change has no check for standing in
   smoke; the defence and crit parts do have one.
 - **Dense Smoke's wider cloud (×1.25) is not done.**
+
+## Report (2026-11-02 night, Double Tap, Rapid Reaction, Ready for Anything)
+
+These three go through the free-action effect (`X2Effect_LWFreeShot`),
+which now also gives reserve points back or adds them:
+- **Double Tap**: the turn's first shot leaves the second action (standard,
+  sniper, snap, Precision and Disabling shots). After that, 3 turns before
+  it works again (`DOUBLETAP_COOLDOWN`, counted on the player's turn
+  count).
+- **Rapid Reaction**: a reaction shot (overwatch, pistol overwatch, Long
+  Watch) that hits gives its reserve point back, twice a turn at most, so
+  three shots in all, as Long War's text says.
+- **Ready for Anything**: a shot taken as the turn's first action, which
+  ends the turn, leaves the soldier in overwatch (a reserve point added).
+
+**Checked in the game** (perks given by the test aid; soldiers put 8 tiles
+from a pod; the `effects` aid now shows action and reserve points):
+- Double Tap: after the first shot the soldier had 1 action and fired
+  again, then had 0.
+- Ready for Anything: after the shot the soldier had 0 actions and an
+  `overwatch` reserve point.
+- **Rapid Reaction is not tried in play**: it needs an alien to walk into
+  the overwatch.
+
+### Decisions
+
+- **Ready for Anything adds the reserve point when the shot is taken**, not
+  at the end of the turn. The shot ends the turn, so the effect is the
+  same, but XCOM 2's overwatch eye is not shown on the unit.
+- **Rapid Reaction's minimum distance (`RAPIDREACTION_MIN_DIST`, 2 tiles)
+  is not applied.**

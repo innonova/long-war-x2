@@ -128,7 +128,7 @@ function Handle(string Line, out array<string> Out)
 	case "effects":
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', EffUnit)
 			if (EffUnit.GetTeam() == eTeam_XCom && EffUnit.IsSoldier() && !EffUnit.bRemovedFromPlay)
-				Out.AddItem(EffUnit.GetFullName() @ "will" @ int(EffUnit.GetCurrentStat(eStat_Will)) @ "hp" @ int(EffUnit.GetCurrentStat(eStat_HP)) $ "/" $ int(EffUnit.GetMaxStat(eStat_HP)) @ (EffUnit.IsInWorldEffectTile(class'X2Effect_ApplySmokeGrenadeToWorld'.Name) ? "IN SMOKE" : "") $ ":" @ JoinNames(EffUnit.AffectedByEffectNames));
+				Out.AddItem(EffUnit.GetFullName() @ "will" @ int(EffUnit.GetCurrentStat(eStat_Will)) @ "hp" @ int(EffUnit.GetCurrentStat(eStat_HP)) $ "/" $ int(EffUnit.GetMaxStat(eStat_HP)) @ (EffUnit.IsInWorldEffectTile(class'X2Effect_ApplySmokeGrenadeToWorld'.Name) ? "IN SMOKE" : "") @ "ap" @ EffUnit.ActionPoints.Length @ "reserve" @ JoinNames(EffUnit.ReserveActionPoints) $ ":" @ JoinNames(EffUnit.AffectedByEffectNames));
 		return;
 	case "near":
 		Out.AddItem(MoveNear(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? int(Args[2]) : 8));

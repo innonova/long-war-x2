@@ -169,6 +169,13 @@ const REAL = {
   LW_Savior: () => ({ Heal: c('MEDIKIT_SAVIOR_BONUS') }),
   // "Gain +15 aim against flying targets."
   LW_Deadeye: () => ({ Aim: 15, AimIf: 'TargetFlying' }),
+  // "Allows both actions to be used for Standard Shot, Precision Shot, or Disabling Shot, provided no costly actions
+  // were taken. <DoubleTapCooldown> turn cooldown."
+  LW_DoubleTap: () => ({ FreeShotIf: 'DoubleTap', Param: c('DOUBLETAP_COOLDOWN') }),
+  // "If on Overwatch, confers a bonus reaction shot (to a maximum three shots total) for every reaction shot that is a hit."
+  LW_RapidReaction: () => ({ FreeShotIf: 'OverwatchHit', Param: 2 }),
+  // "If the unit fires without taking any other costly actions, it automatically enters overwatch at the end of its turn."
+  LW_ReadyForAnything: () => ({ FreeShotIf: 'ReadyForAnything' }),
   // In the cloud of the soldier's smoke grenades (X2Effect_LWSmoke, added to them: AddSmokeBonuses). Combat Drugs'
   // text says +20 critical chance; its constant (used here) is 10.
   LW_DenseSmoke: () => ({ SmokeDefense: c('DENSE_SMOKE_DEFENSE_BONUS') }),
