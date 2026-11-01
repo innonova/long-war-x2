@@ -88,6 +88,7 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 	class'LWX2EWMapPieces'.static.Place(self, EWFloor, 0, At, class'LWX2LevelActor', Placed, true);
 	default.EWShift = At - EWFloor;
 	default.bEWPlaced = true;
+	class'LWX2EWMapPieces'.static.PlaceLights(self, default.EWShift);
 	// The first EW drop zone inside the generated map's level volume (two tiles in from its edge).
 	foreach class'LWX2EWMapPieces'.default.DropZones(DropZone)
 	{

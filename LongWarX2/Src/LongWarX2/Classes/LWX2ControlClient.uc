@@ -124,6 +124,14 @@ function Handle(string Line, out array<string> Out)
 	case "capture":
 		Out.AddItem(CaptureNearest());
 		return;
+	case "look":
+		if (Args.Length < 3)
+		{
+			Out.AddItem("ERR look <x> <y> [z] (Enemy Within's coordinates on its placed map; 'look pod <n>' its pod n)");
+			return;
+		}
+		Out.AddItem(Look(Args));
+		return;
 	case "spawn":
 		Out.AddItem(SpawnAlien(Args.Length > 1 ? name(Args[1]) : 'Sectoid', Args.Length > 2 ? int(Args[2]) : 2));
 		return;
@@ -748,6 +756,35 @@ function string CaptureNearest()
 }
 
 /** In a mission: an alien dropped on the aliens' team a few tiles from the first soldier (a test aid, XCOM 2's cheat). */
+/** The tactical camera to a place on the placed EW map for 20 seconds, fog of war off (a test aid: its lights, its pods). */
+function string Look(array<string> Args)
+{
+	local X2Camera_LookAtLocationTimed Camera;
+	local vector At;
+
+	if (Args[1] == "pod")
+	{
+		if (int(Args[2]) >= class'LWX2EWMapPieces'.default.Pods.Length)
+			return "ERR no such pod";
+		At = class'LWX2EWMapPieces'.default.Pods[int(Args[2])].Loc;
+	}
+	else
+	{
+		At.X = float(Args[1]);
+		At.Y = float(Args[2]);
+		At.Z = Args.Length > 3 ? float(Args[3]) : 0.0;
+	}
+	At += class'LWX2PartPlacer'.default.EWShift;
+	Camera = new class'X2Camera_LookAtLocationTimed';
+	Camera.LookAtLocation = At;
+	Camera.LookAtDuration = 20;
+	Camera.Priority = eCameraPriority_Cinematic;
+	`CAMERASTACK.AddCamera(Camera);
+	// Fog of war off, so the place is seen (never seen ground is drawn black).
+	GetALocalPlayerController().ConsoleCommand("SetFOW false");
+	return "ok looking at" @ At;
+}
+
 function string SpawnAlien(name CharacterTemplate, int Tiles)
 {
 	local XComTacticalCheatManager Cheats;

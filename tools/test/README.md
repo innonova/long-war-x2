@@ -55,6 +55,11 @@ And around it:
     tools/test/sync-build.sh                   # this working tree built on wingpu (game stopped, patch applied)
     tools/test/new-campaign.sh [0-3] [--first] # game started, new campaign, reports passed, Geoscape open (~45 s)
     tools/test/shot.sh /tmp/shot.png           # a screenshot copied here
+    tools/test/to-mission.sh ['give-to 0 LWSmall_73' …]  # a new campaign into its first abduction, soldiers ready to move
+    LWX2_EWMAP=1 tools/test/sync-build.sh      # built, and the whole EW map placed in missions (the converted map
+                                               # in the checkout's Content and Config: tools/convert/README.md)
+    tools/test/lw.sh enemies                   # in a mission: the aliens, their templates, tiles away
+    tools/test/lw.sh 'look -7440 2544 200'     # the camera to an EW map place (EW's coordinates; 'look pod 1'), fog off
 
 The dump is every XCOM 2 game state object, newest version, with all its fields
 (about a thousand objects, 60,000 lines, a few seconds), and the screens up. Screenshots

@@ -35,7 +35,9 @@ render in XCOM 2: the unit display uses a material made in the editor.
   mod's `Content`;
 - the `.ini` (`XComLWX2EWMap.ini`, into the mod's `Config`): every placed
   static mesh with its place, its materials and whether it is backdrop; each
-  material's diffuse and normal maps; EW's play area and drop zones. The mod
+  material's diffuse and normal maps; EW's play area and drop zones; its
+  alien pods and spawn points; its lights (point, spot, sun, sky), which the
+  mod spawns as movable lights (EW baked them into lightmaps). The mod
   (`LWX2EWMapPieces`, `LWX2PartPlacer`) places them in a mission.
 
 ## For the editor: `ew-to-gltf.ts`, `gltf-to-fbx.py`

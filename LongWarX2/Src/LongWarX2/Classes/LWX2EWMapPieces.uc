@@ -57,6 +57,67 @@ struct LWX2Pod
 };
 var config array<LWX2Pod> Pods;
 var config array<vector> SpawnPoints;
+/**
+ * EW's lights (lw-missions.md, step 2): baked into its lightmaps, which XCOM 2 cannot use, so each is spawned as
+ * a movable light. Kind: Point, Spot, Sun (its directional light), Sky. Unreal's units throughout.
+ */
+struct LWX2Light
+{
+	var name Kind;
+	var vector Loc;
+	var rotator Rot;
+	var float Radius;
+	var float Brightness;
+	var color Color;
+	var float Falloff;
+	var float Inner;
+	var float Outer;
+	var float Lower;
+};
+var config array<LWX2Light> Lights;
+/** Each light's brightness times this (EW's lightmaps added bounced light the movable lights do not). */
+var config float LightScale;
+/** Which kinds are placed (the mission's own sun and sky light the map too). */
+var config array<name> LightKinds;
+
+/** Spawns EW's lights (of LightKinds) moved by Shift; returns how many were placed. */
+static function int PlaceLights(Actor Spawner, vector Shift)
+{
+	local LWX2Light L;
+	local Light A;
+	local int Count;
+
+	foreach default.Lights(L)
+	{
+		if (default.LightKinds.Find(L.Kind) == INDEX_NONE)
+			continue;
+		switch (L.Kind)
+		{
+			case 'Point': A = Spawner.Spawn(class'LWX2PointLight', , , L.Loc + Shift, L.Rot); break;
+			case 'Spot': A = Spawner.Spawn(class'LWX2SpotLight', , , L.Loc + Shift, L.Rot); break;
+			case 'Sun': A = Spawner.Spawn(class'LWX2SunLight', , , L.Loc + Shift, L.Rot); break;
+			case 'Sky': A = Spawner.Spawn(class'LWX2SkyLight', , , L.Loc + Shift, L.Rot); break;
+			default: A = none;
+		}
+		if (A == none || A.LightComponent == none)
+			continue;
+		if (PointLightComponent(A.LightComponent) != none)
+		{
+			PointLightComponent(A.LightComponent).Radius = L.Radius;
+			PointLightComponent(A.LightComponent).FalloffExponent = L.Falloff;
+		}
+		if (SpotLightComponent(A.LightComponent) != none)
+		{
+			SpotLightComponent(A.LightComponent).InnerConeAngle = L.Inner;
+			SpotLightComponent(A.LightComponent).OuterConeAngle = L.Outer;
+		}
+		A.LightComponent.SetLightProperties(L.Brightness * (default.LightScale > 0 ? default.LightScale : 1.0), L.Color);
+		A.ReattachComponent(A.LightComponent);
+		Count++;
+	}
+	`log("LongWarX2: EW map:" @ Count @ "of" @ default.Lights.Length @ "lights placed", , 'LongWarX2');
+	return Count;
+}
 
 /** Spawns the pieces with their positions relative to Origin; returns how many were placed. */
 static function int PlaceAll(Actor Spawner, vector Origin)

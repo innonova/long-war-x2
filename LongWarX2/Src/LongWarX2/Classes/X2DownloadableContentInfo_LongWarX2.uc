@@ -13,6 +13,15 @@ static event OnLoadedSavedGameToStrategy()
 	class'XComGameState_LWAirWar'.static.EnsureExists();
 }
 
+/** A mission from the campaign begins without squad concealment: Long War has none (lw-missions.md). */
+static event OnPreMission(XComGameState StartGameState, XComGameState_MissionSite MissionState)
+{
+	local XComGameState_BattleData BattleData;
+
+	foreach StartGameState.IterateByClassType(class'XComGameState_BattleData', BattleData)
+		BattleData.bForceNoSquadConcealment = true;
+}
+
 /** Templates are built: Long War's classes armed in War of the Chosen's Skirmish Mode; XCOM 2's techs hidden behind Long War's; Long War's weapons given XCOM 2's looks. */
 static event OnPostTemplatesCreated()
 {

@@ -181,6 +181,44 @@ const starts: number[][] = []
 // EW's alien pods (where its aliens stand: the commander's pod, how many) and its spawn points.
 const pods: { loc: number[]; commander: boolean; min: number; max: number }[] = []
 const spawnPoints: number[][] = []
+// EW's lights (lw-missions.md, step 2): baked into its lightmaps, which XCOM 2 cannot use, so
+// the mod spawns each as a movable light. Kind, place, direction, and its component's values
+// (Unreal's defaults where the map does not set them).
+interface EWLight {
+  kind: 'Point' | 'Spot' | 'Sun' | 'Sky'
+  loc: number[]
+  rot: number[]
+  radius: number
+  brightness: number
+  color: number[]
+  falloff: number
+  inner: number
+  outer: number
+  lower: number
+}
+const lights: EWLight[] = []
+const LIGHTS: Record<string, EWLight['kind']> = {
+  PointLight: 'Point', PointLightToggleable: 'Point', PointLightMovable: 'Point',
+  SpotLight: 'Spot', SpotLightToggleable: 'Spot', SpotLightMovable: 'Spot',
+  DirectionalLight: 'Sun', DominantDirectionalLight: 'Sun', SkyLight: 'Sky',
+}
+/**
+ * A component's properties: after its leading fields (net index, template names), found by trying;
+ * a dominant light's come after its shadow map, so after that the whole component is tried.
+ */
+function componentTags(r: number): Tag[] {
+  if (r <= 0) return []
+  const data = pkg.data(r)
+  for (const start of [4, 8, 12, 16, 20, 0, ...Array.from({ length: data.length }, (_, k) => k)]) {
+    try {
+      const t = readTags(new Reader(data.subarray(start)), pkg)
+      if (t.some((x) => x.name === 'LightGuid' || x.name === 'Brightness' || x.name === 'LightColor')) return t
+    } catch {
+      // not here
+    }
+  }
+  return []
+}
 exports.forEach((e, i) => {
   const parts = e.fullName.split('.')
   if (parts[0] !== 'TheWorld' || parts.length !== 3) return
@@ -201,6 +239,31 @@ exports.forEach((e, i) => {
         min: i32(t!.find((x) => x.name === 'NumAliens_Min'), 0),
         max: i32(t!.find((x) => x.name === 'NumAliens_Max'), 0),
       })
+  }
+  if (LIGHTS[e.type]) {
+    const t = actorTags(i) ?? []
+    const loc = t.find((x) => x.name === 'Location')
+    const rot = t.find((x) => x.name === 'Rotation')
+    const c = componentTags(ref(t.find((x) => x.name === 'LightComponent')))
+    const get = (k: string) => c.find((x) => x.name === k)
+    if (get('bEnabled')?.boolValue === 0) return
+    const color = (k: string) => {
+      const x = get(k)
+      return x ? [x.value[2]!, x.value[1]!, x.value[0]!, x.value[3]!] : [255, 255, 255, 0]
+    }
+    const num = (k: string, d: number) => (get(k) ? f32(get(k), 0) : d)
+    lights.push({
+      kind: LIGHTS[e.type]!,
+      loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
+      rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
+      radius: num('Radius', 1024),
+      brightness: num('Brightness', 1),
+      color: color('LightColor'),
+      falloff: num('FalloffExponent', 2),
+      inner: num('InnerConeAngle', 0),
+      outer: num('OuterConeAngle', 44),
+      lower: num('LowerBrightness', 0),
+    })
   }
   if (e.type === 'XComLevelVolume' && !play) {
     const t = actorTags(i)
@@ -351,6 +414,19 @@ const lines = [
   "; EW's alien pods (the commander's, how many aliens) and its spawn points.",
   ...pods.map((p) => `+Pods=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Commander=${p.commander},Min=${p.min},Max=${p.max})`),
   ...spawnPoints.map((p) => `+SpawnPoints=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
+  "; EW's lights (point, spot, its sun and sky), spawned as movable lights: the kinds placed and a scale on their",
+  "; brightness (3: EW's lightmaps carried bounced light too; judged by eye on CSmallScout_Badlands).",
+  'LightScale=3',
+  '+LightKinds=Point',
+  '+LightKinds=Spot',
+  '+LightKinds=Sun',
+  '+LightKinds=Sky',
+  ...lights.map(
+    (l) =>
+      `+Lights=(Kind=${l.kind},Loc=(X=${n(l.loc[0]!)},Y=${n(l.loc[1]!)},Z=${n(l.loc[2]!)}),Rot=(Pitch=${l.rot[0]},Yaw=${l.rot[1]},Roll=${l.rot[2]}),` +
+      `Radius=${n(l.radius)},Brightness=${n(l.brightness)},Color=(R=${l.color[0]},G=${l.color[1]},B=${l.color[2]},A=${l.color[3]}),` +
+      `Falloff=${n(l.falloff)},Inner=${n(l.inner)},Outer=${n(l.outer)},Lower=${n(l.lower)})`,
+  ),
   '; XCOM 2 cannot draw EW\'s materials: each is replaced by an instance of one of these parents',
   '; (by the kind of the EW material) given the EW textures. Empty: the EW materials are kept.',
   'PropParent="Materials.Approved.Props_SD"',
@@ -369,5 +445,6 @@ const meshes = new Set(pieces.map((p) => p.mesh))
 console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed, ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB)`)
 const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
+console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points, ${lights.length} lights`)
 console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
 

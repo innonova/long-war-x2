@@ -143,3 +143,67 @@ squad. A screenshot showed the squad on the (dark) EW map.
 
 - EW's lights; the landing spot; objectives at EW places.
 - Pods use XCOM 2's stand-in templates until step 3.
+
+## Report (2026-11-01, step 2: Enemy Within's lights; no squad concealment)
+
+**EW's lights are placed with its map.** The converter reads every light
+of the map (point, spot, its directional "sun", its sky light) with its
+place, direction, radius, brightness, colour, falloff and cone, and writes
+them to the map's ini (`+Lights=`). The mod spawns each as a movable light
+when it places the whole map (`LWX2EWMapPieces.PlaceLights`).
+- XCOM 2's movable light classes cannot be spawned at run time
+  (`bNoDelete`), so the mod has its own: `LWX2PointLight` (no shadows),
+  `LWX2SpotLight`, `LWX2SunLight`, `LWX2SkyLight`.
+- A dominant light's properties come after its shadow map in the package;
+  the converter now finds them there. Before, the sun read as Unreal's
+  defaults.
+- `CSmallScout_Badlands` is a night map. Its sun is a dim blue moon
+  (brightness 0.5) and its sky is purple. Most of its light is orange
+  point lights around the crashed UFO.
+
+**Checked in the game** (wingpu, three missions on the badlands map):
+- "60 of 62 lights placed" with points and spots only. The scene stayed
+  dull grey.
+- With the brightness ×3 and the moon and sky added, the drop area reads as
+  a moonlit badlands, with the rock warm in the point lights' colour.
+- The UFO, seen from close by with the new `look` test aid, is dark apart
+  from its own glowing ports.
+
+**No squad concealment** in campaign missions
+(`X2DownloadableContentInfo_LongWarX2.OnPreMission` sets the battle's
+`bForceNoSquadConcealment`, as XCOM 2's High Alert dark event does). Long
+War has none, and its blue tint got in the way of judging the light (the
+person's suggestion). The tint was gone in the next mission.
+
+**Test aids:**
+- `look <x> <y> [z]` / `look pod <n>`: the camera to a place on the placed
+  EW map, with the fog of war off. Ground never seen is drawn black, which
+  had made the first tries look empty.
+- `LWX2_EWMAP=1 tools/test/sync-build.sh`: builds, then turns the whole
+  EW map on in the installed config.
+
+### Decisions
+
+- **Brightness ×3, all four kinds of light** (`LightScale`, `LightKinds` in
+  the generated ini), judged by eye on one map. EW's lightmaps also carried
+  bounced light, which movable lights do not give, so the lights alone, at
+  ×1, left the map grey.
+  - The mission's own XCOM 2 sun and sky still light the map as well.
+  - Both settings are in the generated ini, so they can be tuned without
+    converting again.
+- **Point lights without shadows; spots, the sun and the sky with
+  XCOM 2's defaults.** A map has dozens of point lights, and EW baked
+  their shadows.
+- **No squad concealment in any campaign mission**, not only on EW maps.
+  Long War has none. Phantom-style abilities of XCOM 2's classes would
+  still conceal a unit, but Long War's classes do not have them.
+
+### Found, left open
+
+- **The campaign's squad held 'Stiletto', a Reaper** (War of the Chosen's
+  starting faction soldier, with its own concealment). Long War has no
+  factions: to be removed from a Long War campaign.
+- The UFO's interior and its hull are dark; whether EW lit them by
+  lightmap only or by lights not read (the `GeneratedMeshAreaLight`s,
+  emissive surfaces) is not known yet.
+- The landing spot; objectives at EW places.
