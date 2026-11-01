@@ -1,6 +1,6 @@
 ---
 title: "A build the person can install on their own PC and give feedback on"
-status: in-progress
+status: review
 priority: 2
 dependsOn:
   - lw-classes
