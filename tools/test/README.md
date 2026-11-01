@@ -63,6 +63,14 @@ The game's FileWriter does not open files in the shipped game, so the dump comes
 over the socket. A firewall rule on wingpu lets XCom2.exe listen without a dialog
 (`netsh advfirewall firewall add rule name="XCOM 2 WotC (LWX2 control)" …`, made over ssh).
 
+## Long War on the test machine
+
+wingpu has Enemy Within with Long War 1.0 installed (its own installer, silent, into
+`C:\Program Files (x86)\Steam\steamapps\common\XCom-Enemy-Unknown\XEW`, 2026-11-01), so the
+setup program's words step runs there for real, and words can be written in place:
+
+    tools/test/on.sh 'node scripts\write-words.mjs "C:\Program Files (x86)\Steam\steamapps\common\XCom-Enemy-Unknown\XEW"'
+
 ## The window
 
 The game runs windowed at 1600x900, so a whole screenshot shows it; clicks
