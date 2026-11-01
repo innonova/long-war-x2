@@ -7,7 +7,7 @@
 //
 // Bundled with upkit into one Windows program (tools/setup/bundle.mjs); runs from the repository
 // too: node tools/setup/setup.mjs --mod LongWarX2 …
-import { cpSync, existsSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import { cpSync, existsSync, readFileSync, rmSync, writeFileSync, mkdirSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { execFileSync } from 'node:child_process'
@@ -77,43 +77,60 @@ function findSteamApp(app, folder, sub) {
 const XCOM2_APP = '268500'
 const EU_APP = '200510' // XCOM: Enemy Unknown; Enemy Within (and Long War in it) is its XEW folder
 
-/** The game's list of active mods (it reads it at start; the launchers write it): the player's Documents, wherever they are. */
-function modOptionsFile() {
-  const docs = [
-    registry('HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders', 'Personal'),
-    process.env.USERPROFILE && join(process.env.USERPROFILE, 'Documents'),
-  ].filter(Boolean)
-  return docs.map((d) => join(d, 'My Games', 'XCOM2 War of the Chosen', 'XComGame', 'Config', 'XComModOptions.ini')).find((p) => existsSync(p))
+/** The player's Documents folder (wherever Windows keeps it; LWX2_DOCS for tests). */
+function documents() {
+  return process.env.LWX2_DOCS ?? registry('HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders', 'Personal') ?? (process.env.USERPROFILE && join(process.env.USERPROFILE, 'Documents'))
 }
 
-/** The mod's ActiveMods line added (on) or taken out (off) in one mod options file; the other lines kept, a copy of the file before kept once. */
-function setActiveIn(file, on, create) {
-  if (!existsSync(file) && !create) return undefined
-  const lines = existsSync(file) ? readFileSync(file, 'utf8').split(/\r?\n/) : []
-  const kept = lines.filter((l) => !/^\s*ActiveMods\s*=\s*"?LongWarX2"?\s*$/i.test(l))
-  if (on) {
-    const at = kept.findIndex((l) => l.trim() === '[Engine.XComModOptions]')
-    if (at < 0) kept.unshift('[Engine.XComModOptions]', `ActiveMods="${MOD}"`)
-    else kept.splice(at + 1, 0, `ActiveMods="${MOD}"`)
-  }
-  if (existsSync(file) && !existsSync(`${file}.before-lwx2`)) writeFileSync(`${file}.before-lwx2`, lines.join('\r\n'))
-  writeFileSync(file, kept.join('\r\n'))
-  return file
-}
+const isMine = (l) => /^\s*ActiveMods\s*=\s*"?LongWarX2"?\s*$/i.test(l)
 
 /**
- * The mod switched on (or off) where the game takes its list of active mods from: the game
- * folder's base file (XComGame\Config\DefaultModOptions.ini, where the mod launchers write too):
- * the game rebuilds the copy in My Games from it whenever it thinks that copy is out of date,
- * which drops anything only added there. The My Games copy is changed too, for the next start.
+ * The mod switched on (or off) in the game's list of active mods, as the Alternative Mod Launcher
+ * does it (X2CommunityCore/xcom2-launcher, DefaultConfigFile): in My Games' XComModOptions.ini,
+ * with its [IniVersion] stamp set to the modification time of the game folder's
+ * DefaultModOptions.ini it is built from. When the stamp does not match, the game rebuilds the
+ * file from the default at start and the active mods are gone (seen on the person's PC). The
+ * game folder's file is not changed (an earlier build of this setup added the mod there: that
+ * line is taken out again). The player's other mods stay as they are.
  */
 function setActive(xcom2, on) {
-  const base = setActiveIn(join(xcom2, 'XComGame', 'Config', 'DefaultModOptions.ini'), on, true)
-  const user = modOptionsFile()
-  if (user) setActiveIn(user, on, false)
-  return base
+  const base = join(xcom2, 'XComGame', 'Config', 'DefaultModOptions.ini')
+  if (existsSync(base)) {
+    const lines = readFileSync(base, 'utf8').split(/\r?\n/)
+    if (lines.some(isMine)) writeFileSync(base, lines.filter((l) => !isMine(l)).join('\r\n'))
+  }
+  const docs = documents()
+  if (!docs) return undefined
+  const file = join(docs, 'My Games', 'XCOM2 War of the Chosen', 'XComGame', 'Config', 'XComModOptions.ini')
+  const before = existsSync(file) ? readFileSync(file, 'utf8') : existsSync(base) ? readFileSync(base, 'utf8') : '[Engine.XComModOptions]'
+  const lines = before.split(/\r?\n/).filter((l) => !isMine(l))
+  if (on) {
+    let at = lines.findIndex((l) => l.trim() === '[Engine.XComModOptions]')
+    if (at < 0) {
+      lines.unshift('[Engine.XComModOptions]', '')
+      at = 0
+    }
+    lines.splice(at + 1, 0, `ActiveMods="${MOD}"`)
+  }
+  // The stamp: the last entry of [IniVersion] is the default file's time (whole seconds, as the game writes it).
+  if (existsSync(base)) {
+    const stamp = `${Math.floor(statSync(base).mtimeMs / 1000)}.000000`
+    let sec = lines.findIndex((l) => l.trim() === '[IniVersion]')
+    if (sec < 0) {
+      while (lines.length && lines[lines.length - 1].trim() === '') lines.pop()
+      lines.push('', '[IniVersion]', `0=${stamp}`)
+    } else {
+      let last = -1
+      for (let i = sec + 1; i < lines.length && !lines[i].startsWith('['); i++) if (/^\d+=/.test(lines[i])) last = i
+      if (last < 0) lines.splice(sec + 1, 0, `0=${stamp}`)
+      else lines[last] = lines[last].replace(/=.*/, `=${stamp}`)
+    }
+  }
+  mkdirSync(dirname(file), { recursive: true })
+  if (existsSync(file) && !existsSync(`${file}.before-lwx2`)) writeFileSync(`${file}.before-lwx2`, before)
+  writeFileSync(file, lines.join('\r\n'))
+  return file
 }
-
 
 async function main() {
   // The mod to install: beside this program (the download), or --mod.
