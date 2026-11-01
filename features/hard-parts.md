@@ -586,3 +586,12 @@ reached only 14 tiles. So `CanUnitsEnterTile` does not see what walls them
 in (thin walls on tile edges, most likely), or XCOM 2 puts the squad
 elsewhere than the tiles counted. **Left open**: look at where the two land
 (the debug tile view) before trying again. The check stays (harmless).
+
+**Then, in a campaign mission** (`tools/test/campaign-mission.sh --launch`,
+the new one-command check): the Floater's run-time material failed there
+("the parent is not loaded"), while the map's stand-ins in the same mission
+loaded theirs. XCOM 2's parents are loadable only when something already
+holds them in memory: the props' parents come with every plot, the alien
+parent (`AlienUnit_TC`) did not in that mission. The display now falls back
+to the editor-made material. **Left open**: load an XCOM 2 alien's package
+first, or pick a parent the plots always bring.

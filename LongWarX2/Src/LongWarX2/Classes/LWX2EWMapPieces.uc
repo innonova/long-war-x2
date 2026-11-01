@@ -182,7 +182,11 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : default.PropParent);
 	}
 	if (ParentPath != "" && L.Diffuse != "")
+	{
 		Parent = Material(DynamicLoadObject(ParentPath, class'Material', true));
+		if (Parent == none)
+			`log("LongWarX2: EW map: parent material" @ ParentPath @ "not loaded; the EW material kept for" @ Path, , 'LongWarX2');
+	}
 	if (Parent != none)
 	{
 		MIC = new(InOuter) class'MaterialInstanceConstant';

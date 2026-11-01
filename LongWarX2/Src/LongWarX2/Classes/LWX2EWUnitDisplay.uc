@@ -57,11 +57,11 @@ function bool ShowBeside(Actor Next)
 	if (StandinParent != "")
 	{
 		Mat = Standin();
-		`log("LongWarX2: EW unit: material made from" @ StandinParent @ "and" @ DiffusePath @ (Mat != none ? "" : "FAILED"), , 'LongWarX2');
+		`log("LongWarX2: EW unit: material made from" @ StandinParent @ "and" @ DiffusePath @ (Mat != none ? "" : "FAILED (the parent is not loaded: falling back to MaterialPath)"), , 'LongWarX2');
 		if (Mat != none)
 			SkeletalMeshComponent.SetMaterial(0, Mat);
 	}
-	else if (MaterialPath != "")
+	if (Mat == none && MaterialPath != "")
 	{
 		Mat = MaterialInterface(DynamicLoadObject(MaterialPath, class'MaterialInterface', true));
 		`log("LongWarX2: EW unit: material" @ MaterialPath @ (Mat != none ? "loaded" : "NOT loaded, the mesh keeps its own"), , 'LongWarX2');
