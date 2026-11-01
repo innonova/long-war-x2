@@ -17,7 +17,7 @@ fi
 tools/test/on.sh 'tools\test\start-game.ps1' 'tools\test\click.ps1 200 152' 2>&1 | tail -1
 for _ in $(seq 1 25); do
   sleep 4
-  r=$(ssh "$host" "Get-Content '$log' | Select-String 'pieces placed|appError' | % Line; if (-not (Get-Process XCom2 -ErrorAction SilentlyContinue)) { 'GAME GONE' }" 2>&1 | tr -d '\r')
+  r=$(ssh "$host" "Get-Content '$log' | Select-String 'camera hold spawned|appError' | % Line; if (-not (Get-Process XCom2 -ErrorAction SilentlyContinue)) { 'GAME GONE' }" 2>&1 | tr -d '\r')
   [ -n "$r" ] && break
 done
 echo "$r" | grep -q 'appError\|GAME GONE' && { echo "$r"; exit 1; }

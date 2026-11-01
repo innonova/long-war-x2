@@ -12,6 +12,8 @@ struct LWX2Piece
 	var vector Scale;
 	/** Its materials slot by slot (EW's meshes carry none XCOM 2 can read: the placed pieces and their archetypes do). */
 	var array<string> Materials;
+	/** The sky dome, the mountains: drawn, never colliding (they would enclose the map). */
+	var bool Backdrop;
 };
 
 /** An EW material's textures, for its XCOM 2 stand-in; Kind picks the parent. */
@@ -41,6 +43,10 @@ var config string FoliageParent;
 var config string AlienParent;
 var config array<LWX2Look> Looks;
 var config array<LWX2Piece> Pieces;
+/** EW's play area (its level volume: centre and half sizes) and drop zones (its player starts). */
+var config vector PlayCenter;
+var config vector PlayExtent;
+var config array<vector> DropZones;
 
 /** Spawns the pieces with their positions relative to Origin; returns how many were placed. */
 static function int PlaceAll(Actor Spawner, vector Origin)
@@ -49,25 +55,26 @@ static function int PlaceAll(Actor Spawner, vector Origin)
 
 	if (default.Pieces.Length == 0)
 		return 0;
-	LoadPackage();
 	Place(Spawner, vect(0, 0, 0), 0, Origin, class'DynamicSMActor_Spawnable', Placed);
 	return Placed.Length;
 }
 
 /**
  * Spawns the pieces within Radius of Center (all when Radius is 0), moved so Center lands
- * on At, as actors of the given class (a StaticMeshActor or a DynamicSMActor).
+ * on At, as actors of the given class (a StaticMeshActor or a DynamicSMActor). With
+ * bCollideInPlayOnly, pieces outside EW's play area (its backdrop) do not collide.
  */
-static function Place(Actor Spawner, vector Center, float Radius, vector At, class<Actor> ActorClass, out array<Actor> Placed)
+static function Place(Actor Spawner, vector Center, float Radius, vector At, class<Actor> ActorClass, out array<Actor> Placed, optional bool bCollideInPlayOnly)
 {
 	local LWX2Piece P;
 	local StaticMesh Mesh;
 	local Actor A;
 	local StaticMeshComponent Comp;
-	local int Missing, i;
+	local int Missing, i, Backdrop;
 	local array<LWX2Standin> Standins;
 	local MaterialInterface M;
 
+	LoadPackage();
 	foreach default.Pieces(P)
 	{
 		if (Radius > 0 && VSize2D(P.Loc - Center) > Radius)
@@ -93,6 +100,16 @@ static function Place(Actor Spawner, vector Center, float Radius, vector At, cla
 			Comp.SetStaticMesh(Mesh);
 		}
 		A.SetDrawScale3D(P.Scale);
+		// The backdrop does not collide: the huge pieces (the sky dome, the mountains: they would
+		// enclose the map), and with bCollideInPlayOnly whatever is outside the play area.
+		if (P.Backdrop || (bCollideInPlayOnly && (Abs(P.Loc.X - default.PlayCenter.X) > default.PlayExtent.X || Abs(P.Loc.Y - default.PlayCenter.Y) > default.PlayExtent.Y)))
+		{
+			A.SetCollision(false, false);
+			Comp.SetBlockRigidBody(false);
+			Comp.SetActorCollision(false, false);
+			Comp.SetTraceBlocking(false, false); // the sky dome's collision box holds the whole map
+			Backdrop++;
+		}
 		for (i = 0; i < P.Materials.Length; i++)
 		{
 			M = MaterialFor(P.Materials[i], A, Standins);
@@ -101,7 +118,7 @@ static function Place(Actor Spawner, vector Center, float Radius, vector At, cla
 		}
 		Placed.AddItem(A);
 	}
-	`log("LongWarX2: EW map:" @ Placed.Length @ "pieces placed as" @ ActorClass.Name $ "," @ Missing @ "meshes not found;" @ Standins.Length @ "materials", , 'LongWarX2');
+	`log("LongWarX2: EW map:" @ Placed.Length @ "pieces placed as" @ ActorClass.Name $ "," @ Missing @ "meshes not found;" @ Standins.Length @ "materials" $ ";" @ Backdrop @ "backdrop pieces without collision", , 'LongWarX2');
 }
 
 /** Loads the converted map package (any of its objects loads it whole: then its meshes are found by their paths). */

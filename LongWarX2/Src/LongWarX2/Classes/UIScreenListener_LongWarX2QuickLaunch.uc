@@ -5,6 +5,7 @@
 // Turn On Debug Camera.
 class UIScreenListener_LongWarX2QuickLaunch extends UIScreenListener config(LWAirWar);
 
+/** The whole EW map beside the generated one, to look at (the placer, LWX2PartPlacer, puts it in a mission). */
 var config bool PlaceEWMap;
 /** Where the map's origin goes: away from the map the screen generates (its lights still reach). */
 var config vector Origin;
@@ -17,9 +18,12 @@ event OnInit(UIScreen Screen)
 	local LWX2CameraHold Hold;
 	local LWX2PartPlacer Placer;
 
-	if (!default.PlaceEWMap || Screen.Class.Name != 'UITacticalQuickLaunch')
+	if (Screen.Class.Name != 'UITacticalQuickLaunch')
 		return;
-	class'LWX2EWMapPieces'.static.PlaceAll(Screen, default.Origin);
+	if (!default.PlaceEWMap && !class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapPart && !class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole)
+		return;
+	if (default.PlaceEWMap)
+		class'LWX2EWMapPieces'.static.PlaceAll(Screen, default.Origin);
 	// The debug camera, once turned on, held where the config says.
 	Hold = Screen.Spawn(class'LWX2CameraHold', Screen.PC);
 	`log("LongWarX2: camera hold" @ (Hold != none ? "spawned" : "NOT spawned") @ "for" @ Screen.PC, , 'LongWarX2');
@@ -29,13 +33,14 @@ event OnInit(UIScreen Screen)
 	Hold.View.Location = default.Origin + default.CameraPosition;
 	Hold.View.Rotation = rotator(default.CameraDirection);
 	Hold.View.FOV = 70;
-	if (class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapPart)
+	if (class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapPart || class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole)
 	{
 		Placer = Screen.Spawn(class'LWX2PartPlacer', Screen.PC);
 		Placer.Screen = UITacticalQuickLaunch(Screen);
 		Placer.Center = class'UIScreenListener_LongWarX2Tactical'.default.PartCenter;
 		Placer.Radius = class'UIScreenListener_LongWarX2Tactical'.default.PartRadius;
 		Placer.Offset = class'UIScreenListener_LongWarX2Tactical'.default.PartOffset;
+		Placer.bWhole = class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole;
 	}
 }
 

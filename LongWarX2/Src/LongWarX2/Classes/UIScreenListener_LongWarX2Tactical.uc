@@ -6,6 +6,8 @@ class UIScreenListener_LongWarX2Tactical extends UIScreenListener config(LWAirWa
 
 var config bool ShowEWUnit;
 var config bool PlaceEWMapPart;
+/** The whole EW map in place of the generated one (instead of a part). */
+var config bool PlaceEWMapWhole;
 /** The part of the EW map (its coordinates): the pieces within the radius of the centre. */
 var config vector PartCenter;
 var config float PartRadius;
@@ -29,8 +31,11 @@ event OnInit(UIScreen Screen)
 	`log("LongWarX2: tactical HUD; first soldier pawn" @ Pawn, , 'LongWarX2');
 	if (Pawn == none)
 		return;
-	if (default.PlaceEWMapPart)
+	if (default.PlaceEWMapPart || default.PlaceEWMapWhole)
+	{
 		ReportMapPart(Screen, Pawn);
+		Screen.SetTimer(40.0, false, nameof(ReportReach), self);
+	}
 	if (!default.ShowEWUnit)
 		return;
 	Display = Screen.WorldInfo.Spawn(class'LWX2EWUnitDisplay');
@@ -38,14 +43,17 @@ event OnInit(UIScreen Screen)
 		Display.Destroy();
 }
 
-/** After the battle started: the EW map part's effect on the tile data, and whether its pieces collide. */
+/** After the battle started: the EW map's effect on the tile data around the placement, and whether its pieces collide. */
 function ReportMapPart(UIScreen Screen, XComUnitPawn Pawn)
 {
 	local XComWorldData World;
 	local LWX2LevelActor Piece;
-	local vector At, HitLocation, HitNormal;
+	local vector At, HitLocation, HitNormal, FloorPos, Probe;
 	local Actor Hit;
-	local int n;
+	local TTile Centre, T;
+	local int n, dx, dy, Floors, Enterable;
+	local XGUnit Unit;
+	local array<TTile> Reachable;
 
 	World = `XWORLD;
 	foreach Screen.WorldInfo.AllActors(class'LWX2LevelActor', Piece)
@@ -53,8 +61,76 @@ function ReportMapPart(UIScreen Screen, XComUnitPawn Pawn)
 	if (n == 0)
 		return;
 	At = class'LWX2PartPlacer'.default.PlacedAt;
-	Hit = Screen.Trace(HitLocation, HitNormal, At - vect(0, 0, 200), At + vect(0, 0, 2000), false);
-	`log("LongWarX2: EW map part in the battle:" @ n @ "pieces; at" @ At $ ", cover points" @ class'LWX2EWMapPieces'.static.CountCover(World, At, default.PartRadius) $ ", tiles units cannot enter near its centre" @ class'LWX2EWMapPieces'.static.CountBlocked(World, At) @ "of 49; a line down onto it hits" @ Hit @ "at" @ HitLocation, , 'LongWarX2');
+	Hit = Screen.Trace(HitLocation, HitNormal, At - vect(0, 0, 400), At + vect(0, 0, 2000), false);
+	Centre = World.GetTileCoordinatesFromPosition(At);
+	for (dx = -7; dx <= 7; dx++)
+		for (dy = -7; dy <= 7; dy++)
+		{
+			T = Centre;
+			T.X += dx;
+			T.Y += dy;
+			Probe = World.GetPositionFromTileCoordinates(T);
+			if (World.GetFloorTileForPosition(Probe, T, true))
+			{
+				Floors++;
+				if (World.GetFloorPositionForTile(T, FloorPos) && World.CanUnitsEnterTile(T))
+					Enterable++;
+			}
+		}
+	Unit = XGUnit(Pawn.GetGameUnit());
+	if (Unit != none && Unit.m_kReachableTilesCache != none)
+	{
+		Unit.m_kReachableTilesCache.UpdateTileCacheIfNeeded();
+		Unit.m_kReachableTilesCache.GetAllPathableTiles(Reachable);
+	}
+	`log("LongWarX2: EW map in the battle: the first soldier" @ Unit @ "can reach" @ Reachable.Length @ "tiles; the line hits" @ (StaticMeshActor(Hit) != none ? string(StaticMeshActor(Hit).StaticMeshComponent.StaticMesh) : "-") @ "collide" @ Hit.bCollideActors @ "block" @ Hit.bBlockActors @ "hidden" @ Hit.bHidden, , 'LongWarX2');
+	`log("LongWarX2: EW map in the battle:" @ n @ "pieces; around" @ At @ "(tile" @ Centre.X $ "," $ Centre.Y $ "," $ Centre.Z $ "): floor tiles" @ Floors @ "of 225, enterable" @ Enterable $ "; cover points" @ class'LWX2EWMapPieces'.static.CountCover(World, At, default.PartRadius) $ "; a line down hits" @ Hit @ "at" @ HitLocation $ "; the first soldier at" @ Pawn.Location, , 'LongWarX2');
+}
+
+/** Of the tiles 1 to 5 tiles away from the unit (a ring of 120), how many its path cache says it can reach. */
+function int CountReachableAround(XGUnit Unit)
+{
+	local XComWorldData World;
+	local TTile Centre, T;
+	local vector Probe;
+	local int dx, dy, n;
+
+	World = `XWORLD;
+	Probe = Unit.GetPawn().Location;
+	Centre = World.GetTileCoordinatesFromPosition(Probe);
+	for (dx = -5; dx <= 5; dx++)
+		for (dy = -5; dy <= 5; dy++)
+		{
+			if (dx == 0 && dy == 0)
+				continue;
+			T = Centre;
+			T.X += dx;
+			T.Y += dy;
+			Probe = World.GetPositionFromTileCoordinates(T);
+			if (World.GetFloorTileForPosition(Probe, T, true) && Unit.m_kReachableTilesCache.IsTileReachable(T))
+				n++;
+		}
+	return n;
+}
+
+/** Later, once the mission has settled: how far each soldier can move. */
+function ReportReach()
+{
+	local XGUnit Unit;
+	local array<TTile> Reachable;
+	local string Out;
+
+	foreach class'WorldInfo'.static.GetWorldInfo().AllActors(class'XGUnit', Unit)
+	{
+		if (Unit.m_kReachableTilesCache == none)
+			continue;
+		Unit.m_kReachableTilesCache.ForceCacheUpdate();
+		Unit.m_kReachableTilesCache.UpdateTileCacheIfNeeded();
+		Reachable.Length = 0;
+		Unit.m_kReachableTilesCache.GetAllPathableTiles(Reachable, 100000, false);
+		Out @= Unit.GetVisualizedGameState().GetMyTemplateName() $ ":" $ Reachable.Length $ "/" $ CountReachableAround(Unit);
+	}
+	`log("LongWarX2: EW map in the battle, later: tiles each unit can reach:" $ Out, , 'LongWarX2');
 }
 
 defaultproperties

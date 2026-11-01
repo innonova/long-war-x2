@@ -71,6 +71,23 @@ function actorTags(index: number): Tag[] | undefined {
 }
 /** An export's archetype (its export table entry, after its name): what it inherits from. */
 const archetypeOf = (index: number) => v.getInt32(exports[index].entryOffset + 20, true)
+/** A static mesh's bounds' half sizes: the first thing in its data after the properties (origin, extent, radius). */
+function meshExtent(path: string): number[] {
+  const i = exports.findIndex((e) => e.fullName === path)
+  if (i < 0) return [0, 0, 0]
+  const d = pkg.data(i + 1)
+  const dv = new DataView(d.buffer, d.byteOffset, d.byteLength)
+  const none = meta.names.indexOf('None')
+  let o = 4
+  try {
+    readTags(new Reader(d.subarray(4)), pkg)
+    while (dv.getInt32(o, true) !== none) o += 24 + dv.getInt32(o + 16, true) + (meta.names[dv.getInt32(o + 8, true)] === 'StructProperty' || meta.names[dv.getInt32(o + 8, true)] === 'ByteProperty' ? 8 : 0) + (meta.names[dv.getInt32(o + 8, true)] === 'BoolProperty' ? 1 : 0)
+  } catch {
+    return [0, 0, 0]
+  }
+  o += 8
+  return [dv.getFloat32(o + 12, true), dv.getFloat32(o + 16, true), dv.getFloat32(o + 20, true)]
+}
 /** A component's static mesh: its own, or its archetype's (placed actors store only what differs). */
 function meshOf(index: number, tags: Tag[]): string {
   for (let depth = 0; depth < 8; depth++) {
@@ -112,7 +129,7 @@ function materialsOf(index: number, tags: Tag[]): number[] {
   }
   return Array.from(slots, (r) => r ?? 0)
 }
-interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[] }
+interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[]; extent: number[] }
 const pieces: Piece[] = []
 const skipped: Record<string, number> = {}
 exports.forEach((e, i) => {
@@ -144,7 +161,46 @@ exports.forEach((e, i) => {
     rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
     scale: ds3 ? [f32(ds3, 0) * s, f32(ds3, 1) * s, f32(ds3, 2) * s] : [s, s, s],
     materials: materialsOf(ref(comp) - 1, ctags),
+    extent: [0, 0, 0],
   })
+})
+
+/** The backdrop (the sky dome, the mountains): too big to be ground; it must not collide, or it encloses the map. */
+const isBackdrop = (p: Piece) => p.extent[0]! > 2400 || p.extent[1]! > 2400 || p.extent[2]! > 1200
+const extents = new Map<string, number[]>()
+for (const p of pieces) {
+  if (!extents.has(p.mesh)) extents.set(p.mesh, meshExtent(p.mesh))
+  p.extent = extents.get(p.mesh)!.map((x, k) => Math.abs(x * p.scale[k]!))
+}
+if (process.env.LWX2_EXTENTS) for (const [m, e] of [...extents].sort((a, b) => Math.max(...b[1]) - Math.max(...a[1])).slice(0, 12)) console.log('extent', m, e.map((x) => x.toFixed(0)).join(','))
+
+// --- The play area and the drop zones ---------------------------------------------
+// The level volume (its location plus its brush's bounds: a Model's data starts with them)
+// and the player starts (one per drop zone), for placing the map as a mission's ground.
+let play: { center: number[]; extent: number[] } | undefined
+const starts: number[][] = []
+exports.forEach((e, i) => {
+  const parts = e.fullName.split('.')
+  if (parts[0] !== 'TheWorld' || parts.length !== 3) return
+  if (e.type === 'PlayerStart') {
+    const t = actorTags(i)
+    const loc = t?.find((x) => x.name === 'Location')
+    if (loc) starts.push([f32(loc, 0), f32(loc, 1), f32(loc, 2)])
+  }
+  if (e.type === 'XComLevelVolume' && !play) {
+    const t = actorTags(i)
+    const loc = t?.find((x) => x.name === 'Location')
+    const brush = t?.find((x) => x.name === 'Brush')
+    if (!loc || !brush || ref(brush) <= 0) return
+    const d = pkg.data(ref(brush))
+    const dv = new DataView(d.buffer, d.byteOffset, d.byteLength)
+    const none = meta.names.indexOf('None')
+    let o = 4
+    while (dv.getInt32(o, true) !== none) o += 24 + dv.getInt32(o + 16, true)
+    o += 8
+    const b = Array.from({ length: 6 }, (_, k) => dv.getFloat32(o + 4 * k, true))
+    play = { center: [f32(loc, 0) + b[0]!, f32(loc, 1) + b[1]!, f32(loc, 2) + b[2]!], extent: [b[3]!, b[4]!, b[5]!] }
+  }
 })
 
 // --- The materials' textures, for XCOM 2 stand-ins --------------------------------
@@ -269,6 +325,14 @@ const lines = [
   '; Not in the repository: generated from the player\'s own Enemy Within install.',
   '[LongWarX2.LWX2EWMapPieces]',
   `MapPackage="${basename(out, '.upk')}"`,
+  ...(play
+    ? [
+        '; The play area (EW\'s level volume: centre and half sizes) and the drop zones (its player starts).',
+        `PlayCenter=(X=${n(play.center[0]!)},Y=${n(play.center[1]!)},Z=${n(play.center[2]!)})`,
+        `PlayExtent=(X=${n(play.extent[0]!)},Y=${n(play.extent[1]!)},Z=${n(play.extent[2]!)})`,
+      ]
+    : []),
+  ...starts.map((p) => `+DropZones=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
   '; XCOM 2 cannot draw EW\'s materials: each is replaced by an instance of one of these parents',
   '; (by the kind of the EW material) given the EW textures. Empty: the EW materials are kept.',
   'PropParent="Materials.Approved.Props_SD"',
@@ -279,7 +343,7 @@ const lines = [
   ),
   ...pieces.map(
     (p) =>
-      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''})`,
+      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''}${isBackdrop(p) ? ',Backdrop=true' : ''})`,
   ),
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')
