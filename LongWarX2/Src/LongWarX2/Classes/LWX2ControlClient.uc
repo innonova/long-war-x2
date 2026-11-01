@@ -56,7 +56,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
-		Out.AddItem("give-to <soldier> <item template>: an item put on a soldier (a test aid) | abilities: in a mission, each soldier's abilities and charges | use <soldier> <ability> [target, 99: force the nearest enemy, 98: at the soldier's feet]: an ability used (no target: the targets) | enemies | spawn [alien] [tiles]: an alien dropped near the squad | capture: the arc thrower's capture on the nearest enemy (test aids)");
+		Out.AddItem("give-to <soldier> <item template>: an item put on a soldier (a test aid) | abilities: in a mission, each soldier's abilities and charges | use <soldier> <ability> [target, 99: force the nearest enemy, 98: at the soldier's feet, 97: at the nearest alien]: an ability used (no target: the targets) | enemies | spawn [alien] [tiles]: an alien dropped near the squad | capture: the arc thrower's capture on the nearest enemy (test aids)");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
 		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid) | hqassault: the HQ assault from now (a test aid)");
 		Out.AddItem("base: the base's tiles, numbers and facilities | base set <column> <row> <facility>: placed at once (a test aid) | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
@@ -931,6 +931,8 @@ function string UseAbility(string Who, name AbilityName, int TargetIndex, option
 	local array<vector> Here;
 	local XComGameState_Ability Ability;
 	local AvailableTarget Area;
+	local XComGameState_Unit Near;
+	local int Best;
 	local int i;
 
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
@@ -956,10 +958,21 @@ function string UseAbility(string Who, name AbilityName, int TargetIndex, option
 			Action.AvailableCode = 'AA_Success';
 			TargetIndex = 0;
 		}
-		// 98: at the soldier's own feet (a grenade's smoke on the soldier: a test aid).
-		if (TargetIndex == 98)
+		// 98: at the soldier's own feet (a grenade's smoke on the soldier); 97: at the nearest alien (test aids).
+		if (TargetIndex == 98 || TargetIndex == 97)
 		{
-			Here.AddItem(`XWORLD.GetPositionFromTileCoordinates(Unit.TileLocation));
+			Near = Unit;
+			if (TargetIndex == 97)
+			{
+				Best = MaxInt;
+				foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Target)
+					if (Target.GetTeam() == eTeam_Alien && Target.IsAlive() && !Target.bRemovedFromPlay && Unit.TileDistanceBetween(Target) < Best)
+					{
+						Best = Unit.TileDistanceBetween(Target);
+						Near = Target;
+					}
+			}
+			Here.AddItem(`XWORLD.GetPositionFromTileCoordinates(Near.TileLocation));
 			if (Action.AvailableTargets.Length == 0)
 				Action.AvailableTargets.Length = 1;
 			// The units in its area, as the targeting UI gathers them before it activates the ability.

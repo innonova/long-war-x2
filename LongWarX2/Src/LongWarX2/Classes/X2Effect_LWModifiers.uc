@@ -94,6 +94,14 @@ function int Holds(name Condition, XComGameState_Unit Attacker, XComGameState_Un
 	case 'Explosive':
 		Weapon = AbilityState != none ? AbilityState.GetSourceWeapon() : none;
 		return (Weapon != none && (X2GrenadeTemplate(Weapon.GetMyTemplate()) != none || Weapon.GetMyTemplateName() == 'LWSmall_218')) ? 1 : 0;
+	// Sapper: grenades only (not rockets).
+	case 'Grenade':
+		Weapon = AbilityState != none ? AbilityState.GetSourceWeapon() : none;
+		return (Weapon != none && X2GrenadeTemplate(Weapon.GetMyTemplate()) != none) ? 1 : 0;
+	// HEAT Warheads: rockets and grenades against robots.
+	case 'ExplosiveVsRobotic':
+		Weapon = AbilityState != none ? AbilityState.GetSourceWeapon() : none;
+		return (Target != none && Target.IsRobotic() && Weapon != none && (X2GrenadeTemplate(Weapon.GetMyTemplate()) != none || Weapon.GetMyTemplateName() == 'LWSmall_218')) ? 1 : 0;
 	case 'GunnerShot':
 		Weapon = AbilityState != none ? AbilityState.GetSourceWeapon() : none;
 		if (Weapon == none || (AbilityState.GetMyTemplateName() != 'StandardShot' && AbilityState.GetMyTemplateName() != 'RapidFire' && AbilityState.GetMyTemplateName() != 'RapidFire2'))

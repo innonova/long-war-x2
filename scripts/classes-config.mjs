@@ -181,6 +181,10 @@ const REAL = {
   // "Any unit hit takes additional damage from all sources for the next <ShredderRocketDamageEffectDuration> turns."
   // EW applies the shred natively; +33 % is EW's documented factor (APPROXIMATION).
   LW_ShredderAmmo: () => ({ ShredPct: 33, ShredTurns: c('SHREDDER_ROCKET_DURATION') }),
+  // "Your grenades and mines do one additional damage to enemies" (and more to the environment: not done).
+  LW_Sapper: () => ({ Damage: 1, DamageIf: 'Grenade' }),
+  // "Your rockets and grenades do an additional 50% damage to robotic enemies after damage reduction is assessed."
+  LW_HEATWarheads: () => ({ DamagePct: c('HEATAMMO_DMG_MULTIPLIER', 100) - 100, DamageIf: 'ExplosiveVsRobotic' }),
   // In the cloud of the soldier's smoke grenades (X2Effect_LWSmoke, added to them: AddSmokeBonuses). Combat Drugs'
   // text says +20 critical chance; its constant (used here) is 10.
   LW_DenseSmoke: () => ({ SmokeDefense: c('DENSE_SMOKE_DEFENSE_BONUS') }),

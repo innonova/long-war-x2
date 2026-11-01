@@ -499,3 +499,21 @@ from a pod; the `effects` aid now shows action and reserve points):
   factor cannot be read. 33 % is EW's documented one (APPROXIMATION).
 - **Close Combat Specialist fires at every enemy that closes in**, once each
   a turn, not once a turn in all.
+
+## Report (2026-11-02 night, Sapper and HEAT Warheads)
+
+- **Sapper**: grenades do +1 damage (condition `Grenade`: grenades only,
+  not rockets). The extra damage to the environment is not done.
+- **HEAT Warheads**: rockets and grenades do +50 % to robots
+  (`HEATAMMO_DMG_MULTIPLIER`; condition `ExplosiveVsRobotic`).
+- **Checked:** a frag grenade (base 3) thrown by a soldier with Sapper took
+  4 from a Sectoid. HEAT Warheads is not seen in play: no robot was in the
+  blast.
+- **Test aid:** `use <soldier> <ability>:<item> 97` aims at the nearest
+  alien's tile.
+- **Not done, for want of Long War's numbers (they are in EW's code, not
+  its constants):** Bombard's and Javelin's range, Extra Conditioning's hit
+  points per armour.
+- **Not done, for want of a mechanism:** Lock N' Load's extra shot (XCOM 2
+  changes a clip's size only through weapon upgrades; its reload already
+  leaves the turn going).
