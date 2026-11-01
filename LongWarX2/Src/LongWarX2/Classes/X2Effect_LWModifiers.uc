@@ -15,6 +15,8 @@ var name AimIf, CritIf, DefenseIf, DamageIf;
 var float Param;
 var int MaxStacks;
 var string Reason;
+/** Set while working out damage: the shot is a critical hit. */
+var bool bCrit;
 
 /** How many times the condition holds for this shot: 0 (no), 1, or the count for PerVisibleEnemy. */
 function int Holds(name Condition, XComGameState_Unit Attacker, XComGameState_Unit Target, XComGameState_Ability AbilityState, bool bAsTarget)
@@ -55,6 +57,15 @@ function int Holds(name Condition, XComGameState_Unit Attacker, XComGameState_Un
 		if (Condition == 'InLowCover')
 			return VisInfo.TargetCover == CT_MidLevel ? 1 : 0;
 		return VisInfo.TargetCover == CT_Standing ? 1 : 0;
+	case 'CritPerSquadVisibleEnemy':
+		// On a critical hit: one per enemy the squad sees (the most any of them sees), up to MaxStacks.
+		if (!bCrit)
+			return 0;
+		n = 0;
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Other)
+			if (Other.GetTeam() == Me.GetTeam() && Other.IsAlive() && !Other.bRemovedFromPlay)
+				n = Max(n, class'X2TacticalVisibilityHelpers'.static.GetNumVisibleEnemyTargetsToSource(Other.ObjectID));
+		return MaxStacks > 0 ? Min(n, MaxStacks) : n;
 	case 'TargetRobotic':
 		return (Target != none && Target.IsRobotic()) ? 1 : 0;
 	case 'Primary':
@@ -99,6 +110,7 @@ function int GetAttackingDamageModifier(XComGameState_Effect EffectState, XComGa
 {
 	if ((Damage == 0 && DamagePct == 0) || CurrentDamage <= 0)
 		return 0;
+	bCrit = AppliedData.AbilityResultContext.HitResult == eHit_Crit;
 	if (DamagePct != 0)
 		return (CurrentDamage * DamagePct / 100) * Holds(DamageIf, Attacker, XComGameState_Unit(TargetDamageable), AbilityState, false);
 	return Damage * Holds(DamageIf, Attacker, XComGameState_Unit(TargetDamageable), AbilityState, false);

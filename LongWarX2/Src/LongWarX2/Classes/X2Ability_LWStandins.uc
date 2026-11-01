@@ -16,6 +16,10 @@ struct LWStandin
 	/** A free standard shot under this condition, once a turn (X2Effect_LWFreeShot); KeepOne: it costs one action. */
 	var name FreeShotIf;
 	var bool KeepOne;
+	/** Not a passive: SnapShot (a one-action shot with the weapon, Aim as its built-in modifier). */
+	var name Kind;
+	/** Immunities (Panic …), as XCOM 2's damage immunity effect has them. */
+	var array<name> ImmuneTo;
 };
 
 var config array<LWStandin> Standins;
@@ -27,12 +31,33 @@ static function array<X2DataTemplate> CreateTemplates()
 
 	foreach default.Standins(S)
 	{
-		if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '')
+		if (S.Kind == 'SnapShot')
+			Templates.AddItem(SnapShot(S));
+		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0)
 			Templates.AddItem(Passive(S));
 		else
 			Templates.AddItem(PurePassive(S.Name, S.Icon, false, 'eAbilitySource_Perk', true));
 	}
 	return Templates;
+}
+
+/**
+ * Long War's Snap Shot for the sniper classes: a shot with one action (XCOM 2's sniper rifle needs
+ * both), at Long War's aim penalty; the full shot stays as it is.
+ */
+static function X2AbilityTemplate SnapShot(LWStandin S)
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityToHitCalc_StandardAim Aim;
+
+	Template = class'X2Ability_WeaponCommon'.static.Add_StandardShot(S.Name);
+	Template.IconImage = S.Icon;
+	Template.bDontDisplayInAbilitySummary = false;
+	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.STANDARD_SHOT_PRIORITY + 1;
+	Aim = new class'X2AbilityToHitCalc_StandardAim';
+	Aim.BuiltInHitMod = S.Aim;
+	Template.AbilityToHitCalc = Aim;
+	return Template;
 }
 
 /** A passive perk with its bonuses, shown in the soldier's perks. */
@@ -42,6 +67,8 @@ static function X2AbilityTemplate Passive(LWStandin S)
 	local X2Effect_LWModifiers Effect;
 	local X2Effect_PersistentStatChange Stats;
 	local X2Effect_LWFreeShot Free;
+	local X2Effect_DamageImmunity Immunity;
+	local name Immune;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, S.Name);
 	Template.IconImage = S.Icon;
@@ -70,6 +97,15 @@ static function X2AbilityTemplate Passive(LWStandin S)
 	Effect.MaxStacks = S.MaxStacks;
 	Effect.Reason = Template.LocFriendlyName;
 	Template.AddTargetEffect(Effect);
+
+	if (S.ImmuneTo.Length > 0)
+	{
+		Immunity = new class'X2Effect_DamageImmunity';
+		Immunity.BuildPersistentEffect(1, true, false, false);
+		foreach S.ImmuneTo(Immune)
+			Immunity.ImmuneTypes.AddItem(Immune);
+		Template.AddTargetEffect(Immunity);
+	}
 
 	if (S.FreeShotIf != '')
 	{

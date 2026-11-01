@@ -123,6 +123,10 @@
    "perk": "ePerk_WilltoSurvive"
   },
   {
+   "name": "LW_SnapShotRocket",
+   "perk": "ePerk_SnapShot"
+  },
+  {
    "name": "LW_FireInTheHole",
    "perk": "ePerk_Foundry_AdvancedFlight"
   },
@@ -133,10 +137,6 @@
   {
    "name": "LW_ShredderAmmo",
    "perk": "ePerk_ShredderRocket"
-  },
-  {
-   "name": "LW_Suppression",
-   "perk": "ePerk_FocusedSuppression"
   },
   {
    "name": "LW_Opportunist",

@@ -63,9 +63,20 @@ const SAME = {
   ePerk_RapidFire: 'RapidFire',
   ePerk_TracerBeams: 'HoloTargeting',
   ePerk_FieldMedic: 'FieldMedic',
+  ePerk_FocusedSuppression: 'Suppression', // Long War's Suppression is EW's Focused Suppression slot
 }
+/** XCOM 2's abilities that work through a weapon: given with it, as XCOM 2's own classes give them (DefaultClassData.ini). */
+const WEAPON_SLOT = { LW_SnapShot: 'eInvSlot_PrimaryWeapon', InTheZone: 'eInvSlot_PrimaryWeapon', CoveringFire: 'eInvSlot_PrimaryWeapon', RapidFire: 'eInvSlot_PrimaryWeapon', HoloTargeting: 'eInvSlot_PrimaryWeapon', Suppression: 'eInvSlot_PrimaryWeapon' }
 const RANKS = ['Corporal1', 'Sergeant1', 'Lieutenant1', 'Captain1', 'Major', 'Colonel1']
 const RANK_NAMES = ['eRank_Squaddie', 'eRank_Corporal', 'eRank_Sergeant', 'eRank_Lieutenant', 'eRank_Captain', 'eRank_Major', 'eRank_Colonel']
+
+/** A perk in a class's tree: as abilityFor, but Snap Shot is the sniper classes' shot only (for a Rocketeer it is about rockets). */
+function abilityForClass(perk, cls) {
+  if (perk !== 'ePerk_SnapShot' || cls.weapons.includes('sniper_rifle')) return abilityFor(perk)
+  const name = 'LW_SnapShotRocket'
+  if (!standins.has(name)) standins.set(name, { perk, icon: 'UIPerk_standard' })
+  return name
+}
 
 // --- Long War's data ---------------------------------------------------------------
 const trees = new Map()
@@ -134,11 +145,16 @@ const REAL = {
   LW_HitAndRun: () => ({ FreeShotIf: 'TargetExposed' }),
   LW_CloseEncounters: () => ({ FreeShotIf: 'Within', Param: 6 }),
   LW_LightEmUp: () => ({ FreeShotIf: 'FirstAction', KeepOne: true }),
+  // The sniper classes' Snap Shot: a one-action shot at Long War's penalty (the Rocketeer's is another perk: LW_SnapShotRocket).
+  LW_SnapShot: () => ({ Kind: 'SnapShot', Aim: consts.has('SNAP_SHOT_AIM_PENALTY') ? -c('SNAP_SHOT_AIM_PENALTY') : undefined }),
+  LW_Steadfast: () => ({ ImmuneTo: ['Panic'] }),
+  // "Bonus damage on critical hits, with additional bonuses (up to +6) based on how many enemies your squad can see."
+  LW_BringEmOn: () => ({ Damage: 1, DamageIf: 'CritPerSquadVisibleEnemy', MaxStacks: 6 }),
 }
 const realFields = (name) => {
   const f = REAL[name]?.()
   if (!f || Object.values(f).some((v) => v === undefined)) return ''
-  return Object.entries(f).map(([k, v]) => `, ${k}=${v === true ? 'true' : v}`).join('')
+  return Object.entries(f).map(([k, v]) => `, ${k}=${Array.isArray(v) ? `(${v.join(',')})` : v === true ? 'true' : v}`).join('')
 }
 
 // --- The classes -----------------------------------------------------------------------
@@ -190,13 +206,13 @@ for (const c of CLASSES) {
     'bCanHaveBonds=true',
     'BaseAbilityPointsPerPromotion=3',
     `; squaddie: ${titleOf(c.squaddie)}`,
-    `+SoldierRanks=(AbilitySlots=(${slot(abilityFor(c.squaddie))}, ${slot('PistolStandardShot', 'eInvSlot_SecondaryWeapon')}), ${stats(c.id, RANK_NAMES[0])})`,
+    `+SoldierRanks=(AbilitySlots=(${slot(abilityForClass(c.squaddie, c), WEAPON_SLOT[abilityForClass(c.squaddie, c)])}, ${slot('PistolStandardShot', 'eInvSlot_SecondaryWeapon')}), ${stats(c.id, RANK_NAMES[0])})`,
   )
   RANKS.forEach((rank, k) => {
     const perks = rows.map((r) => r[rank]).filter((p) => p && p !== '0')
     out.push(
       `; ${RANK_NAMES[k + 1].replace('eRank_', '').toLowerCase()}: ${perks.map(titleOf).join(' / ')}`,
-      `+SoldierRanks=(AbilitySlots=(${perks.map((p) => slot(abilityFor(p))).join(', ')}), ${stats(c.id, RANK_NAMES[k + 1])})`,
+      `+SoldierRanks=(AbilitySlots=(${perks.map((p) => slot(abilityForClass(p, c), WEAPON_SLOT[abilityForClass(p, c)])).join(', ')}), ${stats(c.id, RANK_NAMES[k + 1])})`,
     )
   })
 }
