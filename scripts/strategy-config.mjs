@@ -89,6 +89,8 @@ const out = [
   `PanicUfoShotDown=${one('PANIC_UFO_SHOOTDOWN')}`,
   `PanicUfoAssault=${one('PANIC_UFO_ASSAULT')}`,
   `PanicUfoEscaped=${one('PANIC_UFO_ESCAPED')}`,
+  // The squad a mission takes at the campaign's start (the Officer Training School's Squad Size I and II add to it).
+  `SkyrangerCapacity=${one('SKYRANGER_CAPACITY')}`,
   `PanicSatAddedCountry=${one('PANIC_SAT_ADDED_COUNTRY')}`,
   `PanicSatAddedContinent=${one('PANIC_SAT_ADDED_CONTINENT')}`,
   `PanicSatDestroyedCountry=${one('PANIC_SAT_DESTROYED_COUNTRY')}`,

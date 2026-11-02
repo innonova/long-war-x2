@@ -86,6 +86,8 @@ var config int UfoSecondPassFindSatPct;
 var config int PanicAlienBaseCountry;
 var config int PanicAlienBaseContinent;
 /** The same once the Foundry's Stealth Satellites are done. */
+/** The soldiers a mission takes (Long War's SKYRANGER_CAPACITY, before the Officer Training School's upgrades). */
+var config int SkyrangerCapacity;
 var config int UfoFindStealthSatPct;
 var config int UfoSecondPassFindStealthSatPct;
 /** The chance (%) a terror target is the most panicked candidate rather than one of the top three. */

@@ -388,3 +388,11 @@ The Lost", and a Lost swarm was drawn by a grenade.
 
 - **The mission's gameplay tags are cleared whole**, not one by one. Only
   sitreps and the Chosen put tags there; Long War has neither.
+
+## Report (2026-11-02 night, Long War's squad size)
+
+**A mission takes Long War's squad of 6** (`SKYRANGER_CAPACITY`, now in the
+strategy config as `SkyrangerCapacity`), not XCOM 2's 4. The Officer
+Training School's Squad Size I and II (+1 each) wait for the school.
+- **Checked:** "launching Hack_ADV on Plot_TWN_Guerilla_LgObj_Boulevard
+  with 6 soldiers"; all six landed and could act.

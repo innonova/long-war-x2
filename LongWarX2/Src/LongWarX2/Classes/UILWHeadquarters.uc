@@ -53,10 +53,16 @@ function Refresh()
 	else
 		Last.SetText("Last mission: none yet");
 	S = "Squad for the next mission:\n";
-	Soldiers = ReadySoldiers(4);
+	Soldiers = ReadySoldiers(SquadSize());
 	foreach Soldiers(Unit)
 		S $= Unit.GetName(eNameType_RankFull) @ "-" @ Unit.GetSoldierClassTemplate().DisplayName @ "-" @ Unit.GetNumMissions() @ "missions," @ Unit.GetNumKills() @ "kills\n";
 	Squad.SetText(S);
+}
+
+/** Long War's squad: its Skyranger's capacity (4 if the config is from before it was generated). */
+static function int SquadSize()
+{
+	return class'LWStrategyRules'.default.SkyrangerCapacity > 0 ? class'LWStrategyRules'.default.SkyrangerCapacity : 4;
 }
 
 /** The first soldiers able to go on a mission. */
@@ -100,7 +106,7 @@ function OnLaunch(UIButton Button)
 	local Vector2D Where;
 	local XComGameState_LWStrategy LW;
 
-	Soldiers = ReadySoldiers(4);
+	Soldiers = ReadySoldiers(SquadSize());
 	if (Soldiers.Length == 0)
 		return;
 	History = `XCOMHISTORY;
