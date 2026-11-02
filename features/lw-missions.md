@@ -783,3 +783,82 @@ with their colours, no speckle.
 - The scene is still on the dark side on several maps (dark asphalt under
   a noon light); a brighter lighting map or exposure to try.
 - A terror site on an EW map: not yet seen.
+
+## Report (2026-11-02, Enemy Within's maps as real XCOM 2 plots)
+
+The person, on the hiding and the test plots: "why do we not build a
+proper plot instead of trying to hack it in?" and, on the choice between
+one plot of our own with the map placed at run time and a real XCOM 2 map
+per EW map: "lets do option 2 … it will make life so much easier from that
+point on".
+
+**An Enemy Within map is now a real XCOM 2 plot**, written on the player's
+machine from the converted map, and XCOM 2 loads it as it loads its own
+(`LoadMap: LWX2_URB_HighwayFallen`).
+- **A template plot of our own** (`tools/maps/LWX2_EWPlotTemplate.umap`):
+  made in the SDK editor from T3D text we write (`tools/maps/template.py`:
+  a box level volume, a group spawn, a parcel slot, and one sample each of
+  a level actor with its mesh component, a movable point light and a
+  movable spot light), pasted into a blank map, its geometry built, saved.
+  The editor's save builds its tile grid (32 × 32 × 18). And an empty
+  parcel map (`LWX2_EmptyParcel.umap`), so XCOM 2's objective parcel brings
+  nothing into the plot.
+- **The plot writer** (`tools/convert/ew-plot.ts`) clones the template's
+  samples, with their properties set, for each EW piece (an
+  `XComLevelActor` and its `StaticMeshComponent`: mesh, place, rotation,
+  scale, materials; backdrop pieces without collision), each EW material
+  (a `MaterialInstanceConstant` of the XCOM 2 parent for its kind, with
+  EW's textures, the white mask and no specular), each EW point and spot
+  light, and each drop zone (a group spawn). It sizes the level volume and
+  the tile grid to EW's play area (two tiles to spare on each side, on EW's
+  floor) and writes the level's actor list. upkit writes the package (a
+  new GUID each).
+- **The converter nests EW's carried packages in the map's package**
+  (`ew-map.ts`: their forced-export flag cleared). `Qighway_B.Meshes.X` is
+  now `URB_HighwayFallen.Qighway_B.Meshes.X`, so a plot imports it the
+  ordinary way, by loading the map's package. The config paths it writes
+  carry the prefix.
+- **Our own plot type, parcel, mission and light** (`Config/XComPlots.ini`,
+  `XComParcels.ini`, `XComMissionDefs.ini`, `XComMaps.ini`): plot type
+  `LWX2_EW`; mission `LWX2_EWMission` (XCOM 2's test kismet `Obj_Test`,
+  `NullSchedule`, no timer or items); a clear day for the type.
+- **The mod** launches onto `LWX2_<map>` when it is listed as a plot
+  (`UILWHeadquarters.UseEWPlot`). On it, nothing is placed or hidden: the
+  pods stand at EW's coordinates (`LWX2EWMapPieces.OnOwnPlot`). Without a
+  plot for the map, the template with the run-time placement is the
+  fallback.
+- On the test machine `tools/test/build.ps1` links `tools/maps/*.umap` and
+  the generated plots into the built mod and lists the plots.
+
+**Checked** (the test machine, URB_HighwayFallen reconverted and its plot
+written: 786 pieces, 87 stand-in materials, 83 lights, one drop zone,
+24 × 72 × 14 tiles, 650 KB; a campaign abduction): "launching
+LWX2_EWMission on LWX2_URB_HighwayFallen"; the map loaded in about 11 s,
+where the run-time placement took over 30; "on its own plot"; Long War's
+squad of 7 at 4 EW pods; Long War's objective; no soldier boxed in, the
+best reaching 482 tiles. On screen: the EW map with the squad on the
+highway's deck.
+
+### Decisions
+
+- **Clones of samples from an editor-made template**, not a level written
+  from nothing: the editor makes the parts whose format is hardest (the
+  level, the world, the volume's brush and its generated mesh, the tile
+  grid's record), once; the writer only adds actors and sets properties.
+- **The plot imports EW's content from the converted package** rather than
+  holding it: one converted package per map as before, a small plot
+  (hundreds of KB) beside it.
+- **EW's sun and sky lights are not written**: XCOM 2's lighting map
+  lights the plot. EW's point and spot lights are, without shadows.
+
+### Left open
+
+- The setup program does not write plots yet, and maps converted by an
+  earlier setup must be converted again (nested packages): the next step.
+- EW's lights at ×3 tint the squad orange under XCOM 2's sun.
+- Warnings: the template references editor-only packages (`UI_Cover`) the
+  retail game does not have; no mission template for `LWX2_EWMission`
+  (`GetMissionSquad`).
+- Terror sites on our mission bring no civilians yet (EW's civilian spawn
+  points to use); interiors' roofs (building volumes, now authorable in the
+  plot); EW's destructible pieces as XCOM 2 destructibles.

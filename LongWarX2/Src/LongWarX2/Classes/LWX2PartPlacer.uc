@@ -19,6 +19,11 @@ var config vector PlacedAt;
 /** The whole EW map's shift from EW's coordinates to the mission's, once placed (for its pods: LWMissionSquads; never saved). */
 var config vector EWShift;
 var config bool bEWPlaced;
+/** The fog of war on an EW map: ground not yet seen drawn as seen before (Enemy Within never blacked it out), and the two
+ *  fog levels (0: XCOM 2's own) set on the world data once the map is placed. */
+var config bool FogNeverSeenAsHaveSeen;
+var config float FogNeverSeen;
+var config float FogHaveSeen;
 
 event Tick(float DeltaTime)
 {
@@ -52,8 +57,6 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 {
 	local vector EWFloor, At, Mid, Size, Spawn, DropZone;
 	local array<Actor> Placed;
-	local Actor A;
-	local PrimitiveComponent Prim;
 	local int Hidden;
 	local array<vector> DropZones;
 
@@ -62,26 +65,7 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 	Size = World.WorldBounds.Max - World.WorldBounds.Min;
 	`log("LongWarX2: EW map whole: the generated map's level volume is" @ int(Size.X / 96) @ "x" @ int(Size.Y / 96) @ "x" @ int(Size.Z / 96) @ "tiles; EW's play area" @ int(2 * class'LWX2EWMapPieces'.static.Map().PlayExtent.X / 96) @ "x" @ int(2 * class'LWX2EWMapPieces'.static.Map().PlayExtent.Y / 96), , 'LongWarX2');
 	// The generated map's geometry: hidden and without collision (its spawn points, volumes and lights stay).
-	foreach AllActors(class'Actor', A)
-	{
-		if (LWX2LevelActor(A) != none || DynamicSMActor_Spawnable(A) != none)
-			continue;
-		if (StaticMeshActorBase(A) == none && DynamicSMActor(A) == none && !A.bWorldGeometry)
-			continue;
-		if (A.Location.X < World.WorldBounds.Min.X - 960 || A.Location.X > World.WorldBounds.Max.X + 960
-			|| A.Location.Y < World.WorldBounds.Min.Y - 960 || A.Location.Y > World.WorldBounds.Max.Y + 960)
-			continue;
-		A.SetHidden(true);
-		A.SetCollision(false, false);
-		// Its components too: they block traces (the tile data is built by tracing) on their own.
-		foreach A.ComponentList(class'PrimitiveComponent', Prim)
-		{
-			Prim.SetTraceBlocking(false, false);
-			Prim.SetActorCollision(false, false);
-			Prim.SetBlockRigidBody(false);
-		}
-		Hidden++;
-	}
+	Hidden = HideForeign(self, World);
 	// EW's floor (the bottom of its play area) on the generated map's floor at its spawn.
 	EWFloor = class'LWX2EWMapPieces'.static.Map().PlayCenter;
 	EWFloor.Z -= class'LWX2EWMapPieces'.static.Map().PlayExtent.Z;
@@ -114,8 +98,56 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 	if (Screen != none)
 		Screen.BattleDataState.MapData.SoldierSpawnLocation = Spawn;
 	Rebuild(Parcels);
+	Fog(World);
 	default.PlacedAt = Spawn;
 	`log("LongWarX2: EW map whole:" @ Hidden @ "actors of the generated map hidden; EW's map centred at" @ At $ "; the soldiers' spawn moved to" @ Parcels.SoldierSpawn.Location, , 'LongWarX2');
+}
+
+/**
+ * XCOM 2's own geometry around the EW map (the plot's, its parcels', their cars, doors and other destructibles): hidden,
+ * each component too (destructibles and the building visibility system show actors again), and without collision.
+ * Ours, units, lights and volumes are left. Called when the map is placed and again when the battle starts, for what
+ * arrived since. Returns how many it hid.
+ */
+static function int HideForeign(Actor Finder, XComWorldData World)
+{
+	local Actor A;
+	local PrimitiveComponent Prim;
+	local int Hidden;
+
+	foreach Finder.AllActors(class'Actor', A)
+	{
+		if (LWX2LevelActor(A) != none || DynamicSMActor_Spawnable(A) != none)
+			continue;
+		if (StaticMeshActorBase(A) == none && DynamicSMActor(A) == none && FracturedStaticMeshActor(A) == none && !A.bWorldGeometry)
+			continue;
+		if (A.Location.X < World.WorldBounds.Min.X - 960 || A.Location.X > World.WorldBounds.Max.X + 960
+			|| A.Location.Y < World.WorldBounds.Min.Y - 960 || A.Location.Y > World.WorldBounds.Max.Y + 960)
+			continue;
+		A.SetHidden(true);
+		A.SetCollision(false, false);
+		// Its components too: they block traces (the tile data is built by tracing) and draw on their own.
+		foreach A.ComponentList(class'PrimitiveComponent', Prim)
+		{
+			Prim.SetHidden(true);
+			Prim.SetTraceBlocking(false, false);
+			Prim.SetActorCollision(false, false);
+			Prim.SetBlockRigidBody(false);
+		}
+		Hidden++;
+	}
+	return Hidden;
+}
+
+/** The fog of war as configured (FogNeverSeenAsHaveSeen, FogNeverSeen, FogHaveSeen), and its levels logged. */
+static function Fog(XComWorldData World)
+{
+	`log("LongWarX2: EW map: fog of war was: never seen" @ World.FOWNeverSeen $ ", have seen" @ World.FOWHaveSeen $ ", never seen shown as seen" @ World.bShowNeverSeenAsHaveSeen, , 'LongWarX2');
+	World.bShowNeverSeenAsHaveSeen = default.FogNeverSeenAsHaveSeen;
+	if (default.FogNeverSeen > 0)
+		World.FOWNeverSeen = default.FogNeverSeen;
+	if (default.FogHaveSeen > 0)
+		World.FOWHaveSeen = default.FogHaveSeen;
 }
 
 /**

@@ -57,6 +57,11 @@ event OnInit(UIScreen Screen)
 	// On an Enemy Within map, Long War's pods at its places (lw-missions.md, step 2).
 	if (class'LWX2EWMapPieces'.static.HasMap())
 	{
+		// XCOM 2's geometry that arrived after the map was placed (or was shown again since), hidden; on the EW map's own
+		// plot there is none (and its pieces are XCOM 2 level actors themselves).
+		if (!class'LWX2EWMapPieces'.static.OnOwnPlot())
+			`log("LongWarX2: EW map: at the battle's start," @ class'LWX2PartPlacer'.static.HideForeign(Screen, `XWORLD) @ "of XCOM 2's actors hidden (again)", , 'LongWarX2');
+		class'LWX2PartPlacer'.static.Fog(`XWORLD);
 		class'LWMissionSquads'.static.SpawnAtEWPods();
 		// Soldiers boxed in by EW's walls moved out, once their paths are known.
 		BoxedTries = 0;

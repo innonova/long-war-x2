@@ -24,6 +24,13 @@ struct LWX2Scalar
 	var float Value;
 };
 
+/** A texture parameter set on every stand-in (StandinTextures). */
+struct LWX2TextureParam
+{
+	var name Name;
+	var string Path;
+};
+
 /** An EW material's textures, for its XCOM 2 stand-in; Kind picks the parent. */
 struct LWX2Look
 {
@@ -49,6 +56,8 @@ var config string FoliageParent;
 var config string AlienParent;
 /** Scalars set on every stand-in (SpecularScale 0: the parents' placeholder mask made EW's surfaces glossy and grey). */
 var config array<LWX2Scalar> StandinScalars;
+/** Textures set on every stand-in (Masks white: the parents' own value for "no mask"; their placeholder darkened everything). */
+var config array<LWX2TextureParam> StandinTextures;
 /** EW's alien pods (lw-missions.md, step 2): where its aliens stand, the commander's pod, how many. */
 struct LWX2Pod
 {
@@ -154,6 +163,18 @@ static function array<string> ConvertedMaps()
  * A converted map for Long War's mission kind (and ship, for a crash or a landed UFO), at random among those Long War
  * lists for it; "" when this machine has none converted. A ship without a map of its own takes any of the kind.
  */
+/**
+ * Whether the mission is on the EW map's own plot (LWX2_<map>, written by tools/convert/ew-plot.ts): its geometry, lights
+ * and spawns are in the plot, at EW's coordinates, and nothing is placed or hidden at run time.
+ */
+static function bool OnOwnPlot()
+{
+	local XComGameState_BattleData Battle;
+
+	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+	return Battle != none && MapName() != "" && Battle.MapData.PlotMapName ~= ("LWX2_" $ MapName());
+}
+
 static function string ChooseMap(name Kind, int Ship)
 {
 	local array<string> Converted, Fits, Any;
@@ -364,6 +385,12 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 		MIC.SetParent(Parent);
 		for (k = 0; k < default.StandinScalars.Length; k++)
 			MIC.SetScalarParameterValue(default.StandinScalars[k].Name, default.StandinScalars[k].Value);
+		for (k = 0; k < default.StandinTextures.Length; k++)
+		{
+			T = Texture(DynamicLoadObject(default.StandinTextures[k].Path, class'Texture', true));
+			if (T != none)
+				MIC.SetTextureParameterValue(default.StandinTextures[k].Name, T);
+		}
 		T = Texture(DynamicLoadObject(L.Diffuse, class'Texture', true));
 		if (T != none)
 			MIC.SetTextureParameterValue('Diffuse', T);

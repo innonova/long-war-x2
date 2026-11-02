@@ -423,6 +423,19 @@ meta.nameEntries.forEach((n: { name: string; offset: number }) => {
   bytes.set(new TextEncoder().encode(to), at)
   if (carried.has(n.name)) renamedPackages.set(n.name, to)
 })
+// The carried packages nested in the map's own package rather than loaded as packages of their own: their forced-export
+// flag cleared, so Qighway_B.Meshes.X is URB_HighwayFallen.Qighway_B.Meshes.X. A plot (ew-plot.ts) can then import them
+// the ordinary way, by loading the map's package.
+let nested = 0
+exports.forEach((e) => {
+  if (e.type !== 'Package' || e.outer !== 0) return
+  const at = e.entryOffset + 40
+  const flags = v.getUint32(at, true)
+  if (flags & 1) {
+    v.setUint32(at, flags & ~1, true)
+    nested++
+  }
+})
 // The textures with their mips uncompressed in the package (inline-textures.ts), after the stub.
 const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'))
 const outBytes = new Uint8Array(bytes.length + stub.length + tex.appended.length)
@@ -433,7 +446,13 @@ writeFileSync(out, outBytes)
 
 // --- The pieces as config ------------------------------------------------------------
 // Names are shared by everything in the package: a mesh named like a carried package was renamed with it.
-const rename = (path: string) => path.split('.').map((part) => renamedPackages.get(part) ?? CACHES[part] ?? part).join('.')
+// What is in a carried package is under the map's own package now (above): its path starts with the map's name.
+const mapPackage = basename(out, '.upk')
+const carriedNames = new Set(renamedPackages.values())
+const rename = (path: string) => {
+  const p = path.split('.').map((part) => renamedPackages.get(part) ?? CACHES[part] ?? part).join('.')
+  return carriedNames.has(p.split('.')[0]!) ? `${mapPackage}.${p}` : p
+}
 const n = (x: number) => (Math.abs(x) < 1e-4 ? '0' : String(Math.round(x * 1000) / 1000))
 const lines = [
   `; The static meshes of ${basename(src)}, converted on this machine by tools/convert/ew-map.ts.`,
@@ -471,7 +490,7 @@ const lines = [
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')
 const meshes = new Set(pieces.map((p) => p.mesh))
-console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed, ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB)`)
+console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed (${nested} nested), ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB)`)
 const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
 console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points, ${lights.length} lights`)

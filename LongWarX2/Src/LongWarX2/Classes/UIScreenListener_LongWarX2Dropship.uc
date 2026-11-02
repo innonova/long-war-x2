@@ -9,6 +9,15 @@ event OnInit(UIScreen Screen)
 
 	if (UIDropShipBriefing_MissionStart(Screen) == none || !class'LWX2EWMapPieces'.static.HasMap())
 		return;
+	// On the EW map's own plot: it is all there already, at EW's coordinates (its pods need no shift).
+	if (class'LWX2EWMapPieces'.static.OnOwnPlot())
+	{
+		class'LWX2PartPlacer'.default.EWShift = vect(0, 0, 0);
+		class'LWX2PartPlacer'.default.bEWPlaced = true;
+		class'LWX2PartPlacer'.static.Fog(`XWORLD);
+		`log("LongWarX2: EW map: on its own plot" @ `XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData').ObjectID, , 'LongWarX2');
+		return;
+	}
 	Placer = Screen.Spawn(class'LWX2PartPlacer');
 	Placer.bCampaign = true;
 	Placer.bWhole = true;

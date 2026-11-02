@@ -28,10 +28,28 @@ if (Test-Path $converted) {
   foreach ($content in @("$game\XComGame\Mods\LongWarX2\Content", "$sdk\XComGame\Mods\LongWarX2\Content")) {
     if (-not (Test-Path (Split-Path $content))) { continue }
     New-Item -ItemType Directory -Force $content | Out-Null
-    foreach ($f in Get-ChildItem $converted -Filter *.upk) {
+    foreach ($f in Get-ChildItem $converted | Where-Object { $_.Extension -in '.upk', '.umap' }) {
       $link = Join-Path $content $f.Name
-      if (-not (Test-Path $link)) { New-Item -ItemType HardLink -Path $link -Target $f.FullName | Out-Null }
+      if (Test-Path $link) { Remove-Item $link }
+      New-Item -ItemType HardLink -Path $link -Target $f.FullName | Out-Null
     }
+  }
+  # Each EW map's own plot (tools/convert/ew-plot.ts: LWX2_<map>.umap) listed as a plot of Long War X2's type.
+  $plots = Get-ChildItem $converted -Filter 'LWX2_*.umap' | Where-Object { $_.BaseName -ne 'LWX2_EWPlotTemplate' }
+  if ($plots) {
+    $ini = "$game\XComGame\Mods\LongWarX2\Config\XComPlots.ini"
+    Add-Content $ini ('; The plots of the Enemy Within maps converted on this machine (tools/test/build.ps1).')
+    foreach ($p in $plots) { Add-Content $ini ('+arrPlots=(MapName="' + $p.BaseName + '", strType="LWX2_EW", ExcludeFromStrategy=true, ValidBiomes[0]="Arid", ObjectiveTags[0]="LWX2_EW")') }
+  }
+}
+# Long War X2's own maps (tools/maps: the template plot, the empty parcel) linked into the built mod's Content too.
+foreach ($content in @("$game\XComGame\Mods\LongWarX2\Content", "$sdk\XComGame\Mods\LongWarX2\Content")) {
+  if (-not (Test-Path (Split-Path $content))) { continue }
+  New-Item -ItemType Directory -Force $content | Out-Null
+  foreach ($f in Get-ChildItem (Join-Path $repo 'tools\maps') -Filter *.umap) {
+    $link = Join-Path $content $f.Name
+    if (Test-Path $link) { Remove-Item $link }
+    New-Item -ItemType HardLink -Path $link -Target $f.FullName | Out-Null
   }
 }
 Select-String -Path $log -Pattern ': Error|: Warning|SUCCESS|Failed' | ForEach-Object { $_.Line.Replace("$repo\", '') }

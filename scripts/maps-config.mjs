@@ -46,6 +46,9 @@ console.log(
     "; Scalars set on every stand-in. The parents' placeholder mask (no EW texture fills it) made the surfaces glossy",
     '; and grey; no specular reads cleanly (features/lw-missions.md, compared on URB_HighwayFallen).',
     '+StandinScalars=(Name=SpecularScale, Value=0)',
+    "; and textures: the parents' mask (XCOM 2's packed light channels) white, which is their own value when a material",
+    '; has no mask (their NoMasksMap switch puts 1 in every channel); the placeholder in its place darkened every surface.',
+    '+StandinTextures=(Name=Masks, Path="EngineResources.WhiteSquareTexture")',
     ...maps,
   ].join('\r\n'),
 )

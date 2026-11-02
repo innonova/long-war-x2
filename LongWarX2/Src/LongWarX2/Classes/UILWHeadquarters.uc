@@ -15,6 +15,8 @@ var config bool TestVoiceAtLaunch;
 var config string EWPlot;
 var config string EWBiome;
 var config string EWMission;
+/** For development: every Long War mission played as this kind (1 crash site, 2 landed UFO, 3 abduction, 4 terror; 0: its own). */
+var config int ForceKind;
 
 var UIText Title, Info, Squad, Last;
 var UIButton LaunchButton, AirWarButton, AvengerButton;
@@ -146,6 +148,8 @@ function OnLaunch(UIButton Button)
 	Region = XComGameState_WorldRegion(History.GetGameStateForObjectID(XComHQ.StartingRegion.ObjectID));
 	Where = Region.GetRandom2DLocationInRegion();
 	Kind = class'XComGameState_LWStrategy'.static.Get() != none ? class'XComGameState_LWStrategy'.static.Get().PendingKind : 0;
+	if (ForceKind > 0 && Kind != 0)
+		Kind = ForceKind;
 	// Enemy Within's map for it, when the switch is on and this machine has one converted for the kind (and ship).
 	if (class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole && Kind != 0)
 	{
@@ -181,7 +185,7 @@ function OnLaunch(UIButton Button)
 		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate(Source)), Where, Region.GetReference(), Rewards, true, false);
 		Mission.GeneratedMission.SitReps.Length = 0;
 		Mission.TacticalGameplayTags.Length = 0;
-		if (EWMap == "" || UseEWPlot(Mission, Source != 'MissionSource_Retaliation') || PreferOutdoorPlot(Mission) || Attempt == 7)
+		if (EWMap == "" || UseEWPlot(Mission, true, EWMap) || PreferOutdoorPlot(Mission) || Attempt == 7)
 			break;
 		History.CleanupPendingGameState(NewGameState);
 	}
@@ -257,13 +261,26 @@ function LoadMapNow()
  * Long War's aliens stand at EW's pods and its rule ends the mission); not for a terror site, whose XCOM 2 mission brings
  * and counts the civilians. False when the plot is not in this install's list.
  */
-function bool UseEWPlot(XComGameState_MissionSite Mission, bool bTestMission)
+function bool UseEWPlot(XComGameState_MissionSite Mission, bool bTestMission, string EWMap)
 {
 	local XComParcelManager Parcels;
 	local PlotDefinition Plot;
 	local MissionDefinition Def;
 
 	Parcels = `PARCELMGR;
+	// The EW map's own plot (LWX2_<map>: ew-plot.ts, listed by the setup program) when there is one; else the template,
+	// with the map placed at run time.
+	foreach Parcels.arrPlots(Plot)
+	{
+		if (Plot.MapName ~= ("LWX2_" $ EWMap))
+		{
+			Mission.GeneratedMission.Plot = Plot;
+			Mission.GeneratedMission.Biome = Parcels.GetBiomeDefinition(EWBiome);
+			if (bTestMission && EWMission != "" && `TACTICALMISSIONMGR.GetMissionDefinitionForType(EWMission, Def))
+				Mission.GeneratedMission.Mission = Def;
+			return true;
+		}
+	}
 	foreach Parcels.arrPlots(Plot)
 	{
 		if (Plot.MapName ~= EWPlot)
