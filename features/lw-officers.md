@@ -12,7 +12,7 @@ other five projects make officers. A soldier promoted to an officer rank
 gains officer abilities, and a squad's officers bring their bonuses to the
 mission.
 
-## What Long War keeps (the Tree's samples, Long War 1.0d)
+## What Long War keeps (stock Long War 1.0)
 
 - **The projects** (`OTSBalance`, eTech 3 to 7): Lieutenant §100, Captain
   §200, Major §300, Colonel §400, Field Commander §500. Each is available

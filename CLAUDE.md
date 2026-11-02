@@ -74,11 +74,15 @@
 - **A single-target ability measures its reach by its weapon**: unbound
   (`ApplyToWeaponSlot` unset), every target is "not in range". XCOM 2's psi
   powers use the psi amp; ours are bound to the primary weapon.
-- **Long War's numbers**: the committed config is generated from the Tree's
-  samples (`xcom-ew-lw-tree/samples`: `Config/DefaultGameCore.ini`,
-  `INT2/XComGame.int`, `CookedPCConsole/*.upk`; Long War 1.0d). The Long War
-  installed on wingpu is another build (PSI_GIFT_CHANCE 0.45, not 0.65, and
-  more): use it for words on the test machine, never for committed config.
+- **Long War's numbers follow stock Long War 1.0**, never one player's
+  changes. `scripts/config-all.sh` regenerates every config from the stock
+  installer's files in the Tree's samples (`samples/Long War Mod Manager
+  1.0d-620-1-0d/LongWarFiles/_Long War EW 1.0 for PC-88-1-0.exe/{app}/XComGame`),
+  with the full game's packages under them for upkit. `samples/Config` and
+  `samples/CookedPCConsole` are the person's **modified** Long War (listed in
+  `samples/additional_mods/manual.changes.txt` and `additional_mods/Mods`):
+  read code from the stock packages (`upk_script.py <stock>/XComGame.upk …`).
+  The Long War installed on wingpu matches stock (PSI_GIFT_CHANCE 0.45).
   EW's code constants (`readConsts`) and its compiled script
   (`xcom-ew-lw-tree/scripts/upk_script.py`) give what the ini does not;
   decompiled output stays in the terminal or /tmp.

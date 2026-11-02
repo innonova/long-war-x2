@@ -115,12 +115,11 @@ and a Decisions list to review.
 - **Fixed**: XCOM 2 stopped when leaving a mission. A screen listener held
   the HUD; it would have hit any player with the development EW map on.
 - **For the person's eye**:
-  - **Which Long War the config follows.** For part of the night I
-    generated config from the test machine's Long War install, not the
-    Tree's samples (1.0d) as before. Regenerated from the samples,
-    everything came out the same except the Psi Labs' base chance (0.65
-    in the samples, 0.45 installed). Which one the port follows is a
-    question (`lw-psi.md`, the correction).
+  - **Which Long War the config follows: answered, stock Long War 1.0.**
+    The samples' ini and packages are the person's modified Long War. All
+    config is now regenerated from stock (`scripts/config-all.sh`); the
+    Psi Labs' chance is 0.45 and the arc thrower's multiplier 0.61
+    (`lw-psi.md`, the answer).
   - **XCOM 2 sometimes crashes while loading a mission map**: about 3 in
     25 loads that night, always at the same address. Not yet known whether
     it happens with the mod off (`lw-missions.md`).

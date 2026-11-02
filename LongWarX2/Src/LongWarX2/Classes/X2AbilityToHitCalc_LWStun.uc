@@ -1,7 +1,7 @@
 // Long War's arc thrower's chance: Enemy Within's stun chance (native in its code, not readable) times Long War's
-// UFO_PSI_LINK_SURVIVE, 0.85 (XGTacticalGameCore.TryStunned). APPROXIMATION of Enemy Within's part: the more of its
+// UFO_PSI_LINK_SURVIVE, 0.61 in stock Long War (XGTacticalGameCore.TryStunned; config StunBalance). APPROXIMATION of Enemy Within's part: the more of its
 // health the alien has left, the less the chance: 100 - 50 x its health's share (a full-health alien 50 %, near
-// death almost 100 %), times 0.85.
+// death almost 100 %), times StunBalance.
 class X2AbilityToHitCalc_LWStun extends X2AbilityToHitCalc config(LWGear);
 
 var config float StunBalance;

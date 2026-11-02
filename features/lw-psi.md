@@ -34,10 +34,9 @@ powers as XCOM 2 abilities in missions.
   - while W ≤ T + 80 − G: W − T + G, at least 1;
   - above that: 100 − 400 / ((W − T) + (G − 60)), at most 99;
   - plus a council bonus (not ported).
-  So with Long War 1.0d's `PSI_GIFT_CHANCE` of 0.65 (the Tree's samples,
-  which all the committed config comes from), a soldier of will 50 has
-  65 % for a will-50 power. The Long War installed on the test machine has
-  0.45, so 45 %.
+  So with stock Long War 1.0's `PSI_GIFT_CHANCE` of 0.45, a soldier of
+  will 50 has 45 % for a will-50 power. (0.65 is the person's own change;
+  see the answer below.)
 
 ## Steps
 
@@ -241,6 +240,25 @@ Regenerated from the samples:
 
 The person's own Long War may be either. Which one the port should follow
 is a question for the review.
+
+## Answer (2026-11-02, morning): stock Long War
+
+The person: follow Long War's defaults, not their own changes; 0.65 is
+theirs, and not the only one. The Tree records them:
+`samples/additional_mods/manual.changes.txt` (the ini edits) and
+`samples/additional_mods/Mods` (five patches to the packages). The stock
+installer's files are in the samples too.
+- `scripts/config-all.sh` now regenerates every config from stock. Two
+  values changed: **`PsiGiftChance` 0.45** (was 0.65) and **`StunBalance`
+  0.61** (`UFO_PSI_LINK_SURVIVE`, was 0.85). The person's other changes
+  (soldier HP and mobility, 60 starting soldiers, and so on) feed nothing
+  the port uses yet.
+- The 84 Long War functions the features cite decompile the same from the
+  stock packages; the 264 code constants and the English words are the
+  same as well. The Tree's data files regenerate identically from stock.
+- The test machine's install was right all along (0.45); the rule in
+  `CLAUDE.md` and learning #215 had it the wrong way round (corrected:
+  #217).
 
 
 ## Report (2026-11-02 night, Distortion Field)

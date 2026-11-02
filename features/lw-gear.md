@@ -400,8 +400,9 @@ is a small item, built in engineering once the Arc Thrower is researched (§100,
 - **The shot** targets a visible alien within 4 tiles and ends the soldier's
   turn. It never targets robots, chryssalids, zombies (Long War's
   `CanBeStunned`), the Lost, the Chosen or the Avatar.
-- **Its chance** is Enemy Within's stun chance × Long War's 0.85
-  (`UFO_PSI_LINK_SURVIVE`, `TryStunned`). Enemy Within's own part is in its
+- **Its chance** is Enemy Within's stun chance × Long War's 0.61
+  (`UFO_PSI_LINK_SURVIVE`, `TryStunned`; first written 0.85, the person's
+  own change, corrected 2026-11-02 to stock). Enemy Within's own part is in its
   native code and can't be read, so it is an APPROXIMATION: 100 − 50 × the
   alien's health share. A full-health alien is 42 %.
 - **A stun takes the alien off the field** and notes it in the Geoscape's

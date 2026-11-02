@@ -14,7 +14,7 @@ starting country a set of starting bonuses, and countries further bonuses.
 All of it is numbers in its `DefaultGameCore.ini`, with each line's meaning
 in a comment.
 
-## What Long War keeps (the Tree's samples, Long War 1.0d)
+## What Long War keeps (stock Long War 1.0)
 
 `ItemBalance_Classic` entries, after the "Coded starter bonuses" and
 "Country Bonuses" comments:
