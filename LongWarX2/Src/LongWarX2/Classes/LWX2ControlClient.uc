@@ -156,7 +156,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("moved" @ class'LWX2PartPlacer'.static.FreeBoxedIn(Args.Length > 1 ? int(Args[1]) : 40));
 		return;
 	case "psichance":
-		PsiChances(Out);
+		PsiChances(Out, Args.Length > 1 ? name(Args[1]) : '');
 		return;
 	case "killaliens":
 		Out.AddItem(KillAliens());
@@ -1023,15 +1023,20 @@ static function bool TileTaken(TTile T)
 }
 
 /** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
-/** In a mission: the aliens' psi abilities' chances against each soldier (Long War's will against psi counted). */
-function PsiChances(out array<string> Out)
+/**
+ * In a mission: the aliens' psi abilities' chances against each soldier (Long War's will against psi counted); with an
+ * ability's name, that ability's chances instead, with what made them.
+ */
+function PsiChances(out array<string> Out, name Only)
 {
 	local XComGameState_Unit Alien, Soldier;
 	local XComGameState_Ability Ability;
 	local StateObjectReference Ref;
 	local AvailableTarget Target;
 	local ShotBreakdown Breakdown;
-	local X2AbilityToHitCalc_LWPsiCheck Check;
+	local X2AbilityToHitCalc Check;
+	local string Why;
+	local int i;
 
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Alien)
 	{
@@ -1040,15 +1045,24 @@ function PsiChances(out array<string> Out)
 		foreach Alien.Abilities(Ref)
 		{
 			Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
-			Check = Ability == none ? none : X2AbilityToHitCalc_LWPsiCheck(Ability.GetMyTemplate().AbilityToHitCalc);
-			if (Check == none)
+			Check = Ability == none ? none : Ability.GetMyTemplate().AbilityToHitCalc;
+			if (Check == none || (Only == '' ? X2AbilityToHitCalc_LWPsiCheck(Check) == none : Ability.GetMyTemplateName() != Only))
 				continue;
 			foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Soldier)
 			{
 				if (!Soldier.IsSoldier() || !Soldier.IsAlive() || Soldier.GetTeam() != eTeam_XCom)
 					continue;
 				Target.PrimaryTarget = Soldier.GetReference();
-				Out.AddItem(Alien.GetMyTemplateName() @ Ability.GetMyTemplateName() @ "->" @ Soldier.GetFullName() @ "will" @ int(Soldier.GetCurrentStat(eStat_Will)) @ "+" @ class'X2Ability_LWStandins'.static.PsiWillOf(Soldier) $ ":" @ Check.GetShotBreakdown(Ability, Target, Breakdown) $ "%");
+				if (Only == '')
+				{
+					Out.AddItem(Alien.GetMyTemplateName() @ Ability.GetMyTemplateName() @ "->" @ Soldier.GetFullName() @ "will" @ int(Soldier.GetCurrentStat(eStat_Will)) @ "+" @ class'X2Ability_LWStandins'.static.PsiWillOf(Soldier) $ ":" @ Check.GetShotBreakdown(Ability, Target, Breakdown) $ "%");
+					continue;
+				}
+				Why = "";
+				i = Check.GetShotBreakdown(Ability, Target, Breakdown);
+				for (i = 0; i < Breakdown.Modifiers.Length; i++)
+					Why @= Breakdown.Modifiers[i].Reason $ "=" $ Breakdown.Modifiers[i].Value;
+				Out.AddItem(Alien.ObjectID @ Ability.GetMyTemplateName() @ "->" @ Soldier.GetFullName() @ "(" $ Alien.TileDistanceBetween(Soldier) @ "tiles):" @ Breakdown.FinalHitChance $ "% |" $ Why);
 			}
 		}
 	}

@@ -212,6 +212,8 @@ const REAL = {
   LW_PsychokineticStrike: () => ({ PsiKind: 'PsychokineticStrike', Radius: 1, Param2: 100, Param: 2 }),
   // "Nearby allies are healed for <RegenPheromoneRegen> health each turn" (cannot die of a critical wound, cured of acid:
   // not done).
+  // "Nearby allies in cover receive + Defense": DISTORTIONFIELD_DEFENSE, within DISTORTIONFIELD_RADIUS (EW's units, 96 a tile).
+  LW_DistortionField: () => ({ AuraDefense: c('DISTORTIONFIELD_DEFENSE'), Radius: c('DISTORTIONFIELD_RADIUS') / 96 }),
   LW_RegenBiofield: () => ({ Kind: 'Biofield', Radius: c('REGENPHEROMONE_RANGE'), Heal: c('GENEMOD_REGENPHEROMONES') }),
   LW_PsiInspiration: () => ({ PsiKind: 'Inspiration', Radius: 3, Will: c('PSIINSPIRED_WILL_BONUS'), Param: 4, Param2: 2 }),
   // Gene mods (features/lw-genemods.md), with Long War's constants.

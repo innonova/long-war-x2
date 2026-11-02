@@ -48,6 +48,8 @@ struct LWStandin
 	var int Revive;
 	/** Will more against psi attacks, the aliens' too (Neural Damping: X2AbilityToHitCalc_LWPsiCheck, AddPsiChecks). */
 	var int PsiWill;
+	/** Defence more for allies in cover within Radius tiles of the soldier (Distortion Field: X2Effect_LWDistortionField). */
+	var int AuraDefense;
 };
 
 var config array<LWStandin> Standins;
@@ -827,6 +829,31 @@ static function AddPsiChecks()
 		n++;
 	}
 	`log("LongWarX2: perks:" @ n @ "psi abilities checked with Long War's will against psi", , 'LongWarX2');
+}
+
+/** The defence an ally in cover at this unit's place gets from soldiers' fields nearby (AuraDefense within Radius; the best one). */
+static function int AuraDefenseAt(XComGameState_Unit Unit)
+{
+	local XComGameState_Unit Other;
+	local LWStandin S;
+	local int Best;
+
+	foreach default.Standins(S)
+	{
+		if (S.AuraDefense <= Best)
+			continue;
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Other)
+		{
+			if (Other.GetTeam() != Unit.GetTeam() || !Other.IsAlive() || Other.bRemovedFromPlay || !Other.HasSoldierAbility(S.Name))
+				continue;
+			if (Other.TileDistanceBetween(Unit) <= S.Radius)
+			{
+				Best = S.AuraDefense;
+				break;
+			}
+		}
+	}
+	return Best;
 }
 
 /** Will more against psi attacks this unit has (PsiWill of its abilities). */

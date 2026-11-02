@@ -147,7 +147,7 @@ soldiers put 6 tiles from a pod):
 ### Left open
 
 - The other powers are stand-ins: Neural Feedback, Regen Biofield,
-  Distortion Field, Mind Merge, Telekinetic Field, Pyrokinesis,
+  ~~Distortion Field~~ (done since, below), Mind Merge, Telekinetic Field, Pyrokinesis,
   Psychokinetic Strike, Rift.
 - Psi XP and ranks (`m_iPsiXPLevels`); the tier and fatigue numbers.
 - ~~A Psi Labs panel in the base screen.~~ Done the same night, below.
@@ -242,3 +242,31 @@ Regenerated from the samples:
 The person's own Long War may be either. Which one the port should follow
 is a question for the review.
 
+
+## Report (2026-11-02 night, Distortion Field)
+
+Distortion Field: "Nearby allies in cover receive + Defense". Its number
+is in EW's constants: `DISTORTIONFIELD_DEFENSE` 10, `DISTORTIONFIELD_RADIUS`
+432 (EW's units, 96 a tile: 4.5 tiles). There is also a
+`DISTORTIONFIELD_HEIGHT` 384, not used.
+- XCOM 2 has no auras. **Every Long War soldier now carries
+  `X2Effect_LWDistortionField`** (with the Foundry's effect, on the armour's
+  stat ability). When the soldier is shot at, it asks whether a living
+  ally with Distortion Field is within 4.5 tiles. If so, and the soldier
+  is in cover against this attacker (as XCOM 2's aim counts it: not
+  flanked, not melee), the shot gets −10.
+- The test aid `psichance <ability>` shows that ability's chances, the
+  aliens' against each soldier, with what made them.
+- **Checked** (a first abduction; Heather Murray given Distortion Field):
+  every soldier, all in high cover near her, read "Aim=75 High Cover=-40
+  Distortion Field=-10". Liang Zhu moved 6 tiles from a Sectoid: flanked by
+  the near aliens, nothing ("Flanking Target"). In high cover against the
+  far ones but away from Heather, no field.
+
+### Decisions
+
+- **The psion counts as their own ally**: Long War's text says "nearby
+  allies"; whether the psion is covered too is not known. Included.
+- **Fields do not add up**: two psions with it give 10, as one.
+- **Height (`DISTORTIONFIELD_HEIGHT`) not used**: the distance is XCOM 2's
+  tile distance, floors included.

@@ -24,6 +24,7 @@ static function X2AbilityTemplate Stats(LWGearRules.LWArmorDef A)
 	local X2AbilityTemplate Template;
 	local X2Effect_PersistentStatChange Effect;
 	local X2Effect_LWFoundry Foundry;
+	local X2Effect_LWDistortionField Field;
 	local X2Effect_DamageImmunity Immunity;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, StatsFor(A.Item));
@@ -64,6 +65,10 @@ static function X2AbilityTemplate Stats(LWGearRules.LWArmorDef A)
 	Foundry = new class'X2Effect_LWFoundry';
 	Foundry.BuildPersistentEffect(1, true, false, false);
 	Template.AddTargetEffect(Foundry);
+	// Distortion Field's defence, near a psion who has it.
+	Field = new class'X2Effect_LWDistortionField';
+	Field.BuildPersistentEffect(1, true, false, false);
+	Template.AddTargetEffect(Field);
 
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	return Template;
