@@ -191,8 +191,9 @@ the code says.
   - The flight legs (above).
   - A UFO is seen or not when it launches, rather than as it crosses
     watched countries.
-- **A terror mission won** changes no panic. Long War's result depends
-  on the civilians saved, which XCOM 2's missions do not count yet.
+- **A terror mission won** now moves panic by the civilians lost, as Long
+  War does (`lw-missions.md`, 2026-11-02). One won without playing it
+  (WIN, resolve) still changes none.
 - **Scout hunts and the alien base:** Long War's follow-up hunts after
   scouting (`ShouldHunt`, `AddHuntTarget`), and the alien base and HQ
   assault missions, are not in yet.

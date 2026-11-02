@@ -21,6 +21,8 @@ event OnInit(UIScreen Screen)
 	local XComUnitPawn Pawn;
 	local LWX2EWUnitDisplay Display;
 
+	if (UIMissionSummary(Screen) != none)
+		CountCivilians();
 	if (UITacticalHUD(Screen) == none)
 		return;
 	class'LWX2PerkProbe'.static.Start(Screen);
@@ -98,6 +100,37 @@ static function NoTimer()
 	class'XComGameState_UITimer'.static.SuspendTimer(false, NewGameState);
 	`TACTICALRULES.SubmitGameState(NewGameState);
 	`log("LongWarX2: missions: XCOM 2's mission timer suspended (Long War's missions have none)", , 'LongWarX2');
+}
+
+/**
+ * A Long War terror mission ended: its civilians counted for Long War's result (XComGameState_LWStrategy.TerrorWon). The
+ * civilians of this mission are those with a pawn here (the dead keep theirs); Faceless posing as civilians are not counted.
+ */
+static function CountCivilians()
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_Unit Unit;
+	local XComGameState NewGameState;
+	local int All, Saved;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || S.PendingKind != 4 || S.PendingCivilians >= 0)
+		return;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Unit.GetMyTemplate() == none || !Unit.GetMyTemplate().bIsCivilian || Unit.GetMyTemplateName() == 'FacelessCivilian' || Unit.GetVisualizer() == none)
+			continue;
+		All++;
+		if (Unit.IsAlive())
+			Saved++;
+	}
+	`log("LongWarX2: missions: terror mission over," @ Saved @ "of" @ All @ "civilians alive", , 'LongWarX2');
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: civilians counted");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	S.PendingCivilians = All;
+	S.PendingCiviliansSaved = Saved;
+	// The tactical game has ended: its rules take no more changes, the history does.
+	`XCOMHISTORY.AddGameStateToHistory(NewGameState);
 }
 
 /**

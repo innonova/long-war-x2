@@ -130,6 +130,8 @@ var bool bPendingCapture;
 var array<int> PendingSquad;
 /** The aliens stunned with the arc thrower in the mission under way (their XCOM 2 character groups; X2Effect_LWCapture). */
 var array<name> PendingCaptives;
+/** The civilians of the terror mission sent, counted as it ended: all of them, and those alive (-1: not counted). */
+var int PendingCivilians, PendingCiviliansSaved;
 /** The story (features/lw-story.md): the countries with an alien base, the Hyperwave Beacon and the Ethereal
  * Device ever held, the campaign won. */
 var array<int> AlienBases;
@@ -1030,6 +1032,32 @@ function TickSite(int i)
  * ApplyMissionPanic): abductions, panic in the country and on its continent; terror, the country
  * leaves the council and its continent panics.
  */
+/**
+ * A terror mission won (Long War's XGStrategyAI.ApplyMissionPanic, terror, and CalcTerrorMissionPanicResult): the country
+ * panics by the civilians lost, its continent too; with no civilian saved the country leaves all the same. A country
+ * gone already (Long War's secret pact) only moves its continent. Not counted (won without playing it): no panic.
+ */
+function TerrorWon(int i)
+{
+	local int Country, Lost;
+
+	Country = Sites[i].Country;
+	if (PendingCivilians < 0)
+		return;
+	Lost = PendingCivilians - PendingCiviliansSaved;
+	Note(PendingCiviliansSaved @ "of" @ PendingCivilians @ "civilians saved in" @ CountryName(Country) $ ".");
+	AddContinentPanic(CountryContinent(Country), Lost * class'LWStrategyRules'.default.PanicTerrorCivilianContinent);
+	if (Countries[Country].bLeft)
+		return;
+	if (PendingCiviliansSaved == 0)
+	{
+		Leave(Country);
+		Note("No civilian was saved in" @ CountryName(Country) $ ": it has left the council.");
+		return;
+	}
+	AddPanic(Country, Lost * class'LWStrategyRules'.default.PanicTerrorCivilianCountry);
+}
+
 function SiteIgnored(int i)
 {
 	local int d;
@@ -1098,6 +1126,8 @@ static function MissionSent(int Kind, int Index, optional bool bCapture)
 	S.bPendingCapture = bCapture;
 	S.PendingCaptives.Length = 0;
 	S.PendingSquad.Length = 0;
+	S.PendingCivilians = -1;
+	S.PendingCiviliansSaved = -1;
 	if (Kind <= 2)
 		S.Ufos[Index].Status = 5;
 	else if (Kind <= 4 || Kind == 7)
@@ -1167,7 +1197,11 @@ static function MissionBack(bool bWon)
 	S.bPendingCapture = false;
 	S.PendingCaptives.Length = 0;
 	if (S.PendingKind == 4)
+	{
 		S.TerrorsTaken++;
+		if (bWon)
+			S.TerrorWon(S.PendingIndex);
+	}
 	if (S.PendingKind == 3 && bWon)
 		S.GiveAbductionReward(NewGameState, Country);
 	if (S.PendingKind == 1)

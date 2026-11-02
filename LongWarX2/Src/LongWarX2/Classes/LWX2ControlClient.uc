@@ -155,6 +155,9 @@ function Handle(string Line, out array<string> Out)
 	case "unbox":
 		Out.AddItem("moved" @ class'LWX2PartPlacer'.static.FreeBoxedIn(Args.Length > 1 ? int(Args[1]) : 40));
 		return;
+	case "killaliens":
+		Out.AddItem(KillAliens());
+		return;
 	case "endturn":
 		if (XComTacticalController(GetALocalPlayerController()) == none)
 		{
@@ -1017,6 +1020,28 @@ static function bool TileTaken(TTile T)
 }
 
 /** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
+/** In a mission: every alien killed, the civilians left alone (XCOM 2's KillAllAIs kills them too: they are the AI's). */
+function string KillAliens()
+{
+	local XComGameState NewGameState;
+	local XComGameState_Unit Unit;
+	local int n;
+
+	if (`TACTICALRULES == none)
+		return "ERR not in a mission";
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: aliens killed");
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (!Unit.IsAlive() || Unit.bRemovedFromPlay || Unit.GetTeam() != eTeam_Alien)
+			continue;
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		Unit.SetCurrentStat(eStat_HP, 0);
+		n++;
+	}
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	return "ok" @ n @ "aliens killed";
+}
+
 function string MoveNext(string Who, string Whom)
 {
 	local XComGameState_Unit Unit, Other, Any;

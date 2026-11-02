@@ -64,6 +64,8 @@ var config int PanicSatAddedCountry, PanicSatAddedContinent, PanicSatDestroyedCo
 var config int PanicAbductionCountry[4];
 var config int PanicAbductionContinent[4];
 var config int PanicAbductionThwartedCountry, PanicAbductionThwartedContinent, PanicTerrorContinent;
+/** A terror mission won: panic per civilian lost, to the country (PANIC_TERROR_COUNTRY) and its continent (UFO_LIMIT, as Long War uses it). */
+var config int PanicTerrorCivilianCountry, PanicTerrorCivilianContinent;
 /** Panic "blocks" (panic + 1) from which a country rolls to leave at the month's end; the same for a country XCOM left alone this month. */
 var config int DefectThreshold[4];
 var config int DefectNotHelpedThreshold[4];

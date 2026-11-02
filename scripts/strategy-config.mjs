@@ -105,6 +105,8 @@ const out = [
   `PanicAbductionThwartedCountry=${one('PANIC_ABDUCTION_THWARTED_COUNTRY')}`,
   `PanicAbductionThwartedContinent=${one('PANIC_ABDUCTION_THWARTED_CONTINENT')}`,
   `PanicTerrorContinent=${one('PANIC_TERROR_CONTINENT')}`,
+  `PanicTerrorCivilianCountry=${one('PANIC_TERROR_COUNTRY')}`,
+  `PanicTerrorCivilianContinent=${one('UFO_LIMIT')}`,
   ...arr('DefectThreshold', four('PANIC_DEFECT_THRESHHOLD')),
   ...arr('DefectNotHelpedThreshold', four('PANIC_DEFECT_THRESHHOLD_NOT_HELPED')),
   ...arr('DefectChancePerPoint', four('PANIC_DEFECT_CHANCE_PER_BLOCK')),

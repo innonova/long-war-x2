@@ -452,6 +452,7 @@ mission's end did no harm.
 - **A terror mission is won by clearing the aliens, as the others are.**
   Long War's terror rewards depend on the civilians saved, which XCOM 2's
   mission counts; feeding that count to Long War's result is left open.
+  (Done since: "the civilians of a terror mission", below.)
 
 **Landed UFO checked, and a gap found and closed.** A landed Transport
 became "launching SecureUFO on Plot_WLD_UFO_Ravine": "Neutralize all
@@ -505,3 +506,51 @@ a countdown in turns).
 - **A spawner whose countdown is already 0 is not caught**: it lands in the
   same turn it is made. If one is seen, the next step is to remove its pod
   as it lands.
+
+## Report (2026-11-02 night, the civilians of a terror mission)
+
+A terror mission won now moves panic as Long War's does. Read from its
+`XGStrategyAI.ApplyMissionPanic` (terror) and `CalcTerrorMissionPanicResult`:
+- **Won:** the country panics by the civilians lost × `PANIC_TERROR_COUNTRY`
+  (2), its continent by the civilians lost × `UFO_LIMIT` (1; the ini's
+  comment says so). **With no civilian saved, the country leaves the
+  council** all the same.
+- **Lost:** the country leaves, the continent +20. The port did this
+  already (`SiteIgnored`).
+- A country gone already (Long War's secret pact) moves only its
+  continent. Long War does not spare the home country.
+
+How:
+- **`CountCivilians`**, in the tactical listener, when the mission summary
+  opens on a Long War terror mission. It counts the civilians with a pawn
+  in this mission (the dead keep theirs) and those alive. Faceless posing
+  as civilians (`FacelessCivilian`) are left out. The count goes to
+  `PendingCivilians` / `PendingCiviliansSaved`, added to the history
+  directly: the tactical rules take no changes after the game's end.
+- **`TerrorWon`**, on the way back. A mission won without playing it
+  (WIN, resolve) has no count (−1) and changes no panic.
+- Config: `PanicTerrorCivilianCountry`, `PanicTerrorCivilianContinent`
+  (generated from the Tree's samples).
+- **A new test aid, `killaliens`**: XCOM 2's `KillAllAIs` kills the
+  civilians too (they are the AI's, the SDK shows). The first test with it
+  read "0 of 13 civilians alive", and the United States left the council.
+
+**Checked** (a new campaign, terror in France; three alien turns, then
+`killaliens`): "terror mission over, 11 of 13 civilians alive". Back on
+the Geoscape: "11 of 13 civilians saved in France. The mission in France
+succeeded." France's panic went from 88 to 94: 2 lost × 2 for the country,
+plus 2 × 1 for the continent, which reaches each of its countries
+(`AddContinentPanic`, as EW's).
+
+### Decisions
+
+- **Counted when the summary opens**, not at each death. The summary
+  comes for every ending (won, lost, evacuated), and the tally is then
+  final.
+- **Alive means saved.** Long War's civilians are saved unless killed;
+  XCOM 2's rescue (a soldier beside them) is not required.
+- **A count of none is not "none saved".** Without a count, the country
+  does not leave.
+- **Long War's monthly terror tallies** (`iTerror`, `iTerrorThwarted`, for
+  the council report) are not kept: the port's council report does not
+  show them yet.
