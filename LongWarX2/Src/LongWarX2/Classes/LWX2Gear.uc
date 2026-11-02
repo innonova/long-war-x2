@@ -7,6 +7,9 @@
 // (UIScreenListener_LWX2Gear) and after the test promotions.
 class LWX2Gear extends Object dependson(LWGearRules);
 
+/** XCOM 2's soldier's utility slots without armour (its 'Soldier' character), before Tactical Rigging. */
+var int UtilityBase;
+
 /** Every unlimited Long War item in XCOM's stores (XCOM 2 adds its starting items only when a campaign begins). */
 static function EnsureInfinite()
 {
@@ -46,6 +49,41 @@ static function EnsureInfinite()
 }
 
 /** Every Long War soldier in XCOM's crew armed as their class allows. Returns how many were changed. */
+/**
+ * The Foundry's Tactical Rigging (24): "granting all soldiers the ability to carry one additional small item". XCOM 2
+ * puts a soldier's utility slots back to the character's base (+1 for an armour that adds one) whenever the loadout
+ * changes, so the base itself is raised, from the campaign's state, before the soldiers are armed; and each Long War
+ * soldier's slots are put to it. Returns the slots a soldier then has without armour.
+ */
+static function int ApplyRigging(XComGameState NewGameState, XComGameState_HeadquartersXCom XComHQ)
+{
+	local array<X2DataTemplate> Templates;
+	local X2DataTemplate Data;
+	local XComGameState_Unit Unit;
+	local XComGameState_Item Armor;
+	local StateObjectReference Ref;
+	local int Base, Slots;
+
+	Base = default.UtilityBase + (class'X2Effect_LWFoundry'.static.Done(24) ? 1 : 0);
+	class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager().FindDataTemplateAllDifficulties('Soldier', Templates);
+	foreach Templates(Data)
+		X2CharacterTemplate(Data).CharacterBaseStats[eStat_UtilityItems] = Base;
+	foreach XComHQ.Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier() || Unit.GetMyTemplateName() != 'Soldier' || Left(string(Unit.GetSoldierClassTemplateName()), 4) != "LWS_")
+			continue;
+		Armor = Unit.GetItemInSlot(eInvSlot_Armor);
+		Slots = Base + ((Armor != none && X2ArmorTemplate(Armor.GetMyTemplate()) != none && X2ArmorTemplate(Armor.GetMyTemplate()).bAddsUtilitySlot) ? 1 : 0);
+		if (int(Unit.GetMaxStat(eStat_UtilityItems)) == Slots)
+			continue;
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		Unit.SetBaseMaxStat(eStat_UtilityItems, Slots);
+		Unit.SetCurrentStat(eStat_UtilityItems, Slots);
+	}
+	return Base;
+}
+
 static function int ArmAll()
 {
 	local XComGameStateHistory History;
@@ -63,6 +101,7 @@ static function int ArmAll()
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom', true));
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: soldiers armed as Long War allows");
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
+	ApplyRigging(NewGameState, XComHQ);
 	foreach XComHQ.Crew(Ref)
 	{
 		Unit = XComGameState_Unit(History.GetGameStateForObjectID(Ref.ObjectID));
@@ -75,7 +114,7 @@ static function int ArmAll()
 			n++;
 		}
 	}
-	if (n > 0)
+	if (n > 0 || NewGameState.GetNumGameStateObjects() > 1)
 	{
 		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 		`log("LongWarX2: gear:" @ n @ "soldiers armed as Long War allows", , 'LongWarX2');
@@ -256,4 +295,9 @@ static function Report(out array<string> Out)
 			@ "| small" @ SmallText(Unit) @ "slots" @ Unit.GetCurrentStat(eStat_UtilityItems);
 		Out.AddItem(Line);
 	}
+}
+
+defaultproperties
+{
+	UtilityBase = 1
 }

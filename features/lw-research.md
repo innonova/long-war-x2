@@ -167,8 +167,7 @@ The shot probe now also logs the pistol shot's breakdown.
 
 ### Left open
 
-- Tactical Rigging (+1 small item: XCOM 2 adds utility slots only through
-  armour), Alien Grenades, Improved Arc Thrower (EW's stun thresholds 3 and
+- ~~Tactical Rigging~~ (done since, below), Alien Grenades, Improved Arc Thrower (EW's stun thresholds 3 and
   6 HP), Ammo Conservation, Advanced Servomotors, and the projects for SHIVs
   and MECs.
 
@@ -181,3 +180,28 @@ fills each soldier's weapons.
 - **Checked:** with the project done, the clips were sniper rifle 6,
   pistol 3, rifle 4, LMG 7. Without it, in that night's other missions, they
   were 5, 2, 3, 6.
+
+## Report (2026-11-02 night, Tactical Rigging)
+
+The Foundry's Tactical Rigging (project 24): "granting all soldiers the
+ability to carry one additional small item" (Long War's words for the
+starting bonus that gives it).
+- XCOM 2 puts a soldier's utility slots back to the character's base
+  (+1 for an armour that adds one) whenever the loadout changes, so a slot
+  given on the soldier alone would not last. **`LWX2Gear.ApplyRigging`**
+  raises the base of XCOM 2's `Soldier` character from the campaign's state
+  (1, or 2 once the project is done), and puts each Long War soldier's
+  slots to it. It runs with the arming pass, whenever soldiers are looked
+  at or sent out.
+- **Checked** (a new campaign): soldiers in Tac Armor had 2 slots. With
+  the project marked done and the arming pass run, they had 3. A soldier
+  then given two more small items carried "XPad LWSmall_81 LWSmall_73
+  LWSmall_73, slots 3": XCOM 2's reset on equipping kept the third.
+
+### Decisions
+
+- **The character's base is changed in memory**, set again from the
+  campaign at every arming pass. Templates are not saved, so loading
+  another campaign sets it to that campaign's state at its first pass.
+- **Every soldier, of any armour**, as Long War's words say "all
+  soldiers". The armory's look with three slots was not looked at.
