@@ -55,45 +55,56 @@ proposal: the person reorders or cuts.
 The night after "keep going till 7am". Each feature's report has the details
 and a Decisions list to review.
 
-- **Missions on Enemy Within's maps** (`lw-missions.md`, step 2): the whole
-  loop works, from the Geoscape to Long War's result:
-  - Long War's squad spawns at EW's pods and patrols (the AI's data made for
-    it). Pods are read from a map's sub-levels too (the truck stop keeps
-    them there).
-  - EW's lights are placed (point, spot, sun, sky).
-  - Soldiers boxed in at landing are moved out.
-  - A Long War mission is won when its aliens are all dead or taken, on
-    XCOM 2's maps too.
-  - No squad concealment; no faction soldier in a Long War campaign.
-- **Perks** (`lw-classes.md`): Precision and Disabling Shot, Double Tap,
-  Rapid Reaction, Ready for Anything, Close Combat Specialist, Paramedic,
-  Savior, Deadeye, Dense Smoke, Combat Drugs, Shredder Ammo, Sapper, HEAT
-  Warheads. Long War's numbers come from EW's constants and its ability
-  table.
-- **Psionics** (`lw-psi.md`, new): the twelve powers trained in the Psi
-  Labs at Long War's hours and chance. Mindfray, Panic, Mind Control and
-  Inspiration work in missions. A Psi Labs line in the base screen.
-- **Gene mods** (`lw-genemods.md`, new): the ten mods in five slots, made
-  in the Genetics Lab. Six work in missions. A Genetics Lab line in the
-  base screen.
+- **Missions** (`lw-missions.md`):
+  - On Enemy Within's maps the whole loop works, from the Geoscape to Long
+    War's result. Long War's squad spawns at EW's pods and patrols; pods
+    are read from a map's sub-levels too; EW's lights are placed; soldiers
+    boxed in at landing are moved out.
+  - On every map, a Long War mission is won when its aliens are all dead
+    or taken, has no turn limit (XCOM 2's timer suspended), no sitreps, no
+    Chosen and no squad concealment. A Long War campaign starts without
+    War of the Chosen's faction soldier.
+- **Perks** (`lw-classes.md`), with Long War's numbers from EW's constants
+  and ability table:
+  - shots: Precision Shot, Disabling Shot, Flush, Double Tap;
+  - reactions: Rapid Reaction, Ready for Anything, Close Combat Specialist;
+  - medics: Paramedic, Savior, Revive;
+  - grenades and rockets: Dense Smoke, Combat Drugs, Sapper, HEAT
+    Warheads, Shredder Ammo;
+  - Deadeye.
+- **Psionics** (`lw-psi.md`, new):
+  - the twelve powers are trained in the Psi Labs at Long War's hours and
+    chance, from a Psi Labs line in the base screen;
+  - in missions: Mindfray, Panic, Mind Control, Inspiration, Telekinetic
+    Field, Rift, Mind Merge, Psychokinetic Strike, Regen Biofield.
+- **Gene mods** (`lw-genemods.md`, new):
+  - the ten mods in five slots are made in the Genetics Lab, from a line in
+    the base screen;
+  - in missions: Iron Skin, Depth Perception, Hyper-Reactive Pupils, Neural
+    Damping, Smart Macrophages, Adaptive Bone Marrow, Secondary Heart,
+    Adrenal Neurosympathy.
 - **The Foundry in missions** (`lw-research.md`): the pistol projects,
   Improved Medikit, Ammo Conservation.
-- **Which Long War the config follows** (`lw-psi.md`, the correction): for
-  part of the night I generated config from the test machine's Long War
-  install, not the Tree's samples (1.0d) as before. Regenerated from the
-  samples, everything came out the same except the Psi Labs' base chance
-  (0.65 in the samples, 0.45 installed). Which Long War the port follows
-  is a question for the person.
+- **The screens**: the Geoscape's, the base's, engineering's and the
+  hangar's buttons no longer cover each other or their texts.
 - **Fixed**: XCOM 2 stopped when leaving a mission. A screen listener held
   the HUD; it would have hit any player with the development EW map on.
-- **Open, worth the person's eye**:
-  - XCOM 2 sometimes crashes while loading a mission map, about 3 in 25
-    loads that night, always at the same address. Not yet known whether
+- **For the person's eye**:
+  - **Which Long War the config follows.** For part of the night I
+    generated config from the test machine's Long War install, not the
+    Tree's samples (1.0d) as before. Regenerated from the samples,
+    everything came out the same except the Psi Labs' base chance (0.65
+    in the samples, 0.45 installed). Which one the port follows is a
+    question (`lw-psi.md`, the correction).
+  - **XCOM 2 sometimes crashes while loading a mission map**: about 3 in
+    25 loads that night, always at the same address. Not yet known whether
     it happens with the mod off (`lw-missions.md`).
-  - Several numbers are approximations, marked so in the Decisions lists:
-    the psi will check's base, Shredder's +33 %, the two-turn cooldowns.
-- **Preview build**: replaced at 23:41 UTC with the work up to the Sapper
-  perk. A later one follows if the night allows.
+  - **Approximations**, marked so in the Decisions lists: the psi will
+    check's base, Shredder's +33 %, several cooldowns and radii.
+  - **Planned, not built**: the home country and its bonuses
+    (`lw-startbonus.md`), with Long War's rules read from its code.
+- **Preview build**: replaced at 01:12 UTC (`LongWarX2-20261102-646981d`).
+  A last one follows at the end of the night.
 
 ## Where each step stood (2026-11-01, evening)
 
