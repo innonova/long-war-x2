@@ -158,6 +158,9 @@ function Handle(string Line, out array<string> Out)
 	case "psichance":
 		PsiChances(Out, Args.Length > 1 ? name(Args[1]) : '');
 		return;
+	case "hurt":
+		Out.AddItem(Hurt(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? int(Args[2]) : 1));
+		return;
 	case "killaliens":
 		Out.AddItem(KillAliens());
 		return;
@@ -1095,6 +1098,26 @@ function PsiChances(out array<string> Out, name Only)
 	}
 	if (Out.Length == 0)
 		Out.AddItem("none: no alien with a psi ability");
+}
+
+/** In a mission: a soldier (name or class part) loses health, as a hit would (their lowest health in the mission too). */
+function string Hurt(string Who, int Amount)
+{
+	local XComGameState NewGameState;
+	local XComGameState_Unit Unit;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (!Unit.IsSoldier() || Unit.GetTeam() != eTeam_XCom || !Unit.IsAlive() || InStr(Locs(Unit.GetFullName() @ Unit.GetSoldierClassTemplateName()), Locs(Who)) < 0)
+			continue;
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: a soldier hurt");
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		Unit.SetCurrentStat(eStat_HP, Max(1, Unit.GetCurrentStat(eStat_HP) - Amount));
+		Unit.LowestHP = Min(Unit.LowestHP, Unit.GetCurrentStat(eStat_HP));
+		`TACTICALRULES.SubmitGameState(NewGameState);
+		return "ok" @ Unit.GetFullName() @ "hp" @ int(Unit.GetCurrentStat(eStat_HP)) $ "/" $ Unit.HighestHP @ "lowest" @ Unit.LowestHP;
+	}
+	return "ERR no such soldier in a mission";
 }
 
 /** In a mission: every alien killed, the civilians left alone (XCOM 2's KillAllAIs kills them too: they are the AI's). */

@@ -22,7 +22,10 @@ event OnInit(UIScreen Screen)
 	local LWX2EWUnitDisplay Display;
 
 	if (UIMissionSummary(Screen) != none)
+	{
 		CountCivilians();
+		FieldSurgeon();
+	}
 	if (UITacticalHUD(Screen) == none)
 		return;
 	class'LWX2PerkProbe'.static.Start(Screen);
@@ -100,6 +103,46 @@ static function NoTimer()
 	class'XComGameState_UITimer'.static.SuspendTimer(false, NewGameState);
 	`TACTICALRULES.SubmitGameState(NewGameState);
 	`log("LongWarX2: missions: XCOM 2's mission timer suspended (Long War's missions have none)", , 'LongWarX2');
+}
+
+/**
+ * Long War's Field Surgeon (XGBattle_SP.PutSoldiersOnDropship): with a soldier who has it coming home (alive, not
+ * critically wounded, not left behind), every soldier coming home so heals as if their lowest health in the mission had
+ * been one higher; more than one such medic gives no more. XCOM 2 heals from LowestHP when the summary is closed
+ * (XComGameState_Unit.EndTacticalHealthMod), so it is raised here, as the summary opens.
+ */
+static function FieldSurgeon()
+{
+	local XComGameState_Unit Unit;
+	local XComGameState NewGameState;
+	local array<XComGameState_Unit> Home;
+	local bool bSurgeon;
+	local int n;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (!Unit.IsSoldier() || Unit.GetTeam() != eTeam_XCom || !Unit.IsAlive() || Unit.IsBleedingOut() || Unit.IsUnconscious() || Unit.bCaptured)
+			continue;
+		Home.AddItem(Unit);
+		if (Unit.HasSoldierAbility('LW_FieldSurgeon'))
+			bSurgeon = true;
+	}
+	if (!bSurgeon)
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: Field Surgeon");
+	foreach Home(Unit)
+	{
+		if (Unit.LowestHP >= Unit.HighestHP)
+			continue;
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		Unit.LowestHP += 1;
+		`log("LongWarX2: perks: Field Surgeon:" @ Unit.GetFullName() @ "heals as from" @ Unit.LowestHP @ "of" @ Unit.HighestHP, , 'LongWarX2');
+		n++;
+	}
+	if (n > 0)
+		`XCOMHISTORY.AddGameStateToHistory(NewGameState);
+	else
+		`XCOMHISTORY.CleanupPendingGameState(NewGameState);
 }
 
 /**

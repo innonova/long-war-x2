@@ -548,3 +548,33 @@ from a pod; the `effects` aid now shows action and reserve points):
   not bleeding out, not unconscious, with both actions.
 - **Test aid:** `next <soldier> <other>` puts a soldier on a free tile
   beside another.
+
+## Report (2026-11-02 night, Field Surgeon)
+
+Field Surgeon (the Medic's; Long War's renamed `ePerk_CovertPockets`):
+"Wound recovery time will be calculated as if the soldier's lowest hit
+points during the mission was one higher. Multiple medics on a mission
+having this perk will not provide an additional reduction."
+- Long War's code (`XGBattle_SP.PutSoldiersOnDropship`): if a soldier with
+  it comes home (not dead or dying, not critically wounded, not left
+  behind), every soldier coming home so gets `m_iLowestHP` + 1; one or
+  several medics, +1.
+- **Now `FieldSurgeon`**, in the tactical listener, when the mission
+  summary opens: the same rule, with XCOM 2's states (alive, not bleeding
+  out, not unconscious, not captured). It raises `LowestHP`, from which
+  XCOM 2 heals when the summary is closed (`EndTacticalHealthMod`).
+- A new test aid, `hurt <name|class> [n]`: a soldier loses n health, and
+  their lowest health in the mission with it.
+- **Checked** (the squad given Field Surgeon; Caden Ryan hurt by 1,
+  Jacqueline Dubois by 3; aliens killed): "Caden Ryan heals as from 7 of
+  7", "Jacqueline Dubois heals as from 5 of 7". Back home, Caden was at
+  5/5, not wounded; without the perk, 6 of 7 would have been 4 of 5.
+  Jacqueline was at 4/5, where 4 of 7 would have been 3.
+
+### Decisions
+
+- **Long War's fatigue clause** ("Does not affect wounds sustained by
+  sending fatigued soldier on a mission") has no XCOM 2 counterpart here
+  yet: Long War's fatigue is not in. Not applied.
+- **Captured means left behind.** XCOM 2's evacuated soldiers are off the
+  field as well, and they come home.
