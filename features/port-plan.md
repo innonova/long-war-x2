@@ -92,15 +92,20 @@ and a Decisions list to review.
   - the twelve powers are trained in the Psi Labs at Long War's hours and
     chance, from a Psi Labs line in the base screen;
   - in missions: Mindfray, Panic, Mind Control, Inspiration, Telekinetic
-    Field, Rift, Mind Merge, Psychokinetic Strike, Regen Biofield.
+    Field, Rift, Mind Merge, Psychokinetic Strike, Regen Biofield, and
+    Distortion Field (+10 defence to allies in cover within 4.5 tiles).
 - **Gene mods** (`lw-genemods.md`, new):
   - the ten mods in five slots are made in the Genetics Lab, from a line in
     the base screen;
   - in missions: Iron Skin, Depth Perception, Hyper-Reactive Pupils, Neural
-    Damping, Smart Macrophages, Adaptive Bone Marrow, Secondary Heart,
-    Adrenal Neurosympathy.
-- **The Foundry in missions** (`lw-research.md`): the pistol projects,
-  Improved Medikit, Ammo Conservation.
+    Damping (now with +20 will against every psi attack, the aliens'
+    too), Smart Macrophages, Adaptive Bone Marrow, Secondary Heart,
+    Adrenal Neurosympathy; Muscle Fiber Density brings XCOM 2's grapple
+    (in the bar, not yet seen used).
+- **The Foundry** (`lw-research.md`): in missions, the pistol projects,
+  Improved Medikit, Ammo Conservation; for the soldiers, Tactical Rigging
+  (a third small item) and Alien Grenades (frag grenades swapped once,
+  the alien grenade unlimited).
 - **The screens**: the Geoscape's, the base's, engineering's and the
   hangar's buttons no longer cover each other or their texts.
 - **Fixed**: XCOM 2 stopped when leaving a mission. A screen listener held
@@ -118,7 +123,13 @@ and a Decisions list to review.
   - **Approximations**, marked so in the Decisions lists: the psi will
     check's base, Shredder's +33 %, several cooldowns and radii.
   - **Planned, not built**: the home country and its bonuses
-    (`lw-startbonus.md`), with Long War's rules read from its code.
+    (`lw-startbonus.md`), with Long War's rules read from its code; the
+    officers (`lw-officers.md`).
+  - **Seen once, not explained**: after a key was sent to the game to
+    open the grapple, the world drew black under a working HUD
+    (`lw-genemods.md`).
+  - **Test aids added** (`tools/test/README.md`): `killaliens` (XCOM 2's
+    `KillAllAIs` kills the civilians too) and `psichance`.
 - **Preview build**: replaced at 01:12 UTC (`LongWarX2-20261102-646981d`).
   A last one follows at the end of the night.
 
