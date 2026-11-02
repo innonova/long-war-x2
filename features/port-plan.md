@@ -130,8 +130,8 @@ and a Decisions list to review.
     (`lw-genemods.md`).
   - **Test aids added** (`tools/test/README.md`): `killaliens` (XCOM 2's
     `KillAllAIs` kills the civilians too) and `psichance`.
-- **Preview build**: replaced at 01:12 UTC (`LongWarX2-20261102-646981d`).
-  A last one follows at the end of the night.
+- **Preview build**: replaced at 04:30 UTC with everything above
+  (`LongWarX2-20261102-95973c9`, on v0.1.0-preview.1).
 
 ## Where each step stood (2026-11-01, evening)
 
