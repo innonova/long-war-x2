@@ -227,6 +227,9 @@ const REAL = {
   LW_DepthPerception: () => ({ Aim: c('GENEMOD_DEPTHPERCEPTION_AIM'), AimIf: 'HeightAdvantage', Crit: c('GENEMOD_DEPTHPERCEPTION_CRIT'), CritIf: 'HeightAdvantage' }),
   LW_HyperReactivePupils: () => ({ Aim: c('GENEMOD_PUPILS_BONUS'), AimIf: 'AfterMiss' }),
   // "+<GeneModBrainDampingWill> will against psionic attacks" (X2AbilityToHitCalc_LWPsiCheck, on every will-defended psi ability).
+  // "reach high positions without the need for ladders or other climbing aids": XCOM 2's grapple (the Spider Suit's;
+  // an action with a cooldown where Long War's is a way of moving: APPROXIMATION).
+  LW_MuscleFiberDensity: () => ({ AlsoGrants: 'Grapple' }),
   LW_NeuralDamping: () => ({ ImmuneTo: ['Panic'], PsiWill: c('GENEMOD_BRAINDAMPING_WILL') }),
   // "Medikits and Restorative Mist heal 2 HP more when used on the soldier. Confers complete immunity to poison and acid."
   LW_SmartMacrophages: () => ({ ImmuneTo: ['Poison', 'Acid'], HealTaken: 2 }),

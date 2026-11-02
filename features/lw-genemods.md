@@ -116,7 +116,7 @@ happen again. It is an ability triggered by XCOM 2's `KillMail` event.
 
 - Stand-ins still:
   - Bioelectric Skin: nearby enemies revealed;
-  - Muscle Fiber Density: climbing.
+  - ~~Muscle Fiber Density: climbing~~ (XCOM 2's grapple since, below).
 - ~~Neural Damping's +20 will against psi~~ (done the same night, below);
   the post-mission fatigue of every mod.
 
@@ -145,3 +145,29 @@ will against psionic attacks"), besides its immunity to panic.
 - **XCOM 2's own numbers stay**: a Sectoid's Mindspin starts above 100 %
   against these soldiers. That is XCOM 2's Sectoid, standing in for EW's
   until step 3.
+
+## Report (2026-11-02 night, Muscle Fiber Density: the grapple)
+
+"Confers superhuman leg strength, enabling the soldier to reach high
+positions without the need for ladders or other climbing aids."
+- **Now Muscle Fiber Density brings XCOM 2's Grapple** (the Spider Suit's:
+  a free action, cooldown 3, to the grapple points XCOM 2 finds on the
+  map). This uses a new stand-in field, `AlsoGrants`: an XCOM 2 ability
+  that comes with the stand-in, as `AdditionalAbilities`.
+- **Checked, in part:** the mod given in the strategy layer to the squad,
+  then a mission. The grapple was in the soldier's bar (slot 6), and the
+  control port read "Grapple available AA_Success". Given mid-mission with
+  the `perk` aid it does not come: that aid writes the soldier's abilities,
+  which XCOM 2 reads at the mission's start.
+- **Not seen used.** The key sent to open the grapple's targeting did not
+  reach the game (nothing in the log). After it, the world drew black
+  under a working HUD, and the pause menu came up over the black. Whether
+  the key, the capture or the GPU caused it is not known; the mission was
+  left there.
+
+### Decisions
+
+- **A grapple for a passive.** Long War's soldier climbs as a way of
+  moving; XCOM 2's nearest thing is the grapple, an action with a
+  cooldown (APPROXIMATION). The other choice, XCOM 2's wall-climb
+  traversal, is a character's setting, not something an ability gives.

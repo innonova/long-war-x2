@@ -50,6 +50,8 @@ struct LWStandin
 	var int PsiWill;
 	/** Defence more for allies in cover within Radius tiles of the soldier (Distortion Field: X2Effect_LWDistortionField). */
 	var int AuraDefense;
+	/** An XCOM 2 ability that comes with this one (Muscle Fiber Density: the Spider Suit's Grapple). */
+	var name AlsoGrants;
 };
 
 var config array<LWStandin> Standins;
@@ -117,6 +119,8 @@ static function array<X2DataTemplate> CreateTemplates()
 			Templates.AddItem(Passive(S));
 		else
 			Templates.AddItem(PurePassive(S.Name, S.Icon, false, 'eAbilitySource_Perk', true));
+		if (S.AlsoGrants != '')
+			X2AbilityTemplate(Templates[Templates.Length - 1]).AdditionalAbilities.AddItem(S.AlsoGrants);
 	}
 	return Templates;
 }
