@@ -161,9 +161,14 @@ positions without the need for ladders or other climbing aids."
   which XCOM 2 reads at the mission's start.
 - **Not seen used.** The key sent to open the grapple's targeting did not
   reach the game (nothing in the log). After it, the world drew black
-  under a working HUD, and the pause menu came up over the black. Whether
-  the key, the capture or the GPU caused it is not known; the mission was
-  left there.
+  under a working HUD, and the pause menu came up over the black.
+- **Explained the same night: the test tool, not the game.** `key.ps1 6`
+  sent the virtual key 6, which is the mouse's XButton2, not the digit. It
+  turned the world black again in a second mission. `key.ps1` now sends a
+  digit as its key (`D6`), and with that the grapple's targeting opened
+  ("Grapple: Deploy a grappling hook to move quickly to an elevated
+  position"). The grapple itself was not carried out: the world was still
+  black from the stray key.
 
 ### Decisions
 

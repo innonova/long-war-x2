@@ -125,9 +125,6 @@ and a Decisions list to review.
   - **Planned, not built**: the home country and its bonuses
     (`lw-startbonus.md`), with Long War's rules read from its code; the
     officers (`lw-officers.md`).
-  - **Seen once, not explained**: after a key was sent to the game to
-    open the grapple, the world drew black under a working HUD
-    (`lw-genemods.md`).
   - **Test aids added** (`tools/test/README.md`): `killaliens` (XCOM 2's
     `KillAllAIs` kills the civilians too) and `psichance`.
 - **Preview build**: replaced at 04:30 UTC with everything above

@@ -11,6 +11,9 @@ public static class LwxKey {
 }
 '@
 Add-Type -AssemblyName System.Windows.Forms
+# A digit is the digit's key (D6), not the virtual key of that number (6 is the mouse's XButton2, which turned XCOM 2's
+# world black under its HUD).
+if ($Key -match '^\d$') { $Key = "D$Key" }
 $vk = [uint32][System.Windows.Forms.Keys]$Key
 $scan = [byte][LwxKey]::MapVirtualKey($vk, 0)
 [LwxKey]::keybd_event([byte]$vk, $scan, 0x8, [UIntPtr]::Zero)        # KEYEVENTF_SCANCODE
