@@ -68,6 +68,20 @@ static function int SquadSize()
 	return (class'LWStrategyRules'.default.SkyrangerCapacity > 0 ? class'LWStrategyRules'.default.SkyrangerCapacity : 4) + (S != none ? S.SquadSizesBought : 0);
 }
 
+/** XCOM 2's mission source for a Long War mission kind (XComGameState_LWStrategy.PendingKind). */
+static function name SourceForKind(int Kind)
+{
+	switch (Kind)
+	{
+	case 1: // crash site
+	case 2: // landed UFO
+		return 'MissionSource_LandedUFO';
+	case 4: // terror site
+		return 'MissionSource_Retaliation';
+	}
+	return 'MissionSource_GuerillaOp';
+}
+
 /** The first soldiers able to go on a mission. */
 function array<XComGameState_Unit> ReadySoldiers(int Max)
 {
@@ -102,6 +116,8 @@ function OnLaunch(UIButton Button)
 	local array<XComGameState_Reward> Rewards;
 	local X2StrategyElementTemplateManager Strategy;
 	local X2RewardTemplate RewardTemplate;
+	local name Source;
+	local int Kind;
 	local array<XComGameState_Unit> Soldiers;
 	local XComGameState_Unit Unit;
 	local XGStrategy Game;
@@ -121,14 +137,18 @@ function OnLaunch(UIButton Button)
 	if (class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole)
 		DaylightRegion(Region, Where);
 
+	Kind = class'XComGameState_LWStrategy'.static.Get() != none ? class'XComGameState_LWStrategy'.static.Get().PendingKind : 0;
 	// A mission site, as XCOM 2's calendar makes a guerrilla op; and the squad. With the EW map,
 	// made again (up to eight times) until its mission can be played on an outdoor plot.
 	for (Attempt = 0; Attempt < 8; Attempt++)
 	{
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("LongWarX2: a mission from the Long War headquarters");
-		// XCOM 2's supplies reward with nothing in it: Long War's missions pay their own (rewards by kind
-		// still to come). (Reward_None has no mission family, and the mission then never starts.)
-		RewardTemplate = X2RewardTemplate(Strategy.FindStrategyElementTemplate('Reward_Supplies'));
+		// XCOM 2's mission for Long War's kind (lw-missions.md): a crash site or landed UFO is XCOM 2's
+		// landed UFO, a terror site its retaliation (its civilians), the rest a guerrilla op. The reward is
+		// what XCOM 2 pairs with the source, with nothing in it: Long War's missions pay their own. (A
+		// guerrilla op with Reward_None has no mission family, and the mission then never starts.)
+		Source = SourceForKind(Kind);
+		RewardTemplate = X2RewardTemplate(Strategy.FindStrategyElementTemplate(Source == 'MissionSource_GuerillaOp' ? 'Reward_Supplies' : 'Reward_None'));
 		Reward = RewardTemplate.CreateInstanceFromTemplate(NewGameState);
 		Reward.GenerateReward(NewGameState, ResHQ.GetMissionResourceRewardScalar(Reward), Region.GetReference());
 		Reward.Quantity = 0;
@@ -138,7 +158,9 @@ function OnLaunch(UIButton Button)
 		// Long War has no sitreps and no Chosen: none from the mission source, and (below) none forced by the plot
 		// and none of the tags that bring the Chosen or a sitrep's units.
 		Mission.bForceNoSitRep = true;
-		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate('MissionSource_GuerillaOp')), Where, Region.GetReference(), Rewards, true, false);
+		// Not War of the Chosen's own retaliation, which brings the Chosen.
+		Mission.ExcludeMissionFamilies.AddItem("ChosenRetaliation");
+		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate(Source)), Where, Region.GetReference(), Rewards, true, false);
 		Mission.GeneratedMission.SitReps.Length = 0;
 		Mission.TacticalGameplayTags.Length = 0;
 		if (!class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole || PreferOutdoorPlot(Mission) || Attempt == 7)

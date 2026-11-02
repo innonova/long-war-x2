@@ -423,3 +423,32 @@ the Geoscape.
 In the next such landing it was measured: "soldier Paul Johnson boxed in,
 moved to tile 76,27,13 beside Ella Willems (who reaches 655 tiles)", and 28
 seconds later every soldier reached 411 to 660 tiles.
+
+## Report (2026-11-02 night, XCOM 2's mission for Long War's kind)
+
+**A Long War mission now plays the XCOM 2 mission closest to its kind**
+(`UILWHeadquarters.SourceForKind`):
+- a crash site or landed UFO: XCOM 2's landed UFO (`MissionSource_LandedUFO`,
+  "Secure the UFO");
+- a terror site: XCOM 2's retaliation (`MissionSource_Retaliation`, its
+  "Terror" mission, with its civilians); War of the Chosen's Chosen
+  retaliation is excluded;
+- an abduction and the rest: a guerrilla op, as before.
+- The reward is the one XCOM 2 pairs with the source (`Reward_None`; a
+  guerrilla op keeps the empty supplies reward).
+
+**Checked** (a new campaign run on until its first terror site, in China):
+"launching Terror on Plot_SHN_Terror_HighwayAssault with 6 soldiers". The
+mission read "Rescue at least 6 Civilians from Alien Forces", with 15
+civilians and Long War's squad of 12. Won by clearing (cheat). Back on the
+Avenger: "The aliens killed (12) left: … 4 Chryssalid Carcass, 8 Floater
+Corpse. The mission in China succeeded." XCOM 2's retaliation code at the
+mission's end did no harm.
+- The first try crashed at the map load: the known crash (`+0x6d0695`), now
+  4 in about 35 loads.
+
+### Decisions
+
+- **A terror mission is won by clearing the aliens, as the others are.**
+  Long War's terror rewards depend on the civilians saved, which XCOM 2's
+  mission counts; feeding that count to Long War's result is left open.
