@@ -62,6 +62,7 @@ And around it:
     tools/test/lw.sh endturn                   # in a mission: XCOM's turn ended (as the button)
     tools/test/lw.sh 'unbox 500'                 # soldiers reaching fewer than 500 tiles moved beside the best placed (-1: paths unknown)
     tools/test/lw.sh 'near Sniper 8'           # a soldier put 8 tiles from the nearest alien (a target in view)
+    tools/test/lw.sh 'next Quinn Price'        # a soldier put on a free tile beside another (a medikit's reach)
     tools/test/lw.sh effects                   # each soldier's will, hp and the effects on them
     tools/test/lw.sh psi 'psi 0 68'           # psi training: the powers, chances, hours; soldier 0 trains Mindfray
     tools/test/lw.sh gene 'gene 2 148'        # gene mods: costs, what is missing; soldier 2 into the tank for Iron Skin

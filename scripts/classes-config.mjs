@@ -170,6 +170,9 @@ const REAL = {
   // "Fire a shot that may cause non-flying enemies to run to new cover. The shot is easy to hit with, but does
   // reduced damage and consumes extra ammo." The running is not done.
   LW_Flush: () => ({ Kind: 'Flush', Aim: c('FLUSH_AIM_BONUS'), Damage2: consts.has('FLUSH_DMG_REDUCTION') ? -c('FLUSH_DMG_REDUCTION', 100) : undefined }),
+  // "Allows Medikits to revive critically wounded soldiers at <ReviveHealthPercent>% of maximum health, instead of just
+  // stabilizing them."
+  LW_Revive: () => ({ Revive: c('REVIVE_HEALTH_AMOUNT', 100) }),
   LW_Paramedic: () => ({ FreeShotIf: 'Medikit' }),
   // "Medikits restore four more health per use" (and two more charges: X2Effect_LWCharges).
   LW_Savior: () => ({ Heal: c('MEDIKIT_SAVIOR_BONUS') }),

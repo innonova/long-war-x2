@@ -139,6 +139,9 @@ function Handle(string Line, out array<string> Out)
 	case "near":
 		Out.AddItem(MoveNear(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? int(Args[2]) : 8));
 		return;
+	case "next":
+		Out.AddItem(MoveNext(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? Args[2] : ""));
+		return;
 	case "unbox":
 		Out.AddItem("moved" @ class'LWX2PartPlacer'.static.FreeBoxedIn(Args.Length > 1 ? int(Args[1]) : 40));
 		return;
@@ -989,6 +992,56 @@ static function string JoinNames(array<name> Names)
 	foreach Names(N)
 		S @= string(N);
 	return S;
+}
+
+/** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
+function string MoveNext(string Who, string Whom)
+{
+	local XComGameState_Unit Unit, Other, Any;
+	local XComWorldData World;
+	local XComGameState NewGameState;
+	local TTile T;
+	local vector P;
+	local int dx, dy;
+	local bool bTaken;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Any)
+		if (Any.GetTeam() == eTeam_XCom && !Any.bRemovedFromPlay)
+		{
+			if (InStr(Caps(Any.GetFullName()), Caps(Who)) != INDEX_NONE)
+				Unit = Any;
+			if (InStr(Caps(Any.GetFullName()), Caps(Whom)) != INDEX_NONE)
+				Other = Any;
+		}
+	if (Unit == none || Other == none)
+		return "ERR no such soldiers";
+	World = `XWORLD;
+	for (dx = -1; dx <= 1; dx++)
+		for (dy = -1; dy <= 1; dy++)
+		{
+			if (dx == 0 && dy == 0)
+				continue;
+			T = Other.TileLocation;
+			T.X += dx;
+			T.Y += dy;
+			P = World.GetPositionFromTileCoordinates(T);
+			if (!World.GetFloorTileForPosition(P, T, false) || !World.CanUnitsEnterTile(T))
+				continue;
+			bTaken = false;
+			foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Any)
+				if (!Any.bRemovedFromPlay && Any.TileLocation == T)
+					bTaken = true;
+			if (bTaken)
+				continue;
+			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a soldier moved beside another (control port)");
+			XComGameStateContext_ChangeContainer(NewGameState.GetContext()).BuildVisualizationFn = class'LWMissionSquads'.static.BuildPodVisualization;
+			Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+			Unit.bRequiresVisibilityUpdate = true;
+			Unit.SetVisibilityLocation(T);
+			`TACTICALRULES.SubmitGameState(NewGameState);
+			return "ok" @ Unit.GetFullName() @ "beside" @ Other.GetFullName();
+		}
+	return "ERR no free tile beside" @ Other.GetFullName();
 }
 
 /** A soldier moved to a floor tile Tiles from the nearest living alien, on the side towards the soldier (a test aid: a target in view). */

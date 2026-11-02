@@ -44,6 +44,8 @@ struct LWStandin
 	var int HealTaken, Regen;
 	/** Secondary Heart: bleeding out instead of dying once a mission, these turns more (X2Effect_LWSecondaryHeart). */
 	var int BleedTurns;
+	/** Revive: a medikit's stabilize brings the soldier back at this % of their health (AddHealBonuses). */
+	var int Revive;
 };
 
 var config array<LWStandin> Standins;
@@ -682,7 +684,7 @@ static function X2AbilityTemplate Passive(LWStandin S)
 	return Template;
 }
 
-/** Savior and its like: XCOM 2's medikit abilities heal more for a soldier with the perk, Smart Macrophages on one, and with Improved Medikit done (OnPostTemplatesCreated). */
+/** Savior and its like: XCOM 2's medikit abilities heal more for a soldier with the perk, Smart Macrophages on one, and with Improved Medikit done; Revive's stabilize (OnPostTemplatesCreated). */
 static function AddHealBonuses()
 {
 	local X2AbilityTemplateManager Manager;
@@ -691,6 +693,9 @@ static function AddHealBonuses()
 	local X2Condition_AbilityProperty Owner;
 	local X2Condition_UnitEffects Target;
 	local X2Condition_LWFoundry Done;
+	local X2Condition_LWOwnerLacks Lacks;
+	local X2Effect Effect;
+	local X2Effect_LWReviveHeal Revive;
 	local LWStandin S;
 	local name Ability;
 	local array<name> Medikits;
@@ -698,6 +703,24 @@ static function AddHealBonuses()
 	Medikits.AddItem('MedikitHeal');
 	Medikits.AddItem('NanoMedikitHeal');
 	Manager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+	// Revive: the stabilized soldier stays awake, healed to a share of their health.
+	Medikit = Manager.FindAbilityTemplate('MedikitStabilize');
+	foreach default.Standins(S)
+		if (S.Revive != 0 && Medikit != none)
+		{
+			Owner = new class'X2Condition_AbilityProperty';
+			Owner.OwnerHasSoldierAbilities.AddItem(S.Name);
+			// XCOM 2's unconsciousness after stabilizing: only for a medic without the perk.
+			Lacks = new class'X2Condition_LWOwnerLacks';
+			Lacks.Ability = S.Name;
+			foreach Medikit.AbilityTargetEffects(Effect)
+				if (X2Effect_Persistent(Effect) != none && X2Effect_Persistent(Effect).EffectName == class'X2StatusEffects'.default.UnconsciousName)
+					Effect.TargetConditions.AddItem(Lacks);
+			Revive = new class'X2Effect_LWReviveHeal';
+			Revive.Pct = S.Revive;
+			Revive.TargetConditions.AddItem(Owner);
+			Medikit.AddTargetEffect(Revive);
+		}
 	foreach Medikits(Ability)
 	{
 		Medikit = Manager.FindAbilityTemplate(Ability);

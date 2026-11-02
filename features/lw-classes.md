@@ -529,3 +529,21 @@ from a pod; the `effects` aid now shows action and reserve points):
   of 1 (XCOM 2's), if that is the cause.
 - **Not done:** "may cause non-flying enemies to run to new cover". XCOM 2
   has no effect that makes a unit move to cover.
+
+## Report (2026-11-02 night, Revive)
+
+- **Revive**: a medikit's stabilize on a soldier bleeding out, by a medic
+  with the perk, brings them back at 33 % of their maximum health
+  (`REVIVE_HEALTH_AMOUNT`).
+  - The heal is `X2Effect_LWReviveHeal`: XCOM 2's medikit heal, its amount
+    set from the target.
+  - XCOM 2's unconsciousness after stabilizing is kept off for such a medic
+    (`X2Condition_LWOwnerLacks` on that effect).
+- **Checked, partly:** a soldier bleeding out at 1/8, stabilized by a medic
+  with the perk, came to 3/8 and was no longer bleeding out, but stayed
+  unconscious. Removing the effect in the same ability did not see the one
+  just added. The fix (the condition) is built but not yet seen in play:
+  in two more tries the frag grenades killed instead of leaving anyone
+  bleeding out (XCOM 2's chance).
+- **Test aid:** `next <soldier> <other>` puts a soldier on a free tile
+  beside another.
