@@ -57,6 +57,7 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 	local int Hidden;
 	local array<vector> DropZones;
 
+	FitVolume(World);
 	Mid = (World.WorldBounds.Min + World.WorldBounds.Max) * 0.5;
 	Size = World.WorldBounds.Max - World.WorldBounds.Min;
 	`log("LongWarX2: EW map whole: the generated map's level volume is" @ int(Size.X / 96) @ "x" @ int(Size.Y / 96) @ "x" @ int(Size.Z / 96) @ "tiles; EW's play area" @ int(2 * class'LWX2EWMapPieces'.static.Map().PlayExtent.X / 96) @ "x" @ int(2 * class'LWX2EWMapPieces'.static.Map().PlayExtent.Y / 96), , 'LongWarX2');
@@ -114,6 +115,36 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 	Rebuild(Parcels);
 	default.PlacedAt = Spawn;
 	`log("LongWarX2: EW map whole:" @ Hidden @ "actors of the generated map hidden; EW's map centred at" @ At $ "; the soldiers' spawn moved to" @ Parcels.SoldierSpawn.Location, , 'LongWarX2');
+}
+
+/**
+ * The level volume (the playable space, which XCOM 2's tiles fill) stretched to hold EW's play area with two tiles to
+ * spare on each side, where it is smaller (XCOM 2's empty test plot is 36 x 36 tiles; EW's maps run to over 70), and the
+ * tile grid made again for it. The volume's centre stays.
+ */
+function FitVolume(XComWorldData World)
+{
+	local XComLevelVolume Volume;
+	local vector Have, Need, Scale, Before;
+
+	Volume = World.Volume;
+	if (Volume == none)
+		foreach AllActors(class'XComLevelVolume', Volume)
+			break;
+	if (Volume == none)
+		return;
+	Have = World.WorldBounds.Max - World.WorldBounds.Min;
+	Need = 2 * class'LWX2EWMapPieces'.static.Map().PlayExtent + vect(384, 384, 0);
+	Scale.X = FMax(1, Need.X / FMax(Have.X, 96));
+	Scale.Y = FMax(1, Need.Y / FMax(Have.Y, 96));
+	Scale.Z = FMax(1, Need.Z / FMax(Have.Z, 96));
+	if (Scale.X == 1 && Scale.Y == 1 && Scale.Z == 1)
+		return;
+	Before = Have;
+	Volume.SetDrawScale3D(Volume.DrawScale3D * Scale);
+	World.BuildWorldData(Volume);
+	Have = World.WorldBounds.Max - World.WorldBounds.Min;
+	`log("LongWarX2: EW map whole: the level volume stretched by" @ Scale @ "from" @ int(Before.X / 96) @ "x" @ int(Before.Y / 96) @ "x" @ int(Before.Z / 96) @ "to" @ int(Have.X / 96) @ "x" @ int(Have.Y / 96) @ "x" @ int(Have.Z / 96) @ "tiles", , 'LongWarX2');
 }
 
 /**

@@ -655,3 +655,78 @@ is stopped (`SeqAct_Interp`'s Stop input), and the map loads 1.5 s later
 
 - Terror missions: **civilians alive at the end count as saved** (as
   built).
+
+## Report (2026-11-02, Enemy Within's maps as missions of their own)
+
+The person, on the first build with EW maps: "a weird second layer of
+xcom2 stuff in addition to a haze and not being very bright"; "why is there
+a host mission?"; "can we not convert the maps into proper missions in
+their own right?"; and "it only requires an editor step if we are not able
+to replicate whatever the editor does".
+
+**An EW map is now the whole mission, with no editor step and nothing
+shipped.** The host was never needed for the map, only for what XCOM 2
+asks of a mission: a plot (a level volume, a spawn, a parcel), a lighting
+map and a mission def. XCOM 2 builds tiles, cover and paths from geometry
+itself, so a map package of our own adds nothing the pieces do not. What
+had leaked through was the host plot's own content and its weather. Now:
+- **The plot: XCOM 2's empty test plot** (`Plot_WLD_Test_Lg`, cooked in
+  every retail install: a level volume, a spawn, one parcel and 13 ground
+  pieces), set as the mission's plot at launch
+  (`UILWHeadquarters.UseEWPlot`, `EWPlot` in `XComLWAirWar.ini`).
+- **Its volume stretched to the EW map** (`LWX2PartPlacer.FitVolume`):
+  the plot's volume is 36 × 36 tiles. Before placing, it is scaled to
+  EW's play area plus two tiles each side and XCOM 2's tile grid made again
+  for it (`BuildWorldData(Volume)`). The volume is a static actor; scaling
+  its draw scale works all the same. Seen: 36 × 36 → 48 × 42 (URB_FastFood,
+  45 × 39), → 53 × 47 (URB_Demolition_EWI, 50 × 44).
+- **The light: a clear day.** The mod's new `Config/XComMaps.ini` gives
+  that plot a lighting map of its own (`EnvLighting_Day_Arid`). XCOM 2
+  prefers a plot map's own lighting over its type's, so no rain map
+  (Wilderness can have one), no weather fog.
+- **The mission: XCOM 2's test mission** (`TestMission`, made for test
+  plots: kismet `Obj_Test`, `NullSchedule`, no timer, no objective items),
+  except on a terror site, whose XCOM 2 retaliation brings and counts the
+  civilians. Long War's aliens stand at EW's pods as before, and Long War's
+  rule (every alien dead or taken) ends the mission.
+- **The objective list shows Long War's objective**
+  (`UIScreenListener_LongWarX2Tactical.LongWarObjectives`): "Kill or
+  capture every alien" in place of XCOM 2's, whenever XCOM 2's kismet
+  writes its own. Not on a terror site.
+
+**Checked** (the test machine, three campaign abductions, screenshots):
+- With the test plot and the day light (URB_HighwayFallen): no rain, no
+  fog, no XCOM 2 props around the map. But the 36 × 36 volume cut the map
+  off: "There are no valid spawn locations", and the aliens could reach
+  one tile.
+- With the stretched volume (URB_FastFood): the map fits, and Long War's
+  squad of 9 stood at 6 EW pods. XCOM 2's guerrilla op still brought its
+  objectives and a "Container Detonation" countdown.
+- With the test mission and Long War's objective (URB_Demolition_EWI):
+  "launching TestMission on Plot_WLD_Test_Lg", Long War's squad of 11 at
+  4 EW pods, "the objective list shows Long War's objective", no soldier
+  boxed in (the best reaches 268 tiles). On screen: the EW map alone, in
+  daylight, with only "Kill or capture every alien" listed and no timer.
+
+### Decisions
+
+- **XCOM 2's own test plot and test mission**, not a plot of our own made
+  in the editor or written as a package: they are in every install, they
+  do what a host has to do and nothing more, and the volume can be fitted
+  at run time. A plot of our own stays the fallback if a patch removes them
+  (the launch falls back to an outdoor plot when `EWPlot` is not listed).
+- **One lighting map for now, a clear day**: brightness first, as the
+  person asked. EW's night maps (80 of the 126) are played in daylight too;
+  night lighting comes with each map's look.
+- **Terror sites keep XCOM 2's terror mission and its objective list**:
+  the civilians count toward Long War's result.
+
+### Left open
+
+- **Each map's look**: surfaces are glossy and washed out (the stand-in
+  materials' parents and parameters). One EW street lamp at ×3
+  (`LightScale`, judged on a darker host) still floods its corner orange
+  under the day light.
+- A terror site on an EW map still plays on the test plot with XCOM 2's
+  terror mission: not yet seen.
+- Night: a night lighting map for EW's night maps, once they look right.

@@ -16,6 +16,8 @@ var config float PartRadius;
 /** Where the part's centre goes, from the soldiers' spawn (its floor). */
 var config vector PartOffset;
 var int BoxedTries;
+/** An empty objective line (its struct defaults), for LongWarObjectives. */
+var ObjectiveDisplayInfo ObjectiveTemplate;
 var bool bSwept;
 
 event OnInit(UIScreen Screen)
@@ -214,6 +216,7 @@ function CheckSwept()
 	if (bSwept || `TACTICALRULES == none || `TACTICALRULES.HasTacticalGameEnded())
 		return;
 	NoReinforcements();
+	LongWarObjectives();
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 	{
 		if (Unit.GetTeam() != eTeam_Alien || Unit.GetMyTemplate().bIsCosmetic)
@@ -229,6 +232,49 @@ function CheckSwept()
 		HUD().ClearTimer(nameof(CheckSwept), self);
 	`log("LongWarX2: missions: all" @ Came @ "aliens dead or taken: the mission is won", , 'LongWarX2');
 	TestWin();
+}
+
+/**
+ * On an Enemy Within map, the objective list shows Long War's objective in place of the XCOM 2 mission's (a device to
+ * protect, charges to plant: things that are not on the map), each time XCOM 2's kismet writes its own. Not on a terror
+ * mission: XCOM 2's terror objective counts the civilians, as Long War's does.
+ */
+static function LongWarObjectives()
+{
+	local XComGameState_ObjectivesList List;
+	local XComGameState_BattleData Battle;
+	local ObjectiveDisplayInfo Info;
+	local XComGameState NewGameState;
+	local bool bOurs, bOthers;
+
+	if (!class'LWX2EWMapPieces'.static.HasMap())
+		return;
+	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+	if (Battle == none || Battle.MapData.ActiveMission.sType == "Terror")
+		return;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_ObjectivesList', List)
+		break;
+	if (List == none)
+		return;
+	foreach List.ObjectiveDisplayInfos(Info)
+	{
+		if (Info.MissionType == "LongWarX2")
+			bOurs = true;
+		else if (!Info.GPObjective)
+			bOthers = true;
+	}
+	if (bOurs && !bOthers)
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: Long War's objective");
+	List = XComGameState_ObjectivesList(NewGameState.ModifyStateObject(class'XComGameState_ObjectivesList', List.ObjectID));
+	List.ClearTacticalObjectives();
+	Info = default.ObjectiveTemplate;
+	Info.MissionType = "LongWarX2";
+	Info.DisplayLabel = "Kill or capture every alien";
+	Info.ShowCheckBox = true;
+	List.SetObjectiveDisplay(Info);
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	`log("LongWarX2: missions: the objective list shows Long War's objective", , 'LongWarX2');
 }
 
 static function TestWin()

@@ -11,6 +11,10 @@ var int PendingLaunch;
 var config float LaunchDelay;
 /** For the load-crash test: a narrative voice started as the mission launches, and left playing. */
 var config bool TestVoiceAtLaunch;
+/** The plot and biome of a mission on an Enemy Within map (UseEWPlot). */
+var config string EWPlot;
+var config string EWBiome;
+var config string EWMission;
 
 var UIText Title, Info, Squad, Last;
 var UIButton LaunchButton, AirWarButton, AvengerButton;
@@ -177,7 +181,7 @@ function OnLaunch(UIButton Button)
 		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate(Source)), Where, Region.GetReference(), Rewards, true, false);
 		Mission.GeneratedMission.SitReps.Length = 0;
 		Mission.TacticalGameplayTags.Length = 0;
-		if (EWMap == "" || PreferOutdoorPlot(Mission) || Attempt == 7)
+		if (EWMap == "" || UseEWPlot(Mission, Source != 'MissionSource_Retaliation') || PreferOutdoorPlot(Mission) || Attempt == 7)
 			break;
 		History.CleanupPendingGameState(NewGameState);
 	}
@@ -244,6 +248,35 @@ function LoadMapNow()
 {
 	`log("LongWarX2: Long War HQ: the map loads now", , 'LongWarX2');
 	`GAME.LaunchTacticalBattle(PendingLaunch);
+}
+
+/**
+ * The EW map's mission on XCOM 2's empty test plot (EWPlot): a level volume, a spawn and one parcel, so nothing of an XCOM 2
+ * map is around the EW map; its light is a clear day (Config/XComMaps.ini gives the plot its own). With bTestMission, also
+ * XCOM 2's mission made for that plot (EWMission, "TestMission": no aliens of its own, no timer, no objective items;
+ * Long War's aliens stand at EW's pods and its rule ends the mission); not for a terror site, whose XCOM 2 mission brings
+ * and counts the civilians. False when the plot is not in this install's list.
+ */
+function bool UseEWPlot(XComGameState_MissionSite Mission, bool bTestMission)
+{
+	local XComParcelManager Parcels;
+	local PlotDefinition Plot;
+	local MissionDefinition Def;
+
+	Parcels = `PARCELMGR;
+	foreach Parcels.arrPlots(Plot)
+	{
+		if (Plot.MapName ~= EWPlot)
+		{
+			Mission.GeneratedMission.Plot = Plot;
+			Mission.GeneratedMission.Biome = Parcels.GetBiomeDefinition(EWBiome);
+			if (bTestMission && EWMission != "" && `TACTICALMISSIONMGR.GetMissionDefinitionForType(EWMission, Def))
+				Mission.GeneratedMission.Mission = Def;
+			return true;
+		}
+	}
+	`log("LongWarX2: Long War HQ: no plot" @ EWPlot $ "; an outdoor plot instead", , 'LongWarX2');
+	return false;
 }
 
 /**
