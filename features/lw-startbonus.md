@@ -40,15 +40,36 @@ in a comment.
   - Robotics, Spetznaz, Sandhurst, Cyberware, NeoPanzers, Bounties;
   - Expertise, Legacy of Uxmal, Task Force Arrowhead, We Have Ways.
 
-## Questions before building it
+## How Long War uses them (read from its code, the same night)
 
-- **How Long War assigns the starting bonus.** The player picks the
-  country; is the bonus then picked by the player, or drawn among the
-  country's? The ini does not say.
-- **When a country bonus applies**: with a satellite over the country,
-  or while it stays in the council?
-- **The columns' exact meaning** (`iAlloys`), to be confirmed from Long
-  War's code (`XGStrategy` / `XGHeadquarters`), as was done for psi.
+- **The start screen** (`XGContinentUI.Init`) offers every distinct
+  (`iCash`, `iElerium`) pair of the starting bonuses: **the player picks a
+  bonus and its country together**, one of the 39. The choice is kept in
+  `XGHeadQuarters.m_iCountry`: the country, and the bonus's index in the
+  high 16 bits.
+- **`XGHeadQuarters.HasBonus(eBonus)`** sums the value (`iEng`, via
+  `XGWorld.GetContinentByBonus`) of every entry whose `iTime` is eBonus:
+  - a starting bonus (`eItem` 0) counts when its country is home and its
+    index is the one chosen;
+  - a country bonus (`eItem` 1) counts for a country other than home that
+    has satellite coverage and has not left the council;
+  - a continent bonus (`eItem` 2) counts while that continent's
+    (`iAlloys`) bonus is held. The samples have no such entry.
+- The rest of Long War's code asks `HasBonus` with the type numbers. Its
+  psi code, read for `lw-psi.md`, asks 55 (Legacy of Uxmal: chance) and 43
+  (The Old Path: hours), which matches the ini's comments.
+- Country ids are EW's `ECountry`, which `strategy-config.mjs` already
+  lists. The names are in Long War's `XComStrategyGame.int`
+  (`ContinentBonusNames[type]`, `ContinentBonusDesc[type]`); they would
+  need a localization file of the mod's own package (`LongWarX2.int`),
+  written by the setup program like the other words.
+
+## Why not built that night
+
+The choice only means something once the bonuses' effects are in, across
+the base, engineering, psi, gene mods, the soldiers and the Foundry; and
+the names need the setup program to write a second file. That is a
+feature to shape with the person, not to rush at the end of a night.
 
 ## Steps (proposed)
 
