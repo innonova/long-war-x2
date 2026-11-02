@@ -266,8 +266,10 @@ async function convertEW(ew, target) {
     )
     want = /^y/i.test(String(answer).trim())
   }
-  if (want) {
-    convertMaps(cooked, target, maps, content, join(content, 'ewmaps'), (src, out, ini) =>
+  // Maps converted by an earlier setup (their sections kept in Content/ewmaps) are joined in again even when no new
+  // ones are wanted: the mod's folder was just replaced, and with it its list of converted maps.
+  if (want || existsSync(join(content, 'ewmaps'))) {
+    convertMaps(cooked, target, want ? maps : [], content, join(content, 'ewmaps'), (src, out, ini) =>
       execFileSync(process.execPath, ['--convert-map', src, out, ini], {
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'pipe'],

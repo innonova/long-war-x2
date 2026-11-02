@@ -182,3 +182,20 @@ the missions to them; converted content survives reinstalls. The README
 says so, and asks nothing the setup does not. Checked from the release zip
 on the test machine (`lw-ew-screens.md`, last report). The download is
 `LongWarX2-20261102-7ed90c9.zip` on v0.1.0-preview.1.
+
+## Report (2026-11-02, a re-run keeps the maps on)
+
+The person, re-running a newer build's setup: every map "converted
+already". That is as meant: nothing in the conversion had changed (the
+changes since were all in the mod's script and config, which every setup
+replaces), and the packages and their sections are kept in `Content`.
+- **Found and fixed:** a re-run answered "N" to the maps question (or
+  `--no-maps`) skipped the join of the kept sections into the fresh mod
+  folder's `XComLWX2EWMap.ini`, so the missions went back to XCOM 2's maps
+  with the converted maps still on disk. The kept sections are now joined
+  whenever `Content/ewmaps` exists; "N" means only "convert no new maps".
+  Checked with a scratch mod folder: two kept sections, no maps asked for,
+  "2 maps in Config/XComLWX2EWMap.ini".
+- When a future change does need the maps converted again (the converter's
+  output changes), the setup will have to say so and redo them; today it
+  only compares file presence.
