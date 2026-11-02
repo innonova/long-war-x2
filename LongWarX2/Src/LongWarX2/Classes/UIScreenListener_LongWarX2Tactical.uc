@@ -31,6 +31,7 @@ event OnInit(UIScreen Screen)
 	{
 		bSwept = false;
 		Screen.SetTimer(2.0, true, nameof(CheckSwept), self);
+		NoTimer();
 	}
 	foreach Screen.WorldInfo.AllActors(class'LWX2EWUnitDisplay', Display)
 		return;
@@ -78,6 +79,25 @@ function OnEndMission(UIButton Button)
 }
 
 /** For development: the mission ended as won (its button; LWX2Control's "win"). */
+/**
+ * Long War's missions have no turn limit: XCOM 2's mission timer suspended for the whole mission, as War of the Chosen
+ * suspends it while the squad is concealed. Missions whose timer is their point refuse it (XCOM 2's
+ * DisallowUITimerSuspension). Once a mission (the HUD can come up again after a load).
+ */
+static function NoTimer()
+{
+	local XComGameState NewGameState;
+	local XComGameState_UITimer Timer;
+
+	Timer = XComGameState_UITimer(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_UITimer', true));
+	if (Timer != none && Timer.IsSuspended())
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: no mission timer");
+	class'XComGameState_UITimer'.static.SuspendTimer(false, NewGameState);
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	`log("LongWarX2: missions: XCOM 2's mission timer suspended (Long War's missions have none)", , 'LongWarX2');
+}
+
 /**
  * Long War's rule for its missions: when the aliens that came are all dead or taken (none alive on the field, after
  * at least one was there), the mission is won, as by the test button (XCOM 2's objectives counted as done). XCOM 2

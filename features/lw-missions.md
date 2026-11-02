@@ -353,3 +353,20 @@ check waited for the soldiers' paths (7 tries) and found nobody boxed in
 On the Geoscape: "The aliens killed (7) left: … The abduction's reward:
 §80. The mission in Russia succeeded." It was the first EW-map mission
 played to its end and counted by Long War's campaign.
+
+## Report (2026-11-02 night, no turn limit)
+
+**XCOM 2's mission timer is suspended for the whole of a Long War
+mission** (`NoTimer`, at the HUD's start). Long War's missions have no turn
+limit, but XCOM 2's mission types brought theirs ("Container Detonation",
+"Data Transfer"), which could fail a mission. The timer is suspended the
+way War of the Chosen suspends it while the squad is concealed
+(`XComGameState_UITimer.SuspendTimer`). Missions whose timer is their point
+refuse it (XCOM 2's `DisallowUITimerSuspension`).
+- **Checked:** "Data Transfer: 9 turns until completion" at the start, and
+  still 9 after two turns ended. Log: "XCOM 2's mission timer suspended".
+
+### Decisions
+
+- **Suspended rather than removed.** XCOM 2's own mechanism, so its timer
+  display and its kismet stay consistent.
