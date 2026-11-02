@@ -98,6 +98,48 @@ static function SpawnAtEWPods()
 	`log("LongWarX2: missions: Long War's squad of" @ S.PendingSquad.Length @ "spawned at" @ Pods.Length @ "of Enemy Within's pods", , 'LongWarX2');
 }
 
+/**
+ * On XCOM 2's maps: those of Long War's squad that did not come (XCOM 2 places a pod whole or not at all, and its pods
+ * are made for fewer aliens than Long War's squads share into them) spawned as pods of up to 4 beside aliens already
+ * on the field. Once a mission: every alien that came stays in the history, dead or taken.
+ */
+static function TopUp()
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_Unit Unit;
+	local array<XComGameState_Unit> Field;
+	local array<name> Names;
+	local vector At;
+	local int Came, Missing, k, n, Pod;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || S.PendingSquad.Length == 0 || class'LWX2PartPlacer'.default.bEWPlaced)
+		return;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_Alien && !Unit.GetMyTemplate().bIsCosmetic)
+		{
+			Came++;
+			if (Unit.IsAlive() && !Unit.bRemovedFromPlay)
+				Field.AddItem(Unit);
+		}
+	Missing = S.PendingSquad.Length - Came;
+	if (Missing <= 0 || Field.Length == 0)
+		return;
+	`log("LongWarX2: missions:" @ Missing @ "of Long War's squad of" @ S.PendingSquad.Length @ "did not come (XCOM 2's pods too small): spawned beside the others", , 'LongWarX2');
+	// The squad's last ones (which pods failed is not known: the squad is shared out in order).
+	for (k = S.PendingSquad.Length - Missing; k < S.PendingSquad.Length; k += n)
+	{
+		Names.Length = 0;
+		for (n = 0; n < 4 && k + n < S.PendingSquad.Length; n++)
+			Names.AddItem(TemplateFor(S.PendingSquad[k + n]));
+		At = `XWORLD.GetPositionFromTileCoordinates(Field[Pod % Field.Length].TileLocation);
+		At.X += (Pod % 2 == 0 ? 3 : -3) * class'XComWorldData'.const.WORLD_StepSize;
+		At.Y += (Pod % 3 == 0 ? 3 : -3) * class'XComWorldData'.const.WORLD_StepSize;
+		SpawnPod(name("LWX2_TopUp" $ Pod), At, Names);
+		Pod++;
+	}
+}
+
 /** A pod of these templates at a location (XComAISpawnManager.SpawnPodAtLocation), shown, its turn begun. */
 static function SpawnPod(name EncounterID, vector Location, array<name> Templates)
 {

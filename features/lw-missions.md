@@ -452,3 +452,25 @@ mission's end did no harm.
 - **A terror mission is won by clearing the aliens, as the others are.**
   Long War's terror rewards depend on the civilians saved, which XCOM 2's
   mission counts; feeding that count to Long War's result is left open.
+
+**Landed UFO checked, and a gap found and closed.** A landed Transport
+became "launching SecureUFO on Plot_WLD_UFO_Ravine": "Neutralize all
+enemies guarding UFO", on a UFO plot. Won by clearing; back on the Geoscape:
+"The aliens killed (20) left: … 6 Outsider Shard … The mission in United
+States succeeded."
+- **But only 10 of the squad of 20 had been on the field.** XCOM 2 places
+  a pod whole or not at all, and its pods are made for fewer aliens than
+  Long War's squads share into them ("Unable to find valid spawn location
+  for the ENTIRE group 'OPNx3_Standard'", twice).
+- **Now `LWMissionSquads.TopUp`**, at the HUD's start on XCOM 2's maps,
+  spawns those who did not come as pods of up to 4 beside aliens already on
+  the field (with AI data and a patrol zone, as the EW-map pods).
+- **Checked:** "7 of Long War's squad of 20 did not come … spawned beside
+  the others", two pods spawned, and 20 aliens on the field.
+
+### Decisions
+
+- **The missing ones are taken as the squad's last.** Which pod failed is
+  not known; the squad is shared out in order.
+- **Placed beside aliens already there**, not at the failed encounter's
+  place. XCOM 2 found no room there.

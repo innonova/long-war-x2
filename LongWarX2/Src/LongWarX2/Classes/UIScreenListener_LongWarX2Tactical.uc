@@ -32,6 +32,8 @@ event OnInit(UIScreen Screen)
 		bSwept = false;
 		Screen.SetTimer(2.0, true, nameof(CheckSwept), self);
 		NoTimer();
+		// On XCOM 2's maps: the squad's aliens whose pods found no room.
+		class'LWMissionSquads'.static.TopUp();
 	}
 	foreach Screen.WorldInfo.AllActors(class'LWX2EWUnitDisplay', Display)
 		return;
