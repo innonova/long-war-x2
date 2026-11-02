@@ -345,3 +345,11 @@ holds no screen and looks the HUD up when a timer is to be cleared.
   - XCOM 2's own objectives can still end a mission first, or fail it:
     their timers, for one.
   - Units of other teams (the Lost, civilians) are not counted.
+
+**The same loop on Enemy Within's map** (the badlands placed whole, the
+development switch on): Long War's squad spawned at EW's pods. The boxed-in
+check waited for the soldiers' paths (7 tries) and found nobody boxed in
+(the best reached 670 tiles). With all 7 aliens killed the mission was won.
+On the Geoscape: "The aliens killed (7) left: … The abduction's reward:
+§80. The mission in Russia succeeded." It was the first EW-map mission
+played to its end and counted by Long War's campaign.
