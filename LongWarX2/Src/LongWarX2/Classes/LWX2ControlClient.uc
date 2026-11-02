@@ -180,6 +180,11 @@ function Handle(string Line, out array<string> Out)
 		// A parameter of every stand-in material on the EW map, live: ewmat <parameter> <number | texture path>.
 		Out.AddItem(SetEWMaterials(Args.Length > 1 ? name(Args[1]) : '', Args.Length > 2 ? Args[2] : ""));
 		return;
+	case "stopmovie":
+		// The movie playing (the new campaign's intro, which the first mission waits for) stopped.
+		Out.AddItem("movie playing:" @ class'XComEngine'.static.IsAnyMoviePlaying());
+		class'XComEngine'.static.StopCurrentMovie();
+		return;
 	case "buildings":
 		// The plot's building volumes as XCOM 2 sees them; with an action on the n-th: buildings [n show <lo> <hi> | n reveal | n rebuild].
 		Buildings(Args, Out);

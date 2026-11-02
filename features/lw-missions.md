@@ -1020,3 +1020,10 @@ civilians.
   **Checked** (URB_CommercialAlley_Terror, reconverted): Long War's squad
   of 8 at the map's 5 terror pods; "18 civilians placed as Enemy Within
   placed them", none among the squad.
+- **00:40, the first mission, seen in play.** Through the control port's
+  campaign start (its intro movie stopped with a new aid, `stopmovie`: the
+  first mission waits for the movie, and the scripted start could not skip
+  it): "LoadMap: LWX2_URB_ConvienienceStore", Long War's first mission
+  squad of 10 at 8 EW pods, XCOM 2's four soldiers at EW's drop zone, the
+  best reaching 807 tiles. Won (Long War's rule), the after-action report
+  and the loot passed, back on the Avenger: the campaign goes on.
