@@ -54,6 +54,14 @@ struct LWUfoValue
 };
 
 var config array<LWCountryDef> Countries;
+/** Each council country's place on Enemy Within's flat world map (XGWorld.CreateSatNodes; x, y from 0 to 1). */
+struct LWMapPlace
+{
+	var name Country;
+	var float X;
+	var float Y;
+};
+var config array<LWMapPlace> MapPlaces;
 var config float FundingBalance[4];
 var config float StartingCashBalance[4];
 var config int BaseFundingPct[4];

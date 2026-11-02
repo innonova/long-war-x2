@@ -160,3 +160,45 @@ Geoscape still working under them (the control port's top screen
   screens go as EW's take their place.
 - Labels are our own words ("CASH", "ALLOYS") until EW's are written by
   the setup program.
+
+## Report (2026-11-02, the Situation Room)
+
+**EW's Situation Room shows Long War's world** (`UILWEWSituationRoom`,
+opened from the Geoscape screen's new SITUATION ROOM button, or `ewsitroom`).
+- **The council's countries** in EW's order (read from EW's code:
+  `XGSituationRoomUI.SortSitCountries`, `XGWorld.CreateCountries`), each
+  with its name, its funding ("+" when a satellite watches) and Long War's
+  panic in its bars; the doom tracker (countries gone).
+- **The map**: XCOM's headquarters, the satellites and the UFOs seen, at
+  each country's place on EW's map. The places are generated from EW's
+  code (`XGWorld.CreateSatNodes`, `+MapPlaces` in `XComLWStrategy.ini`,
+  numbers only).
+- **EW's screens are now scaled to XCOM 2's stage** (`bScaleToStage`:
+  EW laid them out for 1280 × 720, XCOM 2's stage is 1920 × 1080). Those
+  that place themselves by the stage's edges, as the HUD, are not.
+
+**What it took** (read from the movie's own ActionScript, with a small
+disassembler of ours in /tmp; not kept):
+- EW's movies carry their own `Colors` class, and XCOM 2's Flash has one
+  of the same name, loaded first; ActionScript 2's classes are global, so
+  EW's movies used XCOM 2's. `ew-ui.ts` now renames EW's to `EWClrs` (275
+  names in the movies).
+- The country name and funding are coloured by panic level 0 to 5
+  (`Colors.wrapInPanicLevelHtml`); any other value gives no colour, and
+  XCOM 2's Flash then draws nothing. Long War's version of the movie draws
+  the bars from the same number over about a hundred frames. So the level
+  (panic ÷ 20) goes to `SetCountryInfo`, and each bar is set to Long War's
+  panic afterwards, queued after it (`MC.ChildFunctionNum`: calls through
+  `MC` run in order at the end of the frame, `Movie.Invoke` at once, before
+  them).
+
+**Checked** (a new campaign, three days on): the sixteen countries with
+their names and funding (UNITED STATES +§160, CANADA §36 …), their panic
+bars (Russia's higher, in yellow), the HQ on the map, the HUD over it.
+
+### Left open
+
+- **The map behind is empty**: in EW the Situation Room's Flash lies over
+  a 3D world map in the room; a map picture behind it is next.
+- EW's satellite launching from the room (its satellite mode and uplinks)
+  is not wired; satellites are launched from the Geoscape screen.

@@ -48,9 +48,30 @@ for (const e of pkg.exports as { type: string; offset: number; size: number }[])
     }
   })
 }
+// ActionScript 2 classes are global and the first definition of a name wins. XCOM 2's Flash framework grew from EW's and
+// has classes of the same names, loaded first; where they differ, EW's movies get XCOM 2's. EW's Colors (its panic and
+// state colours) is renamed in EW's movies, as a whole name in their string tables, to EWClrs (the same length).
+const CLASSES: [string, string][] = [['Colors', 'EWClrs']]
+let classNames = 0
+for (const e of pkg.exports as { type: string; offset: number; size: number }[]) {
+  if (e.type !== 'SwfMovie') continue
+  const body = bytes.subarray(e.offset, e.offset + e.size)
+  for (const [from, to] of CLASSES) {
+    for (const before of [0x00, 0x2e]) {
+      const needle = Buffer.from([before, ...Buffer.from(from, 'latin1'), 0x00])
+      let i = 0
+      const view = Buffer.from(body.buffer, body.byteOffset, body.byteLength)
+      while ((i = view.indexOf(needle, i)) >= 0) {
+        body.set(Buffer.from(to, 'latin1'), i + 1)
+        classNames++
+        i += needle.length - 1
+      }
+    }
+  }
+}
 const tex = inlineTextures(bytes, pkg.exports, pkg.names, dirname(src), bytes.length)
 const outBytes = new Uint8Array(bytes.length + tex.appended.length)
 outBytes.set(bytes)
 outBytes.set(tex.appended, bytes.length)
 writeFileSync(out, outBytes)
-console.log(`${out}: ${outBytes.length} bytes; ${groups.length} groups renamed gfx → ewx, ${replaced} names in the movies; ${tex.textures} textures rewritten (${tex.mips} mips)`)
+console.log(`${out}: ${outBytes.length} bytes; ${groups.length} groups renamed gfx → ewx, ${replaced} names in the movies, ${classNames} class names; ${tex.textures} textures rewritten (${tex.mips} mips)`)

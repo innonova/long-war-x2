@@ -162,6 +162,9 @@ function Handle(string Line, out array<string> Out)
 		class'UILWEWStrategyHUD'.static.ShowIfAvailable();
 		Out.AddItem("ok");
 		return;
+	case "ewsitroom":
+		Out.AddItem(class'UILWEWSituationRoom'.static.Open());
+		return;
 	case "ewresearch":
 		Out.AddItem(class'UILWEWResearch'.static.Open());
 		return;

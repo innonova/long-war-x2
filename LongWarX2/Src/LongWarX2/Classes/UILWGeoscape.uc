@@ -14,7 +14,7 @@ var UIButton ActionButtons[MAX_ACTIONS];
 /** Beside each mission: won without playing it (to try the strategy layer), and won with an alien taken alive. */
 var UIButton WinButtons[MAX_ACTIONS];
 var UIButton CaptureButtons[MAX_ACTIONS];
-var UIButton StoresButton, EngineeringButton, BaseButton, HangarButton;
+var UIButton StoresButton, EngineeringButton, BaseButton, HangarButton, SitRoomButton;
 /** The right-hand text shows the stores instead of the events. */
 var bool bShowStores;
 /** For each action button: 1 intercept, 2 crash site, 3 landed UFO, 4 abduction, 5 terror; and the index. */
@@ -92,6 +92,12 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	BaseButton.SetPosition(1410, 75);
 	HangarButton = Spawn(class'UIButton', self).InitButton('LWGeoHangar', "HANGAR", OnHangar);
 	HangarButton.SetPosition(1240, 75);
+	// Enemy Within's own Situation Room, where its converted screens are in the mod (lw-ew-screens.md).
+	if (class'UILWEWScreen'.static.HasEWScreens())
+	{
+		SitRoomButton = Spawn(class'UIButton', self).InitButton('LWGeoSitRoom', "SITUATION ROOM", OnSitRoom);
+		SitRoomButton.SetPosition(1020, 75);
+	}
 	CloseGeoButton = Spawn(class'UIButton', self).InitButton('LWGeoClose', "CLOSE", OnAvenger);
 	CloseGeoButton.SetPosition(1700, 960);
 	Refresh();
@@ -288,6 +294,11 @@ simulated function OnBase(UIButton Button)
 simulated function OnEngineering(UIButton Button)
 {
 	Movie.Pres.ScreenStack.Push(Spawn(class'UILWEngineering', Movie.Pres));
+}
+
+simulated function OnSitRoom(UIButton Button)
+{
+	class'UILWEWSituationRoom'.static.Open();
 }
 
 simulated function OnStores(UIButton Button)

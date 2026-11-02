@@ -238,7 +238,7 @@ out.push(
     ['Muton', 7], ['Archon', 10], ['Berserker', 15], ['Andromedon', 11], ['Codex', 9], ['AdventPsiWitch', 12]].map(([g, c]) => `+CaptureAs=(Group=${g}, Char=${c})`),
   ...[28, 29, 30, 31].map((id) => `+Species=(Char=${id}, Name=ExaltElite${id}, Elerium=0, Alloys=0, Meld=${one('CB_FUNDING_BONUS')})`),
 )
-if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk))
+if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk), ...mapPlaces(strategyUpk))
 console.log(out.join('\r\n'))
 
 /**
@@ -287,6 +287,20 @@ function loseCondition(upk) {
   const m = /^\s*LOSE_CONDITION_NUM_DESERTERS=(\d+)/m.exec(src)
   if (!m) throw new Error('LOSE_CONDITION_NUM_DESERTERS not in XGStrategyActorNativeBase')
   return ["; The campaign is lost when this many countries have left (Long War's LOSE_CONDITION_NUM_DESERTERS).", `LoseCountries=${m[1]}`]
+}
+
+/**
+ * Where each council country sits on Enemy Within's flat world map (XGWorld.CreateSatNodes: its satellite node, x and
+ * y from 0 to 1 across the map), for EW's Situation Room (features/lw-ew-screens.md).
+ */
+function mapPlaces(upk) {
+  const places = []
+  for (const l of decompile(upk, 'XGWorld.CreateSatNodes')) {
+    const m = /^BuildSatNode\(eCountry_(\w+), vect2d\(([\d.]+), ([\d.]+)\)\);$/.exec(l)
+    if (m) places.push(`+MapPlaces=(Country=${m[1]}, X=${m[2]}, Y=${m[3]})`)
+  }
+  if (places.length !== 16) throw new Error(`XGWorld.CreateSatNodes: ${places.length} places read, expected 16`)
+  return ["; Each council country's place on Enemy Within's world map (XGWorld.CreateSatNodes: x, y from 0 to 1).", ...places]
 }
 
 function monthlyPlan(upk) {

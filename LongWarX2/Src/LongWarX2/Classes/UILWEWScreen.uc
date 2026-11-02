@@ -4,6 +4,9 @@
 class UILWEWScreen extends UIScreen;
 
 var string UIPackage;
+/** EW's movies are laid out for a 1280 x 720 stage, XCOM 2's is 1920 x 1080: a screen that does not place itself by the
+ *  stage's edges (as EW's HUD does) is scaled up to fill it. */
+var bool bScaleToStage;
 
 /** Whether the converted EW UI package is in the mod's Content (loading one of its objects loads it whole). */
 static function bool HasEWScreens()
@@ -57,6 +60,8 @@ static function string CallMovie(array<string> Args)
 simulated function OnInit()
 {
 	super.OnInit();
+	if (bScaleToStage)
+		SetPanelScale(1920.0 / 1280.0);
 	`log("LongWarX2: EW screen" @ Package @ "inited", , 'LongWarX2');
 }
 
@@ -85,5 +90,6 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 defaultproperties
 {
 	UIPackage = "EWStrategyUI"
+	bScaleToStage = true
 	InputState = eInputState_Consume
 }
