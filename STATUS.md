@@ -58,5 +58,5 @@ buttons and text, no art).
 | The player's build | done | the mod, its config and a setup program that writes Long War's words from the player's own install (v0.1.0-preview.1) | the EW content conversion in the setup program | `playable-build` |
 | Config from stock Long War | done | `scripts/config-all.sh` | | `lw-psi` (the answer) |
 | XCOM 2 test harness | done | control port, scripts, test aids (`tools/test`) | | |
-| Crash at mission load | none | | XCOM 2 sometimes dies at `LoadMap` (about 1 load in 9) | `lw-missions` |
+| Crash at mission load | done | a Wwise callback during `LoadMap` after launching with the Avenger's cinematics running: voices and cinematics stopped, the map loaded 1.5 s later (0 in 20 under provoked conditions) | more play to confirm | `lw-missions` |
 | EW Long War test harness | none | | running Enemy Within the same way, to compare | |

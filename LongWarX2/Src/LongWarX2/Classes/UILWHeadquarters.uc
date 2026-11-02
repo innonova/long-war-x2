@@ -4,7 +4,13 @@
 // mission with the first four soldiers able to go, through XCOM 2's own mission path (a mission
 // site, PrepareTacticalBattle, LaunchTacticalBattle), skipping its Geoscape, squad select and
 // Skyranger; and opens the air war (experiment 3) with the campaign's jets.
-class UILWHeadquarters extends UIScreen;
+class UILWHeadquarters extends UIScreen config(LWAirWar);
+
+/** The mission being launched, and the pause before its map loads (OnLaunch). */
+var int PendingLaunch;
+var config float LaunchDelay;
+/** For the load-crash test: a narrative voice started as the mission launches, and left playing. */
+var config bool TestVoiceAtLaunch;
 
 var UIText Title, Info, Squad, Last;
 var UIButton LaunchButton, AirWarButton, AvengerButton;
@@ -194,7 +200,50 @@ function OnLaunch(UIButton Button)
 		class'XComGameState_LWStrategy'.static.MissionLaunched(Mission.ObjectID);
 	Game = `GAME;
 	Game.PrepareTacticalBattle(Mission.ObjectID);
-	Game.LaunchTacticalBattle(Mission.ObjectID);
+	// The map is loaded a moment later, not in this frame (lw-missions.md, the load crash): XCOM 2 died now and then in
+	// LoadMap, on Wwise's thread, in a sound's duration callback that reached for the world while it was being torn down.
+	// A sound posted as the launch begins (its narrative voices load here) has its callback by then; voices are stopped.
+	if (TestVoiceAtLaunch)
+		`HQPRES.UINarrative(XComNarrativeMoment'X2NarrativeMoments.Strategy.Avenger_Skyranger_Deployed');
+	PendingLaunch = Mission.ObjectID;
+	if (LaunchDelay <= 0)
+		LoadMapNow();
+	else
+		SetTimer(0.5, false, nameof(LaunchNow));
+}
+
+/** The mission launched (OnLaunch, after LaunchDelay seconds): voices and the Avenger's cinematics stopped first. */
+function LaunchNow()
+{
+	local Sequence Seq;
+	local array<SequenceObject> Interps;
+	local SequenceObject Obj;
+	local int n;
+
+	if (`HQPRES.m_kNarrativeUIMgr != none)
+		`HQPRES.m_kNarrativeUIMgr.StopConversations();
+	// Running cinematics (their sound tracks post the events whose callbacks crashed): stopped (SeqAct_Interp's input 2).
+	Seq = WorldInfo.GetGameSequence();
+	if (Seq != none)
+	{
+		Seq.FindSeqObjectsByClass(class'SeqAct_Interp', true, Interps);
+		foreach Interps(Obj)
+		{
+			if (SeqAct_Interp(Obj).bIsPlaying)
+			{
+				SeqAct_Interp(Obj).ForceActivateInput(2);
+				n++;
+			}
+		}
+	}
+	SetTimer(LaunchDelay, false, nameof(LoadMapNow));
+	`log("LongWarX2: Long War HQ: voices and" @ n @ "running cinematics stopped; the map loads in" @ LaunchDelay @ "s", , 'LongWarX2');
+}
+
+function LoadMapNow()
+{
+	`log("LongWarX2: Long War HQ: the map loads now", , 'LongWarX2');
+	`GAME.LaunchTacticalBattle(PendingLaunch);
 }
 
 /**

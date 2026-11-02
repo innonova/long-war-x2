@@ -120,9 +120,10 @@ and a Decisions list to review.
     config is now regenerated from stock (`scripts/config-all.sh`); the
     Psi Labs' chance is 0.45 and the arc thrower's multiplier 0.61
     (`lw-psi.md`, the answer).
-  - **XCOM 2 sometimes crashes while loading a mission map**: about 3 in
-    25 loads that night, always at the same address. Not yet known whether
-    it happens with the mod off (`lw-missions.md`).
+  - **The crash while loading a mission map: found and fixed** (2026-11-02):
+    a sound callback during the load, after our launch left the Avenger's
+    cinematics running; they and the voices are now stopped before the
+    map loads (`lw-missions.md`).
   - **Approximations**, marked so in the Decisions lists: the psi will
     check's base, Shredder's +33 %, several cooldowns and radii.
   - **Planned, not built**: the home country and its bonuses

@@ -603,3 +603,50 @@ reached 510 tiles.
   converts maps nor turns it on.
 - Package size (114 to 302 MB a map) and loading time; a texture cache of
   our own would shrink them.
+
+## Report (2026-11-02, the crash at mission load: found and fixed)
+
+**XCOM 2 died now and then while loading a mission map** (`XCom2.exe+0x6d0695`,
+first seen 2026-11-01 21:40 UTC). Found, and fixed in our launch.
+- **The pattern** (the test machine's 124 kept campaign launch logs): 5 of
+  them end at `LoadMap`, each on a different plot; all five were campaign
+  launches from our headquarters screen. Quick launches never crashed.
+- **The dump** (Windows' local crash dumps turned on for XCom2.exe on the
+  test machine): a null object (`rcx` 0) in a small engine helper, called
+  from a function that handles a Wwise callback of type 8 (a sound's
+  duration) and walks every cinematic sound track
+  (`InterpTrackInstAkEvent`). The callback is registered with Wwise's
+  `PostEvent` (flags 9). So a sound posted from a cinematic (or a voice)
+  calls back on the audio thread while the old world is torn down, and
+  the engine reaches for the world. Three more dumps: the same address and
+  caller.
+- **Our launch** went straight from our screen into the tactical battle
+  in the same frame, with the Avenger's cinematics running (16 of them at
+  a launch). XCOM 2's own launch leaves the Avenger view first.
+
+**Tested** (the test machine, new campaigns launched into their first
+abduction, `crashloop.sh`):
+- as before: 1 crash in 20 (and 5 in 124 in the logs);
+- Long War's squad not written into XCOM 2's encounters: 0 in 20 (the
+  first suspect; not the cause, as the dumps say);
+- a narrative voice started at launch, no delay: **3 in 15**;
+- the same with a 1.5 s delay alone (the voice still playing): 2 in 20;
+- **the same with the fix: 0 in 20.**
+
+**The fix** (`UILWHeadquarters`): the mission is prepared, then after
+0.5 s voices are stopped (`StopConversations`) and every running cinematic
+is stopped (`SeqAct_Interp`'s Stop input), and the map loads 1.5 s later
+(`LaunchDelay`). The test voice is a development switch
+(`TestVoiceAtLaunch`, off).
+
+### Decisions
+
+- **Stop what plays, then wait**, rather than avoid launching from the
+  Avenger: the port's headquarters screen stays where it is.
+- **`SquadsInEncounters` stays** as a switch (on): the test cleared it.
+
+### Left open
+
+- The rate after the fix rests on 20 runs under the provoked condition;
+  more campaign play will tell. The crash dumps stay on for the test
+  machine.
