@@ -370,3 +370,21 @@ refuse it (XCOM 2's `DisallowUITimerSuspension`).
 
 - **Suspended rather than removed.** XCOM 2's own mechanism, so its timer
   display and its kismet stay consistent.
+
+## Report (2026-11-02 night, no sitreps, no Chosen)
+
+**A mission from Long War's Geoscape has no sitreps and no Chosen.** Before
+this, XCOM 2's sitreps could come with it: one test mission had "SITREP:
+The Lost", and a Lost swarm was drawn by a grenade.
+- No sitreps from the mission source (`bForceNoSitRep` before
+  `BuildMission`).
+- The sitreps the plot forces (the Lost on abandoned cities) and the
+  mission's gameplay tags (which bring the Chosen and a sitrep's units) are
+  cleared after it.
+- **Checked** in two missions: only aliens (team 16), plus the slum
+  map's civilians (team 1); no sitrep on the HUD.
+
+### Decisions
+
+- **The mission's gameplay tags are cleared whole**, not one by one. Only
+  sitreps and the Chosen put tags there; Long War has neither.

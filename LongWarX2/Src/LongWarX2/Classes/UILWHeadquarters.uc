@@ -126,7 +126,12 @@ function OnLaunch(UIButton Button)
 		Rewards.Length = 0;
 		Rewards.AddItem(Reward);
 		Mission = XComGameState_MissionSite(NewGameState.CreateNewStateObject(class'XComGameState_MissionSite'));
+		// Long War has no sitreps and no Chosen: none from the mission source, and (below) none forced by the plot
+		// and none of the tags that bring the Chosen or a sitrep's units.
+		Mission.bForceNoSitRep = true;
 		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate('MissionSource_GuerillaOp')), Where, Region.GetReference(), Rewards, true, false);
+		Mission.GeneratedMission.SitReps.Length = 0;
+		Mission.TacticalGameplayTags.Length = 0;
 		if (!class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole || PreferOutdoorPlot(Mission) || Attempt == 7)
 			break;
 		History.CleanupPendingGameState(NewGameState);
