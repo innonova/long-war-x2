@@ -103,6 +103,8 @@ static function array<X2DataTemplate> CreateTemplates()
 			Templates.AddItem(CloseCombatShot(S));
 		else if (S.PsiKind != '')
 			Templates.AddItem(PsiPower(S));
+		else if (S.Kind == 'Adrenal')
+			Templates.AddItem(Adrenal(S));
 		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.Damage2 != 0 || S.DamageTaken != 0 || S.CritDamagePct != 0 || S.BonusRadius != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0 || S.HealTaken != 0 || S.Regen != 0 || S.BleedTurns != 0)
 			Templates.AddItem(Passive(S));
 		else
@@ -476,6 +478,66 @@ static function LWStandin FlushDamage(LWStandin S)
 	D.DamagePct = S.Damage2;
 	D.DamageIf = 'FlushShot';
 	return D;
+}
+
+/**
+ * Long War's Adrenal Neurosympathy: when the soldier kills, squadmates within Radius tiles gain Aim, Crit and Mobility
+ * until the soldier's next turn; Param turns before it can happen again. Triggered by XCOM 2's KillMail event (the
+ * killer its source).
+ */
+static function X2AbilityTemplate Adrenal(LWStandin S)
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityTrigger_EventListener Trigger;
+	local X2AbilityMultiTarget_Radius Radius;
+	local X2Condition_UnitProperty Allies;
+	local X2Effect_PersistentStatChange Rush;
+	local X2AbilityCooldown Cooldown;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, S.Name);
+	Template.IconImage = S.Icon;
+	Template.AbilitySourceName = 'eAbilitySource_Perk';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_NeverShow;
+	Template.Hostility = eHostility_Neutral;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SelfTarget;
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Trigger = new class'X2AbilityTrigger_EventListener';
+	Trigger.ListenerData.EventID = 'KillMail';
+	Trigger.ListenerData.Deferral = ELD_OnStateSubmitted;
+	Trigger.ListenerData.Filter = eFilter_Unit;
+	Trigger.ListenerData.EventFn = class'XComGameState_Ability'.static.AbilityTriggerEventListener_Self;
+	Template.AbilityTriggers.AddItem(Trigger);
+	Radius = new class'X2AbilityMultiTarget_Radius';
+	Radius.fTargetRadius = S.Radius * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
+	Radius.bIgnoreBlockingCover = true;
+	Template.AbilityMultiTargetStyle = Radius;
+	Allies = new class'X2Condition_UnitProperty';
+	Allies.ExcludeHostileToSource = true;
+	Allies.ExcludeFriendlyToSource = false;
+	Allies.ExcludeDead = true;
+	Allies.RequireSquadmates = true;
+	Allies.FailOnNonUnits = true;
+	Template.AbilityMultiTargetConditions.AddItem(Allies);
+	if (S.Param > 0)
+	{
+		Cooldown = new class'X2AbilityCooldown';
+		Cooldown.iNumTurns = S.Param;
+		Template.AbilityCooldown = Cooldown;
+	}
+	Rush = new class'X2Effect_PersistentStatChange';
+	Rush.EffectName = name(S.Name $ "_Rush");
+	Rush.BuildPersistentEffect(1, false, true, false, eGameRule_PlayerTurnBegin);
+	Rush.SetDisplayInfo(ePerkBuff_Bonus, Template.LocFriendlyName, Template.GetMyHelpText(), Template.IconImage, true);
+	Rush.AddPersistentStatChange(eStat_Offense, S.Aim);
+	Rush.AddPersistentStatChange(eStat_CritChance, S.Crit);
+	Rush.AddPersistentStatChange(eStat_Mobility, S.Mobility);
+	Rush.DuplicateResponse = eDupe_Refresh;
+	Template.AddMultiTargetEffect(Rush);
+	Template.bShowActivation = true;
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
+	return Template;
 }
 
 /** A passive perk with its bonuses, shown in the soldier's perks. */

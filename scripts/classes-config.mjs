@@ -210,6 +210,9 @@ const REAL = {
   LW_PsiInspiration: () => ({ PsiKind: 'Inspiration', Radius: 3, Will: c('PSIINSPIRED_WILL_BONUS'), Param: 4, Param2: 2 }),
   // Gene mods (features/lw-genemods.md), with Long War's constants.
   LW_IronSkin: () => ({ DamageTaken: 1 }),
+  // "when a kill is confirmed, the soldier emits pheromones that grant offensive benefits to all nearby squadmates.
+  // Cannot occur more than once every 5 turns." Nearby: 6 tiles (APPROXIMATION, its reach is not known).
+  LW_AdrenalNeurosympathy: () => ({ Kind: 'Adrenal', Radius: 6, Aim: c('GENEMOD_ADRENAL_AIM'), Crit: c('GENEMOD_ADRENAL_CRIT'), Mobility: c('GENEMOD_ADRENAL_MOBILITY'), Param: 5 }),
   // "Causes soldiers to bleed out instead of dying the first time they go to zero health in a mission. The bleed-out
   // timer is extended by <SecondaryHeartBleedTimerBonus> turns."
   LW_SecondaryHeart: () => ({ BleedTurns: c('GENEMOD_SECONDHEART_BLEEDOUT') }),

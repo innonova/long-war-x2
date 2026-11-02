@@ -99,10 +99,22 @@ decided. The effect's own path is not yet seen in play.
 **Left open:** the 2 extra turns apply only when the effect itself saves
 the soldier, not to XCOM 2's own bleed-outs.
 
+## Report (2026-11-02 night, Adrenal Neurosympathy)
+
+**Adrenal Neurosympathy**: when the soldier kills, squadmates within 6
+tiles gain +10 aim, +5 crit and +2 mobility (`GENEMOD_ADRENAL_AIM`, `_CRIT`,
+`_MOBILITY`) until the soldier's next turn; then 5 turns before it can
+happen again. It is an ability triggered by XCOM 2's `KillMail` event.
+- **Checked:** with it and Rift given to the squad, one soldier's Rift
+  killed two Sectoids. The three squadmates gained
+  `LW_AdrenalNeurosympathy_Rush`; the killer did not ("all nearby
+  squadmates").
+- **Decision:** the reach is 6 tiles (APPROXIMATION); Long War's number is
+  not known.
+
 ### Left open
 
 - Stand-ins still:
-  - Adrenal Neurosympathy: a kill's buff to nearby squadmates;
   - Bioelectric Skin: nearby enemies revealed;
   - Muscle Fiber Density: climbing.
 - Neural Damping's +20 will against psi; the post-mission fatigue of
