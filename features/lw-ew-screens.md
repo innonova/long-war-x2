@@ -198,7 +198,29 @@ bars (Russia's higher, in yellow), the HQ on the map, the HUD over it.
 
 ### Left open
 
-- **The map behind is empty**: in EW the Situation Room's Flash lies over
-  a 3D world map in the room; a map picture behind it is next.
+- ~~The map behind is empty~~: done the same day, next report.
 - EW's satellite launching from the room (its satellite mode and uplinks)
   is not wired; satellites are launched from the Geoscape screen.
+
+## Report (2026-11-02, the earth behind the Situation Room)
+
+In EW the Situation Room's Flash lies over a 3D world map in the room.
+**Now EW's own holographic earth is drawn under the movie's map**
+(`UILWEWMapBackdrop`): `FX_Globe.T_Earth_Holo`, from EW's
+`Static_SituationRoom.upk`, converted by the existing `ew-package.ts` as
+`EWSitRoomMap.upk` (26 MB with its textures inlined).
+- EW's map coordinates are longitude and latitude scaled to 0 to 1 (the
+  United States' place is x 0.217: −100°), so the earth picture lines up
+  when stretched over the movie's map area. Its corners were measured by
+  placing markers at (0.5, 0.5) beside the HQ at (0.217, 0.283): x 590,
+  y 158, 750 × 498 on XCOM 2's stage.
+- Loaded into the movie without joining the stack, just before the
+  Situation Room, so it lies below; removed when the room closes.
+
+**Checked**: the continents behind the map, the HQ marker on the United
+States.
+
+### Left open
+
+- The setup program converts neither package yet (the UI screens, this
+  map).
