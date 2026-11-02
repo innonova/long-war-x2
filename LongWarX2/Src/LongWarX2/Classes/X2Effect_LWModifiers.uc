@@ -106,6 +106,9 @@ function int Holds(name Condition, XComGameState_Unit Attacker, XComGameState_Un
 	case 'Explosive':
 		Weapon = AbilityState != none ? AbilityState.GetSourceWeapon() : none;
 		return (Weapon != none && (X2GrenadeTemplate(Weapon.GetMyTemplate()) != none || Weapon.GetMyTemplateName() == 'LWSmall_218')) ? 1 : 0;
+	// Flush's own shot (its reduced damage).
+	case 'FlushShot':
+		return (AbilityState != none && AbilityState.GetMyTemplateName() == 'LW_Flush') ? 1 : 0;
 	// Sapper: grenades only (not rockets).
 	case 'Grenade':
 		Weapon = AbilityState != none ? AbilityState.GetSourceWeapon() : none;

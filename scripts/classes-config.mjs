@@ -70,7 +70,7 @@ const SAME = {
   ePerk_Opportunist: 'CoolUnderPressure',
 }
 /** XCOM 2's abilities that work through a weapon: given with it, as XCOM 2's own classes give them (DefaultClassData.ini). */
-const WEAPON_SLOT = { LW_SnapShot: 'eInvSlot_PrimaryWeapon', LW_CloseCombatSpecialist: 'eInvSlot_PrimaryWeapon', LW_PrecisionShot: 'eInvSlot_PrimaryWeapon', LW_DisablingShot: 'eInvSlot_PrimaryWeapon', InTheZone: 'eInvSlot_PrimaryWeapon', CoveringFire: 'eInvSlot_PrimaryWeapon', RapidFire: 'eInvSlot_PrimaryWeapon', HoloTargeting: 'eInvSlot_PrimaryWeapon', Suppression: 'eInvSlot_PrimaryWeapon' }
+const WEAPON_SLOT = { LW_SnapShot: 'eInvSlot_PrimaryWeapon', LW_Flush: 'eInvSlot_PrimaryWeapon', LW_CloseCombatSpecialist: 'eInvSlot_PrimaryWeapon', LW_PrecisionShot: 'eInvSlot_PrimaryWeapon', LW_DisablingShot: 'eInvSlot_PrimaryWeapon', InTheZone: 'eInvSlot_PrimaryWeapon', CoveringFire: 'eInvSlot_PrimaryWeapon', RapidFire: 'eInvSlot_PrimaryWeapon', HoloTargeting: 'eInvSlot_PrimaryWeapon', Suppression: 'eInvSlot_PrimaryWeapon' }
 const RANKS = ['Corporal1', 'Sergeant1', 'Lieutenant1', 'Captain1', 'Major', 'Colonel1']
 const RANK_NAMES = ['eRank_Squaddie', 'eRank_Corporal', 'eRank_Sergeant', 'eRank_Lieutenant', 'eRank_Captain', 'eRank_Major', 'eRank_Colonel']
 
@@ -167,6 +167,9 @@ const REAL = {
   LW_PrecisionShot: () => ({ Kind: 'PrecisionShot', Crit: c('PRECISION_SHOT_CRITICAL_CHANCE_BONUS'), Damage: c('PRECISION_SHOT_DAMAGE_BONUS'), Param: 2 }),
   LW_DisablingShot: () => ({ Kind: 'DisablingShot', Aim: consts.has('DISABLINGSHOT_AIM_PENALTY') ? -c('DISABLINGSHOT_AIM_PENALTY') : undefined, Param: 2 }),
   // "Once per turn, this unit may use a medikit without spending an action."
+  // "Fire a shot that may cause non-flying enemies to run to new cover. The shot is easy to hit with, but does
+  // reduced damage and consumes extra ammo." The running is not done.
+  LW_Flush: () => ({ Kind: 'Flush', Aim: c('FLUSH_AIM_BONUS'), Damage2: consts.has('FLUSH_DMG_REDUCTION') ? -c('FLUSH_DMG_REDUCTION', 100) : undefined }),
   LW_Paramedic: () => ({ FreeShotIf: 'Medikit' }),
   // "Medikits restore four more health per use" (and two more charges: X2Effect_LWCharges).
   LW_Savior: () => ({ Heal: c('MEDIKIT_SAVIOR_BONUS') }),

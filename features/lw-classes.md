@@ -517,3 +517,15 @@ from a pod; the `effects` aid now shows action and reserve points):
 - **Not done, for want of a mechanism:** Lock N' Load's extra shot (XCOM 2
   changes a clip's size only through weapon upgrades; its reload already
   leaves the turn going).
+
+## Report (2026-11-02 night, Flush)
+
+- **Flush**: a shot beside the standard one, at +30 aim
+  (`FLUSH_AIM_BONUS`), half damage (`FLUSH_DMG_REDUCTION`) and two shots'
+  ammo. The halving is a hidden passive that comes with it
+  (`LW_Flush_Damage`, condition `FlushShot`).
+- **Checked:** from 6 tiles, Flush hit an ADVENT MEC for 1 (7 → 6) and the
+  ammo went from 3 to 1. The rifle does 4; half is 2, less the MEC's armour
+  of 1 (XCOM 2's), if that is the cause.
+- **Not done:** "may cause non-flying enemies to run to new cover". XCOM 2
+  has no effect that makes a unit move to cover.

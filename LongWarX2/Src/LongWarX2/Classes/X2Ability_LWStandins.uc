@@ -90,8 +90,13 @@ static function array<X2DataTemplate> CreateTemplates()
 	{
 		if (S.Kind == 'SnapShot')
 			Templates.AddItem(SnapShot(S));
-		else if (S.Kind == 'PrecisionShot' || S.Kind == 'DisablingShot')
+		else if (S.Kind == 'PrecisionShot' || S.Kind == 'DisablingShot' || S.Kind == 'Flush')
+		{
 			Templates.AddItem(ActiveShot(S));
+			// Flush's reduced damage: a passive of its own (the shooter's damage modifier on that shot).
+			if (S.Kind == 'Flush')
+				Templates.AddItem(Passive(FlushDamage(S)));
+		}
 		else if (S.Kind == 'CloseCombat')
 			Templates.AddItem(CloseCombatShot(S));
 		else if (S.PsiKind != '')
@@ -134,6 +139,7 @@ static function X2AbilityTemplate ActiveShot(LWStandin S)
 	local X2AbilityToHitCalc_StandardAim Aim;
 	local X2Effect_ApplyWeaponDamage Bonus;
 	local X2AbilityCooldown Cooldown;
+	local X2AbilityCost Cost;
 
 	Template = class'X2Ability_WeaponCommon'.static.Add_StandardShot(S.Name);
 	Template.IconImage = S.Icon;
@@ -157,6 +163,14 @@ static function X2AbilityTemplate ActiveShot(LWStandin S)
 	}
 	Template.AbilityToHitCalc = Aim;
 	Template.AbilityTargetConditions.AddItem(new class'X2Condition_LWSniperReady');
+	// Flush: two shots' ammo, and the damage passive with it.
+	if (S.Kind == 'Flush')
+	{
+		foreach Template.AbilityCosts(Cost)
+			if (X2AbilityCost_Ammo(Cost) != none)
+				X2AbilityCost_Ammo(Cost).iAmmo = 2;
+		Template.AdditionalAbilities.AddItem(name(S.Name $ "_Damage"));
+	}
 	if (S.Param > 0)
 	{
 		Cooldown = new class'X2AbilityCooldown';
@@ -356,6 +370,18 @@ static function X2AbilityTemplate PsiPower(LWStandin S)
 		break;
 	}
 	return Template;
+}
+
+/** Flush's reduced damage, as a stand-in of its own: Damage2 % (negative) on Flush's shot. */
+static function LWStandin FlushDamage(LWStandin S)
+{
+	local LWStandin D;
+
+	D.Name = name(S.Name $ "_Damage");
+	D.Icon = S.Icon;
+	D.DamagePct = S.Damage2;
+	D.DamageIf = 'FlushShot';
+	return D;
 }
 
 /** A passive perk with its bonuses, shown in the soldier's perks. */
