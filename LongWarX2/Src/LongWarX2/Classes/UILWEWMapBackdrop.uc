@@ -5,7 +5,7 @@
 // movie's map where that maps 0..1 (longitude and latitude): under it, the map's tinted panel left it too dark to read.
 class UILWEWMapBackdrop extends UIScreen config(LWAirWar);
 
-/** The earth's tint (a Flash colour, "" for none: EW's map is a teal hologram, its material tinting the same earth) and opacity. */
+/** A colour for the earth (Flash setColor fills the image with it, so "" for none) and its opacity. */
 var config string EarthTint;
 var config float EarthAlpha;
 

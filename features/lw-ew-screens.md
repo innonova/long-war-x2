@@ -281,3 +281,15 @@ the map panel, the HQ marker on the United States.
 - The selected research row's text is dark on its dark bar.
 - The room's top-right box (EW's alien activity readout) is empty.
 - The HUD's project queue is still a placeholder.
+
+## Night log (2026-11-03)
+
+- **The Situation Room's map colour.** EW's map is its holographic earth
+  drawn through a teal material (the earth, a country index, clouds, line
+  noise: `FX_Globe.MI_Globe_Holo_Dark`); ours is the bare earth texture. A
+  tint through Flash's `setColor` (UIPanel.SetColor) was tried: it fills
+  the image with the colour, the continents gone. **Decision:** no tint
+  (`EarthTint` empty, opacity 50 as before). A first release went out with
+  the fill for about ten minutes and was replaced. To do properly: a teal
+  texture made by the converter from EW's earth and index textures, or a
+  material on a 3D plane behind the movie.
