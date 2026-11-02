@@ -16,6 +16,9 @@ Add-Type -AssemblyName System.Windows.Forms
 if ($Key -match '^\d$') { $Key = "D$Key" }
 $vk = [uint32][System.Windows.Forms.Keys]$Key
 $scan = [byte][LwxKey]::MapVirtualKey($vk, 0)
-[LwxKey]::keybd_event([byte]$vk, $scan, 0x8, [UIntPtr]::Zero)        # KEYEVENTF_SCANCODE
+# Arrows and the keys above them are "extended" keys: without the flag their scan codes are the numpad's (Down was
+# read as numpad 2).
+$ext = if (@('Up', 'Down', 'Left', 'Right', 'Home', 'End', 'PageUp', 'PageDown', 'Insert', 'Delete') -contains $Key) { 0x1 } else { 0 }
+[LwxKey]::keybd_event([byte]$vk, $scan, 0x8 -bor $ext, [UIntPtr]::Zero)        # KEYEVENTF_SCANCODE
 Start-Sleep -Milliseconds $Ms
-[LwxKey]::keybd_event([byte]$vk, $scan, 0x8 -bor 0x2, [UIntPtr]::Zero) # and KEYEVENTF_KEYUP
+[LwxKey]::keybd_event([byte]$vk, $scan, 0x8 -bor 0x2 -bor $ext, [UIntPtr]::Zero) # and KEYEVENTF_KEYUP

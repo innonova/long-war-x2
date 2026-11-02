@@ -57,6 +57,19 @@ static function string CallMovie(array<string> Args)
 	return "ok" @ EWScreen.MCPath $ "." $ Args[1] @ "with" @ (Args.Length - 2) @ "arguments";
 }
 
+/** A variable of the top EW screen's movie, below its clip (a test aid: ewvar). */
+static function string ReadVar(string SubPath)
+{
+	local UILWEWScreen EWScreen;
+	local UIScreen Top;
+
+	Top = `HQPRES.ScreenStack.GetCurrentScreen();
+	EWScreen = UILWEWScreen(Top) != none ? UILWEWScreen(Top) : UILWEWScreen(`HQPRES.ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
+	if (EWScreen == none)
+		return "ERR no EW screen";
+	return EWScreen.MCPath $ "." $ SubPath @ "=" @ EWScreen.Movie.GetVariableString(EWScreen.MCPath $ "." $ SubPath);
+}
+
 simulated function OnInit()
 {
 	super.OnInit();

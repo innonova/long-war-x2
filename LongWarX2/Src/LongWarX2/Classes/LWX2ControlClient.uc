@@ -168,6 +168,10 @@ function Handle(string Line, out array<string> Out)
 	case "ewresearch":
 		Out.AddItem(class'UILWEWResearch'.static.Open());
 		return;
+	case "ewvar":
+		// A variable inside the open EW movie: ewvar <path below the screen's clip>.
+		Out.AddItem(class'UILWEWScreen'.static.ReadVar(Args.Length > 1 ? Args[1] : ""));
+		return;
 	case "ewcall":
 		// A function of the open EW movie: ewcall <function> [arguments; _ for a space].
 		Out.AddItem(class'UILWEWScreen'.static.CallMovie(Args));

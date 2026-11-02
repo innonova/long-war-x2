@@ -245,3 +245,39 @@ run kept the maps ("converted already").
 - Found on the way: the backdrop looked the earth up by its short path
   first, and in the release that found nothing visible; it now loads its
   package first (and logs where the earth came from).
+
+## Report (2026-11-02, the person's first look)
+
+The person: "i see the situation room sort of and the research selection
+screen doesn't actually let me select".
+
+**Research now selects, by mouse and by keyboard** (`UILWEWResearch`).
+EW's list does not report its clicks to UnrealScript: they arrive only as
+the raw mouse commands (`FXS_L_MOUSE_UP_DELAYED`, `…_DOUBLE_UP`) and the
+row under the mouse is found by asking each row of
+`itemList.theItems.<i>` for its size and the mouse's place in it
+(`_width`, `_height`, `_xmouse`, `_ymouse`). A click selects (the row
+lights, the panel shows the tech's days, summary and image), a double
+click starts it, Up and Down (arrows and the numpad) move, Enter starts.
+- `tools/test/key.ps1` now sends the arrows (and Home, End, Insert,
+  Delete, Page Up and Down) as extended keys; without it Down arrived as
+  numpad 2. And digits as `D<n>`.
+- A new control-port aid, `ewvar <path>`, reads a variable of an EW movie.
+
+**Checked**: a click on ALIEN MATERIALS selected it, Down moved to ALIEN
+COMPUTERS, Enter started the research and closed the screen.
+
+**The Situation Room sits on black, with the earth over its map**
+(`UILWEWMapBackdrop`, now two of them): a black background loaded before
+the room (the Avenger no longer shows through, as in the person's
+screenshot), and the earth loaded after it at half opacity: under it, the
+movie's tinted map panel left it too dark to read.
+
+**Checked** (screenshot): black around the room, the continents clear in
+the map panel, the HQ marker on the United States.
+
+### Left open
+
+- The selected research row's text is dark on its dark bar.
+- The room's top-right box (EW's alien activity readout) is empty.
+- The HUD's project queue is still a placeholder.

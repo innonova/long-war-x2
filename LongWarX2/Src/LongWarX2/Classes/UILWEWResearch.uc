@@ -98,12 +98,55 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 	super(UIScreen).OnMouseEvent(cmd, args);
 }
 
+/**
+ * The option under the mouse, or -1. EW's list items do not report clicks to XCOM 2 (their own input code is EW's), so
+ * each option's clip (itemList.theItems.<i>, as EW's list names them) is asked where the mouse is, in its own coordinates.
+ */
+function int OptionUnderMouse()
+{
+	local string Path;
+	local float MouseX, MouseY, W, H;
+	local int i;
+
+	for (i = 0; i < Techs.Length; i++)
+	{
+		Path = MCPath $ ".itemList.theItems." $ i;
+		W = Movie.GetVariableNumber(Path $ "._width");
+		H = Movie.GetVariableNumber(Path $ "._height");
+		MouseX = Movie.GetVariableNumber(Path $ "._xmouse");
+		MouseY = Movie.GetVariableNumber(Path $ "._ymouse");
+		if (W > 0 && MouseX >= 0 && MouseY >= 0 && MouseX <= W && MouseY <= H)
+			return i;
+	}
+	return -1;
+}
+
 simulated function bool OnUnrealCommand(int cmd, int arg)
 {
+	local int i;
+
+	// A click on the list: the option under the mouse selected (a double click starts it).
+	if ((cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED || cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_DOUBLE_UP)
+		&& (arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0)
+	{
+		i = OptionUnderMouse();
+		`log("LongWarX2: EW research screen: click on option" @ i, , 'LongWarX2');
+		if (i >= 0)
+		{
+			Select(i);
+			if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_DOUBLE_UP)
+				Accept();
+			return true;
+		}
+	}
 	if ((arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) == 0)
 		return super.OnUnrealCommand(cmd, arg);
 	switch (cmd)
 	{
+		case class'UIUtilities_Input'.const.FXS_KEY_NUMPAD_8:
+		case class'UIUtilities_Input'.const.FXS_KEY_NUMPAD_2:
+			Select(Selected + (cmd == class'UIUtilities_Input'.const.FXS_KEY_NUMPAD_2 ? 1 : -1));
+			return true;
 		case class'UIUtilities_Input'.const.FXS_ARROW_UP:
 		case class'UIUtilities_Input'.const.FXS_DPAD_UP:
 			Select(Selected - 1);

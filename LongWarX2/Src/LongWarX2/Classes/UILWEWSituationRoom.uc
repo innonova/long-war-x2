@@ -17,8 +17,8 @@ static function string Open()
 	if (HQPres == none)
 		return "ERR not on the Avenger";
 	DynamicLoadObject(default.UIPackage $ ".ewxSituationRoom", class'Object', true);
-	// EW's earth under it, when its package is converted.
-	class'UILWEWMapBackdrop'.static.ShowIfAvailable();
+	// A black background under it (the earth goes over it once it is loaded: OnInit).
+	class'UILWEWMapBackdrop'.static.ShowIfAvailable(false);
 	EWScreen = HQPres.Spawn(class'UILWEWSituationRoom', HQPres);
 	EWScreen.Package = name("/ package/ewxSituationRoom/SituationRoom");
 	EWScreen.MCName = 'theScreen';
@@ -35,6 +35,7 @@ simulated function OnRemoved()
 simulated function OnInit()
 {
 	super.OnInit();
+	class'UILWEWMapBackdrop'.static.ShowIfAvailable(true);
 	MC.FunctionVoid("HideTicker");
 	MC.FunctionVoid("HideUplinks");
 	Refresh();
