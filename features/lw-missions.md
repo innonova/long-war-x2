@@ -862,3 +862,49 @@ highway's deck.
 - Terror sites on our mission bring no civilians yet (EW's civilian spawn
   points to use); interiors' roofs (building volumes, now authorable in the
   plot); EW's destructible pieces as XCOM 2 destructibles.
+
+## Report (2026-11-02, plots in the player's setup)
+
+**The setup program now makes every converted map a plot of its own.**
+- The batch converter (`ew-maps.ts`) writes each map's plot after
+  converting (`writePlots`; the stand-ins' parents and parameters and the
+  lights read from the mod's `XComLWEWMaps.ini`; EW's lights at
+  `PlotLightScale` 1 under XCOM 2's sun). The setup lists the plots in the
+  installed `XComPlots.ini`; the release ships the template plot and the
+  empty parcel in the mod's `Content`, and a reinstall keeps them beside
+  the kept conversions.
+- **Older conversions are redone**: each map's section records the
+  converter's version (`; ew-map.ts 2`). A section of an older version is
+  converted again when maps are wanted, and has no plot until then (its
+  map is placed at run time, as before). So the person's maps will be
+  converted once more by the next setup with maps.
+- The writer indexes names and imports: 0.1 s a plot (the first version
+  took about 10 s, a quadratic lookup; a full setup took 21 minutes).
+
+**Found on the way**
+- **The release had been built from stale code**, twice today:
+  `package.sh` checked out the commit on the test machine, but files a
+  development sync left there blocked the checkout without the script
+  noticing, and the build was of the old commit. It now cleans the
+  checkout and refuses to package unless the test machine is at the commit.
+- **The empty parcel was registered as small**; the template's slot is
+  32 × 32 tiles, which XCOM 2 counts as large, so no parcel fitted and the
+  game crashed generating the map ("Map package does not exist"). Now
+  large. Why the first plot test (URB_HighwayFallen) passed with it is not
+  known: its log was overwritten.
+
+**Checked** (the release zip unpacked on the test machine, the mod
+uninstalled, its setup run with `--maps`: 83 maps converted and 83 plots
+written in 230 s; then a campaign abduction): "launching LWX2_EWMission on
+LWX2_URB_CommercialRestaurant", "on its own plot", Long War's squad of 11
+at 2 EW pods, Long War's objective, the best soldier reaching 382 tiles.
+On screen: the EW street with its own colours, no orange cast.
+
+### Left open
+
+- Interiors and overpasses: the roof or the deck hides the squad
+  (URB_OfficePaper_EWI, URB_StreetOverpass). Next: EW's building volumes
+  and floors, read by the converter, written into the plot as XCOM 2
+  building volumes (a sample to add to the template).
+- Terror sites: civilians at EW's civilian spawn points.
+- No mission template for `LWX2_EWMission` (a warning).
