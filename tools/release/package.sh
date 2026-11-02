@@ -15,7 +15,12 @@ stage="dist/$name"
 
 # The build, of this commit (the game stopped first: a running game keeps the mod's files).
 tools/test/on.sh 'tools\test\stop-game.ps1' >/dev/null 2>&1 || true
-ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git checkout -q -- .; git fetch -q origin main; git checkout -q $commit 2>&1; pwsh -File tools\\test\\build.ps1" | tr -d '\r' | grep -E ': Error|SUCCESS|FAIL' | tail -2
+# The checkout cleaned first (files a development sync left would block the checkout, and the build would be of the
+# old commit), and checked: the build is of this commit or there is no package.
+ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git checkout -q -- .; git clean -qfd -e BuildCache; git fetch -q origin main; git checkout -q $commit 2>&1"
+built=$(ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git rev-parse HEAD" | tr -d '\r')
+[ "$built" = "$(git rev-parse HEAD)" ] || { echo "the test machine's checkout is at $built, not $commit: no package"; exit 1; }
+ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; pwsh -File tools\\test\\build.ps1" | tr -d '\r' | grep -E ': Error|SUCCESS|FAIL' | tail -2
 rm -rf "$stage" && mkdir -p "$stage"
 # The mod folder without its Content (the converted EW packages linked there for testing are many GB, and none of
 # them may be in the download anyway): tar on the test machine, unpacked here.
