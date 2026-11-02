@@ -68,3 +68,21 @@
   window are screen pixels (`click-screen.ps1`) or the UI's 1920x1080
   coordinates (`click.ps1`); a soldier's reach read from script is 1 until
   XCOM's turn has begun.
+- **Units spawned mid-mission** (`XComAISpawnManager.SpawnPodAtLocation`) get
+  no AI unit data: make an `XComGameState_AIUnitData` for each, or the AI
+  never moves them (as XCOM 2's reinforcement spawner does).
+- **A single-target ability measures its reach by its weapon**: unbound
+  (`ApplyToWeaponSlot` unset), every target is "not in range". XCOM 2's psi
+  powers use the psi amp; ours are bound to the primary weapon.
+- **Long War's numbers**: the committed config is generated from the Tree's
+  samples (`xcom-ew-lw-tree/samples`: `Config/DefaultGameCore.ini`,
+  `INT2/XComGame.int`, `CookedPCConsole/*.upk`; Long War 1.0d). The Long War
+  installed on wingpu is another build (PSI_GIFT_CHANCE 0.45, not 0.65, and
+  more): use it for words on the test machine, never for committed config.
+  EW's code constants (`readConsts`) and its compiled script
+  (`xcom-ew-lw-tree/scripts/upk_script.py`) give what the ini does not;
+  decompiled output stays in the terminal or /tmp.
+- **Test aids for aimed abilities** must gather the area's units
+  (`AbilityMultiTargetStyle.GetMultiTargetsForLocation`) before
+  `ActivateAbility`, as the targeting UI does; without it only world effects
+  apply.
