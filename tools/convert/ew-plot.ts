@@ -95,10 +95,13 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const allNames = (): NameEntry[] => [...pkg.names, ...names]
 
   // --- Names, imports, exports -----------------------------------------------------------------------------------
+  const namesByText = new Map<string, number>()
+  pkg.names.forEach((n: NameEntry, k: number) => { if (!namesByText.has(n.name)) namesByText.set(n.name, k) })
   const nameIndex = (s: string): number => {
-    const i = allNames().findIndex((n) => n.name === s)
-    if (i >= 0) return i
+    const i = namesByText.get(s)
+    if (i !== undefined) return i
     names.push({ name: s, flags: nameFlags })
+    namesByText.set(s, pkg.names.length + names.length - 1)
     return pkg.names.length + names.length - 1
   }
   /** An object name: "Foo_12" is name Foo, number 13 (UE3's numbered names). */
@@ -112,14 +115,19 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     const i = allImports()[-ref - 1]!
     return (i.outer ? importPath(i.outer) + '.' : '') + nm(i.objectName)
   }
+  /** The imports by path (lower case), the template's read once. */
+  const importsByPath = new Map<string, number>()
+  pkg.imports.forEach((_: Import, k: number) => importsByPath.set(importPath(-k - 1).toLowerCase(), -k - 1))
   /** An import by path (its outers made as packages), of a class in a class package. */
   const importRef = (path: string, className: string, classPackage = 'Engine'): number => {
-    const found = allImports().findIndex((_, k) => importPath(-k - 1).toLowerCase() === path.toLowerCase())
-    if (found >= 0) return -found - 1
+    const found = importsByPath.get(path.toLowerCase())
+    if (found !== undefined) return found
     const parts = path.split('.')
     const outer = parts.length > 1 ? importRef(parts.slice(0, -1).join('.'), 'Package', 'Core') : 0
     imports.push({ classPackage: objName(classPackage), className: objName(className), outer, objectName: objName(parts.at(-1)!) })
-    return -(pkg.imports.length + imports.length)
+    const ref = -(pkg.imports.length + imports.length)
+    importsByPath.set(path.toLowerCase(), ref)
+    return ref
   }
   const exportCount = () => pkg.exports.length + added.length
   const byPath = (suffix: string): number => {
