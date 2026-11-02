@@ -169,3 +169,23 @@ did before.
 
 **Test aid:** `open base|hangar|engineering` opens the Geoscape's screens
 as their buttons do.
+
+## Report (2026-11-02 night, Telekinetic Field and Rift)
+
+- **Telekinetic Field**: the psion and allies within 12 tiles gain +40
+  defence (`TELEKINETIC_FIELD_DEFENSE_BONUS`) until the psion's next turn,
+  so through the enemy turn; cooldown 4.
+- **Rift**: 8 psi damage (`RIFT_START_DMG`) to every unit within 6 tiles of
+  the place chosen (XCOM 2's Void Rift targeting); cooldown 4.
+- **Checked:** Telekinetic Field cast by one soldier put
+  `LW_TelekineticField_Defense` on all four. Rift aimed at the nearest
+  Sectoid killed the two nearest (8 HP each); they were gone from the list
+  of the living.
+
+### Decisions
+
+- **The radii are read as tiles.** EW's constants (12.75, 6.75) follow
+  Inspiration's pattern: 3.75 for Long War's "within 3 tiles".
+- **Rift does the same damage to every target** (APPROXIMATION). Long War
+  scales it by the target's will (`RIFT_WILL_BALANCE`, `RIFT_WILL_DMG_SLICE`,
+  a minimum of 4 to 5). Its psi armour requirement is not applied yet.

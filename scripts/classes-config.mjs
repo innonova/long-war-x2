@@ -197,6 +197,10 @@ const REAL = {
   LW_Mindfray: () => ({ PsiKind: 'Mindfray', Base: 50, Damage: 1 }),
   LW_PsiPanic: () => ({ PsiKind: 'Panic', Base: 50, Param: 2 }),
   LW_MindControl: () => ({ PsiKind: 'MindControl', Base: 50 + ini('MIND_CONTROL_DIFFICULTY'), Param: 5, Param2: 3 }),
+  // Radii: EW's constants are in tiles plus 0.75 (PSI_INSPIRE_FIELD_RADIUS 3.75, "within 3 tiles").
+  LW_TelekineticField: () => ({ PsiKind: 'TKField', Radius: 12, Defense: c('TELEKINETIC_FIELD_DEFENSE_BONUS'), Param: 4 }),
+  // "The rift does more damage against targets with low Will": its start damage (RIFT_START_DMG) for all (APPROXIMATION).
+  LW_Rift: () => ({ PsiKind: 'Rift', Radius: 6, Damage: c('RIFT_START_DMG'), Param: 4 }),
   LW_PsiInspiration: () => ({ PsiKind: 'Inspiration', Radius: 3, Will: c('PSIINSPIRED_WILL_BONUS'), Param: 4, Param2: 2 }),
   // Gene mods (features/lw-genemods.md), with Long War's constants.
   LW_IronSkin: () => ({ DamageTaken: 1 }),

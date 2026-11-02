@@ -306,6 +306,52 @@ static function X2AbilityTemplate PsiPower(LWStandin S)
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
 
+	// Telekinetic Field: allies within Radius tiles of the psion gain Defense until its next turn.
+	if (S.PsiKind == 'TKField')
+	{
+		Template.Hostility = eHostility_Neutral;
+		Template.AbilityToHitCalc = default.DeadEye;
+		Template.AbilityTargetStyle = default.SelfTarget;
+		Radius = new class'X2AbilityMultiTarget_Radius';
+		Radius.fTargetRadius = S.Radius * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
+		Radius.bIgnoreBlockingCover = true;
+		Radius.bExcludeSelfAsTargetIfWithinRadius = false;
+		Template.AbilityMultiTargetStyle = Radius;
+		Living = new class'X2Condition_UnitProperty';
+		Living.ExcludeHostileToSource = true;
+		Living.ExcludeFriendlyToSource = false;
+		Living.ExcludeDead = true;
+		Template.AbilityMultiTargetConditions.AddItem(Living);
+		Will = new class'X2Effect_PersistentStatChange';
+		Will.EffectName = name(S.Name $ "_Defense");
+		Will.BuildPersistentEffect(1, false, true, false, eGameRule_PlayerTurnBegin);
+		Will.SetDisplayInfo(ePerkBuff_Bonus, Template.LocFriendlyName, Template.GetMyHelpText(), Template.IconImage, true);
+		Will.AddPersistentStatChange(eStat_Defense, S.Defense);
+		Will.DuplicateResponse = eDupe_Refresh;
+		Template.AddShooterEffect(Will);
+		Template.AddMultiTargetEffect(Will);
+		return Template;
+	}
+	// Rift: Damage psi damage to every unit within Radius tiles of the place chosen.
+	if (S.PsiKind == 'Rift')
+	{
+		Template.Hostility = eHostility_Offensive;
+		Template.AbilityToHitCalc = default.DeadEye;
+		Cursor = new class'X2AbilityTarget_Cursor';
+		Template.AbilityTargetStyle = Cursor;
+		Radius = new class'X2AbilityMultiTarget_Radius';
+		Radius.fTargetRadius = S.Radius * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
+		Template.AbilityMultiTargetStyle = Radius;
+		Template.TargetingMethod = class'X2TargetingMethod_VoidRift';
+		Damage = new class'X2Effect_ApplyWeaponDamage';
+		Damage.bIgnoreBaseDamage = true;
+		Damage.EffectDamageValue.Damage = S.Damage;
+		Damage.EffectDamageValue.DamageType = 'Psi';
+		Damage.bExplosiveDamage = true;
+		Template.AddMultiTargetEffect(Damage);
+		return Template;
+	}
+
 	if (S.PsiKind == 'Inspiration')
 	{
 		Template.Hostility = eHostility_Neutral;
