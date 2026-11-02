@@ -117,5 +117,31 @@ happen again. It is an ability triggered by XCOM 2's `KillMail` event.
 - Stand-ins still:
   - Bioelectric Skin: nearby enemies revealed;
   - Muscle Fiber Density: climbing.
-- Neural Damping's +20 will against psi; the post-mission fatigue of
-  every mod.
+- ~~Neural Damping's +20 will against psi~~ (done the same night, below);
+  the post-mission fatigue of every mod.
+
+## Report (2026-11-02 night, Neural Damping's will against psi)
+
+Neural Damping now gives +20 will against psi attacks
+(`GENEMOD_BRAINDAMPING_WILL`; its words say "+<GeneModBrainDampingWill>
+will against psionic attacks"), besides its immunity to panic.
+- XCOM 2's psi check (`X2AbilityToHitCalc_StatCheck_UnitVsUnit`: base +
+  psi offence − will) reads the stat itself and asks no effect. So
+  **`AddPsiChecks`** gives every ability checked against will a subclass,
+  `X2AbilityToHitCalc_LWPsiCheck`, which adds the target's `PsiWill`
+  (a new stand-in field, generated). The log at start: "17 psi abilities
+  checked". These are the aliens' and Long War's powers alike.
+- A new test aid, `psichance`: the aliens' psi abilities' chances against
+  each soldier.
+- **Checked** (a new campaign's first abduction, 7 Sectoids): Mindspin
+  against Harumi Murakami (will 43) was 122 %. With Neural Damping given,
+  it was "will 43 + 20: 102%"; the others were unchanged.
+
+### Decisions
+
+- **Against every psi ability checked against will**, not a list of
+  Long War's. The aliens' psi attacks are XCOM 2's (Mindspin and so on),
+  which is what the soldier meets.
+- **XCOM 2's own numbers stay**: a Sectoid's Mindspin starts above 100 %
+  against these soldiers. That is XCOM 2's Sectoid, standing in for EW's
+  until step 3.

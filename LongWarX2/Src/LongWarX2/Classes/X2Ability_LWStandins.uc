@@ -46,6 +46,8 @@ struct LWStandin
 	var int BleedTurns;
 	/** Revive: a medikit's stabilize brings the soldier back at this % of their health (AddHealBonuses). */
 	var int Revive;
+	/** Will more against psi attacks, the aliens' too (Neural Damping: X2AbilityToHitCalc_LWPsiCheck, AddPsiChecks). */
+	var int PsiWill;
 };
 
 var config array<LWStandin> Standins;
@@ -796,6 +798,49 @@ static function AddSmokeBonuses()
 }
 
 /** Shredder Ammo: the shots of a Gunner's LMG or SAW and the rockets shred what they hit, for a soldier with the perk (OnPostTemplatesCreated). */
+/**
+ * Every psi ability checked against the target's will (XCOM 2's X2AbilityToHitCalc_StatCheck_UnitVsUnit, the aliens' and
+ * Long War's powers alike) gets X2AbilityToHitCalc_LWPsiCheck, which counts PsiWill (Neural Damping): XCOM 2's check reads
+ * the stat itself and asks no effect.
+ */
+static function AddPsiChecks()
+{
+	local X2AbilityTemplateManager Manager;
+	local X2DataTemplate Data;
+	local X2AbilityTemplate Template;
+	local X2AbilityToHitCalc_StatCheck_UnitVsUnit Old;
+	local X2AbilityToHitCalc_LWPsiCheck Check;
+	local int n;
+
+	Manager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+	foreach Manager.IterateTemplates(Data, none)
+	{
+		Template = X2AbilityTemplate(Data);
+		Old = Template == none ? none : X2AbilityToHitCalc_StatCheck_UnitVsUnit(Template.AbilityToHitCalc);
+		if (Old == none || X2AbilityToHitCalc_LWPsiCheck(Old) != none || Old.DefenderStat != eStat_Will)
+			continue;
+		Check = new class'X2AbilityToHitCalc_LWPsiCheck';
+		Check.BaseValue = Old.BaseValue;
+		Check.AttackerStat = Old.AttackerStat;
+		Check.DefenderStat = Old.DefenderStat;
+		Template.AbilityToHitCalc = Check;
+		n++;
+	}
+	`log("LongWarX2: perks:" @ n @ "psi abilities checked with Long War's will against psi", , 'LongWarX2');
+}
+
+/** Will more against psi attacks this unit has (PsiWill of its abilities). */
+static function int PsiWillOf(XComGameState_Unit Unit)
+{
+	local LWStandin S;
+	local int Will;
+
+	foreach default.Standins(S)
+		if (S.PsiWill != 0 && Unit.HasSoldierAbility(S.Name))
+			Will += S.PsiWill;
+	return Will;
+}
+
 static function AddShredders()
 {
 	local X2AbilityTemplateManager Manager;

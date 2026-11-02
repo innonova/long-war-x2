@@ -60,6 +60,7 @@ And around it:
                                                # in the checkout's Content and Config: tools/convert/README.md)
     tools/test/lw.sh enemies                   # in a mission: the aliens, their templates, tiles away
     tools/test/lw.sh endturn                   # in a mission: XCOM's turn ended (as the button)
+    tools/test/lw.sh psichance                 # in a mission: the aliens' psi abilities' chances against each soldier
     tools/test/lw.sh killaliens                # in a mission: every alien killed, civilians spared (KillAllAIs kills them)
     tools/test/lw.sh 'unbox 500'                 # soldiers reaching fewer than 500 tiles moved beside the best placed (-1: paths unknown)
     tools/test/lw.sh 'near Sniper 8'           # a soldier put 8 tiles from the nearest alien (a target in view)

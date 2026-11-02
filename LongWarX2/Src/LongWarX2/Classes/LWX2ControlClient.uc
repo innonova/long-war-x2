@@ -155,6 +155,9 @@ function Handle(string Line, out array<string> Out)
 	case "unbox":
 		Out.AddItem("moved" @ class'LWX2PartPlacer'.static.FreeBoxedIn(Args.Length > 1 ? int(Args[1]) : 40));
 		return;
+	case "psichance":
+		PsiChances(Out);
+		return;
 	case "killaliens":
 		Out.AddItem(KillAliens());
 		return;
@@ -1020,6 +1023,39 @@ static function bool TileTaken(TTile T)
 }
 
 /** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
+/** In a mission: the aliens' psi abilities' chances against each soldier (Long War's will against psi counted). */
+function PsiChances(out array<string> Out)
+{
+	local XComGameState_Unit Alien, Soldier;
+	local XComGameState_Ability Ability;
+	local StateObjectReference Ref;
+	local AvailableTarget Target;
+	local ShotBreakdown Breakdown;
+	local X2AbilityToHitCalc_LWPsiCheck Check;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Alien)
+	{
+		if (!Alien.IsAlive() || Alien.GetTeam() != eTeam_Alien)
+			continue;
+		foreach Alien.Abilities(Ref)
+		{
+			Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+			Check = Ability == none ? none : X2AbilityToHitCalc_LWPsiCheck(Ability.GetMyTemplate().AbilityToHitCalc);
+			if (Check == none)
+				continue;
+			foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Soldier)
+			{
+				if (!Soldier.IsSoldier() || !Soldier.IsAlive() || Soldier.GetTeam() != eTeam_XCom)
+					continue;
+				Target.PrimaryTarget = Soldier.GetReference();
+				Out.AddItem(Alien.GetMyTemplateName() @ Ability.GetMyTemplateName() @ "->" @ Soldier.GetFullName() @ "will" @ int(Soldier.GetCurrentStat(eStat_Will)) @ "+" @ class'X2Ability_LWStandins'.static.PsiWillOf(Soldier) $ ":" @ Check.GetShotBreakdown(Ability, Target, Breakdown) $ "%");
+			}
+		}
+	}
+	if (Out.Length == 0)
+		Out.AddItem("none: no alien with a psi ability");
+}
+
 /** In a mission: every alien killed, the civilians left alone (XCOM 2's KillAllAIs kills them too: they are the AI's). */
 function string KillAliens()
 {

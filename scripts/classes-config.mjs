@@ -224,7 +224,8 @@ const REAL = {
   LW_SecondaryHeart: () => ({ BleedTurns: c('GENEMOD_SECONDHEART_BLEEDOUT') }),
   LW_DepthPerception: () => ({ Aim: c('GENEMOD_DEPTHPERCEPTION_AIM'), AimIf: 'HeightAdvantage', Crit: c('GENEMOD_DEPTHPERCEPTION_CRIT'), CritIf: 'HeightAdvantage' }),
   LW_HyperReactivePupils: () => ({ Aim: c('GENEMOD_PUPILS_BONUS'), AimIf: 'AfterMiss' }),
-  LW_NeuralDamping: () => ({ ImmuneTo: ['Panic'] }),
+  // "+<GeneModBrainDampingWill> will against psionic attacks" (X2AbilityToHitCalc_LWPsiCheck, on every will-defended psi ability).
+  LW_NeuralDamping: () => ({ ImmuneTo: ['Panic'], PsiWill: c('GENEMOD_BRAINDAMPING_WILL') }),
   // "Medikits and Restorative Mist heal 2 HP more when used on the soldier. Confers complete immunity to poison and acid."
   LW_SmartMacrophages: () => ({ ImmuneTo: ['Poison', 'Acid'], HealTaken: 2 }),
   // "unit regenerates 2 hp every turn up to the HP max"

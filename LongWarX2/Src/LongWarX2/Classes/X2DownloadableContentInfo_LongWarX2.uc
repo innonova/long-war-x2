@@ -75,4 +75,5 @@ static event OnPostTemplatesCreated()
 	class'X2Ability_LWStandins'.static.AddHealBonuses();
 	class'X2Ability_LWStandins'.static.AddSmokeBonuses();
 	class'X2Ability_LWStandins'.static.AddShredders();
+	class'X2Ability_LWStandins'.static.AddPsiChecks();
 }
