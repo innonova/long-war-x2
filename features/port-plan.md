@@ -64,6 +64,8 @@ and a Decisions list to review.
     or taken, has no turn limit (XCOM 2's timer suspended), no sitreps, no
     Chosen and no squad concealment. A Long War campaign starts without
     War of the Chosen's faction soldier.
+  - A mission takes Long War's squad of 6. The Officer Training School's
+    Squad Size I and II (7, 8) can be bought from the base screen.
 - **Perks** (`lw-classes.md`), with Long War's numbers from EW's constants
   and ability table:
   - shots: Precision Shot, Disabling Shot, Flush, Double Tap;
