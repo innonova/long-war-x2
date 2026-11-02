@@ -411,3 +411,11 @@ soldier more each, at §200, once the barracks' ranks add up to 40 and 115
 raised to 48 (XCOM 2's `LevelUpBarracks` cheat) it was bought: "squad size
 7", and the next needed 115. A mission after that: "launching ProtectDevice
 … with 7 soldiers", all seven on the field.
+
+**The boxed-in fix in a real landing** (the badlands, later that night):
+one soldier reached fewer than 40 tiles. On the fifth try, once the
+soldiers' paths were known, she was moved: "soldier Estela Suárez boxed in,
+moved to tile 75,25,1 beside Fergus Clark (who reaches 684 tiles)". Her
+reach after the move was not measured: the mission ended by the cheat
+first. The same run went on to "The mission in United States succeeded" on
+the Geoscape.
