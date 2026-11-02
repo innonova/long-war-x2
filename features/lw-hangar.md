@@ -136,3 +136,12 @@ assembled:
 - with Armored Fighters and Wingtip Sparrowhawks marked done (the new
   test aid `foundry done <id>`), both jets went in for repair to 3500 HP;
 - a Scout was fought with two weapons.
+
+## Report (2026-11-02 night, the screens' buttons)
+
+The hangar's SEND and REFIT buttons overlapped each other and the jet's
+name, and engineering's BUILD button covered the item's first letter
+("awed-off Shotgun"). XCOM 2's buttons are wider than the positions
+allowed for. The texts and the second button have moved right. Checked on
+both screens: "Sawed-off Shotgun: §0, 1 Shotgun; 1 days"; SEND, REFIT,
+"Raven-1 (Interceptor, Avalanche Missiles) …", each clear of the others.

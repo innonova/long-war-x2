@@ -31,10 +31,10 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 		TransferButtons[i] = Spawn(class'UIButton', self).InitButton(name("LWHangarTransfer" $ i), "SEND", OnTransfer);
 		TransferButtons[i].SetPosition(90, 140 + i * 52);
 		EquipButtons[i] = Spawn(class'UIButton', self).InitButton(name("LWHangarEquip" $ i), "REFIT", OnEquip);
-		EquipButtons[i].SetPosition(200, 140 + i * 52);
+		EquipButtons[i].SetPosition(260, 140 + i * 52);
 		JetTexts[i] = Spawn(class'UIText', self).InitText(name("LWHangarJet" $ i), "");
-		JetTexts[i].SetPosition(320, 140 + i * 52);
-		JetTexts[i].SetWidth(1500);
+		JetTexts[i].SetPosition(430, 140 + i * 52);
+		JetTexts[i].SetWidth(1400);
 	}
 	OrdersText = Spawn(class'UIText', self).InitText('LWHangarOrders', "");
 	OrdersText.SetPosition(90, 780);

@@ -32,7 +32,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 		BuildButtons[i] = Spawn(class'UIButton', self).InitButton(name("LWEngBuild" $ i), "BUILD", OnBuild);
 		BuildButtons[i].SetPosition(90, 140 + i * 56);
 		BuildTexts[i] = Spawn(class'UIText', self).InitText(name("LWEngText" $ i), "");
-		BuildTexts[i].SetPosition(230, 140 + i * 56);
+		BuildTexts[i].SetPosition(260, 140 + i * 56);
 		BuildTexts[i].SetWidth(1000);
 	}
 	ProjectsText = Spawn(class'UIText', self).InitText('LWEngProjects', "");
