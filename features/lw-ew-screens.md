@@ -222,5 +222,26 @@ States.
 
 ### Left open
 
-- The setup program converts neither package yet (the UI screens, this
-  map).
+- ~~The setup program converts neither package yet~~: it does since, next
+  report.
+
+## Report (2026-11-02, in the player's build)
+
+**The setup program now converts Enemy Within's content from the player's
+install** (`tools/setup/setup.mjs`): the strategy screens (`ew-ui.ts`) and
+the earth (`ew-package.ts`) always; the maps (`ew-map.ts`, one child process
+of the setup program each, with a 12 GB heap) when the player says yes, or
+with `--maps`; then the missions play on Enemy Within's maps
+(`PlaceEWMapWhole`). Converted content is kept when a newer build's setup
+reinstalls the mod. The converters are now functions the setup program
+calls (and still command-line scripts).
+
+**Checked** (the release zip unpacked on the test machine, its setup run
+with `--maps`; then the game with only the control port turned on): words,
+screens, earth and 83 maps converted in under 4 minutes, none failed;
+"Missions play on Enemy Within's maps (83 converted)". In a new campaign the
+HUD, the Situation Room with its countries and the earth behind it. A second
+run kept the maps ("converted already").
+- Found on the way: the backdrop looked the earth up by its short path
+  first, and in the release that found nothing visible; it now loads its
+  package first (and logs where the earth came from).

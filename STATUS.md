@@ -48,14 +48,14 @@ buttons and text, no art).
 | Small items | most | X2 | grenades, medikits, rockets (with scatter), the arc thrower, scanners, beacons | the Shadow Device, the Battle Computer | `lw-gear` |
 | Aliens | stand-in | X2 | Long War's squads (which aliens, how many) as XCOM 2's nearest aliens | Enemy Within's aliens as units: their models, abilities, AI (step 3) | `lw-missions` |
 | Missions | most | X2 | each kind as an XCOM 2 mission type; won when every alien is dead or taken; no turn limit, sitreps, Chosen, concealment or reinforcements; Long War's squad size; terror civilians counted | Long War's objectives per kind; the landing spot | `lw-missions` |
-| Maps | part | LW + X2 | XCOM 2's plots; in development, Enemy Within's maps chosen per mission kind and ship from Long War's list, converted in batch, placed whole (pods, lights, patrols) | each map's look (textures, night light); package size; the player's build converting and using them | `lw-missions`, `hard-parts` |
+| Maps | part | LW + X2 | Enemy Within's maps chosen per mission kind and ship from Long War's list, converted by the setup program when the player asks (else XCOM 2's plots), placed whole (pods, lights, patrols) | each map's look (textures, night light); package size | `lw-missions`, `hard-parts` |
 | Wounds | most | X2 | XCOM 2's healing; Field Surgeon | Long War's own recovery times | `lw-classes` |
 
 ## The build and the tools
 
 | System | Status | What is in | What is missing | Feature |
 |---|---|---|---|---|
-| The player's build | done | the mod, its config and a setup program that writes Long War's words from the player's own install (v0.1.0-preview.1) | the EW content conversion in the setup program | `playable-build` |
+| The player's build | done | the mod, its config and a setup program that writes Long War's words and converts EW's screens, earth and (when asked) maps from the player's own install (v0.1.0-preview.1) | | `playable-build` |
 | Config from stock Long War | done | `scripts/config-all.sh` | | `lw-psi` (the answer) |
 | XCOM 2 test harness | done | control port, scripts, test aids (`tools/test`) | | |
 | Crash at mission load | done | a Wwise callback during `LoadMap` after launching with the Avenger's cinematics running: voices and cinematics stopped, the map loaded 1.5 s later (0 in 20 under provoked conditions) | more play to confirm | `lw-missions` |
