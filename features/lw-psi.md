@@ -288,3 +288,8 @@ is in EW's constants: `DISTORTIONFIELD_DEFENSE` 10, `DISTORTIONFIELD_RADIUS`
 - **Fields do not add up**: two psions with it give 10, as one.
 - **Height (`DISTORTIONFIELD_HEIGHT`) not used**: the distance is XCOM 2's
   tile distance, floors included.
+
+## The person's review (2026-11-02, recorded by the agent)
+
+- Distortion Field: **the psion and the allies around them are covered;
+  fields do not stack** (as built).

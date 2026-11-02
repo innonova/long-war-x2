@@ -202,3 +202,12 @@ strangler is the Seeker; XCOM 2's is the Viper's Bind.
 
 - **Only the strangling.** "Revealing but not alerting nearby enemies"
   needs a moving reveal XCOM 2 has no ready piece for; left out.
+
+## The person's review (2026-11-02, recorded by the agent)
+
+- **Muscle Fiber Density is not a grapple**: it lets the soldier jump up
+  without an action. XCOM 2 has that move: the `JumpUp` traversal (ADVENT
+  MECs, Chryssalids, Faceless), and `X2Effect_PersistentTraversalChange`
+  gives a traversal to any unit. **Next**: the grapple replaced by a
+  passive JumpUp traversal; to check that soldiers have an animation for
+  it.

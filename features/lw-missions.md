@@ -650,3 +650,8 @@ is stopped (`SeqAct_Interp`'s Stop input), and the map loads 1.5 s later
 - The rate after the fix rests on 20 runs under the provoked condition;
   more campaign play will tell. The crash dumps stay on for the test
   machine.
+
+## The person's review (2026-11-02, recorded by the agent)
+
+- Terror missions: **civilians alive at the end count as saved** (as
+  built).

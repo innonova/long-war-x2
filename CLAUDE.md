@@ -76,6 +76,13 @@
   powers use the psi amp; ours are bound to the primary weapon.
 - **`STATUS.md`** is the table of every system's state; bring its row up to
   date when work on a system lands.
+- **Enemy Within with Long War on the test machine** (stock 1.0, by hash):
+  `tools/ew-test` starts it through Steam and its launcher (started by
+  itself, `XComEW.exe` becomes Enemy Unknown), reads its saves with
+  `../xcomsave`; mouse input works, keyboard not yet (`features/ew-harness.md`).
+- **Converted EW packages** (maps, screens, units) live in the test
+  machine's `BuildCache/ewcontent` and are linked into the built mod; in
+  `Content` every build processes them (`tools/convert/README.md`).
 - **Long War's numbers follow stock Long War 1.0**, never one player's
   changes. `scripts/config-all.sh` regenerates every config from the stock
   installer's files in the Tree's samples (`samples/Long War Mod Manager

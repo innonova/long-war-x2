@@ -256,3 +256,12 @@ builds the alien grenade otherwise (its item tree gives Foundry 255).
 - Not built: the radius is now read (above) and could follow; the
   damage itself is not in readable code. The port's pistol projects and
   Ammo Conservation do not ask for a Foundry in the base either.
+
+## The person's review (2026-11-02, recorded by the agent)
+
+- Alien Grenades: **only what Long War's code does** (as built).
+- The arc thrower: its base chance is Enemy Within's native code (vanilla,
+  `XGTacticalGameCoreNativeBase.CalcStunChance`); Long War's part is the
+  script around it (× `UFO_PSI_LINK_SURVIVE`, 0.61, and who cannot be
+  stunned). To measure in the original with the EW harness
+  (`ew-harness.md`).
