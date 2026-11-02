@@ -17,6 +17,13 @@ struct LWX2Piece
 	var bool Backdrop;
 };
 
+/** A scalar parameter set on every stand-in (StandinScalars). */
+struct LWX2Scalar
+{
+	var name Name;
+	var float Value;
+};
+
 /** An EW material's textures, for its XCOM 2 stand-in; Kind picks the parent. */
 struct LWX2Look
 {
@@ -40,6 +47,8 @@ struct LWX2Standin
 var config string PropParent;
 var config string FoliageParent;
 var config string AlienParent;
+/** Scalars set on every stand-in (SpecularScale 0: the parents' placeholder mask made EW's surfaces glossy and grey). */
+var config array<LWX2Scalar> StandinScalars;
 /** EW's alien pods (lw-missions.md, step 2): where its aliens stand, the commander's pod, how many. */
 struct LWX2Pod
 {
@@ -84,6 +93,8 @@ struct LWX2MapChoice
 var config array<LWX2MapChoice> Maps;
 /** The converted map a quick launch places (no campaign to choose one). */
 var config string DefaultMap;
+/** For development: this converted map for every Long War mission, whatever its kind ("": Long War's list decides). */
+var config string ForceMap;
 
 /** The mission's converted EW map: a Long War mission's choice (XComGameState_LWStrategy.PendingEWMap, "" for none), else DefaultMap. */
 static function string MapName()
@@ -149,6 +160,8 @@ static function string ChooseMap(name Kind, int Ship)
 	local LWX2MapChoice M;
 
 	Converted = ConvertedMaps();
+	if (default.ForceMap != "" && Converted.Find(default.ForceMap) != INDEX_NONE)
+		return default.ForceMap;
 	foreach default.Maps(M)
 	{
 		if (M.Kind != Kind || Converted.Find(M.Name) == INDEX_NONE)
@@ -349,6 +362,8 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	{
 		MIC = new(InOuter) class'MaterialInstanceConstant';
 		MIC.SetParent(Parent);
+		for (k = 0; k < default.StandinScalars.Length; k++)
+			MIC.SetScalarParameterValue(default.StandinScalars[k].Name, default.StandinScalars[k].Value);
 		T = Texture(DynamicLoadObject(L.Diffuse, class'Texture', true));
 		if (T != none)
 			MIC.SetTextureParameterValue('Diffuse', T);

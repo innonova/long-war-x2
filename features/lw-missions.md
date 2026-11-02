@@ -730,3 +730,56 @@ had leaked through was the host plot's own content and its weather. Now:
 - A terror site on an EW map still plays on the test plot with XCOM 2's
   terror mission: not yet seen.
 - Night: a night lighting map for EW's night maps, once they look right.
+
+## Report (2026-11-02, the maps' look: no gloss; a spawn on a highway's deck; interiors)
+
+**EW's surfaces no longer look wet and grey.** The stand-in materials'
+parent (`Materials.Approved.Props_SD`) has a `Masks` texture (XCOM 2's
+packed specular, roughness and metal) that nothing of EW's fills. Its
+placeholder made every surface glossy, speckled white and washed out.
+Compared live on URB_HighwayFallen with two new control-port aids
+(`ewmat <parameter> <value>`: a parameter on every stand-in;
+`ewlight <kind> <scale>`: EW's placed lights by kind), each from the same
+camera:
+- `SpecularScale 0`: the sheen and speckle gone, the colours back (the
+  taxi yellow again). Roughness ×4 changed nothing more after it.
+- A black `Masks`: everything darker. A white one: brighter but tinted
+  (the taxi pink, as metal). So the placeholder stays.
+- EW's own lights (its sun, its sky, 74 point and 9 spot lights) at 0 or
+  a third: hardly any difference under XCOM 2's daylight.
+- Now **`StandinScalars`** in `XComLWEWMaps.ini` (generated):
+  `SpecularScale` 0 on every stand-in.
+
+**A drop zone above the ground** (URB_HighwayFallen: on a highway's deck,
+400 units up): the spawn search looked for open ground at EW's lowest
+floor, found none ("no open ground near the drop zone") and put the squad
+under the bridge, where every unit could reach one tile. It now looks at
+the drop zone's own floor. Checked: "spawn on open ground 0 tiles from the
+drop zone", the squad on the deck, the best soldier reaching 503 tiles.
+(The first test-plot run had not shown it: there the floor happened to
+read higher.)
+
+**Found: interiors are hidden under their roofs.** URB_OfficePaper_EWI (an
+office) was placed and walkable (the best soldier 535 tiles, 12 aliens at
+4 pods), but the screen showed only the roof. XCOM 2 cuts roofs and upper
+floors away inside its building volumes, and the placed pieces have none.
+The next step: EW's levels carry their building volumes with their floors.
+The converter can read their bounds, and the mod can spawn XCOM 2 building
+volumes from them. A volume is a brush, but the plot's level volume is a box
+brush that can be stretched (as the level volume itself now is), so its
+brush can serve.
+
+Also new: `ForceMap` (`XComLWEWMaps.ini`, development): one converted map
+for every Long War mission, to look at a given map.
+
+**Checked** after the change (a random abduction: URB_SmallCemetery): the
+volume stretched to 38 × 49, the spawn on open ground, Long War's
+objective, the best soldier reaching 469 tiles. On screen: matte surfaces
+with their colours, no speckle.
+
+### Left open
+
+- Interiors: building volumes from EW's (above).
+- The scene is still on the dark side on several maps (dark asphalt under
+  a noon light); a brighter lighting map or exposure to try.
+- A terror site on an EW map: not yet seen.

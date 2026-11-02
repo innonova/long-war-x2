@@ -176,6 +176,14 @@ function Handle(string Line, out array<string> Out)
 		// A function of the open EW movie: ewcall <function> [arguments; _ for a space].
 		Out.AddItem(class'UILWEWScreen'.static.CallMovie(Args));
 		return;
+	case "ewmat":
+		// A parameter of every stand-in material on the EW map, live: ewmat <parameter> <number | texture path>.
+		Out.AddItem(SetEWMaterials(Args.Length > 1 ? name(Args[1]) : '', Args.Length > 2 ? Args[2] : ""));
+		return;
+	case "ewlight":
+		// EW's placed lights of a kind (point, spot, sun, sky; all) at a scale of their brightness now, live: ewlight <kind> <scale>.
+		Out.AddItem(ScaleEWLights(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? float(Args[2]) : 1.0));
+		return;
 	case "psichance":
 		PsiChances(Out, Args.Length > 1 ? name(Args[1]) : '');
 		return;
@@ -1616,6 +1624,62 @@ function Dump(XComGameState_LWStrategy S, out array<string> Out)
 	Decisions(S, Out);
 	for (i = Max(0, S.Events.Length - 10); i < S.Events.Length; i++)
 		Out.AddItem("event" @ S.Events[i]);
+}
+
+/** ewmat: a scalar (a number) or texture (a path) parameter set on every stand-in material of the EW map's pieces. */
+function string SetEWMaterials(name Param, string Value)
+{
+	local LWX2LevelActor A;
+	local MaterialInstanceConstant MIC;
+	local array<MaterialInstanceConstant> Done;
+	local Texture T;
+	local int i;
+
+	if (Param == '' || Value == "")
+		return "ERR ewmat <parameter> <number | texture path>";
+	if (InStr(Value, ".") >= 0 && float(Value) == 0 && Left(Value, 1) != "0")
+	{
+		T = Texture(DynamicLoadObject(Value, class'Texture', true));
+		if (T == none)
+			return "ERR no texture" @ Value;
+	}
+	foreach WorldInfo.AllActors(class'LWX2LevelActor', A)
+	{
+		if (A.StaticMeshComponent == none)
+			continue;
+		for (i = 0; i < A.StaticMeshComponent.GetNumElements(); i++)
+		{
+			MIC = MaterialInstanceConstant(A.StaticMeshComponent.GetMaterial(i));
+			if (MIC == none || Done.Find(MIC) != INDEX_NONE)
+				continue;
+			Done.AddItem(MIC);
+			if (T != none)
+				MIC.SetTextureParameterValue(Param, T);
+			else
+				MIC.SetScalarParameterValue(Param, float(Value));
+		}
+	}
+	return "ewmat" @ Param @ "=" @ Value @ "on" @ Done.Length @ "materials";
+}
+
+/** ewlight: EW's placed lights of a kind (or all) at Scale times their brightness now. */
+function string ScaleEWLights(string Kind, float Scale)
+{
+	local Light A;
+	local int n;
+
+	foreach WorldInfo.AllActors(class'Light', A)
+	{
+		if (A.LightComponent == none)
+			continue;
+		if (!((Kind ~= "point" && LWX2PointLight(A) != none) || (Kind ~= "spot" && LWX2SpotLight(A) != none)
+			|| (Kind ~= "sun" && LWX2SunLight(A) != none) || (Kind ~= "sky" && LWX2SkyLight(A) != none)
+			|| (Kind ~= "all" && (LWX2PointLight(A) != none || LWX2SpotLight(A) != none || LWX2SunLight(A) != none || LWX2SkyLight(A) != none))))
+			continue;
+		A.LightComponent.SetLightProperties(A.LightComponent.Brightness * Scale, A.LightComponent.LightColor);
+		n++;
+	}
+	return "ewlight" @ Kind @ "x" $ Scale @ "on" @ n @ "lights";
 }
 
 defaultproperties

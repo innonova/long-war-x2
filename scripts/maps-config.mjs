@@ -29,6 +29,8 @@ console.log(
     '[LongWarX2.LWX2EWMapPieces]',
     "; The converted map a quick launch places (no campaign to choose one).",
     'DefaultMap="CSmallScout_Badlands"',
+    '; For development: this converted map for every Long War mission, whatever its kind ("": Long War\'s list decides).',
+    'ForceMap=""',
     "; EW's lights (point, spot, its sun and sky), spawned as movable lights: the kinds placed and a scale on their",
     "; brightness (3: EW's lightmaps carried bounced light too; judged by eye on CSmallScout_Badlands).",
     'LightScale=3',
@@ -41,6 +43,9 @@ console.log(
     'PropParent="Materials.Approved.Props_SD"',
     'FoliageParent="Materials.Approved.Vegetations_VO"',
     'AlienParent="Materials.Approved.Alien_Props"',
+    "; Scalars set on every stand-in. The parents' placeholder mask (no EW texture fills it) made the surfaces glossy",
+    '; and grey; no specular reads cleanly (features/lw-missions.md, compared on URB_HighwayFallen).',
+    '+StandinScalars=(Name=SpecularScale, Value=0)',
     ...maps,
   ].join('\r\n'),
 )

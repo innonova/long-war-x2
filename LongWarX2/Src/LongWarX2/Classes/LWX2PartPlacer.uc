@@ -108,7 +108,8 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 	// The tile data now (the quick launch screen rebuilds it again when the battle starts), so the
 	// spawn can be moved off anything EW placed on its drop zone (a trailer's roof is floor too).
 	Parcels.RebuildWorldData();
-	Spawn = OpenGround(World, Parcels.SoldierSpawn.Location, At.Z);
+	// The ground looked for at the drop zone's own floor, not EW's lowest (a drop zone on a highway's deck stands far above it).
+	Spawn = OpenGround(World, Parcels.SoldierSpawn.Location, World.GetFloorZForPosition(Parcels.SoldierSpawn.Location));
 	Parcels.SoldierSpawn.SetLocation(Spawn);
 	if (Screen != none)
 		Screen.BattleDataState.MapData.SoldierSpawnLocation = Spawn;
