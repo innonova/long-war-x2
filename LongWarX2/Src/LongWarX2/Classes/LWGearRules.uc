@@ -15,6 +15,8 @@ struct LWWeaponDef
 	var int Crit;
 	var int Aim;
 	var int Ammo;
+	/** The clip with the Foundry's Ammo Conservation done (Long War's iSuppression keeps both: xxyy, xx with it). */
+	var int AmmoConserved;
 	var int Environment;
 	var name Category;
 	var EInventorySlot Slot;

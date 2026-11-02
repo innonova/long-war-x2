@@ -34,8 +34,10 @@ powers as XCOM 2 abilities in missions.
   - while W ≤ T + 80 − G: W − T + G, at least 1;
   - above that: 100 − 400 / ((W − T) + (G − 60)), at most 99;
   - plus a council bonus (not ported).
-  So a soldier of will 50 has 45 % for a will-50 power, and one of will
-  70 has 65 %.
+  So with Long War 1.0d's `PSI_GIFT_CHANCE` of 0.65 (the Tree's samples,
+  which all the committed config comes from), a soldier of will 50 has
+  65 % for a will-50 power. The Long War installed on the test machine has
+  0.45, so 45 %.
 
 ## Steps
 
@@ -71,7 +73,8 @@ powers as XCOM 2 abilities in missions.
   first ready soldier's chance and hours, what is missing, and who is
   training. `psi <soldier> <perk>` begins training.
 
-**Checked in the game:**
+**Checked in the game** (with the config then generated from the test
+machine's Long War, `PSI_GIFT_CHANCE` 0.45; see the correction below):
 - With the Labs placed (test aid) the list read, for a soldier of will
   45: Mindfray 40 %, 213 hours (45 − 50 + 45; 192 × 50 ÷ 45); Mind Control
   1 %; Rift "needs Mind Control first". Before the research, every power
@@ -215,3 +218,25 @@ as their buttons do.
 - **Checked:** a frag grenade left a soldier at 5/8; at the next turn she
   was at 6/8 (only the biofield given). Two soldiers the blast had brought
   to 0 were not healed: dead, as it should be.
+
+## Correction (2026-11-02 night): which Long War the config comes from
+
+From the start of that night until 01:30 UTC, I generated the base and
+class configs from the Long War installed on the test machine. Everything
+committed before had come from the Tree's samples (Long War 1.0d,
+`samples/Config/DefaultGameCore.ini`). The two files differ in 522 lines:
+soldier and alien stats, among others.
+
+Regenerated from the samples:
+- the class configs (perk trees, perk numbers, stand-ins) come out
+  identical;
+- the base and gear numbers are identical too, apart from what that night
+  added;
+- **the one difference that matters is `PsiGiftChance`: 0.65 in the
+  samples, 0.45 on the test machine.** The config now has 0.65. The chances
+  quoted in step 1's report are the test machine's: with 0.65 they are 20
+  points higher (will 45 against target 50: 60 %, not 40 %).
+
+The person's own Long War may be either. Which one the port should follow
+is a question for the review.
+

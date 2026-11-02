@@ -76,8 +76,14 @@ and a Decisions list to review.
 - **Gene mods** (`lw-genemods.md`, new): the ten mods in five slots, made
   in the Genetics Lab. Six work in missions. A Genetics Lab line in the
   base screen.
-- **The Foundry in missions** (`lw-research.md`): the pistol projects and
-  Improved Medikit.
+- **The Foundry in missions** (`lw-research.md`): the pistol projects,
+  Improved Medikit, Ammo Conservation.
+- **Which Long War the config follows** (`lw-psi.md`, the correction): for
+  part of the night I generated config from the test machine's Long War
+  install, not the Tree's samples (1.0d) as before. Regenerated from the
+  samples, everything came out the same except the Psi Labs' base chance
+  (0.65 in the samples, 0.45 installed). Which Long War the port follows
+  is a question for the person.
 - **Fixed**: XCOM 2 stopped when leaving a mission. A screen listener held
   the HUD; it would have hit any player with the development EW map on.
 - **Open, worth the person's eye**:

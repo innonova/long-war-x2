@@ -171,3 +171,13 @@ The shot probe now also logs the pistol shot's breakdown.
   armour), Alien Grenades, Improved Arc Thrower (EW's stun thresholds 3 and
   6 HP), Ammo Conservation, Advanced Servomotors, and the projects for SHIVs
   and MECs.
+
+**Ammo Conservation** (the Foundry's project 10). Long War keeps both clips
+in a weapon's `iSuppression` as xxyy: xx with the project, yy without (its
+ini says so). The gear config now carries both (`AmmoConserved`). At a
+mission's start the charges effect sets the clip on Long War's weapon
+templates from whether the project is done, so reloads fill to it, and
+fills each soldier's weapons.
+- **Checked:** with the project done, the clips were sniper rifle 6,
+  pistol 3, rifle 4, LMG 7. Without it, in that night's other missions, they
+  were 5, 2, 3, 6.

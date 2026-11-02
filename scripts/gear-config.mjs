@@ -35,7 +35,7 @@ for (const items of Object.values(FAMILIES)) {
     const kind = secondary ? 'Pistol' : w.props.includes('MoveLimited') ? 'Sniper' : 'Rifle'
     out.push(
       `+Weapons=(Item=${item}, Enum=${ITEMS[item]}, Family=${family}, Tier=${TIERS[tier]}, Damage=${w.iDamage}, Crit=${w.iCritical}, Aim=${w.iOffenseBonus}, ` +
-        `Ammo=${Number(w.iSuppression) % 100}, Environment=${w.iEnvironmentDamage ?? 0}, Category=${categoryFor(w.props, item)}, ` +
+        `Ammo=${Number(w.iSuppression) % 100}, AmmoConserved=${Math.floor(Number(w.iSuppression) / 100) || Number(w.iSuppression) % 100}, Environment=${w.iEnvironmentDamage ?? 0}, Category=${categoryFor(w.props, item)}, ` +
         `Slot=${secondary ? 'eInvSlot_SecondaryWeapon' : 'eInvSlot_PrimaryWeapon'}, Kind=${kind}, Look=${look}, Tech=${TECH[tier]}, ` +
         `Range=${RANGE[family]}, Infinite=${infinite.has(item)})`,
     )
