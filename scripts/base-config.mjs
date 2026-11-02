@@ -95,4 +95,19 @@ out.push(
 for (const m of core.matchAll(/^ItemBalance_Easy=\(eItem=(\d+),\s*iCash=(\d+),\s*iElerium=(\d+),\s*iAlloys=(\d+),\s*iTime=0,\s*iEng=(\d+)\)\s*;\s*\d+=(ePerk_\w+)/gm)) {
   out.push(`+PsiPowers=(Perk=${m[1]}, Enum=${m[6]}, TargetWill=${m[2]}, Tech=${m[3]}, Tier=${m[4]}, Fatigue=${m[5]})`)
 }
+// Long War's gene mods (features/lw-genemods.md): its "Gene Mod Configuration" ItemBalance_Easy entries (iCash the
+// cost, iElerium the tech, iAlloys the meld, iTime the days in the tank, iEng the fatigue hours) and the slot each
+// fills (XComPerkManager's GeneModPerkTree: two mods a slot, a soldier one of them).
+const geneTree = core.match(/^GeneModPerkTree=\((.*)\)/m)?.[1] ?? ''
+const geneSlot = new Map([...geneTree.matchAll(/(\w+?)\d=(ePerk_\w+)/g)].map((m) => [m[2], m[1]]))
+out.push(
+  "; Long War's gene mods (Perk: its perk id; Cash; Tech: the Long War tech researched first; Meld; Days in the tank;",
+  '; Fatigue: hours after a mission; Slot: Chest, Brain, Eyes, Skin or Legs, one mod a slot).',
+)
+const geneAt = core.indexOf('; Gene Mod Configuration')
+for (const m of core.slice(geneAt).matchAll(/^ItemBalance_Easy=\(eItem=(\d+),\s*iCash=(\d+),\s*iElerium=(\d+),\s*iAlloys=(\d+),\s*iTime=(\d+),\s*iEng=(\d+)\)\s*;\s*(ePerk_\w+)/gm)) {
+  const slot = geneSlot.get(m[7])
+  if (!slot) throw new Error(`gene mod ${m[7]} is in no slot of GeneModPerkTree`)
+  out.push(`+GeneMods=(Perk=${m[1]}, Enum=${m[7]}, Cash=${m[2]}, Tech=${m[3]}, Meld=${m[4]}, Days=${m[5]}, Fatigue=${m[6]}, Slot=${slot})`)
+}
 console.log(out.join('\r\n'))

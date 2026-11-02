@@ -40,6 +40,8 @@ struct LWStandin
 	var name PsiKind;
 	var int Base, Param2, Will;
 	var float Radius;
+	/** Hit points more from a medikit used on this soldier (Smart Macrophages: AddHealBonuses); regenerated a turn (Adaptive Bone Marrow). */
+	var int HealTaken, Regen;
 };
 
 var config array<LWStandin> Standins;
@@ -51,6 +53,16 @@ struct LWPsiAbility
 	var name Ability;
 };
 var config array<LWPsiAbility> PsiAbilities;
+/** Long War's gene mods: the ability each gives (features/lw-genemods.md). */
+var config array<LWPsiAbility> GeneAbilities;
+
+static function name GeneAbilityFor(int Perk)
+{
+	local int k;
+
+	k = default.GeneAbilities.Find('Perk', Perk);
+	return k == INDEX_NONE ? '' : default.GeneAbilities[k].Ability;
+}
 
 /** A power's name as the player reads it (the ability's). */
 static function string PsiPowerName(name Ability)
@@ -84,7 +96,7 @@ static function array<X2DataTemplate> CreateTemplates()
 			Templates.AddItem(CloseCombatShot(S));
 		else if (S.PsiKind != '')
 			Templates.AddItem(PsiPower(S));
-		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.Damage2 != 0 || S.DamageTaken != 0 || S.CritDamagePct != 0 || S.BonusRadius != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0)
+		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.Damage2 != 0 || S.DamageTaken != 0 || S.CritDamagePct != 0 || S.BonusRadius != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0 || S.HealTaken != 0 || S.Regen != 0)
 			Templates.AddItem(Passive(S));
 		else
 			Templates.AddItem(PurePassive(S.Name, S.Icon, false, 'eAbilitySource_Perk', true));
@@ -354,6 +366,7 @@ static function X2AbilityTemplate Passive(LWStandin S)
 	local X2Effect_PersistentStatChange Stats;
 	local X2Effect_LWFreeShot Free;
 	local X2Effect_DamageImmunity Immunity;
+	local X2Effect_Regeneration Regen;
 	local name Immune;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, S.Name);
@@ -410,6 +423,16 @@ static function X2AbilityTemplate Passive(LWStandin S)
 		Template.AddTargetEffect(Free);
 	}
 
+	if (S.Regen > 0)
+	{
+		Regen = new class'X2Effect_Regeneration';
+		Regen.BuildPersistentEffect(1, true, false, false, eGameRule_PlayerTurnBegin);
+		Regen.HealAmount = S.Regen;
+		Regen.MaxHealAmount = 1000;
+		Regen.HealthRegeneratedName = name(S.Name $ "_Healed");
+		Template.AddTargetEffect(Regen);
+	}
+
 	if (S.Mobility != 0)
 	{
 		Stats = new class'X2Effect_PersistentStatChange';
@@ -423,13 +446,14 @@ static function X2AbilityTemplate Passive(LWStandin S)
 	return Template;
 }
 
-/** Savior and its like: XCOM 2's medikit abilities heal more for a soldier with the perk (OnPostTemplatesCreated). */
+/** Savior and its like: XCOM 2's medikit abilities heal more for a soldier with the perk, and Smart Macrophages on one (OnPostTemplatesCreated). */
 static function AddHealBonuses()
 {
 	local X2AbilityTemplateManager Manager;
 	local X2AbilityTemplate Medikit;
 	local X2Effect_ApplyMedikitHeal Heal;
 	local X2Condition_AbilityProperty Owner;
+	local X2Condition_UnitEffects Target;
 	local LWStandin S;
 	local name Ability;
 	local array<name> Medikits;
@@ -443,6 +467,17 @@ static function AddHealBonuses()
 		if (Medikit == none)
 			continue;
 		foreach default.Standins(S)
+		{
+			// Smart Macrophages: more when used on a soldier with the perk (its passive effect, named as the perk).
+			if (S.HealTaken != 0)
+			{
+				Heal = new class'X2Effect_ApplyMedikitHeal';
+				Heal.PerUseHP = S.HealTaken;
+				Target = new class'X2Condition_UnitEffects';
+				Target.AddRequireEffect(S.Name, 'AA_MissingRequiredEffect');
+				Heal.TargetConditions.AddItem(Target);
+				Medikit.AddTargetEffect(Heal);
+			}
 			if (S.Heal != 0)
 			{
 				Heal = new class'X2Effect_ApplyMedikitHeal';
@@ -452,6 +487,7 @@ static function AddHealBonuses()
 				Heal.TargetConditions.AddItem(Owner);
 				Medikit.AddTargetEffect(Heal);
 			}
+		}
 	}
 }
 

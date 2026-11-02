@@ -128,6 +128,9 @@ function Handle(string Line, out array<string> Out)
 	case "psi":
 		Psi(Args, Out);
 		return;
+	case "gene":
+		Gene(Args, Out);
+		return;
 	case "effects":
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', EffUnit)
 			if (EffUnit.GetTeam() == eTeam_XCom && EffUnit.IsSoldier() && !EffUnit.bRemovedFromPlay)
@@ -936,6 +939,45 @@ function Psi(array<string> Args, out array<string> Out)
 	{
 		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(T.Unit));
 		Out.AddItem("training:" @ (Unit != none ? Unit.GetFullName() : string(T.Unit)) @ class'X2Ability_LWStandins'.static.PsiAbilityFor(T.Perk) @ T.HoursLeft @ "hours left," @ T.Chance $ "%");
+	}
+}
+
+/** Gene mods (features/lw-genemods.md): with no arguments the mods and who is in the tank; 'gene <soldier index> <perk>' begins one. */
+function Gene(array<string> Args, out array<string> Out)
+{
+	local XComGameState_LWStrategy S;
+	local LWBaseRules.LWGeneMod G;
+	local XComGameState_LWStrategy.LWPsiTrainee T;
+	local XComGameState_Unit Unit, First;
+	local StateObjectReference Ref;
+	local string Why;
+	local int n;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier())
+			continue;
+		if (Args.Length > 2 && n == int(Args[1]))
+		{
+			Out.AddItem(class'XComGameState_LWStrategy'.static.StartGeneMod(Unit.ObjectID, int(Args[2]), Why) ? "ok" @ Unit.GetFullName() @ "in the tank" : "ERR needs" @ Why);
+			return;
+		}
+		if (First == none && Unit.CanGoOnMission() && !S.InPsiTraining(Unit.ObjectID))
+			First = Unit;
+		n++;
+	}
+	Out.AddItem("Genetics Lab:" @ class'LWBase'.static.Count(S, 23) @ "built," @ S.GeneTrainees.Length @ "in the tanks");
+	foreach class'LWBaseRules'.default.GeneMods(G)
+	{
+		class'XComGameState_LWStrategy'.static.CanGeneMod(S, First, G, Why);
+		Out.AddItem(G.Perk @ class'X2Ability_LWStandins'.static.GeneAbilityFor(G.Perk) @ G.Slot @ class'LWStrategyRules'.static.Money(G.Cash) @ G.Meld @ "meld" @ G.Days @ "days" $ (Why != "" ? "; needs" @ Why : ""));
+	}
+	foreach S.GeneTrainees(T)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(T.Unit));
+		Out.AddItem("tank:" @ (Unit != none ? Unit.GetFullName() : string(T.Unit)) @ class'X2Ability_LWStandins'.static.GeneAbilityFor(T.Perk) @ T.HoursLeft @ "hours left");
 	}
 }
 

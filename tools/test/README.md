@@ -64,6 +64,7 @@ And around it:
     tools/test/lw.sh 'near Sniper 8'           # a soldier put 8 tiles from the nearest alien (a target in view)
     tools/test/lw.sh effects                   # each soldier's will, hp and the effects on them
     tools/test/lw.sh psi 'psi 0 68'           # psi training: the powers, chances, hours; soldier 0 trains Mindfray
+    tools/test/lw.sh gene 'gene 2 148'        # gene mods: costs, what is missing; soldier 2 into the tank for Iron Skin
     tools/test/lw.sh 'open base'               # the Geoscape's base screen (hangar, engineering)
     tools/test/lw.sh 'use Sniper ThrowGrenade:LWSmall_82 98'  # an item's ability, at the soldier's own feet (97: at the nearest alien)
     tools/test/lw.sh 'look -7440 2544 200'     # the camera to an EW map place (EW's coordinates; 'look pod 1'), fog off

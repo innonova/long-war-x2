@@ -105,6 +105,8 @@ struct LWPsiTrainee
 	var int Chance;
 };
 var array<LWPsiTrainee> PsiTrainees;
+/** A soldier in the Genetics Lab's tank (features/lw-genemods.md): the unit, the mod (Long War's perk id), the hours left. */
+var array<LWPsiTrainee> GeneTrainees;
 /** Engineering's projects (LWEngineering). */
 var array<LWBuild> Builds;
 /** The Foundry's projects under way (Item: the project's id) and those done. */
@@ -422,6 +424,15 @@ function Tick(XComGameState NewGameState)
 			continue;
 		PsiTrainingDone(NewGameState, PsiTrainees[i]);
 		PsiTrainees.Remove(i, 1);
+		bStop = true;
+	}
+	// Gene mods finished: the mod is the soldier's.
+	for (i = GeneTrainees.Length - 1; i >= 0; i--)
+	{
+		if (--GeneTrainees[i].HoursLeft > 0)
+			continue;
+		GeneModDone(NewGameState, GeneTrainees[i]);
+		GeneTrainees.Remove(i, 1);
 		bStop = true;
 	}
 	// Satellites finished.
@@ -1755,7 +1766,7 @@ function Note(string Text)
 
 function bool InPsiTraining(int UnitID)
 {
-	return PsiTrainees.Find('Unit', UnitID) != INDEX_NONE;
+	return PsiTrainees.Find('Unit', UnitID) != INDEX_NONE || GeneTrainees.Find('Unit', UnitID) != INDEX_NONE;
 }
 
 /** Whether a soldier may begin training a power now; Why says what is missing. */
@@ -1842,5 +1853,92 @@ function PsiTrainingDone(XComGameState NewGameState, LWPsiTrainee T)
 	Unit.AWCAbilities.AddItem(Power);
 	Note(Unit.GetFullName() @ "gained" @ class'X2Ability_LWStandins'.static.PsiPowerName(Ability) @ "in the Psi Labs.");
 	`log("LongWarX2: psi:" @ Unit.GetFullName() @ "gained" @ Ability @ "(rolled" @ Roll @ "against" @ T.Chance $ ")", , 'LongWarX2');
+}
+
+// --- Gene mods (features/lw-genemods.md) ----------------------------------------------
+
+/** Whether a soldier may go into the tank for a mod now; Why says what is missing. */
+static function bool CanGeneMod(XComGameState_LWStrategy S, XComGameState_Unit Unit, LWBaseRules.LWGeneMod G, out string Why)
+{
+	local LWBaseRules.LWGeneMod Other;
+	local name Tech, Meld;
+
+	Why = "";
+	Meld = class'X2Item_LWArtifacts'.static.ItemFor('Meld');
+	if (class'LWBase'.static.Count(S, 23) == 0)
+		Why = "the Genetics Lab";
+	else if (S.GeneTrainees.Length >= class'LWBaseRules'.default.PsiSlots * class'LWBase'.static.Count(S, 23))
+		Why = "a free tank in the Genetics Lab";
+	else if (Unit == none || !Unit.IsSoldier() || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
+		Why = "a soldier ready for duty";
+	else
+	{
+		foreach class'LWBaseRules'.default.GeneMods(Other)
+			if (Other.Slot == G.Slot && Unit.HasSoldierAbility(class'X2Ability_LWStandins'.static.GeneAbilityFor(Other.Perk)))
+				Why = "a soldier without a mod there (" $ G.Slot $ ")";
+	}
+	if (Why == "" && G.Tech != 0)
+	{
+		Tech = class'LWResearchRules'.static.TemplateForId(G.Tech);
+		if (Tech == '' || !class'UIUtilities_Strategy'.static.GetXComHQ().IsTechResearched(Tech))
+			Why = "its research";
+	}
+	if (Why == "" && class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies() < G.Cash)
+		Why = class'LWStrategyRules'.static.Money(G.Cash);
+	if (Why == "" && class'LWEngineering'.static.Held(Meld) < G.Meld)
+		Why = G.Meld @ class'X2Item_LWArtifacts'.static.DisplayName('Meld');
+	return Why == "";
+}
+
+/** A soldier goes into the tank for a mod (its cost paid): out of the barracks for its days. */
+static function bool StartGeneMod(int UnitID, int Perk, out string Why)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_Unit Unit;
+	local LWBaseRules.LWGeneMod G;
+	local LWPsiTrainee T;
+
+	S = Get();
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
+	if (S == none || !class'LWBaseRules'.static.GeneModFor(Perk, G))
+	{
+		Why = "a gene mod";
+		return false;
+	}
+	if (!CanGeneMod(S, Unit, G, Why))
+		return false;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: gene mod begun");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	XComHQ.AddResource(NewGameState, 'Supplies', -G.Cash);
+	class'LWEngineering'.static.Take(NewGameState, class'X2Item_LWArtifacts'.static.ItemFor('Meld'), G.Meld);
+	T.Unit = UnitID;
+	T.Perk = Perk;
+	T.HoursLeft = G.Days * 24;
+	S.GeneTrainees.AddItem(T);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	`log("LongWarX2: gene mods:" @ Unit.GetFullName() @ "in the tank for" @ class'X2Ability_LWStandins'.static.GeneAbilityFor(Perk) @ "," @ G.Days @ "days", , 'LongWarX2');
+	return true;
+}
+
+/** Out of the tank: the mod is the soldier's (a soldier ability) from then on. */
+function GeneModDone(XComGameState NewGameState, LWPsiTrainee T)
+{
+	local XComGameState_Unit Unit;
+	local ClassAgnosticAbility Mod;
+	local name Ability;
+
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(T.Unit));
+	Ability = class'X2Ability_LWStandins'.static.GeneAbilityFor(T.Perk);
+	if (Unit == none || Ability == '')
+		return;
+	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+	Mod.AbilityType.AbilityName = Ability;
+	Mod.bUnlocked = true;
+	Unit.AWCAbilities.AddItem(Mod);
+	Note(Unit.GetFullName() @ "came out of the Genetics Lab with" @ class'X2Ability_LWStandins'.static.PsiPowerName(Ability) $ ".");
+	`log("LongWarX2: gene mods:" @ Unit.GetFullName() @ "gained" @ Ability, , 'LongWarX2');
 }
 

@@ -28,12 +28,21 @@ var string Reason;
 /** Set while working out damage: the shot is a critical hit. */
 var bool bCrit;
 
+/** Hyper-Reactive Pupils: whether each shot hit or missed, noted for the next (AfterMiss). */
+function bool PostAbilityCostPaid(XComGameState_Effect EffectState, XComGameStateContext_Ability AbilityContext, XComGameState_Ability kAbility, XComGameState_Unit SourceUnit, XComGameState_Item AffectWeapon, XComGameState NewGameState, const array<name> PreCostActionPoints, const array<name> PreCostReservePoints)
+{
+	if (AimIf == 'AfterMiss' && X2AbilityToHitCalc_StandardAim(kAbility.GetMyTemplate().AbilityToHitCalc) != none && AbilityContext.InputContext.PrimaryTarget.ObjectID > 0)
+		SourceUnit.SetUnitFloatValue(name(EffectName $ "_Missed"), AbilityContext.IsResultContextMiss() ? 1 : 0, eCleanup_BeginTactical);
+	return false;
+}
+
 /** How many times the condition holds for this shot: 0 (no), 1, or the count for PerVisibleEnemy. */
 function int Holds(name Condition, XComGameState_Unit Attacker, XComGameState_Unit Target, XComGameState_Ability AbilityState, bool bAsTarget)
 {
 	local XComGameState_Unit Me, Other;
 	local GameRulesCache_VisibilityInfo VisInfo;
 	local XComGameState_Item Weapon;
+	local UnitValue Missed;
 	local int n;
 
 	Me = bAsTarget ? Target : Attacker;
@@ -56,6 +65,9 @@ function int Holds(name Condition, XComGameState_Unit Attacker, XComGameState_Un
 	case 'PerVisibleEnemy':
 		n = class'X2TacticalVisibilityHelpers'.static.GetNumVisibleEnemyTargetsToSource(Me.ObjectID);
 		return MaxStacks > 0 ? Min(n, MaxStacks) : n;
+	// Hyper-Reactive Pupils: the unit's last shot missed (PostAbilityCostPaid notes it).
+	case 'AfterMiss':
+		return (Me.GetUnitValue(name(EffectName $ "_Missed"), Missed) && Missed.fValue > 0) ? 1 : 0;
 	case 'HeightAdvantage':
 		return (Other != none && Me.HasHeightAdvantageOver(Other, !bAsTarget)) ? 1 : 0;
 	case 'NoActionTaken':

@@ -63,6 +63,12 @@ export function makeWords({ plan, core, loc, consts }) {
     GrenadierCharges: () => c('GRENADIER_CHARGES'),
     DoubleTapCooldown: () => c('DOUBLETAP_COOLDOWN'),
     HeadshotCritBonus: () => c('PRECISION_SHOT_CRITICAL_CHANCE_BONUS'),
+    // Gene mods (features/lw-genemods.md).
+    GeneModPupilsBonus: () => c('GENEMOD_PUPILS_BONUS'),
+    GeneModDepthPerceptionAim: () => c('GENEMOD_DEPTHPERCEPTION_AIM'),
+    GeneModDepthPerceptionCrit: () => c('GENEMOD_DEPTHPERCEPTION_CRIT'),
+    GeneModBrainDampingWill: () => c('GENEMOD_BRAINDAMPING_WILL'),
+    SecondaryHeartBleedTimerBonus: () => c('GENEMOD_SECONDHEART_BLEEDOUT'),
     // Psi powers (features/lw-psi.md): EW's ability table's cooldowns and durations, counted on every side's turn,
     // as the soldier's own turns ((n - 1) / 2), as the mod's abilities count them.
     PsiInspirationWillBonus: () => c('PSIINSPIRED_WILL_BONUS'),

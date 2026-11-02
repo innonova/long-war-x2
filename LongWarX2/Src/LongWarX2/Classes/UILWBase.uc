@@ -2,7 +2,8 @@
 // ground, each a button (rock: dig it; the shaft: an access lift; empty: the facility chosen), the
 // facility to build, the base's power, satellites, bonuses and upkeep; with the Psi Labs built, their
 // training (features/lw-psi.md: the soldier and the power chosen, the chance and hours, who is
-// training). The rules are LWBase's; time passes on the Geoscape.
+// training); with the Genetics Lab built, its gene mods (features/lw-genemods.md). The rules are
+// LWBase's; time passes on the Geoscape.
 class UILWBase extends UIScreen dependson(LWBaseRules, XComGameState_LWStrategy);
 
 const TILES = 35;
@@ -14,6 +15,10 @@ var UIButton PrevFacility, NextFacility, CloseButton;
 var UIButton PsiSoldierButton, PsiPowerButton, PsiTrainButton;
 var UIText PsiText;
 var int PsiSoldier, PsiPower;
+/** The Genetics Lab (features/lw-genemods.md): the soldier and the mod chosen, the tank begun; who is in the tanks. */
+var UIButton GeneSoldierButton, GeneModButton, GeneStartButton;
+var UIText GeneText;
+var int GeneSoldier, GeneMod;
 /** The buildable facilities (Long War's ids) and the one chosen. */
 var array<int> Choices;
 var int Choice;
@@ -63,6 +68,15 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	PsiText = Spawn(class'UIText', self).InitText('LWBasePsiText', "");
 	PsiText.SetPosition(960, 870);
 	PsiText.SetWidth(820);
+	GeneSoldierButton = Spawn(class'UIButton', self).InitButton('LWBaseGeneSoldier', "SOLDIER", OnGeneSoldier);
+	GeneSoldierButton.SetPosition(90, 925);
+	GeneModButton = Spawn(class'UIButton', self).InitButton('LWBaseGeneMod', "MOD", OnGeneMod);
+	GeneModButton.SetPosition(490, 925);
+	GeneStartButton = Spawn(class'UIButton', self).InitButton('LWBaseGeneStart', "MODIFY", OnGeneStart);
+	GeneStartButton.SetPosition(810, 925);
+	GeneText = Spawn(class'UIText', self).InitText('LWBaseGeneText', "");
+	GeneText.SetPosition(960, 915);
+	GeneText.SetWidth(700);
 	CloseButton = Spawn(class'UIButton', self).InitButton('LWBaseClose', "CLOSE", OnClose);
 	CloseButton.SetPosition(1700, 970);
 	Refresh();
@@ -94,6 +108,72 @@ function Refresh()
 	}
 	StatusText.SetText(Status != "" ? Status : "Rock: dig it. The shaft: an access lift. Empty ground: the facility chosen below.");
 	RefreshPsi(S);
+	RefreshGene(S);
+}
+
+/** The Genetics Lab's line: shown once the Lab is built. */
+function RefreshGene(XComGameState_LWStrategy S)
+{
+	local array<XComGameState_Unit> Soldiers;
+	local LWBaseRules.LWGeneMod G;
+	local XComGameState_LWStrategy.LWPsiTrainee T;
+	local XComGameState_Unit Unit;
+	local string Text, Why;
+
+	if (class'LWBase'.static.Count(S, 23) == 0 || class'LWBaseRules'.default.GeneMods.Length == 0)
+	{
+		GeneSoldierButton.Hide();
+		GeneModButton.Hide();
+		GeneStartButton.Hide();
+		GeneText.SetText("");
+		return;
+	}
+	GeneSoldierButton.Show();
+	GeneModButton.Show();
+	GeneStartButton.Show();
+	Soldiers = PsiCandidates(S);
+	GeneMod = GeneMod % class'LWBaseRules'.default.GeneMods.Length;
+	G = class'LWBaseRules'.default.GeneMods[GeneMod];
+	GeneModButton.SetText(class'X2Ability_LWStandins'.static.PsiPowerName(class'X2Ability_LWStandins'.static.GeneAbilityFor(G.Perk)) @ "(" $ G.Slot $ ")");
+	Text = class'LWStrategyRules'.static.Money(G.Cash) $ "," @ G.Meld @ class'X2Item_LWArtifacts'.static.DisplayName('Meld') $ "," @ G.Days @ "days";
+	if (Soldiers.Length > 0)
+	{
+		GeneSoldier = GeneSoldier % Soldiers.Length;
+		Unit = Soldiers[GeneSoldier];
+		GeneSoldierButton.SetText("GENE:" @ Unit.GetFullName());
+		class'XComGameState_LWStrategy'.static.CanGeneMod(S, Unit, G, Why);
+		Text $= (Why != "" ? " (needs" @ Why $ ")" : "");
+	}
+	else
+		GeneSoldierButton.SetText("GENE: no soldier ready");
+	foreach S.GeneTrainees(T)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(T.Unit));
+		Text $= " | " $ (Unit != none ? Unit.GetFullName() : "?") $ ":" @ class'X2Ability_LWStandins'.static.PsiPowerName(class'X2Ability_LWStandins'.static.GeneAbilityFor(T.Perk)) @ T.HoursLeft $ "h";
+	}
+	GeneText.SetText(Text);
+}
+
+simulated function OnGeneSoldier(UIButton Button) { GeneSoldier++; Refresh(); }
+simulated function OnGeneMod(UIButton Button) { GeneMod++; Refresh(); }
+
+simulated function OnGeneStart(UIButton Button)
+{
+	local XComGameState_LWStrategy S;
+	local array<XComGameState_Unit> Soldiers;
+	local string Why;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Soldiers = PsiCandidates(S);
+	if (Soldiers.Length == 0)
+		return;
+	if (class'XComGameState_LWStrategy'.static.StartGeneMod(Soldiers[GeneSoldier % Soldiers.Length].ObjectID, class'LWBaseRules'.default.GeneMods[GeneMod % class'LWBaseRules'.default.GeneMods.Length].Perk, Why))
+		Status = "Into the gene tank.";
+	else
+		Status = "The gene mod needs" @ Why $ ".";
+	if (XComHQPresentationLayer(Movie.Pres) != none && XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD != none)
+		XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD.UpdateResources();
+	Refresh();
 }
 
 /** The soldiers who may train: ready for duty, not already training. */

@@ -112,6 +112,8 @@ const ini = (key) => {
 const c = (name, times = 1) => (consts.has(name) ? Math.round(consts.get(name) * times) : undefined)
 // --- Perks to abilities ---------------------------------------------------------------
 const standins = new Map() // name -> { perk, icon }
+// Icons XCOM 2 keeps under another name than Long War's perk.
+const ICON_LIKE = { LW_HyperReactivePupils: 'UIPerk_hyperactivepupils', LW_AdaptiveBoneMarrow: 'UIPerk_regeneration' }
 function abilityFor(perk) {
   if (SAME[perk] && x2Abilities.has(SAME[perk])) return SAME[perk]
   const title = titleOf(perk)
@@ -121,7 +123,7 @@ function abilityFor(perk) {
     const names = [title.replace(/[^A-Za-z0-9]/g, ''), ...(renamed.has(perk) ? [] : [perk.replace(/^ePerk_/, '')])]
     // XCOM 2 keeps EW's psi icons as uiperk_psi_<power> (Psi Panic: uiperk_psi_panic).
     const candidates = names.flatMap((c) => [`uiperk_${c.toLowerCase()}`, `uiperk_psi_${c.toLowerCase()}`, `uiperk_psi_${c.toLowerCase().replace(/^psi/, '')}`])
-    const icon = candidates.map((c) => x2Icons.get(c)).find(Boolean) ?? 'UIPerk_standard'
+    const icon = ICON_LIKE[name] ?? candidates.map((c) => x2Icons.get(c)).find(Boolean) ?? 'UIPerk_standard'
     standins.set(name, { perk, icon })
   }
   return name
@@ -193,6 +195,15 @@ const REAL = {
   LW_PsiPanic: () => ({ PsiKind: 'Panic', Base: 50, Param: 2 }),
   LW_MindControl: () => ({ PsiKind: 'MindControl', Base: 50 + ini('MIND_CONTROL_DIFFICULTY'), Param: 5, Param2: 3 }),
   LW_PsiInspiration: () => ({ PsiKind: 'Inspiration', Radius: 3, Will: c('PSIINSPIRED_WILL_BONUS'), Param: 4, Param2: 2 }),
+  // Gene mods (features/lw-genemods.md), with Long War's constants.
+  LW_IronSkin: () => ({ DamageTaken: 1 }),
+  LW_DepthPerception: () => ({ Aim: c('GENEMOD_DEPTHPERCEPTION_AIM'), AimIf: 'HeightAdvantage', Crit: c('GENEMOD_DEPTHPERCEPTION_CRIT'), CritIf: 'HeightAdvantage' }),
+  LW_HyperReactivePupils: () => ({ Aim: c('GENEMOD_PUPILS_BONUS'), AimIf: 'AfterMiss' }),
+  LW_NeuralDamping: () => ({ ImmuneTo: ['Panic'] }),
+  // "Medikits and Restorative Mist heal 2 HP more when used on the soldier. Confers complete immunity to poison and acid."
+  LW_SmartMacrophages: () => ({ ImmuneTo: ['Poison', 'Acid'], HealTaken: 2 }),
+  // "unit regenerates 2 hp every turn up to the HP max"
+  LW_AdaptiveBoneMarrow: () => ({ Regen: c('GENEMOD_BONEMARROW_HP_REGEN') }),
   // In the cloud of the soldier's smoke grenades (X2Effect_LWSmoke, added to them: AddSmokeBonuses). Combat Drugs'
   // text says +20 critical chance; its constant (used here) is 10.
   LW_DenseSmoke: () => ({ SmokeDefense: c('DENSE_SMOKE_DEFENSE_BONUS') }),
@@ -307,6 +318,14 @@ for (const m of core.matchAll(/^ItemBalance_Easy=\(eItem=(\d+),\s*iCash=\d+,\s*i
   psiLines.push(`+PsiAbilities=(Perk=${id}, Ability=${q(abilityFor(perk))})`)
 }
 
+// --- Gene mods (features/lw-genemods.md) -------------------------------------------------
+// Long War's ten gene mods, made in the Genetics Lab (their numbers: base-config.mjs): each an ability.
+const geneLines = []
+const geneAt = core.indexOf('; Gene Mod Configuration')
+for (const m of core.slice(geneAt).matchAll(/^ItemBalance_Easy=\(eItem=(\d+),[^)]*\)[ \t]*;[ \t]*(ePerk_\w+)/gm)) {
+  geneLines.push(`+GeneAbilities=(Perk=${m[1]}, Ability=${q(abilityFor(m[2]))})`)
+}
+
 // --- The stand-ins ---------------------------------------------------------------------
 writeFileSync(
   join(mod, 'Config', 'XComLWClasses.ini'),
@@ -317,6 +336,8 @@ writeFileSync(
     ...[...standins].map(([name, s]) => `+Standins=(Name=${q(name)}, Icon=${q('img:///UILibrary_PerkIcons.' + s.icon)}${realFields(name)})`),
     "; Long War's psi powers: the ability each gives (features/lw-psi.md).",
     ...psiLines,
+    "; Long War's gene mods: the ability each gives (features/lw-genemods.md).",
+    ...geneLines,
     '',
     "; War of the Chosen's Skirmish Mode: Long War's classes armed like these XCOM 2 classes (LWX2SkirmishWeapons).",
     '[LongWarX2.LWX2SkirmishWeapons]',

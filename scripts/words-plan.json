@@ -281,6 +281,46 @@
   {
    "name": "LW_Rift",
    "perk": "ePerk_Rift"
+  },
+  {
+   "name": "LW_SecondaryHeart",
+   "perk": "ePerk_GeneMod_SecondHeart"
+  },
+  {
+   "name": "LW_AdrenalNeurosympathy",
+   "perk": "ePerk_GeneMod_Adrenal"
+  },
+  {
+   "name": "LW_NeuralDamping",
+   "perk": "ePerk_GeneMod_BrainDamping"
+  },
+  {
+   "name": "LW_SmartMacrophages",
+   "perk": "ePerk_Medal_DefenderB"
+  },
+  {
+   "name": "LW_HyperReactivePupils",
+   "perk": "ePerk_GeneMod_Pupils"
+  },
+  {
+   "name": "LW_DepthPerception",
+   "perk": "ePerk_GeneMod_DepthPerception"
+  },
+  {
+   "name": "LW_BioelectricSkin",
+   "perk": "ePerk_GeneMod_BioelectricSkin"
+  },
+  {
+   "name": "LW_IronSkin",
+   "perk": "ePerk_GeneMod_IronSkin"
+  },
+  {
+   "name": "LW_MuscleFiberDensity",
+   "perk": "ePerk_GeneMod_MuscleFiber"
+  },
+  {
+   "name": "LW_AdaptiveBoneMarrow",
+   "perk": "ePerk_GeneMod_BoneMarrow"
   }
  ]
 }

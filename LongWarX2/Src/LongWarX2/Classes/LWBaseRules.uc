@@ -43,6 +43,22 @@ var config float PsiGiftChance;
 var config int PsiTrainingHours;
 var config int PsiSlots;
 var config array<LWPsiPower> PsiPowers;
+
+/** A gene mod made in the Genetics Lab (features/lw-genemods.md): Long War's numbers for it. */
+struct LWGeneMod
+{
+	var int Perk;
+	var name Enum;
+	var int Cash;
+	var int Tech;
+	var int Meld;
+	var int Days;
+	var int Fatigue;
+	/** Chest, Brain, Eyes, Skin or Legs: a soldier has one mod a slot (a string: as a name it shows another name's case). */
+	var string Slot;
+};
+var config array<LWGeneMod> GeneMods;
+
 var config array<int> BasePower;
 var config int PowerAdjacencyBonus;
 var config int SteamVents;
@@ -117,3 +133,13 @@ static function int PsiChance(int Will, LWPsiPower P)
 	return Min(99, int(100 - 400.0 / float((W - T) + (G - 60))));
 }
 
+static function bool GeneModFor(int Perk, out LWGeneMod G)
+{
+	local int k;
+
+	k = default.GeneMods.Find('Perk', Perk);
+	if (k == INDEX_NONE)
+		return false;
+	G = default.GeneMods[k];
+	return true;
+}
