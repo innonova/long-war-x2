@@ -42,7 +42,7 @@ buttons and text, no art).
 | System | Status | Looks | What is in | What is missing | Feature |
 |---|---|---|---|---|---|
 | Classes and perk trees | done | X2 | the eight subclasses, their trees and stat gains | | `lw-classes` |
-| Perks | most | X2 | most of the 78 Long War perks act; approximations marked in Decisions | Lock N' Load, Concealment, Extra Conditioning, Javelin, Neural Feedback, Pyrokinesis; Bioelectric Skin's reveal | `lw-classes`, `lw-psi`, `lw-genemods` |
+| Perks | most | X2 | most of the 78 Long War perks act; approximations marked in Decisions | Lock N' Load, Concealment, Extra Conditioning, Javelin, Neural Feedback, Pyrokinesis; Bioelectric Skin's reveal; Muscle Fiber Density as a passive jump (a grapple for now) | `lw-classes`, `lw-psi`, `lw-genemods` |
 | Psi powers in missions | most | X2 | ten of twelve | Neural Feedback, Pyrokinesis | `lw-psi` |
 | Weapons and armour | done | X2 | Long War's stats, slots, ammo, who may carry what | Long War's weapon perks while carried | `lw-gear` |
 | Small items | most | X2 | grenades, medikits, rockets (with scatter), the arc thrower, scanners, beacons | the Shadow Device, the Battle Computer | `lw-gear` |
