@@ -74,6 +74,8 @@
 - **A single-target ability measures its reach by its weapon**: unbound
   (`ApplyToWeaponSlot` unset), every target is "not in range". XCOM 2's psi
   powers use the psi amp; ours are bound to the primary weapon.
+- **`STATUS.md`** is the table of every system's state; bring its row up to
+  date when work on a system lands.
 - **Long War's numbers follow stock Long War 1.0**, never one player's
   changes. `scripts/config-all.sh` regenerates every config from the stock
   installer's files in the Tree's samples (`samples/Long War Mod Manager
