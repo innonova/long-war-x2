@@ -130,6 +130,8 @@ var bool bPendingCapture;
 var array<int> PendingSquad;
 /** The aliens stunned with the arc thrower in the mission under way (their XCOM 2 character groups; X2Effect_LWCapture). */
 var array<name> PendingCaptives;
+/** Foundry projects whose one-time change to the soldiers' gear has been made (LWX2Gear.ApplyFoundryGear). */
+var array<int> FoundryApplied;
 /** The civilians of the terror mission sent, counted as it ended: all of them, and those alive (-1: not counted). */
 var int PendingCivilians, PendingCiviliansSaved;
 /** The story (features/lw-story.md): the countries with an alien base, the Hyperwave Beacon and the Ethereal

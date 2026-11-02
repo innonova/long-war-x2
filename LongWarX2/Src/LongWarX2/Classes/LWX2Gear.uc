@@ -9,6 +9,8 @@ class LWX2Gear extends Object dependson(LWGearRules);
 
 /** XCOM 2's soldier's utility slots without armour (its 'Soldier' character), before Tactical Rigging. */
 var int UtilityBase;
+/** The Foundry's Alien Grenades (2): Long War's alien grenade (84) then unlimited, in place of the soldiers' frag grenades (81). */
+var int AlienGrenadesProject, AlienGrenade, FragGrenade;
 
 /** Every unlimited Long War item in XCOM's stores (XCOM 2 adds its starting items only when a campaign begins). */
 static function EnsureInfinite()
@@ -32,7 +34,7 @@ static function EnsureInfinite()
 		if (A.Infinite && XComHQ.GetItemByName(class'LWGearRules'.static.ArmorTemplateFor(A.Item)) == none)
 			Missing.AddItem(class'LWGearRules'.static.ArmorTemplateFor(A.Item));
 	foreach class'LWGearRules'.default.SmallItems(D)
-		if (D.Infinite && XComHQ.GetItemByName(D.Template) == none)
+		if ((D.Infinite || InfiniteByFoundry(D.Item)) && XComHQ.GetItemByName(D.Template) == none)
 			Missing.AddItem(D.Template);
 	if (Missing.Length == 0)
 		return;
@@ -55,6 +57,78 @@ static function EnsureInfinite()
  * changes, so the base itself is raised, from the campaign's state, before the soldiers are armed; and each Long War
  * soldier's slots are put to it. Returns the slots a soldier then has without armour.
  */
+/** A small item made unlimited by a Foundry project done (Long War's OnFoundryProjectCompleted: Alien Grenades). */
+static function bool InfiniteByFoundry(int Item)
+{
+	return Item == default.AlienGrenade && class'X2Effect_LWFoundry'.static.Done(default.AlienGrenadesProject);
+}
+
+/** Item templates whose being unlimited depends on the campaign: set from it (templates are not saved). */
+static function SetFoundryInfinite()
+{
+	local array<X2DataTemplate> Templates;
+	local X2DataTemplate Data;
+	local LWGearRules.LWSmallDef D;
+
+	foreach class'LWGearRules'.default.SmallItems(D)
+	{
+		if (D.Item != default.AlienGrenade || D.Infinite)
+			continue;
+		class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindDataTemplateAllDifficulties(D.Template, Templates);
+		foreach Templates(Data)
+			X2ItemTemplate(Data).bInfiniteItem = InfiniteByFoundry(D.Item);
+	}
+}
+
+/**
+ * A Foundry project's one-time change to the soldiers' gear, made once after it is done. Long War's
+ * OnFoundryProjectCompleted and XGFacility_Barracks.UpdateGrenades: Alien Grenades puts an alien grenade in place of
+ * every frag grenade a soldier carries. Returns the items changed.
+ */
+static function int ApplyFoundryGear(XComGameState NewGameState, XComGameState_HeadquartersXCom XComHQ)
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_Unit Unit;
+	local XComGameState_Item Item;
+	local X2EquipmentTemplate Alien;
+	local array<XComGameState_Item> Frags, Carried;
+	local StateObjectReference Ref;
+	local name FragName;
+	local int n;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || !class'X2Effect_LWFoundry'.static.Done(default.AlienGrenadesProject) || S.FoundryApplied.Find(default.AlienGrenadesProject) != INDEX_NONE)
+		return 0;
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	S.FoundryApplied.AddItem(default.AlienGrenadesProject);
+	FragName = name("LWSmall_" $ default.FragGrenade);
+	Alien = X2EquipmentTemplate(class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(name("LWSmall_" $ default.AlienGrenade)));
+	if (Alien == none)
+		return 0;
+	foreach XComHQ.Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier())
+			continue;
+		Frags.Length = 0;
+		Carried = Unit.GetAllItemsInSlot(eInvSlot_Utility, NewGameState);
+		foreach Carried(Item)
+			if (Item.GetMyTemplateName() == FragName)
+				Frags.AddItem(Item);
+		if (Frags.Length == 0)
+			continue;
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		foreach Frags(Item)
+		{
+			Unit.RemoveItemFromInventory(XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Item.ObjectID)), NewGameState);
+			if (Unit.AddItemToInventory(Alien.CreateInstanceFromTemplate(NewGameState), eInvSlot_Utility, NewGameState))
+				n++;
+		}
+	}
+	S.Note("Alien Grenades: " $ n @ "frag grenades carried are alien grenades now.");
+	return n;
+}
+
 static function int ApplyRigging(XComGameState NewGameState, XComGameState_HeadquartersXCom XComHQ)
 {
 	local array<X2DataTemplate> Templates;
@@ -97,11 +171,13 @@ static function int ArmAll()
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom', true));
 	if (XComHQ == none)
 		return 0;
+	SetFoundryInfinite();
 	EnsureInfinite();
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom', true));
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: soldiers armed as Long War allows");
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 	ApplyRigging(NewGameState, XComHQ);
+	ApplyFoundryGear(NewGameState, XComHQ);
 	foreach XComHQ.Crew(Ref)
 	{
 		Unit = XComGameState_Unit(History.GetGameStateForObjectID(Ref.ObjectID));
@@ -300,4 +376,7 @@ static function Report(out array<string> Out)
 defaultproperties
 {
 	UtilityBase = 1
+	AlienGrenadesProject = 2
+	AlienGrenade = 84
+	FragGrenade = 81
 }

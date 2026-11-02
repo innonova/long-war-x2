@@ -167,7 +167,7 @@ The shot probe now also logs the pistol shot's breakdown.
 
 ### Left open
 
-- ~~Tactical Rigging~~ (done since, below), Alien Grenades, Improved Arc Thrower (EW's stun thresholds 3 and
+- ~~Tactical Rigging~~, ~~Alien Grenades~~ (done since, below), Improved Arc Thrower (EW's stun thresholds 3 and
   6 HP), Ammo Conservation, Advanced Servomotors, and the projects for SHIVs
   and MECs.
 
@@ -205,3 +205,32 @@ starting bonus that gives it).
   another campaign sets it to that campaign's state at its first pass.
 - **Every soldier, of any armour**, as Long War's words say "all
   soldiers". The armory's look with three slots was not looked at.
+
+## Report (2026-11-02 night, Alien Grenades)
+
+Read from Long War's code (`XGFacility_Engineering.OnFoundryProjectCompleted`,
+`XGFacility_Barracks.UpdateGrenades`): when Alien Grenades (project 2) is
+done, **the alien grenade (84) becomes unlimited in the stores, and every
+frag grenade (81) a soldier carries is replaced by one**. Long War never
+builds the alien grenade otherwise (its item tree gives Foundry 255).
+- **`LWX2Gear.SetFoundryInfinite`** marks the alien grenade's template
+  unlimited from the campaign's state, and the stores get one as the
+  other unlimited items do.
+- **`LWX2Gear.ApplyFoundryGear`** makes the swap once, from the arming
+  pass after the project is done. It records the project in
+  `FoundryApplied`, so a player may carry frag grenades again afterwards,
+  as in Long War, and leaves a note.
+- **Checked** (a new campaign): soldiers carried "XPad LWSmall_81". With
+  the project marked done and the arming pass run: "LWSmall_84", and the
+  note "Alien Grenades: 12 frag grenades carried are alien grenades now".
+  The project was recorded as applied, and a second pass changed nothing.
+  The alien grenade was in the stores.
+
+### Decisions
+
+- **Only what Long War's code does.** The project's text also promises
+  deadlier AP grenades and HE grenades with 40 % more area; the completion
+  code does neither, and no constant for them was found. Not added.
+- **Once, from the arming pass**, rather than at each of the three places
+  a project completes (engineering's start, the hourly tick, the test
+  aid). The pass runs at the Geoscape and whenever soldiers are looked at.
