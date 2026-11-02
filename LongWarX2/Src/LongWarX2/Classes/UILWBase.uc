@@ -46,13 +46,13 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 		TileButtons[i].SetPosition(90 + (i % class'LWBase'.const.W) * 250, 180 + (i / class'LWBase'.const.W) * 110);
 		TileButtons[i].SetWidth(240);
 	}
-	PrevFacility = Spawn(class'UIButton', self).InitButton('LWBasePrev', "<", OnPrev);
+	PrevFacility = Spawn(class'UIButton', self).InitButton('LWBasePrev', "PREV", OnPrev);
 	PrevFacility.SetPosition(90, 760);
-	NextFacility = Spawn(class'UIButton', self).InitButton('LWBaseNext', ">", OnNext);
-	NextFacility.SetPosition(160, 760);
+	NextFacility = Spawn(class'UIButton', self).InitButton('LWBaseNext', "NEXT", OnNext);
+	NextFacility.SetPosition(250, 760);
 	ChoiceText = Spawn(class'UIText', self).InitText('LWBaseChoice', "");
-	// Right of the arrows (a button is wider than its one character).
-	ChoiceText.SetPosition(300, 760);
+	// Right of the PREV and NEXT buttons ("<" drew as an empty button: Flash reads it as the start of a tag).
+	ChoiceText.SetPosition(410, 760);
 	ChoiceText.SetWidth(1600);
 	StatusText = Spawn(class'UIText', self).InitText('LWBaseStatus', "");
 	StatusText.SetPosition(90, 830);

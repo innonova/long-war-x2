@@ -166,9 +166,10 @@ left. TRAIN begins training.
 - With the words written on the test machine, the powers show Long War's
   names (Neural Feedback, Mindfray).
 
-**On the way:** the facility line's text moved right of its arrow buttons,
-which covered "TO BUILD". The "<" button draws as a thin line only, as it
-did before.
+**On the way:** the facility line's arrow buttons covered "TO BUILD", and
+the "<" button drew as a thin line: Flash reads "<" as the start of a tag,
+so its label was empty. They are now PREV and NEXT, spaced apart, with the
+text to their right (checked on the screen).
 
 **Test aid:** `open base|hangar|engineering` opens the Geoscape's screens
 as their buttons do.
