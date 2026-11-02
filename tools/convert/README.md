@@ -40,6 +40,17 @@ render in XCOM 2: the unit display uses a material made in the editor.
   mod spawns as movable lights (EW baked them into lightmaps). The mod
   (`LWX2EWMapPieces`, `LWX2PartPlacer`) places them in a mission.
 
+## EW's strategy screens: `ew-ui.ts`
+
+    ew-ui.ts -- <EW>/CookedPCConsole/UICollection_Strategy_SF.upk <out>/EWStrategyUI.upk
+
+EW's Flash movies (Scaleform, ActionScript 2, as XCOM 2's), every `gfx<Name>`
+group renamed `ewx<Name>` in the package and inside the movies' import paths
+(several names are XCOM 2's too), the textures rewritten uncompressed. The
+package goes into the mod's `Content`; a screen shows a movie with
+`Package = "/ package/ewx<Screen>/<Screen>"` and the movie's own instance as
+`MCName` (`features/lw-ew-screens.md`).
+
 ## For the editor: `ew-to-gltf.ts`, `gltf-to-fbx.py`
 
 An EW unit as glTF (mesh, skeleton, textures, animations), then FBX through

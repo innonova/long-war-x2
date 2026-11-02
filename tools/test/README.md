@@ -63,6 +63,8 @@ And around it:
     tools/test/lw.sh psichance [ability]       # in a mission: the aliens' psi abilities' chances against each soldier (or that ability's, with its modifiers)
     tools/test/lw.sh open loadout              # on the Avenger: the first soldier's loadout in the armory
     tools/test/lw.sh hurt <name|class> [n]     # in a mission: a soldier loses n health (their lowest in the mission too)
+    tools/test/lw.sh ewscreen ChooseTech theChooseResearch  # on the Avenger: an EW screen's own movie (EWStrategyUI.upk in Content)
+    tools/test/lw.sh ewcall SetTitle RESEARCH  # a function of the open EW movie (_ for a space)
     tools/test/lw.sh killaliens                # in a mission: every alien killed, civilians spared (KillAllAIs kills them)
     tools/test/lw.sh 'unbox 500'                 # soldiers reaching fewer than 500 tiles moved beside the best placed (-1: paths unknown)
     tools/test/lw.sh 'near Sniper 8'           # a soldier put 8 tiles from the nearest alien (a target in view)

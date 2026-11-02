@@ -155,6 +155,13 @@ function Handle(string Line, out array<string> Out)
 	case "unbox":
 		Out.AddItem("moved" @ class'LWX2PartPlacer'.static.FreeBoxedIn(Args.Length > 1 ? int(Args[1]) : 40));
 		return;
+	case "ewscreen":
+		Out.AddItem(Args.Length > 1 ? class'UILWEWScreen'.static.ShowMovie(Args[1], Args.Length > 2 ? Args[2] : "") : "ERR ewscreen <EW movie: MissionControl, StrategyHUD …>");
+		return;
+	case "ewcall":
+		// A function of the open EW movie: ewcall <function> [arguments; _ for a space].
+		Out.AddItem(class'UILWEWScreen'.static.CallMovie(Args));
+		return;
 	case "psichance":
 		PsiChances(Out, Args.Length > 1 ? name(Args[1]) : '');
 		return;

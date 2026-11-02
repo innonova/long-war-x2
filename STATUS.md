@@ -16,6 +16,7 @@ buttons and text, no art).
 
 | System | Status | Looks | What is in | What is missing | Feature |
 |---|---|---|---|---|---|
+| EW's own strategy screens | part | LW | shown in XCOM 2, driven by calls, clicks come back (experiment) | each screen wired to Long War's state; EW's pictures; the 3D globe and base | `lw-ew-screens` |
 | The Geoscape: clock, month, decisions | most | plain | Long War's time, month and events on a screen of our own, over XCOM 2's Avenger | a globe; the squad's flight time; XCOM 2's resource bar still shows | `lw-geoscape` |
 | Council, panic, funding | done | plain | countries, panic, leaving, the council report, funding | the monthly tallies (terrors thwarted …) in the report | `lw-geoscape` |
 | Satellites | done | plain | launching, coverage, detection | | `lw-geoscape` |
