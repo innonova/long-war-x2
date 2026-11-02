@@ -396,3 +396,18 @@ strategy config as `SkyrangerCapacity`), not XCOM 2's 4. The Officer
 Training School's Squad Size I and II (+1 each) wait for the school.
 - **Checked:** "launching Hack_ADV on Plot_TWN_Guerilla_LgObj_Boulevard
   with 6 soldiers"; all six landed and could act.
+
+**The Officer Training School's Squad Size I and II** (`OTSBalance`): a
+soldier more each, at §200, once the barracks' ranks add up to 40 and 115
+(Long War's count: rookie 0, squaddie 1 …).
+- They are bought from a line in the base screen (once the school is
+  built) or with the `ots` test aid.
+- The campaign keeps how many were bought (`SquadSizesBought`).
+- The school's officer projects (Long War's officer ranks and their
+  abilities) are not ported.
+
+**Checked:** with the school placed and the ranks at 24, the line read
+"squad 6 -> 7, §200 (needs ranks adding up to 40 (now 24))". With the ranks
+raised to 48 (XCOM 2's `LevelUpBarracks` cheat) it was bought: "squad size
+7", and the next needed 115. A mission after that: "launching ProtectDevice
+… with 7 soldiers", all seven on the field.

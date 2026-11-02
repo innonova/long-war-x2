@@ -19,6 +19,9 @@ var int PsiSoldier, PsiPower;
 var UIButton GeneSoldierButton, GeneModButton, GeneStartButton;
 var UIText GeneText;
 var int GeneSoldier, GeneMod;
+/** The Officer Training School (lw-missions.md): the next squad size. */
+var UIButton OTSButton;
+var UIText OTSText;
 /** The buildable facilities (Long War's ids) and the one chosen. */
 var array<int> Choices;
 var int Choice;
@@ -77,6 +80,11 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	GeneText = Spawn(class'UIText', self).InitText('LWBaseGeneText', "");
 	GeneText.SetPosition(960, 915);
 	GeneText.SetWidth(700);
+	OTSButton = Spawn(class'UIButton', self).InitButton('LWBaseOTS', "SQUAD SIZE", OnOTS);
+	OTSButton.SetPosition(90, 970);
+	OTSText = Spawn(class'UIText', self).InitText('LWBaseOTSText', "");
+	OTSText.SetPosition(330, 960);
+	OTSText.SetWidth(1200);
 	CloseButton = Spawn(class'UIButton', self).InitButton('LWBaseClose', "CLOSE", OnClose);
 	CloseButton.SetPosition(1700, 970);
 	Refresh();
@@ -109,6 +117,36 @@ function Refresh()
 	StatusText.SetText(Status != "" ? Status : "Rock: dig it. The shaft: an access lift. Empty ground: the facility chosen below.");
 	RefreshPsi(S);
 	RefreshGene(S);
+	RefreshOTS(S);
+}
+
+/** The Officer Training School's line: the next squad size, shown once the school is built. */
+function RefreshOTS(XComGameState_LWStrategy S)
+{
+	local string Why;
+
+	if (class'LWBase'.static.Count(S, 12) == 0 || class'LWStrategyRules'.default.SquadSizes.Length == 0)
+	{
+		OTSButton.Hide();
+		OTSText.SetText("");
+		return;
+	}
+	OTSButton.Show();
+	class'XComGameState_LWStrategy'.static.CanBuySquadSize(S, Why);
+	if (S.SquadSizesBought < class'LWStrategyRules'.default.SquadSizes.Length)
+		OTSText.SetText("Officer Training School: squad" @ class'UILWHeadquarters'.static.SquadSize() @ "->" @ (class'UILWHeadquarters'.static.SquadSize() + 1) $ "," @ class'LWStrategyRules'.static.Money(class'LWStrategyRules'.default.SquadSizes[S.SquadSizesBought].Cash) $ (Why != "" ? " (needs" @ Why $ ")" : ""));
+	else
+		OTSText.SetText("Officer Training School: squad" @ class'UILWHeadquarters'.static.SquadSize() $ ", both squad sizes bought");
+}
+
+simulated function OnOTS(UIButton Button)
+{
+	local string Why;
+
+	Status = class'XComGameState_LWStrategy'.static.BuySquadSize(Why) ? "Squad size" @ class'UILWHeadquarters'.static.SquadSize() $ "." : "The squad size needs" @ Why $ ".";
+	if (XComHQPresentationLayer(Movie.Pres) != none && XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD != none)
+		XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD.UpdateResources();
+	Refresh();
 }
 
 /** The Genetics Lab's line: shown once the Lab is built. */

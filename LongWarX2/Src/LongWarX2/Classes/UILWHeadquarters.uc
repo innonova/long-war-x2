@@ -59,10 +59,13 @@ function Refresh()
 	Squad.SetText(S);
 }
 
-/** Long War's squad: its Skyranger's capacity (4 if the config is from before it was generated). */
+/** Long War's squad: its Skyranger's capacity (4 if the config is from before it was generated) and the squad sizes bought. */
 static function int SquadSize()
 {
-	return class'LWStrategyRules'.default.SkyrangerCapacity > 0 ? class'LWStrategyRules'.default.SkyrangerCapacity : 4;
+	local XComGameState_LWStrategy S;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	return (class'LWStrategyRules'.default.SkyrangerCapacity > 0 ? class'LWStrategyRules'.default.SkyrangerCapacity : 4) + (S != none ? S.SquadSizesBought : 0);
 }
 
 /** The first soldiers able to go on a mission. */

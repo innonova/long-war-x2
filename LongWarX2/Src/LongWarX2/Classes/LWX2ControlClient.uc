@@ -131,6 +131,16 @@ function Handle(string Line, out array<string> Out)
 	case "gene":
 		Gene(Args, Out);
 		return;
+	case "ots":
+		// The Officer Training School's squad sizes: 'ots' what the next needs, 'ots buy' buys it.
+		if (Args.Length > 1 && Args[1] ~= "buy")
+			Out.AddItem(class'XComGameState_LWStrategy'.static.BuySquadSize(Why) ? "ok squad size" @ class'UILWHeadquarters'.static.SquadSize() : "ERR needs" @ Why);
+		else
+		{
+			class'XComGameState_LWStrategy'.static.CanBuySquadSize(class'XComGameState_LWStrategy'.static.Get(), Why);
+			Out.AddItem("squad size" @ class'UILWHeadquarters'.static.SquadSize() $ "; ranks in the barracks" @ class'XComGameState_LWStrategy'.static.RanksInBarracks() $ (Why != "" ? "; the next needs" @ Why : "; the next can be bought"));
+		}
+		return;
 	case "effects":
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', EffUnit)
 			if (EffUnit.GetTeam() == eTeam_XCom && EffUnit.IsSoldier() && !EffUnit.bRemovedFromPlay)

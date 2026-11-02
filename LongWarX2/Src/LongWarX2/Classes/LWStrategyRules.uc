@@ -88,6 +88,13 @@ var config int PanicAlienBaseContinent;
 /** The same once the Foundry's Stealth Satellites are done. */
 /** The soldiers a mission takes (Long War's SKYRANGER_CAPACITY, before the Officer Training School's upgrades). */
 var config int SkyrangerCapacity;
+/** The Officer Training School's Squad Size I and II: a soldier more each, at Cash, once the barracks' ranks add up to Ranks. */
+struct LWSquadSize
+{
+	var int Cash;
+	var int Ranks;
+};
+var config array<LWSquadSize> SquadSizes;
 var config int UfoFindStealthSatPct;
 var config int UfoSecondPassFindStealthSatPct;
 /** The chance (%) a terror target is the most panicked candidate rather than one of the top three. */

@@ -105,6 +105,8 @@ struct LWPsiTrainee
 	var int Chance;
 };
 var array<LWPsiTrainee> PsiTrainees;
+/** The Officer Training School's squad sizes bought (lw-missions.md). */
+var int SquadSizesBought;
 /** A soldier in the Genetics Lab's tank (features/lw-genemods.md): the unit, the mod (Long War's perk id), the hours left. */
 var array<LWPsiTrainee> GeneTrainees;
 /** Engineering's projects (LWEngineering). */
@@ -1941,5 +1943,65 @@ function GeneModDone(XComGameState NewGameState, LWPsiTrainee T)
 	Unit.AWCAbilities.AddItem(Mod);
 	Note(Unit.GetFullName() @ "came out of the Genetics Lab with" @ class'X2Ability_LWStandins'.static.PsiPowerName(Ability) $ ".");
 	`log("LongWarX2: gene mods:" @ Unit.GetFullName() @ "gained" @ Ability, , 'LongWarX2');
+}
+
+// --- The Officer Training School's squad sizes (lw-missions.md) ------------------------
+
+/** The barracks' ranks added up (rookie 0, squaddie 1 …), as Long War counts them for the school's projects. */
+static function int RanksInBarracks()
+{
+	local XComGameState_Unit Unit;
+	local StateObjectReference Ref;
+	local int n;
+
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit != none && Unit.IsSoldier() && Unit.IsAlive())
+			n += Unit.GetRank();
+	}
+	return n;
+}
+
+/** Whether the next squad size can be bought now; Why says what is missing. */
+static function bool CanBuySquadSize(XComGameState_LWStrategy S, out string Why)
+{
+	local LWStrategyRules.LWSquadSize Next;
+
+	Why = "";
+	if (S.SquadSizesBought >= class'LWStrategyRules'.default.SquadSizes.Length)
+		Why = "nothing: both bought";
+	else
+	{
+		Next = class'LWStrategyRules'.default.SquadSizes[S.SquadSizesBought];
+		if (class'LWBase'.static.Count(S, 12) == 0)
+			Why = "the Officer Training School";
+		else if (RanksInBarracks() < Next.Ranks)
+			Why = "ranks adding up to" @ Next.Ranks @ "(now" @ RanksInBarracks() $ ")";
+		else if (class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies() < Next.Cash)
+			Why = class'LWStrategyRules'.static.Money(Next.Cash);
+	}
+	return Why == "";
+}
+
+static function bool BuySquadSize(out string Why)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local int Cash;
+
+	S = Get();
+	if (S == none || !CanBuySquadSize(S, Why))
+		return false;
+	Cash = class'LWStrategyRules'.default.SquadSizes[S.SquadSizesBought].Cash;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: squad size bought");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	XComHQ.AddResource(NewGameState, 'Supplies', -Cash);
+	S.SquadSizesBought++;
+	S.Note("The Officer Training School: squad size" @ (class'LWStrategyRules'.default.SkyrangerCapacity + S.SquadSizesBought) $ ".");
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	return true;
 }
 
