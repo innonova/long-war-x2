@@ -17,7 +17,10 @@ stage="dist/$name"
 tools/test/on.sh 'tools\test\stop-game.ps1' >/dev/null 2>&1 || true
 ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git checkout -q -- .; git fetch -q origin main; git checkout -q $commit 2>&1; pwsh -File tools\\test\\build.ps1" | tr -d '\r' | grep -E ': Error|SUCCESS|FAIL' | tail -2
 rm -rf "$stage" && mkdir -p "$stage"
-scp -rq "$host:$game" "$stage/LongWarX2"
+# The mod folder without its Content (the converted EW packages linked there for testing are many GB, and none of
+# them may be in the download anyway): tar on the test machine, unpacked here.
+mkdir -p "$stage"
+ssh "$host" "tar -cf - --exclude=Content -C '$(dirname "$game")' LongWarX2" | tar -xf - -C "$stage"
 ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git checkout -q main" >/dev/null 2>&1 || true
 
 # Nothing of the games, the player's config.
