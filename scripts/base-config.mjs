@@ -81,4 +81,18 @@ out.push(
   'HangarBays=6',
   'FirestormUpkeep=50',
 )
+// Long War's psi powers (features/lw-psi.md), kept in ItemBalance_Easy entries that XComPerkManager.GetPerkInTreePsi
+// reads as: iCash the target will, iElerium the tech that opens the power, iAlloys its tier, iEng the post-mission
+// fatigue hours. Only the entries before the gene mods' (whose comment names a psi perk's tech: eTech_…).
+out.push(
+  "; Long War's psi training (XGFacility_PsiLabs): the chance's base, the hours (x the power's target will / the",
+  "; soldier's will), the slots; and the twelve powers (Perk: Long War's perk id; TargetWill; Tech: the Long War tech",
+  '; researched first, 0: specially coded; Tier; Fatigue: hours after a mission).',
+  `PsiGiftChance=${one('PSI_GIFT_CHANCE')}`,
+  `PsiTrainingHours=${one('PSI_TRAINING_HOURS')}`,
+  `PsiSlots=${one('PSI_NUM_TRAINING_SLOTS')}`,
+)
+for (const m of core.matchAll(/^ItemBalance_Easy=\(eItem=(\d+),\s*iCash=(\d+),\s*iElerium=(\d+),\s*iAlloys=(\d+),\s*iTime=0,\s*iEng=(\d+)\)\s*;\s*\d+=(ePerk_\w+)/gm)) {
+  out.push(`+PsiPowers=(Perk=${m[1]}, Enum=${m[6]}, TargetWill=${m[2]}, Tech=${m[3]}, Tier=${m[4]}, Fatigue=${m[5]})`)
+}
 console.log(out.join('\r\n'))

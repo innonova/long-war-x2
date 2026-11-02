@@ -40,6 +40,31 @@ struct LWStandin
 
 var config array<LWStandin> Standins;
 
+/** Long War's psi powers: the ability each gives (features/lw-psi.md). */
+struct LWPsiAbility
+{
+	var int Perk;
+	var name Ability;
+};
+var config array<LWPsiAbility> PsiAbilities;
+
+/** A power's name as the player reads it (the ability's). */
+static function string PsiPowerName(name Ability)
+{
+	local X2AbilityTemplate Template;
+
+	Template = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate(Ability);
+	return (Template != none && Template.LocFriendlyName != "") ? Template.LocFriendlyName : string(Ability);
+}
+
+static function name PsiAbilityFor(int Perk)
+{
+	local int k;
+
+	k = default.PsiAbilities.Find('Perk', Perk);
+	return k == INDEX_NONE ? '' : default.PsiAbilities[k].Ability;
+}
+
 static function array<X2DataTemplate> CreateTemplates()
 {
 	local array<X2DataTemplate> Templates;

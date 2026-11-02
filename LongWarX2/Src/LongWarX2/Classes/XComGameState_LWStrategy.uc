@@ -3,7 +3,7 @@
 // month's plan (UFOs, abductions, terror); what happened. Saved with the campaign. The rules are
 // Long War's (LWStrategyRules, its numbers); where a rule is not read from Long War yet, the
 // function says APPROXIMATION.
-class XComGameState_LWStrategy extends XComGameState_BaseObject dependson(LWAirWar, LWResearchRules, LWStrategyRules);
+class XComGameState_LWStrategy extends XComGameState_BaseObject dependson(LWAirWar, LWResearchRules, LWStrategyRules, LWBaseRules);
 
 struct LWCountry
 {
@@ -96,6 +96,15 @@ var array<int> SatellitesDue;
 var array<int> TileType;
 var array<int> TileFacility;
 var array<LWBaseJob> BaseJobs;
+/** A soldier training a psi power in the Psi Labs (features/lw-psi.md): the unit, the power (Long War's perk id), the hours left. */
+struct LWPsiTrainee
+{
+	var int Unit;
+	var int Perk;
+	var int HoursLeft;
+	var int Chance;
+};
+var array<LWPsiTrainee> PsiTrainees;
 /** Engineering's projects (LWEngineering). */
 var array<LWBuild> Builds;
 /** The Foundry's projects under way (Item: the project's id) and those done. */
@@ -405,6 +414,15 @@ function Tick(XComGameState NewGameState)
 			FoundryProjects.Remove(i, 1);
 			bStop = true;
 		}
+	}
+	// Psi training finished: the roll; on success the power is the soldier's.
+	for (i = PsiTrainees.Length - 1; i >= 0; i--)
+	{
+		if (--PsiTrainees[i].HoursLeft > 0)
+			continue;
+		PsiTrainingDone(NewGameState, PsiTrainees[i]);
+		PsiTrainees.Remove(i, 1);
+		bStop = true;
 	}
 	// Satellites finished.
 	for (i = SatellitesDue.Length - 1; i >= 0; i--)
@@ -1732,3 +1750,95 @@ function Note(string Text)
 		Events.Remove(0, Events.Length - 40);
 	`log("LongWarX2: Geoscape:" @ Text, , 'LongWarX2');
 }
+
+// --- Psi training (features/lw-psi.md) -----------------------------------------------
+
+function bool InPsiTraining(int UnitID)
+{
+	return PsiTrainees.Find('Unit', UnitID) != INDEX_NONE;
+}
+
+/** Whether a soldier may begin training a power now; Why says what is missing. */
+static function bool CanTrainPsi(XComGameState_LWStrategy S, XComGameState_Unit Unit, LWBaseRules.LWPsiPower P, out string Why)
+{
+	local name Tech, Ability;
+
+	Why = "";
+	Ability = class'X2Ability_LWStandins'.static.PsiAbilityFor(P.Perk);
+	if (class'LWBase'.static.Count(S, 17) == 0)
+		Why = "the Psi Labs";
+	else if (S.PsiTrainees.Length >= class'LWBaseRules'.default.PsiSlots * class'LWBase'.static.Count(S, 17))
+		Why = "a free place in the Psi Labs";
+	else if (Unit == none || !Unit.IsSoldier() || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
+		Why = "a soldier ready for duty";
+	else if (Ability != '' && Unit.HasSoldierAbility(Ability))
+		Why = "a soldier without the power";
+	else if (P.Tech != 0)
+	{
+		Tech = class'LWResearchRules'.static.TemplateForId(P.Tech);
+		if (Tech == '' || !class'UIUtilities_Strategy'.static.GetXComHQ().IsTechResearched(Tech))
+			Why = "its research";
+	}
+	// Rift (specially coded in Long War): after Mind Control.
+	else if (P.Perk == 73 && !Unit.HasSoldierAbility(class'X2Ability_LWStandins'.static.PsiAbilityFor(71)))
+		Why = "Mind Control first";
+	return Why == "";
+}
+
+/** A soldier begins training a power: out of the barracks until it is done. */
+static function bool StartPsi(int UnitID, int Perk, out string Why)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local XComGameState_Unit Unit;
+	local LWBaseRules.LWPsiPower P;
+	local LWPsiTrainee T;
+
+	S = Get();
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
+	if (S == none || !class'LWBaseRules'.static.PsiPowerFor(Perk, P))
+	{
+		Why = "a psi power";
+		return false;
+	}
+	if (!CanTrainPsi(S, Unit, P, Why))
+		return false;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: psi training begun");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	T.Unit = UnitID;
+	T.Perk = Perk;
+	T.HoursLeft = class'LWBaseRules'.static.PsiHours(int(Unit.GetMaxStat(eStat_Will)), P);
+	T.Chance = class'LWBaseRules'.static.PsiChance(int(Unit.GetMaxStat(eStat_Will)), P);
+	S.PsiTrainees.AddItem(T);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	`log("LongWarX2: psi:" @ Unit.GetFullName() @ "trains" @ class'X2Ability_LWStandins'.static.PsiAbilityFor(Perk) @ "for" @ T.HoursLeft @ "hours," @ T.Chance $ "% chance", , 'LongWarX2');
+	return true;
+}
+
+/** The roll at the end of training; on success the soldier has the power (as a soldier ability) from then on. */
+function PsiTrainingDone(XComGameState NewGameState, LWPsiTrainee T)
+{
+	local XComGameState_Unit Unit;
+	local ClassAgnosticAbility Power;
+	local name Ability;
+	local int Roll;
+
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(T.Unit));
+	Ability = class'X2Ability_LWStandins'.static.PsiAbilityFor(T.Perk);
+	if (Unit == none || Ability == '')
+		return;
+	Roll = Rand(100);
+	if (Roll >= T.Chance)
+	{
+		Note(Unit.GetFullName() @ "finished psi training without gaining" @ class'X2Ability_LWStandins'.static.PsiPowerName(Ability) $ ".");
+		`log("LongWarX2: psi:" @ Unit.GetFullName() @ "failed" @ Ability @ "(rolled" @ Roll @ "against" @ T.Chance $ ")", , 'LongWarX2');
+		return;
+	}
+	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+	Power.AbilityType.AbilityName = Ability;
+	Power.bUnlocked = true;
+	Unit.AWCAbilities.AddItem(Power);
+	Note(Unit.GetFullName() @ "gained" @ class'X2Ability_LWStandins'.static.PsiPowerName(Ability) @ "in the Psi Labs.");
+	`log("LongWarX2: psi:" @ Unit.GetFullName() @ "gained" @ Ability @ "(rolled" @ Roll @ "against" @ T.Chance $ ")", , 'LongWarX2');
+}
+

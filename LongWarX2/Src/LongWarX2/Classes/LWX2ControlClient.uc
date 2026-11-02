@@ -125,6 +125,9 @@ function Handle(string Line, out array<string> Out)
 	case "capture":
 		Out.AddItem(CaptureNearest());
 		return;
+	case "psi":
+		Psi(Args, Out);
+		return;
 	case "effects":
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', EffUnit)
 			if (EffUnit.GetTeam() == eTeam_XCom && EffUnit.IsSoldier() && !EffUnit.bRemovedFromPlay)
@@ -868,6 +871,60 @@ function Enemies(out array<string> Out)
 }
 
 /** In a mission: a soldier's ability used on a target (its index among the available targets; -1: list them). */
+/**
+ * Psi training (features/lw-psi.md): with no arguments the powers (target will, what is missing for the first
+ * soldier ready) and the soldiers in training; 'psi <soldier index> <perk>' begins training.
+ */
+function Psi(array<string> Args, out array<string> Out)
+{
+	local XComGameState_LWStrategy S;
+	local LWBaseRules.LWPsiPower P;
+	local XComGameState_LWStrategy.LWPsiTrainee T;
+	local XComGameState_Unit Unit, First;
+	local StateObjectReference Ref;
+	local string Why;
+	local int n;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none)
+	{
+		Out.AddItem("ERR no Long War campaign");
+		return;
+	}
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier())
+			continue;
+		if (Args.Length > 2 && n == int(Args[1]))
+		{
+			Out.AddItem(class'XComGameState_LWStrategy'.static.StartPsi(Unit.ObjectID, int(Args[2]), Why) ? "ok" @ Unit.GetFullName() @ "begins" : "ERR needs" @ Why);
+			return;
+		}
+		if (First == none && Unit.CanGoOnMission() && !S.InPsiTraining(Unit.ObjectID))
+			First = Unit;
+		n++;
+	}
+	if (Args.Length > 2)
+	{
+		Out.AddItem("ERR no such soldier");
+		return;
+	}
+	Out.AddItem("Psi Labs:" @ class'LWBase'.static.Count(S, 17) @ "built," @ S.PsiTrainees.Length @ "training," @ class'LWBaseRules'.default.PsiSlots @ "places each");
+	foreach class'LWBaseRules'.default.PsiPowers(P)
+	{
+		class'XComGameState_LWStrategy'.static.CanTrainPsi(S, First, P, Why);
+		Out.AddItem(P.Perk @ class'X2Ability_LWStandins'.static.PsiAbilityFor(P.Perk) @ "will" @ P.TargetWill
+			$ (First != none ? " | " $ First.GetFullName() @ "(will" @ int(First.GetMaxStat(eStat_Will)) $ "):" @ class'LWBaseRules'.static.PsiChance(int(First.GetMaxStat(eStat_Will)), P) $ "%," @ class'LWBaseRules'.static.PsiHours(int(First.GetMaxStat(eStat_Will)), P) @ "hours" : "")
+			$ (Why != "" ? "; needs" @ Why : ""));
+	}
+	foreach S.PsiTrainees(T)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(T.Unit));
+		Out.AddItem("training:" @ (Unit != none ? Unit.GetFullName() : string(T.Unit)) @ class'X2Ability_LWStandins'.static.PsiAbilityFor(T.Perk) @ T.HoursLeft @ "hours left," @ T.Chance $ "%");
+	}
+}
+
 static function string JoinNames(array<name> Names)
 {
 	local string S;

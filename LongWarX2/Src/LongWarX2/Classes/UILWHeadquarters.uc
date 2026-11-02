@@ -73,7 +73,9 @@ function array<XComGameState_Unit> ReadySoldiers(int Max)
 	foreach XComHQ.Crew(Ref)
 	{
 		Unit = XComGameState_Unit(History.GetGameStateForObjectID(Ref.ObjectID));
-		if (Unit != none && Unit.IsSoldier() && Unit.CanGoOnMission() && Out.Length < Max)
+		// Not those in psi training (features/lw-psi.md).
+		if (Unit != none && Unit.IsSoldier() && Unit.CanGoOnMission() && Out.Length < Max
+			&& (class'XComGameState_LWStrategy'.static.Get() == none || !class'XComGameState_LWStrategy'.static.Get().InPsiTraining(Unit.ObjectID)))
 			Out.AddItem(Unit);
 	}
 	return Out;

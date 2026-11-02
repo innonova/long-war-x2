@@ -233,6 +233,54 @@
   {
    "name": "LW_LightEmUp",
    "perk": "ePerk_PlasmaBarrage"
+  },
+  {
+   "name": "LW_NeuralFeedback",
+   "perk": "ePerk_GeneMod_BrainFeedback"
+  },
+  {
+   "name": "LW_RegenBiofield",
+   "perk": "ePerk_GeneMod_RegenPheromones"
+  },
+  {
+   "name": "LW_Mindfray",
+   "perk": "ePerk_MindFray"
+  },
+  {
+   "name": "LW_PsiInspiration",
+   "perk": "ePerk_PsiInspiration"
+  },
+  {
+   "name": "LW_DistortionField",
+   "perk": "ePerk_DistortionField"
+  },
+  {
+   "name": "LW_MindMerge",
+   "perk": "ePerk_MindMerge"
+  },
+  {
+   "name": "LW_PsiPanic",
+   "perk": "ePerk_PsiPanic"
+  },
+  {
+   "name": "LW_TelekineticField",
+   "perk": "ePerk_TelekineticField"
+  },
+  {
+   "name": "LW_Pyrokinesis",
+   "perk": "ePerk_RifleSuppression_DEPRECATED"
+  },
+  {
+   "name": "LW_PsychokineticStrike",
+   "perk": "ePerk_Foundry_SHIVSuppression"
+  },
+  {
+   "name": "LW_MindControl",
+   "perk": "ePerk_MindControl"
+  },
+  {
+   "name": "LW_Rift",
+   "perk": "ePerk_Rift"
   }
  ]
 }

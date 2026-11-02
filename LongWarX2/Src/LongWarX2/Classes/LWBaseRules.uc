@@ -26,6 +26,23 @@ struct LWFacilityDef
 };
 
 var config array<LWFacilityDef> Facilities;
+
+/** A psi power trained in the Psi Labs (features/lw-psi.md): Long War's numbers for it. */
+struct LWPsiPower
+{
+	var int Perk;
+	var name Enum;
+	var int TargetWill;
+	/** The Long War tech researched first (0: specially coded: Rift, after Mind Control). */
+	var int Tech;
+	var int Tier;
+	/** Hours of fatigue after a mission (not applied yet). */
+	var int Fatigue;
+};
+var config float PsiGiftChance;
+var config int PsiTrainingHours;
+var config int PsiSlots;
+var config array<LWPsiPower> PsiPowers;
 var config array<int> BasePower;
 var config int PowerAdjacencyBonus;
 var config int SteamVents;
@@ -69,3 +86,34 @@ static function name FacilityTemplateFor(int Id)
 {
 	return name("LWFacility_" $ Id);
 }
+
+static function bool PsiPowerFor(int Perk, out LWPsiPower P)
+{
+	local int k;
+
+	k = default.PsiPowers.Find('Perk', Perk);
+	if (k == INDEX_NONE)
+		return false;
+	P = default.PsiPowers[k];
+	return true;
+}
+
+/** Hours to train a power (XGFacility_PsiLabs.AddSoldier): PsiTrainingHours x its target will / the soldier's will. */
+static function int PsiHours(int Will, LWPsiPower P)
+{
+	return default.PsiTrainingHours * P.TargetWill / Max(1, Will);
+}
+
+/** The chance (%) that training succeeds (XGFacility_PsiLabs.RollForGift; its council bonus left out). */
+static function int PsiChance(int Will, LWPsiPower P)
+{
+	local int W, T, G;
+
+	W = Max(1, Will);
+	T = P.TargetWill;
+	G = Round(100 * default.PsiGiftChance);
+	if (W <= T + 80 - G)
+		return Max(1, W - T + G);
+	return Min(99, int(100 - 400.0 / float((W - T) + (G - 60))));
+}
+
