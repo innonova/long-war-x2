@@ -59,4 +59,4 @@ buttons and text, no art).
 | Config from stock Long War | done | `scripts/config-all.sh` | | `lw-psi` (the answer) |
 | XCOM 2 test harness | done | control port, scripts, test aids (`tools/test`) | | |
 | Crash at mission load | done | a Wwise callback during `LoadMap` after launching with the Avenger's cinematics running: voices and cinematics stopped, the map loaded 1.5 s later (0 in 20 under provoked conditions) | more play to confirm | `lw-missions` |
-| EW Long War test harness | none | | running Enemy Within the same way, to compare | |
+| EW Long War test harness | part | EW (stock Long War 1.0) started through Steam and its launcher, windowed; mouse input, screenshots, saves read | the keyboard; a campaign by clicks; the measurements | `ew-harness` |

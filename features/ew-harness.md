@@ -49,6 +49,28 @@ numbers be put side by side.
 
 ## Report (2026-11-02, started)
 
-Scripts written, not yet run in the game (the test machine was busy with
-the load-crash runs): `tools/ew-test/ew.ps1` (paths), `start-ew.ps1`,
-`stop-ew.ps1`, `save.sh`. `xcomsave` built and reading saves.
+**Enemy Within with Long War starts, shows, and takes mouse input under
+the harness; its saves are read.**
+- `tools/ew-test/start-ew.ps1` starts it as a player does: through Steam
+  (`steam://rungameid/200510`), clicking the XCOM launcher's Enemy Within
+  button. Started by itself, `XComEW.exe` had Steam start the app's
+  default, Enemy Unknown's `XComGame.exe` (seen: EU's menu), and a
+  `steam_appid.txt` beside it made it exit at once (removed again). It
+  sets the game windowed at 1600 × 900 in its own `XComEngine.ini`. The
+  main menu ("LONG WAR", "LOAD GAME" …) was up after 19 s.
+- **The install is stock Long War 1.0**: its `DefaultGameCore.ini`,
+  `XComGame.upk` and `XComStrategyGame.upk` hash the same as the stock
+  installer's files in the Tree's samples. (Its old saves say "LWR v2.06",
+  from an earlier install.)
+- **Mouse: yes** (`tools/test/click-screen.ps1`: LOAD GAME opened the load
+  screen, BACK closed it). **Keyboard: not yet**: neither Right on the
+  menu nor Tilde did anything, even after a click into the window; EW may
+  read the keyboard another way than XCOM 2. So whether it keeps a console
+  is still open.
+- `save.sh` and `xcomsave` read its saves into JSON.
+
+### Left open
+
+- The keyboard (and with it the console).
+- Starting a campaign and reaching a mission by clicks; then the first
+  measurements (stun chance by health, rocket scatter).
