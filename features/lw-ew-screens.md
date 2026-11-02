@@ -127,3 +127,36 @@ research screen starts one (`SetNewResearchProject`).
 
 - **No confirmation popup** when switching projects. XCOM 2 asks; EW's
   screen did not ask either.
+
+## Report (2026-11-02, EW's strategy HUD)
+
+**EW's strategy HUD shows over the Avenger and the port's strategy
+screens** (`UILWEWStrategyHUD`).
+- **The resource bar**: Long War's cash, alloys, elerium and meld, as EW's
+  `UIStrategyHUD` fills it (`ClearResources`, one `AddResource` each,
+  coloured).
+- **EW's clock** with Long War's date and hour (`theClock.SetDateTime`, as
+  EW's `UIStrategyComponent_Clock` sets it for English): "00:00 AM,
+  1 March 2015" on a new campaign.
+- **Refreshed every second.**
+- **Loaded into the movie without joining the screen stack.** Pushed, it
+  took the focus, and XCOM 2's screens hide when they lose it (our
+  Geoscape vanished, and XCOM 2's Avenger HUD with it). A movie draws over
+  those loaded before it, so whenever one of the port's strategy screens
+  opens, the HUD is loaded again above it (`UIScreenListener_LWEWScreens`).
+- Test aid: `ewhud`.
+
+**Checked**: over the Geoscape screen, the bar at the top right (CASH
+§500, ALLOYS 1, ELERIUM 1, MELD 2) and the clock at the bottom, with the
+Geoscape still working under them (the control port's top screen
+`UILWGeoscape`).
+
+### Left open
+
+- The bottom-right panel (EW's project queue) still shows a placeholder
+  line; `SetCurrentResearch` fills only part of it, and the rest is not
+  read yet.
+- The bar overlaps the Geoscape screen's ENGINEERING button; the plain
+  screens go as EW's take their place.
+- Labels are our own words ("CASH", "ALLOYS") until EW's are written by
+  the setup program.
