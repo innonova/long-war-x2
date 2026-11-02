@@ -578,3 +578,25 @@ having this perk will not provide an additional reduction."
   yet: Long War's fatigue is not in. Not applied.
 - **Captured means left behind.** XCOM 2's evacuated soldiers are off the
   field as well, and they come home.
+
+## Found (2026-11-02 night): rockets do not scatter here
+
+XCOM 2's rockets land where they are aimed; Long War's scatter. So **Fire
+in the Hole** (+10 aim against scatter when the soldier has not moved)
+and the rocket half of **Snap Shot** mean nothing in the port yet, and
+neither does a Rocketeer's aim for rockets.
+- Long War's rule (`XGAbility_Targeted.GetScatterChance`):
+  - start from `MIN_SCATTER` (7.8: "average meters of miss if shooting
+    with 0 aim at a target 20 meters away");
+  - × (120 − aim) / 120, with aim clamped to 0…120 and +10 each for Fire
+    in the Hole (perk 141) and perk 114 when the soldier has not moved;
+  - × distance / 20 m (EW's 64 units a metre), ÷ 1.5, × √2, × 10;
+  - after moving, × 1.25 with perk 16, else × 2.
+- How the rocket is then displaced is not in readable code.
+- **Proposed next**: XCOM 2's rocket abilities with the target point
+  moved by a random distance averaging this value, as XCOM 2 mods with scatter
+  do (`ModifyNewContextFn`); the distribution an approximation.
+- **Tandem Warheads** ("full damage to the maximum extent of their area
+  of effect") needs nothing: XCOM 2's explosives already do full damage
+  over their whole area. Without it, a Long War soldier's would fall off
+  towards the edge; the port has no fall-off.

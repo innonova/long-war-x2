@@ -246,11 +246,13 @@ builds the alien grenade otherwise (its item tree gives Foundry 255).
   Thrower, the capture drone, Elerium fuel, Shaped Armor and **Alien
   Grenades** (`ePerk_Foundry_AlienGrenades`, 125).
 - That perk is read in EW's tactical code in three places:
-  - `XGWeapon.GetDamageRadius`: the frag grenade's (81) radius times 2.0
-    (as decompiled; the text says "40 % more area", which does not fit);
+  - `XGWeapon.GetDamageRadius`: the frag grenade's (81) radius times
+    √2.0, so twice the area (the decompiler prints the square root as
+    `op0xc1`: native 193 in UE3's numbering, found later that night). The
+    text says "40 % more area".
   - `XGAbility_Targeted.TShotInfo_ToString`: +2 for items 79 and 86, in a
     function that only displays;
   - `XComWeapon.PrepareProjectile`: another projectile for item 24.
-- Not built: what the radius line means needs a closer reading, and the
+- Not built: the radius is now read (above) and could follow; the
   damage itself is not in readable code. The port's pistol projects and
   Ammo Conservation do not ask for a Foundry in the base either.
