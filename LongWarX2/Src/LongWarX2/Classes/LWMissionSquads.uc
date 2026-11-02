@@ -6,6 +6,9 @@
 // are left as they are.
 class LWMissionSquads extends Object dependson(LWStrategyRules, LWX2EWMapPieces);
 
+/** A terror site's civilians (Enemy Within's XGBattleDesc.m_iNumTerrorCivilians). */
+const TERROR_CIVILIANS = 18;
+
 /** The patrol zone of a pod spawned at Enemy Within's pod (tiles a side). */
 const ZoneTiles = 16;
 
@@ -105,6 +108,63 @@ static function SpawnAtEWPods()
 			SpawnPod(name("LWX2_EWPod" $ i), Pods[i].Loc + class'LWX2PartPlacer'.default.EWShift, Names);
 	}
 	`log("LongWarX2: missions: Long War's squad of" @ Squad.Length @ "spawned at" @ Pods.Length @ "of Enemy Within's pods", , 'LongWarX2');
+}
+
+/**
+ * A terror site on an Enemy Within map's own plot: its civilians placed as Enemy Within placed them
+ * (XGAIPlayer_Animal.SpawnCivilians, CivilianStartPointValidator): TERROR_CIVILIANS of them (XGBattleDesc's
+ * m_iNumTerrorCivilians), each on a floor tile units can enter, at least 10 tiles from the soldiers' start, 5 from an
+ * alien pod and 5 from each other (EW's cover points stand in for by random floor tiles). Long War counts those alive at
+ * the end as saved (UIScreenListener_LongWarX2Tactical.CountCivilians). Once a mission: none if civilians are there already.
+ */
+static function SpawnCivilians()
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_Unit Unit;
+	local XComWorldData World;
+	local XComGameState_BattleData Battle;
+	local vector Start, At, Pod;
+	local array<vector> Pods, Placed;
+	local TTile Tile;
+	local int n, Tries, k;
+	local bool bOk;
+	local LWX2EWMapPieces.LWX2Pod P;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || S.PendingKind != 4 || !class'LWX2EWMapPieces'.static.OnOwnPlot())
+		return;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetMyTemplate() != none && Unit.GetMyTemplate().bIsCivilian)
+			return;
+	World = `XWORLD;
+	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+	Start = Battle.MapData.SoldierSpawnLocation;
+	foreach class'LWX2EWMapPieces'.static.Map().Pods(P)
+		Pods.AddItem(P.Loc);
+	for (Tries = 0; Tries < 4000 && n < TERROR_CIVILIANS; Tries++)
+	{
+		At.X = World.WorldBounds.Min.X + 192 + FRand() * (World.WorldBounds.Max.X - World.WorldBounds.Min.X - 384);
+		At.Y = World.WorldBounds.Min.Y + 192 + FRand() * (World.WorldBounds.Max.Y - World.WorldBounds.Min.Y - 384);
+		At.Z = World.WorldBounds.Max.Z - 64;
+		if (!World.GetFloorTileForPosition(At, Tile, true) || !World.CanUnitsEnterTile(Tile))
+			continue;
+		At = World.GetPositionFromTileCoordinates(Tile);
+		if (VSize2D(At - Start) < 10 * 96)
+			continue;
+		bOk = true;
+		foreach Pods(Pod)
+			if (VSize(At - Pod) < 5 * 64)
+				bOk = false;
+		for (k = 0; k < Placed.Length && bOk; k++)
+			if (VSize(At - Placed[k]) < 5 * 64)
+				bOk = false;
+		if (!bOk)
+			continue;
+		`SPAWNMGR.CreateUnit(At, 'Civilian', eTeam_Neutral, false);
+		Placed.AddItem(At);
+		n++;
+	}
+	`log("LongWarX2: missions: terror:" @ n @ "civilians placed as Enemy Within placed them", , 'LongWarX2');
 }
 
 /**

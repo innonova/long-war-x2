@@ -6,6 +6,8 @@ class UIScreenListener_LongWarX2Dropship extends UIScreenListener;
 event OnInit(UIScreen Screen)
 {
 	local LWX2PartPlacer Placer;
+	local XComBuildingVolume Building;
+	local int Buildings;
 
 	if (UIDropShipBriefing_MissionStart(Screen) == none || !class'LWX2EWMapPieces'.static.HasMap())
 		return;
@@ -15,6 +17,20 @@ event OnInit(UIScreen Screen)
 		class'LWX2PartPlacer'.default.EWShift = vect(0, 0, 0);
 		class'LWX2PartPlacer'.default.bEWPlaced = true;
 		class'LWX2PartPlacer'.static.Fog(`XWORLD);
+		// Each building's floors could be told which of the plot's actors are theirs (RebuildCachedActors: the editor does it
+		// for a plot it saves), for XCOM 2's building visibility to cut roofs away. Off (CacheBuildingFloors): with it the
+		// buildings vanished whole, whatever floors were shown (lw-missions.md, night log).
+		if (class'LWX2PartPlacer'.default.CacheBuildingFloors)
+		{
+			foreach Screen.WorldInfo.AllActors(class'XComBuildingVolume', Building)
+			{
+				Building.CacheBuildingVolumeInChildrenFloorVolumes();
+				Building.CacheFloorCenterAndExtent();
+				Building.RebuildCachedActors();
+				Buildings++;
+			}
+			`log("LongWarX2: EW map:" @ Buildings @ "buildings' floors cached", , 'LongWarX2');
+		}
 		`log("LongWarX2: EW map: on its own plot" @ `XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData').ObjectID, , 'LongWarX2');
 		return;
 	}

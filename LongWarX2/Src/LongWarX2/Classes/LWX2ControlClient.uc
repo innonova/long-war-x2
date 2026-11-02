@@ -180,6 +180,10 @@ function Handle(string Line, out array<string> Out)
 		// A parameter of every stand-in material on the EW map, live: ewmat <parameter> <number | texture path>.
 		Out.AddItem(SetEWMaterials(Args.Length > 1 ? name(Args[1]) : '', Args.Length > 2 ? Args[2] : ""));
 		return;
+	case "buildings":
+		// The plot's building volumes as XCOM 2 sees them; with an action on the n-th: buildings [n show <lo> <hi> | n reveal | n rebuild].
+		Buildings(Args, Out);
+		return;
 	case "fog":
 		// The fog of war's levels, live: fog <never seen> <seen before> <never seen shown as seen: 0 or 1>.
 		class'LWX2PartPlacer'.default.FogNeverSeen = Args.Length > 1 ? float(Args[1]) : 0.0;
@@ -1689,6 +1693,37 @@ function string ScaleEWLights(string Kind, float Scale)
 		n++;
 	}
 	return "ewlight" @ Kind @ "x" $ Scale @ "on" @ n @ "lights";
+}
+
+/** buildings: each building volume's floors (centre, half height, cached actors), or an action on one. */
+function Buildings(array<string> Args, out array<string> Out)
+{
+	local XComBuildingVolume B;
+	local int n, f, Want;
+	local string Line;
+
+	Want = Args.Length > 1 ? int(Args[1]) : -1;
+	foreach WorldInfo.AllActors(class'XComBuildingVolume', B)
+	{
+		if (Want >= 0 && n != Want)
+		{
+			n++;
+			continue;
+		}
+		if (Args.Length > 2 && Args[2] ~= "show")
+			B.ShowFloors(int(Args[3]), int(Args[4]));
+		else if (Args.Length > 2 && Args[2] ~= "reveal")
+			B.RevealAllFloors();
+		else if (Args.Length > 2 && Args[2] ~= "rebuild")
+			B.RebuildCachedActors();
+		Line = "building" @ n @ B.Name @ "at" @ B.Location @ "inside" @ B.IsInside @ "floors" @ B.Floors.Length $ ":";
+		for (f = 0; f < B.Floors.Length; f++)
+			Line @= "[" $ f @ "z" @ int(B.Floors[f].fCenterZ) @ "+-" @ int(B.Floors[f].fExtent) @ "vols" @ B.Floors[f].FloorVolumes.Length @ "actors" @ B.Floors[f].m_aCachedActors.Length $ "]";
+		Out.AddItem(Line);
+		n++;
+	}
+	if (n == 0)
+		Out.AddItem("no building volumes");
 }
 
 defaultproperties

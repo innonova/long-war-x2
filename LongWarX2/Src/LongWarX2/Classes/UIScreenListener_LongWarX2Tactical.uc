@@ -64,6 +64,7 @@ event OnInit(UIScreen Screen)
 		// (The fog of war is set before the battle, at the dropship: changed while it is being drawn, the game died now and
 		// then right here, on the person's machine.)
 		class'LWMissionSquads'.static.SpawnAtEWPods();
+		class'LWMissionSquads'.static.SpawnCivilians();
 		// Soldiers boxed in by EW's walls moved out, once their paths are known.
 		BoxedTries = 0;
 		Screen.SetTimer(3.0, true, nameof(FreeBoxedIn), self);

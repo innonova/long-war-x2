@@ -24,6 +24,8 @@ var config bool bEWPlaced;
 var config bool FogNeverSeenAsHaveSeen;
 var config float FogNeverSeen;
 var config float FogHaveSeen;
+/** For development: each building's floors given their actors on an EW map's own plot (UIScreenListener_LongWarX2Dropship). */
+var config bool CacheBuildingFloors;
 
 event Tick(float DeltaTime)
 {

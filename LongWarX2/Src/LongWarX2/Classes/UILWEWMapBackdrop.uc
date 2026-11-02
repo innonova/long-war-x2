@@ -3,7 +3,11 @@
 // Avenger no longer shows through), and EW's own holographic earth (FX_Globe.T_Earth_Holo, from EW's
 // Static_SituationRoom package converted by tools/convert/ew-package.ts as EWSitRoomMap.upk) after it, half seen over the
 // movie's map where that maps 0..1 (longitude and latitude): under it, the map's tinted panel left it too dark to read.
-class UILWEWMapBackdrop extends UIScreen;
+class UILWEWMapBackdrop extends UIScreen config(LWAirWar);
+
+/** The earth's tint (a Flash colour, "" for none: EW's map is a teal hologram, its material tinting the same earth) and opacity. */
+var config string EarthTint;
+var config float EarthAlpha;
 
 var UIImage Earth;
 /** The earth (over the Situation Room) rather than the black background (under it). */
@@ -58,7 +62,9 @@ simulated function OnInit()
 	Earth = Spawn(class'UIImage', self).InitImage('LWEWEarth', "img:///FX_Globe.T_Earth_Holo");
 	Earth.SetPosition(590, 158);
 	Earth.SetSize(750, 498);
-	Earth.SetAlpha(50);
+	if (EarthTint != "")
+		Earth.SetColor(EarthTint);
+	Earth.SetAlpha(EarthAlpha > 0 ? EarthAlpha : 50.0);
 }
 
 defaultproperties

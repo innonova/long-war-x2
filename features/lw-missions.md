@@ -970,3 +970,53 @@ civilians.
   box); the plot writer adds an `XComBuildingVolume` per building and an
   `XComFloorVolume` per floor, reusing the template's box brush, scaled.
   XCOM 2's own building visibility then cuts roofs and upper floors away.
+- **21:15, roofs, first look.** With the building and floor volumes in the
+  plot alone, nothing changed: the dockyard's big building kept its roof.
+  XCOM 2 links building and floor volumes as a map loads (`InitVolumes`),
+  but which actors belong to which floor is made in the editor for a plot.
+  **Decision:** on our own plots the mod has each building cache its floors'
+  actors at the dropship briefing (`RebuildCachedActors`, with
+  `CacheBuildingVolumeInChildrenFloorVolumes` and
+  `CacheFloorCenterAndExtent`). First look: the roof gone and the aliens
+  inside drawn whole; then, after a click on the building, the whole view
+  black (units too). Being tested: whether the floors took in far more than
+  their building (EW's ground and backdrop pieces overlap every building).
+- **22:05, roofs, second look.** The floors cached correctly (the big
+  building: 4 floors, 114, 35, 124 and 44 actors; heights 96, 288, 480,
+  800), but with them the whole building vanished, from outside too, and
+  neither revealing all floors nor showing floors 0 to 3 (new control aid
+  `buildings [n reveal|show lo hi|rebuild]`) brought it back; the aliens
+  inside stood on nothing. So it is not which floors are shown: most
+  likely the actors, once a building's, are drawn through XCOM 2's
+  building shader (its cutaway and "scanline" modes), which our stand-in
+  materials do not render. **Decision:** the run-time caching is off
+  (`CacheBuildingFloors`, development switch): buildings show whole with
+  their roofs, as before; the volumes stay in the plots. Next, for a later
+  session: a small plot made in the SDK editor with one box building,
+  cached there, to compare the editor's floor data with the run time's.
+- **22:20, the dockyard again** (caching off): the big building whole with
+  its roof; its windows now dark glass panes in their frames, no holes or
+  checker. Colour everywhere (the fog of war at XCOM 2's own).
+- **22:40, terror civilians.** On our mission XCOM 2 brings no civilians.
+  **Decision:** on a terror site on its own plot, a civilian (`Civilian`,
+  neutral) at each of EW's spawn points, up to 16
+  (`LWMissionSquads.SpawnCivilians`, the spawn manager's `CreateUnit`, as
+  XCOM 2's `DropCivilian` cheat does); Long War counts those alive at the
+  end as saved (as built). `ForceKind` (development) now sets Long War's
+  pending kind too, or the tactical side never knew it was a terror site.
+- **23:30, terror sites, properly.** Two finds on URB_CommercialAlley_Terror:
+  its alien pods are `XComAlienPod_Terror`, which the converter did not
+  read (so no aliens came and the mission could not end); and its
+  `XComSpawnPoint`s are the soldiers' places (six, the squad), not
+  civilians' (the first try put the civilians among the squad). Enemy
+  Within places a terror site's civilians itself
+  (`XGAIPlayer_Animal.SpawnCivilians`, decompiled from stock Long War):
+  18 (`m_iNumTerrorCivilians`), at random good places at least 10 tiles
+  from the squad's start, 5 from an alien pod and 5 from each other, not
+  in no-spawn zones. **Decision:** the converter reads terror pods and
+  each spawn point's type (converter version 4: every map converted
+  again); the mod places 18 civilians by EW's rules on random floor tiles
+  (EW's cover points and no-spawn volumes not yet carried over).
+  **Checked** (URB_CommercialAlley_Terror, reconverted): Long War's squad
+  of 8 at the map's 5 terror pods; "18 civilians placed as Enemy Within
+  placed them", none among the squad.

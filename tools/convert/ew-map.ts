@@ -23,8 +23,8 @@ import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 
 /** Raised when what a conversion writes changes so that maps converted before must be converted again
- *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors). */
-export const CONVERTER_VERSION = 3
+ *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods, spawn points by type). */
+export const CONVERTER_VERSION = 4
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -254,12 +254,16 @@ exports.forEach((e, i) => {
     const loc = t?.find((x) => x.name === 'Location')
     if (loc) starts.push([f32(loc, 0), f32(loc, 1), f32(loc, 2)])
   }
-  if (e.type === 'XComAlienPod' || e.type === 'XComAlienPod_Abduction' || e.type === 'XComSpawnPoint') {
+  if (e.type === 'XComAlienPod' || e.type === 'XComAlienPod_Abduction' || e.type === 'XComAlienPod_Terror' || e.type === 'XComSpawnPoint') {
     const t = actorTags(i)
     const loc = t?.find((x) => x.name === 'Location')
     if (!loc) return
-    if (e.type === 'XComSpawnPoint') spawnPoints.push([f32(loc, 0), f32(loc, 1), f32(loc, 2)])
-    else
+    // A spawn point's unit type (EW takes a terror site's civilians from the civilian ones: XGBattle_SP.GetCivilianSpawnPoints).
+    if (e.type === 'XComSpawnPoint') {
+      const ut = t!.find((x) => x.name === 'UnitType')
+      const type = ut && ut.value.byteLength >= 8 ? meta.names[new DataView(ut.value.buffer, ut.value.byteOffset).getInt32(0, true)] : ut && ut.value.byteLength === 1 ? String(ut.value[0]) : ''
+      spawnPoints.push([f32(loc, 0), f32(loc, 1), f32(loc, 2), /Civilian/i.test(type) ? 1 : 0])
+    } else
       pods.push({
         loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
         commander: t!.some((x) => x.name === 'bCommanderPod'),
@@ -533,7 +537,8 @@ const lines = [
   ),
   "; EW's alien pods (the commander's, how many aliens; Level: the sub-level it is in, none: the map's own) and its spawn points.",
   ...pods.map((p) => `+Pods=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Commander=${p.commander},Min=${p.min},Max=${p.max}${p.level ? `,Level=${p.level}` : ''})`),
-  ...spawnPoints.map((p) => `+SpawnPoints=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
+  ...spawnPoints.filter((p) => !p[3]).map((p) => `+SpawnPoints=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
+  ...spawnPoints.filter((p) => p[3]).map((p) => `+CivilianSpawns=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
   "; EW's lights (point, spot, its sun and sky), spawned as movable lights.",
   ...lights.map(
     (l) =>
@@ -555,7 +560,7 @@ const meshes = new Set(pieces.map((p) => p.mesh))
 console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed (${nested} nested), ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB)`)
 const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
-console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points, ${lights.length} lights, ${buildings.length} buildings (${buildings.reduce((a, b) => a + b.floors.length, 0)} floors)`)
+console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points (${spawnPoints.filter((p) => p[3]).length} civilian), ${lights.length} lights, ${buildings.length} buildings (${buildings.reduce((a, b) => a + b.floors.length, 0)} floors)`)
 console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
 }
 

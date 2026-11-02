@@ -195,6 +195,9 @@ function OnLaunch(UIButton Button)
 		LW = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID));
 		LW.PendingSquad = LW.MissionSquad();
 		LW.PendingEWMap = EWMap;
+		// (Development: a forced kind is the mission's kind for the tactical side too: a terror site's civilians.)
+		if (ForceKind > 0)
+			LW.PendingKind = Kind;
 		class'LWMissionSquads'.static.ApplyTo(Mission, LW.PendingSquad);
 	}
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
