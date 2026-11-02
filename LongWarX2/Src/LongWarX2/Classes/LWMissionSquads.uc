@@ -23,6 +23,11 @@ static function ApplyTo(XComGameState_MissionSite Mission, array<int> Squad)
 	local array<int> Pods;
 	local int i, k, p, n, Size;
 
+	if (!class'UIScreenListener_LongWarX2Tactical'.default.SquadsInEncounters)
+	{
+		`log("LongWarX2: missions: Long War's squad not written into XCOM 2's encounters (SquadsInEncounters off)", , 'LongWarX2');
+		return;
+	}
 	Mission.UpdateSelectedMissionData();
 	for (i = 0; i < Mission.SelectedMissionData.SelectedEncounters.Length; i++)
 		if (Mission.SelectedMissionData.SelectedEncounters[i].EncounterSpawnInfo.Team == eTeam_Alien

@@ -20,5 +20,19 @@ if (Test-Path $ew) {
     }
   }
 }
+# Converted Enemy Within packages (maps, screens, units: tools/convert) live outside the mod's Content, in
+# BuildCache\ewcontent: the build processes every package in Content, and 83 maps (18 GB) made it take
+# far too long. They are linked into the built mod's Content after the build instead. Hard links, no copies.
+$converted = Join-Path $repo 'BuildCache\ewcontent'
+if (Test-Path $converted) {
+  foreach ($content in @("$game\XComGame\Mods\LongWarX2\Content", "$sdk\XComGame\Mods\LongWarX2\Content")) {
+    if (-not (Test-Path (Split-Path $content))) { continue }
+    New-Item -ItemType Directory -Force $content | Out-Null
+    foreach ($f in Get-ChildItem $converted -Filter *.upk) {
+      $link = Join-Path $content $f.Name
+      if (-not (Test-Path $link)) { New-Item -ItemType HardLink -Path $link -Target $f.FullName | Out-Null }
+    }
+  }
+}
 Select-String -Path $log -Pattern ': Error|: Warning|SUCCESS|Failed' | ForEach-Object { $_.Line.Replace("$repo\", '') }
 exit $code

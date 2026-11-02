@@ -8,6 +8,8 @@ var config bool ShowEWUnit;
 var config bool PlaceEWMapPart;
 /** The whole EW map in place of the generated one (instead of a part). */
 var config bool PlaceEWMapWhole;
+/** Long War's squad written into XCOM 2's alien encounters before the map loads (LWMissionSquads.ApplyTo). */
+var config bool SquadsInEncounters;
 /** The part of the EW map (its coordinates): the pieces within the radius of the centre. */
 var config vector PartCenter;
 var config float PartRadius;

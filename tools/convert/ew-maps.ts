@@ -1,7 +1,10 @@
 // Enemy Within's maps for Long War's missions converted on the player's machine, many at once
-// (features/lw-missions.md): each map by ew-map.ts into the mod's Content, its section kept in a work folder,
+// (features/lw-missions.md): each map by ew-map.ts (its package to --out, below), its section kept in a work folder,
 // and every section joined into the mod's XComLWX2EWMap.ini, which the mod reads (LWX2EWMapData).
-//   node tools/convert/ew-maps.ts <EW's CookedPCConsole> <the mod's folder (LongWarX2)> [--all | --kind <Kind> | <map> …] [--force]
+//   node tools/convert/ew-maps.ts <EW's CookedPCConsole> <the mod's folder (LongWarX2)> [--all | --kind <Kind> | <map> …] [--force] [--out <folder>]
+// The packages go to --out (default: BuildCache/ewcontent beside the mod's folder, which tools/test/build.ps1 links into
+// the built mod's Content: in Content itself they would be processed by every build); in a player's installed mod,
+// --out is the mod's Content.
 // --all: every map Long War lists for its missions (Config/XComLWEWMaps.ini); --kind Abduction|Crash|Landed|Terror:
 // those of a kind. A map already converted is skipped unless --force. Ends with the joined ini, from every section
 // in the work folder (BuildCache/ewmaps beside the mod's folder).
@@ -26,17 +29,23 @@ const kindAt = args.indexOf('--kind')
 let maps: string[]
 if (args.includes('--all')) maps = listed.map((m) => m.name)
 else if (kindAt >= 0) maps = listed.filter((m) => m.kind === args[kindAt + 1]).map((m) => m.name)
-else maps = args.slice(2).filter((a) => !a.startsWith('--') && a !== args[kindAt + 1])
+else {
+  // The names: what is neither a flag nor a flag's value.
+  const values = new Set([args.indexOf('--kind'), args.indexOf('--out')].filter((i) => i >= 0).map((i) => i + 1))
+  maps = args.slice(2).filter((a, i) => !a.startsWith('--') && !values.has(i + 2))
+}
 maps = [...new Set(maps)]
 
 const work = join(mod, '..', 'BuildCache', 'ewmaps')
+const outAt = args.indexOf('--out')
+const content = outAt >= 0 ? args[outAt + 1]! : join(mod, '..', 'BuildCache', 'ewcontent')
 mkdirSync(work, { recursive: true })
-mkdirSync(join(mod, 'Content'), { recursive: true })
+mkdirSync(content, { recursive: true })
 const converter = join(dirname(fileURLToPath(import.meta.url)), 'ew-map.ts')
 const failed: string[] = []
 for (const name of maps) {
   const src = join(cooked, `${name}.upk`)
-  const out = join(mod, 'Content', `${name}.upk`)
+  const out = join(content, `${name}.upk`)
   const ini = join(work, `${name}.ini`)
   if (!existsSync(src)) {
     console.log(`${name}: not in this install`)
