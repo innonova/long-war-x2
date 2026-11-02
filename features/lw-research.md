@@ -132,3 +132,42 @@ build's techs "instant". The generators now leave empty arrays out.
 Weapon fragments, consumed items, "one of these in stores", UFO types
 captured, and "held" (asked as "held now") are now enforced, since
 missions bring loot. See `lw-loot.md`, phase 2.
+
+## Report (2026-11-02 night, the Foundry's projects in missions)
+
+**Four of the Foundry's projects now change soldiers in missions once done**
+in the campaign. The campaign's state comes into the mission with the rest
+of the strategy game, so `X2Effect_LWFoundry`, on every Long War armour's
+stat ability, reads the projects done.
+- **Mag Pistols**: pistols +25 critical chance (`PISTOL_I_CRIT_BONUS`).
+- **Rail Pistols**: pistols +15 aim. Its constant is named for defence
+  (`PISTOL_II_DEF_BONUS`), but Long War's text says aim.
+- **Reflex Pistols**: pistols +1 damage ("an increase in the maximum damage
+  output").
+- **Improved Medikit**: medikits heal 3 more a charge, Long War's text ("by
+  three for medikits"). An extra heal on XCOM 2's medikit abilities, under
+  `X2Condition_LWFoundry`.
+- Pistols are Long War's weapons of the Pistol family.
+
+**Checked in the game** (the four projects marked done by the test aid):
+the pistol shot's breakdown read "Mag Pistols: crit=25, Rail Pistols:
+aim=15" for both soldiers carrying pistols. Reflex Pistols' damage and
+Improved Medikit's heal were not seen in play.
+
+The shot probe now also logs the pistol shot's breakdown.
+
+### Decisions
+
+- **Improved Medikit gives +3, Long War's text.** EW's constant
+  `MEDIKIT_FOUNDRY_BONUS` is 2, which matches the text's number for
+  Restorative Mist.
+- **These numbers are in the mod's code**, not generated from the player's
+  install. They are EW's constants or Long War's text, written in the
+  effect.
+
+### Left open
+
+- Tactical Rigging (+1 small item: XCOM 2 adds utility slots only through
+  armour), Alien Grenades, Improved Arc Thrower (EW's stun thresholds 3 and
+  6 HP), Ammo Conservation, Advanced Servomotors, and the projects for SHIVs
+  and MECs.

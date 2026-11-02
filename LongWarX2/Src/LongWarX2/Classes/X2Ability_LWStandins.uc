@@ -446,7 +446,7 @@ static function X2AbilityTemplate Passive(LWStandin S)
 	return Template;
 }
 
-/** Savior and its like: XCOM 2's medikit abilities heal more for a soldier with the perk, and Smart Macrophages on one (OnPostTemplatesCreated). */
+/** Savior and its like: XCOM 2's medikit abilities heal more for a soldier with the perk, Smart Macrophages on one, and with Improved Medikit done (OnPostTemplatesCreated). */
 static function AddHealBonuses()
 {
 	local X2AbilityTemplateManager Manager;
@@ -454,6 +454,7 @@ static function AddHealBonuses()
 	local X2Effect_ApplyMedikitHeal Heal;
 	local X2Condition_AbilityProperty Owner;
 	local X2Condition_UnitEffects Target;
+	local X2Condition_LWFoundry Done;
 	local LWStandin S;
 	local name Ability;
 	local array<name> Medikits;
@@ -466,6 +467,13 @@ static function AddHealBonuses()
 		Medikit = Manager.FindAbilityTemplate(Ability);
 		if (Medikit == none)
 			continue;
+		// Improved Medikit (the Foundry's project 3): +3 a charge, Long War's text ("by three for medikits").
+		Heal = new class'X2Effect_ApplyMedikitHeal';
+		Heal.PerUseHP = 3;
+		Done = new class'X2Condition_LWFoundry';
+		Done.Foundry = 3;
+		Heal.TargetConditions.AddItem(Done);
+		Medikit.AddTargetEffect(Heal);
 		foreach default.Standins(S)
 		{
 			// Smart Macrophages: more when used on a soldier with the perk (its passive effect, named as the perk).

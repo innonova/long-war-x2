@@ -24,7 +24,7 @@ function Report()
 	local XComGameStateHistory History;
 	local XComGameState_Unit Unit, Enemy;
 	local array<XComGameState_Unit> Enemies;
-	local StateObjectReference Shot;
+	local StateObjectReference Shot, Pistol;
 	local ShotBreakdown Breakdown;
 	local ShotModifierInfo M;
 	local string Out, Line;
@@ -69,6 +69,16 @@ function Report()
 		{
 			class'XComGameState_Ability'.static.LookupShotBreakdown(Unit.GetReference(), Enemies[i].GetReference(), Shot, Breakdown);
 			Line = Unit.GetSoldierClassTemplateName() @ Unit.GetFullName() @ ShotName @ "->" @ Enemies[i].GetMyTemplateName() @ "at" @ Unit.TileDistanceBetween(Enemies[i]) @ "tiles: hit" @ Breakdown.FinalHitChance @ "crit" @ Breakdown.ResultTable[eHit_Crit] $ ";";
+			foreach Breakdown.Modifiers(M)
+				Line @= M.Reason $ ":" $ (M.ModType == eHit_Crit ? "crit" : (M.ModType == eHit_Success ? "aim" : string(M.ModType))) $ "=" $ M.Value;
+			Out $= Line $ "\n";
+		}
+		// The pistol's shot too (the Foundry's pistol projects: X2Effect_LWFoundry).
+		Pistol = Unit.FindAbility('PistolStandardShot');
+		if (Pistol.ObjectID != 0 && Enemies.Length > 0)
+		{
+			class'XComGameState_Ability'.static.LookupShotBreakdown(Unit.GetReference(), Enemies[0].GetReference(), Pistol, Breakdown);
+			Line = Unit.GetSoldierClassTemplateName() @ Unit.GetFullName() @ "PistolStandardShot ->" @ Enemies[0].GetMyTemplateName() @ "at" @ Unit.TileDistanceBetween(Enemies[0]) @ "tiles: hit" @ Breakdown.FinalHitChance @ "crit" @ Breakdown.ResultTable[eHit_Crit] $ ";";
 			foreach Breakdown.Modifiers(M)
 				Line @= M.Reason $ ":" $ (M.ModType == eHit_Crit ? "crit" : (M.ModType == eHit_Success ? "aim" : string(M.ModType))) $ "=" $ M.Value;
 			Out $= Line $ "\n";
