@@ -131,8 +131,9 @@ soldiers put 6 tiles from a pod):
   first was one of our soldiers, mind-controlled by a Sectoid, so its
   effect was not seen.
 - **Mind Control not tried**: its soldier was bleeding out.
-- The `near` test aid put three soldiers on one tile (it does not check
-  for units there).
+- The `near` test aid put three soldiers on one tile. Fixed later that
+  night: it moves on to the next free tile (three soldiers then landed on
+  three tiles).
 
 ### Decisions
 

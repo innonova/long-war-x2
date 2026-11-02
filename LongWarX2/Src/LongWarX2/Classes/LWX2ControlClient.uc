@@ -994,6 +994,16 @@ static function string JoinNames(array<name> Names)
 	return S;
 }
 
+static function bool TileTaken(TTile T)
+{
+	local XComGameState_Unit Any;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Any)
+		if (!Any.bRemovedFromPlay && Any.IsAlive() && Any.TileLocation == T)
+			return true;
+	return false;
+}
+
 /** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
 function string MoveNext(string Who, string Whom)
 {
@@ -1078,6 +1088,14 @@ function string MoveNear(string Who, int Tiles)
 	To = From + Dir * Tiles * class'XComWorldData'.const.WORLD_StepSize;
 	if (!World.GetFloorTileForPosition(To, T, false))
 		return "ERR no floor there";
+	// Not onto another unit: the next tile towards the soldier while one stands there.
+	for (d = 0; d < 6 && TileTaken(T); d++)
+	{
+		To += Dir * class'XComWorldData'.const.WORLD_StepSize;
+		World.GetFloorTileForPosition(To, T, false);
+	}
+	if (TileTaken(T))
+		return "ERR no free tile there";
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a soldier moved near an alien (control port)");
 	XComGameStateContext_ChangeContainer(NewGameState.GetContext()).BuildVisualizationFn = class'LWMissionSquads'.static.BuildPodVisualization;
 	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
