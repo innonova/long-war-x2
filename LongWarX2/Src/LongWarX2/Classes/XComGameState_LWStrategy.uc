@@ -161,8 +161,9 @@ static function XComGameState_LWStrategy GetOrCreate()
 	S.SyncResearchIn(NewGameState);
 	// Long War's campaign begins with its first mission won: what its aliens left (XCOM 2's first
 	// mission, played or skipped, leaves nothing of Long War's).
-	S.Note("Long War's first mission:");
 	S.GiveKillLoot(NewGameState, class'LWAlienSquads'.static.FirstMissionSquad());
+	// After the loot's note: the events show the newest first, so this reads above it.
+	S.Note("Long War's first mission, won before the campaign began, brought back what its aliens left:");
 	// Long War's starting money: the home country's starting cash x StartingCashBalance, in place of XCOM 2's.
 	XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));

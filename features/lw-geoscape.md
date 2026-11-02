@@ -318,3 +318,14 @@ through the control port:
   does.
 - XCOM 2's objectives and narrative still point at its world map.
 - Jet repair and replacement, and jets based per continent.
+
+## Report (2026-11-02 night, the screen's layout)
+
+- The HANGAR, BASE and ENGINEERING buttons covered each other
+  ("NGINEERING"), and the time buttons touched; they are spaced now.
+- The first day's events read "Long War's first mission:" with nothing
+  after it: the heading was noted before the loot, and the events show the
+  newest first. It now comes after the loot's note and says what it is:
+  "Long War's first mission, won before the campaign began, brought back
+  what its aliens left:", above "The aliens killed (10) left: …".
+- Checked on the screen.
