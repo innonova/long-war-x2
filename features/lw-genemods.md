@@ -167,8 +167,12 @@ positions without the need for ladders or other climbing aids."
   turned the world black again in a second mission. `key.ps1` now sends a
   digit as its key (`D6`), and with that the grapple's targeting opened
   ("Grapple: Deploy a grappling hook to move quickly to an elevated
-  position"). The grapple itself was not carried out: the world was still
-  black from the stray key.
+  position"). In a third mission (the test machine's copy of the tool not
+  yet updated, so the world went black once more), the targeting opened
+  with `D6` and Enter confirmed it. Afterwards the control port read
+  "Grapple available AA_CoolingDown": **the soldier grappled**, and the
+  grapple is on its cooldown. The move itself was not seen, since the world
+  was black.
 
 ### Decisions
 

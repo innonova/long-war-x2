@@ -101,7 +101,7 @@ and a Decisions list to review.
     Damping (now with +20 will against every psi attack, the aliens'
     too), Smart Macrophages, Adaptive Bone Marrow, Secondary Heart,
     Adrenal Neurosympathy; Muscle Fiber Density brings XCOM 2's grapple
-    (in the bar, not yet seen used).
+    (used once in a mission: on cooldown after).
 - **The Foundry** (`lw-research.md`): in missions, the pistol projects,
   Improved Medikit, Ammo Conservation; for the soldiers, Tactical Rigging
   (a third small item) and Alien Grenades (frag grenades swapped once,
