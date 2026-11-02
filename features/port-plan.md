@@ -84,7 +84,8 @@ and a Decisions list to review.
   and ability table:
   - shots: Precision Shot, Disabling Shot, Flush, Double Tap;
   - reactions: Rapid Reaction, Ready for Anything, Close Combat Specialist;
-  - medics: Paramedic, Savior, Revive;
+  - medics: Paramedic, Savior, Revive, Field Surgeon (wounds counted one
+    health lighter when a medic with it comes home);
   - grenades and rockets: Dense Smoke, Combat Drugs, Sapper, HEAT
     Warheads, Shredder Ammo;
   - Deadeye.
@@ -101,7 +102,8 @@ and a Decisions list to review.
     Damping (now with +20 will against every psi attack, the aliens'
     too), Smart Macrophages, Adaptive Bone Marrow, Secondary Heart,
     Adrenal Neurosympathy; Muscle Fiber Density brings XCOM 2's grapple
-    (used once in a mission: on cooldown after).
+    (used once in a mission: on cooldown after); Bioelectric Skin keeps
+    the Viper's Bind off its soldier.
 - **The Foundry** (`lw-research.md`): in missions, the pistol projects,
   Improved Medikit, Ammo Conservation; for the soldiers, Tactical Rigging
   (a third small item) and Alien Grenades (frag grenades swapped once,
@@ -126,7 +128,8 @@ and a Decisions list to review.
     (`lw-startbonus.md`), with Long War's rules read from its code; the
     officers (`lw-officers.md`).
   - **Test aids added** (`tools/test/README.md`): `killaliens` (XCOM 2's
-    `KillAllAIs` kills the civilians too) and `psichance`.
+    `KillAllAIs` kills the civilians too), `psichance`, `hurt`, `open
+    loadout`; `key.ps1` now sends digits as digits.
 - **Preview build**: replaced at 04:30 UTC with everything above
   (`LongWarX2-20261102-95973c9`, on v0.1.0-preview.1).
 
