@@ -440,7 +440,9 @@ const n = (x: number) => (Math.abs(x) < 1e-4 ? '0' : String(Math.round(x * 1000)
 const lines = [
   `; The static meshes of ${basename(src)}, converted on this machine by tools/convert/ew-map.ts.`,
   '; Not in the repository: generated from the player\'s own Enemy Within install.',
-  '[LongWarX2.LWX2EWMapPieces]',
+  // One section per map (LWX2EWMapData, per-object config): a machine's maps are these sections joined
+  // (tools/convert/ew-maps.ts); the shared settings are the mod's own (XComLWEWMaps.ini).
+  `[${basename(src, '.upk')} LWX2EWMapData]`,
   `MapPackage="${basename(out, '.upk')}"`,
   ...(play
     ? [
@@ -453,24 +455,14 @@ const lines = [
   "; EW's alien pods (the commander's, how many aliens; Level: the sub-level it is in, none: the map's own) and its spawn points.",
   ...pods.map((p) => `+Pods=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Commander=${p.commander},Min=${p.min},Max=${p.max}${p.level ? `,Level=${p.level}` : ''})`),
   ...spawnPoints.map((p) => `+SpawnPoints=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
-  "; EW's lights (point, spot, its sun and sky), spawned as movable lights: the kinds placed and a scale on their",
-  "; brightness (3: EW's lightmaps carried bounced light too; judged by eye on CSmallScout_Badlands).",
-  'LightScale=3',
-  '+LightKinds=Point',
-  '+LightKinds=Spot',
-  '+LightKinds=Sun',
-  '+LightKinds=Sky',
+  "; EW's lights (point, spot, its sun and sky), spawned as movable lights.",
   ...lights.map(
     (l) =>
       `+Lights=(Kind=${l.kind},Loc=(X=${n(l.loc[0]!)},Y=${n(l.loc[1]!)},Z=${n(l.loc[2]!)}),Rot=(Pitch=${l.rot[0]},Yaw=${l.rot[1]},Roll=${l.rot[2]}),` +
       `Radius=${n(l.radius)},Brightness=${n(l.brightness)},Color=(R=${l.color[0]},G=${l.color[1]},B=${l.color[2]},A=${l.color[3]}),` +
       `Falloff=${n(l.falloff)},Inner=${n(l.inner)},Outer=${n(l.outer)},Lower=${n(l.lower)})`,
   ),
-  '; XCOM 2 cannot draw EW\'s materials: each is replaced by an instance of one of these parents',
-  '; (by the kind of the EW material) given the EW textures. Empty: the EW materials are kept.',
-  'PropParent="Materials.Approved.Props_SD"',
-  'FoliageParent="Materials.Approved.Vegetations_VO"',
-  'AlienParent="Materials.Approved.Alien_Props"',
+  "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
     ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}")`,
   ),

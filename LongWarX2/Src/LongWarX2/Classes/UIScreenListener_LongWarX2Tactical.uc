@@ -51,14 +51,14 @@ event OnInit(UIScreen Screen)
 	if (Pawn == none)
 		return;
 	// On an Enemy Within map, Long War's pods at its places (lw-missions.md, step 2).
-	if (default.PlaceEWMapWhole)
+	if (class'LWX2EWMapPieces'.static.HasMap())
 	{
 		class'LWMissionSquads'.static.SpawnAtEWPods();
 		// Soldiers boxed in by EW's walls moved out, once their paths are known.
 		BoxedTries = 0;
 		Screen.SetTimer(3.0, true, nameof(FreeBoxedIn), self);
 	}
-	if (default.PlaceEWMapPart || default.PlaceEWMapWhole)
+	if (default.PlaceEWMapPart || class'LWX2EWMapPieces'.static.HasMap())
 	{
 		ReportMapPart(Screen, Pawn);
 		Screen.SetTimer(40.0, false, nameof(ReportReach), self);

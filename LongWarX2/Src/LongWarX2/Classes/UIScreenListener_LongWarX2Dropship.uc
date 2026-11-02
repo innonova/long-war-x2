@@ -7,7 +7,7 @@ event OnInit(UIScreen Screen)
 {
 	local LWX2PartPlacer Placer;
 
-	if (UIDropShipBriefing_MissionStart(Screen) == none || !class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole)
+	if (UIDropShipBriefing_MissionStart(Screen) == none || !class'LWX2EWMapPieces'.static.HasMap())
 		return;
 	Placer = Screen.Spawn(class'LWX2PartPlacer');
 	Placer.bCampaign = true;

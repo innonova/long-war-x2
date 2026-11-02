@@ -124,6 +124,7 @@ function OnLaunch(UIButton Button)
 	local int Attempt;
 	local Vector2D Where;
 	local XComGameState_LWStrategy LW;
+	local string EWMap;
 
 	Soldiers = ReadySoldiers(SquadSize());
 	if (Soldiers.Length == 0)
@@ -134,10 +135,17 @@ function OnLaunch(UIButton Button)
 	ResHQ = XComGameState_HeadquartersResistance(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersResistance'));
 	Region = XComGameState_WorldRegion(History.GetGameStateForObjectID(XComHQ.StartingRegion.ObjectID));
 	Where = Region.GetRandom2DLocationInRegion();
-	if (class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole)
+	Kind = class'XComGameState_LWStrategy'.static.Get() != none ? class'XComGameState_LWStrategy'.static.Get().PendingKind : 0;
+	// Enemy Within's map for it, when the switch is on and this machine has one converted for the kind (and ship).
+	if (class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole && Kind != 0)
+	{
+		LW = class'XComGameState_LWStrategy'.static.Get();
+		EWMap = class'LWX2EWMapPieces'.static.ChooseMap(class'LWX2EWMapPieces'.static.KindFor(Kind), (Kind <= 2 && LW.PendingIndex < LW.Ufos.Length) ? LW.Ufos[LW.PendingIndex].Ufo : 0);
+		`log("LongWarX2: Long War HQ: EW map for kind" @ Kind $ ":" @ (EWMap != "" ? EWMap : "none converted, XCOM 2's plot"), , 'LongWarX2');
+	}
+	if (EWMap != "")
 		DaylightRegion(Region, Where);
 
-	Kind = class'XComGameState_LWStrategy'.static.Get() != none ? class'XComGameState_LWStrategy'.static.Get().PendingKind : 0;
 	// A mission site, as XCOM 2's calendar makes a guerrilla op; and the squad. With the EW map,
 	// made again (up to eight times) until its mission can be played on an outdoor plot.
 	for (Attempt = 0; Attempt < 8; Attempt++)
@@ -163,7 +171,7 @@ function OnLaunch(UIButton Button)
 		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate(Source)), Where, Region.GetReference(), Rewards, true, false);
 		Mission.GeneratedMission.SitReps.Length = 0;
 		Mission.TacticalGameplayTags.Length = 0;
-		if (!class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole || PreferOutdoorPlot(Mission) || Attempt == 7)
+		if (EWMap == "" || PreferOutdoorPlot(Mission) || Attempt == 7)
 			break;
 		History.CleanupPendingGameState(NewGameState);
 	}
@@ -172,6 +180,7 @@ function OnLaunch(UIButton Button)
 	{
 		LW = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID));
 		LW.PendingSquad = LW.MissionSquad();
+		LW.PendingEWMap = EWMap;
 		class'LWMissionSquads'.static.ApplyTo(Mission, LW.PendingSquad);
 	}
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));

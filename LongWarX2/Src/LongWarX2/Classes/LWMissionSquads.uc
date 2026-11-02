@@ -58,7 +58,9 @@ static function SpawnAtEWPods()
 	local array<name> Names, Levels;
 	local name Level;
 	local int i, k, n, Size;
+	local array<LWX2EWMapPieces.LWX2Pod> MapPods;
 
+	MapPods = class'LWX2EWMapPieces'.static.Map().Pods;
 	Levels.AddItem('Stream');
 	Levels.AddItem('EWI');
 	Levels.AddItem('Any');
@@ -71,7 +73,7 @@ static function SpawnAtEWPods()
 	// The map's own pods and its always streamed sub-level's; else the abduction ones (the map's, its EWI variant's); else any.
 	foreach Levels(Level)
 	{
-		foreach class'LWX2EWMapPieces'.default.Pods(Pod)
+		foreach MapPods(Pod)
 			if (Pod.Max > 0 && (Level == 'Any' || Pod.Level == Level || Level == 'Stream' && Pod.Level == '' || Level == 'EWI' && Pod.Level == 'Abduction'))
 			{
 				if (Pod.Commander)
@@ -83,7 +85,7 @@ static function SpawnAtEWPods()
 			break;
 	}
 	if (Pods.Length == 0)
-		Pods = class'LWX2EWMapPieces'.default.Pods;
+		Pods = MapPods;
 	if (Pods.Length == 0)
 		return;
 	for (i = 0; i < Pods.Length; i++)

@@ -48,7 +48,7 @@ buttons and text, no art).
 | Small items | most | X2 | grenades, medikits, rockets (with scatter), the arc thrower, scanners, beacons | the Shadow Device, the Battle Computer | `lw-gear` |
 | Aliens | stand-in | X2 | Long War's squads (which aliens, how many) as XCOM 2's nearest aliens | Enemy Within's aliens as units: their models, abilities, AI (step 3) | `lw-missions` |
 | Missions | most | X2 | each kind as an XCOM 2 mission type; won when every alien is dead or taken; no turn limit, sitreps, Chosen, concealment or reinforcements; Long War's squad size; terror civilians counted | Long War's objectives per kind; the landing spot | `lw-missions` |
-| Maps | stand-in | X2 | XCOM 2's plots | Enemy Within's maps: converted and placed whole in development (pods, lights, patrols), not in the player's build | `lw-missions`, `hard-parts` |
+| Maps | part | LW + X2 | XCOM 2's plots; in development, Enemy Within's maps chosen per mission kind and ship from Long War's list, converted in batch, placed whole (pods, lights, patrols) | each map's look (textures, night light); package size; the player's build converting and using them | `lw-missions`, `hard-parts` |
 | Wounds | most | X2 | XCOM 2's healing; Field Surgeon | Long War's own recovery times | `lw-classes` |
 
 ## The build and the tools

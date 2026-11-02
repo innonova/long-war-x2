@@ -55,10 +55,11 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 	local Actor A;
 	local PrimitiveComponent Prim;
 	local int Hidden;
+	local array<vector> DropZones;
 
 	Mid = (World.WorldBounds.Min + World.WorldBounds.Max) * 0.5;
 	Size = World.WorldBounds.Max - World.WorldBounds.Min;
-	`log("LongWarX2: EW map whole: the generated map's level volume is" @ int(Size.X / 96) @ "x" @ int(Size.Y / 96) @ "x" @ int(Size.Z / 96) @ "tiles; EW's play area" @ int(2 * class'LWX2EWMapPieces'.default.PlayExtent.X / 96) @ "x" @ int(2 * class'LWX2EWMapPieces'.default.PlayExtent.Y / 96), , 'LongWarX2');
+	`log("LongWarX2: EW map whole: the generated map's level volume is" @ int(Size.X / 96) @ "x" @ int(Size.Y / 96) @ "x" @ int(Size.Z / 96) @ "tiles; EW's play area" @ int(2 * class'LWX2EWMapPieces'.static.Map().PlayExtent.X / 96) @ "x" @ int(2 * class'LWX2EWMapPieces'.static.Map().PlayExtent.Y / 96), , 'LongWarX2');
 	// The generated map's geometry: hidden and without collision (its spawn points, volumes and lights stay).
 	foreach AllActors(class'Actor', A)
 	{
@@ -81,8 +82,8 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 		Hidden++;
 	}
 	// EW's floor (the bottom of its play area) on the generated map's floor at its spawn.
-	EWFloor = class'LWX2EWMapPieces'.default.PlayCenter;
-	EWFloor.Z -= class'LWX2EWMapPieces'.default.PlayExtent.Z;
+	EWFloor = class'LWX2EWMapPieces'.static.Map().PlayCenter;
+	EWFloor.Z -= class'LWX2EWMapPieces'.static.Map().PlayExtent.Z;
 	At = Mid;
 	At.Z = World.GetFloorZForPosition(Parcels.SoldierSpawn.Location);
 	class'LWX2EWMapPieces'.static.Place(self, EWFloor, 0, At, class'LWX2LevelActor', Placed, true);
@@ -90,7 +91,8 @@ function PlaceWhole(XComParcelManager Parcels, XComWorldData World)
 	default.bEWPlaced = true;
 	class'LWX2EWMapPieces'.static.PlaceLights(self, default.EWShift);
 	// The first EW drop zone inside the generated map's level volume (two tiles in from its edge).
-	foreach class'LWX2EWMapPieces'.default.DropZones(DropZone)
+	DropZones = class'LWX2EWMapPieces'.static.Map().DropZones;
+	foreach DropZones(DropZone)
 	{
 		Spawn = At + DropZone - EWFloor;
 		if (Spawn.X > World.WorldBounds.Min.X + 192 && Spawn.X < World.WorldBounds.Max.X - 192

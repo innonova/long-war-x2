@@ -554,3 +554,52 @@ plus 2 × 1 for the continent, which reaches each of its countries
 - **Long War's monthly terror tallies** (`iTerror`, `iTerrorThwarted`, for
   the council report) are not kept: the port's council report does not
   show them yet.
+
+## Report (2026-11-02, Enemy Within's maps chosen per mission)
+
+Toward EW's maps as the missions' ground (the person's request: playable
+first, the maps a big part of it). The pipeline held one converted map at a
+time; now it holds many and picks one per mission.
+- **Long War's map list, generated** (`scripts/maps-config.mjs` →
+  `Config/XComLWEWMaps.ini`, from stock Long War's `DefaultMaps.ini`): every
+  map in rotation for an abduction (44), a crash site (39), a landed UFO
+  (21) or a terror site (22), with its ship and whether it is a night map.
+  Long War lists its five new ships by number, the same maps again
+  ("LSmallScout_River (Fighter)"), so each ship has its own maps; the
+  Tree's ship images confirm the hulls (Fighter = Scout's, Raider =
+  Destroyer's, Harvester = Abductor's, Terror Ship = Transport's, Assault
+  Carrier = Battleship's).
+- **One section per converted map** (`LWX2EWMapData`, per-object config;
+  `ew-map.ts` writes `[<map> LWX2EWMapData]`), joined by the new batch
+  converter **`tools/convert/ew-maps.ts`** (`--all`, `--kind <Kind>`, or
+  names; work files in `BuildCache/ewmaps`). The shared settings (lights,
+  material parents) moved to the generated, committed `XComLWEWMaps.ini`.
+- **At launch** (`UILWHeadquarters`), with the EW-map switch on: a converted
+  map Long War lists for the mission's kind and ship, at random
+  (`LWX2EWMapPieces.ChooseMap`), kept in the campaign
+  (`PendingEWMap`). A kind with no converted map plays XCOM 2's plot as
+  before. The tactical side places the mission's map (`Map()`, `HasMap()`).
+
+**Checked** (the test machine; four maps converted in 2 to 3 s each,
+114 to 302 MB: CSmallScout_Badlands, LSmallScout_River, URB_Bar,
+URB_CommercialAlley_Terror): a first-month abduction chose "URB_Bar",
+loaded it, placed 880 pieces (8 meshes not found), and spawned Long War's
+squad of 8 at 4 of EW's pods. After the boxed-in check the best soldier
+reached 510 tiles.
+
+### Decisions
+
+- **Long War's own list decides** which maps a kind and ship may have; at
+  random among those converted.
+- **Without a converted map, XCOM 2's plot**: a player who converted only
+  some maps still plays every mission.
+
+### Found, left open
+
+- **URB_Bar looked wrong**: surfaces as grey noise, and one EW light (a
+  street lamp, at the ×3 brightness judged on a day map) flooded the
+  squad's area orange. Per-map look: textures and night lighting.
+- The switch is still a development setting; the player's build neither
+  converts maps nor turns it on.
+- Package size (114 to 302 MB a map) and loading time; a texture cache of
+  our own would shrink them.

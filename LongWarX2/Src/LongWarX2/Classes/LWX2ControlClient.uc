@@ -868,9 +868,9 @@ function string Look(array<string> Args)
 
 	if (Args[1] == "pod")
 	{
-		if (int(Args[2]) >= class'LWX2EWMapPieces'.default.Pods.Length)
+		if (int(Args[2]) >= class'LWX2EWMapPieces'.static.Map().Pods.Length)
 			return "ERR no such pod";
-		At = class'LWX2EWMapPieces'.default.Pods[int(Args[2])].Loc;
+		At = class'LWX2EWMapPieces'.static.Map().Pods[int(Args[2])].Loc;
 	}
 	else
 	{
