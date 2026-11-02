@@ -29,11 +29,9 @@ const CACHES: Record<string, string> = {
   Textures_startup: 'EWTextrs_startup',
 }
 
-const [src, out, iniOut] = process.argv.slice(2).filter((a) => a !== '--')
-if (!iniOut) {
-  console.error('usage: ew-map.ts <EW map .upk> <out .upk> <out pieces .ini>')
-  process.exit(2)
-}
+/** One EW map converted (the package to out, its section to iniOut); its report lines printed. Used by ew-maps.ts and the
+ *  player's setup program as well as from the command line. */
+export function convertMap(src: string, out: string, iniOut: string): void {
 const original = new Uint8Array(readFileSync(src))
 const bytes = decompressPackage(original)
 // Two readers of the same bytes: upk's for names, paths and table entries; package's for object data.
@@ -478,4 +476,15 @@ const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
 console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points, ${lights.length} lights`)
 console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
+}
+
+// From the command line: node tools/convert/ew-map.ts <EW map .upk> <out .upk> <out pieces .ini>
+if (/ew-map\.ts$/.test(process.argv[1] ?? '')) {
+  const [src, out, iniOut] = process.argv.slice(2).filter((a) => a !== '--')
+  if (!iniOut) {
+    console.error('usage: ew-map.ts <EW map .upk> <out .upk> <out pieces .ini>')
+    process.exit(2)
+  }
+  convertMap(src!, out!, iniOut!)
+}
 

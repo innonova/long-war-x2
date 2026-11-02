@@ -12,11 +12,8 @@ import { dirname } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
 import { inlineTextures } from './inline-textures.ts'
 
-const [src, out] = process.argv.slice(2).filter((a) => a !== '--')
-if (!out) {
-  console.error('usage: ew-ui.ts <EW UI package .upk> <out .upk>')
-  process.exit(2)
-}
+/** An EW UI package converted to out; returns its report. */
+export function convertUI(src: string, out: string): string {
 const bytes = decompressPackage(new Uint8Array(readFileSync(src)))
 const pkg = new Package(bytes)
 const latin1 = new TextDecoder('latin1')
@@ -74,4 +71,15 @@ const outBytes = new Uint8Array(bytes.length + tex.appended.length)
 outBytes.set(bytes)
 outBytes.set(tex.appended, bytes.length)
 writeFileSync(out, outBytes)
-console.log(`${out}: ${outBytes.length} bytes; ${groups.length} groups renamed gfx → ewx, ${replaced} names in the movies, ${classNames} class names; ${tex.textures} textures rewritten (${tex.mips} mips)`)
+return `${out}: ${outBytes.length} bytes; ${groups.length} groups renamed gfx → ewx, ${replaced} names in the movies, ${classNames} class names; ${tex.textures} textures rewritten (${tex.mips} mips)`
+}
+
+if (/ew-ui\.ts$/.test(process.argv[1] ?? '')) {
+  const [src, out] = process.argv.slice(2).filter((a) => a !== '--')
+  if (!out) {
+    console.error('usage: ew-ui.ts <EW UI package .upk> <out .upk>')
+    process.exit(2)
+  }
+  console.log(convertUI(src!, out!))
+}
+

@@ -23,11 +23,8 @@ export const CACHES: Record<string, string> = {
   Textures_startup: 'EWTextrs_startup',
 }
 
-const [src, out] = process.argv.slice(2).filter((a) => a !== '--')
-if (!out) {
-  console.error('usage: ew-package.ts <EW package .upk> <out .upk>')
-  process.exit(2)
-}
+/** An EW package made loadable by XCOM 2, written to out; returns its report. */
+export function convertPackage(src: string, out: string): string {
 const original = new Uint8Array(readFileSync(src))
 const bytes = decompressPackage(original)
 const pkg = new Package(bytes)
@@ -52,4 +49,15 @@ outBytes.set(bytes)
 outBytes.set(tex.appended, bytes.length)
 writeFileSync(out, outBytes)
 
-console.log(`${out}: ${outBytes.length} bytes, decompressed; caches ${renamed.join(', ') || 'none named'}; ${tex.textures} textures rewritten (${tex.mips} mips)`)
+return `${out}: ${outBytes.length} bytes, decompressed; caches ${renamed.join(', ') || 'none named'}; ${tex.textures} textures rewritten (${tex.mips} mips)`
+}
+
+if (/ew-package\.ts$/.test(process.argv[1] ?? '')) {
+  const [src, out] = process.argv.slice(2).filter((a) => a !== '--')
+  if (!out) {
+    console.error('usage: ew-package.ts <EW package .upk> <out .upk>')
+    process.exit(2)
+  }
+  console.log(convertPackage(src!, out!))
+}
+

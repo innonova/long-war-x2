@@ -1,17 +1,24 @@
 // The player's setup program (features/playable-build.md): installs the mod into XCOM 2: War of
-// the Chosen and writes Long War's words for it from the player's own Long War install.
+// the Chosen, writes Long War's words for it from the player's own Long War install, and converts
+// Enemy Within's content the mod uses from that install (features/lw-ew-screens.md, lw-missions.md):
+// its strategy screens and its earth always, its maps when asked (about 18 GB).
 //
-//   LongWarX2-setup.exe                  install (or update) the mod beside this program, write the words
+//   LongWarX2-setup.exe                  install (or update) the mod beside this program, write the words, convert
 //   LongWarX2-setup.exe --uninstall      remove the mod
 //   options: --xcom2 <War of the Chosen folder> --ew <Enemy Within's XEW folder> --no-pause
+//            --maps / --no-maps          convert Enemy Within's maps, or not (else asked)
 //
 // Bundled with upkit into one Windows program (tools/setup/bundle.mjs); runs from the repository
 // too: node tools/setup/setup.mjs --mod LongWarX2 …
-import { cpSync, existsSync, readFileSync, rmSync, writeFileSync, mkdirSync, statSync } from 'node:fs'
+import { cpSync, existsSync, readFileSync, renameSync, rmSync, writeFileSync, mkdirSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { execFileSync } from 'node:child_process'
 import { wordsFrom } from '../../scripts/write-words.mjs'
+import { convertUI } from '../convert/ew-ui.ts'
+import { convertPackage } from '../convert/ew-package.ts'
+import { convertMap } from '../convert/ew-map.ts'
+import { convertMaps, listedMaps } from '../convert/ew-maps.ts'
 
 const MOD = 'LongWarX2'
 const args = process.argv.slice(2)
@@ -194,9 +201,19 @@ async function main() {
     return 1
   }
   if (source !== target) {
+    // The Enemy Within content converted by an earlier setup is kept (the maps take minutes and many GB).
+    const kept = join(dirname(target), `${MOD}.converted`)
+    if (existsSync(join(target, 'Content'))) {
+      rmSync(kept, { recursive: true, force: true })
+      renameSync(join(target, 'Content'), kept)
+    }
     rmSync(target, { recursive: true, force: true })
     mkdirSync(dirname(target), { recursive: true })
     cpSync(source, target, { recursive: true })
+    if (existsSync(kept)) {
+      rmSync(join(target, 'Content'), { recursive: true, force: true })
+      renameSync(kept, join(target, 'Content'))
+    }
     say(`Installed the mod: ${target}`)
   }
   for (const p of elsewhere) {
@@ -219,12 +236,59 @@ async function main() {
   mkdirSync(join(target, 'Localization'), { recursive: true })
   writeFileSync(join(target, 'Localization', 'XComGame.int'), words.text)
   say(`Long War's words written from ${ew}: ${words.report}.`)
+  await convertEW(ew, target)
   say('')
   say('Next: start XCOM 2: War of the Chosen from Steam. (With a mod launcher such as the Alternative Mod Launcher, tick "Long War X2" there: it rewrites the list when it starts the game.)')
   return 0
 }
 
+/**
+ * Enemy Within's content the mod uses, converted from the player's install into the mod's Content: its strategy
+ * screens (ew-ui.ts) and the earth behind its Situation Room (ew-package.ts) always; its maps (ew-map.ts, one child
+ * process of this program each, with a larger heap) when asked, and then the mod plays its missions on them.
+ */
+async function convertEW(ew, target) {
+  const cooked = join(ew, 'XComGame', 'CookedPCConsole')
+  const content = join(target, 'Content')
+  mkdirSync(content, { recursive: true })
+  try {
+    say(`Enemy Within's strategy screens: ${convertUI(join(cooked, 'UICollection_Strategy_SF.upk'), join(content, 'EWStrategyUI.upk'))}`)
+    say(`Enemy Within's earth: ${convertPackage(join(cooked, 'Static_SituationRoom.upk'), join(content, 'EWSitRoomMap.upk'))}`)
+  } catch (e) {
+    say(`Enemy Within's screens could not be converted (${e?.message ?? e}); XCOM 2's screens will show instead.`)
+  }
+  const maps = listedMaps(target).map((m) => m.name)
+  let want = flag('--maps') ? true : flag('--no-maps') ? false : undefined
+  if (want === undefined && process.stdin.isTTY) {
+    const rl = createInterface({ input: process.stdin, output: process.stdout })
+    const answer = await new Promise((done) =>
+      rl.question(`\nConvert Enemy Within's maps for the missions (${new Set(maps).size} maps, about 18 GB, a few minutes; already converted ones are kept)? [y/N] `, (a) => done(rl.close() ?? a)),
+    )
+    want = /^y/i.test(String(answer).trim())
+  }
+  if (want) {
+    convertMaps(cooked, target, maps, content, join(content, 'ewmaps'), (src, out, ini) =>
+      execFileSync(process.execPath, ['--convert-map', src, out, ini], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=12288' },
+        windowsHide: true,
+      }),
+    false, say)
+  }
+  // The missions on Enemy Within's maps when this machine has them converted.
+  const sections = existsSync(join(target, 'Config', 'XComLWX2EWMap.ini')) ? (readFileSync(join(target, 'Config', 'XComLWX2EWMap.ini'), 'latin1').match(/ LWX2EWMapData\]/g) ?? []).length : 0
+  const air = join(target, 'Config', 'XComLWAirWar.ini')
+  writeFileSync(air, readFileSync(air, 'utf8').replace(/^PlaceEWMapWhole=.*$/m, `PlaceEWMapWhole=${sections > 0}`))
+  say(sections > 0 ? `Missions play on Enemy Within's maps (${sections} converted).` : "Missions play on XCOM 2's maps (Enemy Within's not converted: run this again with --maps).")
+}
+
 async function run() {
+  // A child of this program converting one map (convertEW): its own heap, its own process.
+  if (args[0] === '--convert-map') {
+    convertMap(args[1], args[2], args[3])
+    process.exit(0)
+  }
   const code = await main().catch((e) => {
     say(`Failed: ${e?.stack ?? e}`)
     return 1
