@@ -207,6 +207,9 @@ const REAL = {
   // "Project a bolt of pure psi force that destroys cover but does not harm units": environment damage only, a tile's
   // radius (APPROXIMATION: its radius and strength are not known).
   LW_PsychokineticStrike: () => ({ PsiKind: 'PsychokineticStrike', Radius: 1, Param2: 100, Param: 2 }),
+  // "Nearby allies are healed for <RegenPheromoneRegen> health each turn" (cannot die of a critical wound, cured of acid:
+  // not done).
+  LW_RegenBiofield: () => ({ Kind: 'Biofield', Radius: c('REGENPHEROMONE_RANGE'), Heal: c('GENEMOD_REGENPHEROMONES') }),
   LW_PsiInspiration: () => ({ PsiKind: 'Inspiration', Radius: 3, Will: c('PSIINSPIRED_WILL_BONUS'), Param: 4, Param2: 2 }),
   // Gene mods (features/lw-genemods.md), with Long War's constants.
   LW_IronSkin: () => ({ DamageTaken: 1 }),

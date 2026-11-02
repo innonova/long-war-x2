@@ -65,6 +65,7 @@ export function makeWords({ plan, core, loc, consts }) {
     HeadshotCritBonus: () => c('PRECISION_SHOT_CRITICAL_CHANCE_BONUS'),
     // Gene mods (features/lw-genemods.md).
     GeneModPupilsBonus: () => c('GENEMOD_PUPILS_BONUS'),
+    RegenPheromoneRegen: () => c('GENEMOD_REGENPHEROMONES'),
     GeneModDepthPerceptionAim: () => c('GENEMOD_DEPTHPERCEPTION_AIM'),
     GeneModDepthPerceptionCrit: () => c('GENEMOD_DEPTHPERCEPTION_CRIT'),
     GeneModBrainDampingWill: () => c('GENEMOD_BRAINDAMPING_WILL'),

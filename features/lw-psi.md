@@ -204,3 +204,14 @@ as their buttons do.
   the condition now refuses those.
 - **Psychokinetic Strike** was used ("used at …") but its effect on the
   ground was not checked.
+
+## Report (2026-11-02 night, Regen Biofield)
+
+- **Regen Biofield**: at the start of each of XCOM's turns, wounded allies
+  within 6 tiles (`REGENPHEROMONE_RANGE`), the psion too, heal 1
+  (`GENEMOD_REGENPHEROMONES`). It is an ability triggered by XCOM 2's
+  `PlayerTurnBegun` event. "Cannot die of a critical wound" and "cured of
+  acid" are not done.
+- **Checked:** a frag grenade left a soldier at 5/8; at the next turn she
+  was at 6/8 (only the biofield given). Two soldiers the blast had brought
+  to 0 were not healed: dead, as it should be.

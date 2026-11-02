@@ -105,6 +105,8 @@ static function array<X2DataTemplate> CreateTemplates()
 			Templates.AddItem(PsiPower(S));
 		else if (S.Kind == 'Adrenal')
 			Templates.AddItem(Adrenal(S));
+		else if (S.Kind == 'Biofield')
+			Templates.AddItem(Biofield(S));
 		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.Damage2 != 0 || S.DamageTaken != 0 || S.CritDamagePct != 0 || S.BonusRadius != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0 || S.HealTaken != 0 || S.Regen != 0 || S.BleedTurns != 0)
 			Templates.AddItem(Passive(S));
 		else
@@ -535,6 +537,49 @@ static function X2AbilityTemplate Adrenal(LWStandin S)
 	Rush.DuplicateResponse = eDupe_Refresh;
 	Template.AddMultiTargetEffect(Rush);
 	Template.bShowActivation = true;
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
+	return Template;
+}
+
+/** Long War's Regen Biofield: at the start of each of XCOM's turns, allies within Radius tiles (the psion too) heal Heal. */
+static function X2AbilityTemplate Biofield(LWStandin S)
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityTrigger_EventListener Trigger;
+	local X2AbilityMultiTarget_Radius Radius;
+	local X2Condition_UnitProperty Allies;
+	local X2Effect_ApplyMedikitHeal Heal;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, S.Name);
+	Template.IconImage = S.Icon;
+	Template.AbilitySourceName = 'eAbilitySource_Psionic';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_NeverShow;
+	Template.Hostility = eHostility_Neutral;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SelfTarget;
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Trigger = new class'X2AbilityTrigger_EventListener';
+	Trigger.ListenerData.EventID = 'PlayerTurnBegun';
+	Trigger.ListenerData.Deferral = ELD_OnStateSubmitted;
+	Trigger.ListenerData.Filter = eFilter_Player;
+	Trigger.ListenerData.EventFn = class'XComGameState_Ability'.static.AbilityTriggerEventListener_Self;
+	Template.AbilityTriggers.AddItem(Trigger);
+	Radius = new class'X2AbilityMultiTarget_Radius';
+	Radius.fTargetRadius = S.Radius * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
+	Radius.bIgnoreBlockingCover = true;
+	Radius.bExcludeSelfAsTargetIfWithinRadius = false;
+	Template.AbilityMultiTargetStyle = Radius;
+	Allies = new class'X2Condition_UnitProperty';
+	Allies.ExcludeHostileToSource = true;
+	Allies.ExcludeFriendlyToSource = false;
+	Allies.ExcludeDead = true;
+	Allies.ExcludeFullHealth = true;
+	Allies.FailOnNonUnits = true;
+	Template.AbilityMultiTargetConditions.AddItem(Allies);
+	Heal = new class'X2Effect_ApplyMedikitHeal';
+	Heal.PerUseHP = S.Heal;
+	Template.AddMultiTargetEffect(Heal);
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
 	return Template;
