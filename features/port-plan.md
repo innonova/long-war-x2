@@ -132,8 +132,10 @@ and a Decisions list to review.
   - **Test aids added** (`tools/test/README.md`): `killaliens` (XCOM 2's
     `KillAllAIs` kills the civilians too), `psichance`, `hurt`, `open
     loadout`; `key.ps1` now sends digits as digits.
-- **Preview build**: replaced at 05:15 UTC with everything above
-  (`LongWarX2-20261102-e9ef37b`, on v0.1.0-preview.1).
+- **Preview build**: replaced on 2026-11-02 at 12:45 UTC
+  (`LongWarX2-20261102-ea63b34`, on v0.1.0-preview.1): stock Long War's
+  numbers, the load-crash fix. EW's screens and maps need the converted
+  content, which the player's build does not make yet.
 
 ## Where each step stood (2026-11-01, evening)
 
