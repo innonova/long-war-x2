@@ -132,8 +132,8 @@ and a Decisions list to review.
   - **Test aids added** (`tools/test/README.md`): `killaliens` (XCOM 2's
     `KillAllAIs` kills the civilians too), `psichance`, `hurt`, `open
     loadout`; `key.ps1` now sends digits as digits.
-- **Preview build**: replaced at 05:00 UTC with everything above
-  (`LongWarX2-20261102-3a8db5b`, on v0.1.0-preview.1).
+- **Preview build**: replaced at 05:15 UTC with everything above
+  (`LongWarX2-20261102-e9ef37b`, on v0.1.0-preview.1).
 
 ## Where each step stood (2026-11-01, evening)
 
