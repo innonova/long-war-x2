@@ -11,14 +11,16 @@ static function bool ShowIfAvailable()
 {
 	local XComHQPresentationLayer HQPres;
 	local UILWEWMapBackdrop Backdrop;
+	local Object Earth, World;
 
 	HQPres = `HQPRES;
 	if (HQPres == none)
 		return false;
-	// The converted package loaded whole (by its world), then its earth found by its own path.
-	if (DynamicLoadObject("FX_Globe.T_Earth_Holo", class'Texture2D', true) == none)
-		DynamicLoadObject("EWSitRoomMap.TheWorld", class'Object', true);
-	if (DynamicLoadObject("FX_Globe.T_Earth_Holo", class'Texture2D', true) == none)
+	// The converted package loaded whole (by its world) first, then its earth found by its own path.
+	World = DynamicLoadObject("EWSitRoomMap.TheWorld", class'Object', true);
+	Earth = DynamicLoadObject("FX_Globe.T_Earth_Holo", class'Texture2D', true);
+	`log("LongWarX2: EW screen: the earth" @ (Earth != none ? PathName(Earth) : "not found") $ (World != none ? ", from" @ PathName(World) : ""), , 'LongWarX2');
+	if (Earth == none)
 		return false;
 	HideAll();
 	Backdrop = HQPres.Spawn(class'UILWEWMapBackdrop', HQPres);
