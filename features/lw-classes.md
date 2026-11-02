@@ -542,8 +542,9 @@ from a pod; the `effects` aid now shows action and reserve points):
 - **Checked, partly:** a soldier bleeding out at 1/8, stabilized by a medic
   with the perk, came to 3/8 and was no longer bleeding out, but stayed
   unconscious. Removing the effect in the same ability did not see the one
-  just added. The fix (the condition) is built but not yet seen in play:
-  in two more tries the frag grenades killed instead of leaving anyone
-  bleeding out (XCOM 2's chance).
+  just added. Then the fix (the condition) was built.
+- **Checked again, in full:** a soldier bleeding out at 1/8, stabilized by
+  a medic with the perk (put beside her by the new test aid), came to 3/8:
+  not bleeding out, not unconscious, with both actions.
 - **Test aid:** `next <soldier> <other>` puts a soldier on a free tile
   beside another.
