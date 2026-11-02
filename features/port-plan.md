@@ -73,8 +73,13 @@ and a Decisions list to review.
     XCOM 2's pods are made for fewer aliens, and a pod that finds no room
     spawns nobody (a landed UFO had 10 of its 20). The missing ones are now
     spawned beside the others.
-  - Open: XCOM 2's own reinforcements (ADVENT) can still come in some
-    mission types.
+  - XCOM 2's own reinforcements: in Secure the UFO they hang on its
+    mission timer, already suspended, and never came in 14 turns. A guard
+    holds back any other spawner waiting to land; it has not been seen to
+    fire.
+  - **A terror mission won moves panic by the civilians lost**, as Long
+    War's does; with none saved, the country leaves. Checked: "11 of 13
+    civilians saved in France", France +6.
 - **Perks** (`lw-classes.md`), with Long War's numbers from EW's constants
   and ability table:
   - shots: Precision Shot, Disabling Shot, Flush, Double Tap;
