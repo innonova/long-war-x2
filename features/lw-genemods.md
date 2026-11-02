@@ -115,7 +115,8 @@ happen again. It is an ability triggered by XCOM 2's `KillMail` event.
 ### Left open
 
 - Stand-ins still:
-  - Bioelectric Skin: nearby enemies revealed;
+  - Bioelectric Skin: nearby enemies revealed (its immunity to
+    strangulation is in since, below);
   - ~~Muscle Fiber Density: climbing~~ (XCOM 2's grapple since, below).
 - ~~Neural Damping's +20 will against psi~~ (done the same night, below);
   the post-mission fatigue of every mod.
@@ -180,3 +181,24 @@ positions without the need for ladders or other climbing aids."
   moving; XCOM 2's nearest thing is the grapple, an action with a
   cooldown (APPROXIMATION). The other choice, XCOM 2's wall-climb
   traversal, is a character's setting, not something an ability gives.
+
+## Report (2026-11-02 night, Bioelectric Skin: no strangling)
+
+"The soldier projects an electric field from his or her skin, revealing
+but not alerting nearby enemies, and is immune to strangulation." EW's
+strangler is the Seeker; XCOM 2's is the Viper's Bind.
+- **Now Bind cannot target a soldier with Bioelectric Skin.** A new
+  stand-in field, `BlocksAbilities`, names XCOM 2 abilities that cannot
+  target the soldier. `AddBlocks` gives those abilities a target condition
+  (`X2Condition_LWOwnerLacks` with `bTarget`).
+- The test aid `psichance <ability>` now also shows the ability's target
+  conditions' answer.
+- **Checked** (Bioelectric Skin given to three soldiers; a Viper spawned
+  beside the squad): Bind read "AA_UnitIsImmune" against Sung Min Yang and
+  Oliver Thomas, 1 tile away, and "AA_Success" against Kaun-Yin Zheng
+  beside it, who has no Bioelectric Skin.
+
+### Decisions
+
+- **Only the strangling.** "Revealing but not alerting nearby enemies"
+  needs a moving reveal XCOM 2 has no ready piece for; left out.

@@ -52,6 +52,8 @@ struct LWStandin
 	var int AuraDefense;
 	/** An XCOM 2 ability that comes with this one (Muscle Fiber Density: the Spider Suit's Grapple). */
 	var name AlsoGrants;
+	/** XCOM 2 abilities that cannot target this soldier (Bioelectric Skin: Bind, the strangling: AddBlocks). */
+	var array<name> BlocksAbilities;
 };
 
 var config array<LWStandin> Standins;
@@ -870,6 +872,33 @@ static function int PsiWillOf(XComGameState_Unit Unit)
 		if (S.PsiWill != 0 && Unit.HasSoldierAbility(S.Name))
 			Will += S.PsiWill;
 	return Will;
+}
+
+/** XCOM 2's abilities that cannot target a soldier with a stand-in that blocks them (BlocksAbilities). */
+static function AddBlocks()
+{
+	local X2AbilityTemplateManager Manager;
+	local array<X2AbilityTemplate> Templates;
+	local X2AbilityTemplate Template;
+	local X2Condition_LWOwnerLacks Lacks;
+	local LWStandin S;
+	local name Blocked;
+
+	Manager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+	foreach default.Standins(S)
+	{
+		foreach S.BlocksAbilities(Blocked)
+		{
+			Manager.FindAbilityTemplateAllDifficulties(Blocked, Templates);
+			foreach Templates(Template)
+			{
+				Lacks = new class'X2Condition_LWOwnerLacks';
+				Lacks.Ability = S.Name;
+				Lacks.bTarget = true;
+				Template.AbilityTargetConditions.AddItem(Lacks);
+			}
+		}
+	}
 }
 
 static function AddShredders()

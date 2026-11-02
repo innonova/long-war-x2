@@ -1092,7 +1092,7 @@ function PsiChances(out array<string> Out, name Only)
 				i = Check.GetShotBreakdown(Ability, Target, Breakdown);
 				for (i = 0; i < Breakdown.Modifiers.Length; i++)
 					Why @= Breakdown.Modifiers[i].Reason $ "=" $ Breakdown.Modifiers[i].Value;
-				Out.AddItem(Alien.ObjectID @ Ability.GetMyTemplateName() @ "->" @ Soldier.GetFullName() @ "(" $ Alien.TileDistanceBetween(Soldier) @ "tiles):" @ Breakdown.FinalHitChance $ "% |" $ Why);
+				Out.AddItem(Alien.ObjectID @ Ability.GetMyTemplateName() @ "->" @ Soldier.GetFullName() @ "(" $ Alien.TileDistanceBetween(Soldier) @ "tiles):" @ Breakdown.FinalHitChance $ "%" @ Ability.GetMyTemplate().CheckTargetConditions(Ability, Alien, Soldier) @ "|" $ Why);
 			}
 		}
 	}

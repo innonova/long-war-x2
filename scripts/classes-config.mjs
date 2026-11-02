@@ -230,6 +230,9 @@ const REAL = {
   // "reach high positions without the need for ladders or other climbing aids": XCOM 2's grapple (the Spider Suit's;
   // an action with a cooldown where Long War's is a way of moving: APPROXIMATION).
   LW_MuscleFiberDensity: () => ({ AlsoGrants: 'Grapple' }),
+  // "...is immune to strangulation" (EW's Seeker): XCOM 2's strangling is the Viper's Bind. The rest ("revealing but not
+  // alerting nearby enemies") is not in.
+  LW_BioelectricSkin: () => ({ BlocksAbilities: ['Bind'] }),
   LW_NeuralDamping: () => ({ ImmuneTo: ['Panic'], PsiWill: c('GENEMOD_BRAINDAMPING_WILL') }),
   // "Medikits and Restorative Mist heal 2 HP more when used on the soldier. Confers complete immunity to poison and acid."
   LW_SmartMacrophages: () => ({ ImmuneTo: ['Poison', 'Acid'], HealTaken: 2 }),
