@@ -419,3 +419,7 @@ moved to tile 75,25,1 beside Fergus Clark (who reaches 684 tiles)". Her
 reach after the move was not measured: the mission ended by the cheat
 first. The same run went on to "The mission in United States succeeded" on
 the Geoscape.
+
+In the next such landing it was measured: "soldier Paul Johnson boxed in,
+moved to tile 76,27,13 beside Ella Willems (who reaches 655 tiles)", and 28
+seconds later every soldier reached 411 to 660 tiles.
