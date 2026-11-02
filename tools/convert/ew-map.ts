@@ -22,6 +22,10 @@ import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 
+/** Raised when what a conversion writes changes so that maps converted before must be converted again
+ *  (2: carried packages nested in the map's package, for its plot). */
+export const CONVERTER_VERSION = 2
+
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
   Textures: 'EWTextrs',
@@ -456,6 +460,8 @@ const rename = (path: string) => {
 const n = (x: number) => (Math.abs(x) < 1e-4 ? '0' : String(Math.round(x * 1000) / 1000))
 const lines = [
   `; The static meshes of ${basename(src)}, converted on this machine by tools/convert/ew-map.ts.`,
+  // The converter's version: a section without it (or with an older one) is converted again (ew-maps.ts).
+  `; ew-map.ts ${CONVERTER_VERSION}`,
   '; Not in the repository: generated from the player\'s own Enemy Within install.',
   // One section per map (LWX2EWMapData, per-object config): a machine's maps are these sections joined
   // (tools/convert/ew-maps.ts); the shared settings are the mod's own (XComLWEWMaps.ini).

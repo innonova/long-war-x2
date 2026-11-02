@@ -34,6 +34,8 @@ console.log(
     "; EW's lights (point, spot, its sun and sky), spawned as movable lights: the kinds placed and a scale on their",
     "; brightness (3: EW's lightmaps carried bounced light too; judged by eye on CSmallScout_Badlands).",
     'LightScale=3',
+    "; In a map's own plot (tools/convert/ew-plot.ts), under XCOM 2's sun: EW's lights at their own brightness.",
+    'PlotLightScale=1',
     '+LightKinds=Point',
     '+LightKinds=Spot',
     '+LightKinds=Sun',

@@ -10,7 +10,7 @@
 //
 // Bundled with upkit into one Windows program (tools/setup/bundle.mjs); runs from the repository
 // too: node tools/setup/setup.mjs --mod LongWarX2 …
-import { cpSync, existsSync, readFileSync, renameSync, rmSync, writeFileSync, mkdirSync, statSync } from 'node:fs'
+import { cpSync, existsSync, readFileSync, renameSync, rmSync, writeFileSync, mkdirSync, statSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { execFileSync } from 'node:child_process'
@@ -18,7 +18,7 @@ import { wordsFrom } from '../../scripts/write-words.mjs'
 import { convertUI } from '../convert/ew-ui.ts'
 import { convertPackage } from '../convert/ew-package.ts'
 import { convertMap } from '../convert/ew-map.ts'
-import { convertMaps, listedMaps } from '../convert/ew-maps.ts'
+import { convertMaps, listedMaps, writePlots } from '../convert/ew-maps.ts'
 
 const MOD = 'LongWarX2'
 const args = process.argv.slice(2)
@@ -213,6 +213,9 @@ async function main() {
     if (existsSync(kept)) {
       rmSync(join(target, 'Content'), { recursive: true, force: true })
       renameSync(kept, join(target, 'Content'))
+      // The mod's own maps (the template plot, the empty parcel) from this download, over the kept ones.
+      for (const f of existsSync(join(source, 'Content')) ? readdirSync(join(source, 'Content')) : [])
+        if (f.endsWith('.umap')) cpSync(join(source, 'Content', f), join(target, 'Content', f))
     }
     say(`Installed the mod: ${target}`)
   }
@@ -262,7 +265,7 @@ async function convertEW(ew, target) {
   if (want === undefined && process.stdin.isTTY) {
     const rl = createInterface({ input: process.stdin, output: process.stdout })
     const answer = await new Promise((done) =>
-      rl.question(`\nConvert Enemy Within's maps for the missions (${new Set(maps).size} maps, about 18 GB, a few minutes; already converted ones are kept)? [y/N] `, (a) => done(rl.close() ?? a)),
+      rl.question(`\nConvert Enemy Within's maps for the missions (${new Set(maps).size} maps, about 18 GB, a few minutes; already converted ones are kept, those of an older version converted again)? [y/N] `, (a) => done(rl.close() ?? a)),
     )
     want = /^y/i.test(String(answer).trim())
   }
@@ -277,6 +280,13 @@ async function convertEW(ew, target) {
         windowsHide: true,
       }),
     false, say)
+  }
+  // Each converted map as a plot of its own (ew-plot.ts), listed for the game in the mod's XComPlots.ini.
+  if (existsSync(join(content, 'ewmaps')) && existsSync(join(content, 'LWX2_EWPlotTemplate.umap'))) {
+    const plots = writePlots(target, content, join(content, 'ewmaps'), join(content, 'LWX2_EWPlotTemplate.umap'), say)
+    const ini = join(target, 'Config', 'XComPlots.ini')
+    writeFileSync(ini, readFileSync(ini, 'utf8').trimEnd() + '\r\n; The plots of the Enemy Within maps converted on this machine (the setup program).\r\n' +
+      plots.map((p) => `+arrPlots=(MapName="${p}", strType="LWX2_EW", ExcludeFromStrategy=true, ValidBiomes[0]="Arid", ObjectiveTags[0]="LWX2_EW")`).join('\r\n') + '\r\n')
   }
   // The missions on Enemy Within's maps when this machine has them converted.
   const sections = existsSync(join(target, 'Config', 'XComLWX2EWMap.ini')) ? (readFileSync(join(target, 'Config', 'XComLWX2EWMap.ini'), 'latin1').match(/ LWX2EWMapData\]/g) ?? []).length : 0

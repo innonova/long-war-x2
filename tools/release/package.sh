@@ -26,6 +26,8 @@ ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git checkout -q main" >
 # Nothing of the games, the player's config.
 rm -rf "$stage/LongWarX2/Content" "$stage/LongWarX2/Localization/XComGame.int" "$stage/LongWarX2/Config/XComLWX2EWMap.ini"
 node scripts/airwar-config.mjs ../xcom-ew-lw-tree/data/airwar.json --player > "$stage/LongWarX2/Config/XComLWAirWar.ini"
+# The mod's own maps (ours: the template plot the setup program writes each EW map's plot from, the empty parcel).
+mkdir -p "$stage/LongWarX2/Content" && cp tools/maps/*.umap "$stage/LongWarX2/Content/"
 if find "$stage" -iname '*.upk' -o -iname '*.tfc' -o -iname '*.png' | grep -q .; then echo "game content in the download:"; find "$stage" -iname '*.upk' -o -iname '*.tfc' -o -iname '*.png'; exit 1; fi
 
 npm run -s setup:bundle >/dev/null
