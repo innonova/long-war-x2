@@ -200,6 +200,9 @@ const REAL = {
   LW_PsiInspiration: () => ({ PsiKind: 'Inspiration', Radius: 3, Will: c('PSIINSPIRED_WILL_BONUS'), Param: 4, Param2: 2 }),
   // Gene mods (features/lw-genemods.md), with Long War's constants.
   LW_IronSkin: () => ({ DamageTaken: 1 }),
+  // "Causes soldiers to bleed out instead of dying the first time they go to zero health in a mission. The bleed-out
+  // timer is extended by <SecondaryHeartBleedTimerBonus> turns."
+  LW_SecondaryHeart: () => ({ BleedTurns: c('GENEMOD_SECONDHEART_BLEEDOUT') }),
   LW_DepthPerception: () => ({ Aim: c('GENEMOD_DEPTHPERCEPTION_AIM'), AimIf: 'HeightAdvantage', Crit: c('GENEMOD_DEPTHPERCEPTION_CRIT'), CritIf: 'HeightAdvantage' }),
   LW_HyperReactivePupils: () => ({ Aim: c('GENEMOD_PUPILS_BONUS'), AimIf: 'AfterMiss' }),
   LW_NeuralDamping: () => ({ ImmuneTo: ['Panic'] }),
@@ -243,6 +246,9 @@ writeFileSync(
     "; Long War's soldiers carry as many grenades and medikits as they have small slots (a charge each): XCOM 2's one-each rule lifted.",
     '-UniqueEquipCategories=grenade',
     '-UniqueEquipCategories=heal',
+    "; Long War's Secondary Heart is asked before a soldier dies (X2Effect_LWSecondaryHeart).",
+    '[XComGame.X2AbilityTemplateManager]',
+    '+PreDeathCheckEffects=LWSecondaryHeart',
     "; A recruit costs Long War's SOLDIER_COST on every difficulty (XCOM 2 asks more on Legend).",
     '[XComGame.XComGameState_HeadquartersResistance]',
     ...[0, 1, 2, 3].map((d) => `RecruitSupplyCosts[${d}]=${Number(core.match(/^SOLDIER_COST\s*=\s*(\d+)/m)[1])}`),

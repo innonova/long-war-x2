@@ -82,10 +82,26 @@ is done.
 - **The slot is kept as a string.** As an UnrealScript name, "Brain"
   showed as another name's case ("bRain").
 
+## Report (2026-11-02 night, Secondary Heart)
+
+**Secondary Heart is an effect of its own** (`X2Effect_LWSecondaryHeart`),
+named in XCOM 2's `PreDeathCheckEffects` (XComGameData.ini, generated):
+- When XCOM 2 decides a soldier with it dies, the effect puts them into
+  bleeding out instead, as XCOM 2's protected `ApplyBleedingOut` does.
+- It works once a mission, and adds 2 turns to the bleed-out timer
+  (`GENEMOD_SECONDHEART_BLEEDOUT`).
+
+**Checked, partly:** frag grenades thrown at a squad that all had it left
+two soldiers bleeding out. But the effect's log line did not appear: XCOM
+2's own bleed-out chance had put them there, before any death was
+decided. The effect's own path is not yet seen in play.
+
+**Left open:** the 2 extra turns apply only when the effect itself saves
+the soldier, not to XCOM 2's own bleed-outs.
+
 ### Left open
 
 - Stand-ins still:
-  - Secondary Heart: bleeding out instead of dying, +2 turns;
   - Adrenal Neurosympathy: a kill's buff to nearby squadmates;
   - Bioelectric Skin: nearby enemies revealed;
   - Muscle Fiber Density: climbing.
