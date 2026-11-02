@@ -189,3 +189,18 @@ as their buttons do.
 - **Rift does the same damage to every target** (APPROXIMATION). Long War
   scales it by the target's will (`RIFT_WILL_BALANCE`, `RIFT_WILL_DMG_SLICE`,
   a minimum of 4 to 5). Its psi armour requirement is not applied yet.
+
+## Report (2026-11-02 night, Mind Merge and Psychokinetic Strike)
+
+- **Mind Merge**: an ally in view gains +25 critical chance
+  (`MINDMERGE_CRIT_BONUS`) and takes 1 less damage until the psion's next
+  turn; cooldown 1. Long War's "bonus will" is left out: its number is not
+  known.
+- **Psychokinetic Strike**: environment damage within a tile of the place
+  chosen, no unit harmed; cooldown 2. The radius and strength are guesses
+  (APPROXIMATION).
+- **Checked:** Mind Merge put `LW_MindMerge_Merged` on the soldier
+  chosen. The first try had picked a non-unit object from the target list;
+  the condition now refuses those.
+- **Psychokinetic Strike** was used ("used at …") but its effect on the
+  ground was not checked.

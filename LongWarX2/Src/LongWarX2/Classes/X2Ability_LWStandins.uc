@@ -282,6 +282,7 @@ static function X2AbilityTemplate PsiPower(LWStandin S)
 	local X2AbilityMultiTarget_Radius Radius;
 	local X2Effect_RemoveEffects Calm;
 	local X2Effect_PersistentStatChange Will;
+	local X2Effect_LWModifiers Merge;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, S.Name);
 	Template.IconImage = S.Icon;
@@ -306,6 +307,51 @@ static function X2AbilityTemplate PsiPower(LWStandin S)
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
 
+	// Mind Merge: an ally gains Crit critical chance and takes DamageTaken less damage until the psion's next turn.
+	if (S.PsiKind == 'MindMerge')
+	{
+		Template.Hostility = eHostility_Defensive;
+		Template.AbilityToHitCalc = default.DeadEye;
+		Template.AbilityTargetStyle = default.SimpleSingleTarget;
+		Living = new class'X2Condition_UnitProperty';
+		Living.ExcludeHostileToSource = true;
+		Living.ExcludeFriendlyToSource = false;
+		Living.ExcludeDead = true;
+		Living.ExcludeRobotic = true;
+		Living.RequireSquadmates = true;
+		Living.FailOnNonUnits = true;
+		Template.AbilityTargetConditions.AddItem(Living);
+		Template.AbilityTargetConditions.AddItem(default.GameplayVisibilityCondition);
+		Merge = new class'X2Effect_LWModifiers';
+		Merge.EffectName = name(S.Name $ "_Merged");
+		Merge.BuildPersistentEffect(1, false, true, false, eGameRule_PlayerTurnBegin);
+		Merge.SetDisplayInfo(ePerkBuff_Bonus, Template.LocFriendlyName, Template.GetMyHelpText(), Template.IconImage, true);
+		Merge.Crit = S.Crit;
+		Merge.DamageTaken = S.DamageTaken;
+		Merge.Reason = Template.LocFriendlyName;
+		Merge.DuplicateResponse = eDupe_Refresh;
+		Template.AddTargetEffect(Merge);
+		return Template;
+	}
+	// Psychokinetic Strike: cover destroyed within Radius tiles of the place chosen, no unit harmed.
+	if (S.PsiKind == 'PsychokineticStrike')
+	{
+		Template.Hostility = eHostility_Neutral;
+		Template.AbilityToHitCalc = default.DeadEye;
+		Cursor = new class'X2AbilityTarget_Cursor';
+		Template.AbilityTargetStyle = Cursor;
+		Radius = new class'X2AbilityMultiTarget_Radius';
+		Radius.fTargetRadius = S.Radius * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
+		Template.AbilityMultiTargetStyle = Radius;
+		Template.TargetingMethod = class'X2TargetingMethod_VoidRift';
+		Damage = new class'X2Effect_ApplyWeaponDamage';
+		Damage.bIgnoreBaseDamage = true;
+		Damage.EnvironmentalDamageAmount = S.Param2;
+		Damage.bApplyOnHit = true;
+		Damage.bApplyOnMiss = true;
+		Template.AddMultiTargetEffect(Damage);
+		return Template;
+	}
 	// Telekinetic Field: allies within Radius tiles of the psion gain Defense until its next turn.
 	if (S.PsiKind == 'TKField')
 	{

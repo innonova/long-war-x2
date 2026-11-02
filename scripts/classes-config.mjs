@@ -201,6 +201,12 @@ const REAL = {
   LW_TelekineticField: () => ({ PsiKind: 'TKField', Radius: 12, Defense: c('TELEKINETIC_FIELD_DEFENSE_BONUS'), Param: 4 }),
   // "The rift does more damage against targets with low Will": its start damage (RIFT_START_DMG) for all (APPROXIMATION).
   LW_Rift: () => ({ PsiKind: 'Rift', Radius: 6, Damage: c('RIFT_START_DMG'), Param: 4 }),
+  // "granting the target +25% critical chance, bonus will, and ... damage reduction (for humans)": crit and 1 less
+  // damage for a turn (the will left out: its number is not known).
+  LW_MindMerge: () => ({ PsiKind: 'MindMerge', Crit: c('MINDMERGE_CRIT_BONUS'), DamageTaken: 1, Param: 1 }),
+  // "Project a bolt of pure psi force that destroys cover but does not harm units": environment damage only, a tile's
+  // radius (APPROXIMATION: its radius and strength are not known).
+  LW_PsychokineticStrike: () => ({ PsiKind: 'PsychokineticStrike', Radius: 1, Param2: 100, Param: 2 }),
   LW_PsiInspiration: () => ({ PsiKind: 'Inspiration', Radius: 3, Will: c('PSIINSPIRED_WILL_BONUS'), Param: 4, Param2: 2 }),
   // Gene mods (features/lw-genemods.md), with Long War's constants.
   LW_IronSkin: () => ({ DamageTaken: 1 }),
