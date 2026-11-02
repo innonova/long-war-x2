@@ -579,7 +579,7 @@ having this perk will not provide an additional reduction."
 - **Captured means left behind.** XCOM 2's evacuated soldiers are off the
   field as well, and they come home.
 
-## Found (2026-11-02 night): rockets do not scatter here
+## Found (2026-11-02 night): rockets did not scatter here (they do since, below)
 
 XCOM 2's rockets land where they are aimed; Long War's scatter. So **Fire
 in the Hole** (+10 aim against scatter when the soldier has not moved)
@@ -594,9 +594,38 @@ neither does a Rocketeer's aim for rockets.
   - after moving, × 1.25 with perk 16, else × 2.
 - How the rocket is then displaced is not in readable code.
 - **Proposed next**: XCOM 2's rocket abilities with the target point
-  moved by a random distance averaging this value, as XCOM 2 mods with scatter
-  do (`ModifyNewContextFn`); the distribution an approximation.
+  moved by a random distance averaging this value (`ModifyNewContextFn`);
+  the distribution an approximation. Done the same night: next report.
 - **Tandem Warheads** ("full damage to the maximum extent of their area
   of effect") needs nothing: XCOM 2's explosives already do full damage
   over their whole area. Without it, a Long War soldier's would fall off
   towards the edge; the port has no fall-off.
+
+## Report (2026-11-02 night, rocket scatter)
+
+**Long War soldiers' rockets now scatter.** XCOM 2's `RocketLauncher` gets
+`ScatterRocket` as its `ModifyNewContextFn`. When a rocket is fired, the
+target point moves by Long War's average miss (`ScatterMetres`: the rule
+above, with `MinScatter` 7.8 generated from the samples' `MIN_SCATTER`)
+in a random direction. The units in the blast are gathered again at the
+new point, and the context's results are rebuilt for them.
+- Platform Stability and Fire in the Hole (+10 aim each if not moved) and
+  Snap Shot (×1.25 instead of ×2 after moving) count, so those perks now
+  mean something for rockets.
+- **Checked** (a first abduction; the Rocketeer fired at the nearest
+  Sectoid of three with the `use` aid, before moving): "rocket scatter:
+  average 5.0359 m, missed by 4.8931 m". One Sectoid fell from 8 to 1
+  health (the rocket's 7), the two at the aimed point untouched. The game
+  went on.
+- The first try crashed at the map load: the known crash, now about 5 in
+  45 loads.
+
+### Decisions
+
+- **The miss: a random direction, and a distance from none to twice the
+  average** (APPROXIMATION). Long War's own displacement is not in
+  readable code; its value is "average meters of miss".
+- **"Not moved" is two actions left**, as XCOM 2 counts a turn. The
+  rocket's own cost is not paid yet when this is asked.
+- **Only Long War's soldiers' rockets.** Other units' are left as XCOM 2
+  has them.

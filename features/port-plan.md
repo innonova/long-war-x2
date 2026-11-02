@@ -88,7 +88,9 @@ and a Decisions list to review.
     health lighter when a medic with it comes home);
   - grenades and rockets: Dense Smoke, Combat Drugs, Sapper, HEAT
     Warheads, Shredder Ammo;
-  - Deadeye.
+  - Deadeye;
+  - rockets scatter as Long War's (Platform Stability, Fire in the Hole
+    and Snap Shot count).
 - **Psionics** (`lw-psi.md`, new):
   - the twelve powers are trained in the Psi Labs at Long War's hours and
     chance, from a Psi Labs line in the base screen;

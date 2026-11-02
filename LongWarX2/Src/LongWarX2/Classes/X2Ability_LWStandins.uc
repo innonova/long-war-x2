@@ -57,6 +57,8 @@ struct LWStandin
 };
 
 var config array<LWStandin> Standins;
+/** Long War's rocket scatter: the average miss in metres with 0 aim at 20 metres (MIN_SCATTER; ScatterRocket). */
+var config float MinScatter;
 
 /** Long War's psi powers: the ability each gives (features/lw-psi.md). */
 struct LWPsiAbility
@@ -899,6 +901,100 @@ static function AddBlocks()
 			}
 		}
 	}
+}
+
+/** XCOM 2's rocket launcher's rockets scatter as Long War's do (ScatterRocket). */
+static function AddScatter()
+{
+	local array<X2AbilityTemplate> Templates;
+	local X2AbilityTemplate Template;
+
+	if (default.MinScatter <= 0)
+		return;
+	class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplateAllDifficulties('RocketLauncher', Templates);
+	foreach Templates(Template)
+		Template.ModifyNewContextFn = ScatterRocket;
+}
+
+/**
+ * Long War's average miss for a rocket, in metres (XGAbility_Targeted.GetScatterChance, whose value is tenths of this):
+ * MIN_SCATTER x (120 - aim) / 120, aim clamped to 0..120 and +10 each for Platform Stability and Fire in the Hole when
+ * the soldier has not moved; x distance / 20 m; / 1.5 x sqrt(2); after moving, x 2, or x 1.25 with Snap Shot.
+ */
+static function float ScatterMetres(XComGameState_Unit Unit, float Distance)
+{
+	local bool bMoved;
+	local int Aim;
+	local float Metres;
+
+	// XCOM 2's soldiers start a turn with two actions; the rocket's cost is not paid yet when this is asked.
+	bMoved = Unit.ActionPoints.Length < 2;
+	Aim = Unit.GetCurrentStat(eStat_Offense);
+	if (!bMoved && Unit.HasSoldierAbility('LW_PlatformStability'))
+		Aim += 10;
+	if (!bMoved && Unit.HasSoldierAbility('LW_FireInTheHole'))
+		Aim += 10;
+	Metres = default.MinScatter * (120 - Clamp(Aim, 0, 120)) / 120.0;
+	Metres *= Distance / (20 * 64) / 1.5 * Sqrt(2.0);
+	if (bMoved)
+		Metres *= (Unit.HasSoldierAbility('LW_SnapShotRocket') || Unit.HasSoldierAbility('LW_SnapShot')) ? 1.25 : 2.0;
+	return Metres;
+}
+
+/**
+ * The rocket's point moved by Long War's scatter, and the units in its blast gathered again there. How Long War then
+ * displaces the rocket is not readable: here a random direction and a distance from none to twice the average
+ * (APPROXIMATION), on the floor of the tile it lands in. EW's units are XCOM 2's: 64 a metre, 96 a tile.
+ */
+static function ScatterRocket(XComGameStateContext Context)
+{
+	local XComGameStateContext_Ability AbilityContext;
+	local XComGameState_Ability Ability;
+	local XComGameState_Unit Unit;
+	local AvailableTarget Target;
+	local vector From, To;
+	local TTile Tile;
+	local float Metres, Miss, Angle;
+	local int i;
+
+	AbilityContext = XComGameStateContext_Ability(Context);
+	if (AbilityContext == none || AbilityContext.InputContext.TargetLocations.Length == 0)
+		return;
+	Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(AbilityContext.InputContext.AbilityRef.ObjectID));
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(AbilityContext.InputContext.SourceObject.ObjectID));
+	if (Ability == none || Unit == none || Left(string(Unit.GetSoldierClassTemplateName()), 4) != "LWS_")
+		return;
+	From = `XWORLD.GetPositionFromTileCoordinates(Unit.TileLocation);
+	To = AbilityContext.InputContext.TargetLocations[0];
+	Metres = ScatterMetres(Unit, VSize(To - From));
+	Miss = Metres * 64 * 2 * `SYNC_FRAND_STATIC();
+	Angle = 2 * Pi * `SYNC_FRAND_STATIC();
+	To.X += Cos(Angle) * Miss;
+	To.Y += Sin(Angle) * Miss;
+	if (`XWORLD.GetFloorTileForPosition(To, Tile))
+		To = `XWORLD.GetPositionFromTileCoordinates(Tile);
+	`log("LongWarX2: perks: rocket scatter: average" @ Metres @ "m, missed by" @ Miss / 64 @ "m", , 'LongWarX2');
+	AbilityContext.InputContext.TargetLocations[0] = To;
+	// The blast's units at the new point; a rocket always hits what is in its blast.
+	Target.PrimaryTarget = AbilityContext.InputContext.PrimaryTarget;
+	if (Ability.GetMyTemplate().AbilityMultiTargetStyle != none)
+		Ability.GetMyTemplate().AbilityMultiTargetStyle.GetMultiTargetsForLocation(Ability, To, Target);
+	AbilityContext.InputContext.MultiTargets = Target.AdditionalTargets;
+	AbilityContext.InputContext.MultiTargetsNotified.Length = 0;
+	AbilityContext.ResultContext.MultiTargetHitResults.Length = 0;
+	AbilityContext.ResultContext.MultiTargetEffectResults.Length = 0;
+	AbilityContext.ResultContext.MultiTargetArmorMitigation.Length = 0;
+	AbilityContext.ResultContext.MultiTargetStatContestResult.Length = 0;
+	AbilityContext.ResultContext.MultiTargetEffectsOverrides.Length = 0;
+	for (i = 0; i < Target.AdditionalTargets.Length; i++)
+	{
+		AbilityContext.InputContext.MultiTargetsNotified.AddItem(false);
+		AbilityContext.ResultContext.MultiTargetHitResults.AddItem(eHit_Success);
+	}
+	AbilityContext.ResultContext.MultiTargetEffectResults.Length = Target.AdditionalTargets.Length;
+	AbilityContext.ResultContext.MultiTargetArmorMitigation.Length = Target.AdditionalTargets.Length;
+	AbilityContext.ResultContext.MultiTargetStatContestResult.Length = Target.AdditionalTargets.Length;
+	AbilityContext.ResultContext.MultiTargetEffectsOverrides.Length = Target.AdditionalTargets.Length;
 }
 
 static function AddShredders()
