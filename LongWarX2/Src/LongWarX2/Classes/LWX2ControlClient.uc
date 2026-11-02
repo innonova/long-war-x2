@@ -208,6 +208,12 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem(OpenGeoscape() != none ? "ok" : "ERR not on the Avenger");
 		return;
 	case "open":
+		// The armory's loadout of the first soldier (arm's order), as the armory opens it.
+		if (Args.Length > 1 && Args[1] ~= "loadout")
+		{
+			Out.AddItem(OpenLoadout());
+			return;
+		}
 		// A Geoscape screen opened, as its button opens it (a test aid: base, hangar, engineering).
 		Geo = OpenGeoscape();
 		if (Geo == none)
@@ -219,7 +225,7 @@ function Handle(string Line, out array<string> Out)
 		else if (Args.Length > 1 && Args[1] ~= "engineering")
 			Geo.OnEngineering(none);
 		else
-			Out.AddItem("ERR open base|hangar|engineering");
+			Out.AddItem("ERR open base|hangar|engineering|loadout");
 		return;
 	}
 	// The rest needs the campaign's Geoscape.
@@ -615,6 +621,27 @@ function FoundryDone(int Id)
 	if (S.FoundryDone.Find(Id) == INDEX_NONE)
 		S.FoundryDone.AddItem(Id);
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+}
+
+/** The armory's loadout screen for the first soldier (a test aid: the small-item slots seen as the player sees them). */
+function string OpenLoadout()
+{
+	local XComHQPresentationLayer HQPres;
+	local XComGameState_Unit Unit;
+	local StateObjectReference Ref;
+
+	HQPres = `HQPRES;
+	if (HQPres == none)
+		return "ERR not on the Avenger";
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier())
+			continue;
+		HQPres.UIArmory_Loadout(Ref);
+		return "ok" @ Unit.GetFullName() $ "'s loadout";
+	}
+	return "ERR no soldier";
 }
 
 /** A perk given to a soldier (XCOM 2's training-centre abilities; a test aid). */

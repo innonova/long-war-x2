@@ -204,7 +204,10 @@ starting bonus that gives it).
   campaign at every arming pass. Templates are not saved, so loading
   another campaign sets it to that campaign's state at its first pass.
 - **Every soldier, of any armour**, as Long War's words say "all
-  soldiers". The armory's look with three slots was not looked at.
+  soldiers".
+- **Looked at in the armory** afterwards (a new test aid, `open loadout`):
+  a sniper in Tac Armor showed three utility item slots, an HE grenade
+  and two empty.
 
 ## Report (2026-11-02 night, Alien Grenades)
 
