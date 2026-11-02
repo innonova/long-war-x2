@@ -101,6 +101,29 @@ static function NoTimer()
 }
 
 /**
+ * Long War's missions get no reinforcements: XCOM 2's reinforcement spawners (ADVENT, called by its missions' kismet)
+ * waiting to land have their countdown put out of reach. One that lands at once (countdown 0) is not caught.
+ */
+static function NoReinforcements()
+{
+	local XComGameState_AIReinforcementSpawner Spawner;
+	local XComGameState NewGameState;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_AIReinforcementSpawner', Spawner)
+	{
+		if (Spawner.Countdown <= 0 || Spawner.Countdown >= 90 || Spawner.SpawnedUnitIDs.Length > 0)
+			continue;
+		if (NewGameState == none)
+			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: no reinforcements");
+		Spawner = XComGameState_AIReinforcementSpawner(NewGameState.ModifyStateObject(class'XComGameState_AIReinforcementSpawner', Spawner.ObjectID));
+		`log("LongWarX2: missions: XCOM 2's reinforcements (" $ Spawner.SpawnInfo.EncounterID $ ", in" @ Spawner.Countdown @ "turns) held back", , 'LongWarX2');
+		Spawner.Countdown = 99;
+	}
+	if (NewGameState != none)
+		`TACTICALRULES.SubmitGameState(NewGameState);
+}
+
+/**
  * Long War's rule for its missions: when the aliens that came are all dead or taken (none alive on the field, after
  * at least one was there), the mission is won, as by the test button (XCOM 2's objectives counted as done). XCOM 2
  * leaves victory to each mission's kismet, which on an Enemy Within map has nothing to act on.
@@ -112,6 +135,7 @@ function CheckSwept()
 
 	if (bSwept || `TACTICALRULES == none || `TACTICALRULES.HasTacticalGameEnded())
 		return;
+	NoReinforcements();
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 	{
 		if (Unit.GetTeam() != eTeam_Alien || Unit.GetMyTemplate().bIsCosmetic)

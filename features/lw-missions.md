@@ -474,3 +474,34 @@ States succeeded."
   not known; the squad is shared out in order.
 - **Placed beside aliens already there**, not at the failed encounter's
   place. XCOM 2 found no room there.
+
+## Report (2026-11-02 night, no reinforcements)
+
+Long War's missions have no reinforcements. XCOM 2's arrive by its
+missions' kismet, through `XComGameState_AIReinforcementSpawner` (a pod and
+a countdown in turns).
+- **Now `NoReinforcements`**, in the tactical listener's 2-second check on
+  Long War's missions: a spawner waiting to land (countdown 1 to 89, nobody
+  spawned yet) gets its countdown put to 99, with a log line.
+- **Checked, in a landed UFO** (a new campaign, UFOs intercepted until
+  "ASSAULT: landed UFO in United States"; Secure the UFO, 20 aliens with
+  the top-up): kismet logged "Critical reinforcements queued" at the start,
+  and then "No RNF call queued" each turn for 14 turns. The mission's
+  "Distress Beacon: turns until alien response" is XCOM 2's mission timer,
+  already suspended ("Mission timer is currently suspended"): it stayed at
+  6, and its reinforcements never came. The aliens stayed at 20. Won by
+  clearing (cheat): "all 20 aliens dead or taken".
+- **So the new guard did not fire here.** It stays for missions whose
+  kismet sets a spawner without the timer; none has been seen yet.
+- The test aid `endturn` reported "the turn could not end" while the turn
+  ended (the game's answer is false either way): it now says only that the
+  end was asked.
+
+### Decisions
+
+- **A guard rather than a change to the missions' kismet.** The kismet is
+  XCOM 2's; holding the spawner back is the one place all of its
+  reinforcements pass through.
+- **A spawner whose countdown is already 0 is not caught**: it lands in the
+  same turn it is made. If one is seen, the next step is to remove its pod
+  as it lands.

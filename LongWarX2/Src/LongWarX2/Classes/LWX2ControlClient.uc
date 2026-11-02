@@ -161,7 +161,9 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem("ERR not in a mission");
 			return;
 		}
-		Out.AddItem(XComTacticalController(GetALocalPlayerController()).PerformEndTurn(ePlayerEndTurnType_PlayerInput) ? "ok turn ended" : "ERR the turn could not end");
+		// PerformEndTurn answers false while the turn ends all the same (seen in a mission's log): its answer is not reported.
+		XComTacticalController(GetALocalPlayerController()).PerformEndTurn(ePlayerEndTurnType_PlayerInput);
+		Out.AddItem("ok end of turn asked");
 		return;
 	case "look":
 		if (Args.Length < 3)
