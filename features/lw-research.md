@@ -234,3 +234,20 @@ builds the alien grenade otherwise (its item tree gives Foundry 255).
 - **Once, from the arming pass**, rather than at each of the three places
   a project completes (engineering's start, the hourly tick, the test
   aid). The pass runs at the Geoscape and whenever soldiers are looked at.
+
+### Found after, left open
+
+- Long War also gives every soldier a **perk per Foundry project**
+  (`XGFacility_Barracks.UpdateFoundryPerksForSoldier`), and only while the
+  base has a Foundry: Scope, the pistols, Ammo Conservation, Improved Arc
+  Thrower, the capture drone, Elerium fuel, Shaped Armor and **Alien
+  Grenades** (`ePerk_Foundry_AlienGrenades`, 125).
+- That perk is read in EW's tactical code in three places:
+  - `XGWeapon.GetDamageRadius`: the frag grenade's (81) radius times 2.0
+    (as decompiled; the text says "40 % more area", which does not fit);
+  - `XGAbility_Targeted.TShotInfo_ToString`: +2 for items 79 and 86, in a
+    function that only displays;
+  - `XComWeapon.PrepareProjectile`: another projectile for item 24.
+- Not built: what the radius line means needs a closer reading, and the
+  damage itself is not in readable code. The port's pistol projects and
+  Ammo Conservation do not ask for a Foundry in the base either.
