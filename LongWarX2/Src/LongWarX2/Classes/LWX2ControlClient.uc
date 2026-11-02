@@ -599,7 +599,7 @@ function string GivePerk(int Index, name AbilityName)
 		Perk.AbilityType.AbilityName = AbilityName;
 		// Shots with the weapon (as the classes' trees give them: ApplyToWeaponSlot).
 		Template = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate(AbilityName);
-		if (Template != none && X2AbilityTarget_Single(Template.AbilityTargetStyle) != none && Template.AbilityToHitCalc != none && X2AbilityToHitCalc_StandardAim(Template.AbilityToHitCalc) != none)
+		if (Template != none && (Template.AbilitySourceName == 'eAbilitySource_Psionic' || X2AbilityTarget_Single(Template.AbilityTargetStyle) != none && Template.AbilityToHitCalc != none && X2AbilityToHitCalc_StandardAim(Template.AbilityToHitCalc) != none))
 			Perk.AbilityType.ApplyToWeaponSlot = eInvSlot_PrimaryWeapon;
 		Perk.bUnlocked = true;
 		Unit.AWCAbilities.AddItem(Perk);

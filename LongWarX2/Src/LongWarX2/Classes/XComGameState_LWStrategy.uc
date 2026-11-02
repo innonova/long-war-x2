@@ -1836,6 +1836,8 @@ function PsiTrainingDone(XComGameState NewGameState, LWPsiTrainee T)
 	}
 	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
 	Power.AbilityType.AbilityName = Ability;
+	// Bound to the soldier's weapon, as XCOM 2's psi powers are to the psi amp: its range is the power's reach.
+	Power.AbilityType.ApplyToWeaponSlot = eInvSlot_PrimaryWeapon;
 	Power.bUnlocked = true;
 	Unit.AWCAbilities.AddItem(Power);
 	Note(Unit.GetFullName() @ "gained" @ class'X2Ability_LWStandins'.static.PsiPowerName(Ability) @ "in the Psi Labs.");

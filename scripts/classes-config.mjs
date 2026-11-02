@@ -119,7 +119,8 @@ function abilityFor(perk) {
   if (!standins.has(name)) {
     // By Long War's name; by EW's slot only where Long War kept the perk (a renamed slot's icon is another perk's).
     const names = [title.replace(/[^A-Za-z0-9]/g, ''), ...(renamed.has(perk) ? [] : [perk.replace(/^ePerk_/, '')])]
-    const candidates = names.map((c) => `uiperk_${c.toLowerCase()}`)
+    // XCOM 2 keeps EW's psi icons as uiperk_psi_<power> (Psi Panic: uiperk_psi_panic).
+    const candidates = names.flatMap((c) => [`uiperk_${c.toLowerCase()}`, `uiperk_psi_${c.toLowerCase()}`, `uiperk_psi_${c.toLowerCase().replace(/^psi/, '')}`])
     const icon = candidates.map((c) => x2Icons.get(c)).find(Boolean) ?? 'UIPerk_standard'
     standins.set(name, { perk, icon })
   }
@@ -185,6 +186,13 @@ const REAL = {
   LW_Sapper: () => ({ Damage: 1, DamageIf: 'Grenade' }),
   // "Your rockets and grenades do an additional 50% damage to robotic enemies after damage reduction is assessed."
   LW_HEATWarheads: () => ({ DamagePct: c('HEATAMMO_DMG_MULTIPLIER', 100) - 100, DamageIf: 'ExplosiveVsRobotic' }),
+  // Psi powers (features/lw-psi.md; X2Ability_LWPsi). The will check: base 50 + the soldier's will - the target's
+  // (APPROXIMATION of EW's psi chance); Mind Control at Long War's difficulty. EW's cooldowns and durations count
+  // every side's turn: (n - 1) / 2 of the soldier's own turns.
+  LW_Mindfray: () => ({ PsiKind: 'Mindfray', Base: 50, Damage: 1 }),
+  LW_PsiPanic: () => ({ PsiKind: 'Panic', Base: 50, Param: 2 }),
+  LW_MindControl: () => ({ PsiKind: 'MindControl', Base: 50 + ini('MIND_CONTROL_DIFFICULTY'), Param: 5, Param2: 3 }),
+  LW_PsiInspiration: () => ({ PsiKind: 'Inspiration', Radius: 3, Will: c('PSIINSPIRED_WILL_BONUS'), Param: 4, Param2: 2 }),
   // In the cloud of the soldier's smoke grenades (X2Effect_LWSmoke, added to them: AddSmokeBonuses). Combat Drugs'
   // text says +20 critical chance; its constant (used here) is 10.
   LW_DenseSmoke: () => ({ SmokeDefense: c('DENSE_SMOKE_DEFENSE_BONUS') }),

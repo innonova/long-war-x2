@@ -63,6 +63,18 @@ export function makeWords({ plan, core, loc, consts }) {
     GrenadierCharges: () => c('GRENADIER_CHARGES'),
     DoubleTapCooldown: () => c('DOUBLETAP_COOLDOWN'),
     HeadshotCritBonus: () => c('PRECISION_SHOT_CRITICAL_CHANCE_BONUS'),
+    // Psi powers (features/lw-psi.md): EW's ability table's cooldowns and durations, counted on every side's turn,
+    // as the soldier's own turns ((n - 1) / 2), as the mod's abilities count them.
+    PsiInspirationWillBonus: () => c('PSIINSPIRED_WILL_BONUS'),
+    PsiInspirationDuration: () => 2,
+    PsiInspirationCooldown: () => 4,
+    PsiPanicCooldown: () => 2,
+    MindControlDuration: () => 3,
+    MindControlCooldown: () => 5,
+    TelekineticFieldCooldown: () => 4,
+    RiftCooldown: () => 4,
+    TKFieldDefenseBonus: () => c('TELEKINETIC_FIELD_DEFENSE_BONUS'),
+    MindMergeCritBonus: () => c('MINDMERGE_CRIT_BONUS'),
     // EW's BuildAbility gives Precision and Disabling Shot a cooldown of 5, counted on every side's turn: the
     // soldier's own turns, as the mod's abilities count them (X2Ability_LWStandins.ActiveShot), 2.
     HeadshotCooldown: () => 2,

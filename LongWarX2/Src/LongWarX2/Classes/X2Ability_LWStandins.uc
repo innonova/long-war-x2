@@ -36,6 +36,10 @@ struct LWStandin
 	var int SmokeDefense, SmokeCrit, SmokeWill;
 	/** Damage taken more (%) for ShredTurns turns by a unit this soldier hits with an LMG, a SAW or a rocket (Shredder Ammo: AddShredders). */
 	var int ShredPct, ShredTurns;
+	/** A psi power in missions (X2Ability_LWPsi): which; the will check's base; a second number (turns); its radius (tiles); will given. */
+	var name PsiKind;
+	var int Base, Param2, Will;
+	var float Radius;
 };
 
 var config array<LWStandin> Standins;
@@ -78,6 +82,8 @@ static function array<X2DataTemplate> CreateTemplates()
 			Templates.AddItem(ActiveShot(S));
 		else if (S.Kind == 'CloseCombat')
 			Templates.AddItem(CloseCombatShot(S));
+		else if (S.PsiKind != '')
+			Templates.AddItem(PsiPower(S));
 		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.Damage2 != 0 || S.DamageTaken != 0 || S.CritDamagePct != 0 || S.BonusRadius != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0)
 			Templates.AddItem(Passive(S));
 		else
@@ -222,6 +228,121 @@ static function X2AbilityTemplate CloseCombatShot(LWStandin S)
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Template.BuildVisualizationFn = OverwatchShot_BuildVisualization;
 	Template.bShowActivation = true;
+	return Template;
+}
+
+/**
+ * Long War's psi powers in missions (features/lw-psi.md, step 2), built for the stand-ins whose Kind is Psi
+ * (CreateTemplates): a will check, the soldier's will against the target's (XCOM 2's StatCheck_UnitVsUnit:
+ * Base + will - will), and XCOM 2's status effects.
+ * - Mindfray: disoriented (XCOM 2's), and Damage base damage; robots immune.
+ * - Panic: panicked (XCOM 2's); robots immune.
+ * - Mind Control: controlled for Param2 turns (XCOM 2's); robots immune.
+ * - Inspiration: allies within Radius tiles of the place chosen lose disorientation and panic and gain Will for
+ *   Param2 turns.
+ * The soldier has no psi animations: the powers show their effects without a firing animation.
+ */
+static function X2AbilityTemplate PsiPower(LWStandin S)
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityToHitCalc_StatCheck_UnitVsUnit Check;
+	local X2AbilityCost_ActionPoints Cost;
+	local X2AbilityCooldown Cooldown;
+	local X2Condition_UnitProperty Living;
+	local X2Effect_ApplyWeaponDamage Damage;
+	local X2AbilityTarget_Cursor Cursor;
+	local X2AbilityMultiTarget_Radius Radius;
+	local X2Effect_RemoveEffects Calm;
+	local X2Effect_PersistentStatChange Will;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, S.Name);
+	Template.IconImage = S.Icon;
+	Template.AbilitySourceName = 'eAbilitySource_Psionic';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
+	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.CLASS_SQUADDIE_PRIORITY;
+	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Template.AddShooterEffectExclusions();
+	Cost = new class'X2AbilityCost_ActionPoints';
+	Cost.iNumPoints = 1;
+	Cost.bConsumeAllPoints = true;
+	Template.AbilityCosts.AddItem(Cost);
+	if (S.Param > 0)
+	{
+		Cooldown = new class'X2AbilityCooldown';
+		Cooldown.iNumTurns = S.Param;
+		Template.AbilityCooldown = Cooldown;
+	}
+	Template.bSkipFireAction = true;
+	Template.bShowActivation = true;
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
+
+	if (S.PsiKind == 'Inspiration')
+	{
+		Template.Hostility = eHostility_Neutral;
+		Template.AbilityToHitCalc = default.DeadEye;
+		Cursor = new class'X2AbilityTarget_Cursor';
+		Cursor.bRestrictToSquadsightRange = true;
+		Template.AbilityTargetStyle = Cursor;
+		Radius = new class'X2AbilityMultiTarget_Radius';
+		Radius.fTargetRadius = S.Radius * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
+		Radius.bIgnoreBlockingCover = true;
+		Template.AbilityMultiTargetStyle = Radius;
+		Template.TargetingMethod = class'X2TargetingMethod_GremlinAOE';
+		Living = new class'X2Condition_UnitProperty';
+		Living.ExcludeHostileToSource = true;
+		Living.ExcludeFriendlyToSource = false;
+		Living.ExcludeDead = true;
+		Template.AbilityMultiTargetConditions.AddItem(Living);
+		Calm = new class'X2Effect_RemoveEffects';
+		Calm.EffectNamesToRemove.AddItem(class'X2AbilityTemplateManager'.default.DisorientedName);
+		Calm.EffectNamesToRemove.AddItem(class'X2AbilityTemplateManager'.default.PanickedName);
+		Template.AddMultiTargetEffect(Calm);
+		Will = new class'X2Effect_PersistentStatChange';
+		Will.EffectName = name(S.Name $ "_Will");
+		Will.BuildPersistentEffect(S.Param2, false, true, false, eGameRule_PlayerTurnBegin);
+		Will.SetDisplayInfo(ePerkBuff_Bonus, Template.LocFriendlyName, Template.GetMyHelpText(), Template.IconImage, true);
+		Will.AddPersistentStatChange(eStat_Will, S.Will);
+		Will.DuplicateResponse = eDupe_Refresh;
+		Template.AddMultiTargetEffect(Will);
+		return Template;
+	}
+
+	Template.Hostility = eHostility_Offensive;
+	Check = new class'X2AbilityToHitCalc_StatCheck_UnitVsUnit';
+	Check.AttackerStat = eStat_Will;
+	Check.DefenderStat = eStat_Will;
+	Check.BaseValue = S.Base;
+	Template.AbilityToHitCalc = Check;
+	Template.AbilityTargetStyle = default.SimpleSingleTarget;
+	Template.AbilityTargetConditions.AddItem(default.LivingHostileTargetProperty);
+	Template.AbilityTargetConditions.AddItem(default.GameplayVisibilityCondition);
+	Living = new class'X2Condition_UnitProperty';
+	Living.ExcludeRobotic = true;
+	Living.FailOnNonUnits = true;
+	Template.AbilityTargetConditions.AddItem(Living);
+	switch (S.PsiKind)
+	{
+	case 'Mindfray':
+		Template.AddTargetEffect(class'X2StatusEffects'.static.CreateDisorientedStatusEffect());
+		if (S.Damage > 0)
+		{
+			Damage = new class'X2Effect_ApplyWeaponDamage';
+			Damage.bIgnoreBaseDamage = true;
+			Damage.EffectDamageValue.Damage = S.Damage;
+			Damage.EffectDamageValue.DamageType = 'Psi';
+			Template.AddTargetEffect(Damage);
+		}
+		break;
+	case 'Panic':
+		Template.AddTargetEffect(class'X2StatusEffects'.static.CreatePanickedStatusEffect());
+		break;
+	case 'MindControl':
+		Template.AddTargetEffect(class'X2StatusEffects'.static.CreateMindControlStatusEffect(S.Param2));
+		Template.AddTargetEffect(class'X2StatusEffects'.static.CreateMindControlRemoveEffects());
+		break;
+	}
 	return Template;
 }
 

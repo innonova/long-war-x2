@@ -91,3 +91,59 @@ powers as XCOM 2 abilities in missions.
   but not applied yet.**
 - **No screen yet.** Training is begun from the control port. A Psi Labs
   panel in the base screen is next, with step 2.
+
+## Report (2026-11-02, step 2: four powers in missions)
+
+**Mindfray, Panic, Mind Control and Inspiration work as abilities**
+(`X2Ability_LWStandins.PsiPower`, for stand-ins with a `PsiKind`):
+- **The attacking three** check will: XCOM 2's
+  `X2AbilityToHitCalc_StatCheck_UnitVsUnit` with the soldier's will
+  against the target's, base 50. Mind Control's base is 15 (50 + Long
+  War's `MIND_CONTROL_DIFFICULTY`, −35). Robots are immune.
+  - Mindfray: XCOM 2's disoriented, and 1 damage (Long War's text: "one
+    base damage").
+  - Panic: XCOM 2's panicked; cooldown 2.
+  - Mind Control: XCOM 2's mind control for 3 turns; cooldown 5.
+- **Inspiration**: aimed at a place. Allies within 3 tiles lose
+  disorientation and panic and gain +30 will (`PSIINSPIRED_WILL_BONUS`)
+  for 2 turns; cooldown 4.
+- Each costs an action and ends the turn. The cooldowns and durations are
+  EW's, from its ability table, counted as the soldier's own turns.
+- **Bound to the soldier's primary weapon**, both when the Labs give the
+  power and in the test aid. XCOM 2 measures a single-target ability's
+  reach by its weapon (its psi powers by the psi amp's); unbound, every
+  target was "not in range".
+- **No firing animation.** Soldiers have no psi animations; the effects
+  show without one.
+- **Icons**: XCOM 2 still carries EW's psi icons (`UIPerk_psi_mindfray`
+  …), now found by the generator for all the powers.
+
+**Checked in the game** (all four given to the squad by the test aid,
+soldiers put 6 tiles from a pod):
+- Mindfray from four soldiers: one hit. The Sectoid went from 8/8 to 7/8
+  and carried `Disoriented`.
+- Inspiration at a soldier's feet: the three soldiers in its area gained
+  `LW_PsiInspiration_Will`, with their will up 21 to 27.
+- Panic was used and then reported `AA_CoolingDown`. The target listed
+  first was one of our soldiers, mind-controlled by a Sectoid, so its
+  effect was not seen.
+- **Mind Control not tried**: its soldier was bleeding out.
+- The `near` test aid put three soldiers on one tile (it does not check
+  for units there).
+
+### Decisions
+
+- **Base 50 for the will check** (APPROXIMATION). EW's psi chance formula
+  was not read.
+- **Each power ends the turn.**
+- **Mindfray has no cooldown, and lasts as XCOM 2's disorientation does.**
+  Long War's duration and cooldown for it are not known (its words show
+  them unfilled).
+
+### Left open
+
+- The other powers are stand-ins: Neural Feedback, Regen Biofield,
+  Distortion Field, Mind Merge, Telekinetic Field, Pyrokinesis,
+  Psychokinetic Strike, Rift.
+- Psi XP and ranks (`m_iPsiXPLevels`); the tier and fatigue numbers.
+- A Psi Labs panel in the base screen.
