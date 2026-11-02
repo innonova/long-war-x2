@@ -5,6 +5,12 @@ class UILWEWScreen extends UIScreen;
 
 var string UIPackage;
 
+/** Whether the converted EW UI package is in the mod's Content (loading one of its objects loads it whole). */
+static function bool HasEWScreens()
+{
+	return DynamicLoadObject(default.UIPackage $ ".ewxChooseTech", class'Object', true) != none;
+}
+
 /** The converted package loaded (any of its objects loads it whole), then the screen pushed with EW's movie. */
 static function string ShowMovie(string MovieName, optional string Instance)
 {

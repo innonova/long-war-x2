@@ -158,6 +158,9 @@ function Handle(string Line, out array<string> Out)
 	case "ewscreen":
 		Out.AddItem(Args.Length > 1 ? class'UILWEWScreen'.static.ShowMovie(Args[1], Args.Length > 2 ? Args[2] : "") : "ERR ewscreen <EW movie: MissionControl, StrategyHUD …>");
 		return;
+	case "ewresearch":
+		Out.AddItem(class'UILWEWResearch'.static.Open());
+		return;
 	case "ewcall":
 		// A function of the open EW movie: ewcall <function> [arguments; _ for a space].
 		Out.AddItem(class'UILWEWScreen'.static.CallMovie(Args));

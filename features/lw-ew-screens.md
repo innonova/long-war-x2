@@ -100,3 +100,30 @@ What was built:
 3. The setup program runs `ew-ui.ts` on the player's install.
 4. The 3D: the globe for the Geoscape, the base's cutaway, with the map
    converter.
+
+## Report (2026-11-02, the first screen wired: research)
+
+**EW's research screen chooses XCOM's research**, with Long War's techs
+as the port runs them (`UILWEWResearch`). It is driven as EW's
+`UIChooseTech` drives the movie (read from EW's code): `SetTitle`,
+`clear`, `AddOption`, `setFocus`, `UpdateInfo`, `SetConfirmButtonHelp`.
+EW's clicks are 400 to select an option, 398 to select and accept, and
+391 on the confirm button to accept. The project starts as XCOM 2's
+research screen starts one (`SetNewResearchProject`).
+- **XCOM 2's research screen is replaced by it** wherever the converted
+  package is present (`UIScreenListener_LWEWScreens`; the Shadow Chamber
+  is left alone). Without the package, XCOM 2's stays.
+- The test aid `ewresearch` opens it.
+- **Checked** (a new campaign): the four opening techs in EW's list,
+  Xenobiology selected with "18 Days", Long War's summary and XCOM 2's
+  tech picture; Enter started it ("research begun: LWTech_Xenobiology")
+  and the screen closed.
+- **Not yet right**: the Down key did not move the selection; EW's
+  movie seems to take it and move its own focus to the confirm button.
+  The title and button labels are our own words ("RESEARCH", "START
+  RESEARCH") until EW's are written by the setup program.
+
+### Decisions
+
+- **No confirmation popup** when switching projects. XCOM 2 asks; EW's
+  screen did not ask either.
