@@ -146,4 +146,26 @@ soldiers put 6 tiles from a pod):
   Distortion Field, Mind Merge, Telekinetic Field, Pyrokinesis,
   Psychokinetic Strike, Rift.
 - Psi XP and ranks (`m_iPsiXPLevels`); the tier and fatigue numbers.
-- A Psi Labs panel in the base screen.
+- ~~A Psi Labs panel in the base screen.~~ Done the same night, below.
+
+## Report (2026-11-02, the Psi Labs panel)
+
+**The base screen has a Psi Labs line once the Labs are built**
+(`UILWBase.RefreshPsi`). It holds the soldier (cycled among those ready and
+not training, with their will), the power (cycled), the chance and hours,
+what is missing ("needs its research"), and who is training with the hours
+left. TRAIN begins training.
+
+**Checked on the screen:**
+- The Labs placed, the power cycled to Mindfray, TRAIN clicked: "Psi
+  training begun." The line read "46 %, 188 hours | Olav Karlsen: Mindfray
+  204h", and the control port's list agreed.
+- With the words written on the test machine, the powers show Long War's
+  names (Neural Feedback, Mindfray).
+
+**On the way:** the facility line's text moved right of its arrow buttons,
+which covered "TO BUILD". The "<" button draws as a thin line only, as it
+did before.
+
+**Test aid:** `open base|hangar|engineering` opens the Geoscape's screens
+as their buttons do.

@@ -183,6 +183,20 @@ function Handle(string Line, out array<string> Out)
 	case "geoscape":
 		Out.AddItem(OpenGeoscape() != none ? "ok" : "ERR not on the Avenger");
 		return;
+	case "open":
+		// A Geoscape screen opened, as its button opens it (a test aid: base, hangar, engineering).
+		Geo = OpenGeoscape();
+		if (Geo == none)
+			Out.AddItem("ERR not on the Avenger");
+		else if (Args.Length > 1 && Args[1] ~= "base")
+			Geo.OnBase(none);
+		else if (Args.Length > 1 && Args[1] ~= "hangar")
+			Geo.OnHangar(none);
+		else if (Args.Length > 1 && Args[1] ~= "engineering")
+			Geo.OnEngineering(none);
+		else
+			Out.AddItem("ERR open base|hangar|engineering");
+		return;
 	}
 	// The rest needs the campaign's Geoscape.
 	if (S == none)

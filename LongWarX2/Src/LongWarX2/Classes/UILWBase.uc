@@ -1,14 +1,19 @@
 // Long War's base screen (features/lw-base.md), opened from the Geoscape: the 7 x 5 tiles under the
 // ground, each a button (rock: dig it; the shaft: an access lift; empty: the facility chosen), the
-// facility to build, the base's power, satellites, bonuses and upkeep. The rules are LWBase's; time
-// passes on the Geoscape.
-class UILWBase extends UIScreen dependson(LWBaseRules);
+// facility to build, the base's power, satellites, bonuses and upkeep; with the Psi Labs built, their
+// training (features/lw-psi.md: the soldier and the power chosen, the chance and hours, who is
+// training). The rules are LWBase's; time passes on the Geoscape.
+class UILWBase extends UIScreen dependson(LWBaseRules, XComGameState_LWStrategy);
 
 const TILES = 35;
 
 var UIText Header, SummaryText, StatusText, ChoiceText;
 var UIButton TileButtons[TILES];
 var UIButton PrevFacility, NextFacility, CloseButton;
+/** The Psi Labs (features/lw-psi.md): the soldier and the power chosen, training begun; who is training. */
+var UIButton PsiSoldierButton, PsiPowerButton, PsiTrainButton;
+var UIText PsiText;
+var int PsiSoldier, PsiPower;
 /** The buildable facilities (Long War's ids) and the one chosen. */
 var array<int> Choices;
 var int Choice;
@@ -39,13 +44,25 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	PrevFacility = Spawn(class'UIButton', self).InitButton('LWBasePrev', "<", OnPrev);
 	PrevFacility.SetPosition(90, 760);
 	NextFacility = Spawn(class'UIButton', self).InitButton('LWBaseNext', ">", OnNext);
-	NextFacility.SetPosition(150, 760);
+	NextFacility.SetPosition(160, 760);
 	ChoiceText = Spawn(class'UIText', self).InitText('LWBaseChoice', "");
-	ChoiceText.SetPosition(220, 760);
+	// Right of the arrows (a button is wider than its one character).
+	ChoiceText.SetPosition(300, 760);
 	ChoiceText.SetWidth(1600);
 	StatusText = Spawn(class'UIText', self).InitText('LWBaseStatus', "");
 	StatusText.SetPosition(90, 830);
 	StatusText.SetWidth(1700);
+	PsiSoldierButton = Spawn(class'UIButton', self).InitButton('LWBasePsiSoldier', "SOLDIER", OnPsiSoldier);
+	PsiSoldierButton.SetPosition(90, 880);
+	PsiSoldierButton.SetWidth(380);
+	PsiPowerButton = Spawn(class'UIButton', self).InitButton('LWBasePsiPower', "POWER", OnPsiPower);
+	PsiPowerButton.SetPosition(490, 880);
+	PsiPowerButton.SetWidth(300);
+	PsiTrainButton = Spawn(class'UIButton', self).InitButton('LWBasePsiTrain', "TRAIN", OnPsiTrain);
+	PsiTrainButton.SetPosition(810, 880);
+	PsiText = Spawn(class'UIText', self).InitText('LWBasePsiText', "");
+	PsiText.SetPosition(960, 870);
+	PsiText.SetWidth(820);
 	CloseButton = Spawn(class'UIButton', self).InitButton('LWBaseClose', "CLOSE", OnClose);
 	CloseButton.SetPosition(1700, 970);
 	Refresh();
@@ -76,6 +93,90 @@ function Refresh()
 			$ ", power" @ F.Power $ ", upkeep" @ class'LWStrategyRules'.static.Money(F.Upkeep) $ "," @ F.Days @ "days" $ (Why != "" ? "  (needs" @ Why $ ")" : ""));
 	}
 	StatusText.SetText(Status != "" ? Status : "Rock: dig it. The shaft: an access lift. Empty ground: the facility chosen below.");
+	RefreshPsi(S);
+}
+
+/** The soldiers who may train: ready for duty, not already training. */
+function array<XComGameState_Unit> PsiCandidates(XComGameState_LWStrategy S)
+{
+	local array<XComGameState_Unit> Out;
+	local XComGameState_Unit Unit;
+	local StateObjectReference Ref;
+
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit != none && Unit.IsSoldier() && Unit.CanGoOnMission() && !S.InPsiTraining(Unit.ObjectID))
+			Out.AddItem(Unit);
+	}
+	return Out;
+}
+
+/** The Psi Labs' line: shown once the Labs are built. */
+function RefreshPsi(XComGameState_LWStrategy S)
+{
+	local array<XComGameState_Unit> Soldiers;
+	local LWBaseRules.LWPsiPower P;
+	local XComGameState_LWStrategy.LWPsiTrainee T;
+	local XComGameState_Unit Unit;
+	local string Text, Why;
+	local int Will;
+
+	if (class'LWBase'.static.Count(S, 17) == 0 || class'LWBaseRules'.default.PsiPowers.Length == 0)
+	{
+		PsiSoldierButton.Hide();
+		PsiPowerButton.Hide();
+		PsiTrainButton.Hide();
+		PsiText.SetText("");
+		return;
+	}
+	PsiSoldierButton.Show();
+	PsiPowerButton.Show();
+	PsiTrainButton.Show();
+	Soldiers = PsiCandidates(S);
+	PsiPower = PsiPower % class'LWBaseRules'.default.PsiPowers.Length;
+	P = class'LWBaseRules'.default.PsiPowers[PsiPower];
+	PsiPowerButton.SetText(class'X2Ability_LWStandins'.static.PsiPowerName(class'X2Ability_LWStandins'.static.PsiAbilityFor(P.Perk)));
+	if (Soldiers.Length > 0)
+	{
+		PsiSoldier = PsiSoldier % Soldiers.Length;
+		Unit = Soldiers[PsiSoldier];
+		Will = int(Unit.GetMaxStat(eStat_Will));
+		PsiSoldierButton.SetText("PSI:" @ Unit.GetFullName() @ "(will" @ Will $ ")");
+		class'XComGameState_LWStrategy'.static.CanTrainPsi(S, Unit, P, Why);
+		Text = class'LWBaseRules'.static.PsiChance(Will, P) $ "%," @ class'LWBaseRules'.static.PsiHours(Will, P) @ "hours" $ (Why != "" ? " (needs" @ Why $ ")" : "");
+	}
+	else
+	{
+		PsiSoldierButton.SetText("PSI: no soldier ready");
+		Text = "";
+	}
+	foreach S.PsiTrainees(T)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(T.Unit));
+		Text $= " | " $ (Unit != none ? Unit.GetFullName() : "?") $ ":" @ class'X2Ability_LWStandins'.static.PsiPowerName(class'X2Ability_LWStandins'.static.PsiAbilityFor(T.Perk)) @ T.HoursLeft $ "h";
+	}
+	PsiText.SetText(Text);
+}
+
+simulated function OnPsiSoldier(UIButton Button) { PsiSoldier++; Refresh(); }
+simulated function OnPsiPower(UIButton Button) { PsiPower++; Refresh(); }
+
+simulated function OnPsiTrain(UIButton Button)
+{
+	local XComGameState_LWStrategy S;
+	local array<XComGameState_Unit> Soldiers;
+	local string Why;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Soldiers = PsiCandidates(S);
+	if (Soldiers.Length == 0)
+		return;
+	if (class'XComGameState_LWStrategy'.static.StartPsi(Soldiers[PsiSoldier % Soldiers.Length].ObjectID, class'LWBaseRules'.default.PsiPowers[PsiPower % class'LWBaseRules'.default.PsiPowers.Length].Perk, Why))
+		Status = "Psi training begun.";
+	else
+		Status = "Psi training needs" @ Why $ ".";
+	Refresh();
 }
 
 simulated function OnTile(UIButton Button)
