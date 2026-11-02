@@ -22,6 +22,8 @@ export interface EWMap {
   pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean }[]
   looks: Map<string, { kind: string; diffuse: string; normal: string }>
   lights: { kind: string; loc: number[]; rot: number[]; radius: number; brightness: number; color: number[]; falloff: number; inner: number; outer: number }[]
+  /** EW's building volumes, each with its floors (a box each). */
+  buildings: { center: number[]; extent: number[]; floors: { center: number[]; extent: number[] }[]; ufo: boolean }[]
 }
 
 /** The section read from an .ini (ew-map.ts's output). */
@@ -30,7 +32,7 @@ export function readSection(text: string): EWMap {
   const vec = (s: string) => ['X', 'Y', 'Z'].map((k) => num(s, k))
   const sub = (s: string, k: string) => new RegExp(`\\b${k}=\\(([^()]*)\\)`).exec(s)?.[1] ?? ''
   const str = (s: string, k: string) => new RegExp(`\\b${k}="([^"]*)"`).exec(s)?.[1] ?? ''
-  const m: EWMap = { name: '', mapPackage: '', playCenter: [0, 0, 0], playExtent: [0, 0, 0], dropZones: [], pieces: [], looks: new Map(), lights: [] }
+  const m: EWMap = { name: '', mapPackage: '', playCenter: [0, 0, 0], playExtent: [0, 0, 0], dropZones: [], pieces: [], looks: new Map(), lights: [], buildings: [] }
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim()
     let x: RegExpExecArray | null
@@ -39,6 +41,11 @@ export function readSection(text: string): EWMap {
     else if (line.startsWith('PlayCenter=')) m.playCenter = vec(line)
     else if (line.startsWith('PlayExtent=')) m.playExtent = vec(line)
     else if (line.startsWith('+DropZones=')) m.dropZones.push(vec(line))
+    else if (line.startsWith('+Buildings=')) {
+      // Center=(…),Extent=(…),Floors=((Center=(…),Extent=(…)),…)
+      const boxes = [...line.matchAll(/Center=\(([^()]*)\),Extent=\(([^()]*)\)/g)].map((x) => ({ center: vec(x[1]!), extent: vec(x[2]!) }))
+      if (boxes.length) m.buildings.push({ ...boxes[0]!, floors: boxes.slice(1), ufo: /Ufo=true/.test(line) })
+    }
     else if (line.startsWith('+Looks='))
       m.looks.set(str(line, 'Material'), { kind: /Kind=(\w+)/.exec(line)?.[1] ?? 'Prop', diffuse: str(line, 'Diffuse'), normal: str(line, 'Normal') })
     else if (line.startsWith('+Pieces=')) {
@@ -80,6 +87,17 @@ export interface PlotSettings {
   lightScale: number
   lightKinds: string[]
 }
+
+/**
+ * EW materials no stand-in can be made from (no diffuse map found): by name. Markers and skies are not written at all (a
+ * drop zone's marker, the level designers' border; EW's sky domes, where XCOM 2's lighting map brings its own sky), nor
+ * decal-like effects an opaque stand-in would draw as slabs (road paint, puddles, scorch marks, fire). Glass becomes a
+ * translucent pane; anything else a plain grey stand-in.
+ */
+const SKIPPED_MATERIAL = /Drop_Zone|DESIGN_Border|Sky\b|Sky_|NightSky|DuskSky|NoonSky|SkyDome|RoadPaint|Puddle|Decal|Scar|Asphalt_Patch|Burning|Charred|Black$/i
+const GLASS_MATERIAL = /Glass|Window/i
+const GLASS = { parent: 'Materials.Approved.Translucent_SD', diffuse: 'EngineResources.WhiteSquareTexture', opacity: 0.35, specular: 0.5 }
+const GREY = { diffuse: 'EngineResources.WhiteSquareTexture', tint: [0.35, 0.35, 0.35, 1] }
 
 const TILE = 96
 const FLOOR = 64
@@ -139,9 +157,9 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     throw new Error(`no ${suffix} in the template`)
   }
   /** A new export: a clone of a sample's entry under a new name and outer. */
-  const addExport = (sample: number, name: string, outer: number, bytes: Uint8Array): number => {
+  const addExport = (sample: number, name: string, outer: number, bytes: Uint8Array, over: Partial<Export> = {}): number => {
     const e = pkg.exports[sample - 1]
-    added.push({ entry: { ...e, outer, objectName: objName(name), serialSize: 0, serialOffset: 0, exportFlags: 0, netObjects: [] }, data: bytes })
+    added.push({ entry: { ...e, outer, objectName: objName(name), serialSize: 0, serialOffset: 0, exportFlags: 0, netObjects: [], ...over }, data: bytes })
     return exportCount()
   }
   const counters = new Map<string, number>()
@@ -236,6 +254,25 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     if (mics.has(path)) return mics.get(path)!
     const look = map.looks.get(path)
     let ref = 0
+    if (look && !look.diffuse && !SKIPPED_MATERIAL.test(path)) {
+      // No diffuse map found: glass as a translucent pane, anything else plain grey.
+      const glass = GLASS_MATERIAL.test(path)
+      const p = parse(pkg.data(sampleMIC), 4)
+      const name = (n: string) => bin((x) => { const r = objName(n); x.i32(r.index).i32(r.number) })
+      const param = (n: string, value: T) => serialize({ head: new Uint8Array(0), tags: [{ name: 'ParameterName', type: 'NameProperty', arrayIndex: 0, value: name(n) }, value], tail: new Uint8Array(0) })
+      const scalars: [string, number][] = glass ? [['Opacity', GLASS.opacity], ['SpecularScale', GLASS.specular]] : settings.scalars
+      const tags: T[] = [
+        tObj('Parent', importRef(glass ? GLASS.parent : settings.parents.Prop!, 'Material')),
+        tGuid('LightingGuid'),
+        { name: 'TextureParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(1); w.bytes(param('Diffuse', tObj('ParameterValue', importRef(glass ? GLASS.diffuse : GREY.diffuse, 'Texture2D')))) }) },
+        { name: 'ScalarParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(scalars.length); for (const [n, v] of scalars) w.bytes(param(n, tFloat('ParameterValue', v))) }) },
+      ]
+      if (!glass)
+        tags.push({ name: 'VectorParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(1); w.bytes(param('TintColor', { name: 'ParameterValue', type: 'StructProperty', struct: 'LinearColor', arrayIndex: 0, value: bin((x) => GREY.tint.forEach((c) => x.f32(c))) })) }) })
+      ref = addExport(sampleMIC, nextName(glass ? 'LWX2Glass' : 'LWX2Grey'), level, serialize({ head: objectHead(), tags, tail: p.tail }))
+      mics.set(path, ref)
+      return ref
+    }
     if (look && look.diffuse && settings.parents[look.kind]) {
       const p = parse(pkg.data(sampleMIC), 4)
       const tags: T[] = [tObj('Parent', importRef(settings.parents[look.kind]!, 'Material')), tGuid('LightingGuid')]
@@ -273,7 +310,10 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const actorSample = parse(pkg.data(sampleActor), 26)
   const meshSample = parse(pkg.data(sampleMesh), 8)
   // Meshes EW generated inside its own level (its volumes' meshes) are not in the converted package's carried content.
-  const pieces = map.pieces.filter((p) => !p.mesh.startsWith('TheWorld.'))
+  const pieces = map.pieces.filter(
+    (p) => !p.mesh.startsWith('TheWorld.') && !/SkyDome|Skybox/i.test(p.mesh)
+      && !(p.materials.length > 0 && p.materials.every((m) => !m || (SKIPPED_MATERIAL.test(m) && !map.looks.get(m)?.diffuse))),
+  )
   for (const piece of pieces) {
     // Its stand-ins first: they are exports too, and the actor's component must come right after the actor.
     const mats = piece.materials.map(micFor)
@@ -353,6 +393,47 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     data.set(worldData, serialize(p))
   }
 
+  // --- EW's buildings: a building volume each, a floor volume each of its floors (box actors on the template's brush) -----
+  // XCOM 2's building visibility cuts a building's roof and upper floors away when a unit is inside or below them.
+  const brushComp = byPath('XComLevelVolume_0.BrushComponent_0')
+  const boxModel = byPath('XComLevelVolume_0.Model_LV')
+  const volumeSample = parse(pkg.data(volume), 26)
+  const compSample = parse(pkg.data(brushComp), 8)
+  let floorCount = 0
+  /** A box volume of an XComGame class (the template's box brush, scaled and placed), with extra tags. */
+  const boxVolume = (className: string, name: string, box: { center: number[]; extent: number[] }, extra: T[]): number => {
+    const classRef = importRef(`XComGame.${className}`, 'Class', 'Core')
+    const defaultRef = importRef(`XComGame.Default__${className}`, className, 'XComGame')
+    const compArch = importRef(`XComGame.Default__${className}.BrushComponent0`, 'BrushComponent')
+    const s = [box.extent[0]! / BOX.half, box.extent[1]! / BOX.half, box.extent[2]! / ((BOX.z1 - BOX.z0) / 2)]
+    const loc = [box.center[0]!, box.center[1]!, box.center[2]! - s[2]! * ((BOX.z0 + BOX.z1) / 2)]
+    const actorRef = exportCount() + 1
+    const head = actorHead(volumeSample.head)
+    new DataView(head.buffer).setInt32(0, classRef, true)
+    new DataView(head.buffer).setInt32(4, classRef, true)
+    const tags: T[] = [tObj('Brush', boxModel), tObj('BrushComponent', actorRef + 1), tObj('CollisionComponent', actorRef + 1), tVec('Location', loc), tVec('DrawScale3D', s), ...extra]
+    addExport(volume, name, level, serialize({ head, tags, tail: volumeSample.tail }), { classIndex: classRef, archetype: defaultRef })
+    addExport(brushComp, nextName('BrushComponent'), actorRef, serialize({ head: componentHead(compSample.head), tags: compSample.tags.map((t) => ({ ...t })), tail: compSample.tail }), { archetype: compArch })
+    placed.push(actorRef)
+    return actorRef
+  }
+  for (const b of map.buildings) {
+    const floors = b.floors.map((f, k) => {
+      floorCount++
+      return { ref: boxVolume('XComFloorVolume', nextName('XComFloorVolume'), f, [tInt('FloorNumber', k)]), z: f.center[2]!, extent: f.extent[2]! }
+    })
+    // Floors: an array of tagged structs (fCenterZ, fExtent, FloorVolumes), each ended by None.
+    const floorsTag: T = {
+      name: 'Floors', type: 'ArrayProperty', arrayIndex: 0,
+      value: bin((w) => {
+        w.i32(floors.length)
+        for (const f of floors)
+          w.bytes(serialize({ head: new Uint8Array(0), tags: [tFloat('fCenterZ', f.z), tFloat('fExtent', f.extent), { name: 'FloorVolumes', type: 'ArrayProperty', arrayIndex: 0, value: bin((x) => { x.i32(1); x.i32(f.ref) }) }], tail: new Uint8Array(0) }))
+      }),
+    }
+    boxVolume('XComBuildingVolume', nextName('XComBuildingVolume'), b, [floorsTag, ...(b.ufo ? [tBool('IsUfo', true)] : [])])
+  }
+
   // --- The soldiers' spawns at EW's drop zones (the first in the template's own group spawn) -----------------------
   const spawnSample = parse(pkg.data(spawn), 26)
   map.dropZones.forEach((dz, k) => {
@@ -398,7 +479,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const tiles = [Math.round((max[0]! - min[0]!) / TILE), Math.round((max[1]! - min[1]!) / TILE), Math.round((max[2]! - min[2]!) / FLOOR)]
   return {
     bytes,
-    report: `${map.name}: ${pieces.length} pieces, ${[...mics.values()].filter((r) => r > 0).length} stand-in materials, ${lightCount} lights, ${map.dropZones.length} drop zones; level volume ${tiles.join(' x ')} tiles; ${(bytes.length / 1024).toFixed(0)} KB`,
+    report: `${map.name}: ${pieces.length} pieces, ${[...mics.values()].filter((r) => r > 0).length} stand-in materials, ${lightCount} lights, ${map.dropZones.length} drop zones, ${map.buildings.length} buildings (${floorCount} floors); level volume ${tiles.join(' x ')} tiles; ${(bytes.length / 1024).toFixed(0)} KB`,
   }
 }
 

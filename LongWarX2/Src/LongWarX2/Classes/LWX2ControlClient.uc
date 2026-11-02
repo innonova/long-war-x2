@@ -180,6 +180,15 @@ function Handle(string Line, out array<string> Out)
 		// A parameter of every stand-in material on the EW map, live: ewmat <parameter> <number | texture path>.
 		Out.AddItem(SetEWMaterials(Args.Length > 1 ? name(Args[1]) : '', Args.Length > 2 ? Args[2] : ""));
 		return;
+	case "fog":
+		// The fog of war's levels, live: fog <never seen> <seen before> <never seen shown as seen: 0 or 1>.
+		class'LWX2PartPlacer'.default.FogNeverSeen = Args.Length > 1 ? float(Args[1]) : 0.0;
+		class'LWX2PartPlacer'.default.FogHaveSeen = Args.Length > 2 ? float(Args[2]) : 0.0;
+		class'LWX2PartPlacer'.default.FogNeverSeenAsHaveSeen = Args.Length > 3 && Args[3] == "1";
+		class'LWX2PartPlacer'.static.Fog(`XWORLD);
+		`XWORLD.ForceUpdateAllFOWViewers();
+		Out.AddItem("fog never" @ `XWORLD.FOWNeverSeen @ "seen" @ `XWORLD.FOWHaveSeen @ "never as seen" @ `XWORLD.bShowNeverSeenAsHaveSeen);
+		return;
 	case "ewlight":
 		// EW's placed lights of a kind (point, spot, sun, sky; all) at a scale of their brightness now, live: ewlight <kind> <scale>.
 		Out.AddItem(ScaleEWLights(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? float(Args[2]) : 1.0));

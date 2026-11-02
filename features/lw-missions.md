@@ -908,3 +908,65 @@ On screen: the EW street with its own colours, no orange cast.
   building volumes (a sample to add to the template).
 - Terror sites: civilians at EW's civilian spawn points.
 - No mission template for `LWX2_EWMission` (a warning).
+
+## Night log (2026-11-02 to 03, written as it happens)
+
+The person, on the build with real plots: the first mission
+(Gatecrasher) still runs the old way; missions from the Geoscape crash
+more often than not; the one that did not crash is "mostly black and
+white" (fog of war), "the big building in the middle is clearly missing
+pieces and … the sides should have big windows". Their crash log: the
+game dies right after the battle starts, as Long War's pods are spawned
+at EW's places (`SpawnAtEWPods`), on `LWX2_CSmallScout_Marshlands` (a
+crash site).
+
+Order for the night, by what blocks playing first: the crash; the fog;
+the first mission on an EW plot; the missing pieces (glass and other
+materials without a stand-in); then building volumes (roofs), terror
+civilians.
+
+- **20:55, the crash.** Not reproduced on the test machine (the same map,
+  a crash site, release build: the mission ran, 9 aliens at 3 pods). The
+  person's crashes all came at the same moment: right after the mod set
+  the fog of war at the battle's start (`Fog`, which they had on "never
+  seen shown as seen"), before any pod spawned. Changing the fog while its
+  own thread draws it is the likely race (more often than not on their
+  machine, never on the slower test machine). **Decision:** the fog is set
+  only at the dropship briefing, before the battle, and only what differs
+  is written; with the default now off, nothing is. And pods are kept
+  inside the tile grid (`SpawnPod`), in case a pod of EW's stands beyond
+  the plot's grid. To confirm with the person's crash dumps (asked for).
+- **The fog's look.** "Never seen shown as seen" made everything grey (XCOM
+  2 draws ground seen before desaturated). **Decision:** off again
+  (XCOM 2's own fog); a live aid (`fog <never> <seen> <0|1>`) to compare
+  levels on screen.
+- **Missing pieces and windows.** 1158 of 9472 EW materials across the 83
+  maps have no diffuse map, so no stand-in: glass, skies, markers,
+  decal-like effects (road paint, puddles, scorches), alien machinery. The
+  plot used the EW material itself, which XCOM 2 cannot draw.
+  **Decision** (`ew-plot.ts`): glass and windows become translucent panes
+  (`Materials.Approved.Translucent_SD`, white, opacity 0.35); markers,
+  skies and decal-like effects are not written (an opaque stand-in would
+  draw them as slabs; XCOM 2's lighting map brings its own sky); anything
+  else a plain grey stand-in (the prop parent, white tinted grey).
+- **21:00, the first mission.** XCOM 2 makes its first mission with the
+  campaign; Long War counts its own first mission as won before the
+  campaign (the loot when its Geoscape opens), so the two stay apart.
+  **Decision:** the first mission is played on an EW abduction map's own
+  plot with our mission (`X2DownloadableContentInfo.FirstMissionOnEWMap`,
+  in `InstallNewCampaign`), and Long War's first mission squad (its three
+  Sectoid pods) stands at EW's pods (`LWMissionSquads.SquadNow`; Long
+  War's state does not exist yet). The map is known from the plot's own
+  name in the mission (`LWX2EWMapPieces.MapName`). Checked so far: the
+  campaign's start sets it ("the first mission on
+  LWX2_URB_CommercialRestaurant with LWX2_EWMission"). Not yet seen in
+  play: the control port's campaign start stops at the intro's event
+  notice (a test path problem, not the player's); to drive through the
+  real menus.
+- **21:00, roofs.** EW's buildings carry building volumes with floors, and
+  each floor lists floor volumes (box actors; EW works out the heights at
+  run time), as XCOM 2's do. The dockyard has 9 buildings, 20 floors.
+  **Decision:** the converter reads them (`+Buildings=` with each floor's
+  box); the plot writer adds an `XComBuildingVolume` per building and an
+  `XComFloorVolume` per floor, reusing the template's box brush, scaled.
+  XCOM 2's own building visibility then cuts roofs and upper floors away.

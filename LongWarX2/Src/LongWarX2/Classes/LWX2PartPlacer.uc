@@ -143,10 +143,12 @@ static function int HideForeign(Actor Finder, XComWorldData World)
 static function Fog(XComWorldData World)
 {
 	`log("LongWarX2: EW map: fog of war was: never seen" @ World.FOWNeverSeen $ ", have seen" @ World.FOWHaveSeen $ ", never seen shown as seen" @ World.bShowNeverSeenAsHaveSeen, , 'LongWarX2');
-	World.bShowNeverSeenAsHaveSeen = default.FogNeverSeenAsHaveSeen;
-	if (default.FogNeverSeen > 0)
+	// Only what differs is written: the fog is drawn on its own thread.
+	if (World.bShowNeverSeenAsHaveSeen != default.FogNeverSeenAsHaveSeen)
+		World.bShowNeverSeenAsHaveSeen = default.FogNeverSeenAsHaveSeen;
+	if (default.FogNeverSeen > 0 && World.FOWNeverSeen != default.FogNeverSeen)
 		World.FOWNeverSeen = default.FogNeverSeen;
-	if (default.FogHaveSeen > 0)
+	if (default.FogHaveSeen > 0 && World.FOWHaveSeen != default.FogHaveSeen)
 		World.FOWHaveSeen = default.FogHaveSeen;
 }
 

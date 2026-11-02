@@ -6,6 +6,52 @@ static event InstallNewCampaign(XComGameState StartState)
 {
 	class'XComGameState_LWAirWar'.static.CreateIn(StartState);
 	ReplaceFactionHeroes(StartState);
+	FirstMissionOnEWMap(StartState);
+}
+
+/**
+ * The campaign's first mission (XCOM 2's, made with the campaign) played on an Enemy Within abduction map's own plot, with
+ * Long War X2's mission: Long War's first mission squad stands at EW's pods (LWMissionSquads.SquadNow), its rule ends it.
+ * Without converted maps it stays XCOM 2's.
+ */
+static function FirstMissionOnEWMap(XComGameState StartState)
+{
+	local XComGameState_MissionSite Mission;
+	local PlotDefinition Plot;
+	local MissionDefinition Def;
+	local BiomeDefinition Biome;
+	local string EWMap;
+
+	if (!class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole)
+		return;
+	EWMap = class'LWX2EWMapPieces'.static.ChooseMap('Abduction', 0);
+	if (EWMap == "")
+		return;
+	foreach StartState.IterateByClassType(class'XComGameState_MissionSite', Mission)
+	{
+		if (Mission.Source != 'MissionSource_Start')
+			continue;
+		foreach class'XComParcelManager'.default.arrPlots(Plot)
+			if (Plot.MapName ~= ("LWX2_" $ EWMap))
+				break;
+		if (!(Plot.MapName ~= ("LWX2_" $ EWMap)))
+			return;
+		foreach class'XComTacticalMissionManager'.default.arrMissions(Def)
+			if (Def.sType == class'UILWHeadquarters'.default.EWMission)
+				break;
+		if (Def.sType != class'UILWHeadquarters'.default.EWMission)
+			return;
+		foreach class'XComParcelManager'.default.arrBiomes(Biome)
+			if (Biome.strType == class'UILWHeadquarters'.default.EWBiome)
+				break;
+		Mission.GeneratedMission.Plot = Plot;
+		Mission.GeneratedMission.Mission = Def;
+		Mission.GeneratedMission.Biome = Biome;
+		Mission.GeneratedMission.SitReps.Length = 0;
+		Mission.TacticalGameplayTags.Length = 0;
+		`log("LongWarX2: the first mission on" @ Plot.MapName @ "with" @ Def.sType, , 'LongWarX2');
+		return;
+	}
 }
 
 /**

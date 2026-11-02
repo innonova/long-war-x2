@@ -23,8 +23,8 @@ import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 
 /** Raised when what a conversion writes changes so that maps converted before must be converted again
- *  (2: carried packages nested in the map's package, for its plot). */
-export const CONVERTER_VERSION = 2
+ *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors). */
+export const CONVERTER_VERSION = 3
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -180,6 +180,26 @@ if (process.env.LWX2_EXTENTS) for (const [m, e] of [...extents].sort((a, b) => M
 // and the player starts (one per drop zone), for placing the map as a mission's ground.
 let play: { center: number[]; extent: number[] } | undefined
 const starts: number[][] = []
+// EW's building volumes (where its buildings are and their floors: what XCOM 2's building visibility cuts away when a
+// unit is inside or below), for the map's plot (ew-plot.ts).
+const buildings: { center: number[]; extent: number[]; floors: { center: number[]; extent: number[] }[]; ufo: boolean }[] = []
+/** A brush actor's box in the world: its location plus its brush's bounds (a Model's data starts with them), scaled. */
+function brushBox(index: number): { center: number[]; extent: number[] } | undefined {
+  const t = actorTags(index)
+  const loc = t?.find((x) => x.name === 'Location')
+  const brush = t?.find((x) => x.name === 'Brush')
+  if (!loc || !brush || ref(brush) <= 0) return undefined
+  const scale = t?.find((x) => x.name === 'DrawScale3D')
+  const s = scale ? [f32(scale, 0), f32(scale, 1), f32(scale, 2)] : [1, 1, 1]
+  const d = pkg.data(ref(brush))
+  const dv = new DataView(d.buffer, d.byteOffset, d.byteLength)
+  const none = meta.names.indexOf('None')
+  let o = 4
+  while (dv.getInt32(o, true) !== none) o += 24 + dv.getInt32(o + 16, true)
+  o += 8
+  const b = Array.from({ length: 6 }, (_, k) => dv.getFloat32(o + 4 * k, true))
+  return { center: [0, 1, 2].map((k) => f32(loc, k) + b[k]! * s[k]!), extent: [0, 1, 2].map((k) => b[k + 3]! * Math.abs(s[k]!)) }
+}
 // EW's alien pods (where its aliens stand: the commander's pod, how many) and its spawn points.
 const pods: { loc: number[]; commander: boolean; min: number; max: number; level: string }[] = []
 const spawnPoints: number[][] = []
@@ -272,6 +292,37 @@ exports.forEach((e, i) => {
       outer: num('OuterConeAngle', 44),
       lower: num('LowerBrightness', 0),
     })
+  }
+  if (e.type === 'XComBuildingVolume') {
+    const t = actorTags(i)
+    const box = brushBox(i)
+    if (!t || !box) return
+    // Its floors: an array of tagged structs, each with its floor volumes (box actors, merged into one box a floor).
+    const floors: { center: number[]; extent: number[] }[] = []
+    const ft = t.find((x) => x.name === 'Floors')
+    if (ft && ft.value.byteLength >= 4) {
+      const r = new Reader(ft.value)
+      const n = r.i32()
+      for (let k = 0; k < n; k++) {
+        const ftags = readTags(r, pkg)
+        const fv = ftags.find((x) => x.name === 'FloorVolumes')
+        const boxes: { center: number[]; extent: number[] }[] = []
+        if (fv && fv.value.byteLength >= 4) {
+          const dv = new DataView(fv.value.buffer, fv.value.byteOffset, fv.value.byteLength)
+          for (let j = 0; j < dv.getInt32(0, true); j++) {
+            const r2 = dv.getInt32(4 + 4 * j, true)
+            const fb = r2 > 0 ? brushBox(r2 - 1) : undefined
+            if (fb) boxes.push(fb)
+          }
+        }
+        if (!boxes.length) continue
+        const lo = [0, 1, 2].map((c) => Math.min(...boxes.map((x) => x.center[c]! - x.extent[c]!)))
+        const hi = [0, 1, 2].map((c) => Math.max(...boxes.map((x) => x.center[c]! + x.extent[c]!)))
+        floors.push({ center: [0, 1, 2].map((c) => (lo[c]! + hi[c]!) / 2), extent: [0, 1, 2].map((c) => (hi[c]! - lo[c]!) / 2) })
+      }
+    }
+    const ufo = !!t.find((x) => x.name === 'IsUfo' && x.boolValue)
+    buildings.push({ ...box, floors, ufo })
   }
   if (e.type === 'XComLevelVolume' && !play) {
     const t = actorTags(i)
@@ -475,6 +526,11 @@ const lines = [
       ]
     : []),
   ...starts.map((p) => `+DropZones=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
+  "; EW's building volumes (centre, half sizes) and their floors (each floor's volumes as one box), for the plot's building visibility.",
+  ...buildings.map(
+    (b) =>
+      `+Buildings=(Center=(X=${n(b.center[0]!)},Y=${n(b.center[1]!)},Z=${n(b.center[2]!)}),Extent=(X=${n(b.extent[0]!)},Y=${n(b.extent[1]!)},Z=${n(b.extent[2]!)}),Floors=(${b.floors.map((f) => `(Center=(X=${n(f.center[0]!)},Y=${n(f.center[1]!)},Z=${n(f.center[2]!)}),Extent=(X=${n(f.extent[0]!)},Y=${n(f.extent[1]!)},Z=${n(f.extent[2]!)}))`).join(',')})${b.ufo ? ',Ufo=true' : ''})`,
+  ),
   "; EW's alien pods (the commander's, how many aliens; Level: the sub-level it is in, none: the map's own) and its spawn points.",
   ...pods.map((p) => `+Pods=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Commander=${p.commander},Min=${p.min},Max=${p.max}${p.level ? `,Level=${p.level}` : ''})`),
   ...spawnPoints.map((p) => `+SpawnPoints=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
@@ -499,7 +555,7 @@ const meshes = new Set(pieces.map((p) => p.mesh))
 console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed (${nested} nested), ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB)`)
 const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
-console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points, ${lights.length} lights`)
+console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points, ${lights.length} lights, ${buildings.length} buildings (${buildings.reduce((a, b) => a + b.floors.length, 0)} floors)`)
 console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
 }
 

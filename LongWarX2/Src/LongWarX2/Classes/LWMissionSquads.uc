@@ -64,13 +64,15 @@ static function SpawnAtEWPods()
 	local name Level;
 	local int i, k, n, Size;
 	local array<LWX2EWMapPieces.LWX2Pod> MapPods;
+	local array<int> Squad;
 
 	MapPods = class'LWX2EWMapPieces'.static.Map().Pods;
 	Levels.AddItem('Stream');
 	Levels.AddItem('EWI');
 	Levels.AddItem('Any');
 	S = class'XComGameState_LWStrategy'.static.Get();
-	if (!class'LWX2PartPlacer'.default.bEWPlaced || S == none || S.PendingSquad.Length == 0)
+	Squad = SquadNow();
+	if (!class'LWX2PartPlacer'.default.bEWPlaced || Squad.Length == 0)
 		return;
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 		if (Unit.GetTeam() == eTeam_Alien && Unit.IsAlive() && !Unit.bRemovedFromPlay)
@@ -96,13 +98,31 @@ static function SpawnAtEWPods()
 	for (i = 0; i < Pods.Length; i++)
 	{
 		Names.Length = 0;
-		Size = S.PendingSquad.Length / Pods.Length + (i < S.PendingSquad.Length % Pods.Length ? 1 : 0);
-		for (n = 0; n < Size && k < S.PendingSquad.Length; n++)
-			Names.AddItem(TemplateFor(S.PendingSquad[k++]));
+		Size = Squad.Length / Pods.Length + (i < Squad.Length % Pods.Length ? 1 : 0);
+		for (n = 0; n < Size && k < Squad.Length; n++)
+			Names.AddItem(TemplateFor(Squad[k++]));
 		if (Names.Length > 0)
 			SpawnPod(name("LWX2_EWPod" $ i), Pods[i].Loc + class'LWX2PartPlacer'.default.EWShift, Names);
 	}
-	`log("LongWarX2: missions: Long War's squad of" @ S.PendingSquad.Length @ "spawned at" @ Pods.Length @ "of Enemy Within's pods", , 'LongWarX2');
+	`log("LongWarX2: missions: Long War's squad of" @ Squad.Length @ "spawned at" @ Pods.Length @ "of Enemy Within's pods", , 'LongWarX2');
+}
+
+/**
+ * The squad of the mission under way: the one Long War chose for it (XComGameState_LWStrategy.PendingSquad); on the
+ * campaign's first mission (XCOM 2's, on an EW map's own plot, before Long War's Geoscape exists) Long War's first
+ * mission squad (LWAlienSquads.FirstMissionSquad); else none.
+ */
+static function array<int> SquadNow()
+{
+	local XComGameState_LWStrategy S;
+	local array<int> Empty;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S != none && S.PendingSquad.Length > 0)
+		return S.PendingSquad;
+	if (S == none && class'LWX2EWMapPieces'.static.OnOwnPlot())
+		return class'LWAlienSquads'.static.FirstMissionSquad();
+	return Empty;
 }
 
 /**
@@ -158,6 +178,16 @@ static function SpawnPod(name EncounterID, vector Location, array<name> Template
 	local XComGameState_AIUnitData AIData;
 
 	World = `XWORLD;
+	// Inside the tile grid, two tiles in from its edge: XCOM 2's spawner is given no place it cannot hold (an EW pod in
+	// a sub-level can stand beyond the play area the plot's grid covers).
+	if (Location.X < World.WorldBounds.Min.X + 192 || Location.X > World.WorldBounds.Max.X - 192
+		|| Location.Y < World.WorldBounds.Min.Y + 192 || Location.Y > World.WorldBounds.Max.Y - 192)
+	{
+		`log("LongWarX2: missions: pod" @ EncounterID @ "at" @ Location @ "is outside the tile grid; moved inside", , 'LongWarX2');
+		Location.X = FClamp(Location.X, World.WorldBounds.Min.X + 192, World.WorldBounds.Max.X - 192);
+		Location.Y = FClamp(Location.Y, World.WorldBounds.Min.Y + 192, World.WorldBounds.Max.Y - 192);
+	}
+	Location.Z = FClamp(Location.Z, World.WorldBounds.Min.Z + 32, World.WorldBounds.Max.Z - 32);
 	Location.Z = World.GetFloorZForPosition(Location);
 	Info.Team = eTeam_Alien;
 	Info.EncounterID = EncounterID;

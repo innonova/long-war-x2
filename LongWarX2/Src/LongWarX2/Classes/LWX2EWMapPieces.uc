@@ -109,7 +109,18 @@ var config string ForceMap;
 static function string MapName()
 {
 	local XComGameState_LWStrategy S;
+	local XComGameState_BattleData Battle;
+	local WorldInfo W;
 
+	// In a mission on an EW map's own plot (LWX2_<map>): that map, whatever started the mission (the campaign's first
+	// mission is XCOM 2's, before Long War's Geoscape exists).
+	W = class'WorldInfo'.static.GetWorldInfo();
+	if (W != none && XComTacticalGRI(W.GRI) != none)
+	{
+		Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+		if (Battle != none && Left(Battle.MapData.PlotMapName, 5) ~= "LWX2_" && !(Battle.MapData.PlotMapName ~= "LWX2_EWPlotTemplate"))
+			return Mid(Battle.MapData.PlotMapName, 5);
+	}
 	S = class'XComGameState_LWStrategy'.static.Get();
 	return (S != none && S.PendingKind != 0) ? S.PendingEWMap : default.DefaultMap;
 }
