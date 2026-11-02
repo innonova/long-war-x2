@@ -173,3 +173,12 @@ setup now installs into the first non-Workshop folder listed there (the
 game's default when none is), and removes a copy elsewhere. Checked on
 wingpu with the person's layout copied (the two folders, absolute): the
 mod installed into the base game's Mods folder and loaded.
+
+## Report (2026-11-02, the setup converts Enemy Within's content)
+
+The setup program now also converts Enemy Within's strategy screens and
+earth, and its 83 maps when the player says yes (or `--maps`), and switches
+the missions to them; converted content survives reinstalls. The README
+says so, and asks nothing the setup does not. Checked from the release zip
+on the test machine (`lw-ew-screens.md`, last report). The download is
+`LongWarX2-20261102-7ed90c9.zip` on v0.1.0-preview.1.
