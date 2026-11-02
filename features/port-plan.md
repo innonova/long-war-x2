@@ -66,6 +66,15 @@ and a Decisions list to review.
     War of the Chosen's faction soldier.
   - A mission takes Long War's squad of 6. The Officer Training School's
     Squad Size I and II (7, 8) can be bought from the base screen.
+  - A crash site or landed UFO plays XCOM 2's Secure the UFO (on a UFO
+    plot), a terror site its Terror (with civilians); both were checked to
+    the Geoscape.
+  - **Fixed: Long War's larger squads had been only partly on the field.**
+    XCOM 2's pods are made for fewer aliens, and a pod that finds no room
+    spawns nobody (a landed UFO had 10 of its 20). The missing ones are now
+    spawned beside the others.
+  - Open: XCOM 2's own reinforcements (ADVENT) can still come in some
+    mission types.
 - **Perks** (`lw-classes.md`), with Long War's numbers from EW's constants
   and ability table:
   - shots: Precision Shot, Disabling Shot, Flush, Double Tap;
