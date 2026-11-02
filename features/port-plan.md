@@ -50,7 +50,46 @@ proposal: the person reorders or cuts.
 7. **EW's aliens as units**: pawns, animations through XCOM 2's anim tree,
    abilities, AI.
 
-## Where each step stands (2026-11-01, evening)
+## Where each step stands (2026-11-02, morning: the night's work)
+
+The night after "keep going till 7am". Each feature's report has the details
+and a Decisions list to review.
+
+- **Missions on Enemy Within's maps** (`lw-missions.md`, step 2): the whole
+  loop works, from the Geoscape to Long War's result:
+  - Long War's squad spawns at EW's pods and patrols (the AI's data made for
+    it). Pods are read from a map's sub-levels too (the truck stop keeps
+    them there).
+  - EW's lights are placed (point, spot, sun, sky).
+  - Soldiers boxed in at landing are moved out.
+  - A Long War mission is won when its aliens are all dead or taken, on
+    XCOM 2's maps too.
+  - No squad concealment; no faction soldier in a Long War campaign.
+- **Perks** (`lw-classes.md`): Precision and Disabling Shot, Double Tap,
+  Rapid Reaction, Ready for Anything, Close Combat Specialist, Paramedic,
+  Savior, Deadeye, Dense Smoke, Combat Drugs, Shredder Ammo, Sapper, HEAT
+  Warheads. Long War's numbers come from EW's constants and its ability
+  table.
+- **Psionics** (`lw-psi.md`, new): the twelve powers trained in the Psi
+  Labs at Long War's hours and chance. Mindfray, Panic, Mind Control and
+  Inspiration work in missions. A Psi Labs line in the base screen.
+- **Gene mods** (`lw-genemods.md`, new): the ten mods in five slots, made
+  in the Genetics Lab. Six work in missions. A Genetics Lab line in the
+  base screen.
+- **The Foundry in missions** (`lw-research.md`): the pistol projects and
+  Improved Medikit.
+- **Fixed**: XCOM 2 stopped when leaving a mission. A screen listener held
+  the HUD; it would have hit any player with the development EW map on.
+- **Open, worth the person's eye**:
+  - XCOM 2 sometimes crashes while loading a mission map, about 3 in 25
+    loads that night, always at the same address. Not yet known whether
+    it happens with the mod off (`lw-missions.md`).
+  - Several numbers are approximations, marked so in the Decisions lists:
+    the psi will check's base, Shredder's +33 %, the two-turn cooldowns.
+- **Preview build**: replaced at 23:41 UTC with the work up to the Sapper
+  perk. A later one follows if the night allows.
+
+## Where each step stood (2026-11-01, evening)
 
 1. **Soldiers**: as in the morning, below.
 2. **Weapons and items** (`lw-gear.md`): Long War's 55 soldier weapons and
