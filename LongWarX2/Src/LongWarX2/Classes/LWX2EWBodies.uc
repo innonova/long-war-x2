@@ -1,8 +1,9 @@
 // Enemy Within's bodies on XCOM 2's aliens (features/lw-ew-units.md): a template's units drawn with EW's skeletal mesh and
 // a material made here from EW's textures, animated by EW's own animations under XCOM 2's names (the converted unit
 // package's AnimSet, tools/convert/ew-unit-anims.ts), added to the template's AdditionalAnimSets after XCOM 2's own.
-// The packages are the player's own conversions in the mod's Content; a body whose package is not there is left out.
-class LWX2EWBodies extends Object config(LWEWUnits);
+// The packages are the player's own conversions in the mod's Content, and so is the list (Config/XComLWX2EWUnits.ini,
+// written by the setup: tools/convert/ew-units.ts); a body whose package is not there is left out.
+class LWX2EWBodies extends Object config(LWX2EWUnits);
 
 struct LWX2Body
 {
@@ -110,4 +111,9 @@ static function MaterialInterface Standin(LWX2Body B)
 	if (T != none)
 		MIC.SetTextureParameterValue('Normal', T);
 	return MIC;
+}
+
+defaultproperties
+{
+	MaterialParent="Materials.Approved.AlienUnit_TC"
 }

@@ -12,35 +12,9 @@ import { Reader, Writer } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { writePackage } from '@innonova/upkit/writer'
 
-/** The names XCOM 2's Sectoid answers to (its AnimSet AS_Sectoid). */
-export const X2_SECTOID = [
-  'FF_FireA', 'HL_CallReinforcementsA', 'HL_DeathA', 'HL_DeathB', 'HL_DeathDefaultA', 'HL_DeathFiringA', 'HL_DeathGrenadeA',
-  'HL_DeathLeftA', 'HL_DeathRightA', 'HL_DoorOpenA', 'HL_FireStartA', 'HL_FireStopA', 'HL_FlinchA', 'HL_GetUpA', 'HL_HurtBackA',
-  'HL_HurtFrontA', 'HL_HurtLeftA', 'HL_HurtRightA', 'HL_IdleA', 'HL_IdleAlertA', 'HL_MeleeDeathA', 'HL_Panic_LoopA', 'HL_Panic_StartA',
-  'HL_Panic_StopA', 'HL_PeekFwd_LoopA', 'HL_PeekFwd_StartA', 'HL_PeekFwd_StopA', 'HL_Peek_LoopA', 'HL_Peek_StartA', 'HL_Peek_StopA',
-  'HL_Psi_ExplosionLoopA', 'HL_Psi_ExplosionStartA', 'HL_Psi_ExplosionStopA', 'HL_Psi_MindControlledA', 'HL_Psi_ProjectileMediumA',
-  'HL_Psi_ReAnimateA', 'HL_ReloadA', 'HL_Run2CoverA', 'HL_SignalLookAtBackLeft', 'HL_SignalLookAtBackRight', 'HL_SignalLookAtFwdLeft',
-  'HL_SignalLookAtFwdRight', 'HL_SignalNegativeA', 'HL_SignalPointA', 'HL_SignalPointAttackA', 'HL_SignalPointFlankedA',
-  'HL_SignalPositiveA', 'HL_Stand2CrouchA', 'HL_StepInA', 'HL_StepOutA', 'HL_StunnedIdleA', 'HL_StunnedStartA', 'HL_StunnedStopA',
-  'HL_TurnLeft180', 'HL_TurnLeft45', 'HL_TurnLeft90', 'HL_TurnRight180', 'HL_TurnRight45', 'HL_TurnRight90', 'HL_WindowBreakA',
-  'HR_DoorOpenA', 'HR_FlinchA', 'HR_Peek_LoopA', 'HR_Peek_StartA', 'HR_Peek_StopA', 'HR_Run2CoverA', 'HR_StepInA', 'HR_StepOutA',
-  'HR_WindowBreakA', 'LL_Crouch2StandA', 'LL_FireStartA', 'LL_FireStopA', 'LL_IdleA', 'LL_IdleAlertA', 'LL_Peek_LoopA', 'LL_Peek_StartA',
-  'LL_Peek_StopA', 'LL_Run2CoverA', 'LL_Rush2CoverA', 'LL_SignalLookAtBackLeft', 'LL_SignalLookAtBackRight', 'LL_SignalLookAtFwdLeft',
-  'LL_SignalLookAtFwdRight', 'LL_TurnLeft180', 'LL_TurnLeft45', 'LL_TurnLeft90', 'LL_TurnRight180', 'LL_TurnRight45', 'LL_TurnRight90',
-  'LL_WindowBreakA', 'LR_Peek_LoopA', 'LR_Peek_StartA', 'LR_Peek_StopA', 'LR_Run2CoverA', 'LR_WindowBreakA', 'MV_ClimbDrainDwn_LoopA',
-  'MV_ClimbDrainDwn_StartA', 'MV_ClimbDrainDwn_StopA', 'MV_ClimbDrainUp_LoopA', 'MV_ClimbDrainUp_StartA', 'MV_ClimbDrainUp_StopA',
-  'MV_ClimbDropHigh_StartA', 'MV_ClimbDropHigh_StartWallA', 'MV_ClimbDropHigh_StopA', 'MV_ClimbDropLow_StartA',
-  'MV_ClimbDropLow_StartWallA', 'MV_ClimbDropLow_StopA', 'MV_ClimbDrop_FurtherA', 'MV_ClimbDrop_StartA', 'MV_ClimbDrop_StartB',
-  'MV_ClimbDrop_StopA', 'MV_ClimbLadderDwn_LoopA', 'MV_ClimbLadderDwn_StartA', 'MV_ClimbLadderDwn_StopA', 'MV_ClimbLadderUp_LoopA',
-  'MV_ClimbLadderUp_StartA', 'MV_ClimbLadderUp_StopA', 'MV_ClimbLowObject_DwnA', 'MV_ClimbLowObject_Over1TileA',
-  'MV_ClimbLowObject_Over2TilesA', 'MV_ClimbLowObject_UpA', 'MV_DoorOpenBreakA', 'MV_LowTurnLeft180', 'MV_LowTurnLeft45',
-  'MV_LowTurnLeft90', 'MV_LowTurnRight180', 'MV_LowTurnRight45', 'MV_LowTurnRight90', 'MV_RunBackLeft_StartA', 'MV_RunBackRight_StartA',
-  'MV_RunFlinchA', 'MV_RunFwdA', 'MV_RunFwd_StartA', 'MV_RunFwd_StopCrouchA', 'MV_RunFwd_StopStandA', 'MV_RunLeft_StartA',
-  'MV_RunRight_StartA', 'MV_RunTurn90LeftA', 'MV_RunTurn90RightA', 'MV_TurnLeft180', 'MV_TurnLeft45', 'MV_TurnLeft90',
-  'MV_TurnRight180', 'MV_TurnRight45', 'MV_TurnRight90', 'MV_WalkFwdA', 'MV_WindowBreakThroughA', 'NO_DoorOpenA', 'NO_FireStartA',
-  'NO_FireStopA', 'NO_IdleAlertGunDwnA', 'NO_IdleAlertGunUpA', 'NO_IdleGunDwnA', 'NO_IdleGunUpA', 'NO_Psi_Explosion', 'NO_TurnLeft180',
-  'NO_TurnLeft45', 'NO_TurnLeft90', 'NO_TurnRight180', 'NO_TurnRight45', 'NO_TurnRight90', 'NO_WindowBreakA',
-]
+import { X2_ANIM_NAMES } from './x2-anim-names.ts'
+/** The names XCOM 2's Sectoid answers to (kept for ew-package.ts --anims). */
+export const X2_SECTOID = X2_ANIM_NAMES.Sectoid!
 
 /** Where the rules below do not reach: the EW animation for an XCOM 2 name (first that the unit has). */
 const TABLE: Record<string, string[]> = {
@@ -70,6 +44,7 @@ const TABLE: Record<string, string[]> = {
   HL_Psi_ExplosionStartA: ['AC_NO_Psi_MindFray'], HL_Psi_ExplosionLoopA: ['AC_NO_Psi_MindFray'], HL_Psi_ExplosionStopA: ['AC_NO_IdleA'],
   NO_Psi_Explosion: ['AC_NO_Psi_MindFray'],
   HL_CallReinforcementsA: ['AC_NO_CallOthersA'],
+  POD_RevealA: ['AC_NO_CallOthersA', 'AC_NO_IdleOnAlertA'], POD_RevealB: ['AC_NO_IdleOnAlertA', 'AC_NO_CallOthersA'], POD_RevealC: ['AC_NO_IdleOnAlertA', 'AC_NO_CallOthersA'],
   HL_SignalPointA: ['AC_NO_CallOthersA'], HL_SignalPointAttackA: ['AC_NO_CallOthersA'], HL_SignalPointFlankedA: ['AC_NO_CallOthersA'],
   HL_SignalPositiveA: ['AC_NO_IdleOnAlertA'], HL_SignalNegativeA: ['AC_NO_IdleOnAlertA'],
   HL_Stand2CrouchA: ['AC_LL_Cover2IdleA', 'AC_LL_IdleA'], LL_Crouch2StandA: ['AC_HL_IdleA'],
@@ -106,7 +81,10 @@ export function ewFor(x2: string, ew: Set<string>): string | undefined {
 }
 
 /** The converted unit package with the AnimSet's sequences also under XCOM 2's names; returns its bytes and a report. */
-export function renameAnims(source: Uint8Array, animSetPath: string, x2Names: string[]): { bytes: Uint8Array; report: string } {
+export function renameAnims(source: Uint8Array, animSetPaths: string | string[], x2Names: string[]): { bytes: Uint8Array; report: string } {
+  // The copies go into the first set; the EW animations they copy may be in any of them.
+  const paths = typeof animSetPaths === 'string' ? [animSetPaths] : animSetPaths
+  const animSetPath = paths[0]!
   const pkg: any = openPackage(source)
   const names: NameEntry[] = []
   const added: { entry: Export; data: Uint8Array }[] = []
@@ -140,9 +118,15 @@ export function renameAnims(source: Uint8Array, animSetPath: string, x2Names: st
   const seqTag = setTags.find((t) => t.name === 'Sequences')
   if (!seqTag) throw new Error('the AnimSet lists no sequences')
   const seqs = Array.from({ length: i32(seqTag.value) }, (_, k) => i32(seqTag.value, 4 + 4 * k))
+  const sources = [...seqs]
+  for (const other of paths.slice(1)) {
+    const ref = pkg.exports.findIndex((_e: any, k: number) => pathOf(k + 1) === other) + 1
+    if (ref <= 0) continue
+    const t = (readTags(new Reader((pkg.data(ref) as Uint8Array).subarray(4)), pkg) as Tag[]).find((x) => x.name === 'Sequences')
+    if (t) for (let k = 0; k < i32(t.value); k++) sources.push(i32(t.value, 4 + 4 * k))
+  }
   const byName = new Map<string, number>()
-  const nameAt = new Map<number, { start: number; at: number }>()
-  for (const s of seqs) {
+  for (const s of sources) {
     const d: Uint8Array = pkg.data(s)
     const r = new Reader(d.subarray(4))
     for (const t of readTags(r, pkg) as Tag[]) if (t.name === 'SequenceName') byName.set(nameOf(i32(t.value)), s)

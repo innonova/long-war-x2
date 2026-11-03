@@ -29,7 +29,7 @@ ssh "$host" "tar -cf - --exclude=Content -C '$(dirname "$game")' LongWarX2" | ta
 ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git checkout -q -B main origin/main" >/dev/null 2>&1 || true
 
 # Nothing of the games, the player's config.
-rm -rf "$stage/LongWarX2/Content" "$stage/LongWarX2/Localization/XComGame.int" "$stage/LongWarX2/Config/XComLWX2EWMap.ini"
+rm -rf "$stage/LongWarX2/Content" "$stage/LongWarX2/Localization/XComGame.int" "$stage/LongWarX2/Config/XComLWX2EWMap.ini" "$stage/LongWarX2/Config/XComLWX2EWUnits.ini"
 node scripts/airwar-config.mjs ../xcom-ew-lw-tree/data/airwar.json --player > "$stage/LongWarX2/Config/XComLWAirWar.ini"
 # The mod's own maps (ours: the template plot the setup program writes each EW map's plot from, the empty parcel).
 mkdir -p "$stage/LongWarX2/Content" && cp tools/maps/*.umap "$stage/LongWarX2/Content/"

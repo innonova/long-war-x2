@@ -3,6 +3,7 @@ build.log
 # Converted Enemy Within content (tools/convert/) goes here on the test machine: never committed.
 LongWarX2/Content/
 LongWarX2/Config/XComLWX2EWMap.ini
+LongWarX2/Config/XComLWX2EWUnits.ini
 LongWarX2/Localization/XComGame.int
 node_modules/
 dist/
