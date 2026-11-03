@@ -26,7 +26,7 @@ rm -rf "$stage" && mkdir -p "$stage"
 # them may be in the download anyway): tar on the test machine, unpacked here.
 mkdir -p "$stage"
 ssh "$host" "tar -cf - --exclude=Content -C '$(dirname "$game")' LongWarX2" | tar -xf - -C "$stage"
-ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git checkout -q main" >/dev/null 2>&1 || true
+ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git checkout -q -B main origin/main" >/dev/null 2>&1 || true
 
 # Nothing of the games, the player's config.
 rm -rf "$stage/LongWarX2/Content" "$stage/LongWarX2/Localization/XComGame.int" "$stage/LongWarX2/Config/XComLWX2EWMap.ini"
