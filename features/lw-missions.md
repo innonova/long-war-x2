@@ -1287,3 +1287,14 @@ from the evening, one from the morning) give two exception addresses:
   the wait. Map tests now wait on `ready=1` instead of timers.
 - The game on wingpu is closed before every handover (the person's Steam logs out
   otherwise).
+- **Checked on wingpu,** converter version 6 on all 83 maps, building volumes on: the
+  fast food, office, boulevard, convenience store, `CLrgScout_City`, pier terror site,
+  supply ship and bar all load; no aliens drawn at the start but those in sight; the
+  fast food's and the electronics store's walls, doors and interiors drawn with the
+  roof cut away.
+- **Release** `LongWarX2-20261103-8ad9e71.zip`, checked from the zip (setup converts
+  every map again, version 6; the fast food and the store load). `package.sh` now
+  leaves the test machine's checkout at `origin/main`.
+- Open: walls are whole meshes, not destructible (XCOM 2's `XComFracLevelActor` would
+  be the structural way); the store's lighting is dark; EW's sectoids are XCOM 2's
+  (the person: "the less big sectoids" wanted).
