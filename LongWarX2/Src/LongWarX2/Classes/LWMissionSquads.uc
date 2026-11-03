@@ -290,6 +290,8 @@ static function SpawnPod(name EncounterID, vector Location, array<name> Template
 				if (Species[k] > 0 && TemplateFor(Species[k]) == Unit.GetMyTemplateName())
 				{
 					Unit.SetUnitFloatValue('LWX2Species', Species[k], eCleanup_Never);
+					// Long War's stats for it (features/lw-aliens.md), not the XCOM 2 template's.
+					class'LWAlienStats'.static.ApplyTo(Unit, Species[k]);
 					Species[k] = 0;
 					break;
 				}

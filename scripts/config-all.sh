@@ -21,6 +21,7 @@ node scripts/base-config.mjs "$core" > $cfg/XComLWBase.ini
 node scripts/gear-config.mjs "$core" > $cfg/XComLWGear.ini
 node scripts/strategy-config.mjs "$core" "$cooked/XComStrategyGame.upk" > $cfg/XComLWStrategy.ini
 node scripts/research-config.mjs "$core" "$tree/data/techtree.json" > $cfg/XComLWResearch.ini
+node scripts/aliens-config.mjs "$core" > $cfg/XComLWAliens.ini
 node scripts/maps-config.mjs "$lw/Config/DefaultMaps.ini" > $cfg/XComLWEWMaps.ini
 node scripts/airwar-config.mjs "$tree/data/airwar.json" > $cfg/XComLWAirWar.ini
 # Writes XComLWClasses.ini, XComClassData.ini, XComGameData.ini and the words (gitignored) itself.
