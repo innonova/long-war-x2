@@ -67,7 +67,7 @@ static function SpawnAtEWPods()
 	local name Level;
 	local int i, k, n, Size;
 	local array<LWX2EWMapPieces.LWX2Pod> MapPods;
-	local array<int> Squad;
+	local array<int> Squad, Species;
 
 	MapPods = class'LWX2EWMapPieces'.static.Map().Pods;
 	Levels.AddItem('Stream');
@@ -102,10 +102,14 @@ static function SpawnAtEWPods()
 	{
 		Names.Length = 0;
 		Size = Squad.Length / Pods.Length + (i < Squad.Length % Pods.Length ? 1 : 0);
+		Species.Length = 0;
 		for (n = 0; n < Size && k < Squad.Length; n++)
+		{
+			Species.AddItem(Squad[k]);
 			Names.AddItem(TemplateFor(Squad[k++]));
+		}
 		if (Names.Length > 0)
-			SpawnPod(name("LWX2_EWPod" $ i), Pods[i].Loc + class'LWX2PartPlacer'.default.EWShift, Names);
+			SpawnPod(name("LWX2_EWPod" $ i), Pods[i].Loc + class'LWX2PartPlacer'.default.EWShift, Names, Species);
 	}
 	`log("LongWarX2: missions: Long War's squad of" @ Squad.Length @ "spawned at" @ Pods.Length @ "of Enemy Within's pods", , 'LongWarX2');
 }
@@ -228,7 +232,7 @@ static function TopUp()
 }
 
 /** A pod of these templates at a location (XComAISpawnManager.SpawnPodAtLocation), shown, its turn begun. */
-static function SpawnPod(name EncounterID, vector Location, array<name> Templates)
+static function SpawnPod(name EncounterID, vector Location, array<name> Templates, optional array<int> Species)
 {
 	local XComGameState NewGameState;
 	local PodSpawnInfo Info;
@@ -281,6 +285,14 @@ static function SpawnPod(name EncounterID, vector Location, array<name> Template
 		{
 			AIData = XComGameState_AIUnitData(NewGameState.CreateNewStateObject(class'XComGameState_AIUnitData'));
 			AIData.Init(Unit.ObjectID);
+			// Its Long War species (two may share a template: Sectoid and Sectoid Commander), for its EW body.
+			for (k = 0; k < Species.Length; k++)
+				if (Species[k] > 0 && TemplateFor(Species[k]) == Unit.GetMyTemplateName())
+				{
+					Unit.SetUnitFloatValue('LWX2Species', Species[k], eCleanup_Never);
+					Species[k] = 0;
+					break;
+				}
 		}
 	`TACTICALRULES.SubmitGameState(NewGameState);
 	if (XGAIPlayer(`BATTLE.GetAIPlayer()) != none)

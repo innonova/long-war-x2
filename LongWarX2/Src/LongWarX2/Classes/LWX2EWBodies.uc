@@ -8,6 +8,8 @@ class LWX2EWBodies extends Object config(LWX2EWUnits);
 struct LWX2Body
 {
 	var name Template;
+	/** Long War's species (EW's ECharacter), for one that shares its template with another (0: any on the template). */
+	var int Species;
 	var string Mesh;
 	var string AnimSet;
 	var string Diffuse;
@@ -67,30 +69,34 @@ static function bool Apply(XComGameState_Unit Unit)
 	local SkeletalMesh Mesh;
 	local MaterialInterface Material;
 	local LWX2Body B;
-	local int i;
+	local UnitValue Species;
+	local int i, Mine, Pick;
 
 	if (Unit == none || XGUnit(Unit.GetVisualizer()) == none)
+		return false;
+	// The species' own body before its template's (the pods' aliens carry their species, LWMissionSquads.SpawnPod).
+	Mine = Unit.GetUnitValue('LWX2Species', Species) ? int(Species.fValue) : 0;
+	Pick = INDEX_NONE;
+	for (i = 0; i < default.Bodies.Length; i++)
+		if (default.Bodies[i].Template == Unit.GetMyTemplateName() && (default.Bodies[i].Species == Mine || (default.Bodies[i].Species == 0 && Pick == INDEX_NONE)))
+			Pick = i;
+	if (Pick == INDEX_NONE)
 		return false;
 	Pawn = XGUnit(Unit.GetVisualizer()).GetPawn();
 	if (Pawn == none || Pawn.Mesh == none)
 		return false;
-	foreach default.Bodies(B)
-	{
-		if (B.Template != Unit.GetMyTemplateName())
-			continue;
-		Mesh = SkeletalMesh(DynamicLoadObject(B.Mesh, class'SkeletalMesh', true));
-		if (Mesh == none || Pawn.Mesh.SkeletalMesh == Mesh)
-			return false;
-		Pawn.Mesh.SetSkeletalMesh(Mesh);
-		Material = Standin(B);
-		if (Material != none)
-			for (i = 0; i < Mesh.Materials.Length; i++)
-				Pawn.Mesh.SetMaterial(i, Material);
-		Pawn.UpdateAnimations();
-		Weapon(Unit, B);
-		return true;
-	}
-	return false;
+	B = default.Bodies[Pick];
+	Mesh = SkeletalMesh(DynamicLoadObject(B.Mesh, class'SkeletalMesh', true));
+	if (Mesh == none || Pawn.Mesh.SkeletalMesh == Mesh)
+		return false;
+	Pawn.Mesh.SetSkeletalMesh(Mesh);
+	Material = Standin(B);
+	if (Material != none)
+		for (i = 0; i < Mesh.Materials.Length; i++)
+			Pawn.Mesh.SetMaterial(i, Material);
+	Pawn.UpdateAnimations();
+	Weapon(Unit, B);
+	return true;
 }
 
 /** The unit's primary weapon drawn as EW's (its mesh and a stand-in), where the body names one and XCOM 2's is skeletal. */

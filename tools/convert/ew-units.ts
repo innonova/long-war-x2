@@ -15,13 +15,18 @@ import { X2_ANIM_NAMES } from './x2-anim-names.ts'
 /** XCOM 2's template, EW's package, its mesh and AnimSets (the first takes the renamed copies), its textures by name. */
 /** EW's weapon for it: its package, mesh, textures by name. */
 export interface EWWeapon { pkg: string; mesh: string; diffuse: RegExp; normal: RegExp }
-export interface EWUnit { template: string; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon }
+/** species: Long War's species (EW's ECharacter) when it shares its template with another (its own body before the template's). */
+export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon }
 const PLASMA_LIGHT: EWWeapon = { pkg: 'Weapon_PlasmaRifle_ThinMan_SF', mesh: 'SM_LightPlasmaRifle', diffuse: /^LightAssaultRiflePlasma_DIF$/, normal: /^LightAssaultRiflePlasma_NRM$/ }
 export const EW_UNITS: EWUnit[] = [
   { template: 'Sectoid', pkg: 'GameUnit_XComSectoid_SF', mesh: 'SM_SectoidSoldier', sets: ['AS_SectoidPistol'], diffuse: /^SectoidSoldier_DIF$/, normal: /^SectoidSoldier_NRM$/,
     weapon: { pkg: 'Weapon_PlasmaPistolSectoid_SF', mesh: 'SM_PistolPlasmaSectoid', diffuse: /^T_PistolPlasma_DIF$/, normal: /^T_PistolPlasma_NRM$/ } },
   { template: 'Archon', pkg: 'GameUnit_XComFloater_SF', mesh: 'SM_MedFloater', sets: ['AS_HeavyFloaterRifle', 'AS_HeavyFloaterJetRifle'], diffuse: /^MedFloater_DIF$/, normal: /^MedFloater_NRM$/,
     weapon: { ...PLASMA_LIGHT, pkg: 'Weapon_PlasmaRifle_Floater_SF' } },
+  { template: 'Sectoid', species: 9, pkg: 'GameUnit_XComSectoidCom_SF', mesh: 'SM_SectoidCom', sets: ['AS_SectoidPistol'], diffuse: /^SectoidCom_DIF$/, normal: /^SectoidCom_NRM$/,
+    weapon: { pkg: 'Weapon_PlasmaPistolSectoid_SF', mesh: 'SM_PistolPlasmaSectoid', diffuse: /^T_PistolPlasma_DIF$/, normal: /^T_PistolPlasma_NRM$/ } },
+  { template: 'Archon', species: 10, pkg: 'GameUnit_XComFloaterHeavy_SF', mesh: 'SM_HeavyFloater', sets: ['AS_HeavyFloaterRifle', 'AS_HeavyFloaterJetRifle'], diffuse: /^HeavyFloater_DIF$/, normal: /^HeavyFloater_NRM$/,
+    weapon: { pkg: 'Weapon_HeavyPlasmaFloater_SF', mesh: 'SM_AssaultRiflePlasma', diffuse: /^AssaultRiflePlasma_DIF$/, normal: /^AssaultRiflePlasma_NRM$/ } },
   { template: 'Viper', pkg: 'GameUnit_XComThinMan_SF', mesh: 'SM_ThinMan', sets: ['AS_ThinManPistol'], diffuse: /^ThinMan_DIF/, normal: /^ThinMan_NRM/, weapon: PLASMA_LIGHT },
   { template: 'Faceless', pkg: 'GameUnit_Seeker_SF', mesh: 'SM_Seeker', sets: ['AS_SeekerDefault'], diffuse: /^Seeker_DIF/, normal: /^Seeker_NRM/ },
   { template: 'Gatekeeper', pkg: 'GameUnit_XComCyberDisc_SF', mesh: 'SM_Cyberdisc', sets: ['AS_Cyberdisc'], diffuse: /^T_Cyberdisc_DIF$/, normal: /^T_Cyberdisc_NRM$/ },
@@ -80,7 +85,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
           weapon = `, WeaponMesh="${leaf(wf.mesh, w.pkg)}", WeaponDiffuse="${leaf(wf.diffuse, w.pkg)}", WeaponNormal="${leaf(wf.normal, w.pkg)}"`
         }
       }
-      lines.push(`+Bodies=(Template=${u.template}, Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon})`)
+      lines.push(`+Bodies=(Template=${u.template},${u.species ? ` Species=${u.species},` : ''} Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon})`)
       say(`${u.template} as Enemy Within's (${u.pkg}): ${report.split('; ').slice(-1)[0]}`)
       n++
     } catch (e: any) {
