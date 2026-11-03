@@ -73,6 +73,8 @@ event OnInit(UIScreen Screen)
 		// then right here, on the person's machine.)
 		class'LWMissionSquads'.static.SpawnAtEWPods();
 		class'LWMissionSquads'.static.SpawnCivilians();
+		// Enemy Within's bodies on the aliens already on the field (a loaded battle; the pods spawned get theirs as they come).
+		`log("LongWarX2: EW bodies:" @ class'LWX2EWBodies'.static.ApplyAll() @ "units given Enemy Within's body", , 'LongWarX2');
 		// Soldiers boxed in by EW's walls moved out, once their paths are known.
 		BoxedTries = 0;
 		Screen.SetTimer(3.0, true, nameof(FreeBoxedIn), self);

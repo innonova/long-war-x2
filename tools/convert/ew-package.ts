@@ -14,6 +14,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
 import { inlineTextures } from './inline-textures.ts'
+import { renameAnims, X2_SECTOID } from './ew-unit-anims.ts'
 
 /** EW's texture caches and the names they take in a converted package (the same lengths). */
 export const CACHES: Record<string, string> = {
@@ -24,9 +25,17 @@ export const CACHES: Record<string, string> = {
 }
 
 /** An EW package made loadable by XCOM 2, written to out; returns its report. */
-export function convertPackage(src: string, out: string): string {
+export function convertPackage(src: string, out: string, transform?: (bytes: Uint8Array) => { bytes: Uint8Array; report: string }): string {
 const original = new Uint8Array(readFileSync(src))
-const bytes = decompressPackage(original)
+let bytes = decompressPackage(original)
+// A change to the package itself (a unit's animations under XCOM 2's names, ew-unit-anims.ts) before its textures are
+// appended: a package written again would lose them, or their offsets.
+let changed = ''
+if (transform) {
+  const t = transform(bytes)
+  bytes = t.bytes
+  changed = `; ${t.report}`
+}
 const pkg = new Package(bytes)
 const renamed: string[] = []
 pkg.nameEntries.forEach((e: { name: string; offset: number }) => {
@@ -49,15 +58,19 @@ outBytes.set(bytes)
 outBytes.set(tex.appended, bytes.length)
 writeFileSync(out, outBytes)
 
-return `${out}: ${outBytes.length} bytes, decompressed; caches ${renamed.join(', ') || 'none named'}; ${tex.textures} textures rewritten (${tex.mips} mips)`
+return `${out}: ${outBytes.length} bytes, decompressed; caches ${renamed.join(', ') || 'none named'}; ${tex.textures} textures rewritten (${tex.mips} mips)${changed}`
 }
 
 if (/ew-package\.ts$/.test(process.argv[1] ?? '')) {
-  const [src, out] = process.argv.slice(2).filter((a) => a !== '--')
+  const args = process.argv.slice(2).filter((a) => a !== '--')
+  // --anims <AnimSet path>: a unit's animations also under XCOM 2's names (ew-unit-anims.ts; XCOM 2's Sectoid's names).
+  const at = args.indexOf('--anims')
+  const set = at >= 0 ? args.splice(at, 2)[1] : undefined
+  const [src, out] = args
   if (!out) {
-    console.error('usage: ew-package.ts <EW package .upk> <out .upk>')
+    console.error('usage: ew-package.ts <EW package .upk> <out .upk> [--anims <AnimSet path>]')
     process.exit(2)
   }
-  console.log(convertPackage(src!, out!))
+  console.log(convertPackage(src!, out!, set ? (bytes) => renameAnims(bytes, set, X2_SECTOID) : undefined))
 }
 

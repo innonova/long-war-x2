@@ -113,6 +113,7 @@ static event OnPreMission(XComGameState StartGameState, XComGameState_MissionSit
 static event OnPostTemplatesCreated()
 {
 	class'LWX2SkirmishWeapons'.static.AddClasses();
+	class'LWX2EWBodies'.static.AddAnimSets();
 	class'X2StrategyElement_LWTechs'.static.HideXCom2Techs();
 	class'X2Item_LWWeapons'.static.CopyLooks();
 	class'X2Item_LWArmors'.static.CopyLooks();

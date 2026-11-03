@@ -374,5 +374,7 @@ static function BuildPodVisualization(XComGameState VisualizeGameState)
 		if (Unit.GetVisualizer() == none)
 			Unit.FindOrCreateVisualizer();
 		Unit.SyncVisualizer();
+		// Enemy Within's body, where its package was converted (features/lw-ew-units.md).
+		class'LWX2EWBodies'.static.Apply(Unit);
 	}
 }

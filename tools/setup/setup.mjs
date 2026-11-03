@@ -17,6 +17,7 @@ import { execFileSync } from 'node:child_process'
 import { wordsFrom } from '../../scripts/write-words.mjs'
 import { convertUI } from '../convert/ew-ui.ts'
 import { convertPackage } from '../convert/ew-package.ts'
+import { renameAnims, X2_SECTOID } from '../convert/ew-unit-anims.ts'
 import { convertMap } from '../convert/ew-map.ts'
 import { convertMaps, listedMaps, writePlots } from '../convert/ew-maps.ts'
 
@@ -259,6 +260,13 @@ async function convertEW(ew, target) {
     say(`Enemy Within's earth: ${convertPackage(join(cooked, 'Static_SituationRoom.upk'), join(content, 'EWSitRoomMap.upk'))}`)
   } catch (e) {
     say(`Enemy Within's screens could not be converted (${e?.message ?? e}); XCOM 2's screens will show instead.`)
+  }
+  // Enemy Within's Sectoid: its body on XCOM 2's Sectoids, its animations under XCOM 2's names (features/lw-ew-units.md).
+  try {
+    say(`Enemy Within's Sectoid: ${convertPackage(join(cooked, 'GameUnit_XComSectoid_SF.upk'), join(content, 'GameUnit_XComSectoid_SF.upk'),
+      (bytes) => renameAnims(bytes, 'CHA_SectoidSoldier_ANIMSET.Anims.AS_SectoidPistol', X2_SECTOID))}`)
+  } catch (e) {
+    say(`Enemy Within's Sectoid could not be converted (${e?.message ?? e}); XCOM 2's Sectoid will show instead.`)
   }
   const maps = listedMaps(target).map((m) => m.name)
   let want = flag('--maps') ? true : flag('--no-maps') ? false : undefined
