@@ -26,6 +26,7 @@ export const EW_UNITS: EWUnit[] = [
   { template: 'Codex', pkg: 'GameUnit_XComOutsider_SF', mesh: 'SM_Outsider', sets: ['AS_Outsider', 'AS_SoldierRifle'], diffuse: /^Outsider_DIF/, normal: /^Outsider_NRM/ },
   { template: 'Andromedon', pkg: 'GameUnit_XComMutonElite_SF', mesh: 'SM_MutonElite', sets: ['AS_MutonRifle'], diffuse: /^MutonElite_DIF/, normal: /^MutonElite_NRM/ },
   { template: 'Berserker', pkg: 'GameUnit_XComMutonCom_SF', mesh: 'SM_MutonBerserker', sets: ['AS_MutonRifle', 'AS_MutonBlade'], diffuse: /^MutonBerserker_DIF/, normal: /^MutonBerserker_NRM/ },
+  { template: 'AdvMEC_M1', pkg: 'GameUnit_XComSectopodDrone_SF', mesh: 'SM_Drone', sets: ['AS_DroneDefault'], diffuse: /^Drone_DIF1$/, normal: /^Drone_NRM1$/ },
   { template: 'AdvMEC_M2', pkg: 'GameUnit_XComMechtoid_SF', mesh: 'SM_Mechtoid', sets: ['AS_Mechtoid'], diffuse: /^Mechtoid_DIF/, normal: /^Mechtoid_NRM/ },
 ]
 

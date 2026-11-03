@@ -58,3 +58,27 @@ particle systems as they are; its materials it cannot draw).
   Sectoid in close-up: a cinematic pawn of its own, not the unit's; EW's other aliens
   (Floater, Thin Man, Muton …) the same way, each with its table where names differ;
   the Sectoid's weapon and its psionic effects not looked at.
+
+## Report (2026-11-03 night, thirteen species)
+
+- **Generalized:** `tools/convert/ew-units.ts` lists Long War's species by the XCOM 2
+  template they fight as (`FightAs` in `XComLWStrategy.ini`): Sectoid, Floater (Archon),
+  Thin Man (Viper), Seeker (Faceless), Cyberdisc (Gatekeeper), Muton, Chryssalid, Zombie
+  (PsiZombie), Outsider (Codex), Muton Elite (Andromedon), Berserker, Drone (AdvMEC_M1),
+  Mechtoid (AdvMEC_M2). For each it finds the EW package's mesh, AnimSets and textures,
+  converts the package with its animations under the template's names, and writes the
+  bodies' list (`Config/XComLWX2EWUnits.ini`, gitignored, left out of releases: it names
+  the player's conversions). The setup runs it.
+- **XCOM 2's names per template** (`x2-anim-names.ts`, names only) generated from the
+  SDK's animation packages by `sdk-anim-names.ts` (for development; a player has no SDK):
+  the template's main set, its weapon's and its pod's.
+- **Coverage** (XCOM 2 names answered / without an EW animation): Sectoid 153/2, Thin
+  Man 117/23, Muton 124/12, Muton Elite 86/7, Berserker 61/14, Floater 48/20, Chryssalid
+  42/28, Zombie 45/40, Seeker 39/19, Outsider 36/7, Cyberdisc 25/23, Drone 44/33, Mechtoid
+  44/33. Where none answers, XCOM 2's own animation is asked for and does nothing on EW's
+  skeleton: the unit holds its pose for that action. The tables for the non-humanoid
+  species (flying, crawling) are the next refinement, by watching them play.
+- **Seen:** a Muton, a Thin Man and a Floater spawned beside the squad in EW's bodies,
+  standing in their idles; they still carry XCOM 2's weapons (the templates').
+- Two species on one template share the first's body (Sectoid Commander as Sectoid,
+  Heavy Floater as Floater).
