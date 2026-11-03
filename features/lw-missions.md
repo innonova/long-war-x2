@@ -1159,3 +1159,7 @@ from the evening, one from the morning) give two exception addresses:
 - **`XCom2.exe+0x6940a0`**, the evening's first (URB_Boulevard) and the
   office map on the test machine: during the map's generation, before any
   step of the mod. Open.
+- **Release** `LongWarX2-20261103-6061fad.zip`, checked from the zip on the
+  test machine (uninstalled, setup with `--maps`, then the farm crash site:
+  Long War's squad of 7 at 4 pods, the mission running). Its setup leaves
+  the person's conversions as they are (converter version unchanged).
