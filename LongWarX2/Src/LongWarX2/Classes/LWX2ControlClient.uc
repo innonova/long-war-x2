@@ -114,7 +114,8 @@ function Handle(string Line, out array<string> Out)
 		Abilities(Out);
 		return;
 	case "enemies":
-		Enemies(Out);
+		// enemies all: XCOM's units too.
+		Enemies(Out, Args.Length > 1 && Args[1] == "all");
 		return;
 	case "parts":
 		Parts(Out);
@@ -965,7 +966,7 @@ function string SpawnAlien(name CharacterTemplate, int Tiles)
 }
 
 /** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */
-function Enemies(out array<string> Out)
+function Enemies(out array<string> Out, optional bool bAll)
 {
 	local XComGameState_Unit Unit, Soldier;
 	local XComWorldData World;
@@ -975,11 +976,14 @@ function Enemies(out array<string> Out)
 	local FOWTileStatus FogStatus;
 	local byte FogFlags;
 	local XGUnit Vis;
+	local array<StateObjectReference> Viewers;
+	local XComGameState_Unit Viewer;
+	local int v;
 
 	World = `XWORLD;
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 	{
-		if (Unit.GetTeam() == eTeam_XCom || Unit.bRemovedFromPlay || !Unit.IsAlive())
+		if ((Unit.GetTeam() == eTeam_XCom && !bAll) || Unit.bRemovedFromPlay || !Unit.IsAlive() || Unit.TileLocation.X < 0)
 			continue;
 		Best = 9999;
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Soldier)
@@ -1007,6 +1011,25 @@ function Enemies(out array<string> Out)
 		Out.AddItem("  seen by" @ class'X2TacticalVisibilityHelpers'.static.GetNumEnemyViewersOfTarget(Unit.ObjectID) @ "tile fog" @ FogStatus @ "flags" @ FogFlags
 			@ "visible to teams" @ (Vis != none ? string(Vis.m_eTeamVisibilityFlags) : "no visualizer") @ "pawn hidden" @ ((Vis != none && Vis.GetPawn() != none) ? string(Vis.GetPawn().bHidden) : "-")
 			@ "forced" @ Unit.ForceModelVisible());
+		// Where a unit of XCOM's that is not a soldier came from: the change that first held it.
+		if (Unit.GetTeam() == eTeam_XCom && Unit.GetMyTemplateName() != 'Soldier')
+			Out.AddItem("  a soldier" @ Unit.IsSoldier() @ "in XCOM's squad" @ (XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom')).Squad.Find('ObjectID', Unit.ObjectID) != INDEX_NONE)
+				@ "controlled by player" @ Unit.ControllingPlayer.ObjectID @ "name" @ Unit.GetFullName());
+		if (Unit.GetTeam() == eTeam_XCom && Unit.GetMyTemplateName() != 'Soldier' && `XCOMHISTORY.GetOriginalGameStateRevision(Unit.ObjectID) != none)
+			Out.AddItem("  first in:" @ `XCOMHISTORY.GetOriginalGameStateRevision(Unit.ObjectID).GetParentGameState().GetContext().SummaryString()
+				@ "(history" @ `XCOMHISTORY.GetOriginalGameStateRevision(Unit.ObjectID).GetParentGameState().HistoryIndex $ ")");
+		// Who sees it: each viewer's kind, sight range (in tiles) and distance.
+		Viewers.Length = 0;
+		class'X2TacticalVisibilityHelpers'.static.GetEnemyViewersOfTarget(Unit.ObjectID, Viewers);
+		for (v = 0; v < Viewers.Length; v++)
+		{
+			Viewer = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Viewers[v].ObjectID));
+			if (Viewer != none)
+				Out.AddItem("    by" @ Viewer.GetMyTemplateName() @ "team" @ Viewer.GetTeam() @ "sight" @ int(Viewer.GetCurrentStat(eStat_SightRadius)) @ "at" @ Viewer.TileDistanceBetween(Unit) @ "tiles"
+					@ "on" @ Viewer.TileLocation.X $ "," $ Viewer.TileLocation.Y $ "," $ Viewer.TileLocation.Z @ "concealed" @ Viewer.IsConcealed());
+			else
+				Out.AddItem("    by object" @ Viewers[v].ObjectID @ `XCOMHISTORY.GetGameStateForObjectID(Viewers[v].ObjectID).Class);
+		}
 	}
 }
 

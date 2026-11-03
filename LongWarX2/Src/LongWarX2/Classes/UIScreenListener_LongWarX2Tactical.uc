@@ -35,8 +35,11 @@ event OnInit(UIScreen Screen)
 	class'LWX2PerkProbe'.static.Start(Screen);
 	if (class'UIScreenListener_LongWarX2HQ'.default.ShowTestEndMission && XGBattle_SP(`BATTLE) != none && !`BATTLE.m_kDesc.bIsTacticalQuickLaunch)
 		AddEndButton(Screen);
-	// A mission of the Long War Geoscape is won when its aliens are all dead or taken (lw-missions.md).
-	if (class'LWMissionSquads'.static.SquadNow().Length > 0)
+	// A mission of the Long War Geoscape is won when its aliens are all dead or taken (lw-missions.md); so is any mission
+	// on an EW map's own plot (the campaign's first did not count as one: its squad is not known yet when the HUD
+	// comes up).
+	`log("LongWarX2: missions: the HUD is up; Long War's squad" @ class'LWMissionSquads'.static.SquadNow().Length @ "aliens, on an EW map's own plot" @ class'LWX2EWMapPieces'.static.OnOwnPlot(), , 'LongWarX2');
+	if (class'LWMissionSquads'.static.SquadNow().Length > 0 || class'LWX2EWMapPieces'.static.OnOwnPlot())
 	{
 		bSwept = false;
 		Screen.SetTimer(2.0, true, nameof(CheckSwept), self);
@@ -263,19 +266,24 @@ static function LongWarObjectives()
 		return;
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_ObjectivesList', List)
 		break;
-	if (List == none)
-		return;
-	foreach List.ObjectiveDisplayInfos(Info)
+	if (List != none)
 	{
-		if (Info.MissionType == "LongWarX2")
-			bOurs = true;
-		else if (!Info.GPObjective)
-			bOthers = true;
+		foreach List.ObjectiveDisplayInfos(Info)
+		{
+			if (Info.MissionType == "LongWarX2")
+				bOurs = true;
+			else if (!Info.GPObjective)
+				bOthers = true;
+		}
+		if (bOurs && !bOthers)
+			return;
 	}
-	if (bOurs && !bOthers)
-		return;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: Long War's objective");
-	List = XComGameState_ObjectivesList(NewGameState.ModifyStateObject(class'XComGameState_ObjectivesList', List.ObjectID));
+	// The mission's own objective map has no kismet, so nothing made the list (XCOM 2's mission scripts do): made here.
+	if (List == none)
+		List = XComGameState_ObjectivesList(NewGameState.CreateNewStateObject(class'XComGameState_ObjectivesList'));
+	else
+		List = XComGameState_ObjectivesList(NewGameState.ModifyStateObject(class'XComGameState_ObjectivesList', List.ObjectID));
 	List.ClearTacticalObjectives();
 	Info = default.ObjectiveTemplate;
 	Info.MissionType = "LongWarX2";

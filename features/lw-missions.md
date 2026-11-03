@@ -1235,3 +1235,26 @@ from the evening, one from the morning) give two exception addresses:
 - A stock XCOM 2 skirmish, tried as the fog's reference, drew as a pink void: the
   mod's old hiding of XCOM 2's actors (`HideForeign`, for the hosted-map approach)
   still runs on XCOM 2's own plots. The mod's missions no longer use them; to remove.
+
+### 2026-11-03 evening, every alien visible and awake (the person: "in all missions")
+
+- **Cause:** a Muton on XCOM's side in every mission. Our mission used XCOM 2's
+  `NullSchedule`, a testing schedule whose one encounter (`NullGroup`, tag
+  "MutieTheMuton") places a Muton for XCOM. It started away from the squad, near
+  pods: it saw them (they went to red alert) and, being XCOM's, showed them. The
+  boxed-in safeguard also moved soldiers beside it, the unit reaching most tiles.
+  Found with the `enemies` aid, which now tells who sees each alien and where a unit
+  of XCOM's that is not a soldier came from (`eGameRule_TacticalGameStart`, not in
+  XCOM HQ's squad).
+- **Fix:** the mod's own schedule (`XComSchedules.ini`, `LWX2_EWSchedule`: no
+  encounters, the squad not concealed as in EW) and its own objective map (an empty
+  map, `LWX2_EWObjective`, in place of XCOM 2's test mission's `Obj_Test`).
+- Without XCOM 2's kismet nothing made the objective list: `LongWarObjectives` makes
+  it when missing.
+- **The campaign's first mission was never won by Long War's rule:** the HUD came up
+  before its squad was known, so the check (and "no mission timer", the objective
+  list) never started. It now starts on any EW map's own plot too.
+- **Checked on wingpu:** the first mission (the player's path, film skipped): 4
+  soldiers, 10 Sectoids all hidden, none on red alert, the objective listed; every
+  alien killed → "the mission is won", the summary. A Geoscape mission: 6 soldiers,
+  8 Sectoids, all hidden at the start.
