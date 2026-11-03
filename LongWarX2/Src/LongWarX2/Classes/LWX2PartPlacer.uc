@@ -24,7 +24,7 @@ var config bool bEWPlaced;
 var config bool FogNeverSeenAsHaveSeen;
 var config float FogNeverSeen;
 var config float FogHaveSeen;
-/** For development: each building's floors given their actors on an EW map's own plot (UIScreenListener_LongWarX2Dropship). */
+/** Each building's floors given their actors on an EW map's own plot (UIScreenListener_LongWarX2Dropship), for XCOM 2's building visibility. */
 var config bool CacheBuildingFloors;
 
 event Tick(float DeltaTime)
@@ -139,6 +139,56 @@ static function int HideForeign(Actor Finder, XComWorldData World)
 		Hidden++;
 	}
 	return Hidden;
+}
+
+/**
+ * Every actor of the plot's buildings' floors reset to XCOM 2's uncut, shown state (cutdown 999999, cutout -999999, not
+ * hideable): with its floors just cached, XCOM 2 left EW's buildings in its fully hidden state, and showed them again
+ * only when told to (lw-missions.md, night log). Its building visibility cuts them from there as units and the cursor
+ * move. Returns how many it reset.
+ */
+/**
+ * Each building told which of the plot's actors are on which of its floors (RebuildCachedActors: the editor does it for
+ * a plot it saves, the plot writer cannot), after the map is generated (cached during its generation, the game crashed).
+ * Returns how many buildings.
+ */
+static function int CacheBuildings(Actor Finder)
+{
+	local XComBuildingVolume B;
+	local int n;
+
+	foreach Finder.AllActors(class'XComBuildingVolume', B)
+	{
+		B.CacheBuildingVolumeInChildrenFloorVolumes();
+		B.CacheFloorCenterAndExtent();
+		B.RebuildCachedActors();
+		n++;
+	}
+	return n;
+}
+
+static function int ShowBuildings(Actor Finder)
+{
+	local XComBuildingVolume B;
+	local XComLevelActor A;
+	local int f, k, n;
+
+	foreach Finder.AllActors(class'XComBuildingVolume', B)
+		for (f = 0; f < B.Floors.Length; f++)
+			for (k = 0; k < B.Floors[f].m_aCachedActors.Length; k++)
+			{
+				A = XComLevelActor(B.Floors[f].m_aCachedActors[k].ResidentActor);
+				if (A == none)
+					continue;
+				A.SetHideableFlag(false);
+				A.SetPrimitiveCutdownFlag(false);
+				A.SetPrimitiveCutoutFlag(false);
+				A.SetPrimitiveVisHeight(999999, -999999, 999999, 999999);
+				if (A.StaticMeshComponent != none)
+					A.StaticMeshComponent.SetHidden(false);
+				n++;
+			}
+	return n;
 }
 
 /** The fog of war as configured (FogNeverSeenAsHaveSeen, FogNeverSeen, FogHaveSeen), and its levels logged. */

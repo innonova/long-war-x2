@@ -1033,3 +1033,107 @@ civilians.
   4, and 83 plots; then a mission on LWX2_URB_CommercialRestaurant with
   Long War's squad of 7 at 4 pods). The person's maps will be converted
   again by its setup (about four minutes).
+- **00:15, roofs, third look: on XCOM 2's own plot.** A retaliation on
+  Plot_SHN_Retalliation_LgObj_Ravine (EW maps off): its buildings have
+  floors 256 units tall (centres 144, 400, 656), one to four floor volumes
+  each, hundreds of actors cached, and with the camera on one the roof is
+  cut away and the room shown. Rebuilding that building's cache at run time
+  (`buildings 3 rebuild`) left it as it was. So the run-time caching is
+  sound, and the difference is in our plots.
+- **00:30, fourth look.** EW's backdrop pieces now carry
+  `bExcludeFromBuildingVolume` (XCOM 2's flag on level actors), so the
+  ground and cliffs cannot be taken into a floor. The building still
+  vanished, but the aliens inside now showed as silhouettes: the geometry
+  is there and blocks the view, it is only drawn invisible. So it is the
+  shader: an actor of a building is drawn with XCOM 2's cutaway heights, and
+  the retail game has those shaders for the materials it cooked for
+  buildings only (it cannot compile new ones: "Compiling … at run-time").
+  **Experiment:** pieces standing inside an EW building get stand-ins of
+  XCOM 2's building material (`Materials.Approved.Buildings_VP`, EW's
+  texture in its three layers) instead of the props parent.
+- **01:20, fifth look: what XCOM 2 does to them.** A probe of the cached
+  actors' building visibility state (`buildings n`): XCOM 2's own actors
+  in a working building stand at cutdown 999999, cutout −999999, mask
+  999999, their meshes shown; ours at cutdown 1152, cutout 1152, mask
+  −9999999, their meshes hidden (`HiddenGame`). XCOM 2's building material
+  as the parent changed nothing. So XCOM 2 puts our buildings' actors
+  into its fully hidden state; being tested: whether forcing them back
+  holds, or its logic hides them again.
+- **01:45, sixth look: it works above the ground floor.** Resetting a
+  building's cached actors to XCOM 2's uncut state brings it back, and
+  XCOM 2 does not hide it again until its building visibility next
+  updates. More telling: our actors' cutout height was 1152, XCOM 2's
+  −999999, so XCOM 2 had cut our building out (its transparency for what
+  stands between the camera and the focus), top to bottom, with the focus
+  on the ground. With the focus inside the building at its first floor
+  (Z 300), XCOM 2 cut the roof away and showed the floor: walls with their
+  windows, barrels and crates, as it does for its own buildings. With the
+  focus on the ground floor (Z 96) it still hid everything. Being checked:
+  the floor volumes' numbers (we write 0, 1, 2…; XCOM 2 may count from 1).
+- **02:50, the floor numbers.** XCOM 2's floor volumes count from 1
+  (`FloorNumber` 1, 2, 3; its top floor an empty one for the roof); ours
+  counted from 0, so our ground floor was no floor to it. **Decision:** the
+  writer numbers floors from 1. Being tested.
+  **Checked:** with floors numbered from 1, the dockyard's big building
+  shows its interior with the roof cut away at every focus height (the
+  ground, 96 and 300): the warehouse floor with its crates, forklift,
+  barrels and window walls. **Decision:** the caching is on by default
+  now (`CacheBuildingFloors=true`); with it, each building's actors are
+  reset to XCOM 2's uncut state at the dropship and at the battle's start
+  (`LWX2PartPlacer.ShowBuildings`), and XCOM 2 cuts from there.
+- **03:35, a crash.** On URB_OfficePaper_EWI the game died 0.07 s into
+  "Generating Map", right after the buildings were cached at the dropship
+  briefing: there the briefing comes before XCOM 2 has generated the map
+  (on the dockyard it came after). **Decision:** the buildings are cached
+  and shown only when the battle starts (`LWX2PartPlacer.CacheBuildings`,
+  `ShowBuildings`, from the tactical HUD's start), never at the dropship.
+- **04:00, the crash was the plot.** It came again with the caching
+  moved (no "floors cached" before it), so it is the plot itself, as
+  XCOM 2 generates the map (its own `InitVolumes` reads our building
+  volumes). URB_OfficePaper_EWI has a building whose floors overlap (its
+  second floor reaches into its third) and one without floors.
+  **Decision** (`ew-plot.ts`): floors stacked as XCOM 2 has them, sorted
+  by height, each floor's bottom raised to the top of the one below,
+  floors left without height dropped; buildings without floors left out.
+- **04:55, still crashing.** With the floors stacked, URB_OfficePaper_EWI
+  still crashed, now 3.5 s after its plot began to load: a null pointer
+  read in the engine (`XCom2.exe+0x6940a0`, address 0, from the minidump),
+  so something of our building or floor volumes on that map is read as
+  missing. The dockyard (9 buildings) loads and cuts its roofs; the office
+  (3) does not load. **Decision, for the person's build:** building
+  volumes off (`PlotBuildings=false` in `XComLWEWMaps.ini`; the writer's
+  `buildings` setting): the plots as they were before, which loaded on
+  every map tried, roofs drawn. The roof work stays (the volumes, the
+  1-based floors, the stacking, the caching and showing at the battle's
+  start) for the next session, starting from this crash.
+- **05:15, not the buildings.** With building volumes off the office still
+  crashed, so the last entry's reading was wrong. This office plot had in
+  fact never loaded: its first crash, at 19:36, was put down to the parcel.
+  What sets it apart: it has no EW point or spot lights, and the writer
+  drops the template's sample lights, so the plot had no light at all;
+  XCOM 2's map generation calls on its light clipping manager
+  (`MyLightClippingManager.BuildFromScript`), which a level without lights
+  seemingly has none of: a null read as the generation begins.
+  **Decision:** a plot without EW lights keeps the template's point light,
+  dark, high above the map. Being tested.
+- **05:35, the office map: not solved.** With a light kept, it still
+  crashed at the same moment (the start of "Generating Map"). So three
+  explanations are ruled out (the building volumes, the floors' order, the
+  missing light); the null read at `XCom2.exe+0x6940a0` stays. What is
+  known: the dockyard, the restaurant, the convenience store, the cemetery,
+  the fast food, the highway, the train station's terror and the
+  commercial alley's terror plots load; this one does not, and it never
+  did as a plot (its first try, at 19:36, crashed too, put down then to the
+  parcel). Next: diff this plot against one that loads (its parcel's
+  place, its volume, its spawn, an import that fails), and test more maps
+  in a row to know how many share it.
+
+**State at the end of the night.** The release on the draft
+(`LongWarX2-20261102-79b0b3f.zip`) is the one checked from the zip at
+01:00: the fog race fixed, glass and grey stand-ins, the first mission and
+terror sites (pods and civilians) on EW plots, its maps converted again by
+its setup. Since then, in the repository but in no release: building
+volumes (switched off, `PlotBuildings=false`), the caching and showing of
+building floors at the battle's start (on, without effect while no plot has
+volumes), and the dark light in plots without lights. The office map
+(URB_OfficePaper_EWI) crashes as its plot loads, in the release too.

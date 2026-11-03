@@ -1721,14 +1721,66 @@ function Buildings(array<string> Args, out array<string> Out)
 			B.RevealAllFloors();
 		else if (Args.Length > 2 && Args[2] ~= "rebuild")
 			B.RebuildCachedActors();
+		else if (Args.Length > 2 && Args[2] ~= "force")
+			ForceShown(B, Out);
 		Line = "building" @ n @ B.Name @ "at" @ B.Location @ "inside" @ B.IsInside @ "floors" @ B.Floors.Length $ ":";
 		for (f = 0; f < B.Floors.Length; f++)
-			Line @= "[" $ f @ "z" @ int(B.Floors[f].fCenterZ) @ "+-" @ int(B.Floors[f].fExtent) @ "vols" @ B.Floors[f].FloorVolumes.Length @ "actors" @ B.Floors[f].m_aCachedActors.Length $ "]";
+		{
+			Line @= "[" $ f @ "z" @ int(B.Floors[f].fCenterZ) @ "+-" @ int(B.Floors[f].fExtent) @ "vols" @ B.Floors[f].FloorVolumes.Length;
+			if (B.Floors[f].FloorVolumes.Length > 0 && B.Floors[f].FloorVolumes[0] != none)
+				Line @= "number" @ B.Floors[f].FloorVolumes[0].FloorNumber @ "type" @ int(B.Floors[f].FloorVolumes[0].m_FloorVolumeType) @ "empty" @ B.Floors[f].FloorVolumes[0].m_bIsEmptyFloor @ "bottom" @ int(B.Floors[f].FloorVolumes[0].Location.Z);
+			Line @= "actors" @ B.Floors[f].m_aCachedActors.Length $ "]";
+		}
 		Out.AddItem(Line);
+		// With a building chosen: its floors' first actors' visibility state (cutdown, cutout, opacity heights; hidden).
+		if (Want >= 0)
+			for (f = 0; f < B.Floors.Length; f++)
+				VisState(B, f, Out);
 		n++;
 	}
 	if (n == 0)
 		Out.AddItem("no building volumes");
+}
+
+/** A floor's first few cached level actors: their building visibility heights and hidden state. */
+function VisState(XComBuildingVolume B, int f, out array<string> Out)
+{
+	local XComLevelActor A;
+	local float Cutdown, Cutout, Mask, PrevMask, TCut, TOut;
+	local int k;
+
+	for (k = 0; k < Min(3, B.Floors[f].m_aCachedActors.Length); k++)
+	{
+		A = XComLevelActor(B.Floors[f].m_aCachedActors[k].ResidentActor);
+		if (A == none)
+			continue;
+		A.GetPrimitiveVisHeight(Cutdown, Cutout, Mask, PrevMask);
+		A.GetTargetVisibility(TCut, TOut);
+		Out.AddItem("  floor" @ f @ A.Name @ "at" @ int(A.Location.Z) @ "cutdownfloor" @ B.Floors[f].m_aCachedActors[k].CutdownFloor @ "cutdown" @ Cutdown @ "cutout" @ Cutout @ "mask" @ Mask @ "target" @ TCut @ TOut @ "hidden" @ A.bHidden @ "comp hidden" @ (A.StaticMeshComponent != none && A.StaticMeshComponent.HiddenGame) @ "offset" @ A.GetCutdownOffset());
+	}
+}
+
+/** buildings n force: every cached actor of a building reset to XCOM 2's uncut values and shown. */
+function ForceShown(XComBuildingVolume B, out array<string> Out)
+{
+	local XComLevelActor A;
+	local int f, k, n;
+
+	for (f = 0; f < B.Floors.Length; f++)
+		for (k = 0; k < B.Floors[f].m_aCachedActors.Length; k++)
+		{
+			A = XComLevelActor(B.Floors[f].m_aCachedActors[k].ResidentActor);
+			if (A == none)
+				continue;
+			A.SetHideableFlag(false);
+			A.SetPrimitiveCutdownFlag(false);
+			A.SetPrimitiveCutoutFlag(false);
+			A.SetPrimitiveVisHeight(999999, -999999, 999999, 999999);
+			if (A.StaticMeshComponent != none)
+				A.StaticMeshComponent.SetHidden(false);
+			n++;
+		}
+	Out.AddItem("forced shown:" @ n @ "actors");
 }
 
 defaultproperties

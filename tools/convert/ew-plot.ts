@@ -80,6 +80,12 @@ export function readSection(text: string): EWMap {
 export interface PlotSettings {
   /** The XCOM 2 parent material for each kind of EW material (Prop, Foliage, Alien). */
   parents: Record<string, string>
+  /** The parent for pieces inside EW's buildings (XCOM 2's building material, whose shaders its building visibility
+   *  draws with); "" for the kind's parent. */
+  buildingParent?: string
+  /** Whether EW's buildings are written as XCOM 2 building and floor volumes (roofs cut away; off: some maps' plots
+   *  crashed the game as they loaded, lw-missions.md). */
+  buildings?: boolean
   /** Scalars and textures set on every stand-in. */
   scalars: [string, number][]
   textures: [string, string][]
@@ -249,9 +255,10 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
 
   // --- Stand-in materials: one MaterialInstanceConstant of an XCOM 2 parent per EW material ----------------------
   const mics = new Map<string, number>()
-  const micFor = (path: string): number => {
+  const micFor = (path: string, inBuilding = false): number => {
     if (!path) return 0
-    if (mics.has(path)) return mics.get(path)!
+    const key = (inBuilding ? 'B|' : '') + path
+    if (mics.has(key)) return mics.get(key)!
     const look = map.looks.get(path)
     let ref = 0
     if (look && !look.diffuse && !SKIPPED_MATERIAL.test(path)) {
@@ -270,7 +277,26 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       if (!glass)
         tags.push({ name: 'VectorParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(1); w.bytes(param('TintColor', { name: 'ParameterValue', type: 'StructProperty', struct: 'LinearColor', arrayIndex: 0, value: bin((x) => GREY.tint.forEach((c) => x.f32(c))) })) }) })
       ref = addExport(sampleMIC, nextName(glass ? 'LWX2Glass' : 'LWX2Grey'), level, serialize({ head: objectHead(), tags, tail: p.tail }))
-      mics.set(path, ref)
+      mics.set(key, ref)
+      return ref
+    }
+    if (inBuilding && settings.buildingParent && look && look.diffuse) {
+      // A piece of a building: XCOM 2's building material, EW's textures in each of its three layers.
+      const p = parse(pkg.data(sampleMIC), 4)
+      const name = (n: string) => bin((x) => { const r = objName(n); x.i32(r.index).i32(r.number) })
+      const param = (n: string, value: T) => serialize({ head: new Uint8Array(0), tags: [{ name: 'ParameterName', type: 'NameProperty', arrayIndex: 0, value: name(n) }, value], tail: new Uint8Array(0) })
+      const tex: [string, number][] = []
+      for (const layer of ['Bottom', 'Mid', 'Top']) {
+        tex.push([`${layer}_Diffuse`, importRef(look.diffuse, 'Texture2D')])
+        if (look.normal) tex.push([`${layer}_Normal`, importRef(look.normal, 'Texture2D')])
+      }
+      const tags: T[] = [
+        tObj('Parent', importRef(settings.buildingParent, 'Material')),
+        tGuid('LightingGuid'),
+        { name: 'TextureParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(tex.length); for (const [n, t] of tex) w.bytes(param(n, tObj('ParameterValue', t))) }) },
+      ]
+      const ref = addExport(sampleMIC, nextName('LWX2Building'), level, serialize({ head: objectHead(), tags, tail: p.tail }))
+      mics.set(key, ref)
       return ref
     }
     if (look && look.diffuse && settings.parents[look.kind]) {
@@ -302,7 +328,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       // No stand-in (no diffuse map or no parent for its kind): the EW material itself (XCOM 2 draws its checker).
       ref = importRef(path, 'Material')
     }
-    mics.set(path, ref)
+    mics.set(key, ref)
     return ref
   }
 
@@ -316,7 +342,8 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   )
   for (const piece of pieces) {
     // Its stand-ins first: they are exports too, and the actor's component must come right after the actor.
-    const mats = piece.materials.map(micFor)
+    const inBuilding = map.buildings.some((b) => [0, 1, 2].every((c) => Math.abs(piece.loc[c]! - b.center[c]!) <= b.extent[c]! + 16))
+    const mats = piece.materials.map((m) => micFor(m, inBuilding))
     const actorName = nextName('XComLevelActor')
     const actorRef = exportCount() + 1
     const compRef = actorRef + 1
@@ -326,6 +353,9 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     set(atags, tVec('Location', piece.loc))
     set(atags, tRot('Rotation', piece.rot))
     set(atags, tVec('DrawScale3D', piece.scale))
+    // EW's backdrop (its huge pieces: ground beyond the play area, cliffs, the sky) kept out of the buildings' floors:
+    // XCOM 2's building visibility would hide it with the floor it overlaps.
+    if (piece.backdrop) set(atags, tBool('bExcludeFromBuildingVolume', true))
     addExport(sampleActor, actorName, level, serialize({ head: actorHead(actorSample.head), tags: atags, tail: actorSample.tail }))
     const ctags = meshSample.tags.map((t) => ({ ...t }))
     set(ctags, tObj('StaticMesh', importRef(piece.mesh, 'StaticMesh')))
@@ -417,10 +447,28 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     placed.push(actorRef)
     return actorRef
   }
-  for (const b of map.buildings) {
-    const floors = b.floors.map((f, k) => {
+  // XCOM 2 takes a building's floors stacked, one above the other: EW's sorted by height, each one's bottom raised to the
+  // top of the one below it (some overlap), those left without height dropped; a building without floors is left out (a
+  // plot with overlapping floors crashed the game as it generated the map: URB_OfficePaper_EWI).
+  const stacked = (b: EWMap['buildings'][number]) => {
+    const out: { center: number[]; extent: number[] }[] = []
+    let top = -Infinity
+    for (const f of [...b.floors].sort((x, y) => x.center[2]! - y.center[2]!)) {
+      const lo = Math.max(f.center[2]! - f.extent[2]!, top)
+      const hi = f.center[2]! + f.extent[2]!
+      if (hi - lo < 32) continue
+      out.push({ center: [f.center[0]!, f.center[1]!, (lo + hi) / 2], extent: [f.extent[0]!, f.extent[1]!, (hi - lo) / 2] })
+      top = hi
+    }
+    return out
+  }
+  for (const b of settings.buildings ? map.buildings : []) {
+    const ewFloors = stacked(b)
+    if (!ewFloors.length) continue
+    const floors = ewFloors.map((f, k) => {
       floorCount++
-      return { ref: boxVolume('XComFloorVolume', nextName('XComFloorVolume'), f, [tInt('FloorNumber', k)]), z: f.center[2]!, extent: f.extent[2]! }
+      // XCOM 2 numbers a building's floors from 1 (with 0 its building visibility hid the ground floor whole).
+      return { ref: boxVolume('XComFloorVolume', nextName('XComFloorVolume'), f, [tInt('FloorNumber', k + 1)]), z: f.center[2]!, extent: f.extent[2]! }
     })
     // Floors: an array of tagged structs (fCenterZ, fExtent, FloorVolumes), each ended by None.
     const floorsTag: T = {
@@ -463,7 +511,19 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     const countAt = 16
     const count = v.getInt32(countAt, true)
     const old = Array.from({ length: count }, (_, k) => v.getInt32(countAt + 4 + 4 * k, true))
-    const keep = old.filter((r) => r !== 0 && r !== sampleActor && r !== samplePoint && r !== sampleSpot)
+    // A plot without a light crashed the game as it generated the map (XCOM 2's light clipping manager, made for the
+    // level's lights, read as missing): without EW lights, the template's point light stays, dark, high above the map.
+    const keepPoint = lightCount === 0
+    if (keepPoint) {
+      const a = parse(pkg.data(samplePoint), 26)
+      set(a.tags, tVec('Location', [map.playCenter[0]!, map.playCenter[1]!, max[2]! + 2000]))
+      data.set(samplePoint, serialize(a))
+      const c = parse(pkg.data(samplePointC), 8)
+      set(c.tags, tFloat('Brightness', 0))
+      set(c.tags, tBool('CastShadows', false))
+      data.set(samplePointC, serialize(c))
+    }
+    const keep = old.filter((r) => r !== 0 && r !== sampleActor && (r !== samplePoint || keepPoint) && r !== sampleSpot)
     const actors = [...keep, ...placed]
     const w = new Writer()
     w.bytes(d.subarray(0, countAt))
@@ -493,8 +553,10 @@ if (/ew-plot\.ts$/.test(process.argv[1] ?? '')) {
     parents: { Prop: 'Materials.Approved.Props_SD', Foliage: 'Materials.Approved.Vegetations_VO', Alien: 'Materials.Approved.Alien_Props' },
     scalars: [['SpecularScale', 0]],
     textures: [['Masks', 'EngineResources.WhiteSquareTexture']],
-    lightScale: 3,
+    lightScale: 1,
     lightKinds: ['Point', 'Spot'],
+    buildingParent: process.env.LWX2_BUILDING_PARENT ?? '',
+    buildings: process.env.LWX2_BUILDINGS === '1',
   }
   const { bytes, report } = writePlot(new Uint8Array(readFileSync(template!)), readSection(readFileSync(section!, 'latin1')), settings)
   writeFileSync(out!, bytes)

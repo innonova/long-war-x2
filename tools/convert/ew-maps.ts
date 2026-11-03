@@ -33,6 +33,7 @@ export function plotSettings(mod: string): PlotSettings {
     textures: [...ini.matchAll(/^\+StandinTextures=\(Name=(\w+), Path="([^"]+)"\)/gm)].map((m) => [m[1]!, m[2]!] as [string, string]),
     lightScale: Number(/^PlotLightScale=([\d.]+)/m.exec(ini)?.[1] ?? 1),
     lightKinds: [...ini.matchAll(/^\+LightKinds=(\w+)/gm)].map((m) => m[1]!),
+    buildings: /^PlotBuildings=true/m.test(ini),
   }
 }
 
