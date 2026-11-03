@@ -15,6 +15,8 @@ struct LWX2Piece
 	var array<string> Materials;
 	/** The sky dome, the mountains: drawn, never colliding (they would enclose the map). */
 	var bool Backdrop;
+	/** A wall: its mesh is a FracturedStaticMesh (written by the converter for a map's own plot, ew-plot.ts). */
+	var bool Fractured;
 };
 
 /** A scalar parameter set on every stand-in (StandinScalars). */

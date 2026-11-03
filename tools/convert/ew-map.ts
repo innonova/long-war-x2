@@ -23,9 +23,11 @@ import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 
 /** Raised when what a conversion writes changes so that maps converted before must be converted again
- *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods, spawn points by type;
- *  5: the walls, EW's fracturable meshes; meshes at the root of the map's package; objects of one name made unique; materials cut out by their diffuse's alpha, a kind of their own). */
-export const CONVERTER_VERSION = 5
+ *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods,
+ *  spawn points by type; 5: the walls, EW's fracturable meshes; meshes at the root of the map's package; objects of one
+ *  name made unique; materials cut out by their diffuse's alpha, a kind of their own; 6: walls marked fractured, so the
+ *  plot imports them as such; the buildings' surface textures, Diffuse_Base). */
+export const CONVERTER_VERSION = 6
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -170,7 +172,7 @@ function materialsOf(index: number, tags: Tag[]): number[] {
   }
   return Array.from(slots, (r) => r ?? 0)
 }
-interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[]; extent: number[] }
+interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[]; extent: number[]; fractured: boolean }
 const pieces: Piece[] = []
 const skipped: Record<string, number> = {}
 exports.forEach((e, i) => {
@@ -205,6 +207,8 @@ exports.forEach((e, i) => {
     scale: ds3 ? [f32(ds3, 0) * s, f32(ds3, 1) * s, f32(ds3, 2) * s] : [s, s, s],
     materials: materialsOf(ref(comp) - 1, ctags),
     extent: [0, 0, 0],
+    // A wall's mesh is a FracturedStaticMesh: the plot imports it as that class (as a StaticMesh it is not found).
+    fractured: exports.find((x) => x.fullName === mesh)?.type === 'FracturedStaticMesh',
   })
 })
 
@@ -474,11 +478,14 @@ function lookOf(r: number): Look {
   if (process.env.LWX2_LOOKS) console.log('look', pathOf(r), root, JSON.stringify([...tex]))
   // The parameter names EW's parents use, the main layer first (the ground blends take their
   // Grass layer: one texture where EW blends four by vertex colour); else by the texture's name.
+  // (The buildings' parents, BLDG_*, name their surface Diffuse_Base; their Damage_* layer, rubble, is what shows once a
+  // wall is broken, never the stand-in's.)
   const pick = (params: string[], re: RegExp) =>
-    params.map((p) => tex.get(p)).find(Boolean) ?? [...tex.values()].find((p) => re.test(p.split('.').pop()!)) ?? ''
+    params.map((p) => tex.get(p)).find(Boolean)
+    ?? [...tex].find(([param, p]) => !/^Damage/i.test(param) && re.test(p.split('.').pop()!))?.[1] ?? ''
   return {
-    diffuse: pick(['Diffuse', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock'], /(_DIF|_D|Diffuse|_Dif)\d*$/i),
-    normal: pick(['Normal', 'Leaves_Normal', 'Dirt_Normal', 'Rock_Normal'], /(_NRM|_N|Normal|_Nrm)\d*$/i),
+    diffuse: pick(['Diffuse', 'Diffuse_Base', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock'], /(_DIFF?|_D|Diffuse|_Dif)\d*$/i),
+    normal: pick(['Normal', 'Normal_Base', 'Leaves_Normal', 'Dirt_Normal', 'Rock_Normal'], /(_NRM|_NORM|_N|Normal|_Nrm)\d*$/i),
     // Masked: cut out by the diffuse's alpha (tree cards, signs, fences: PROP_DifOpc, PROP_OpacityMask_Tile).
     kind: /Foliage|Grass|Veget/i.test(root) ? 'Foliage' : /DifOpc|OpacityMask/i.test(root) ? 'Masked' : /ALIEN/i.test(root) ? 'Alien' : 'Prop',
   }
@@ -598,7 +605,7 @@ const lines = [
   ),
   ...pieces.map(
     (p) =>
-      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''}${isBackdrop(p) ? ',Backdrop=true' : ''})`,
+      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''}${isBackdrop(p) ? ',Backdrop=true' : ''}${p.fractured ? ',Fractured=true' : ''})`,
   ),
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')

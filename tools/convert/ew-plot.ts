@@ -19,7 +19,7 @@ export interface EWMap {
   playCenter: number[]
   playExtent: number[]
   dropZones: number[][]
-  pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean }[]
+  pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean; fractured: boolean }[]
   looks: Map<string, { kind: string; diffuse: string; normal: string }>
   lights: { kind: string; loc: number[]; rot: number[]; radius: number; brightness: number; color: number[]; falloff: number; inner: number; outer: number }[]
   /** EW's building volumes, each with its floors (a box each). */
@@ -57,6 +57,7 @@ export function readSection(text: string): EWMap {
         scale: vec(sub(line, 'Scale')),
         materials: mats ? mats.split(',').map((s) => s.replace(/"/g, '')) : [],
         backdrop: /Backdrop=true/.test(line),
+        fractured: /Fractured=true/.test(line),
       })
     } else if (line.startsWith('+Lights=')) {
       const c = sub(line, 'Color')
@@ -373,7 +374,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     if (piece.backdrop) set(atags, tBool('bExcludeFromBuildingVolume', true))
     addExport(sampleActor, actorName, level, serialize({ head: actorHead(actorSample.head), tags: atags, tail: actorSample.tail }))
     const ctags = meshSample.tags.map((t) => ({ ...t }))
-    set(ctags, tObj('StaticMesh', importRef(piece.mesh, 'StaticMesh')))
+    set(ctags, tObj('StaticMesh', importRef(piece.mesh, piece.fractured ? 'FracturedStaticMesh' : 'StaticMesh')))
     if (mats.length)
       set(ctags, { name: 'Materials', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(mats.length); mats.forEach((m) => w.i32(m)) }) })
     if (piece.backdrop)
