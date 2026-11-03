@@ -21,7 +21,7 @@ export interface EWMap {
   dropZones: number[][]
   pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean; fractured: boolean; cover: string[] }[]
   /** EW's doors (ew-map.ts): mesh, AnimTree, AnimSets, physics, where, the idle animation, the interaction points. */
-  doors: { mesh: string; tree: string; physics: string; sets: string[]; loc: number[]; rot: number[]; scale: number[]; idle: string; blocksSight: boolean; window: boolean; points: Record<string, string>[] }[]
+  doors: { mesh: string; materials: string[]; tree: string; physics: string; sets: string[]; loc: number[]; rot: number[]; scale: number[]; idle: string; blocksSight: boolean; window: boolean; points: Record<string, string>[] }[]
   looks: Map<string, { kind: string; diffuse: string; normal: string }>
   lights: { kind: string; loc: number[]; rot: number[]; radius: number; brightness: number; color: number[]; falloff: number; inner: number; outer: number }[]
   /** EW's building volumes, each with its floors (a box each). */
@@ -52,9 +52,11 @@ export function readSection(text: string): EWMap {
       m.looks.set(str(line, 'Material'), { kind: /Kind=(\w+)/.exec(line)?.[1] ?? 'Prop', diffuse: str(line, 'Diffuse'), normal: str(line, 'Normal') })
     else if (line.startsWith('+Doors=')) {
       const sets = /AnimSets=\(([^)]*)\)/.exec(line)?.[1] ?? ''
+      const mats = /Materials=\(([^)]*)\)/.exec(line)?.[1] ?? ''
       const points = /Points=\((.*)\)\)$/.exec(line)?.[1] ?? ''
       m.doors.push({
         mesh: str(line, 'Mesh'),
+        materials: mats ? mats.split(',').map((x) => x.replace(/"/g, '')) : [],
         tree: str(line, 'AnimTree'),
         physics: str(line, 'Physics'),
         sets: sets ? sets.split(',').map((x) => x.replace(/"/g, '')) : [],
@@ -424,6 +426,8 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     const skelClass = importRef('Engine.SkeletalMeshComponent', 'Class', 'Core')
     const skelArch = importRef('XComGame.Default__XComInteractiveLevelActor.SkeletalMeshComponent0', 'SkeletalMeshComponent')
     for (const door of map.doors) {
+      // Its stand-ins first (exports too: the component must come right after the actor), as the pieces'.
+      const doorMats = door.materials.map((m) => micFor(m, true))
       const actorRef = exportCount() + 1
       const compRef = actorRef + 1
       const points = door.points.map((p) => serialize({
@@ -455,6 +459,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       ]
       addExport(sampleActor, nextName('XComInteractiveLevelActor'), level, serialize({ head: actorHead(actorSample.head), tags: atags, tail: actorSample.tail }), { classIndex: doorClass, archetype: doorDefault })
       const ctags: T[] = [tObj('SkeletalMesh', importRef(door.mesh, 'SkeletalMesh'))]
+      if (doorMats.some((m) => m)) ctags.push({ name: 'Materials', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(doorMats.length); doorMats.forEach((m) => w.i32(m)) }) })
       if (door.tree) ctags.push(tObj('AnimTreeTemplate', importRef(door.tree, 'AnimTree')))
       if (door.physics) ctags.push(tObj('PhysicsAsset', importRef(door.physics, 'PhysicsAsset')))
       if (door.sets.length) {

@@ -273,7 +273,7 @@ if (process.env.LWX2_EXTENTS) for (const [m, e] of [...extents].sort((a, b) => M
 // XCOM 2's XComInteractiveLevelActor is EW's, nearly field for field: the plot places one per EW door with EW's mesh,
 // AnimTree, AnimSets and interaction points (where a unit stands to open it, the door's animations by name).
 interface DoorPoint { src: string; dest: string; anim: string; destroy: string; inactive: string; facing: string; mirror: boolean }
-interface Door { mesh: string; tree: string; sets: string[]; physics: string; loc: number[]; rot: number[]; scale: number[]; idle: string; points: DoorPoint[]; blocksSight: boolean; window: boolean }
+interface Door { mesh: string; materials: number[]; tree: string; sets: string[]; physics: string; loc: number[]; rot: number[]; scale: number[]; idle: string; points: DoorPoint[]; blocksSight: boolean; window: boolean }
 const doors: Door[] = []
 const nameAt = (v: Uint8Array) => String(pkg.names[new DataView(v.buffer, v.byteOffset).getInt32(0, true)].name)
 exports.forEach((e, i) => {
@@ -289,6 +289,22 @@ exports.forEach((e, i) => {
   }
   const obj = (name: string) => { const t = ctags.find((x) => x.name === name); return t && ref(t) ? pathOf(ref(t)) : '' }
   const mesh = obj('SkeletalMesh')
+  // Its materials: the component's own, else the mesh's (in its data after the properties and bounds: count, refs).
+  const meshRef = ref(ctags.find((x) => x.name === 'SkeletalMesh')!)
+  const own = ctags.find((x) => x.name === 'Materials')
+  let materials: number[] = own ? refs(own) : []
+  if (!materials.length && meshRef > 0) {
+    try {
+      const d = pkg.data(meshRef)
+      const r = new Reader(d.subarray(4))
+      readTags(r, pkg)
+      const at = 4 + (r as any).o + 28
+      const dv = new DataView(d.buffer, d.byteOffset)
+      materials = Array.from({ length: Math.min(dv.getInt32(at, true), 16) }, (_, k) => dv.getInt32(at + 4 + 4 * k, true))
+    } catch {
+      materials = []
+    }
+  }
   const pointsTag = tags.find((t) => t.name === 'InteractionPoints')
   if (!mesh || !pointsTag) return
   const points: DoorPoint[] = []
@@ -309,7 +325,7 @@ exports.forEach((e, i) => {
   const s = ds ? f32(ds, 0) : 1
   const idle = tags.find((t) => t.name === 'ActiveIdleAnim')
   doors.push({
-    mesh, tree: obj('AnimTreeTemplate'), physics: obj('PhysicsAsset'),
+    mesh, materials, tree: obj('AnimTreeTemplate'), physics: obj('PhysicsAsset'),
     sets: sets ? Array.from({ length: new DataView(sets.value.buffer, sets.value.byteOffset).getInt32(0, true) }, (_, k) => pathOf(new DataView(sets.value.buffer, sets.value.byteOffset).getInt32(4 + 4 * k, true))).filter(Boolean) : [],
     loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
     rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
@@ -591,7 +607,7 @@ function lookOf(r: number): Look {
   }
 }
 const looks = new Map<number, Look>()
-for (const p of pieces) for (const m of p.materials) if (m && !looks.has(m)) looks.set(m, lookOf(m))
+for (const p of [...pieces, ...doors]) for (const m of p.materials) if (m && !looks.has(m)) looks.set(m, lookOf(m))
 
 // --- The package: the world neutralized, the carried packages and the caches renamed -
 // XCOM 2 reads every object of a package it loads, and reads EW's level objects wrong.
@@ -690,7 +706,7 @@ const lines = [
   "; EW's building volumes (centre, half sizes) and their floors (each floor's volumes as one box), for the plot's building visibility.",
   ...doors.map(
     (d) =>
-      `+Doors=(Mesh="${rename(d.mesh)}",AnimTree="${rename(d.tree)}",Physics="${rename(d.physics)}",AnimSets=(${d.sets.map((x) => `"${rename(x)}"`).join(',')}),` +
+      `+Doors=(Mesh="${rename(d.mesh)}",Materials=(${d.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')}),AnimTree="${rename(d.tree)}",Physics="${rename(d.physics)}",AnimSets=(${d.sets.map((x) => `"${rename(x)}"`).join(',')}),` +
       `Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}),` +
       `Idle=${d.idle || 'None'},BlocksSight=${d.blocksSight},Window=${d.window},Points=(${d.points.map((q) => `(Src=${q.src},Dest=${q.dest || 'None'},Anim=${q.anim || 'None'},Destroy=${q.destroy || 'None'},Inactive=${q.inactive || 'None'},Facing=${q.facing},Mirror=${q.mirror})`).join(',')}))`,
   ),
