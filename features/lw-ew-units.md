@@ -118,3 +118,4 @@ particle systems as they are; its materials it cannot draw).
   `SM_HeavyFloater` with its plasma rifle. 15 bodies. Seen side by side with a Sectoid.
 - Bodies are applied again every two seconds in a mission (the win check's timer), so
   aliens that come after the pods (a Chryssalid's zombie, any spawn) get theirs.
+- **Release** `LongWarX2-20261103-ce8c076.zip`, checked from the zip: 15 bodies converted; a crash site (`CSmallScout_Farm`) with its Sectoids in EW's body and pistol.
