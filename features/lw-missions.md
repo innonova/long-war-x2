@@ -1324,3 +1324,19 @@ from the evening, one from the morning) give two exception addresses:
   points 0). Registered again at the battle's start (`LWX2PartPlacer.RegisterDoors`):
   interact points 4 to 6 each; a soldier walked through the store's front door, which
   opened. Converter version 7.
+- **Doors' materials:** EW's door meshes list their materials after their bounds; the
+  converter writes them, the plot gives the door's component stand-ins (Props_SD and
+  Translucent_SD take skeletal meshes). Seen: the store's white back door with its
+  vent, the bookstore's glazed double door.
+- **Long War's weapon categories** registered with the item manager (`+WeaponCategories`
+  in `XComGameData.ini`, from the gear config): the log reported every Long War weapon
+  template invalid.
+- **Checked on wingpu,** version 7 on all 83 maps: twelve maps load (store, fast food,
+  office, boulevard, `CLrgScout_City`, pier terror, supply ship, bar, farm, gas station,
+  trainyard, highway); every door registered (store 15, office 14, supply ship 9,
+  city scout 7, fast food 5).
+- **Release** `LongWarX2-20261103-2360399.zip`, checked from the zip (setup converts every
+  map again at version 7; the store and the office with all their doors). (The launcher's
+  category, the last weapon warning, came after it.)
+- Move ranges: XCOM 2 gives a move action mobility ÷ 1.5 tiles (8 at 12), so 9 to 11
+  tiles taking both actions is XCOM 2's rule, not a fault.
