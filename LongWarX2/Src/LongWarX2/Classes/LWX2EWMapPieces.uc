@@ -5,6 +5,14 @@
 // the mod's own: Long War's maps per mission kind and the shared settings.
 class LWX2EWMapPieces extends Object config(LWEWMaps);
 
+/** A wall's fracture data (the plot writer's, ew-plot.ts; read here only so the line parses). */
+struct LWX2PieceFrac
+{
+	var int Indices;
+	var float MinZ, MaxZ;
+	var name Toughness;
+};
+
 struct LWX2Piece
 {
 	var string Mesh;
@@ -20,6 +28,7 @@ struct LWX2Piece
 	/** Its cover flags where they differ from an XComLevelActor's (the plot sets them; read here only so the line parses). */
 	var bool ClimbOnto, ClimbOver, Destination, IgnoreForCover;
 	var name CoverForce;
+	var LWX2PieceFrac Frac;
 };
 
 /** A scalar parameter set on every stand-in (StandinScalars). */
