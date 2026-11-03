@@ -85,3 +85,15 @@ particle systems as they are; its materials it cannot draw).
 - **Release** `LongWarX2-20261103-1976635.zip`, checked from the zip: the setup converted
   13 species; the office's Drones and Sectoids in EW's bodies (the Drone sits low: EW's
   hover may come from an animation not yet answered).
+- **Gaps closed by what an animation does** (a fallback after the table: flying up and
+  down from EW's jets, melee from EW's attacks and the Muton's bull rush, deaths, hurts,
+  suppression, stuns, panic, reloads, signals): the gaps left are XCOM 2's own abilities
+  (Bind, Anima Gate, Blazing Pinions, burrowing …). Seen: the EW Muton firing on a
+  soldier (6 damage, disoriented), the Thin Man and the Sectoids moving in the aliens'
+  turn.
+- **XCOM 2's reveal close-ups** came with their own model of the alien (the template's
+  cinematic packages): for a template with an EW body the mod drops those packages and
+  the reveal prefix and the first-sighting scene; XCOM 2 then reveals the unit itself.
+  Seen: the reveal camera on an EW Sectoid by a car.
+- The mod's own reader of the map sections (`LWX2EWMapPieces`) did not know the pieces'
+  new cover fields and logged a redscreen per piece; its struct has them now.

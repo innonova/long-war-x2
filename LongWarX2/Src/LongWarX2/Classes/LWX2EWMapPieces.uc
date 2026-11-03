@@ -17,6 +17,9 @@ struct LWX2Piece
 	var bool Backdrop;
 	/** A wall: its mesh is a FracturedStaticMesh (written by the converter for a map's own plot, ew-plot.ts). */
 	var bool Fractured;
+	/** Its cover flags where they differ from an XComLevelActor's (the plot sets them; read here only so the line parses). */
+	var bool ClimbOnto, ClimbOver, Destination, IgnoreForCover;
+	var name CoverForce;
 };
 
 /** A scalar parameter set on every stand-in (StandinScalars). */

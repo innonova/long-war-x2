@@ -43,6 +43,11 @@ static function AddAnimSets()
 			if (X2CharacterTemplate(T) != none && X2CharacterTemplate(T).AdditionalAnimSets.Find(Set) == INDEX_NONE)
 			{
 				X2CharacterTemplate(T).AdditionalAnimSets.AddItem(Set);
+				// XCOM 2's reveal and first-sighting scenes bring their own model of the alien (its cinematic packages):
+				// without them XCOM 2 reveals the unit itself, in its EW body.
+				X2CharacterTemplate(T).strMatineePackages.Length = 0;
+				X2CharacterTemplate(T).RevealMatineePrefix = "";
+				X2CharacterTemplate(T).bNeverShowFirstSighted = true;
 				n++;
 			}
 	}
