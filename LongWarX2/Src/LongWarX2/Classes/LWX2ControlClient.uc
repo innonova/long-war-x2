@@ -1084,6 +1084,25 @@ function Doors(out array<string> Out)
 		Out.AddItem("no interactive level actors");
 }
 
+/** The unit's primary weapon's drawn mesh (its XComWeapon's), for the EW bodies' checks. */
+function string WeaponMeshOf(XComGameState_Unit Unit)
+{
+	local XComGameState_Item Item;
+	local XComWeapon Entity;
+
+	Item = Unit.GetPrimaryWeapon();
+	if (Item == none || XGWeapon(Item.GetVisualizer()) == none)
+		return "no visualizer";
+	Entity = XComWeapon(XGWeapon(Item.GetVisualizer()).m_kEntity);
+	if (Entity == none || Entity.Mesh == none)
+		return "no entity";
+	if (SkeletalMeshComponent(Entity.Mesh) != none)
+		return PathName(SkeletalMeshComponent(Entity.Mesh).SkeletalMesh);
+	if (StaticMeshComponent(Entity.Mesh) != none)
+		return "static" @ PathName(StaticMeshComponent(Entity.Mesh).StaticMesh);
+	return string(Entity.Mesh.Class.Name);
+}
+
 function string EWBody(name Template, string MeshPath, string SetPath, string DiffusePath, string NormalPath)
 {
 	local XComGameState_Unit Unit;
@@ -1243,7 +1262,8 @@ function Enemies(out array<string> Out, optional bool bAll)
 		Out.AddItem("  seen by" @ class'X2TacticalVisibilityHelpers'.static.GetNumEnemyViewersOfTarget(Unit.ObjectID) @ "tile fog" @ FogStatus @ "flags" @ FogFlags
 			@ "visible to teams" @ (Vis != none ? string(Vis.m_eTeamVisibilityFlags) : "no visualizer") @ "pawn hidden" @ ((Vis != none && Vis.GetPawn() != none) ? string(Vis.GetPawn().bHidden) : "-")
 			@ "forced" @ Unit.ForceModelVisible()
-			@ "mesh" @ ((Vis != none && Vis.GetPawn() != none && Vis.GetPawn().Mesh != none) ? PathName(Vis.GetPawn().Mesh.SkeletalMesh) : "-"));
+			@ "mesh" @ ((Vis != none && Vis.GetPawn() != none && Vis.GetPawn().Mesh != none) ? PathName(Vis.GetPawn().Mesh.SkeletalMesh) : "-")
+			@ "weapon" @ WeaponMeshOf(Unit));
 		// Where a unit of XCOM's that is not a soldier came from: the change that first held it.
 		if (Unit.GetTeam() == eTeam_XCom && Unit.GetMyTemplateName() != 'Soldier')
 			Out.AddItem("  a soldier" @ Unit.IsSoldier() @ "in XCOM's squad" @ (XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom')).Squad.Find('ObjectID', Unit.ObjectID) != INDEX_NONE)

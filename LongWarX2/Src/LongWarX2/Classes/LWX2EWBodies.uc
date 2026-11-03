@@ -12,7 +12,7 @@ struct LWX2Body
 	var string AnimSet;
 	var string Diffuse;
 	var string Normal;
-	/** EW's weapon for it, in place of its XCOM 2 weapon's mesh (none: XCOM 2's kept). */
+	/** EW's weapon for it, in place of its XCOM 2 weapon's mesh ("none": XCOM 2's hidden; empty: XCOM 2's kept). */
 	var string WeaponMesh;
 	var string WeaponDiffuse;
 	var string WeaponNormal;
@@ -109,6 +109,13 @@ static function Weapon(XComGameState_Unit Unit, LWX2Body B)
 	if (Item == none || XGWeapon(Item.GetVisualizer()) == none)
 		return;
 	Entity = XComWeapon(XGWeapon(Item.GetVisualizer()).m_kEntity);
+	// EW's species with nothing in its hands: XCOM 2's weapon not drawn.
+	if (B.WeaponMesh == "none")
+	{
+		if (Entity != none && Entity.Mesh != none)
+			Entity.Mesh.SetHidden(true);
+		return;
+	}
 	Mesh = SkeletalMesh(DynamicLoadObject(B.WeaponMesh, class'SkeletalMesh', true));
 	if (Entity == none || SkeletalMeshComponent(Entity.Mesh) == none || Mesh == none)
 		return;

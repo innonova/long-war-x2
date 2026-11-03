@@ -29,8 +29,10 @@ export const EW_UNITS: EWUnit[] = [
     weapon: { pkg: 'Weapon_PlasmaRifleMuton_SF', mesh: 'SM_AssaultRiflePlasmaMuton', diffuse: /^AssaultRiflePlasma_DIF$/, normal: /^AssaultRiflePlasma_NRM$/ } },
   { template: 'Chryssalid', pkg: 'GameUnit_XComChryssalid_SF', mesh: 'SM_Cryssalid', sets: ['AS_CryssalidDefault'], diffuse: /^CHA_Cryssalid_DIF$/, normal: /^CHA_Cryssalid_NRM$/ },
   { template: 'PsiZombie', pkg: 'GameUnit_XComZombie_SF', mesh: 'SM_CivMale_Zombie', sets: ['AS_ZombieMaleDefault'], diffuse: /^CivMaleZombie_DIF$/, normal: /^T_CivilianMaleThinA_Body_NRM$/ },
-  { template: 'Codex', pkg: 'GameUnit_XComOutsider_SF', mesh: 'SM_Outsider', sets: ['AS_Outsider', 'AS_SoldierRifle'], diffuse: /^Outsider_DIF/, normal: /^Outsider_NRM/ },
-  { template: 'Andromedon', pkg: 'GameUnit_XComMutonElite_SF', mesh: 'SM_MutonElite', sets: ['AS_MutonRifle'], diffuse: /^MutonElite_DIF/, normal: /^MutonElite_NRM/ },
+  { template: 'Codex', pkg: 'GameUnit_XComOutsider_SF', mesh: 'SM_Outsider', sets: ['AS_Outsider', 'AS_SoldierRifle'], diffuse: /^Outsider_DIF/, normal: /^Outsider_NRM/,
+    weapon: { ...PLASMA_LIGHT, pkg: 'Weapon_PlasmaRfLtOutsider_SF' } },
+  { template: 'Andromedon', pkg: 'GameUnit_XComMutonElite_SF', mesh: 'SM_MutonElite', sets: ['AS_MutonRifle'], diffuse: /^MutonElite_DIF/, normal: /^MutonElite_NRM/,
+    weapon: { pkg: 'Weapon_HeavyPlasmaMuton_SF', mesh: 'SM_BPHeavyPlasmaMuton', diffuse: /^WP_BPHeavyPlasma_DIF$/, normal: /^WP_BPHeavyPlasma_NRM$/ } },
   { template: 'Berserker', pkg: 'GameUnit_XComMutonCom_SF', mesh: 'SM_MutonBerserker', sets: ['AS_MutonRifle', 'AS_MutonBlade'], diffuse: /^MutonBerserker_DIF/, normal: /^MutonBerserker_NRM/ },
   { template: 'AdvMEC_M1', pkg: 'GameUnit_XComSectopodDrone_SF', mesh: 'SM_Drone', sets: ['AS_DroneDefault'], diffuse: /^Drone_DIF1$/, normal: /^Drone_NRM1$/ },
   { template: 'AdvMEC_M2', pkg: 'GameUnit_XComMechtoid_SF', mesh: 'SM_Mechtoid', sets: ['AS_Mechtoid'], diffuse: /^Mechtoid_DIF/, normal: /^Mechtoid_NRM/ },
@@ -66,8 +68,9 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
       if (!found.mesh || !found.sets.length) { say(`${u.pkg}: no ${u.mesh} or ${u.sets.join('/')}, XCOM 2's ${u.template} kept`); continue }
       const report = convertPackage(src, join(content, `${u.pkg}.upk`), (bytes) => renameAnims(bytes, found.sets, X2_ANIM_NAMES[u.template] ?? []))
       const leaf = (p: string, pkg = u.pkg) => (p ? `${pkg}.${p.split('.').pop()}` : '')
-      // Its weapon: EW's, converted as it is (textures inlined), in place of the XCOM 2 weapon's mesh.
-      let weapon = ''
+      // Its weapon: EW's, converted as it is (textures inlined), in place of the XCOM 2 weapon's mesh; a species with none in
+      // its hands (the Drone, the Seeker, the Cyberdisc …) has the XCOM 2 weapon hidden (WeaponMesh="none").
+      let weapon = ', WeaponMesh="none"'
       const w = u.weapon
       if (w && existsSync(join(cooked, `${w.pkg}.upk`))) {
         const wb = decompressPackage(new Uint8Array(readFileSync(join(cooked, `${w.pkg}.upk`))))
