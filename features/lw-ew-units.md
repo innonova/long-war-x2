@@ -82,3 +82,6 @@ particle systems as they are; its materials it cannot draw).
   standing in their idles; they still carry XCOM 2's weapons (the templates').
 - Two species on one template share the first's body (Sectoid Commander as Sectoid,
   Heavy Floater as Floater).
+- **Release** `LongWarX2-20261103-1976635.zip`, checked from the zip: the setup converted
+  13 species; the office's Drones and Sectoids in EW's bodies (the Drone sits low: EW's
+  hover may come from an animation not yet answered).
