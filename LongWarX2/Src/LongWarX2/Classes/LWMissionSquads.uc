@@ -236,6 +236,7 @@ static function SpawnPod(name EncounterID, vector Location, array<name> Template
 	local XComWorldData World;
 	local XComGameState_Unit Unit;
 	local XComGameState_AIUnitData AIData;
+	local int k;
 
 	World = `XWORLD;
 	// Inside the tile grid, two tiles in from its edge: XCOM 2's spawner is given no place it cannot hold (an EW pod in
@@ -248,7 +249,21 @@ static function SpawnPod(name EncounterID, vector Location, array<name> Template
 		Location.Y = FClamp(Location.Y, World.WorldBounds.Min.Y + 192, World.WorldBounds.Max.Y - 192);
 	}
 	Location.Z = FClamp(Location.Z, World.WorldBounds.Min.Z + 32, World.WorldBounds.Max.Z - 32);
-	Location.Z = World.GetFloorZForPosition(Location);
+	// On a floor tile units can enter, the nearest within six tiles (an EW pod in a crashed UFO can stand where XCOM 2
+	// has no such tile: the spawner then crashed the game, on the person's crash sites); else the pod is not spawned.
+	if (!EnterableNear(World, Location))
+	{
+		`log("LongWarX2: missions: pod" @ EncounterID @ "at" @ Location @ "has no floor units can enter near it: not spawned", , 'LongWarX2');
+		return;
+	}
+	// Templates the game has (a missing one is the spawner's crash too): else a Sectoid.
+	for (k = 0; k < Templates.Length; k++)
+		if (class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager().FindCharacterTemplate(Templates[k]) == none)
+		{
+			`log("LongWarX2: missions: no character template" @ Templates[k] $ "; a Sectoid in its place", , 'LongWarX2');
+			Templates[k] = 'Sectoid';
+		}
+	`log("LongWarX2: missions: spawning pod" @ EncounterID @ "of" @ Templates.Length @ "at" @ Location, , 'LongWarX2');
 	Info.Team = eTeam_Alien;
 	Info.EncounterID = EncounterID;
 	Info.SpawnLocation = Location;
@@ -282,6 +297,38 @@ static function SpawnPod(name EncounterID, vector Location, array<name> Template
  * An encounter zone of ZoneTiles x ZoneTiles holding Location: XCOM 2 builds a pod's zone from the line of play (from
  * XCOM to the objective) and offsets from it and along it, in tiles; the offsets are found by trying.
  */
+/** Location moved onto the nearest floor tile units can enter, within six tiles (in rings); false when there is none. */
+static function bool EnterableNear(XComWorldData World, out vector Location)
+{
+	local TTile Tile, Try;
+	local vector At;
+	local int r, dx, dy;
+
+	At = Location;
+	At.Z += 64;
+	if (!World.GetFloorTileForPosition(At, Tile, true))
+		Tile = World.GetTileCoordinatesFromPosition(Location);
+	for (r = 0; r <= 6; r++)
+		for (dx = -r; dx <= r; dx++)
+			for (dy = -r; dy <= r; dy++)
+			{
+				if (Max(Abs(dx), Abs(dy)) != r)
+					continue;
+				Try = Tile;
+				Try.X += dx;
+				Try.Y += dy;
+				if (World.IsTileOutOfRange(Try))
+					continue;
+				At = World.GetPositionFromTileCoordinates(Try);
+				At.Z += 64;
+				if (!World.GetFloorTileForPosition(At, Try, true) || !World.CanUnitsEnterTile(Try))
+					continue;
+				Location = World.GetPositionFromTileCoordinates(Try);
+				return true;
+			}
+	return false;
+}
+
 static function ZoneAround(vector Location, out PodSpawnInfo Info)
 {
 	local XComGameState_BattleData BattleData;
@@ -295,6 +342,13 @@ static function ZoneAround(vector Location, out PodSpawnInfo Info)
 	Objective = BattleData.MapData.ObjectiveLocation;
 	XCom = SpawnManager.GetCurrentXComLocation();
 	Info.EncounterZoneWidth = ZoneTiles;
+	// No line of play when the squad stands on the objective (an EW map's own plot: its objective is the empty parcel in
+	// the middle): the zone is left at the pod's own place.
+	if (VSize2D(Objective - XCom) < 96)
+	{
+		Info.EncounterZoneDepth = ZoneTiles;
+		return;
+	}
 	Info.EncounterZoneDepth = ZoneTiles;
 	for (Along = -80; Along <= 80; Along += 4)
 		for (From = -60; From <= 60; From += 4)

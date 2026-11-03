@@ -1137,3 +1137,25 @@ volumes (switched off, `PlotBuildings=false`), the caching and showing of
 building floors at the battle's start (on, without effect while no plot has
 volumes), and the dark light in plots without lights. The office map
 (URB_OfficePaper_EWI) crashes as its plot loads, in the release too.
+
+## Morning (2026-11-03)
+
+The person: the first mission loaded (screenshot: the convenience store,
+Long War's aliens); the first crash site crashed. Their crash folders (three
+from the evening, one from the morning) give two exception addresses:
+- **`XCom2.exe+0xb39b6c`**, the evening's two at the battle's start and the
+  morning's: each right before Long War's pods spawn, each on a small scout
+  crash site (CSmallScout_Marshlands, CSmallScout_Farm twice). So the fog
+  was not the cause (the morning's release no longer touched it then).
+  On the test machine CSmallScout_Farm has a pod at (7442, 3899), far
+  outside the plot's tile grid; the release pulled such a pod to the grid's
+  edge, where there may be no floor at all, and XCOM 2's spawner read a
+  null. **Fix** (`LWMissionSquads.SpawnPod`): each pod moved onto the
+  nearest floor tile units can enter, within six tiles (`EnterableNear`),
+  else not spawned; templates the game lacks replaced by a Sectoid; no
+  encounter zone search when the squad stands on the objective (no line of
+  play); each pod logged before it spawns. **Checked:** CSmallScout_Farm,
+  four pods spawned (the far one moved inside), the mission running.
+- **`XCom2.exe+0x6940a0`**, the evening's first (URB_Boulevard) and the
+  office map on the test machine: during the map's generation, before any
+  step of the mod. Open.
