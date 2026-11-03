@@ -1270,6 +1270,7 @@ function Enemies(out array<string> Out, optional bool bAll)
 	local FOWTileStatus FogStatus;
 	local byte FogFlags;
 	local XGUnit Vis;
+	local UnitValue DmgBonus;
 	local array<StateObjectReference> Viewers;
 	local XComGameState_Unit Viewer;
 	local int v;
@@ -1306,7 +1307,9 @@ function Enemies(out array<string> Out, optional bool bAll)
 			@ "visible to teams" @ (Vis != none ? string(Vis.m_eTeamVisibilityFlags) : "no visualizer") @ "pawn hidden" @ ((Vis != none && Vis.GetPawn() != none) ? string(Vis.GetPawn().bHidden) : "-")
 			@ "forced" @ Unit.ForceModelVisible()
 			@ "mesh" @ ((Vis != none && Vis.GetPawn() != none && Vis.GetPawn().Mesh != none) ? PathName(Vis.GetPawn().Mesh.SkeletalMesh) : "-")
-			@ "weapon" @ WeaponMeshOf(Unit));
+			@ "weapon" @ WeaponMeshOf(Unit)
+			@ "aim" @ int(Unit.GetCurrentStat(eStat_Offense)) @ "def" @ int(Unit.GetCurrentStat(eStat_Defense)) @ "mob" @ int(Unit.GetCurrentStat(eStat_Mobility))
+			@ "dmg+" $ (Unit.GetUnitValue('LWX2DamageBonus', DmgBonus) ? string(int(DmgBonus.fValue)) : "-") @ "passive" @ (Unit.FindAbility('LWX2_AlienDamage').ObjectID > 0));
 		// Where a unit of XCOM's that is not a soldier came from: the change that first held it.
 		if (Unit.GetTeam() == eTeam_XCom && Unit.GetMyTemplateName() != 'Soldier')
 			Out.AddItem("  a soldier" @ Unit.IsSoldier() @ "in XCOM's squad" @ (XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom')).Squad.Find('ObjectID', Unit.ObjectID) != INDEX_NONE)

@@ -33,3 +33,9 @@ document the encodings):
 - **Not yet:** the damage bonus (an effect on the alien's shots), leaders and navigators,
   regeneration; each species' own abilities and AI (it still fights with its XCOM 2
   template's: the Floater used Blazing Pinions).
+- **The damage bonus** (the difficulty's and the upgrades' iDamage): set on the alien as a
+  unit value; a passive (`LWX2_AlienDamage`, `X2Ability_LWAliens`) on every template Long
+  War's species fight as adds it to each damaging attack.
+- **Checked on wingpu** (the convenience store, Classic, day 1): 8 Sectoids at 3 HP, aim 60
+  (65 less Classic's 5), mobility 12; 2 Drones at 3 HP, aim 55; each with the passive; and
+  across twelve maps the aliens at Long War's HP.

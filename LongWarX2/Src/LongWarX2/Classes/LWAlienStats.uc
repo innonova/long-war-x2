@@ -1,9 +1,9 @@
 // Long War's aliens' stats (features/lw-aliens.md): each alien of a Long War mission given its species' base stats
 // (XGTacticalGameCore's Characters), the campaign difficulty's adjustments and the automatic upgrades the aliens' research
 // has brought (BalanceMods_Easy and _Normal), in place of the XCOM 2 template's it fights as. Config generated from stock
-// Long War by scripts/aliens-config.mjs. Not yet: the damage bonus (needs an effect on the alien's shots), pod leaders and
-// navigators (BalanceMods_Hard), the regeneration.
-class LWAlienStats extends Object config(LWAliens);
+// Long War by scripts/aliens-config.mjs. The damage bonus rides on a passive every alien template gets (X2Ability_LWAliens).
+// Not yet: pod leaders and navigators (BalanceMods_Hard), the regeneration.
+class LWAlienStats extends Object config(LWAliens) dependson(LWStrategyRules);
 
 struct LWAlienBase { var int Species, HP, Aim, Defense, Mobility, Sight, Will, Crit; };
 struct LWAlienDifficulty { var int Species, Level, Damage, Aim, Defense, HP, Mobility, Will; };
@@ -38,7 +38,7 @@ static function int DifficultyLevel()
 /** A unit (new or modified in the change being built) given its species' Long War stats; false when the species has none. */
 static function bool ApplyTo(XComGameState_Unit Unit, int Species)
 {
-	local int k, HP, Aim, Defense, Mobility, Will, Crit, Shield, Research, Level;
+	local int k, HP, Aim, Defense, Mobility, Will, Crit, Shield, Research, Level, Damage;
 	local float DR;
 	local LWAlienDifficulty D;
 	local LWAlienUpgrade U;
@@ -61,6 +61,7 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species)
 			Defense += D.Defense;
 			Mobility += D.Mobility;
 			Will += D.Will;
+			Damage += D.Damage;
 		}
 	Research = ResearchLevel();
 	foreach default.Upgrade(U)
@@ -74,6 +75,7 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species)
 			Shield += U.Shield;
 			Mobility += U.Mobility;
 			Will += U.Will;
+			Damage += U.Damage;
 		}
 	SetStat(Unit, eStat_HP, Max(1, HP));
 	SetStat(Unit, eStat_Offense, Aim);
@@ -85,7 +87,27 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species)
 		SetStat(Unit, eStat_ShieldHP, Shield);
 	if (DR > 0)
 		SetStat(Unit, eStat_ArmorMitigation, Round(DR));
+	Unit.SetUnitFloatValue('LWX2DamageBonus', Damage, eCleanup_Never);
 	return true;
+}
+
+/** The aliens' passives on every template Long War's species fight as (as the templates are made). */
+static function AddAbilities()
+{
+	local X2CharacterTemplateManager Manager;
+	local array<X2DataTemplate> Templates;
+	local X2DataTemplate T;
+	local LWFightAs F;
+
+	Manager = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager();
+	foreach class'LWStrategyRules'.default.FightAs(F)
+	{
+		Templates.Length = 0;
+		Manager.FindDataTemplateAllDifficulties(F.Template, Templates);
+		foreach Templates(T)
+			if (X2CharacterTemplate(T) != none && X2CharacterTemplate(T).Abilities.Find('LWX2_AlienDamage') == INDEX_NONE)
+				X2CharacterTemplate(T).Abilities.AddItem('LWX2_AlienDamage');
+	}
 }
 
 static function SetStat(XComGameState_Unit Unit, ECharStatType Stat, float Value)
