@@ -37,3 +37,24 @@ particle systems as they are; its materials it cannot draw).
   the animation names XCOM 2 asked for were in EW's set.
 - EW's Sectoid: 178 animations; XCOM 2's (`AS_Sectoid`): 164; 12 names shared (the runs'
   loop, the turns, `FF_FireA`, the climbs' loops).
+- **EW's animations under XCOM 2's names:** `tools/convert/ew-unit-anims.ts` gives the
+  unit's AnimSet a copy of an EW sequence for each XCOM 2 name it stands for (the same
+  name, its `AC_` form, a table, the turns): for the Sectoid 150 copies, every one of
+  XCOM 2's 164 names answered but `Zero`/`ADD_Zero` (XCOM 2's own sets, kept under ours).
+  Seen: EW's Sectoid in an idle where it stood in a T-pose.
+- **In the game by itself:** `LWX2EWBodies` (config `XComLWEWUnits.ini`): at template
+  creation the body's AnimSet goes into the template's `AdditionalAnimSets` (XCOM 2's
+  pawn adds them after its own; War of the Chosen has no animation hook for mods
+  without the Community Highlander); each pod's pawns get EW's mesh and a stand-in
+  material as the pod is shown (all of a Long War mission's aliens come from our pods),
+  and every unit again at the battle's start (a loaded battle). Seen: EW's Sectoids
+  standing, walking about the store in the aliens' turn.
+- **The setup** converts EW's Sectoid package and renames its animations before its
+  textures are inlined (a package written again would lose them); `ew-package.ts
+  --anims <AnimSet>` does the same by hand.
+- **Release** `LongWarX2-20261103-261ba7f.zip`, checked from the zip: the setup converted
+  the Sectoid; a mission's 11 Sectoids all in EW's body.
+- **Open:** XCOM 2's first-sighting scene (Tygan's "first time" moment) showed XCOM 2's
+  Sectoid in close-up: a cinematic pawn of its own, not the unit's; EW's other aliens
+  (Floater, Thin Man, Muton …) the same way, each with its table where names differ;
+  the Sectoid's weapon and its psionic effects not looked at.
