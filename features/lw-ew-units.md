@@ -97,3 +97,11 @@ particle systems as they are; its materials it cannot draw).
   Seen: the reveal camera on an EW Sectoid by a car.
 - The mod's own reader of the map sections (`LWX2EWMapPieces`) did not know the pieces'
   new cover fields and logged a redscreen per piece; its struct has them now.
+- **Weapons:** EW's alien weapons are packages of their own (skeletal meshes); the
+  converter converts the species' weapon too and names it in the bodies' list; the mod
+  sets it on the unit's XCOM 2 weapon visual (`XComWeapon.Mesh`) with a stand-in (Props_SD,
+  which skeletal meshes may wear). Sectoid: plasma pistol; Thin Man, Floater, Outsider:
+  light plasma rifle; Muton: plasma rifle; Muton Elite: heavy plasma. The species with
+  nothing in their hands (Drone, Seeker, Cyberdisc, Chryssalid, Zombie, Berserker,
+  Mechtoid) have XCOM 2's weapon hidden. Seen: the Muton with EW's plasma rifle, the
+  Sectoid with its pistol; the pods' Sectoids get theirs as they spawn.
