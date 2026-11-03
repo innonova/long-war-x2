@@ -1205,3 +1205,24 @@ from the evening, one from the morning) give two exception addresses:
   … duplicate NetIndex` errors, as the carried packages, nested since version 2, keep
   the object numbers of their own packages; maps that load show them as much as maps
   that crash. Left as is.
+- **Boulevard crash found (08:59):** the same bisect, piece 351, `Qoliage.grassPatch`.
+  EW's package holds a static mesh and a texture both `Foliage.grassPatch` (same
+  outer, name and number; EW's cooker allowed it); in XCOM 2 one name holds one
+  object, so the piece got the texture. Same-named objects occur in about 25 of the
+  83 maps (`Foliage.grassPatch`, `Foliage.fernBig`, a door both skeletal and static
+  mesh, destructibles' `Action` subobjects). The converter now gives the second and
+  later of a name a name number of their own (`grassPatch_0`), before reading
+  anything; references inside the package are by index, so nothing else moves.
+- **Checked on wingpu** after converting all 83 maps again (version 5, 4 minutes):
+  the office, the boulevard, `CLrgScout_City` and the convenience store load and
+  play; the store has its walls and interior; on the farm the jagged dark shapes
+  are gone (cut-out materials).
+- **Fog, live** (`fog state` on the office): the world's fog enabled, XCOM 2's fog
+  effect in the player's post-process chain and shown, sized to the level. So it
+  is on, yet draws nothing visible; setting its two levels (never seen, seen) live
+  changed nothing visible either. Next: the same report in a stock XCOM 2 mission,
+  for what differs.
+- **Release** `LongWarX2-20261103-9870eb1.zip`, checked from the zip on wingpu
+  (uninstalled, setup with `--maps`: 83 maps converted again, as the converter is
+  now version 5; then the office map, which crashed before, loads and plays). The
+  person's setup converts their maps again too (about four minutes).
