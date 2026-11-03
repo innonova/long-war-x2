@@ -13,14 +13,20 @@ import { renameAnims } from './ew-unit-anims.ts'
 import { X2_ANIM_NAMES } from './x2-anim-names.ts'
 
 /** XCOM 2's template, EW's package, its mesh and AnimSets (the first takes the renamed copies), its textures by name. */
-export interface EWUnit { template: string; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp }
+/** EW's weapon for it: its package, mesh, textures by name. */
+export interface EWWeapon { pkg: string; mesh: string; diffuse: RegExp; normal: RegExp }
+export interface EWUnit { template: string; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon }
+const PLASMA_LIGHT: EWWeapon = { pkg: 'Weapon_PlasmaRifle_ThinMan_SF', mesh: 'SM_LightPlasmaRifle', diffuse: /^LightAssaultRiflePlasma_DIF$/, normal: /^LightAssaultRiflePlasma_NRM$/ }
 export const EW_UNITS: EWUnit[] = [
-  { template: 'Sectoid', pkg: 'GameUnit_XComSectoid_SF', mesh: 'SM_SectoidSoldier', sets: ['AS_SectoidPistol'], diffuse: /^SectoidSoldier_DIF$/, normal: /^SectoidSoldier_NRM$/ },
-  { template: 'Archon', pkg: 'GameUnit_XComFloater_SF', mesh: 'SM_MedFloater', sets: ['AS_HeavyFloaterRifle', 'AS_HeavyFloaterJetRifle'], diffuse: /^MedFloater_DIF$/, normal: /^MedFloater_NRM$/ },
-  { template: 'Viper', pkg: 'GameUnit_XComThinMan_SF', mesh: 'SM_ThinMan', sets: ['AS_ThinManPistol'], diffuse: /^ThinMan_DIF/, normal: /^ThinMan_NRM/ },
+  { template: 'Sectoid', pkg: 'GameUnit_XComSectoid_SF', mesh: 'SM_SectoidSoldier', sets: ['AS_SectoidPistol'], diffuse: /^SectoidSoldier_DIF$/, normal: /^SectoidSoldier_NRM$/,
+    weapon: { pkg: 'Weapon_PlasmaPistolSectoid_SF', mesh: 'SM_PistolPlasmaSectoid', diffuse: /^T_PistolPlasma_DIF$/, normal: /^T_PistolPlasma_NRM$/ } },
+  { template: 'Archon', pkg: 'GameUnit_XComFloater_SF', mesh: 'SM_MedFloater', sets: ['AS_HeavyFloaterRifle', 'AS_HeavyFloaterJetRifle'], diffuse: /^MedFloater_DIF$/, normal: /^MedFloater_NRM$/,
+    weapon: { ...PLASMA_LIGHT, pkg: 'Weapon_PlasmaRifle_Floater_SF' } },
+  { template: 'Viper', pkg: 'GameUnit_XComThinMan_SF', mesh: 'SM_ThinMan', sets: ['AS_ThinManPistol'], diffuse: /^ThinMan_DIF/, normal: /^ThinMan_NRM/, weapon: PLASMA_LIGHT },
   { template: 'Faceless', pkg: 'GameUnit_Seeker_SF', mesh: 'SM_Seeker', sets: ['AS_SeekerDefault'], diffuse: /^Seeker_DIF/, normal: /^Seeker_NRM/ },
   { template: 'Gatekeeper', pkg: 'GameUnit_XComCyberDisc_SF', mesh: 'SM_Cyberdisc', sets: ['AS_Cyberdisc'], diffuse: /^T_Cyberdisc_DIF$/, normal: /^T_Cyberdisc_NRM$/ },
-  { template: 'Muton', pkg: 'GameUnit_XComMuton_SF', mesh: 'SM_MutonSoldier', sets: ['AS_MutonRifle'], diffuse: /^MutonSoldier_DIF/, normal: /^MutonSoldier_NRM/ },
+  { template: 'Muton', pkg: 'GameUnit_XComMuton_SF', mesh: 'SM_MutonSoldier', sets: ['AS_MutonRifle'], diffuse: /^MutonSoldier_DIF/, normal: /^MutonSoldier_NRM/,
+    weapon: { pkg: 'Weapon_PlasmaRifleMuton_SF', mesh: 'SM_AssaultRiflePlasmaMuton', diffuse: /^AssaultRiflePlasma_DIF$/, normal: /^AssaultRiflePlasma_NRM$/ } },
   { template: 'Chryssalid', pkg: 'GameUnit_XComChryssalid_SF', mesh: 'SM_Cryssalid', sets: ['AS_CryssalidDefault'], diffuse: /^CHA_Cryssalid_DIF$/, normal: /^CHA_Cryssalid_NRM$/ },
   { template: 'PsiZombie', pkg: 'GameUnit_XComZombie_SF', mesh: 'SM_CivMale_Zombie', sets: ['AS_ZombieMaleDefault'], diffuse: /^CivMaleZombie_DIF$/, normal: /^T_CivilianMaleThinA_Body_NRM$/ },
   { template: 'Codex', pkg: 'GameUnit_XComOutsider_SF', mesh: 'SM_Outsider', sets: ['AS_Outsider', 'AS_SoldierRifle'], diffuse: /^Outsider_DIF/, normal: /^Outsider_NRM/ },
@@ -59,8 +65,19 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
       let found = find(decompressPackage(new Uint8Array(readFileSync(src))), u)
       if (!found.mesh || !found.sets.length) { say(`${u.pkg}: no ${u.mesh} or ${u.sets.join('/')}, XCOM 2's ${u.template} kept`); continue }
       const report = convertPackage(src, join(content, `${u.pkg}.upk`), (bytes) => renameAnims(bytes, found.sets, X2_ANIM_NAMES[u.template] ?? []))
-      const leaf = (p: string) => (p ? `${u.pkg}.${p.split('.').pop()}` : '')
-      lines.push(`+Bodies=(Template=${u.template}, Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}")`)
+      const leaf = (p: string, pkg = u.pkg) => (p ? `${pkg}.${p.split('.').pop()}` : '')
+      // Its weapon: EW's, converted as it is (textures inlined), in place of the XCOM 2 weapon's mesh.
+      let weapon = ''
+      const w = u.weapon
+      if (w && existsSync(join(cooked, `${w.pkg}.upk`))) {
+        const wb = decompressPackage(new Uint8Array(readFileSync(join(cooked, `${w.pkg}.upk`))))
+        const wf = find(wb, { ...u, mesh: w.mesh, sets: [], diffuse: w.diffuse, normal: w.normal })
+        if (wf.mesh) {
+          convertPackage(join(cooked, `${w.pkg}.upk`), join(content, `${w.pkg}.upk`))
+          weapon = `, WeaponMesh="${leaf(wf.mesh, w.pkg)}", WeaponDiffuse="${leaf(wf.diffuse, w.pkg)}", WeaponNormal="${leaf(wf.normal, w.pkg)}"`
+        }
+      }
+      lines.push(`+Bodies=(Template=${u.template}, Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon})`)
       say(`${u.template} as Enemy Within's (${u.pkg}): ${report.split('; ').slice(-1)[0]}`)
       n++
     } catch (e: any) {
