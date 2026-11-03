@@ -258,6 +258,16 @@ function Handle(string Line, out array<string> Out)
 			RegisterDoors(Out);
 		Doors(Out);
 		return;
+	case "ewbody":
+		// An experiment (features/lw-ew-units.md): every unit of a template given an EW body, live:
+		// ewbody <template> <mesh path> <AnimSet path> <diffuse path> <normal path>.
+		if (Args.Length < 4)
+		{
+			Out.AddItem("ERR ewbody <template> <mesh> <AnimSet> [diffuse] [normal]");
+			return;
+		}
+		Out.AddItem(EWBody(name(Args[1]), Args[2], Args[3], Args.Length > 4 ? Args[4] : "", Args.Length > 5 ? Args[5] : ""));
+		return;
 	case "units":
 		XComUnits(Out);
 		return;
@@ -1068,6 +1078,52 @@ function Doors(out array<string> Out)
 	}
 	if (n == 0)
 		Out.AddItem("no interactive level actors");
+}
+
+function string EWBody(name Template, string MeshPath, string SetPath, string DiffusePath, string NormalPath)
+{
+	local XComGameState_Unit Unit;
+	local XComUnitPawn Pawn;
+	local SkeletalMesh Mesh;
+	local AnimSet Set;
+	local Material Parent;
+	local MaterialInstanceConstant MIC;
+	local Texture T;
+	local int n, i;
+
+	Mesh = SkeletalMesh(DynamicLoadObject(MeshPath, class'SkeletalMesh', true));
+	Set = AnimSet(DynamicLoadObject(SetPath, class'AnimSet', true));
+	if (Mesh == none || Set == none)
+		return "ERR mesh" @ (Mesh != none) @ "AnimSet" @ (Set != none);
+	Parent = Material(DynamicLoadObject("Materials.Approved.AlienUnit_TC", class'Material', true));
+	if (Parent != none && DiffusePath != "")
+	{
+		MIC = new(self) class'MaterialInstanceConstant';
+		MIC.SetParent(Parent);
+		T = Texture(DynamicLoadObject(DiffusePath, class'Texture', true));
+		if (T != none)
+			MIC.SetTextureParameterValue('Diffuse', T);
+		T = Texture(DynamicLoadObject(NormalPath, class'Texture', true));
+		if (T != none)
+			MIC.SetTextureParameterValue('Normal', T);
+	}
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Unit.GetMyTemplateName() != Template || XGUnit(Unit.GetVisualizer()) == none)
+			continue;
+		Pawn = XGUnit(Unit.GetVisualizer()).GetPawn();
+		if (Pawn == none || Pawn.Mesh == none)
+			continue;
+		Pawn.Mesh.SetSkeletalMesh(Mesh);
+		Pawn.Mesh.AnimSets.Length = 0;
+		Pawn.Mesh.AnimSets.AddItem(Set);
+		Pawn.Mesh.UpdateAnimations();
+		if (MIC != none)
+			for (i = 0; i < Mesh.Materials.Length; i++)
+				Pawn.Mesh.SetMaterial(i, MIC);
+		n++;
+	}
+	return "ok" @ n @ "of" @ Template @ "given" @ PathName(Mesh) @ "and" @ PathName(Set) @ (MIC != none ? "and a stand-in material" : "");
 }
 
 /** XCOM's units on the field, in the order move counts them. */
