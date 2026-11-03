@@ -68,7 +68,43 @@ const TABLE: Record<string, string[]> = {
   MV_ClimbLadderDwn_StartA: ['AC_NO_ClimbLadderDwn_StartA'], MV_ClimbLadderDwn_StopA: ['AC_NO_ClimbLadderDwn_StopA'],
 }
 
-/** The EW animation for an XCOM 2 name: the same name, its AC_ form, the table, then the turns (EW turns only moving). */
+/**
+ * Last, by what the XCOM 2 animation does (for the species whose EW names differ most: the flyers, the crawlers, the
+ * machines): the first EW animation of the candidates the unit has. Abilities of XCOM 2's own (Bind, Anima Gate …) that
+ * Long War's aliens do not use stay unanswered.
+ */
+const KEYWORDS: [RegExp, string[]][] = [
+  [/Fly(Up)?(Start|A$)|FlyUpA$/, ['AC_NO_JetUpAir_StartA', 'AC_NO_JetUpGround_StartA']],
+  [/FlyUp(Loop|StartLoop)/, ['MV_JetUpAir_LoopA']],
+  [/FlyUpStop/, ['AC_NO_JetUpAir_StopA']],
+  [/FlyDwn(Start|A$)/, ['AC_NO_JetDownAir_StartA']],
+  [/FlyDwnLoop/, ['MV_JetDownAir_LoopA']],
+  [/FlyDwnStop/, ['AC_NO_JetDownGround_StopA', 'AC_NO_JetDownAir_StopA']],
+  [/^NO_OpenA$/, ['AC_NO_Open']],
+  [/^NO_CloseA$/, ['AC_NO_Close']],
+  [/FireSuppressIdle/, ['AC_NO_SuppressIdleA']],
+  [/FireSuppress/, ['AC_NO_SuppressAttackFireA', 'FF_FireA']],
+  [/^NO_FireStart/, ['AC_NO_SuppressAttackStartA', 'AC_NO_IdleOnAlertA']],
+  [/^NO_FireStop/, ['AC_NO_IdleA']],
+  [/Melee(Miss)?A$|MeleeStab|ClawsSlash|BiteStart|Counterattack/, ['AC_NO_MeleeAttackA', 'AC_NO_MeleeA', 'AC_NO_BullRushA', 'AC_NO_SwordAttackA']],
+  [/Death/, ['AC_NO_DeathA', 'AC_NO_kineticstrikedeathA']],
+  [/Hurt|Flinch/, ['AC_NO_HurtFrontA', 'AC_HL_HurtFrontA', 'AC_HL_FlinchA', 'AC_NO_SuppressFlinchA']],
+  [/GetUp|Resurrect/, ['AC_NO_GetUp_ReAnimateA', 'AC_NO_IdleA']],
+  [/Stunned|Hacked|ShutDown|Shutdown/, ['AC_NO_SuppressIdleA', 'AC_NO_IdleA']],
+  [/Panic/, ['AC_NO_Panicked_LoopA', 'AC_HL_Panicked_StartA', 'AC_NO_Panicked_StartA']],
+  [/MindControlled/, ['AC_NO_Possessed_StartA', 'AC_HL_Possessed_StartA']],
+  [/Reload/, ['AC_NO_ReloadA', 'AC_HL_ReloadA']],
+  [/Grenade|MicroMissiles|AcidBlob|ShellLauncher|PoisonSpit/, ['AC_NO_ThrowGrenadeA', 'FF_FireA']],
+  [/^FF_Fire/, ['FF_FireA']],
+  [/Rage|Psychosis/, ['AC_NO_BloodCallA', 'AC_NO_CallOthersA']],
+  [/Signal|Reveal/, ['AC_NO_CallOthersA', 'AC_NO_CallOthers', 'AC_NO_SignalVictoryA', 'AC_NO_IdleOnAlertA']],
+  [/ClimbHighJump_Start/, ['AC_NO_ClimbHighJump_StartA']],
+  [/ClimbHighJump_Stop/, ['AC_NO_ClimbHighJump_StopA', 'AC_NO_ClimbHighJump_StopB']],
+  [/Hatch/, ['AC_NO_HatchA']],
+]
+
+/** The EW animation for an XCOM 2 name: the same name, its AC_ form, the table, the turns (EW turns only moving), then by
+ *  what it does (KEYWORDS). */
 export function ewFor(x2: string, ew: Set<string>): string | undefined {
   if (ew.has(x2)) return x2
   if (ew.has('AC_' + x2)) return 'AC_' + x2
@@ -77,6 +113,7 @@ export function ewFor(x2: string, ew: Set<string>): string | undefined {
   if (turn && ew.has(`MV_Turn${turn[1]}${turn[2]}`)) return `MV_Turn${turn[1]}${turn[2]}`
   const signal = /^(HL|LL)_SignalLookAt/.exec(x2)
   if (signal && ew.has('AC_NO_IdleOnAlertA')) return 'AC_NO_IdleOnAlertA'
+  for (const [re, candidates] of KEYWORDS) if (re.test(x2)) for (const c of candidates) if (ew.has(c)) return c
   return undefined
 }
 
