@@ -105,3 +105,4 @@ particle systems as they are; its materials it cannot draw).
   nothing in their hands (Drone, Seeker, Cyberdisc, Chryssalid, Zombie, Berserker,
   Mechtoid) have XCOM 2's weapon hidden. Seen: the Muton with EW's plasma rifle, the
   Sectoid with its pistol; the pods' Sectoids get theirs as they spawn.
+- **Release** `LongWarX2-20261103-ed5ecdd.zip`, checked from the zip: 13 species converted with their weapons; the store's Sectoids in EW's body with EW's pistol.
