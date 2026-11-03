@@ -26,8 +26,8 @@ import { inlineTextures } from './inline-textures.ts'
  *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods,
  *  spawn points by type; 5: the walls, EW's fracturable meshes; meshes at the root of the map's package; objects of one
  *  name made unique; materials cut out by their diffuse's alpha, a kind of their own; 6: walls marked fractured, so the
- *  plot imports them as such; the buildings' surface textures, Diffuse_Base). */
-export const CONVERTER_VERSION = 6
+ *  plot imports them as such; the buildings' surface textures, Diffuse_Base; 7: the doors, the pieces' cover flags). */
+export const CONVERTER_VERSION = 7
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -114,6 +114,53 @@ function actorTags(index: number): Tag[] | undefined {
 }
 /** An export's archetype (its export table entry, after its name): what it inherits from. */
 const archetypeOf = (index: number) => v.getInt32(exports[index].entryOffset + 20, true)
+/**
+ * What units may do with a piece (XCOM 2's and EW's cover flags): stand on it (bCanClimbOnto), vault it
+ * (bCanClimbOver), end a move on it (bIsValidDestination), take cover by it (bIgnoreForCover, CoverForceFlag). Read
+ * from the placed actor, then its archetypes; what none sets is its class's default (a destructible's, a car's or
+ * sandbags', is not to be stood on; XCOM 2 places every piece as an XComLevelActor, whose default is).
+ */
+interface Cover { onto: boolean; over: boolean; destination: boolean; ignore: boolean; force: string }
+const COVER_DEFAULTS: Record<string, Partial<Cover>> = {
+  XComDestructibleActor: { onto: false },
+  XComFracLevelActor: { onto: false },
+  XComDecoFracLevelActor: { onto: false },
+}
+function coverOf(index: number, own: Tag[]): Cover {
+  const found: Partial<Cover> = {}
+  const take = (tags: Tag[]) => {
+    for (const t of tags) {
+      if (t.name === 'bCanClimbOnto' && found.onto === undefined) found.onto = !!t.boolValue
+      else if (t.name === 'bCanClimbOver' && found.over === undefined) found.over = !!t.boolValue
+      else if (t.name === 'bIsValidDestination' && found.destination === undefined) found.destination = !!t.boolValue
+      else if (t.name === 'bIgnoreForCover' && found.ignore === undefined) found.ignore = !!t.boolValue
+      else if (t.name === 'CoverForceFlag' && found.force === undefined)
+        found.force = String(pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name)
+    }
+  }
+  take(own)
+  for (let i = index, depth = 0; depth < 8; depth++) {
+    const arch = archetypeOf(i)
+    if (arch <= 0) break
+    i = arch - 1
+    for (const start of [4, 26, 8]) {
+      try {
+        take(tagsOf(i, start))
+        break
+      } catch {
+        // not here
+      }
+    }
+  }
+  const d = COVER_DEFAULTS[exports[index].type] ?? {}
+  return {
+    onto: found.onto ?? d.onto ?? true,
+    over: found.over ?? d.over ?? false,
+    destination: found.destination ?? d.destination ?? true,
+    ignore: found.ignore ?? d.ignore ?? false,
+    force: found.force ?? 'CoverForce_Default',
+  }
+}
 /** A static mesh's bounds' half sizes: the first thing in its data after the properties (origin, extent, radius). */
 function meshExtent(path: string): number[] {
   const i = exports.findIndex((e) => e.fullName === path)
@@ -172,7 +219,7 @@ function materialsOf(index: number, tags: Tag[]): number[] {
   }
   return Array.from(slots, (r) => r ?? 0)
 }
-interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[]; extent: number[]; fractured: boolean }
+interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[]; extent: number[]; fractured: boolean; cover: Cover }
 const pieces: Piece[] = []
 const skipped: Record<string, number> = {}
 exports.forEach((e, i) => {
@@ -209,6 +256,7 @@ exports.forEach((e, i) => {
     extent: [0, 0, 0],
     // A wall's mesh is a FracturedStaticMesh: the plot imports it as that class (as a StaticMesh it is not found).
     fractured: exports.find((x) => x.fullName === mesh)?.type === 'FracturedStaticMesh',
+    cover: coverOf(i, tags),
   })
 })
 
@@ -220,6 +268,58 @@ for (const p of pieces) {
   p.extent = extents.get(p.mesh)!.map((x, k) => Math.abs(x * p.scale[k]!))
 }
 if (process.env.LWX2_EXTENTS) for (const [m, e] of [...extents].sort((a, b) => Math.max(...b[1]) - Math.max(...a[1])).slice(0, 12)) console.log('extent', m, e.map((x) => x.toFixed(0)).join(','))
+
+// --- The doors: EW's interactive actors (a skeletal mesh that opens by its AnimTree) ---
+// XCOM 2's XComInteractiveLevelActor is EW's, nearly field for field: the plot places one per EW door with EW's mesh,
+// AnimTree, AnimSets and interaction points (where a unit stands to open it, the door's animations by name).
+interface DoorPoint { src: string; dest: string; anim: string; destroy: string; inactive: string; facing: string; mirror: boolean }
+interface Door { mesh: string; tree: string; sets: string[]; physics: string; loc: number[]; rot: number[]; scale: number[]; idle: string; points: DoorPoint[]; blocksSight: boolean; window: boolean }
+const doors: Door[] = []
+const nameAt = (v: Uint8Array) => String(pkg.names[new DataView(v.buffer, v.byteOffset).getInt32(0, true)].name)
+exports.forEach((e, i) => {
+  if (e.type !== 'XComInteractiveLevelActor' || !e.fullName.startsWith('TheWorld.PersistentLevel.')) return
+  const tags = actorTags(i)
+  const comp = tags?.find((t) => t.name === 'SkeletalMeshComponent')
+  if (!tags || !comp || ref(comp) <= 0) return
+  let ctags: Tag[]
+  try {
+    ctags = tagsOf(ref(comp) - 1, 8)
+  } catch {
+    return
+  }
+  const obj = (name: string) => { const t = ctags.find((x) => x.name === name); return t && ref(t) ? pathOf(ref(t)) : '' }
+  const mesh = obj('SkeletalMesh')
+  const pointsTag = tags.find((t) => t.name === 'InteractionPoints')
+  if (!mesh || !pointsTag) return
+  const points: DoorPoint[] = []
+  const count = new DataView(pointsTag.value.buffer, pointsTag.value.byteOffset).getInt32(0, true)
+  const r = new Reader(pointsTag.value.subarray(4))
+  for (let k = 0; k < count; k++) {
+    const st = readTags(r, pkg)
+    const en = (name: string) => { const t = st.find((x) => x.name === name); return t ? nameAt(t.value) : '' }
+    points.push({ src: en('SrcSocket'), dest: en('DestSocket'), anim: en('InteractionAnim'), destroy: en('DestroyAnim'), inactive: en('InactiveIdleAnim'), facing: en('Facing') || 'eIF_Left', mirror: !!st.find((x) => x.name === 'bMirrorAnims')?.boolValue })
+  }
+  const vis = tags.find((t) => t.name === 'VisibilityBlockingData')
+  const visTags = vis ? readTags(new Reader(vis.value), pkg) : []
+  const sets = ctags.find((t) => t.name === 'AnimSets')
+  const loc = tags.find((t) => t.name === 'Location')
+  const rot = tags.find((t) => t.name === 'Rotation')
+  const ds = tags.find((t) => t.name === 'DrawScale')
+  const ds3 = tags.find((t) => t.name === 'DrawScale3D')
+  const s = ds ? f32(ds, 0) : 1
+  const idle = tags.find((t) => t.name === 'ActiveIdleAnim')
+  doors.push({
+    mesh, tree: obj('AnimTreeTemplate'), physics: obj('PhysicsAsset'),
+    sets: sets ? Array.from({ length: new DataView(sets.value.buffer, sets.value.byteOffset).getInt32(0, true) }, (_, k) => pathOf(new DataView(sets.value.buffer, sets.value.byteOffset).getInt32(4 + 4 * k, true))).filter(Boolean) : [],
+    loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
+    rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
+    scale: ds3 ? [f32(ds3, 0) * s, f32(ds3, 1) * s, f32(ds3, 2) * s] : [s, s, s],
+    idle: idle ? nameAt(idle.value) : '',
+    points,
+    blocksSight: visTags.find((t) => t.name === 'bBlockUnitVisibility')?.boolValue !== 0,
+    window: !!visTags.find((t) => t.name === 'bIsWindow')?.boolValue,
+  })
+})
 
 // --- The play area and the drop zones ---------------------------------------------
 // The level volume (its location plus its brush's bounds: a Model's data starts with them)
@@ -566,6 +666,10 @@ const rename = (path: string) => {
   return carriedNames.has(p.split('.')[0]!) || !p.includes('.') ? `${mapPackage}.${p}` : p
 }
 const n = (x: number) => (Math.abs(x) < 1e-4 ? '0' : String(Math.round(x * 1000) / 1000))
+/** A piece's cover flags where they differ from an XComLevelActor's defaults (what the plot places). */
+const coverText = (c: Cover) =>
+  (c.onto ? '' : ',ClimbOnto=false') + (c.over ? ',ClimbOver=true' : '') + (c.destination ? '' : ',Destination=false')
+  + (c.ignore ? ',IgnoreForCover=true' : '') + (c.force !== 'CoverForce_Default' ? `,CoverForce=${c.force}` : '')
 const lines = [
   `; The static meshes of ${basename(src)}, converted on this machine by tools/convert/ew-map.ts.`,
   // The converter's version: a section without it (or with an older one) is converted again (ew-maps.ts).
@@ -584,6 +688,12 @@ const lines = [
     : []),
   ...starts.map((p) => `+DropZones=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
   "; EW's building volumes (centre, half sizes) and their floors (each floor's volumes as one box), for the plot's building visibility.",
+  ...doors.map(
+    (d) =>
+      `+Doors=(Mesh="${rename(d.mesh)}",AnimTree="${rename(d.tree)}",Physics="${rename(d.physics)}",AnimSets=(${d.sets.map((x) => `"${rename(x)}"`).join(',')}),` +
+      `Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}),` +
+      `Idle=${d.idle || 'None'},BlocksSight=${d.blocksSight},Window=${d.window},Points=(${d.points.map((q) => `(Src=${q.src},Dest=${q.dest || 'None'},Anim=${q.anim || 'None'},Destroy=${q.destroy || 'None'},Inactive=${q.inactive || 'None'},Facing=${q.facing},Mirror=${q.mirror})`).join(',')}))`,
+  ),
   ...buildings.map(
     (b) =>
       `+Buildings=(Center=(X=${n(b.center[0]!)},Y=${n(b.center[1]!)},Z=${n(b.center[2]!)}),Extent=(X=${n(b.extent[0]!)},Y=${n(b.extent[1]!)},Z=${n(b.extent[2]!)}),Floors=(${b.floors.map((f) => `(Center=(X=${n(f.center[0]!)},Y=${n(f.center[1]!)},Z=${n(f.center[2]!)}),Extent=(X=${n(f.extent[0]!)},Y=${n(f.extent[1]!)},Z=${n(f.extent[2]!)}))`).join(',')})${b.ufo ? ',Ufo=true' : ''})`,
@@ -605,7 +715,7 @@ const lines = [
   ),
   ...pieces.map(
     (p) =>
-      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''}${isBackdrop(p) ? ',Backdrop=true' : ''}${p.fractured ? ',Fractured=true' : ''})`,
+      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''}${isBackdrop(p) ? ',Backdrop=true' : ''}${p.fractured ? ',Fractured=true' : ''}${coverText(p.cover)})`,
   ),
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')
@@ -614,7 +724,7 @@ console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackag
 const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
 console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points (${spawnPoints.filter((p) => p[3]).length} civilian), ${lights.length} lights, ${buildings.length} buildings (${buildings.reduce((a, b) => a + b.floors.length, 0)} floors)`)
-console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes${renumbered ? `; ${renumbered} objects of a name shared renumbered` : ''}${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
+console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes, ${doors.length} doors${renumbered ? `; ${renumbered} objects of a name shared renumbered` : ''}${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
 }
 
 // From the command line: node tools/convert/ew-map.ts <EW map .upk> <out .upk> <out pieces .ini>

@@ -251,6 +251,13 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(Look(Args));
 		return;
+	case "doors":
+		// The level's interactive actors (doors): where, whether XCOM 2 takes it for a door, its mesh, tree and sets;
+		// doors register: each added to the world's tile data again (what its PostBeginPlay does), then listed.
+		if (Args.Length > 1 && Args[1] == "register")
+			RegisterDoors(Out);
+		Doors(Out);
+		return;
 	case "units":
 		XComUnits(Out);
 		return;
@@ -1018,6 +1025,51 @@ function string SpawnAlien(name CharacterTemplate, int Tiles)
 }
 
 /** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */
+function RegisterDoors(out array<string> Out)
+{
+	local XComInteractiveLevelActor Door;
+	local int n;
+
+	foreach WorldInfo.AllActors(class'XComInteractiveLevelActor', Door)
+	{
+		`XWORLD.AddActorTileData(Door);
+		n++;
+	}
+	Out.AddItem(n @ "interactive actors added to the tile data again");
+}
+
+function Doors(out array<string> Out)
+{
+	local XComInteractiveLevelActor Door;
+	local XComWorldData World;
+	local TTile T;
+	local vector At;
+	local rotator Facing;
+	local int n, i;
+
+	World = `XWORLD;
+	foreach WorldInfo.AllActors(class'XComInteractiveLevelActor', Door)
+	{
+		T = World.GetTileCoordinatesFromPosition(Door.Location);
+		Out.AddItem(n++ @ Door.Name @ "at" @ Door.Location @ "tile" @ T.X @ T.Y @ T.Z @ "door" @ Door.IsDoor() @ "open" @ Door.IsOpenDoor()
+			@ "mesh" @ (Door.SkeletalMeshComponent != none ? PathName(Door.SkeletalMeshComponent.SkeletalMesh) : "no component")
+			@ "tree" @ (Door.SkeletalMeshComponent != none ? PathName(Door.SkeletalMeshComponent.AnimTreeTemplate) : "-")
+			@ "hidden" @ Door.bHidden @ (Door.SkeletalMeshComponent != none ? string(Door.SkeletalMeshComponent.HiddenGame) : "-")
+			@ "points" @ Door.InteractionPoints.Length @ "anim node" @ (Door.AnimNode != none) @ "interact points" @ Door.InteractPoints.Length);
+		// Each socket's place as the game computed it, and the tile there (the world data's door crossings come from these).
+		for (i = 0; i < Door.InteractionPoints.Length; i++)
+			if (Door.GetSocketTransform(GetEnum(enum'EInteractionSocket', Door.InteractionPoints[i].SrcSocket), At, Facing))
+			{
+				T = World.GetTileCoordinatesFromPosition(At);
+				Out.AddItem("    socket" @ Door.InteractionPoints[i].SrcSocket @ "at" @ At @ "tile" @ T.X @ T.Y @ T.Z);
+			}
+			else
+				Out.AddItem("    socket" @ Door.InteractionPoints[i].SrcSocket @ "not on the mesh");
+	}
+	if (n == 0)
+		Out.AddItem("no interactive level actors");
+}
+
 /** XCOM's units on the field, in the order move counts them. */
 function array<XComGameState_Unit> FieldXCom()
 {

@@ -19,7 +19,9 @@ export interface EWMap {
   playCenter: number[]
   playExtent: number[]
   dropZones: number[][]
-  pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean; fractured: boolean }[]
+  pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean; fractured: boolean; cover: string[] }[]
+  /** EW's doors (ew-map.ts): mesh, AnimTree, AnimSets, physics, where, the idle animation, the interaction points. */
+  doors: { mesh: string; tree: string; physics: string; sets: string[]; loc: number[]; rot: number[]; scale: number[]; idle: string; blocksSight: boolean; window: boolean; points: Record<string, string>[] }[]
   looks: Map<string, { kind: string; diffuse: string; normal: string }>
   lights: { kind: string; loc: number[]; rot: number[]; radius: number; brightness: number; color: number[]; falloff: number; inner: number; outer: number }[]
   /** EW's building volumes, each with its floors (a box each). */
@@ -32,7 +34,7 @@ export function readSection(text: string): EWMap {
   const vec = (s: string) => ['X', 'Y', 'Z'].map((k) => num(s, k))
   const sub = (s: string, k: string) => new RegExp(`\\b${k}=\\(([^()]*)\\)`).exec(s)?.[1] ?? ''
   const str = (s: string, k: string) => new RegExp(`\\b${k}="([^"]*)"`).exec(s)?.[1] ?? ''
-  const m: EWMap = { name: '', mapPackage: '', playCenter: [0, 0, 0], playExtent: [0, 0, 0], dropZones: [], pieces: [], looks: new Map(), lights: [], buildings: [] }
+  const m: EWMap = { name: '', mapPackage: '', playCenter: [0, 0, 0], playExtent: [0, 0, 0], dropZones: [], pieces: [], doors: [], looks: new Map(), lights: [], buildings: [] }
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim()
     let x: RegExpExecArray | null
@@ -48,6 +50,23 @@ export function readSection(text: string): EWMap {
     }
     else if (line.startsWith('+Looks='))
       m.looks.set(str(line, 'Material'), { kind: /Kind=(\w+)/.exec(line)?.[1] ?? 'Prop', diffuse: str(line, 'Diffuse'), normal: str(line, 'Normal') })
+    else if (line.startsWith('+Doors=')) {
+      const sets = /AnimSets=\(([^)]*)\)/.exec(line)?.[1] ?? ''
+      const points = /Points=\((.*)\)\)$/.exec(line)?.[1] ?? ''
+      m.doors.push({
+        mesh: str(line, 'Mesh'),
+        tree: str(line, 'AnimTree'),
+        physics: str(line, 'Physics'),
+        sets: sets ? sets.split(',').map((x) => x.replace(/"/g, '')) : [],
+        loc: vec(sub(line, 'Loc')),
+        rot: ['Pitch', 'Yaw', 'Roll'].map((k) => num(sub(line, 'Rot'), k)),
+        scale: vec(sub(line, 'Scale')),
+        idle: /Idle=(\w+)/.exec(line)?.[1] ?? 'None',
+        blocksSight: /BlocksSight=true/.test(line),
+        window: /Window=true/.test(line),
+        points: [...points.matchAll(/\(([^()]*)\)/g)].map((p) => Object.fromEntries(p[1]!.split(',').map((kv) => kv.split('=') as [string, string]))),
+      })
+    }
     else if (line.startsWith('+Pieces=')) {
       const mats = /Materials=\(([^)]*)\)/.exec(line)?.[1] ?? ''
       m.pieces.push({
@@ -58,6 +77,8 @@ export function readSection(text: string): EWMap {
         materials: mats ? mats.split(',').map((s) => s.replace(/"/g, '')) : [],
         backdrop: /Backdrop=true/.test(line),
         fractured: /Fractured=true/.test(line),
+        // Its cover flags where they differ from an XComLevelActor's (ew-map.ts: ClimbOnto=false, CoverForce=…).
+        cover: [...line.matchAll(/,(ClimbOnto|ClimbOver|Destination|IgnoreForCover|CoverForce)=(\w+)/g)].map((m) => `${m[1]}=${m[2]}`),
       })
     } else if (line.startsWith('+Lights=')) {
       const c = sub(line, 'Color')
@@ -225,6 +246,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const tFloat = (name: string, f: number): T => ({ name, type: 'FloatProperty', arrayIndex: 0, value: bin((w) => w.f32(f)) })
   const tInt = (name: string, n: number): T => ({ name, type: 'IntProperty', arrayIndex: 0, value: bin((w) => w.i32(n)) })
   const tBool = (name: string, b: boolean): T => ({ name, type: 'BoolProperty', arrayIndex: 0, bool: b ? 1 : 0, value: new Uint8Array(0) })
+  const tEnum = (name: string, enumName: string, value: string): T => ({ name, type: 'ByteProperty', enumName, arrayIndex: 0, value: bin((w) => { const r = objName(value); w.i32(r.index).i32(r.number) }) })
   const tColor = (name: string, c: number[]): T => ({ name, type: 'StructProperty', struct: 'Color', arrayIndex: 0, value: Uint8Array.from([c[2]!, c[1]!, c[0]!, c[3]!]) })
   const tGuid = (name: string): T => ({ name, type: 'StructProperty', struct: 'Guid', arrayIndex: 0, value: crypto.getRandomValues(new Uint8Array(16)) })
   const NONE = -1
@@ -372,6 +394,12 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     // EW's backdrop (its huge pieces: ground beyond the play area, cliffs, the sky) kept out of the buildings' floors:
     // XCOM 2's building visibility would hide it with the floor it overlaps.
     if (piece.backdrop) set(atags, tBool('bExcludeFromBuildingVolume', true))
+    // What units may do with it, as in EW (a car's hood, sandbags: not to be stood on).
+    for (const c of piece.cover) {
+      const [k, val] = c.split('=') as [string, string]
+      if (k === 'CoverForce') set(atags, tEnum('CoverForceFlag', 'ECoverForceFlag', val))
+      else set(atags, tBool({ ClimbOnto: 'bCanClimbOnto', ClimbOver: 'bCanClimbOver', Destination: 'bIsValidDestination', IgnoreForCover: 'bIgnoreForCover' }[k]!, val === 'true'))
+    }
     addExport(sampleActor, actorName, level, serialize({ head: actorHead(actorSample.head), tags: atags, tail: actorSample.tail }))
     const ctags = meshSample.tags.map((t) => ({ ...t }))
     set(ctags, tObj('StaticMesh', importRef(piece.mesh, piece.fractured ? 'FracturedStaticMesh' : 'StaticMesh')))
@@ -381,6 +409,64 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       for (const b of ['CollideActors', 'BlockActors', 'BlockZeroExtent', 'BlockNonZeroExtent', 'BlockRigidBody']) set(ctags, tBool(b, false))
     addExport(sampleMesh, nextName('StaticMeshComponent'), actorRef, serialize({ head: componentHead(meshSample.head), tags: ctags, tail: meshSample.tail }))
     placed.push(actorRef)
+  }
+
+  // --- EW's doors as XCOM 2's interactive level actors ------------------------------------------------------------
+  // The class's own defaults as archetype (no XCOM 2 door: EW's mesh, AnimTree and AnimSets, which the map's package
+  // carries; their AnimNodeBlendList is named Anim, as XCOM 2's code looks for). The interaction points as EW's, the
+  // unit's animation named as XCOM 2's doors name it by facing (EW's was an enum, eAnimAction_OpenDoor).
+  const tName = (name: string, value: string): T => ({ name, type: 'NameProperty', arrayIndex: 0, value: bin((w) => { const r = objName(value); w.i32(r.index).i32(r.number) }) })
+  const UNIT_DOOR_ANIM: Record<string, string> = { eIF_Left: 'HL_DoorOpenA', eIF_Front: 'NO_DoorOpenA', eIF_Right: 'HR_DoorOpenA' }
+  let doorCount = 0
+  if (!debug.includes('nodoors') && map.doors.length) {
+    const doorClass = importRef('XComGame.XComInteractiveLevelActor', 'Class', 'Core')
+    const doorDefault = importRef('XComGame.Default__XComInteractiveLevelActor', 'XComInteractiveLevelActor', 'XComGame')
+    const skelClass = importRef('Engine.SkeletalMeshComponent', 'Class', 'Core')
+    const skelArch = importRef('XComGame.Default__XComInteractiveLevelActor.SkeletalMeshComponent0', 'SkeletalMeshComponent')
+    for (const door of map.doors) {
+      const actorRef = exportCount() + 1
+      const compRef = actorRef + 1
+      const points = door.points.map((p) => serialize({
+        head: new Uint8Array(0),
+        tags: [
+          tEnum('SrcSocket', 'EInteractionSocket', p.Src!),
+          ...(p.Dest && p.Dest !== 'None' ? [tEnum('DestSocket', 'EInteractionSocket', p.Dest)] : []),
+          tName('UnitInteractionAnimName', UNIT_DOOR_ANIM[p.Facing!] ?? 'NO_DoorOpenA'),
+          ...(['Anim', 'Destroy', 'Inactive'] as const).filter((k) => p[k] && p[k] !== 'None')
+            .map((k) => tEnum({ Anim: 'InteractionAnim', Destroy: 'DestroyAnim', Inactive: 'InactiveIdleAnim' }[k], 'EInteractionAnim', p[k]!)),
+          ...(p.Mirror === 'true' ? [tBool('bMirrorAnims', true)] : []),
+          tEnum('Facing', 'EInteractionFacing', p.Facing!),
+        ],
+        tail: new Uint8Array(0),
+      }))
+      const atags: T[] = [
+        { name: 'InteractionPoints', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(points.length); points.forEach((b) => w.bytes(b)) }) },
+        ...(door.idle !== 'None' ? [tEnum('ActiveIdleAnim', 'EInteractionAnim', door.idle)] : []),
+        tObj('SkeletalMeshComponent', compRef),
+        { name: 'VisibilityBlockingData', type: 'StructProperty', struct: 'VisibilityBlocking', arrayIndex: 0, value: serialize({
+          head: new Uint8Array(0),
+          tags: [tBool('bBlockUnitVisibility', door.blocksSight), tEnum('eBlockCameraVisibility', 'ECameraVisibilityType', 'eCameraVisibilityType_DoNotBlockCamera'), ...(door.window ? [tBool('bIsWindow', true)] : [])],
+          tail: new Uint8Array(0),
+        }) },
+        tVec('Location', door.loc),
+        tRot('Rotation', door.rot),
+        tVec('DrawScale3D', door.scale),
+        tObj('CollisionComponent', compRef),
+      ]
+      addExport(sampleActor, nextName('XComInteractiveLevelActor'), level, serialize({ head: actorHead(actorSample.head), tags: atags, tail: actorSample.tail }), { classIndex: doorClass, archetype: doorDefault })
+      const ctags: T[] = [tObj('SkeletalMesh', importRef(door.mesh, 'SkeletalMesh'))]
+      if (door.tree) ctags.push(tObj('AnimTreeTemplate', importRef(door.tree, 'AnimTree')))
+      if (door.physics) ctags.push(tObj('PhysicsAsset', importRef(door.physics, 'PhysicsAsset')))
+      if (door.sets.length) {
+        const sets = door.sets.map((s) => importRef(s, 'AnimSet'))
+        ctags.push({ name: 'AnimSets', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(sets.length); sets.forEach((s) => w.i32(s)) }) })
+      }
+      // A component's head: the class whose template it is, then its net index.
+      const head = bin((w) => w.i32(doorClass).i32(NONE))
+      addExport(sampleMesh, nextName('SkeletalMeshComponent'), actorRef, serialize({ head, tags: ctags, tail: new Uint8Array(0) }), { classIndex: skelClass, archetype: skelArch })
+      placed.push(actorRef)
+      doorCount++
+    }
   }
 
   // --- EW's point and spot lights as movable lights ---------------------------------------------------------------
@@ -555,7 +641,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const tiles = [Math.round((max[0]! - min[0]!) / TILE), Math.round((max[1]! - min[1]!) / TILE), Math.round((max[2]! - min[2]!) / FLOOR)]
   return {
     bytes,
-    report: `${map.name}: ${pieces.length} pieces, ${[...mics.values()].filter((r) => r > 0).length} stand-in materials, ${lightCount} lights, ${map.dropZones.length} drop zones, ${map.buildings.length} buildings (${floorCount} floors); level volume ${tiles.join(' x ')} tiles; ${(bytes.length / 1024).toFixed(0)} KB`,
+    report: `${map.name}: ${pieces.length} pieces, ${[...mics.values()].filter((r) => r > 0).length} stand-in materials, ${doorCount} doors, ${lightCount} lights, ${map.dropZones.length} drop zones, ${map.buildings.length} buildings (${floorCount} floors); level volume ${tiles.join(' x ')} tiles; ${(bytes.length / 1024).toFixed(0)} KB`,
   }
 }
 

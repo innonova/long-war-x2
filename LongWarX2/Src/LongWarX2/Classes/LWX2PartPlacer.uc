@@ -167,6 +167,24 @@ static function int CacheBuildings(Actor Finder)
 	return n;
 }
 
+/**
+ * The plot's doors added to the world's tile data again, as each door does in its PostBeginPlay: on a map's own plot
+ * that ran before the tile data was built, so no door had its interaction points and no path went through a door
+ * (lw-missions.md). Returns how many.
+ */
+static function int RegisterDoors(Actor Finder)
+{
+	local XComInteractiveLevelActor Door;
+	local int n;
+
+	foreach Finder.WorldInfo.AllActors(class'XComInteractiveLevelActor', Door)
+	{
+		`XWORLD.AddActorTileData(Door);
+		n++;
+	}
+	return n;
+}
+
 static function int ShowBuildings(Actor Finder)
 {
 	local XComBuildingVolume B;
