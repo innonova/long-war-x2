@@ -48,6 +48,11 @@ single `.`. From this machine:
     tools/test/lw.sh 'give AlienAlloy 50'      # items put in the stores (a test aid; any item template)
     tools/test/lw.sh 'exec GiveTech LWTech_LaserWeapons'  # a tech researched at once (XCOM 2's cheat)
     tools/test/lw.sh continue                  # the top screen passed (reports, loot, alerts, tips)
+    tools/test/lw.sh state                     # one line: phase, map, top screen, film, in a mission turn/busy/ended; ready=1 when it waits on the player
+    tools/test/lw.sh 'wait phase=tactical.*ready=1 900'   # until the state line matches (polled; the connection made again across map loads)
+    tools/test/lw.sh 'go phase=tactical.*ready=1 900'     # the same, films skipped and screens continued on the way
+    tools/test/lw.sh units 'move 0 31 12'      # in a mission: XCOM's units (index, tile, action points); one walked to a tile by the game's own move
+    tools/test/lw.sh 'enemies all'             # every unit on the field: tile, fog, who sees it, whether it is drawn
     tools/test/lw.sh 'key 510'                 # any input (UIUtilities_Input codes: 510 Esc)
 
 And around it:

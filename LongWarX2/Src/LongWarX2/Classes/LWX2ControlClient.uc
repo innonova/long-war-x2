@@ -62,7 +62,11 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("base: the base's tiles, numbers and facilities | base set <column> <row> <facility>: placed at once (a test aid) | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
 		Out.AddItem("hangar: the jets (index first), orders, bays | order [continent 0-4] [n] | transfer <jet> <continent> | equip <jet> <weapon 1-7>");
 		Out.AddItem("units: in a mission, XCOM's units on the field (index first: tile, action points, sight) | move <unit> <x> <y> [z]: that unit walks to the tile by XCOM 2's own move (its path found as the game finds it; z omitted: the floor there)");
+		Out.AddItem("state: one line of what the game is doing: phase (shell, strategy, tactical), map, top screen, film playing, in a mission the team whose turn it is and whether the game is still showing what happened (busy), and ready=1 when it waits on the player | lw.sh wait <regex> [s] / go <regex> [s]: until state matches (go also skips films and continues screens)");
 		Out.AddItem("dump [class name part]: every game state object with all its fields (tools/test/lw-dump.sh saves it)");
+		return;
+	case "state":
+		Out.AddItem(GameState());
 		return;
 	case "ping":
 		Out.AddItem("pong" @ (Pres().ScreenStack.GetCurrentScreen() != none ? string(Pres().ScreenStack.GetCurrentScreen().Class.Name) : "none"));
@@ -490,6 +494,40 @@ function string NewCampaign(int Difficulty, bool bFirstMission)
  * the player decides (the base, a facility, the maps, a mission's HUD, the main menu), and nothing on
  * a screen it does not know: a blind Enter there takes decisions (it bonded two soldiers once).
  */
+/**
+ * One line a script can wait on (lw.sh wait / go): phase=shell|strategy|tactical|other map=<map> screen=<top screen>
+ * movie=0|1, in a mission turn=<team whose units act> busy=0|1 (the visualizer still showing what happened) ended=0|1,
+ * and ready=1 when the game waits on the player (no film, nothing being shown; in a mission XCOM's turn with the HUD up).
+ */
+function string GameState()
+{
+	local string Phase, Screen, Mission;
+	local bool bMovie, bReady, bBusy;
+	local XComGameState_Player Player;
+	local UIScreen Top;
+
+	if (XComTacticalGame(WorldInfo.Game) != none)
+		Phase = "tactical";
+	else if (XComHeadquartersGame(WorldInfo.Game) != none)
+		Phase = "strategy";
+	else if (XComShell(WorldInfo.Game) != none)
+		Phase = "shell";
+	else
+		Phase = "other";
+	Top = (Pres() != none && Pres().ScreenStack != none) ? Pres().ScreenStack.GetCurrentScreen() : none;
+	Screen = Top != none ? string(Top.Class.Name) : "none";
+	bMovie = class'XComEngine'.static.IsAnyMoviePlaying();
+	bReady = !bMovie && Top != none;
+	if (Phase == "tactical" && `TACTICALRULES != none)
+	{
+		Player = XComGameState_Player(`XCOMHISTORY.GetGameStateForObjectID(`TACTICALRULES.GetCachedUnitActionPlayerRef().ObjectID));
+		bBusy = !class'XComGameStateVisualizationMgr'.static.VisualizerIdleAndUpToDateWithHistory();
+		Mission = " turn=" $ (Player != none ? string(Player.TeamFlag) : "none") @ "busy=" $ int(bBusy) @ "ended=" $ int(`TACTICALRULES.HasTacticalGameEnded());
+		bReady = bReady && !bBusy && Player != none && Player.TeamFlag == eTeam_XCom && (UITacticalHUD(Top) != none || UISpecialMissionHUD(Top) != none);
+	}
+	return "phase=" $ Phase @ "map=" $ WorldInfo.GetMapName() @ "screen=" $ Screen @ "movie=" $ int(bMovie) $ Mission @ "ready=" $ int(bReady);
+}
+
 function string Continue()
 {
 	local UIScreen Top;
