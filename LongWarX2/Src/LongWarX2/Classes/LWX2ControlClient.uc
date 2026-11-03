@@ -268,6 +268,10 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(EWBody(name(Args[1]), Args[2], Args[3], Args.Length > 4 ? Args[4] : "", Args.Length > 5 ? Args[5] : ""));
 		return;
+	case "bodies":
+		// Every unit on the field given its template's EW body (features/lw-ew-units.md), as the battle's start does.
+		Out.AddItem(class'LWX2EWBodies'.static.ApplyAll() @ "units given Enemy Within's body");
+		return;
 	case "units":
 		XComUnits(Out);
 		return;
