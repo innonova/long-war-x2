@@ -111,3 +111,10 @@ particle systems as they are; its materials it cannot draw).
   Chryssalid walks as EW's; no T-pose. The Floater used the Archon's Blazing Pinions:
   each species fights with its XCOM 2 template's abilities (`FightAs`), which is the
   abilities' port, not the bodies'; noted for it.
+- **By species:** two Long War species share a template (Sectoid and Sectoid Commander
+  as Sectoid, Floater and Heavy Floater as Archon); the pods' aliens now carry their
+  species (a unit value set as the pod spawns) and the bodies' list names a species
+  where it differs: the Commander in EW's red `SM_SectoidCom`, the Heavy Floater in
+  `SM_HeavyFloater` with its plasma rifle. 15 bodies. Seen side by side with a Sectoid.
+- Bodies are applied again every two seconds in a mission (the win check's timer), so
+  aliens that come after the pods (a Chryssalid's zombie, any spawn) get theirs.

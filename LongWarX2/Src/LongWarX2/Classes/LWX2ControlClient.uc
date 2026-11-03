@@ -284,7 +284,8 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem(MoveUnit(int(Args[1]), int(Args[2]), int(Args[3]), Args.Length > 4 ? int(Args[4]) : -1));
 		return;
 	case "spawn":
-		Out.AddItem(SpawnAlien(Args.Length > 1 ? name(Args[1]) : 'Sectoid', Args.Length > 2 ? int(Args[2]) : 2));
+		// spawn [template] [tiles] [Long War species, as the pods tag theirs: its EW body by species]
+		Out.AddItem(SpawnAlien(Args.Length > 1 ? name(Args[1]) : 'Sectoid', Args.Length > 2 ? int(Args[2]) : 2, Args.Length > 3 ? int(Args[3]) : 0));
 		return;
 	case "use":
 		if (Args.Length < 3)
@@ -1019,10 +1020,11 @@ function string Look(array<string> Args)
 	return "ok looking at" @ At;
 }
 
-function string SpawnAlien(name CharacterTemplate, int Tiles)
+function string SpawnAlien(name CharacterTemplate, int Tiles, optional int Species)
 {
 	local XComTacticalCheatManager Cheats;
-	local XComGameState_Unit Unit;
+	local XComGameState_Unit Unit, Newest;
+	local XComGameState NewGameState;
 	local vector Position;
 
 	Cheats = XComTacticalCheatManager(class'WorldInfo'.static.GetWorldInfo().GetALocalPlayerController().CheatManager);
@@ -1035,7 +1037,20 @@ function string SpawnAlien(name CharacterTemplate, int Tiles)
 	Position.X += Tiles * class'XComWorldData'.const.WORLD_StepSize;
 	Position.Z = `XWORLD.GetFloorZForPosition(Position);
 	Cheats.DropUnitAt(Position, CharacterTemplate, 1);
-	return "dropped" @ CharacterTemplate @ Tiles @ "tiles from" @ Unit.GetFullName();
+	if (Species > 0)
+	{
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+			if (Unit.GetMyTemplateName() == CharacterTemplate && (Newest == none || Unit.ObjectID > Newest.ObjectID))
+				Newest = Unit;
+		if (Newest != none)
+		{
+			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a test alien's species");
+			Newest = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Newest.ObjectID));
+			Newest.SetUnitFloatValue('LWX2Species', Species, eCleanup_Never);
+			`TACTICALRULES.SubmitGameState(NewGameState);
+		}
+	}
+	return "dropped" @ CharacterTemplate @ Tiles @ "tiles from" @ Unit.GetFullName() @ (Species > 0 ? "as species" @ Species : "");
 }
 
 /** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */
