@@ -1258,3 +1258,6 @@ from the evening, one from the morning) give two exception addresses:
   soldiers, 10 Sectoids all hidden, none on red alert, the objective listed; every
   alien killed → "the mission is won", the summary. A Geoscape mission: 6 soldiers,
   8 Sectoids, all hidden at the start.
+- **Release** `LongWarX2-20261103-8f9f120.zip`, checked from the zip on wingpu
+  (uninstalled, setup with `--maps`, the first mission: 4 soldiers, 10 Sectoids, none
+  drawn at the start). Maps not converted again (converter unchanged).
