@@ -1340,3 +1340,19 @@ from the evening, one from the morning) give two exception addresses:
   category, the last weapon warning, came after it.)
 - Move ranges: XCOM 2 gives a move action mobility ÷ 1.5 tiles (8 at 12), so 9 to 11
   tiles taking both actions is XCOM 2's rule, not a fault.
+
+### 2026-11-03 night, walls that break
+
+- EW's walls are `XComFracLevelActor`s (fracturable static meshes broken into fragments
+  by damage); XCOM 2 has the same class. An XCOM 2 parcel's placed wall (the SDK's
+  `sm_Bar_02`) was read for what a placed one carries: its component's native data after
+  the properties is the same 50 zero bytes as a plain static mesh component's, so the
+  plot writer writes a wall as an `XComFracLevelActor` (its class defaults as archetype)
+  with a `FracturedStaticMeshComponent` given EW's index count and fragment heights.
+- EW's toughness per wall (masonry, glass, wood, metal …) goes into the wall's Tag; at
+  the battle's start the mod gives it XCOM 2's (masonry and wood standard, glass
+  window, metal and cars strong, deco deco, the rest fragile); the toughness package
+  loads by its path.
+- **Seen:** an explosion (the new `blast` aid: XCOM 2's environment damage at a point)
+  in the electronics store blew the back room's walls into fragments and rubble, fire
+  and smoke, as in EW. On by default (`PlotFracWalls`); converter version 8.
