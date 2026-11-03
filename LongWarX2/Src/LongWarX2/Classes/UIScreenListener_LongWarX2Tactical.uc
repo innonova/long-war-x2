@@ -234,6 +234,8 @@ function CheckSwept()
 		return;
 	NoReinforcements();
 	LongWarObjectives();
+	// Units that came after the pods (a Chryssalid's zombie, a spawn of XCOM 2's) given their EW body too.
+	class'LWX2EWBodies'.static.ApplyAll();
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 	{
 		if (Unit.GetTeam() != eTeam_Alien || Unit.GetMyTemplate().bIsCosmetic)
