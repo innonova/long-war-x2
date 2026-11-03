@@ -68,7 +68,7 @@ event OnInit(UIScreen Screen)
 			`log("LongWarX2: EW map: at the battle's start," @ class'LWX2PartPlacer'.static.CacheBuildings(Screen) @ "buildings' floors cached," @ class'LWX2PartPlacer'.static.ShowBuildings(Screen) @ "of their actors shown", , 'LongWarX2');
 		// EW's doors (XComInteractiveLevelActors in the plot) known to the tile data, so paths go through them.
 		if (class'LWX2EWMapPieces'.static.OnOwnPlot())
-			`log("LongWarX2: EW map: at the battle's start," @ class'LWX2PartPlacer'.static.RegisterDoors(Screen) @ "doors added to the tile data", , 'LongWarX2');
+			`log("LongWarX2: EW map: at the battle's start," @ class'LWX2PartPlacer'.static.RegisterDoors(Screen) @ "doors added to the tile data;" @ class'LWX2PartPlacer'.static.WallToughness(Screen), , 'LongWarX2');
 		// (The fog of war is set before the battle, at the dropship: changed while it is being drawn, the game died now and
 		// then right here, on the person's machine.)
 		class'LWMissionSquads'.static.SpawnAtEWPods();

@@ -16,7 +16,7 @@ import { readSection, writePlot, type PlotSettings } from './ew-plot.ts'
 
 /** The converter version ew-map.ts writes into its sections (kept in step with its CONVERTER_VERSION; read from the
  *  section, so this file need not load the converter). */
-const CONVERTER_VERSION = 7
+const CONVERTER_VERSION = 8
 /** Whether a converted map's section is of the current converter (an older one is converted again). */
 export function sectionCurrent(ini: string): boolean {
   const m = /; ew-map\.ts (\d+)/.exec(readFileSync(ini, 'latin1'))
@@ -35,6 +35,7 @@ export function plotSettings(mod: string): PlotSettings {
     lightScale: Number(/^PlotLightScale=([\d.]+)/m.exec(ini)?.[1] ?? 1),
     lightKinds: [...ini.matchAll(/^\+LightKinds=(\w+)/gm)].map((m) => m[1]!),
     buildings: /^PlotBuildings=true/m.test(ini),
+    fracWalls: /^PlotFracWalls=true/m.test(ini),
   }
 }
 

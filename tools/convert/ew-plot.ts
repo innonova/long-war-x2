@@ -19,7 +19,7 @@ export interface EWMap {
   playCenter: number[]
   playExtent: number[]
   dropZones: number[][]
-  pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean; fractured: boolean; cover: string[] }[]
+  pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean; fractured: boolean; cover: string[]; frac?: { indices: number; minZ: number; maxZ: number; toughness: string } }[]
   /** EW's doors (ew-map.ts): mesh, AnimTree, AnimSets, physics, where, the idle animation, the interaction points. */
   doors: { mesh: string; materials: string[]; tree: string; physics: string; sets: string[]; loc: number[]; rot: number[]; scale: number[]; idle: string; blocksSight: boolean; window: boolean; points: Record<string, string>[] }[]
   looks: Map<string, { kind: string; diffuse: string; normal: string }>
@@ -79,6 +79,10 @@ export function readSection(text: string): EWMap {
         materials: mats ? mats.split(',').map((s) => s.replace(/"/g, '')) : [],
         backdrop: /Backdrop=true/.test(line),
         fractured: /Fractured=true/.test(line),
+        frac: (() => {
+          const f = /Frac=\(Indices=(\d+),MinZ=([-\d.]+),MaxZ=([-\d.]+),Toughness=(\w+)\)/.exec(line)
+          return f ? { indices: Number(f[1]), minZ: Number(f[2]), maxZ: Number(f[3]), toughness: f[4]! } : undefined
+        })(),
         // Its cover flags where they differ from an XComLevelActor's (ew-map.ts: ClimbOnto=false, CoverForce=…).
         cover: [...line.matchAll(/,(ClimbOnto|ClimbOver|Destination|IgnoreForCover|CoverForce)=(\w+)/g)].map((m) => `${m[1]}=${m[2]}`),
       })
@@ -112,6 +116,8 @@ export interface PlotSettings {
   /** Whether EW's buildings are written as XCOM 2 building and floor volumes (roofs cut away; off: some maps' plots
    *  crashed the game as they loaded, lw-missions.md). */
   buildings?: boolean
+  /** Whether EW's walls are XCOM 2's breakable walls (XComFracLevelActor; else drawn whole as level actors). */
+  fracWalls?: boolean
   /** Scalars and textures set on every stand-in. */
   scalars: [string, number][]
   textures: [string, string][]
@@ -248,6 +254,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const tFloat = (name: string, f: number): T => ({ name, type: 'FloatProperty', arrayIndex: 0, value: bin((w) => w.f32(f)) })
   const tInt = (name: string, n: number): T => ({ name, type: 'IntProperty', arrayIndex: 0, value: bin((w) => w.i32(n)) })
   const tBool = (name: string, b: boolean): T => ({ name, type: 'BoolProperty', arrayIndex: 0, bool: b ? 1 : 0, value: new Uint8Array(0) })
+  const tName = (name: string, value: string): T => ({ name, type: 'NameProperty', arrayIndex: 0, value: bin((w) => { const r = objName(value); w.i32(r.index).i32(r.number) }) })
   const tEnum = (name: string, enumName: string, value: string): T => ({ name, type: 'ByteProperty', enumName, arrayIndex: 0, value: bin((w) => { const r = objName(value); w.i32(r.index).i32(r.number) }) })
   const tColor = (name: string, c: number[]): T => ({ name, type: 'StructProperty', struct: 'Color', arrayIndex: 0, value: Uint8Array.from([c[2]!, c[1]!, c[0]!, c[3]!]) })
   const tGuid = (name: string): T => ({ name, type: 'StructProperty', struct: 'Guid', arrayIndex: 0, value: crypto.getRandomValues(new Uint8Array(16)) })
@@ -380,15 +387,24 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     const only = /only=([\w,]+)/.exec(debug)
     return !only || only[1]!.split(',').some((m) => p.mesh.endsWith('.' + m))
   })
+  let fracCount = 0
+  const fracClass = () => importRef('XComGame.XComFracLevelActor', 'Class', 'Core')
+  const fracDefault = () => importRef('XComGame.Default__XComFracLevelActor', 'XComFracLevelActor', 'XComGame')
   for (const piece of pieces) {
     // Its stand-ins first: they are exports too, and the actor's component must come right after the actor.
     const inBuilding = map.buildings.some((b) => [0, 1, 2].every((c) => Math.abs(piece.loc[c]! - b.center[c]!) <= b.extent[c]! + 16))
     const mats = debug.includes('nomats') ? [] : piece.materials.map((m) => micFor(m, inBuilding))
-    const actorName = nextName('XComLevelActor')
+    // A wall that breaks: XCOM 2's fracturable actor with its own class defaults as archetype, EW's fracture data on the
+    // component, EW's toughness in its Tag (LWX2T_MASONRY …) for the mod to give it XCOM 2's at the battle's start.
+    const frac = settings.fracWalls && piece.fractured && piece.frac ? piece.frac : undefined
+    const actorName = nextName(frac ? 'XComFracLevelActor' : 'XComLevelActor')
     const actorRef = exportCount() + 1
     const compRef = actorRef + 1
-    const atags = actorSample.tags.map((t) => ({ ...t })).filter((t) => t.name !== 'Tag')
-    set(atags, tObj('StaticMeshComponent', compRef))
+    const atags = actorSample.tags.map((t) => ({ ...t })).filter((t) => t.name !== 'Tag' && !(frac && t.name === 'StaticMeshComponent'))
+    if (frac) {
+      set(atags, tObj('FracturedStaticMeshComponent', compRef))
+      set(atags, tName('Tag', `LWX2T_${frac.toughness}`))
+    } else set(atags, tObj('StaticMeshComponent', compRef))
     set(atags, tObj('CollisionComponent', compRef))
     set(atags, tVec('Location', piece.loc))
     set(atags, tRot('Rotation', piece.rot))
@@ -402,14 +418,30 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       if (k === 'CoverForce') set(atags, tEnum('CoverForceFlag', 'ECoverForceFlag', val))
       else set(atags, tBool({ ClimbOnto: 'bCanClimbOnto', ClimbOver: 'bCanClimbOver', Destination: 'bIsValidDestination', IgnoreForCover: 'bIgnoreForCover' }[k]!, val === 'true'))
     }
-    addExport(sampleActor, actorName, level, serialize({ head: actorHead(actorSample.head), tags: atags, tail: actorSample.tail }))
+    addExport(sampleActor, actorName, level, serialize({ head: actorHead(actorSample.head), tags: atags, tail: actorSample.tail }),
+      frac ? { classIndex: fracClass(), archetype: fracDefault() } : {})
     const ctags = meshSample.tags.map((t) => ({ ...t }))
     set(ctags, tObj('StaticMesh', importRef(piece.mesh, piece.fractured ? 'FracturedStaticMesh' : 'StaticMesh')))
+    if (frac) {
+      set(ctags, tInt('NumResourceIndices', frac.indices))
+      set(ctags, tFloat('FragmentBoundsMinZ', frac.minZ))
+      set(ctags, tFloat('FragmentBoundsMaxZ', frac.maxZ))
+      set(ctags, tBool('bUseDynamicIndexBuffer', true))
+    }
     if (mats.length)
       set(ctags, { name: 'Materials', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(mats.length); mats.forEach((m) => w.i32(m)) }) })
     if (piece.backdrop)
       for (const b of ['CollideActors', 'BlockActors', 'BlockZeroExtent', 'BlockNonZeroExtent', 'BlockRigidBody']) set(ctags, tBool(b, false))
-    addExport(sampleMesh, nextName('StaticMeshComponent'), actorRef, serialize({ head: componentHead(meshSample.head), tags: ctags, tail: meshSample.tail }))
+    if (frac) {
+      // The component's head names the class whose template it is: the frac actor's.
+      const head = Uint8Array.from(meshSample.head)
+      new DataView(head.buffer).setInt32(0, fracClass(), true)
+      new DataView(head.buffer).setInt32(4, NONE, true)
+      addExport(sampleMesh, nextName('FracturedStaticMeshComponent'), actorRef, serialize({ head, tags: ctags, tail: meshSample.tail }),
+        { classIndex: importRef('Engine.FracturedStaticMeshComponent', 'Class', 'Core'), archetype: importRef('XComGame.Default__XComFracLevelActor.FracturedStaticMeshComponent0', 'FracturedStaticMeshComponent') })
+      fracCount++
+    } else
+      addExport(sampleMesh, nextName('StaticMeshComponent'), actorRef, serialize({ head: componentHead(meshSample.head), tags: ctags, tail: meshSample.tail }))
     placed.push(actorRef)
   }
 
@@ -417,7 +449,6 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   // The class's own defaults as archetype (no XCOM 2 door: EW's mesh, AnimTree and AnimSets, which the map's package
   // carries; their AnimNodeBlendList is named Anim, as XCOM 2's code looks for). The interaction points as EW's, the
   // unit's animation named as XCOM 2's doors name it by facing (EW's was an enum, eAnimAction_OpenDoor).
-  const tName = (name: string, value: string): T => ({ name, type: 'NameProperty', arrayIndex: 0, value: bin((w) => { const r = objName(value); w.i32(r.index).i32(r.number) }) })
   const UNIT_DOOR_ANIM: Record<string, string> = { eIF_Left: 'HL_DoorOpenA', eIF_Front: 'NO_DoorOpenA', eIF_Right: 'HR_DoorOpenA' }
   let doorCount = 0
   if (!debug.includes('nodoors') && map.doors.length) {
@@ -646,7 +677,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const tiles = [Math.round((max[0]! - min[0]!) / TILE), Math.round((max[1]! - min[1]!) / TILE), Math.round((max[2]! - min[2]!) / FLOOR)]
   return {
     bytes,
-    report: `${map.name}: ${pieces.length} pieces, ${[...mics.values()].filter((r) => r > 0).length} stand-in materials, ${doorCount} doors, ${lightCount} lights, ${map.dropZones.length} drop zones, ${map.buildings.length} buildings (${floorCount} floors); level volume ${tiles.join(' x ')} tiles; ${(bytes.length / 1024).toFixed(0)} KB`,
+    report: `${map.name}: ${pieces.length} pieces, ${[...mics.values()].filter((r) => r > 0).length} stand-in materials, ${doorCount} doors, ${fracCount} breakable walls, ${lightCount} lights, ${map.dropZones.length} drop zones, ${map.buildings.length} buildings (${floorCount} floors); level volume ${tiles.join(' x ')} tiles; ${(bytes.length / 1024).toFixed(0)} KB`,
   }
 }
 
@@ -665,6 +696,7 @@ if (/ew-plot\.ts$/.test(process.argv[1] ?? '')) {
     lightKinds: ['Point', 'Spot'],
     buildingParent: process.env.LWX2_BUILDING_PARENT ?? '',
     buildings: process.env.LWX2_BUILDINGS === '1',
+    fracWalls: process.env.LWX2_FRAC_WALLS === '1',
   }
   const { bytes, report } = writePlot(new Uint8Array(readFileSync(template!)), readSection(readFileSync(section!, 'latin1')), settings)
   writeFileSync(out!, bytes)

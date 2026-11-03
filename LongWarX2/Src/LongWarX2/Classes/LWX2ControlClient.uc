@@ -272,6 +272,15 @@ function Handle(string Line, out array<string> Out)
 		// Every unit on the field given its template's EW body (features/lw-ew-units.md), as the battle's start does.
 		Out.AddItem(class'LWX2EWBodies'.static.ApplyAll() @ "units given Enemy Within's body");
 		return;
+	case "blast":
+		// blast <x> <y> <z> [radius, default 192] [damage, default 10]: environment damage there, as an explosion's (walls).
+		if (Args.Length < 4)
+		{
+			Out.AddItem("ERR blast <x> <y> <z> [radius] [damage]");
+			return;
+		}
+		Out.AddItem(Blast(vect(0,0,0) + vect(1,0,0) * float(Args[1]) + vect(0,1,0) * float(Args[2]) + vect(0,0,1) * float(Args[3]), Args.Length > 4 ? float(Args[4]) : 192.0, Args.Length > 5 ? int(Args[5]) : 10));
+		return;
 	case "units":
 		XComUnits(Out);
 		return;
@@ -1162,6 +1171,25 @@ function string EWBody(name Template, string MeshPath, string SetPath, string Di
 		n++;
 	}
 	return "ok" @ n @ "of" @ Template @ "given" @ PathName(Mesh) @ "and" @ PathName(Set) @ (MIC != none ? "and a stand-in material" : "");
+}
+
+function string Blast(vector At, float Radius, int Damage)
+{
+	local XComGameState NewGameState;
+	local XComGameState_EnvironmentDamage Event;
+
+	if (`TACTICALRULES == none)
+		return "ERR not in a mission";
+	NewGameState = `XCOMHISTORY.CreateNewGameState(true, class'XComGameStateContext_AreaDamage'.static.CreateXComGameStateContext());
+	Event = XComGameState_EnvironmentDamage(NewGameState.CreateNewStateObject(class'XComGameState_EnvironmentDamage'));
+	Event.DamageAmount = Damage;
+	Event.DamageTypeTemplateName = 'Explosion';
+	Event.HitLocation = At;
+	Event.DamageRadius = Radius;
+	Event.bRadialDamage = true;
+	Event.bAffectFragileOnly = false;
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	return "ok blast of" @ Damage @ "at" @ At @ "radius" @ Radius;
 }
 
 /** XCOM's units on the field, in the order move counts them. */

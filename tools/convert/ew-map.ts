@@ -26,8 +26,9 @@ import { inlineTextures } from './inline-textures.ts'
  *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods,
  *  spawn points by type; 5: the walls, EW's fracturable meshes; meshes at the root of the map's package; objects of one
  *  name made unique; materials cut out by their diffuse's alpha, a kind of their own; 6: walls marked fractured, so the
- *  plot imports them as such; the buildings' surface textures, Diffuse_Base; 7: the doors, the pieces' cover flags). */
-export const CONVERTER_VERSION = 7
+ *  plot imports them as such; the buildings' surface textures, Diffuse_Base; 7: the doors, the pieces' cover flags;
+ *  8: the walls' fracture data and toughness, for XCOM 2's breakable walls). */
+export const CONVERTER_VERSION = 8
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -161,6 +162,38 @@ function coverOf(index: number, own: Tag[]): Cover {
     force: found.force ?? 'CoverForce_Default',
   }
 }
+/** A property's tag on an export or the first of its archetypes that has it. */
+function inherited(index: number, own: Tag[], name: string, start: number): Tag | undefined {
+  let found = own.find((t) => t.name === name)
+  for (let i = index, depth = 0; !found && depth < 8; depth++) {
+    const arch = archetypeOf(i)
+    if (arch <= 0) break
+    i = arch - 1
+    for (const s of [start, 4, 8, 26]) {
+      try {
+        found = tagsOf(i, s).find((t) => t.name === name)
+        break
+      } catch {
+        // not here
+      }
+    }
+  }
+  return found
+}
+/** A wall's fracture data (its component index and properties, its actor's), for an XCOM 2 wall that breaks. */
+function fracOf(actorIndex: number, actor: Tag[], compIndex: number, comp: Tag[]): Frac {
+  const indices = inherited(compIndex, comp, 'NumResourceIndices', 8)
+  const minZ = inherited(compIndex, comp, 'FragmentBoundsMinZ', 8)
+  const maxZ = inherited(compIndex, comp, 'FragmentBoundsMaxZ', 8)
+  const tough = inherited(actorIndex, actor, 'Toughness', 4)
+  const toughPath = tough && ref(tough) ? pathOf(ref(tough)) : ''
+  return {
+    indices: indices ? i32(indices, 0) : 0,
+    minZ: minZ ? f32(minZ, 0) : 0,
+    maxZ: maxZ ? f32(maxZ, 0) : 0,
+    toughness: /Toughness_(\w+)$/.exec(toughPath)?.[1] ?? '',
+  }
+}
 /** A static mesh's bounds' half sizes: the first thing in its data after the properties (origin, extent, radius). */
 function meshExtent(path: string): number[] {
   const i = exports.findIndex((e) => e.fullName === path)
@@ -219,7 +252,10 @@ function materialsOf(index: number, tags: Tag[]): number[] {
   }
   return Array.from(slots, (r) => r ?? 0)
 }
-interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[]; extent: number[]; fractured: boolean; cover: Cover }
+/** A wall's fracture: its mesh's index count and fragments' height (the component's, or its archetypes'), and EW's
+ *  toughness by name (MASONRY, WOOD …), so XCOM 2 can break it as EW did. */
+interface Frac { indices: number; minZ: number; maxZ: number; toughness: string }
+interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[]; extent: number[]; fractured: boolean; cover: Cover; frac?: Frac }
 const pieces: Piece[] = []
 const skipped: Record<string, number> = {}
 exports.forEach((e, i) => {
@@ -257,6 +293,7 @@ exports.forEach((e, i) => {
     // A wall's mesh is a FracturedStaticMesh: the plot imports it as that class (as a StaticMesh it is not found).
     fractured: exports.find((x) => x.fullName === mesh)?.type === 'FracturedStaticMesh',
     cover: coverOf(i, tags),
+    frac: comp.name === 'FracturedStaticMeshComponent' ? fracOf(i, tags, ref(comp) - 1, ctags) : undefined,
   })
 })
 
@@ -731,7 +768,7 @@ const lines = [
   ),
   ...pieces.map(
     (p) =>
-      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''}${isBackdrop(p) ? ',Backdrop=true' : ''}${p.fractured ? ',Fractured=true' : ''}${coverText(p.cover)})`,
+      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''}${isBackdrop(p) ? ',Backdrop=true' : ''}${p.fractured ? ',Fractured=true' : ''}${p.frac ? `,Frac=(Indices=${p.frac.indices},MinZ=${n(p.frac.minZ)},MaxZ=${n(p.frac.maxZ)},Toughness=${p.frac.toughness || 'None'})` : ''}${coverText(p.cover)})`,
   ),
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')

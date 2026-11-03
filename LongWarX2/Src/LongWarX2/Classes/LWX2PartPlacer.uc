@@ -172,6 +172,43 @@ static function int CacheBuildings(Actor Finder)
  * that ran before the tile data was built, so no door had its interaction points and no path went through a door
  * (lw-missions.md). Returns how many.
  */
+/**
+ * EW's walls placed as XCOM 2's breakable walls (ew-plot.ts: their Tag LWX2T_<EW toughness>) given XCOM 2's toughness
+ * for EW's: masonry and wood as XCOM 2's standard walls, glass as its windows, metal and cars as its strong ones, the
+ * rest as fragile. Returns a line for the log.
+ */
+static function string WallToughness(Actor Finder)
+{
+	local XComFracLevelActor Wall;
+	local XComDestructibleActor_Toughness T;
+	local string Kind, Path;
+	local int n, Missing;
+
+	foreach Finder.WorldInfo.AllActors(class'XComFracLevelActor', Wall)
+	{
+		if (Left(string(Wall.Tag), 6) != "LWX2T_")
+			continue;
+		Kind = Mid(string(Wall.Tag), 6);
+		switch (Kind)
+		{
+			case "MASONRY": case "WOOD": Path = "Toughness.Toughness_STANDARD"; break;
+			case "GLASS": Path = "Toughness.Toughness_WINDOW"; break;
+			case "METAL": case "SMALLCAR": Path = "Toughness.Toughness_STRONG"; break;
+			case "DECO": Path = "Toughness.Toughness_DECO"; break;
+			default: Path = "Toughness_FRAGILE";
+		}
+		T = XComDestructibleActor_Toughness(DynamicLoadObject("GameData_Toughness_X2." $ Path, class'XComDestructibleActor_Toughness', true));
+		if (T == none)
+		{
+			Missing++;
+			continue;
+		}
+		Wall.Toughness = T;
+		n++;
+	}
+	return n @ "walls given XCOM 2's toughness" $ (Missing > 0 ? "," @ Missing @ "not (no toughness object found)" : "");
+}
+
 static function int RegisterDoors(Actor Finder)
 {
 	local XComInteractiveLevelActor Door;

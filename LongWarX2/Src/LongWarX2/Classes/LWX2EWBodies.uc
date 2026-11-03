@@ -86,6 +86,9 @@ static function bool Apply(XComGameState_Unit Unit)
 	if (Pawn == none || Pawn.Mesh == none)
 		return false;
 	B = default.Bodies[Pick];
+	// Given already (asked every two seconds in a mission: a load each time would read the package again).
+	if (Pawn.Mesh.SkeletalMesh != none && string(Pawn.Mesh.SkeletalMesh.Name) == Mid(B.Mesh, InStr(B.Mesh, ".") + 1))
+		return false;
 	Mesh = SkeletalMesh(DynamicLoadObject(B.Mesh, class'SkeletalMesh', true));
 	if (Mesh == none || Pawn.Mesh.SkeletalMesh == Mesh)
 		return false;
