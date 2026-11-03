@@ -1267,3 +1267,23 @@ from the evening, one from the morning) give two exception addresses:
   game's rules apply (sight, reveals, reaction fire). Tried in the first mission: a
   rookie walked 6 tiles. Seen on the way, to look into: that walk left the rookie
   with no action points (6 tiles should be one move).
+
+### 2026-11-03 evening, the walls (the person: "all destructible walls are missing", every map)
+
+- Version 5 put EW's walls in the plots, but imported their meshes as `StaticMesh`;
+  in the package they are `FracturedStaticMesh`, and an import must name the class:
+  nothing was found, nothing drawn, nothing blocked. Sections now mark the walls
+  (`Fractured=true`) and the plot imports them as such (converter version 6). On the
+  fast-food map walls and roof are drawn.
+- With roofs, interiors are hidden: building volumes are back on (`PlotBuildings=true`;
+  they were switched off when suspected of the office crash, whose cause was the
+  root-level mesh). On the fast food the roof is cut away and the interior shows.
+- The buildings' parents (`BLDG_*`) name their surface `Diffuse_Base`/`Normal_Base`; the
+  converter took the damage layer (rubble) by its texture name instead. It now takes
+  the `_Base` textures first and never a `Damage_*` one.
+- **Control port, the person's suggestion:** `state` (phase, map, top screen, film,
+  turn, busy, ready) and `lw.sh wait|go <regex> [s]`, polled over one connection made
+  again across map loads; `go` skips films and continues screens; a gone game ends
+  the wait. Map tests now wait on `ready=1` instead of timers.
+- The game on wingpu is closed before every handover (the person's Steam logs out
+  otherwise).
