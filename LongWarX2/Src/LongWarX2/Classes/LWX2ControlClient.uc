@@ -972,6 +972,9 @@ function Enemies(out array<string> Out)
 	local TTile T, N;
 	local vector Floor;
 	local int Best, dx, dy, Open;
+	local FOWTileStatus FogStatus;
+	local byte FogFlags;
+	local XGUnit Vis;
 
 	World = `XWORLD;
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
@@ -998,6 +1001,12 @@ function Enemies(out array<string> Out)
 			@ "at" @ T.X $ "," $ T.Y $ "," $ T.Z @ (World.GetFloorPositionForTile(T, Floor) ? "floor" : "NOT floor") @ "open around" @ Open
 			@ "ai data" @ Unit.GetAIUnitDataID() @ "group" @ (Unit.GetGroupMembership() != none ? Unit.GetGroupMembership().ObjectID : 0) @ "ap" @ Unit.ActionPoints.Length
 			@ "effects" @ JoinNames(Unit.AffectedByEffectNames));
+		// What decides whether it is drawn: its tile's fog, how many of XCOM see it, its visualizer's team flags.
+		World.GetTileFOWValue(T, FogStatus, FogFlags);
+		Vis = XGUnit(Unit.GetVisualizer());
+		Out.AddItem("  seen by" @ class'X2TacticalVisibilityHelpers'.static.GetNumEnemyViewersOfTarget(Unit.ObjectID) @ "tile fog" @ FogStatus @ "flags" @ FogFlags
+			@ "visible to teams" @ (Vis != none ? string(Vis.m_eTeamVisibilityFlags) : "no visualizer") @ "pawn hidden" @ ((Vis != none && Vis.GetPawn() != none) ? string(Vis.GetPawn().bHidden) : "-")
+			@ "forced" @ Unit.ForceModelVisible());
 	}
 }
 

@@ -1226,3 +1226,12 @@ from the evening, one from the morning) give two exception addresses:
   (uninstalled, setup with `--maps`: 83 maps converted again, as the converter is
   now version 5; then the office map, which crashed before, loads and plays). The
   person's setup converts their maps again too (about four minutes).
+- **Aliens' visibility, live** (the `enemies` aid now tells each alien's tile fog,
+  how many of XCOM see it, its visualizer's team flags and whether its pawn is
+  hidden): on the convenience store, of 12 Sectoids the 4 within 7 to 13 tiles of
+  the squad are seen and drawn; the 8 out of sight are hidden (`eTeam_None`, pawn
+  hidden). So XCOM 2's hiding works on our plots and for Long War's pods. What the
+  person saw (every alien in view) is not reproduced; asked which mission.
+- A stock XCOM 2 skirmish, tried as the fog's reference, drew as a pink void: the
+  mod's old hiding of XCOM 2's actors (`HideForeign`, for the hosted-map approach)
+  still runs on XCOM 2's own plots. The mod's missions no longer use them; to remove.
