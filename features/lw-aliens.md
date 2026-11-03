@@ -39,3 +39,6 @@ document the encodings):
 - **Checked on wingpu** (the convenience store, Classic, day 1): 8 Sectoids at 3 HP, aim 60
   (65 less Classic's 5), mobility 12; 2 Drones at 3 HP, aim 55; each with the passive; and
   across twelve maps the aliens at Long War's HP.
+- **Release** `LongWarX2-20261103-b82cf5d.zip` (with the breakable walls), checked from the
+  zip: the store's Sectoids and Drones at Long War's HP in EW's bodies, with the passive;
+  79 walls given toughness; no redscreens from the map's config.
