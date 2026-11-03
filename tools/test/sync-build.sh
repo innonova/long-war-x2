@@ -17,7 +17,7 @@ git diff HEAD --binary > /tmp/lwtree-sync.patch
 [ -n "$new" ] && git reset -q $new
 scp -q /tmp/lwtree-sync.patch "$host:lwx2-sync.patch"
 rm -f /tmp/lwtree-sync.patch
-LWX2_TIMEOUT=600 tools/test/on.sh 'tools\test\stop-game.ps1' 'git fetch -q origin 2>&1' "git reset -q --hard $commit 2>&1" 'git clean -qfd -e BuildCache 2>&1' \
+LWX2_TIMEOUT=${LWX2_TIMEOUT:-600} tools/test/on.sh 'tools\test\stop-game.ps1' 'git fetch -q origin 2>&1' "git reset -q --hard $commit 2>&1" 'git clean -qfd -e BuildCache 2>&1' \
   'if ((Get-Item C:\Users\aekms\lwx2-sync.patch).Length -gt 0) { git apply C:\Users\aekms\lwx2-sync.patch 2>&1 }' 'tools\test\build.ps1' \
   ${LWX2_EWMAP:+'$f = "C:\Program Files (x86)\Steam\steamapps\common\XCOM 2\XCom2-WarOfTheChosen\XComGame\Mods\LongWarX2\Config\XComLWAirWar.ini"; (Get-Content $f) -replace "PlaceEWMapWhole=false","PlaceEWMapWhole=true" | Set-Content $f; "EW map: SUCCESS placed whole"'} 2>&1 |
   tr -d '\r' | grep -E 'error|: Error|: Warning|SUCCESS|FAIL' | grep -v 'Unknown property in defaults' | head -20
