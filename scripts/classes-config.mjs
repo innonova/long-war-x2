@@ -16,7 +16,7 @@
 //   node scripts/classes-config.mjs <Long War's DefaultGameCore.ini> <Long War's XComGame.int> [<XComGame.upk>]
 import { readFileSync, writeFileSync } from 'node:fs'
 import { readConsts, makeWords } from './lw-words.mjs'
-import { classCategories, readWeapons, startingKit, weaponTemplate } from './lw-gear.mjs'
+import { LAUNCHER_CATEGORY, classCategories, readWeapons, startingKit, weaponTemplate } from './lw-gear.mjs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -275,8 +275,8 @@ writeFileSync(
     '-UniqueEquipCategories=grenade',
     '-UniqueEquipCategories=heal',
     "; Long War's weapon categories (which classes may carry a weapon; XComLWGear.ini, scripts/gear-config.mjs) made known",
-    '; to the item manager (unknown, every Long War weapon template was reported invalid in the log).',
-    ...[...new Set([...readFileSync(join(mod, 'Config', 'XComLWGear.ini'), 'utf8').matchAll(/Category=(lw_\w+)/g)].map((m) => m[1]))].sort().map((c) => `+WeaponCategories=${c}`),
+    '; to the item manager, the rocket launcher\'s too (unknown, every Long War weapon template was reported invalid in the log).',
+    ...[...new Set([...[...readFileSync(join(mod, 'Config', 'XComLWGear.ini'), 'utf8').matchAll(/Category=(lw_\w+)/g)].map((m) => m[1]), LAUNCHER_CATEGORY])].sort().map((c) => `+WeaponCategories=${c}`),
     "; Long War's Secondary Heart is asked before a soldier dies (X2Effect_LWSecondaryHeart).",
     '[XComGame.X2AbilityTemplateManager]',
     '+PreDeathCheckEffects=LWSecondaryHeart',
