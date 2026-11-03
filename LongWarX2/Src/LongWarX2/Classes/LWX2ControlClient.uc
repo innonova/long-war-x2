@@ -522,8 +522,10 @@ function string GameState()
 	{
 		Player = XComGameState_Player(`XCOMHISTORY.GetGameStateForObjectID(`TACTICALRULES.GetCachedUnitActionPlayerRef().ObjectID));
 		bBusy = !class'XComGameStateVisualizationMgr'.static.VisualizerIdleAndUpToDateWithHistory();
-		Mission = " turn=" $ (Player != none ? string(Player.TeamFlag) : "none") @ "busy=" $ int(bBusy) @ "ended=" $ int(`TACTICALRULES.HasTacticalGameEnded());
-		bReady = bReady && !bBusy && Player != none && Player.TeamFlag == eTeam_XCom && (UITacticalHUD(Top) != none || UISpecialMissionHUD(Top) != none);
+		// cinematic: the mission's intro camera (the squad leaving the Skyranger) still running, the HUD already up.
+		Mission = " turn=" $ (Player != none ? string(Player.TeamFlag) : "none") @ "busy=" $ int(bBusy) @ "cinematic=" $ int(GetALocalPlayerController().bCinematicMode)
+			@ "ended=" $ int(`TACTICALRULES.HasTacticalGameEnded());
+		bReady = bReady && !bBusy && !GetALocalPlayerController().bCinematicMode && Player != none && Player.TeamFlag == eTeam_XCom && (UITacticalHUD(Top) != none || UISpecialMissionHUD(Top) != none);
 	}
 	return "phase=" $ Phase @ "map=" $ WorldInfo.GetMapName() @ "screen=" $ Screen @ "movie=" $ int(bMovie) $ Mission @ "ready=" $ int(bReady);
 }
