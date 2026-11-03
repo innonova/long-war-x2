@@ -46,9 +46,9 @@ buttons and text, no art).
 | Psi powers in missions | most | X2 | ten of twelve | Neural Feedback, Pyrokinesis | `lw-psi` |
 | Weapons and armour | done | X2 | Long War's stats, slots, ammo, who may carry what | Long War's weapon perks while carried | `lw-gear` |
 | Small items | most | X2 | grenades, medikits, rockets (with scatter), the arc thrower, scanners, beacons | the Shadow Device, the Battle Computer | `lw-gear` |
-| Aliens | stand-in | X2 | Long War's squads (which aliens, how many) as XCOM 2's nearest aliens | Enemy Within's aliens as units: their models, abilities, AI (step 3) | `lw-missions` |
+| Aliens | part | LW + X2 | Long War's squads (which aliens, how many) as XCOM 2's nearest aliens, drawn as Enemy Within's: 15 species' bodies, animations and weapons converted by the setup (Sectoid and Commander, Floater and Heavy Floater, Thin Man, Seeker, Cyberdisc, Muton, Muton Elite, Berserker, Chryssalid, Zombie, Outsider, Drone, Mechtoid) | Enemy Within's abilities and AI (each fights with its XCOM 2 template's); Sectopod, Ethereal, Mectoid's rider; XCOM 2's reveal voice lines | `lw-ew-units`, `lw-missions` |
 | Missions | most | X2 | each kind as an XCOM 2 mission type; won when every alien is dead or taken; no turn limit, sitreps, Chosen, concealment or reinforcements; Long War's squad size; terror civilians counted | Long War's objectives per kind; the landing spot | `lw-missions` |
-| Maps | part | LW + X2 | Enemy Within's maps as real XCOM 2 plots written by the setup program (geometry, materials incl. glass, lights, drop zones; our plot type, empty parcel, mission, clear-day light); Long War's squad at EW's pods (terror pods too), 18 terror civilians placed by EW's rules; the campaign's first mission on an EW plot with Long War's first squad | URB_OfficePaper_EWI crashes as its plot loads (cause open); roofs: XCOM 2's building visibility works on the dockyard but building volumes are off until that crash is understood; some maps dark | `lw-missions`, `hard-parts` |
+| Maps | most | LW | Enemy Within's maps as real XCOM 2 plots written by the setup (geometry, walls, doors that open, roofs cut away by XCOM 2's building visibility, materials incl. glass and cut-outs, lights, what can be stood on); Long War's squad at EW's pods (terror pods too), 18 terror civilians by EW's rules; the campaign's first mission on an EW plot; every map of 83 loads (the two crashes found) | walls not destructible; night maps dark-blue | `lw-missions`, `hard-parts` |
 | Wounds | most | X2 | XCOM 2's healing; Field Surgeon | Long War's own recovery times | `lw-classes` |
 
 ## The build and the tools
@@ -57,6 +57,6 @@ buttons and text, no art).
 |---|---|---|---|---|
 | The player's build | done | the mod, its config and a setup program that writes Long War's words and converts EW's screens, earth and (when asked) maps from the player's own install (v0.1.0-preview.1) | | `playable-build` |
 | Config from stock Long War | done | `scripts/config-all.sh` | | `lw-psi` (the answer) |
-| XCOM 2 test harness | done | control port, scripts, test aids (`tools/test`) | | |
+| XCOM 2 test harness | done | control port, scripts, test aids (`tools/test`): state and wait/go on it, units and move, enemies (fog, viewers, bodies), doors, bodies | | |
 | Crash at mission load | done | a Wwise callback during `LoadMap` after launching with the Avenger's cinematics running: voices and cinematics stopped, the map loaded 1.5 s later (0 in 20 under provoked conditions) | more play to confirm | `lw-missions` |
 | EW Long War test harness | part | EW (stock Long War 1.0) started through Steam and its launcher, windowed; mouse input, screenshots, saves read | the keyboard; a campaign by clicks; the measurements | `ew-harness` |
