@@ -1027,7 +1027,7 @@ civilians.
   squad of 10 at 8 EW pods, XCOM 2's four soldiers at EW's drop zone, the
   best reaching 807 tiles. Won (Long War's rule), the after-action report
   and the loot passed, back on the Avenger: the campaign goes on.
-- **01:00, release.** `LongWarX2-20261102-3ca85c9.zip` on the draft
+- **01:00, release.** `LongWarX2-20261102-3ca85c9.zip` (replaced at 01:10 by `79b0b3f`, the same without the earth's fill) on the draft
   release, checked from the zip on the test machine (uninstalled, setup
   with `--maps`: 83 maps converted again, as the converter is now version
   4, and 83 plots; then a mission on LWX2_URB_CommercialRestaurant with
