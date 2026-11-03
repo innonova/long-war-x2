@@ -190,7 +190,23 @@ function Handle(string Line, out array<string> Out)
 		Buildings(Args, Out);
 		return;
 	case "fog":
-		// The fog of war's levels, live: fog <never seen> <seen before> <never seen shown as seen: 0 or 1>.
+		// The fog of war's state (fog state), turned on as XCOM 2 does at the battle's start (fog on), or its levels, live:
+		// fog <never seen> <seen before> <never seen shown as seen: 0 or 1>.
+		if (Args.Length > 1 && (Args[1] == "state" || Args[1] == "on"))
+		{
+			if (Args[1] == "on")
+			{
+				`XWORLD.bEnableFOW = true;
+				`XWORLD.bDebugEnableFOW = true;
+				`XWORLD.bEnableFOWUpdate = true;
+				`BATTLE.m_kLevel.SetupXComFOW(true);
+				`XWORLD.bFOWTextureBufferIsDirty = true;
+				`XWORLD.ForceUpdateAllFOWViewers();
+				`BATTLE.SetFOW(true);
+			}
+			FogState(Out);
+			return;
+		}
 		class'LWX2PartPlacer'.default.FogNeverSeen = Args.Length > 1 ? float(Args[1]) : 0.0;
 		class'LWX2PartPlacer'.default.FogHaveSeen = Args.Length > 2 ? float(Args[2]) : 0.0;
 		class'LWX2PartPlacer'.default.FogNeverSeenAsHaveSeen = Args.Length > 3 && Args[3] == "1";
@@ -1681,6 +1697,35 @@ function string SetEWMaterials(name Param, string Value)
 }
 
 /** ewlight: EW's placed lights of a kind (or all) at Scale times their brightness now. */
+/** What decides whether the fog of war is drawn: the world's switches, its size, and each fog effect of the player's post-process chains. */
+function FogState(out array<string> Out)
+{
+	local LocalPlayer LP;
+	local PostProcessChain Chain;
+	local XComFOWEffect Effect;
+	local int i, j, Effects;
+
+	Out.AddItem("fog world: enabled" @ `XWORLD.bEnableFOW @ "debug enabled" @ `XWORLD.bDebugEnableFOW @ "updating" @ `XWORLD.bEnableFOWUpdate
+		@ "visibility updates off" @ `XWORLD.bDisableVisibilityUpdates @ "tiles" @ `XWORLD.NumX @ `XWORLD.NumY @ `XWORLD.NumZ
+		@ "bounds" @ `XWORLD.WorldBounds.Min @ `XWORLD.WorldBounds.Max);
+	LP = LocalPlayer(GetALocalPlayerController().Player);
+	for (i = 0; LP != none && i < LP.PlayerPostProcessChains.Length; i++)
+	{
+		Chain = LP.PlayerPostProcessChains[i];
+		Out.AddItem("chain" @ i @ PathName(Chain) @ (Chain != none ? Chain.Effects.Length : 0) @ "effects");
+		for (j = 0; Chain != none && j < Chain.Effects.Length; j++)
+		{
+			Effect = XComFOWEffect(Chain.Effects[j]);
+			if (Effect == none)
+				continue;
+			Effects++;
+			Out.AddItem("  fog effect" @ PathName(Effect) @ "shown" @ Effect.bShowFOW @ "volume at" @ Effect.LevelVolumePosition @ "inverse size" @ Effect.LevelVolumeDimensions);
+		}
+	}
+	if (Effects == 0)
+		Out.AddItem("no fog effect in the player's post-process chains");
+}
+
 function string ScaleEWLights(string Kind, float Scale)
 {
 	local Light A;

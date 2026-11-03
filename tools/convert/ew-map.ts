@@ -5,8 +5,8 @@
 //     their components, lighting) turned into empty objects XCOM 2 can read; the packages it
 //     carries copies of (FX_Shared, UFO_SmallScout …) renamed, so they do not clash
 //     with XCOM 2's packages of the same names (the first letter becomes "Q");
-//   - every placed static mesh (StaticMeshActor, XComLevelActor, XComDestructibleActor
-//     …) is written out: its mesh's path, its location, rotation and scale, as config
+//   - every placed static mesh (StaticMeshActor, XComLevelActor, XComDestructibleActor,
+//     XComFracLevelActor …) is written out: its mesh's path, its location, rotation and scale, as config
 //     for the mod to spawn (LWX2EWMapPieces).
 // The textures are rewritten with their mips uncompressed in the package (inline-textures.ts:
 // XCOM 2 does not read EW's compression), so the map needs no texture cache.
@@ -23,8 +23,9 @@ import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 
 /** Raised when what a conversion writes changes so that maps converted before must be converted again
- *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods, spawn points by type). */
-export const CONVERTER_VERSION = 4
+ *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods, spawn points by type;
+ *  5: the walls, EW's fracturable meshes; meshes at the root of the map's package; objects of one name made unique; materials cut out by their diffuse's alpha, a kind of their own). */
+export const CONVERTER_VERSION = 5
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -33,11 +34,50 @@ const CACHES: Record<string, string> = {
   Textures_startup: 'EWTextrs_startup',
 }
 
+/**
+ * Objects of one name in one outer made unique, in place: EW's cooker kept, for one, a mesh and a texture both
+ * `Foliage.grassPatch`, and a destructible's actions all `Action`. XCOM 2 keeps one object of a name, so a plot's piece
+ * got the texture for its mesh and the game crashed as it built the map (URB_Boulevard, lw-missions.md). The second and
+ * later of a name get a name number of their own (the export table's; the package refers to its objects by index, so
+ * nothing else changes). Returns how many.
+ */
+function uniqueNames(bytes: Uint8Array): number {
+  const meta: any = new Package(bytes)
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  const names: string[] = meta.names.map((n: any) => String(n.name ?? n).toLowerCase())
+  const used = new Map<string, Set<number>>()
+  const groups = new Map<string, number[]>()
+  for (const e of meta.exports as any[]) {
+    const o = e.entryOffset
+    const key = `${v.getInt32(o + 8, true)}|${names[v.getInt32(o + 12, true)]}`
+    const number = v.getInt32(o + 16, true)
+    if (!used.has(key)) used.set(key, new Set())
+    used.get(key)!.add(number)
+    const k = `${key}|${number}`
+    groups.set(k, [...(groups.get(k) ?? []), o])
+  }
+  let changed = 0
+  for (const [k, offsets] of groups) {
+    if (offsets.length < 2) continue
+    const key = k.slice(0, k.lastIndexOf('|'))
+    const taken = used.get(key)!
+    for (const o of offsets.slice(1)) {
+      let n = Math.max(...taken) + 1
+      while (taken.has(n)) n++
+      taken.add(n)
+      v.setInt32(o + 16, n, true)
+      changed++
+    }
+  }
+  return changed
+}
+
 /** One EW map converted (the package to out, its section to iniOut); its report lines printed. Used by ew-maps.ts and the
  *  player's setup program as well as from the command line. */
 export function convertMap(src: string, out: string, iniOut: string): void {
 const original = new Uint8Array(readFileSync(src))
 const bytes = decompressPackage(original)
+const renumbered = uniqueNames(bytes)
 // Two readers of the same bytes: upk's for names, paths and table entries; package's for object data.
 const meta: any = new Package(bytes)
 const pkg: any = openPackage(bytes)
@@ -63,7 +103,7 @@ function actorTags(index: number): Tag[] | undefined {
   for (const start of [26, ...Array.from({ length: 81 }, (_, k) => k)]) {
     try {
       const t = readTags(new Reader(data.subarray(start)), pkg)
-      if (t.some((x) => x.name === 'StaticMeshComponent' || x.name === 'Location')) return t
+      if (t.some((x) => x.name === 'StaticMeshComponent' || x.name === 'FracturedStaticMeshComponent' || x.name === 'Location')) return t
     } catch {
       // not here
     }
@@ -138,7 +178,9 @@ exports.forEach((e, i) => {
   if (parts[0] !== 'TheWorld' || parts[1] !== 'PersistentLevel' || parts.length !== 3) return
   const tags = actorTags(i)
   if (!tags) return
-  const comp = tags.find((t) => t.name === 'StaticMeshComponent')
+  // EW's walls are fracturable (XComFracLevelActor, XComDecoFracLevelActor): their mesh is a FracturedStaticMesh, which
+  // XCOM 2 draws whole in a plain static mesh component.
+  const comp = tags.find((t) => t.name === 'StaticMeshComponent') ?? tags.find((t) => t.name === 'FracturedStaticMeshComponent')
   if (!comp || ref(comp) <= 0) return
   let ctags: Tag[]
   try {
@@ -382,7 +424,7 @@ for (const level of ['Stream', 'EWI', 'CNH']) {
 // not compile any), so the mod replaces each with an instance of an XCOM 2 parent given
 // the EW material's diffuse and normal maps. Read here: an instance's texture parameters
 // (its parents' for those it does not set), a material's texture expressions.
-interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Alien' }
+interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' }
 const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
 function texturesOf(r: number, into: Map<string, string>, depth = 0): string {
   // returns the root material's name, for the kind
@@ -437,7 +479,8 @@ function lookOf(r: number): Look {
   return {
     diffuse: pick(['Diffuse', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock'], /(_DIF|_D|Diffuse|_Dif)\d*$/i),
     normal: pick(['Normal', 'Leaves_Normal', 'Dirt_Normal', 'Rock_Normal'], /(_NRM|_N|Normal|_Nrm)\d*$/i),
-    kind: /Foliage|Grass|Veget/i.test(root) ? 'Foliage' : /ALIEN/i.test(root) ? 'Alien' : 'Prop',
+    // Masked: cut out by the diffuse's alpha (tree cards, signs, fences: PROP_DifOpc, PROP_OpacityMask_Tile).
+    kind: /Foliage|Grass|Veget/i.test(root) ? 'Foliage' : /DifOpc|OpacityMask/i.test(root) ? 'Masked' : /ALIEN/i.test(root) ? 'Alien' : 'Prop',
   }
 }
 const looks = new Map<number, Look>()
@@ -510,7 +553,10 @@ const mapPackage = basename(out, '.upk')
 const carriedNames = new Set(renamedPackages.values())
 const rename = (path: string) => {
   const p = path.split('.').map((part) => renamedPackages.get(part) ?? CACHES[part] ?? part).join('.')
-  return carriedNames.has(p.split('.')[0]!) ? `${mapPackage}.${p}` : p
+  // Carried content, and objects at the root of the map's own package (a path of one part: URB_OfficePaper_EWI has a
+  // StaticMesh_0 there, its road stripes; left bare, the plot imported a package of that name and the game crashed as
+  // it built the map, lw-missions.md) are the map package's.
+  return carriedNames.has(p.split('.')[0]!) || !p.includes('.') ? `${mapPackage}.${p}` : p
 }
 const n = (x: number) => (Math.abs(x) < 1e-4 ? '0' : String(Math.round(x * 1000) / 1000))
 const lines = [
@@ -561,7 +607,7 @@ console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackag
 const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
 console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points (${spawnPoints.filter((p) => p[3]).length} civilian), ${lights.length} lights, ${buildings.length} buildings (${buildings.reduce((a, b) => a + b.floors.length, 0)} floors)`)
-console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
+console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes${renumbered ? `; ${renumbered} objects of a name shared renumbered` : ''}${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
 }
 
 // From the command line: node tools/convert/ew-map.ts <EW map .upk> <out .upk> <out pieces .ini>

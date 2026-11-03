@@ -16,7 +16,7 @@ import { readSection, writePlot, type PlotSettings } from './ew-plot.ts'
 
 /** The converter version ew-map.ts writes into its sections (kept in step with its CONVERTER_VERSION; read from the
  *  section, so this file need not load the converter). */
-const CONVERTER_VERSION = 4
+const CONVERTER_VERSION = 5
 /** Whether a converted map's section is of the current converter (an older one is converted again). */
 export function sectionCurrent(ini: string): boolean {
   const m = /; ew-map\.ts (\d+)/.exec(readFileSync(ini, 'latin1'))
@@ -28,7 +28,8 @@ export function plotSettings(mod: string): PlotSettings {
   const ini = readFileSync(join(mod, 'Config', 'XComLWEWMaps.ini'), 'latin1')
   const str = (k: string) => new RegExp(`^${k}="([^"]*)"`, 'm').exec(ini)?.[1] ?? ''
   return {
-    parents: { Prop: str('PropParent'), Foliage: str('FoliageParent'), Alien: str('AlienParent') },
+    parents: { Prop: str('PropParent'), Foliage: str('FoliageParent'), Masked: str('MaskedParent'), Alien: str('AlienParent') },
+    diffuseMasks: str('DiffuseMasks').split(',').map((k) => k.trim()).filter(Boolean),
     scalars: [...ini.matchAll(/^\+StandinScalars=\(Name=(\w+), Value=([-\d.]+)\)/gm)].map((m) => [m[1]!, Number(m[2])] as [string, number]),
     textures: [...ini.matchAll(/^\+StandinTextures=\(Name=(\w+), Path="([^"]+)"\)/gm)].map((m) => [m[1]!, m[2]!] as [string, string]),
     lightScale: Number(/^PlotLightScale=([\d.]+)/m.exec(ini)?.[1] ?? 1),

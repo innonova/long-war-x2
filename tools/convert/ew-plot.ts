@@ -78,8 +78,10 @@ export function readSection(text: string): EWMap {
 
 /** Settings the plot is written with (the shared ones of XComLWEWMaps.ini). */
 export interface PlotSettings {
-  /** The XCOM 2 parent material for each kind of EW material (Prop, Foliage, Alien). */
+  /** The XCOM 2 parent material for each kind of EW material (Prop, Foliage, Masked, Alien). */
   parents: Record<string, string>
+  /** The kinds whose stand-ins take their diffuse as their Masks texture too (the ones cut out by its alpha). */
+  diffuseMasks?: string[]
   /** The parent for pieces inside EW's buildings (XCOM 2's building material, whose shaders its building visibility
    *  draws with); "" for the kind's parent. */
   buildingParent?: string
@@ -304,7 +306,11 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       const tags: T[] = [tObj('Parent', importRef(settings.parents[look.kind]!, 'Material')), tGuid('LightingGuid')]
       const texParams: [string, number][] = [['Diffuse', importRef(look.diffuse, 'Texture2D')]]
       if (look.normal) texParams.push(['Normal', importRef(look.normal, 'Texture2D')])
-      for (const [n, t] of settings.textures) texParams.push([n, importRef(t, 'Texture2D')])
+      // The kinds cut out by the diffuse's alpha take it as their masks too: XCOM 2's masked parents read the opacity
+      // from one of the two.
+      const cutOut = settings.diffuseMasks?.includes(look.kind)
+      if (cutOut) texParams.push(['Masks', importRef(look.diffuse, 'Texture2D')])
+      for (const [n, t] of settings.textures) if (!(cutOut && n === 'Masks')) texParams.push([n, importRef(t, 'Texture2D')])
       // TextureParameterValues: an array of (ParameterName, ParameterValue, ExpressionGUID) structs, tagged.
       tags.push({
         name: 'TextureParameterValues', type: 'ArrayProperty', arrayIndex: 0,
@@ -336,14 +342,23 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const actorSample = parse(pkg.data(sampleActor), 26)
   const meshSample = parse(pkg.data(sampleMesh), 8)
   // Meshes EW generated inside its own level (its volumes' meshes) are not in the converted package's carried content.
-  const pieces = map.pieces.filter(
+  // (Debugging a plot that crashes the game: LWX2_PLOT_DEBUG=nopieces leaves EW's pieces out, pieces=a-b keeps
+  // the a-th to the (b-1)-th, only=MeshA,MeshB those meshes, nomats leaves their stand-ins out.)
+  const debug = process.env.LWX2_PLOT_DEBUG ?? ''
+  const pieces = debug.includes('nopieces') ? [] : map.pieces.filter(
     (p) => !p.mesh.startsWith('TheWorld.') && !/SkyDome|Skybox/i.test(p.mesh)
       && !(p.materials.length > 0 && p.materials.every((m) => !m || (SKIPPED_MATERIAL.test(m) && !map.looks.get(m)?.diffuse))),
-  )
+  ).filter((_p, k) => {
+    const range = /pieces=(\d+)-(\d+)/.exec(debug)
+    return !range || (k >= Number(range[1]) && k < Number(range[2]))
+  }).filter((p) => {
+    const only = /only=([\w,]+)/.exec(debug)
+    return !only || only[1]!.split(',').some((m) => p.mesh.endsWith('.' + m))
+  })
   for (const piece of pieces) {
     // Its stand-ins first: they are exports too, and the actor's component must come right after the actor.
     const inBuilding = map.buildings.some((b) => [0, 1, 2].every((c) => Math.abs(piece.loc[c]! - b.center[c]!) <= b.extent[c]! + 16))
-    const mats = piece.materials.map((m) => micFor(m, inBuilding))
+    const mats = debug.includes('nomats') ? [] : piece.materials.map((m) => micFor(m, inBuilding))
     const actorName = nextName('XComLevelActor')
     const actorRef = exportCount() + 1
     const compRef = actorRef + 1
@@ -550,7 +565,8 @@ if (/ew-plot\.ts$/.test(process.argv[1] ?? '')) {
     process.exit(2)
   }
   const settings: PlotSettings = {
-    parents: { Prop: 'Materials.Approved.Props_SD', Foliage: 'Materials.Approved.Vegetations_VO', Alien: 'Materials.Approved.Alien_Props' },
+    parents: { Prop: 'Materials.Approved.Props_SD', Foliage: 'Materials.Approved.Vegetations_VO', Masked: 'Materials.Approved.Props_OpcMask_TC', Alien: 'Materials.Approved.Alien_Props' },
+    diffuseMasks: (process.env.LWX2_DIFFUSE_MASKS ?? 'Foliage,Masked').split(',').filter(Boolean),
     scalars: [['SpecularScale', 0]],
     textures: [['Masks', 'EngineResources.WhiteSquareTexture']],
     lightScale: 1,

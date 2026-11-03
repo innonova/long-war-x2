@@ -1163,3 +1163,45 @@ from the evening, one from the morning) give two exception addresses:
   test machine (uninstalled, setup with `--maps`, then the farm crash site:
   Long War's squad of 7 at 4 pods, the mission running). Its setup leaves
   the person's conversions as they are (converter version unchanged).
+- **The person's look at the first mission** (the convenience store): the
+  colours a real improvement; but windows hanging in mid air, walls
+  missing, odd rock formations on the ground, and the fog of war off
+  altogether (every alien on the map in view). Crashes first, by their
+  word; these next.
+
+### 2026-11-03, the map-generation crash (XCom2.exe+0x6940a0), bisected
+
+- The plot writer takes `LWX2_PLOT_DEBUG` (`nopieces`, `pieces=a-b`, `only=MeshA,MeshB`,
+  `nomats`) to write cut-down plots of one map; each tried on wingpu in place of the
+  installed plot (scratch scripts, not in the repository).
+- Office map (`URB_OfficePaper_EWI`): without EW's pieces it loads; pieces 0 to 435
+  load; 436 to 872 crash. So a piece, not the plot's skeleton (volume, spawns, parcel).
+- Meshes in both crashing maps (office, boulevard) and in none of three that load
+  (store, pier, highway), less two that sit in the half that loads: `TrashPileC_Small`,
+  `BlastDecal_A`, `BoundSidewalkStrA16x4`, `SidewalkStains_E`. Tried next, alone.
+- **The fog of war is off on our plots** (the person: every alien visible). Not
+  switched off on purpose: what went off on 2026-11-02 was only "unexplored shown as
+  seen". The plots' WorldInfo and world data match XCOM 2's own test plot; a control
+  aid (`fog state`, `fog on`) reports and switches on XCOM 2's fog effect live, to
+  find whether the effect is missing or just not on.
+- **Missing walls found:** EW's walls are fracturable actors (`XComFracLevelActor`,
+  `XComDecoFracLevelActor`, their mesh in a `FracturedStaticMeshComponent`); the
+  converter took only `StaticMeshComponent`, so every wall was left out and windows,
+  their own pieces, hung in the air. It now takes both (converter version 5: every map
+  is converted again). The store map gains 79 wall pieces.
+- **Rock formations, likely:** EW's tree cards and signs use parents with opacity in
+  the diffuse alpha (`PROP_DifOpc`, `PROP_OpacityMask_Tile`); they were stood in by an
+  opaque parent, so leaf cards draw as solid shapes. XCOM 2's switchless masked parent
+  is `Props_OpcMask_TC` (two-sided); to try with the diffuse in Diffuse and Masks.
+- **Office crash found (08:41):** pieces narrowed by halves, by a script, to one:
+  piece 857, mesh `StaticMesh_0`, alone crashes the game. It is the one mesh at the
+  root of EW's map package (road stripes); the converter put the map package in front
+  of carried content only, so the section said `StaticMesh_0` and the plot imported a
+  *package* of that name. The converter now treats a one-part path as the map
+  package's own (version 5). Two maps of 83 have such meshes: `URB_OfficePaper_EWI`
+  (26 pieces) and `CLrgScout_City` (6).
+- The boulevard has none, so its crash is another cause: the same bisect runs on it.
+- Seen on the way, not the cause: every map's load logs hundreds of `(AddNetObject)
+  … duplicate NetIndex` errors, as the carried packages, nested since version 2, keep
+  the object numbers of their own packages; maps that load show them as much as maps
+  that crash. Left as is.
