@@ -106,3 +106,8 @@ particle systems as they are; its materials it cannot draw).
   Mechtoid) have XCOM 2's weapon hidden. Seen: the Muton with EW's plasma rifle, the
   Sectoid with its pistol; the pods' Sectoids get theirs as they spawn.
 - **Release** `LongWarX2-20261103-ed5ecdd.zip`, checked from the zip: 13 species converted with their weapons; the store's Sectoids in EW's body with EW's pistol.
+- **Seen in the aliens' turn** (a Floater, Cyberdisc, Chryssalid and Seeker beside the
+  squad): the Drones hover as EW's small discs, the Floater flies on its jets, the
+  Chryssalid walks as EW's; no T-pose. The Floater used the Archon's Blazing Pinions:
+  each species fights with its XCOM 2 template's abilities (`FightAs`), which is the
+  abilities' port, not the bodies'; noted for it.
