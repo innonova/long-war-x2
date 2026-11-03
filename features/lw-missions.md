@@ -1298,3 +1298,29 @@ from the evening, one from the morning) give two exception addresses:
 - Open: walls are whole meshes, not destructible (XCOM 2's `XComFracLevelActor` would
   be the structural way); the store's lighting is dark; EW's sectoids are XCOM 2's
   (the person: "the less big sectoids" wanted).
+
+### 2026-11-03 night, doors and what can be stood on
+
+- **The person, after release 8ad9e71:** walls there, roofs behave, fog works and
+  recedes; no doors; units can stand on sandbags and on a car's hood and trunk.
+- **Standing on things:** every EW piece is placed as an `XComLevelActor`, whose default
+  is `bCanClimbOnto=true`. In EW (and XCOM 2) a destructible's or a wall's default is
+  false; EW's archetypes set it true where it is meant (AC units, dumpsters). The
+  converter now reads each piece's cover flags (`bCanClimbOnto`, `bCanClimbOver`,
+  `bIsValidDestination`, `bIgnoreForCover`, `CoverForceFlag`) from the placed actor and
+  its archetypes, its EW class's default where none sets them, and writes those that
+  differ; the plot sets them. The store: 429 pieces not to be stood on.
+- **Doors:** EW's doors are `XComInteractiveLevelActor`s, skeletal meshes opened by an
+  AnimTree; the converter took static meshes only. XCOM 2's class is EW's nearly field
+  for field (interaction points by socket, `OpenA`/`IdleOpenA`/`BreakOpenA`, the
+  AnimTree's blend list named `Anim`); XCOM 2's own doors are a hinge skeleton with
+  static meshes attached, so no XCOM 2 door is used: the plot places the class with its
+  own defaults as archetype, EW's mesh, AnimTree, AnimSets and physics, and EW's
+  interaction points (the unit's animation named by facing, `HL_`/`NO_`/`HR_DoorOpenA`,
+  where EW had an enum). EW's door meshes carry the `XGDOOR_*` sockets.
+- First try: the doors drawn and taken for doors, but no path went through one and
+  the open-door ability had no target: a door registers with the tile data in its
+  `PostBeginPlay`, which on our plots runs before the tile data is built (interact
+  points 0). Registered again at the battle's start (`LWX2PartPlacer.RegisterDoors`):
+  interact points 4 to 6 each; a soldier walked through the store's front door, which
+  opened. Converter version 7.
