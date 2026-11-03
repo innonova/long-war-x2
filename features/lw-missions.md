@@ -1261,3 +1261,9 @@ from the evening, one from the morning) give two exception addresses:
 - **Release** `LongWarX2-20261103-8f9f120.zip`, checked from the zip on wingpu
   (uninstalled, setup with `--maps`, the first mission: 4 soldiers, 10 Sectoids, none
   drawn at the start). Maps not converted again (converter unchanged).
+- **Control aids for missions** (the person's suggestion): `units` lists XCOM's units
+  on the field (index, tile, action points, sight); `move <unit> <x> <y> [z]` walks
+  one there by XCOM 2's own path solver and the tactical controller's move, so the
+  game's rules apply (sight, reveals, reaction fire). Tried in the first mission: a
+  rookie walked 6 tiles. Seen on the way, to look into: that walk left the rookie
+  with no action points (6 tiles should be one move).

@@ -61,6 +61,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid) | hqassault: the HQ assault from now (a test aid)");
 		Out.AddItem("base: the base's tiles, numbers and facilities | base set <column> <row> <facility>: placed at once (a test aid) | work <column> <row> [facility id]: dig rock, a lift in the shaft, or the facility");
 		Out.AddItem("hangar: the jets (index first), orders, bays | order [continent 0-4] [n] | transfer <jet> <continent> | equip <jet> <weapon 1-7>");
+		Out.AddItem("units: in a mission, XCOM's units on the field (index first: tile, action points, sight) | move <unit> <x> <y> [z]: that unit walks to the tile by XCOM 2's own move (its path found as the game finds it; z omitted: the floor there)");
 		Out.AddItem("dump [class name part]: every game state object with all its fields (tools/test/lw-dump.sh saves it)");
 		return;
 	case "ping":
@@ -245,6 +246,17 @@ function Handle(string Line, out array<string> Out)
 			return;
 		}
 		Out.AddItem(Look(Args));
+		return;
+	case "units":
+		XComUnits(Out);
+		return;
+	case "move":
+		if (Args.Length < 4)
+		{
+			Out.AddItem("ERR move <unit index (units)> <tile x> <tile y> [tile z]");
+			return;
+		}
+		Out.AddItem(MoveUnit(int(Args[1]), int(Args[2]), int(Args[3]), Args.Length > 4 ? int(Args[4]) : -1));
 		return;
 	case "spawn":
 		Out.AddItem(SpawnAlien(Args.Length > 1 ? name(Args[1]) : 'Sectoid', Args.Length > 2 ? int(Args[2]) : 2));
@@ -966,6 +978,74 @@ function string SpawnAlien(name CharacterTemplate, int Tiles)
 }
 
 /** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */
+/** XCOM's units on the field, in the order move counts them. */
+function array<XComGameState_Unit> FieldXCom()
+{
+	local XComGameState_Unit Unit;
+	local array<XComGameState_Unit> Units;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_XCom && Unit.IsAlive() && !Unit.bRemovedFromPlay && Unit.TileLocation.X >= 0 && !Unit.GetMyTemplate().bIsCosmetic)
+			Units.AddItem(Unit);
+	return Units;
+}
+
+function XComUnits(out array<string> Out)
+{
+	local array<XComGameState_Unit> Units;
+	local int i;
+
+	Units = FieldXCom();
+	if (Units.Length == 0)
+		Out.AddItem("ERR no units of XCOM on the field (not in a mission?)");
+	for (i = 0; i < Units.Length; i++)
+		Out.AddItem(i @ Units[i].GetFullName() @ "(" $ Units[i].GetMyTemplateName() $ "," @ Units[i].GetSoldierClassTemplateName() $ ") at" @ Units[i].TileLocation.X @ Units[i].TileLocation.Y @ Units[i].TileLocation.Z
+			@ "ap" @ Units[i].ActionPoints.Length @ "sight" @ int(Units[i].GetCurrentStat(eStat_SightRadius)) @ "hp" @ int(Units[i].GetCurrentStat(eStat_HP)) $ "/" $ int(Units[i].GetMaxStat(eStat_HP)));
+}
+
+/**
+ * A unit of XCOM's walked to a tile as the player's click does it: the path found by XCOM 2's path solver (within the
+ * unit's reach this turn) and submitted by the tactical controller's move, so the game's rules all apply (what it
+ * sees, the pods it reveals, reaction fire).
+ */
+function string MoveUnit(int Index, int X, int Y, int Z)
+{
+	local array<XComGameState_Unit> Units;
+	local XComGameState_Unit Unit;
+	local XComTacticalController Controller;
+	local XComWorldData World;
+	local array<TTile> Path;
+	local TTile Dest;
+	local vector At;
+
+	Units = FieldXCom();
+	if (Index < 0 || Index >= Units.Length)
+		return "ERR no unit" @ Index @ "(units lists them)";
+	Unit = Units[Index];
+	Controller = XComTacticalController(GetALocalPlayerController());
+	if (Controller == none || XGUnit(Unit.GetVisualizer()) == none)
+		return "ERR not in a mission";
+	if (Unit.ActionPoints.Length == 0)
+		return "ERR" @ Unit.GetFullName() @ "has no action points left";
+	World = `XWORLD;
+	Dest.X = X;
+	Dest.Y = Y;
+	Dest.Z = Max(Z, 0);
+	if (Z < 0)
+	{
+		// The floor at that column: from the top of the level down.
+		Dest.Z = World.NumZ - 1;
+		At = World.GetPositionFromTileCoordinates(Dest);
+		if (!World.GetFloorTileForPosition(At, Dest, true))
+			return "ERR no floor at" @ X @ Y;
+	}
+	if (!class'X2PathSolver'.static.BuildPath(Unit, Unit.TileLocation, Dest, Path, true) || Path.Length < 2)
+		return "ERR no path for" @ Unit.GetFullName() @ "to" @ Dest.X @ Dest.Y @ Dest.Z @ "within its reach";
+	if (!Controller.GameStateMoveUnitSingle(XGUnit(Unit.GetVisualizer()), Path))
+		return "ERR the move was refused";
+	return "ok" @ Unit.GetFullName() @ "moving" @ (Path.Length - 1) @ "tiles to" @ Dest.X @ Dest.Y @ Dest.Z;
+}
+
 function Enemies(out array<string> Out, optional bool bAll)
 {
 	local XComGameState_Unit Unit, Soldier;
