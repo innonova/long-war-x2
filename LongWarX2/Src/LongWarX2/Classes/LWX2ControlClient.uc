@@ -251,6 +251,10 @@ function Handle(string Line, out array<string> Out)
 		XComTacticalController(GetALocalPlayerController()).PerformEndTurn(ePlayerEndTurnType_PlayerInput);
 		Out.AddItem("ok end of turn asked");
 		return;
+	case "tire":
+		// tire <hours>: the squad tired as if back from a mission (a test aid for Long War's fatigue).
+		Out.AddItem(class'LWFatigue'.static.Tire(Args.Length > 1 ? int(Args[1]) : 100));
+		return;
 	case "windowsight":
 		// Sight across each window piece (two tiles either side, along X and Y), and across walls for comparison.
 		Out.AddItem(WindowSight("Window"));
@@ -1360,8 +1364,8 @@ function string Crew()
 	local XComGameState_HeadquartersXCom XComHQ;
 	local XComGameState_Unit Unit;
 	local array<int> Ranks;
-	local int i, n;
-	local string S;
+	local int i, n, Shaken;
+	local string S, Tired;
 
 	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
 	if (XComHQ == none)
@@ -1375,10 +1379,14 @@ function string Crew()
 		if (Ranks.Length <= Unit.GetRank())
 			Ranks.Length = Unit.GetRank() + 1;
 		Ranks[Unit.GetRank()]++;
+		if (Unit.GetMentalState() == eMentalState_Tired)
+			Tired $= " " $ Unit.GetLastName() $ "(" $ int(Unit.GetCurrentStat(eStat_Will)) $ "/" $ int(Unit.GetMaxStat(eStat_Will)) $ ")";
+		else if (Unit.GetMentalState() == eMentalState_Shaken)
+			Shaken++;
 	}
 	for (i = 0; i < Ranks.Length; i++)
 		S @= "rank" @ i $ ":" @ Ranks[i];
-	return n @ "soldiers;" $ S;
+	return n @ "soldiers;" $ S $ "; tired:" $ (Tired != "" ? Tired : " none") $ "; shaken:" @ Shaken;
 }
 
 /** A function of EW's strategy HUD, which is loaded beside the screen stack, not on it. */

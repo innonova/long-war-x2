@@ -412,6 +412,7 @@ function Tick(XComGameState NewGameState)
 
 	Hours++;
 	class'LWBase'.static.Tick(self);
+	class'LWFatigue'.static.Tick(NewGameState, self);
 	class'LWHangar'.static.Hour(NewGameState, self);
 	// Engineering: a project whose work is done delivers its items.
 	for (i = Builds.Length - 1; i >= 0; i--)

@@ -48,6 +48,7 @@ event OnInit(UIScreen Screen)
 		// On XCOM 2's maps: the squad's aliens whose pods found no room.
 		class'LWMissionSquads'.static.TopUp();
 		class'LWMeld'.static.Place();
+		class'LWFatigue'.static.MarkAllIn();
 	}
 	foreach Screen.WorldInfo.AllActors(class'LWX2EWUnitDisplay', Display)
 		return;

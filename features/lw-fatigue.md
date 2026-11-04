@@ -1,6 +1,6 @@
 ---
 title: "Long War's fatigue: soldiers out of action after a mission"
-status: in-progress
+status: review
 priority: 3
 dependsOn:
   - lw-classes
@@ -59,3 +59,22 @@ decompiler, kept out of the repository) and its `DefaultGameCore.ini`:
 
 The person: Long War's fatigue **in place of** War of the Chosen's (the proposal: Long War's
 hours shown as War of the Chosen's "Tired").
+
+## Report (2026-11-04 night, Long War's fatigue in place of War of the Chosen's)
+
+- **Built** (`LWFatigue`), as the Response chose: when the Geoscape opens after a mission, each soldier
+  who came back rests Long War's hours (96 and a roll up to 47 more; 144 if hurt or all in; a wounded
+  soldier's healing on top), shown as War of the Chosen's **Tired**: the will set to the top of the
+  Tired band (so the squad screens show Tired and still let the soldier be sent), XCOM 2's own will
+  recovery taken off; each hour of Long War's clock, a soldier whose hours are over has full will
+  again (Ready). A soldier still resting when a mission starts goes **all in**: one point of maximum
+  health lost (down to 1) and the longer rest. XCOM 2's will loss over a mission is overwritten (in
+  place of it); its in-mission will tests stay.
+- **Seen** (a new campaign; the squad tired by a test aid, `tire <hours>`; an abduction won):
+  "Killian Daly goes all in", back "rests 144 hours, went all in (maximum health now 4)"; the others
+  102 to 141 hours; each "rested, ready again" at their hour, once; a soldier tired but not sent still
+  Tired eight days on. Before that, a plain mission: the six of the squad Tired, a hurt one "rests 144
+  hours after 237 of healing".
+- **Not yet:** a psi power's and a gene mod's own hours, officers' and critical wounds' hours, the
+  psi armour's none; the hours left shown on the soldier's screen (XCOM 2's Tired label shows no
+  time without its own recovery project).
