@@ -253,3 +253,26 @@ The rules, from Long War's code:
 - The arc thrower in played missions.
 - The captive capacity: one per containment, which Long War itself does
   not check on the way home.
+
+## Meld canisters: read, not built (2026-11-04)
+
+Long War keeps EW's meld canisters. Read from its code (upkit's decompiler, kept out of the
+repository); a spec for the work, not done yet:
+- **Which missions** (`XGBattleDesc.ShouldSpawnMeldCanisters`): abductions, crash sites, landed
+  UFOs (EW's mission types 2, 3, 4) and EW's meld tutorial map; not terror, not the base defence.
+- **Where:** EW's maps carry `XComMeldContainerSpawnPoint` actors, each with its spawn group
+  (`m_iSpawnGroup`, the map's start chosen for the mission, as the soldiers' spawn), a difficulty
+  (easy or hard) and the turn it self-destructs on (`m_iDestroyedOnTurn`, 3 by default; none:
+  the canister cannot be destroyed). The converter does not read them yet (`ew-map.ts` reads the
+  pods and the spawn points only).
+- **How many** (`XGBattle_SP.InitMeldContainers`, Long War's version): a roll of 1 to 3; always one
+  hard canister (if the group has one), an easy one on 2 or more, a second hard one on 3.
+- **How much** (`XComMeldContainerActor.GetMeldAmount`, hand-patched): a recap stat / 10 clamped to
+  5–30, times a value the patch reads from the game core's defaults (not identified yet).
+- **In the mission:** a unit next to it collects it (an interaction); its countdown starts when
+  it is seen (`m_bBeginCountdownWhenSeen`) and it is destroyed when the turns run out; the HUD shows
+  the canisters and their turns (`UISpecialMissionHUD_MeldStats`).
+- **To build:** the spawn points in the converted map's section (a converter version, so the maps
+  are converted again); the canisters placed as the mission starts (XCOM 2's interactive objects,
+  an EW-looking mesh); collecting, the countdown, the HUD line; the meld booked as loot when the
+  Geoscape next opens.
