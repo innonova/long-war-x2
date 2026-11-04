@@ -281,6 +281,10 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(Blast(vect(0,0,0) + vect(1,0,0) * float(Args[1]) + vect(0,1,0) * float(Args[2]) + vect(0,0,1) * float(Args[3]), Args.Length > 4 ? float(Args[4]) : 192.0, Args.Length > 5 ? int(Args[5]) : 10));
 		return;
+	case "flashnum":
+		// flashnum <path under the top screen's clip>: a Flash number there (where the EW screens' clips sit).
+		Out.AddItem(Args.Length > 1 ? (Args[1] @ "=" @ Pres().ScreenStack.GetCurrentScreen().MC.GetNum(Args[1])) : "ERR flashnum <path>");
+		return;
 	case "units":
 		XComUnits(Out);
 		return;

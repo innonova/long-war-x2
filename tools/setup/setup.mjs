@@ -18,6 +18,7 @@ import { wordsFrom } from '../../scripts/write-words.mjs'
 import { convertUI } from '../convert/ew-ui.ts'
 import { convertPackage } from '../convert/ew-package.ts'
 import { convertUnits } from '../convert/ew-units.ts'
+import { tealEarth } from '../convert/ew-earth.ts'
 import { convertMap } from '../convert/ew-map.ts'
 import { convertMaps, listedMaps, writePlots } from '../convert/ew-maps.ts'
 
@@ -258,6 +259,10 @@ async function convertEW(ew, target) {
   try {
     say(`Enemy Within's strategy screens: ${convertUI(join(cooked, 'UICollection_Strategy_SF.upk'), join(content, 'EWStrategyUI.upk'))}`)
     say(`Enemy Within's earth: ${convertPackage(join(cooked, 'Static_SituationRoom.upk'), join(content, 'EWSitRoomMap.upk'))}`)
+    // In EW's teal, as EW's Situation Room material drew it (tools/convert/ew-earth.ts).
+    const earth = new Uint8Array(readFileSync(join(content, 'EWSitRoomMap.upk')))
+    tealEarth(earth)
+    writeFileSync(join(content, 'EWSitRoomMap.upk'), earth)
   } catch (e) {
     say(`Enemy Within's screens could not be converted (${e?.message ?? e}); XCOM 2's screens will show instead.`)
   }

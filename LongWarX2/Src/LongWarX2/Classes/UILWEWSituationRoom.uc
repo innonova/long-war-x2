@@ -17,7 +17,7 @@ static function string Open()
 	if (HQPres == none)
 		return "ERR not on the Avenger";
 	DynamicLoadObject(default.UIPackage $ ".ewxSituationRoom", class'Object', true);
-	// A black background under it (the earth goes over it once it is loaded: OnInit).
+	// A black background under it (EW's earth goes into its map area: OnInit).
 	class'UILWEWMapBackdrop'.static.ShowIfAvailable(false);
 	EWScreen = HQPres.Spawn(class'UILWEWSituationRoom', HQPres);
 	EWScreen.Package = name("/ package/ewxSituationRoom/SituationRoom");
@@ -35,11 +35,46 @@ simulated function OnRemoved()
 simulated function OnInit()
 {
 	super.OnInit();
-	class'UILWEWMapBackdrop'.static.ShowIfAvailable(true);
+	AddEarth();
 	MC.FunctionVoid("HideTicker");
 	MC.FunctionVoid("HideUplinks");
 	Refresh();
 	SetTimer(1.0, true, nameof(Refresh));
+}
+
+/**
+ * EW's earth (FX_Globe.T_Earth_Holo, made teal on the player's machine: tools/convert/ew-earth.ts) inside the movie's map
+ * area, where EW's 3D globe showed through: over the area's panel, under the markers (a negative depth: the markers are
+ * attached at depths from 0), the size the movie maps 0..1 onto (its MAP_WIDTH and MAP_HEIGHT). The area's height scaled
+ * to the frame's (MAP_FINAL_HEIGHT): unscaled, the map ran past its frame, over the UFO slots and the ticker, and was
+ * squeezed sideways; its width already is the frame's (measured on the screen).
+ */
+function AddEarth()
+{
+	local UIPanel Area;
+	local UIImage Earth;
+	local float W, H, X, Y, FH;
+
+	if (DynamicLoadObject("FX_Globe.T_Earth_Holo", class'Texture2D', true) == none)
+		return;
+	W = MC.GetNum("MAP_WIDTH");
+	H = MC.GetNum("MAP_HEIGHT");
+	// The area's place in the movie, put back once it is bound (a bound panel takes its own position).
+	X = MC.GetNum("theMapArea._x");
+	Y = MC.GetNum("theMapArea._y");
+	FH = MC.GetNum("MAP_FINAL_HEIGHT");
+	Area = Spawn(class'UIPanel', self).InitPanel('theMapArea');
+	Area.SetPosition(X, Y);
+	// The UFO slots (the doom trackers, along the map's top edge) over it, as over EW's globe.
+	MC.ChildFunctionNum("theDoomTracker", "swapDepths", 16000);
+	MC.ChildFunctionNum("doomTracker2", "swapDepths", 16001);
+	if (H > 0 && FH > 0)
+		Area.MC.SetNum("_yscale", 100.0 * FH / H);
+	Earth = Spawn(class'UIImage', Area).InitImage('LWEWEarth', "img:///FX_Globe.T_Earth_Holo");
+	Earth.SetPosition(0, 0);
+	Earth.SetSize(W > 0 ? W : 750.0, H > 0 ? H : 498.0);
+	Earth.MC.FunctionNum("swapDepths", -16000);
+	`log("LongWarX2: EW screen: the earth in the Situation Room's map area," @ W @ "x" @ H, , 'LongWarX2');
 }
 
 function Refresh()

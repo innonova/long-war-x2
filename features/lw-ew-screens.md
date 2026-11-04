@@ -293,3 +293,26 @@ the map panel, the HQ marker on the United States.
   the fill for about ten minutes and was replaced. To do properly: a teal
   texture made by the converter from EW's earth and index textures, or a
   material on a 3D plane behind the movie.
+
+## Report (2026-11-04 night, the Situation Room's earth)
+
+The person compared the Situation Room with EW's: EW's map is teal; ours showed the
+hologram texture's raw channels (dark blue, red borders), over the movie at half opacity.
+
+- **The colours:** EW's hologram texture (`FX_Globe.T_Earth_Holo`, 4096×2048 DXT1) holds the
+  borders in red, the city lights in green and the land in blue; EW's material made the teal
+  from them. `tools/convert/ew-earth.ts` recolours the texture once on the player's machine
+  (the setup runs it after converting the package): an affine function of the channels fitted
+  to EW's screen (sea about (16,62,64), land about (45,105,110)), raised to 1/2.2 since
+  XCOM 2's Flash draws a texture's values as linear; affine, so it is applied to each DXT1
+  block's two endpoint colours and holds for the colours between (endpoint order kept, the
+  indices remapped where it flips). Seen: sea (17,62,67), land (47,108,113).
+- **The place:** the earth now goes into the movie's map area (`theMapArea`, bound as a
+  panel, its position put back), under the markers (a negative depth); the area's height
+  scaled to the frame (`MAP_FINAL_HEIGHT`: unscaled it ran past the frame, over the UFO slots
+  and the ticker, and was squeezed sideways); the doom trackers (the UFO slots) raised over
+  it. Seen: the map filling its frame in EW's teal, the base marker on the United States,
+  the UFO slots over the map's top edge.
+- Still different from EW: the room behind the screens (EW's 3D Situation Room), the
+  objectives panel and the menu (launch satellite, bonuses, finances, the Gray Market),
+  the country rows' size.
