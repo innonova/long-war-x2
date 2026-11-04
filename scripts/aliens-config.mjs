@@ -85,8 +85,12 @@ for (const m of text.matchAll(/^Characters=\(.*?iType=(eChar_\w+),(.*)$/gm)) {
 }
 // The Drone repairs damaged machines (its behaviour in EW, not an ABILITIES[] entry).
 out.push(`+SpeciesAbilities=(Species=${species('Drone')}, Ability="LW_Repair")`)
+// The Cyberdisc's Death Blossom (its behaviour in EW too).
+out.push(`+SpeciesAbilities=(Species=${species('Cyberdisc')}, Ability="LW_DeathBlossom")`)
 // Their numbers: EW's constants (XGTacticalGameCoreNativeBase; read from its package as the classes' words are, so given
 // here as EW has them) and the ranges, which EW's AI chose by sight (an approximation).
 out.push('[LongWarX2.X2Ability_LWAliens]')
 out.push('BloodCallAim=10', 'BloodCallWill=10', 'BloodCallMobility=4', 'BloodCallTiles=8', 'RepairHP=3', 'RepairTiles=8')
+// DEATH_BLOSSOM_RANGE 384 (four tiles), DAMAGE_MIN 4, DAMAGE_MAX 6, COOLDOWN 4.
+out.push('DeathBlossomTiles=4', 'DeathBlossomMin=4', 'DeathBlossomMax=6', 'DeathBlossomCooldown=4')
 console.log(out.join('\r\n'))

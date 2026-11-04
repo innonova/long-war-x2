@@ -8,6 +8,9 @@ class X2Ability_LWAliens extends X2Ability config(LWAliens);
 var config int BloodCallAim, BloodCallWill, BloodCallMobility, BloodCallTiles;
 /** The Drone's repair (EW's DRONE_REPAIR_HP): a damaged robotic ally within RepairTiles. */
 var config int RepairHP, RepairTiles;
+/** The Cyberdisc's Death Blossom (EW's DEATH_BLOSSOM_*): everyone within DeathBlossomTiles of it takes DeathBlossomMin to
+ *  DeathBlossomMax damage; then DeathBlossomCooldown turns. */
+var config int DeathBlossomTiles, DeathBlossomMin, DeathBlossomMax, DeathBlossomCooldown;
 
 static function array<X2DataTemplate> CreateTemplates()
 {
@@ -16,6 +19,7 @@ static function array<X2DataTemplate> CreateTemplates()
 	Templates.AddItem(AlienDamage());
 	Templates.AddItem(BloodCall());
 	Templates.AddItem(Repair());
+	Templates.AddItem(DeathBlossom());
 	return Templates;
 }
 
@@ -131,6 +135,58 @@ static function X2AbilityTemplate Repair()
 	Heal = new class'X2Effect_ApplyMedikitHeal';
 	Heal.PerUseHP = default.RepairHP;
 	Template.AddTargetEffect(Heal);
+	Template.bShowActivation = true;
+	Template.bSkipFireAction = true;
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
+	return Template;
+}
+
+/** The Cyberdisc's Death Blossom: everyone around it within DeathBlossomTiles hit, friend or foe, the scenery too. */
+static function X2AbilityTemplate DeathBlossom()
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityCost_ActionPoints Cost;
+	local X2AbilityCooldown Cooldown;
+	local X2AbilityMultiTarget_Radius Radius;
+	local X2Condition_UnitProperty Living;
+	local X2Condition_LWEnemyNear Near;
+	local X2Effect_ApplyWeaponDamage Damage;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'LW_DeathBlossom');
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_deathblossom";
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
+	Template.Hostility = eHostility_Offensive;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SelfTarget;
+	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Template.AddShooterEffectExclusions();
+	Near = new class'X2Condition_LWEnemyNear';
+	Near.Tiles = default.DeathBlossomTiles;
+	Template.AbilityShooterConditions.AddItem(Near);
+	Cost = new class'X2AbilityCost_ActionPoints';
+	Cost.iNumPoints = 1;
+	Cost.bConsumeAllPoints = true;
+	Template.AbilityCosts.AddItem(Cost);
+	Cooldown = new class'X2AbilityCooldown';
+	Cooldown.iNumTurns = default.DeathBlossomCooldown;
+	Template.AbilityCooldown = Cooldown;
+	Radius = new class'X2AbilityMultiTarget_Radius';
+	Radius.fTargetRadius = default.DeathBlossomTiles * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
+	Radius.bExcludeSelfAsTargetIfWithinRadius = true;
+	Template.AbilityMultiTargetStyle = Radius;
+	Living = new class'X2Condition_UnitProperty';
+	Living.ExcludeDead = true;
+	Living.ExcludeFriendlyToSource = false;
+	Template.AbilityMultiTargetConditions.AddItem(Living);
+	Damage = new class'X2Effect_ApplyWeaponDamage';
+	Damage.bIgnoreBaseDamage = true;
+	Damage.EffectDamageValue.Damage = (default.DeathBlossomMin + default.DeathBlossomMax) / 2;
+	Damage.EffectDamageValue.Spread = (default.DeathBlossomMax - default.DeathBlossomMin) / 2;
+	Damage.EnvironmentalDamageAmount = 10;
+	Template.AddMultiTargetEffect(Damage);
 	Template.bShowActivation = true;
 	Template.bSkipFireAction = true;
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;

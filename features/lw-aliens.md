@@ -160,3 +160,13 @@ document the encodings):
   the ability the same test runs. Not in the mod; to come back to (the visualisation of a
   radius attack by a unit with an EW body is the suspect).
 
+
+## Report (2026-11-04 night, the Cyberdisc's Death Blossom back)
+
+- The crash that took Death Blossom out this morning was the Drone's crash (`lw-ew-units`, same
+  night): an EW body's attack animation starts EW particle effects whose materials the converter
+  had made inert. With those effects left out, the ability is back as it was tried (EW's four tiles,
+  4 to 6 damage to everyone around, the scenery too, cooldown 4; only with an enemy within reach,
+  `X2Condition_LWEnemyNear`; used where the Gatekeeper's tree tried its Anima Consume).
+- Seen: a Cyberdisc beside the squad used it in its turn ("LW_DeathBlossom"), the six soldiers hit
+  for 3 to 5; two turns, no crash.
