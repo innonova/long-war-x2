@@ -2,19 +2,23 @@
 // (XGTacticalGameCore's Characters), the campaign difficulty's adjustments and the automatic upgrades the aliens' research
 // has brought (BalanceMods_Easy and _Normal), in place of the XCOM 2 template's it fights as. Config generated from stock
 // Long War by scripts/aliens-config.mjs. The damage bonus rides on a passive every alien template gets (X2Ability_LWAliens).
-// Not yet: pod leaders and navigators (BalanceMods_Hard), the regeneration.
+// Pod leaders and navigators (BalanceMods_Hard) add their stats and the pawn's scale; their perks are noted, not given
+// yet (features/lw-aliens.md). Not yet: the regeneration.
 class LWAlienStats extends Object config(LWAliens) dependson(LWStrategyRules);
 
 struct LWAlienBase { var int Species, HP, Aim, Defense, Mobility, Sight, Will, Crit; };
 struct LWAlienDifficulty { var int Species, Level, Damage, Aim, Defense, HP, Mobility, Will; };
 struct LWAlienUpgrade { var int Species, Research, Damage, Aim, Crit, Defense, HP, Shield, Mobility, Will, Regen; var float DR; };
 struct LWAlienWeapon { var int Species, Damage; };
+struct LWAlienLeader { var int Species, Research, Level, Chance, HP, Aim, Damage, Will, Perk, Scale; };
 
 var config array<LWAlienBase> Base;
 var config array<LWAlienDifficulty> Difficulty;
 var config array<LWAlienUpgrade> Upgrade;
 /** Each species' weapon's damage in Long War (its shots with the XCOM 2 weapon are shifted to it). */
 var config array<LWAlienWeapon> Weapon;
+/** Pod leaders (Level: a leader of at least that level) and navigators (Chance in 100, any member), from a research level. */
+var config array<LWAlienLeader> Leader;
 /**
  * XCOM 2's abilities of the templates Long War's species fight as that no Long War alien has (Blazing Pinions on a Floater,
  * a Cyberdisc raising the dead, a Sectoid reanimating corpses …), taken off those templates; each species' own Enemy
@@ -47,12 +51,30 @@ static function int DifficultyLevel()
 }
 
 /** A unit (new or modified in the change being built) given its species' Long War stats; false when the species has none. */
-static function bool ApplyTo(XComGameState_Unit Unit, int Species)
+/**
+ * A pod leader's level, as Long War rolls it when it builds a pod (XGStrategyAI.BuildPod): out of the research level / 40
+ * + 1 (1 to 15), above 7 folded back (7 less a roll out of 16 less it), 0 to 7.
+ */
+static function int LeaderLevel()
+{
+	local int n, L;
+
+	n = Clamp(ResearchLevel() / 40 + 1, 1, 15);
+	L = Rand(n);
+	if (L > 7)
+		L = 7 - Rand(16 - n);
+	return Clamp(L, 0, 7);
+}
+
+static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int LeaderLevel)
 {
 	local int k, HP, Aim, Defense, Mobility, Will, Crit, Shield, Research, Level, Damage;
 	local float DR;
 	local LWAlienDifficulty D;
 	local LWAlienUpgrade U;
+	local LWAlienLeader L;
+	local int Scale, Perks;
+	local string PerkList;
 
 	k = default.Base.Find('Species', Species);
 	if (Unit == none || k == INDEX_NONE)
@@ -88,6 +110,30 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species)
 			Will += U.Will;
 			Damage += U.Damage;
 		}
+	// The pod's leader (its level) and navigators (each member, by chance), as Long War applies them (XGUnit's hand-patched
+	// DebugAnims): the leader's lines up to its level, each navigator line at its chance.
+	foreach default.Leader(L)
+	{
+		if (L.Species != Species || L.Research > Research)
+			continue;
+		if (L.Chance > 0 ? Rand(100) > L.Chance : LeaderLevel < L.Level)
+			continue;
+		HP += L.HP;
+		Aim += L.Aim;
+		Damage += L.Damage;
+		Will += L.Will;
+		Scale += L.Scale;
+		if (L.Perk > 0)
+		{
+			Unit.SetUnitFloatValue(name("LWX2Perk" $ Perks), L.Perk, eCleanup_Never);
+			Perks++;
+			PerkList @= string(L.Perk);
+		}
+	}
+	if (Scale != 0)
+		Unit.SetUnitFloatValue('LWX2Scale', Scale, eCleanup_Never);
+	if (LeaderLevel > 0 || Perks > 0)
+		`log("LongWarX2: aliens: species" @ Species @ (LeaderLevel > 0 ? "leader of level" @ LeaderLevel : "navigator") $ ", scale" @ Scale $ "%, Long War perks" @ (PerkList != "" ? PerkList : "none") @ "(not given yet)", , 'LongWarX2');
 	SetStat(Unit, eStat_HP, Max(1, HP));
 	SetStat(Unit, eStat_Offense, Aim);
 	SetStat(Unit, eStat_Defense, Defense);

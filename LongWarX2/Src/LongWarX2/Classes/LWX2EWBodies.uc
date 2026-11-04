@@ -144,9 +144,27 @@ static function int ApplyAll()
 	local int n;
 
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
 		if (Apply(Unit))
 			n++;
+		Scale(Unit);
+	}
 	return n;
+}
+
+/** A pod leader drawn at its size (Long War's leader lines scale the pawn: LWX2Scale, in percent; 0.2 to 10 times). */
+static function Scale(XComGameState_Unit Unit)
+{
+	local UnitValue V;
+	local XComUnitPawn Pawn;
+	local float S;
+
+	if (!Unit.GetUnitValue('LWX2Scale', V) || XGUnit(Unit.GetVisualizer()) == none)
+		return;
+	Pawn = XGUnit(Unit.GetVisualizer()).GetPawn();
+	S = FClamp(1.0 + V.fValue / 100.0, 0.2, 10.0);
+	if (Pawn != none && Pawn.Mesh != none && Abs(Pawn.Mesh.Scale - S) > 0.001)
+		Pawn.Mesh.SetScale(S);
 }
 
 /** An instance of MaterialParent with the body's diffuse and normal maps (none when the parent or a map is missing). */

@@ -64,3 +64,22 @@ document the encodings):
   Blood Call, the Cyberdisc's Death Blossom, the Seeker's cloak and strangle, the Drone's
   repair …); the Sectoid Commander lost Mindspin with the Sectoid (one template) and has no
   psionics until its own.
+
+## Report (2026-11-04 night, leaders and navigators)
+
+- **Read from Long War's code:** a pod's leader level is rolled when the strategy layer
+  builds the pod (`XGStrategyAI.BuildPod`: out of research / 40 + 1, clamped 1 to 15; above 7
+  folded back as 7 less a roll out of 16 less that; 0 to 7) and carried in the pod's
+  `eMainAltWeapon`; the pod's first alien gets it, the others 0 (`XComAlienPodManager`); each
+  alien then applies every `BalanceMods_Hard` line of its species whose research level is
+  reached: a leader line when its level is at least the line's, a navigator line at its
+  chance in 100 (out of 50 at an alien base) (`XGUnit`, Long War's patch in `DebugAnims`):
+  HP, aim, damage, will, a perk, the pawn's scale. HQ assaults roll a level for every alien,
+  the Temple Ship makes them all level 8 (not yet: no such missions).
+- **Ported:** `+Leader` lines (244) in `XComLWAliens.ini`; the first alien of each pod rolls its
+  level (`LWAlienStats.LeaderLevel`), every alien its navigator chances; stats added, the scale
+  set on the pawn (`LWX2EWBodies.Scale`), the perks noted on the unit (`LWX2Perk0…`) and logged.
+- **Seen** (day 1): every leader at level 0, as Long War's roll gives that early; the Sectoids'
+  99% navigator line noted Gunslinger (perk 94) on each.
+- **Next:** the perks given (EW's perk number → the mod's ability, as the classes' generator
+  maps soldiers' perks; added to the alien as its pod spawns), Gunslinger first.

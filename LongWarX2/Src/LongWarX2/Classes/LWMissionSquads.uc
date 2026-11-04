@@ -241,6 +241,7 @@ static function SpawnPod(name EncounterID, vector Location, array<name> Template
 	local XComGameState_Unit Unit;
 	local XComGameState_AIUnitData AIData;
 	local int k;
+	local bool bLeaderGiven;
 
 	World = `XWORLD;
 	// Inside the tile grid, two tiles in from its edge: XCOM 2's spawner is given no place it cannot hold (an EW pod in
@@ -291,7 +292,8 @@ static function SpawnPod(name EncounterID, vector Location, array<name> Template
 				{
 					Unit.SetUnitFloatValue('LWX2Species', Species[k], eCleanup_Never);
 					// Long War's stats for it (features/lw-aliens.md), not the XCOM 2 template's.
-					class'LWAlienStats'.static.ApplyTo(Unit, Species[k]);
+					class'LWAlienStats'.static.ApplyTo(Unit, Species[k], bLeaderGiven ? 0 : class'LWAlienStats'.static.LeaderLevel());
+					bLeaderGiven = true;
 					Species[k] = 0;
 					break;
 				}

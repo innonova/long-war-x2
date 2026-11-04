@@ -43,6 +43,19 @@ for (const m of text.matchAll(/^BalanceMods_Normal=\(\s*eType=(eChar_\w+),(.*)\)
   out.push(`+Upgrade=(Species=${s}, Research=${field(l, 'iCritHit')}, Damage=${field(l, 'iDamage')}, Aim=${aim % 100}, Crit=${Math.trunc(aim / 100)}, ` +
     `Defense=${def % 100}, DR=${Math.trunc(def / 100) / 10}, HP=${hp % 100}, Shield=${Math.trunc(hp / 100)}, Mobility=${field(l, 'iMobility')}, Will=${will % 100}, Regen=${Math.trunc(will / 100)})`)
 }
+// Pod leaders and navigators (BalanceMods_Hard, uncommented lines): from a research level (iCritHit's high digits) a leader
+// of at least a level (its low digits under 10) or a navigator at a chance in 100 (10 or more), its stat upgrades, a perk
+// (iMobility: EW's EPerkType) and the pawn's scale in percent (iDefense).
+out.push("; Pod leaders (Level: the leader's level from which it applies) and navigators (Chance in 100, any member), from a research level.")
+for (const m of text.matchAll(/^BalanceMods_Hard=\(\s*eType=(eChar_\w+),(.*)\)/gm)) {
+  const s = species(m[1])
+  if (s < 4 || s > 23) continue
+  const l = m[2]
+  const code = field(l, 'iCritHit')
+  const low = code % 100
+  out.push(`+Leader=(Species=${s}, Research=${Math.trunc(code / 100)}, ${low < 10 ? `Level=${low}, Chance=0` : `Level=0, Chance=${low}`}, ` +
+    `HP=${field(l, 'iHP')}, Aim=${field(l, 'iAim')}, Damage=${field(l, 'iDamage')}, Will=${field(l, 'iWill')}, Perk=${field(l, 'iMobility')}, Scale=${field(l, 'iDefense')})`)
+}
 // Each species' weapon (EW's: the item its unit carries) and Long War's damage for it; the alien's shots with its XCOM 2
 // weapon are shifted from that weapon's base damage to this (X2Effect_LWAlienDamage).
 const WEAPONS = {
