@@ -35,7 +35,7 @@ buttons and text, no art).
 | EXALT | none | | | all of it | |
 | MECs, SHIVs, cybernetics | none | | | all of it | |
 | Fatigue | none | | | all of it | |
-| Soldiers: recruits, ranks | most | X2 | Long War's eight classes, ranks and stat gains in XCOM 2's barracks | Long War's XP rules; the starting soldiers' number | `lw-classes` |
+| Soldiers: recruits, ranks | most | X2 | Long War's eight classes, ranks and stat gains in XCOM 2's barracks | Long War's XP rules | `lw-classes` |
 
 ## Tactical
 

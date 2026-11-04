@@ -629,3 +629,11 @@ new point, and the context's results are rebuilt for them.
   rocket's own cost is not paid yet when this is asked.
 - **Only Long War's soldiers' rockets.** Other units' are left as XCOM 2
   has them.
+
+## Report (2026-11-04 day, the starting soldiers)
+
+- Long War starts a campaign with 40 soldiers (`NUM_STARTING_SOLDIERS`, `XGFacility_Barracks.
+  InitNewGame`, plus those some country bonuses add); XCOM 2 reads the same setting (12).
+  `scripts/classes-config.mjs` now writes `Config/XComGameCore.ini` with Long War's number.
+  Seen: a new campaign with 40 soldiers (control aid `crew`: the soldiers by rank).
+

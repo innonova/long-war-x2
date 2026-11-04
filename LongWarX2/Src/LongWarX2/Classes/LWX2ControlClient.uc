@@ -125,6 +125,10 @@ function Handle(string Line, out array<string> Out)
 	case "parts":
 		Parts(Out);
 		return;
+	case "crew":
+		// crew: how many soldiers XCOM has, and of what rank.
+		Out.AddItem(Crew());
+		return;
 	case "armory":
 		Out.AddItem(OpenArmory(Args.Length > 1 ? int(Args[1]) : 0));
 		return;
@@ -1224,6 +1228,33 @@ function History(out array<string> Out, int N)
 	}
 	for (i = 0; i < Lines.Length; i++)
 		Out.AddItem(Lines[i]);
+}
+
+/** XCOM's soldiers: how many, by rank. */
+function string Crew()
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_Unit Unit;
+	local array<int> Ranks;
+	local int i, n;
+	local string S;
+
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	if (XComHQ == none)
+		return "ERR no headquarters";
+	for (i = 0; i < XComHQ.Crew.Length; i++)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(XComHQ.Crew[i].ObjectID));
+		if (Unit == none || !Unit.IsSoldier())
+			continue;
+		n++;
+		if (Ranks.Length <= Unit.GetRank())
+			Ranks.Length = Unit.GetRank() + 1;
+		Ranks[Unit.GetRank()]++;
+	}
+	for (i = 0; i < Ranks.Length; i++)
+		S @= "rank" @ i $ ":" @ Ranks[i];
+	return n @ "soldiers;" $ S;
 }
 
 /** A pod of two Sectoids (species 4) spawned the missions' way, Tiles east of the first soldier. */
