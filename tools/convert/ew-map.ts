@@ -27,8 +27,9 @@ import { inlineTextures } from './inline-textures.ts'
  *  spawn points by type; 5: the walls, EW's fracturable meshes; meshes at the root of the map's package; objects of one
  *  name made unique; materials cut out by their diffuse's alpha, a kind of their own; 6: walls marked fractured, so the
  *  plot imports them as such; the buildings' surface textures, Diffuse_Base; 7: the doors, the pieces' cover flags;
- *  8: the walls' fracture data and toughness, for XCOM 2's breakable walls). */
-export const CONVERTER_VERSION = 8
+ *  8: the walls' fracture data and toughness, for XCOM 2's breakable walls; 9: the textures of materials cooked without
+ *  their expressions, read from the compiled shader (the road paint, asphalt patches), translucent ones masked). */
+export const CONVERTER_VERSION = 9
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -583,6 +584,30 @@ for (const level of ['Stream', 'EWI', 'CNH']) {
 // (its parents' for those it does not set), a material's texture expressions.
 interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' }
 const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
+/** Root materials drawn see-through (EW's BlendMode BLEND_Translucent: road paint, decals), by name. */
+const translucent = new Set<string>()
+const isTexture = (r: number) =>
+  r > 0 ? r <= exports.length && /^Texture/.test(exports[r - 1].type) : r < 0 && -r <= meta.imports.length && /^Texture/.test(meta.imports[-r - 1].className ?? '')
+/**
+ * The textures a cooked material's compiled shader reads (its uniform expressions' texture list: a count, then that many
+ * references, in the data after its properties). Cooking strips a material's expressions where no parameter names
+ * them (EW's road paint, asphalt patches): this list is then the only place its textures are named.
+ */
+function compiledTextures(index: number): number[] {
+  const d: Uint8Array = pkg.data(index + 1)
+  const dv = new DataView(d.buffer, d.byteOffset, d.byteLength)
+  const found: number[] = []
+  for (let o = 0; o + 8 <= d.length; o++) {
+    const n = dv.getInt32(o, true)
+    if (n < 1 || n > 16 || o + 4 + 4 * n > d.length) continue
+    const rs = Array.from({ length: n }, (_, i) => dv.getInt32(o + 4 + 4 * i, true))
+    if (rs.every(isTexture)) {
+      for (const r of rs) if (!found.includes(r)) found.push(r)
+      o += 4 * n
+    }
+  }
+  return found
+}
 function texturesOf(r: number, into: Map<string, string>, depth = 0): string {
   // returns the root material's name, for the kind
   if (r <= 0 || depth > 8) return r < 0 ? pathOf(r) : ''
@@ -609,6 +634,13 @@ function texturesOf(r: number, into: Map<string, string>, depth = 0): string {
       const key = pn ? nameOf(pn) : pathOf(ref(tex)).split('.').pop()!
       if (!into.has(key)) into.set(key, pathOf(ref(tex)))
     }
+    for (const t of compiledTextures(r - 1)) {
+      const path = pathOf(t)
+      const key = path.split('.').pop()!
+      if (![...into.values()].includes(path) && !into.has(key)) into.set(key, path)
+    }
+    const blend = tags.find((t) => t.name === 'BlendMode')
+    if (blend && nameOf(blend) === 'BLEND_Translucent') translucent.add(e.fullName)
     return e.fullName
   }
   const tp = tags.find((t) => t.name === 'TextureParameterValues')
@@ -636,11 +668,13 @@ function lookOf(r: number): Look {
   const pick = (params: string[], re: RegExp) =>
     params.map((p) => tex.get(p)).find(Boolean)
     ?? [...tex].find(([param, p]) => !/^Damage/i.test(param) && re.test(p.split('.').pop()!))?.[1] ?? ''
+  const diffuse = pick(['Diffuse', 'Diffuse_Base', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock'], /(_DIFF?|_D|Diffuse|_Dif)\d*$/i)
   return {
-    diffuse: pick(['Diffuse', 'Diffuse_Base', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock'], /(_DIFF?|_D|Diffuse|_Dif)\d*$/i),
+    diffuse,
     normal: pick(['Normal', 'Normal_Base', 'Leaves_Normal', 'Dirt_Normal', 'Rock_Normal'], /(_NRM|_NORM|_N|Normal|_Nrm)\d*$/i),
-    // Masked: cut out by the diffuse's alpha (tree cards, signs, fences: PROP_DifOpc, PROP_OpacityMask_Tile).
-    kind: /Foliage|Grass|Veget/i.test(root) ? 'Foliage' : /DifOpc|OpacityMask/i.test(root) ? 'Masked' : /ALIEN/i.test(root) ? 'Alien' : 'Prop',
+    // Masked: cut out by the diffuse's alpha (tree cards, signs, fences: PROP_DifOpc, PROP_OpacityMask_Tile; and a
+    // translucent parent's, as the road paint's, whose diffuse alpha holds the paint).
+    kind: /Foliage|Grass|Veget/i.test(root) ? 'Foliage' : /DifOpc|OpacityMask/i.test(root) || (translucent.has(root) && diffuse) ? 'Masked' : /ALIEN/i.test(root) ? 'Alien' : 'Prop',
   }
 }
 const looks = new Map<number, Look>()

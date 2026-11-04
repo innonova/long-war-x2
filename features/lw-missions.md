@@ -1356,3 +1356,16 @@ from the evening, one from the morning) give two exception addresses:
 - **Seen:** an explosion (the new `blast` aid: XCOM 2's environment damage at a point)
   in the electronics store blew the back room's walls into fragments and rubble, fire
   and smoke, as in EW. On by default (`PlotFracWalls`); converter version 8.
+
+### 2026-11-04 night, road paint and decals
+
+- The store's crosswalk was drawn black: EW's road paint material (a parent `Material`, cooked
+  without its expressions) names its textures nowhere but in its compiled shader's texture list,
+  so the converter found no diffuse and the stand-in had no texture. The converter now reads that
+  list (a count and that many texture references after the material's properties) and marks a
+  translucent parent's look as masked (cut by its diffuse's alpha, which holds the paint's
+  shape) when a diffuse is found. On the store, fast food, office, bar and highway: the road
+  paint and asphalt patches get their textures; street arrows, graffiti, blast and rubble decals,
+  drawn before as opaque squares, are cut out. Glass (translucent, no diffuse) unchanged.
+  Converter version 9.
+
