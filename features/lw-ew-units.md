@@ -170,3 +170,42 @@ particle systems as they are; its materials it cannot draw).
   Cyberdisc's panic). A last fallback gives those the unit's idle; additive layers excepted.
   The Thin Man answers every name now but the additive `Zero` ones.
 
+
+## Report (2026-11-04 night, EW's bodies animate at last)
+
+- **The person** (evening, release `9b029f8`): the Sectoids "never seemed to leave arms-out pose";
+  the game crashed when a Drone was about to shoot.
+- **Measured, not judged by eye** (control aid `anims <n>` now prints the arm joints in the unit's
+  own frame, the tree, its masks and controls): every EW body stood in its **reference pose**, the
+  Sectoid's arms out, the Muton's hunch (which looks like a pose): even with an animation found and
+  playing at full weight. Earlier reports that saw EW's Sectoid "in an idle" (2026-11-03, this
+  morning's police car) were wrong: those screenshots show the same reference pose.
+- **The cause:** XCOM 2's soldier tree (`AT_Soldier`) passes every animation through its channel
+  masks (`XComAnimNodeBlendMasks`: full body, upper body, the arms, the head), each built from a start
+  bone of XCOM 2's skeletons ("Root", "Spine1", "lShoulder", "rShoulder", "Neck"). EW's skeletons have
+  none of those names (theirs start at `RigRoot`), so the full-body mask covered 0 of the Sectoid's
+  113 bones and nothing reached the body. (The EW Floater animated on 2026-10-31 on a display actor
+  with a one-node tree, which has no masks.) Ruled out on the way: XCOM 2's set beside EW's, stale
+  links, the additive layers, the aim offsets, the empty layers, the skeletal controls, the
+  sequences' encoding and storage.
+- **Fixed** (`LWX2EWBodies.FixMasks`): on an EW body each mask is rebuilt on EW's bones (Root: the
+  mesh's first bone; Spine1, lShoulder, rShoulder, Neck: `RigSpine1`, `RigLArmCollarbone`,
+  `RigRArmCollarbone`, `RigNeck` where the skeleton has them), every bone under its start bone in
+  it and the chain from the root as model-space bones, as XCOM 2 builds them. Seen: the Sectoid in
+  EW's crouched idle, pistol in hand (`logs/wingpu_sectoid_animated.png`); the Muton in a new pose
+  each frame; three alien turns with a Muton, a Floater, a Thin Man and a Drone moving and shooting,
+  no crash.
+- **Also, as the animations now play:** XCOM 2's skeletal controls (twist bones, look-ats, the
+  elbow and knee "splitters") act on EW bones of the same names; they are off on EW bodies (the
+  feet's placement kept). EW's weapons lose their `left_hand` socket (renamed as the setup converts
+  them), so XCOM 2's left-hand IK does not reach for it.
+- **The Drone's crash:** reproduced (a Drone beside the squad, the turn ended: the game stopped as it
+  fired, with its EW body; without it, no crash). EW's firing animation starts EW particle effects
+  (`AnimNotify_PlayParticleEffect`: the Drone's muzzle effect on its own body, the Floater's 105 jet
+  effects), whose materials the converter makes inert; those notifies now start nothing
+  (`stub-materials.ts`, `quietParticleNotifies`). Seen: the Drone fired (and missed), the game went
+  on.
+- **Open:** EW's sequences that share another's data (`CompressedStreamRefIndex`, the "57 without
+  animation data" of the Sectoid) are treated as empty; they may be playable. The non-humanoid
+  species' masks have only the root (the Drone, the Cyberdisc): their partial animations (upper body)
+  do nothing.

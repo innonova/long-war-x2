@@ -1471,3 +1471,13 @@ from the evening, one from the morning) give two exception addresses:
   forest farm and the fallen highway all load, every door registered, no crash and no material
   compiled while loading.
 
+
+### 2026-11-04 night, windows seen through (the person's `transparent-ish.png`)
+
+- The panes were drawn see-through but blocked the soldiers' sight (the fog stayed outside). EW
+  marks what units see through on each piece (`VisibilityBlockingData`: its windows, foliage, cars,
+  small props; 238 of the truck stop's 911 pieces); the converter read it only for doors. Now every
+  piece carries it into the plot (`BlocksSight=false`, `Window=true`; converter version 17).
+- Checked with XCOM 2's own sight test (control aid `windowsight`: two tiles either side of each
+  piece, both ways): windows 13 of 25 seen across both ways, walls 5 of 52 (a piece's pivot is not
+  always its middle, so the test is rough). Not yet looked at from a soldier at the window.
