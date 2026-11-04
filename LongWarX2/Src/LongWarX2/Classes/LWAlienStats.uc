@@ -261,6 +261,9 @@ defaultproperties
 	NotLongWar(24)=CounterattackDescription
 	NotLongWar(25)=TriggerRageDamageListener
 	NotLongWar(26)=ChryssalidBurrow
+	// Seeker (Faceless): its regeneration (EW's Seeker has none; seen in an alien turn, 2026-11-04 night). FacelessInit is
+	// that regeneration (and brings the Regeneration passive with it).
+	NotLongWar(27)=FacelessInit
 	// Their weapons: the Viper's tongue (Thin Man), the Archon's melee (Floater), the Muton's bayonet and execute, the
 	// MECs' micro missiles (Drone, Mechtoid).
 	NotLongWarWeapons(0)="Viper_Tongue_WPN:GetOverHere"

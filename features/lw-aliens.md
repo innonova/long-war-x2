@@ -170,3 +170,9 @@ document the encodings):
   `X2Condition_LWEnemyNear`; used where the Gatekeeper's tree tried its Anima Consume).
 - Seen: a Cyberdisc beside the squad used it in its turn ("LW_DeathBlossom"), the six soldiers hit
   for 3 to 5; two turns, no crash.
+- **The Seeker's regeneration taken off:** XCOM 2's Faceless (the Seeker's template) regenerates
+  (`FacelessInit` is that regeneration and its passive); EW's Seeker does not. Seen: a Seeker's
+  abilities without it.
+- **Ten species together, six turns** (a Sectoid, a Muton, a Thin Man, a Floater, a Drone, a
+  Cyberdisc, a Chryssalid, a Seeker, a Berserker, a Muton Elite beside the squad): shots, a grenade,
+  poison spit, claws, Mind Merge, Blood Call, Death Blossom; no crash.
