@@ -1377,4 +1377,19 @@ from the evening, one from the morning) give two exception addresses:
   texture of its own (`mask-textures.ts`: same size, format and mips, red white, green and blue
   the diffuse's alpha, DXT5 and DXT1), the looks name it (`Mask=`), the plot and the mod's own
   placement give it as Masks. Converter version 10.
+- Two faults on the way, both found on wingpu: 12 maps failed (a texture whose name carries
+  a number, `Leaves_2`, has no name entry of its own; the flags are read through its export
+  entry now); and adding objects to the inlined package (256 MB) moved the whole file each
+  time, a map taking 10 to 13 s, and left the textures' inline mips pointing at their old
+  places (a release candidate drew every texture garbled; not released). The masks are now
+  added before the textures are inlined (the package ~15 MB), as copies of their diffuses
+  whose mips are made as they are inlined; the other objects' inline bulk data (944 lightmap,
+  395 shadow map, 113 sound records on the store) are told where they moved. A map converts
+  in about 4 s again.
+- **Seen** (release candidate `306d876`, from the zip, all 83 maps converted): the store's
+  crosswalk as white worn paint on the asphalt, the gravel decals cut out
+  (`logs/wingpu_crosswalk.png`).
+- **Release** `LongWarX2-20261104-b661195.zip`, checked from the zip (83 maps converted at
+  version 10): the store's crosswalk white; on the forest farm (`LAbductor_FarmOutskirts`) the
+  bushes, ferns and grass cut out as leaves (`logs/wingpu_foliage.png`), textures whole.
 
