@@ -10,6 +10,7 @@ struct LWAlienBase { var int Species, HP, Aim, Defense, Mobility, Sight, Will, C
 struct LWAlienDifficulty { var int Species, Level, Damage, Aim, Defense, HP, Mobility, Will; };
 struct LWAlienUpgrade { var int Species, Research, Damage, Aim, Crit, Defense, HP, Shield, Mobility, Will, Regen; var float DR; };
 struct LWAlienWeapon { var int Species, Damage; };
+struct LWAlienAbility { var int Species; var name Ability; };
 struct LWAlienLeader { var int Species, Research, Level, Chance, HP, Aim, Damage, Will, Perk, Scale; };
 
 var config array<LWAlienBase> Base;
@@ -17,6 +18,8 @@ var config array<LWAlienDifficulty> Difficulty;
 var config array<LWAlienUpgrade> Upgrade;
 /** Each species' weapon's damage in Long War (its shots with the XCOM 2 weapon are shifted to it). */
 var config array<LWAlienWeapon> Weapon;
+/** Each species' own abilities (Long War's ABILITIES[]) where the mod has them: the Sectoid's Mind Merge, Psi Panic, Mindfray … */
+var config array<LWAlienAbility> SpeciesAbilities;
 /** Pod leaders (Level: a leader of at least that level) and navigators (Chance in 100, any member), from a research level. */
 var config array<LWAlienLeader> Leader;
 /**
@@ -76,7 +79,7 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int 
 	local int Scale, Perks;
 	local string PerkList;
 	local name Ability;
-	local X2AbilityTemplate AbilityTemplate;
+	local LWAlienAbility A;
 
 	k = default.Base.Find('Species', Species);
 	if (Unit == none || k == INDEX_NONE)
@@ -132,18 +135,14 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int 
 			// The ability a soldier's perk of that number is, given to the alien (in the game state that spawns it:
 			// InitAbilityForUnit activates a passive's effects then).
 			Ability = class'X2Ability_LWStandins'.static.AlienAbilityFor(L.Perk);
-			AbilityTemplate = Ability != '' ? class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate(Ability) : none;
-			if (AbilityTemplate != none && NewGameState != none && Unit.FindAbility(Ability).ObjectID == 0)
-			{
-				class'X2TacticalGameRuleset'.static.InitAbilityForUnit(AbilityTemplate, Unit, NewGameState, Unit.GetPrimaryWeapon().GetReference());
-				PerkList @= string(L.Perk) $ "=" $ Ability;
-			}
-			else
-				PerkList @= string(L.Perk) $ "=" $ (Ability != '' ? Ability : 'none') $ "(not given)";
+			PerkList @= string(L.Perk) $ "=" $ (Ability != '' ? Ability : 'none') $ (Give(Unit, Ability, NewGameState) ? "" : "(not given)");
 		}
 	}
 	if (Scale != 0)
 		Unit.SetUnitFloatValue('LWX2Scale', Scale, eCleanup_Never);
+	foreach default.SpeciesAbilities(A)
+		if (A.Species == Species)
+			Give(Unit, A.Ability, NewGameState);
 	if (LeaderLevel > 0 || Perks > 0)
 		`log("LongWarX2: aliens: species" @ Species @ (LeaderLevel > 0 ? "leader of level" @ LeaderLevel : "navigator") $ ", scale" @ Scale $ "%, Long War perks" @ (PerkList != "" ? PerkList : "none"), , 'LongWarX2');
 	SetStat(Unit, eStat_HP, Max(1, HP));
@@ -160,6 +159,19 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int 
 	k = default.Weapon.Find('Species', Species);
 	if (k != INDEX_NONE)
 		Unit.SetUnitFloatValue('LWX2WeaponDamage', default.Weapon[k].Damage, eCleanup_Never);
+	return true;
+}
+
+/** An ability given to the unit in the game state that spawns it (InitAbilityForUnit activates a passive's effects then);
+ *  false where there is no such ability, no game state, or the unit has it. */
+static function bool Give(XComGameState_Unit Unit, name Ability, XComGameState NewGameState)
+{
+	local X2AbilityTemplate Template;
+
+	Template = Ability != '' ? class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate(Ability) : none;
+	if (Template == none || NewGameState == none || Unit.FindAbility(Ability).ObjectID != 0)
+		return false;
+	class'X2TacticalGameRuleset'.static.InitAbilityForUnit(Template, Unit, NewGameState, Unit.GetPrimaryWeapon().GetReference());
 	return true;
 }
 

@@ -105,3 +105,24 @@ document the encodings):
   and do nothing, as on soldiers; they work when the soldiers' do.
 - **Release** `LongWarX2-20261104-041a0b4.zip`, checked from the zip: the store's 7 Sectoids at
   3 HP, each with Ranger.
+
+## Report (2026-11-04 day, the species' own abilities: the Sectoid's psionics)
+
+- `scripts/aliens-config.mjs` reads each species' Long War abilities (`Characters=`
+  `ABILITIES[]`) and writes those the mod has as `+SpeciesAbilities` (`XComLWAliens.ini`): Long
+  War's psi powers, which its psi soldiers use (`X2Ability_LWStandins`): the Sectoid's Mind Merge,
+  Psi Panic and Mindfray; the Sectoid Commander's Mind Control, Mindfray, (Greater) Mind Merge
+  and Psi Panic; the Ethereals' Rift, Mind Control and Mindfray. Given as the pod spawns
+  (`LWAlienStats.Give`, as the perks).
+- Mind Merge's target is an ally of the psion's side, not a civilian (it required XCOM's squad).
+- **XCOM 2's AI** uses an ability only where its behaviour tree names it: `Config/XComAI.ini`
+  redefines the Sectoid tree's psionics node (`TryPsiReanimationOrMindSpinOption`, whose
+  abilities Long War's Sectoids no longer have) as Mind Merge on an ally, else Psi Panic or
+  Mindfray (even odds) on a soldier, the target chosen as XCOM 2 chose its Mindspin's.
+- **Seen** (a pod spawned beside the squad, one alien turn; a new control aid `history [n]`
+  lists the last abilities used): the two Sectoids Mind Merged with each other.
+- Not yet: the other species' own abilities (the Floater's Launch, the Muton's Intimidate and
+  Blood Call, the Berserker's Bull Rush, the Drone's Overload, the Seeker's Stealth, the
+  Cyberdisc's closing, the Ethereals' Psi Drain); the Commander's Mind Control and the
+  Ethereals' powers in their AI (their trees are XCOM 2's Sectoid's and Codex's).
+

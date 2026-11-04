@@ -346,7 +346,8 @@ static function X2AbilityTemplate PsiPower(LWStandin S)
 		Living.ExcludeFriendlyToSource = false;
 		Living.ExcludeDead = true;
 		Living.ExcludeRobotic = true;
-		Living.RequireSquadmates = true;
+		// An ally of the psion's side but not a civilian (the Sectoids' Mind Merge too: XCOM's squad is no alien's).
+		Living.ExcludeCivilian = true;
 		Living.FailOnNonUnits = true;
 		Template.AbilityTargetConditions.AddItem(Living);
 		Template.AbilityTargetConditions.AddItem(default.GameplayVisibilityCondition);

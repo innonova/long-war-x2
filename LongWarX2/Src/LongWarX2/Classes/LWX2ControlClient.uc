@@ -294,6 +294,10 @@ function Handle(string Line, out array<string> Out)
 		// pod [tiles]: a pod of two Sectoids spawned as the missions spawn Long War's pods (LWMissionSquads.SpawnPod), near the squad.
 		Out.AddItem(TestPod(Args.Length > 1 ? int(Args[1]) : 4));
 		return;
+	case "history":
+		// history [n]: the last n abilities used in the mission (default 20), newest last: who, what, on whom.
+		History(Out, Args.Length > 1 ? int(Args[1]) : 20);
+		return;
 	case "anims":
 		// anims [n] [all|relink1|relink2]: the n-th enemy's (else the nearest's) animation nodes in play: the name asked for, found or not, weight.
 		Anims(Out, Args.Length > 1 ? int(Args[1]) : -1, Args.Length > 2 && Args[2] == "all", (Args.Length > 2 && Left(Args[2], 6) == "relink") ? int(Mid(Args[2], 6)) : 0);
@@ -1198,6 +1202,30 @@ function string Standable(string Part)
 	return Pieces @ "pieces of" @ Part @ "(" $ Climbable @ "climbable onto);" @ Over @ "with tiles over them units can enter;" @ Destinations @ "such tiles valid destinations," @ Reached @ "a soldier can walk to," @ OnTop @ "of those at the piece's top";
 }
 
+/** The last N abilities used (their contexts in the history), oldest first. */
+function History(out array<string> Out, int N)
+{
+	local XComGameStateHistory H;
+	local XComGameStateContext_Ability C;
+	local array<string> Lines;
+	local XComGameState_Unit Source, Target;
+	local int i;
+
+	H = `XCOMHISTORY;
+	for (i = H.GetCurrentHistoryIndex(); i > 0 && Lines.Length < N; i--)
+	{
+		C = XComGameStateContext_Ability(H.GetGameStateFromHistory(i).GetContext());
+		if (C == none || C.InterruptionStatus == eInterruptionStatus_Interrupt)
+			continue;
+		Source = XComGameState_Unit(H.GetGameStateForObjectID(C.InputContext.SourceObject.ObjectID));
+		Target = XComGameState_Unit(H.GetGameStateForObjectID(C.InputContext.PrimaryTarget.ObjectID));
+		Lines.InsertItem(0, i @ (Source != none ? string(Source.GetMyTemplateName()) $ "#" $ Source.ObjectID : "?") @ C.InputContext.AbilityTemplateName
+			@ (Target != none ? "on" @ Target.GetMyTemplateName() $ "#" $ Target.ObjectID : "") @ (C.IsResultContextHit() ? "hit" : "miss"));
+	}
+	for (i = 0; i < Lines.Length; i++)
+		Out.AddItem(Lines[i]);
+}
+
 /** A pod of two Sectoids (species 4) spawned the missions' way, Tiles east of the first soldier. */
 function string TestPod(int Tiles)
 {
@@ -1226,6 +1254,7 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 	local XComUnitPawn Pawn;
 	local AnimNodeSequence Seq;
 	local int Best;
+	local StateObjectReference Ref;
 	local AnimSet Set;
 	local int n, i, b;
 	local string Sets;
@@ -1264,6 +1293,11 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 	foreach Pawn.Mesh.AnimSets(Set)
 		Sets @= (Set != none ? string(Set.Name) $ "(" $ Set.Sequences.Length $ ")" : "none");
 	Out.AddItem(Pick.GetMyTemplateName() @ "mesh" @ PathName(Pawn.Mesh.SkeletalMesh) @ "tree" @ PathName(Pawn.Mesh.AnimTreeTemplate) @ "sets" $ Sets);
+	Sets = "";
+	foreach Pick.Abilities(Ref)
+		if (XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID)) != none)
+			Sets @= XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID)).GetMyTemplateName();
+	Out.AddItem("  abilities:" $ Sets @ "| behaviour tree" @ Pick.GetMyTemplate().strBehaviorTree);
 	Sets = "";
 	foreach Pick.GetMyTemplate().AdditionalAnimSets(Set)
 		Sets @= (Set != none ? PathName(Set) $ "(" $ Set.Sequences.Length $ ")" : "none");

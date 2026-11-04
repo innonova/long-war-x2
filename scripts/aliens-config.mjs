@@ -70,4 +70,16 @@ for (const [name, item] of Object.entries(WEAPONS)) {
   if (!line) throw new Error(`no Weapons= line for eItem_${item}`)
   out.push(`+Weapon=(Species=${species(name)}, Damage=${field(line, 'iDamage')})`)
 }
+// Each species' own abilities (Characters= ABILITIES[]), where the mod has the power: Long War's psi powers, which its psi
+// soldiers use (X2Ability_LWStandins). The others (the Floater's Launch, the Muton's Blood Call …) are to come.
+const ABILITIES = {
+  eAbility_MindMerge: 'LW_MindMerge', eAbility_GreaterMindMerge: 'LW_MindMerge', eAbility_PsiPanic: 'LW_PsiPanic',
+  eAbility_MindFray: 'LW_Mindfray', eAbility_Mindfray: 'LW_Mindfray', eAbility_PsiControl: 'LW_MindControl', eAbility_Rift: 'LW_Rift',
+}
+out.push("; Each species' own abilities (Long War's ABILITIES[]), where the mod has them.")
+for (const m of text.matchAll(/^Characters=\(.*?iType=(eChar_\w+),(.*)$/gm)) {
+  const s = species(m[1])
+  if (s < 4 || s > 23) continue
+  for (const a of new Set([...m[2].matchAll(/ABILITIES\[\d\]=(eAbility_\w+)/g)].map((x) => x[1]))) if (ABILITIES[a]) out.push(`+SpeciesAbilities=(Species=${s}, Ability="${ABILITIES[a]}")`)
+}
 console.log(out.join('\r\n'))
