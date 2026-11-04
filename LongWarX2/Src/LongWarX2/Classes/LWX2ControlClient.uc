@@ -1364,8 +1364,8 @@ function string Crew()
 	local XComGameState_HeadquartersXCom XComHQ;
 	local XComGameState_Unit Unit;
 	local array<int> Ranks;
-	local int i, n, Shaken;
-	local string S, Tired;
+	local int i, n, Shaken, TimeValue;
+	local string S, Tired, Status, TimeLabel;
 
 	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
 	if (XComHQ == none)
@@ -1380,7 +1380,10 @@ function string Crew()
 			Ranks.Length = Unit.GetRank() + 1;
 		Ranks[Unit.GetRank()]++;
 		if (Unit.GetMentalState() == eMentalState_Tired)
-			Tired $= " " $ Unit.GetLastName() $ "(" $ int(Unit.GetCurrentStat(eStat_Will)) $ "/" $ int(Unit.GetMaxStat(eStat_Will)) $ ")";
+		{
+			Unit.GetMentalStateStringsSeparate(Status, TimeLabel, TimeValue);
+			Tired $= " " $ Unit.GetLastName() $ "(" $ int(Unit.GetCurrentStat(eStat_Will)) $ "/" $ int(Unit.GetMaxStat(eStat_Will)) @ Status @ TimeValue @ TimeLabel $ ")";
+		}
 		else if (Unit.GetMentalState() == eMentalState_Shaken)
 			Shaken++;
 	}

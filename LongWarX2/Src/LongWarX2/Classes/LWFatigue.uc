@@ -62,6 +62,7 @@ static function Apply()
 		Unit.SetCurrentStat(eStat_Will, Unit.GetMaxWillForMentalState(eMentalState_Tired));
 		Unit.UpdateMentalState();
 		XComHQ = NoWillProject(NewGameState, XComHQ, Unit);
+		ShowRest(NewGameState, Unit, Wound + H);
 		`log("LongWarX2: fatigue:" @ Unit.GetFullName() @ "rests" @ H @ "hours" $ (Wound > 0 ? " after" @ Wound @ "of healing" : "") $ (bAllIn ? ", went all in (maximum health now" @ int(Unit.GetBaseStat(eStat_HP)) $ ")" : "") $ (bHurt ? ", hurt" : "") $ "; Tired until hour" @ S.Hours + Wound + H, , 'LongWarX2');
 	}
 	if (NewGameState != none)
@@ -103,6 +104,7 @@ static function Tick(XComGameState NewGameState, XComGameState_LWStrategy S)
 		Unit.SetUnitFloatValue('LWX2RestedAt', 0, eCleanup_Never);
 		Unit.SetCurrentStat(eStat_Will, Unit.GetMaxStat(eStat_Will));
 		Unit.UpdateMentalState();
+		ShowRest(NewGameState, Unit, 0);
 		`log("LongWarX2: fatigue:" @ Unit.GetFullName() @ "rested, ready again at hour" @ S.Hours, , 'LongWarX2');
 	}
 }
@@ -201,6 +203,31 @@ static function XComGameState_HeadquartersProjectRecoverWill WillProjectOf(XComG
 			return Will;
 	}
 	return none;
+}
+
+/**
+ * The rest's days shown where XCOM 2 shows a Tired soldier's (XComGameState_Unit.GetMentalStateStringsSeparate: any will
+ * recovery project in the history naming the soldier, its completion date): one such project kept for each resting soldier,
+ * outside the headquarters' projects (so XCOM 2 neither advances nor completes it), completing at Long War's hour; none
+ * once rested (Hours 0).
+ */
+static function ShowRest(XComGameState NewGameState, XComGameState_Unit Unit, int Hours)
+{
+	local XComGameState_HeadquartersProjectRecoverWill Will;
+	local XComGameState_GameTime TimeState;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_HeadquartersProjectRecoverWill', Will)
+		if (Will.ProjectFocus.ObjectID == Unit.ObjectID && NewGameState.GetGameStateForObjectID(Will.ObjectID) == none)
+			NewGameState.RemoveStateObject(Will.ObjectID);
+	if (Hours <= 0)
+		return;
+	TimeState = XComGameState_GameTime(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_GameTime'));
+	Will = XComGameState_HeadquartersProjectRecoverWill(NewGameState.CreateNewStateObject(class'XComGameState_HeadquartersProjectRecoverWill'));
+	Will.ProjectFocus = Unit.GetReference();
+	Will.WorkPerHour = 1;
+	Will.StartDateTime = TimeState.CurrentTime;
+	Will.CompletionDateTime = TimeState.CurrentTime;
+	class'X2StrategyGameRulesetDataStructures'.static.AddHours(Will.CompletionDateTime, Hours);
 }
 
 /** XCOM 2's will recovery for the soldier taken off (Long War's hours decide when they are ready). */

@@ -76,5 +76,8 @@ hours shown as War of the Chosen's "Tired").
   Tired eight days on. Before that, a plain mission: the six of the squad Tired, a hurt one "rests 144
   hours after 237 of healing".
 - **Not yet:** a psi power's and a gene mod's own hours, officers' and critical wounds' hours, the
-  psi armour's none; the hours left shown on the soldier's screen (XCOM 2's Tired label shows no
-  time without its own recovery project).
+  psi armour's none.
+- **The days shown:** XCOM 2's Tired label takes its days from any will-recovery project naming the
+  soldier; one is kept for each resting soldier, outside the headquarters' projects (XCOM 2 neither
+  advances nor completes it), completing at Long War's hour. Seen (control aid `crew`, XCOM 2's own
+  label): "Tired 6 Days", "Tired 4 Days" after a mission; none Tired eight days on.
