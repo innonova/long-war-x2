@@ -210,6 +210,8 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
     if (!ew) { unmatched.push(x2); continue }
     const src = byName.get(ew)!
     const d = Uint8Array.from(pkg.data(src) as Uint8Array)
+    // No network index of its own (the source's, copied, made the game log a duplicate for each copy).
+    new DataView(d.buffer).setInt32(0, -1, true)
     // Find the SequenceName tag: name "SequenceName", type "NameProperty", size 8, index 0, then the value.
     const want = namesByText.get('SequenceName')!, nameProp = namesByText.get('NameProperty')!
     let patched = false
