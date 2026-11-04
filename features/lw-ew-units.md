@@ -135,4 +135,11 @@ particle systems as they are; its materials it cannot draw).
   table gives XCOM 2's right-side names (`LR_*`, `HR_*`) EW's left ones unmirrored, so a Sectoid
   in cover on its right looks over the wrong side. To do: mirrored copies (EW's meshes carry a
   mirror table).
+- **The mirroring, scoped:** EW's Sectoid set mixes formats (`AC_LL_OverLookA` per-track
+  compressed, `AC_HL_SideLookA` constant-key with Fixed48 rotations); the Tree's reader
+  (`src/model/anim.ts`) decodes the per-track kind in full and only the first keys of the
+  other. A mirrored copy needs: every format decoded, the mesh's mirror table
+  (`SkelMirrorTable`, `SkelMirrorAxis`, `SkelMirrorFlipAxis`), each frame mirrored in
+  component space (UE3's matrix mirror: the mirror axis's column negated, the bone's flip axis's
+  row), and the result written per track (three-float keys, one per frame). Not done today.
 
