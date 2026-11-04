@@ -1415,4 +1415,10 @@ from the evening, one from the morning) give two exception addresses:
   onto, but 7 tiles on them still reachable: a sandbag is low enough to be stepped onto without
   a climb. So the rule also makes their tops no valid destination (`bIsValidDestination`, EW's
   and XCOM 2's flag for exactly this), cars included. Converter version 13.
+- **Release** `LongWarX2-20261104-8024653.zip` (version 13), checked from the zip: on the store
+  no tile on a sedan or the van a valid destination or reachable (12 each before); the farm's
+  sandbags none climbable onto, valid destinations over them 35 → 8, but 7 reachable tiles
+  remain, 4 of them at a sandbag's top height. **Open:** whether those 4 are sandbag tops or
+  the farm's sloped ground level with them (the probe cannot tell the floor's actor); to be
+  looked at on the farm in the game. The aliens as before (Sectoids with Ranger, at 3 HP).
 
