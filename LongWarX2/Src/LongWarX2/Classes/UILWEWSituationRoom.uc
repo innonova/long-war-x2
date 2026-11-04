@@ -20,7 +20,7 @@ static function string Open()
 		return "ERR not on the Avenger";
 	DynamicLoadObject(default.UIPackage $ ".ewxSituationRoom", class'Object', true);
 	// A black background under it (EW's earth goes into its map area: OnInit).
-	class'UILWEWMapBackdrop'.static.ShowIfAvailable(false);
+	class'UILWEWMapBackdrop'.static.ShowIfAvailable();
 	EWScreen = HQPres.Spawn(class'UILWEWSituationRoom', HQPres);
 	EWScreen.Package = name("/ package/ewxSituationRoom/SituationRoom");
 	EWScreen.MCName = 'theScreen';
