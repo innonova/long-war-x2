@@ -281,6 +281,11 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(Blast(vect(0,0,0) + vect(1,0,0) * float(Args[1]) + vect(0,1,0) * float(Args[2]) + vect(0,0,1) * float(Args[3]), Args.Length > 4 ? float(Args[4]) : 192.0, Args.Length > 5 ? int(Args[5]) : 10));
 		return;
+	case "meshes":
+		// meshes <part of a mesh's path>: each placed piece of such a mesh: class, hidden, its cut heights, the floor caching it.
+		if (Args.Length > 1)
+			Meshes(Args[1], Out);
+		return;
 	case "standable":
 		// standable <part of a mesh's path>: for the placed pieces of such meshes, the tiles over them units can stand on.
 		Out.AddItem(Args.Length > 1 ? Standable(Args[1]) : "ERR standable <part of a mesh's path>");
@@ -1096,6 +1101,38 @@ static function string AlienPerksOf(XComGameState_Unit Unit)
 	if (Unit.GetUnitValue('LWX2Scale', Scale))
 		S $= " scale" @ int(Scale.fValue) $ "%";
 	return S != "" ? S : "-";
+}
+
+/** The placed pieces of meshes whose path holds Part, as XCOM 2's building visibility sees them (the first 12). */
+function Meshes(string Part, out array<string> Out)
+{
+	local Actor A;
+	local StaticMeshComponent C;
+	local XComBuildingVolume B;
+	local float Cutdown, Cutout, Mask, PrevMask;
+	local int f, k, n;
+	local string Where;
+
+	foreach class'WorldInfo'.static.GetWorldInfo().AllActors(class'Actor', A)
+		foreach A.ComponentList(class'StaticMeshComponent', C)
+		{
+			if (C.StaticMesh == none || InStr(PathName(C.StaticMesh), Part) < 0 || n++ >= 12)
+				continue;
+			Where = "";
+			foreach class'WorldInfo'.static.GetWorldInfo().AllActors(class'XComBuildingVolume', B)
+				for (f = 0; f < B.Floors.Length; f++)
+					for (k = 0; k < B.Floors[f].m_aCachedActors.Length; k++)
+						if (B.Floors[f].m_aCachedActors[k].ResidentActor == A)
+							Where @= B.Name $ "/floor" $ f;
+			Cutdown = 0;
+			Cutout = 0;
+			if (XComLevelActor(A) != none)
+				XComLevelActor(A).GetPrimitiveVisHeight(Cutdown, Cutout, Mask, PrevMask);
+			else if (XComFracLevelActor(A) != none)
+				XComFracLevelActor(A).GetPrimitiveVisHeight(Cutdown, Cutout, Mask, PrevMask);
+			Out.AddItem(A.Class.Name @ A.Name @ "z" @ int(C.Bounds.Origin.Z - C.Bounds.BoxExtent.Z) $ ".." $ int(C.Bounds.Origin.Z + C.Bounds.BoxExtent.Z) @ "hidden" @ A.bHidden @ "comp hidden" @ C.HiddenGame @ "cutdown" @ Cutdown @ "cutout" @ Cutout @ "floors:" $ (Where != "" ? Where : " none"));
+		}
+	Out.AddItem(n @ "pieces of" @ Part);
 }
 
 /** The pieces whose mesh's path holds Part: how many have tiles over them (a floor higher than the piece's base) units

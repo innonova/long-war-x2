@@ -155,13 +155,28 @@ static function int HideForeign(Actor Finder, XComWorldData World)
 static function int CacheBuildings(Actor Finder)
 {
 	local XComBuildingVolume B;
-	local int n;
+	local int n, f, g, k, i;
+	local bool bBelow;
 
 	foreach Finder.AllActors(class'XComBuildingVolume', B)
 	{
 		B.CacheBuildingVolumeInChildrenFloorVolumes();
 		B.CacheFloorCenterAndExtent();
 		B.RebuildCachedActors();
+		// Each floor caches every actor that reaches into it. XCOM 2's buildings are made of a piece per floor; EW's walls
+		// are often one piece for the whole building (the ice cream shop's), so on every floor at once: viewed from the
+		// ground floor, the floors above are cut out, and the whole wall with them (the person: "missing walls").
+		// Such an actor is left on the lowest floor it is on, as XCOM 2's ground-floor walls are.
+		for (f = B.Floors.Length - 1; f > 0; f--)
+			for (k = B.Floors[f].m_aCachedActors.Length - 1; k >= 0; k--)
+			{
+				bBelow = false;
+				for (g = 0; g < f && !bBelow; g++)
+					for (i = 0; i < B.Floors[g].m_aCachedActors.Length && !bBelow; i++)
+						bBelow = B.Floors[g].m_aCachedActors[i].ResidentActor == B.Floors[f].m_aCachedActors[k].ResidentActor;
+				if (bBelow)
+					B.Floors[f].m_aCachedActors.Remove(k, 1);
+			}
 		n++;
 	}
 	return n;
@@ -226,12 +241,24 @@ static function int ShowBuildings(Actor Finder)
 {
 	local XComBuildingVolume B;
 	local XComLevelActor A;
+	local XComFracLevelActor W;
 	local int f, k, n;
 
 	foreach Finder.AllActors(class'XComBuildingVolume', B)
 		for (f = 0; f < B.Floors.Length; f++)
 			for (k = 0; k < B.Floors[f].m_aCachedActors.Length; k++)
 			{
+				// EW's breakable walls (ew-plot.ts) the same way: left cut out, they stood as ankle-high stubs.
+				W = XComFracLevelActor(B.Floors[f].m_aCachedActors[k].ResidentActor);
+				if (W != none)
+				{
+					W.SetHideableFlag(false);
+					W.SetPrimitiveCutdownFlag(false);
+					W.SetPrimitiveCutoutFlag(false);
+					W.SetPrimitiveVisHeight(999999, -999999, 999999, 999999);
+					n++;
+					continue;
+				}
 				A = XComLevelActor(B.Floors[f].m_aCachedActors[k].ResidentActor);
 				if (A == none)
 					continue;

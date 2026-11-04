@@ -134,7 +134,10 @@ export interface PlotSettings {
  */
 const SKIPPED_MATERIAL = /Drop_Zone|DESIGN_Border|Sky\b|Sky_|NightSky|DuskSky|NoonSky|SkyDome|RoadPaint|Puddle|Decal|Scar|Asphalt_Patch|Burning|Charred|Black$/i
 const GLASS_MATERIAL = /Glass|Window/i
-const GLASS = { parent: 'Materials.Approved.Translucent_SD', diffuse: 'EngineResources.WhiteSquareTexture', opacity: Number(process.env.LWX2_GLASS_OPACITY ?? 0.35), specular: 0.5 }
+/** Glass: XCOM 2's translucent parent (Translucent_SD) draws as opaque black on these plots (its colour unlit, its emissive
+ *  switched off; the person's windows, 2026-11-04), so a pane is cut out entirely: the masked parent with a black mask
+ *  (its opacity is the mask's green), the window a see-through frame. */
+const GLASS = { diffuse: 'EngineResources.WhiteSquareTexture', mask: 'EngineResources.Black' }
 const GREY = { diffuse: 'EngineResources.WhiteSquareTexture', tint: [0.35, 0.35, 0.35, 1] }
 
 const TILE = 96
@@ -301,11 +304,12 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       const p = parse(pkg.data(sampleMIC), 4)
       const name = (n: string) => bin((x) => { const r = objName(n); x.i32(r.index).i32(r.number) })
       const param = (n: string, value: T) => serialize({ head: new Uint8Array(0), tags: [{ name: 'ParameterName', type: 'NameProperty', arrayIndex: 0, value: name(n) }, value], tail: new Uint8Array(0) })
-      const scalars: [string, number][] = glass ? [['Opacity', GLASS.opacity], ['SpecularScale', GLASS.specular]] : settings.scalars
+      const scalars: [string, number][] = settings.scalars
+      const textures: [string, string][] = glass ? [['Diffuse', GLASS.diffuse], ['Masks', GLASS.mask]] : [['Diffuse', GREY.diffuse]]
       const tags: T[] = [
-        tObj('Parent', importRef(glass ? GLASS.parent : settings.parents.Prop!, 'Material')),
+        tObj('Parent', importRef(glass ? settings.parents.Masked! : settings.parents.Prop!, 'Material')),
         tGuid('LightingGuid'),
-        { name: 'TextureParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(1); w.bytes(param('Diffuse', tObj('ParameterValue', importRef(glass ? GLASS.diffuse : GREY.diffuse, 'Texture2D')))) }) },
+        { name: 'TextureParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(textures.length); for (const [n, t] of textures) w.bytes(param(n, tObj('ParameterValue', importRef(t, 'Texture2D')))) }) },
         { name: 'ScalarParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(scalars.length); for (const [n, v] of scalars) w.bytes(param(n, tFloat('ParameterValue', v))) }) },
       ]
       if (!glass)
