@@ -34,7 +34,7 @@ buttons and text, no art).
 | The story | most | plain | alien bases, Overseers, the Temple Ship | the HQ assault from month 4; Act 3; EXALT | `lw-story` |
 | EXALT | none | | | all of it | |
 | MECs, SHIVs, cybernetics | none | | | all of it | |
-| Fatigue | most | X2 | Long War's hours, all in, shown as War of the Chosen's Tired | psi powers' and gene mods' hours, officers' | `lw-fatigue` |
+| Fatigue | most | X2 | Long War's hours, all in, shown as War of the Chosen's Tired | officers' hours, the country bonuses' | `lw-fatigue` |
 | Soldiers: recruits, ranks | most | X2 | Long War's eight classes, ranks, stat gains and experience in XCOM 2's barracks | Wet Work, medals' experience | `lw-classes` |
 
 ## Tactical

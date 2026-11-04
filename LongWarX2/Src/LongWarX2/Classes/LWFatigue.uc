@@ -5,8 +5,17 @@
 // cent). Shown as War of the Chosen's Tired (the squad screens show it, and a Tired soldier may still be sent, as Long War
 // lets a fatigued one go all in): the will set to the top of the Tired band as the Geoscape opens after the mission, XCOM
 // 2's own will recovery taken off, the will full again when Long War's hours are over (each hour of Long War's clock).
-// Not yet: a psi power's and a gene mod's own hours, officers' hours, the critical wounds' hours, the psi armour.
-class LWFatigue extends Object;
+// Each psi power and gene mod the soldier has adds its own hours (config PerkHours).
+// Not yet: officers' hours, the critical wounds' hours, the psi armour, the country bonuses that lessen the powers' hours.
+class LWFatigue extends Object config(LWStrategy);
+
+/** A psi power's or a gene mod's own hours (Long War's ItemBalance_Easy: the perk, its iEng). */
+struct LWPerkHours
+{
+	var int Perk;
+	var int Hours;
+};
+var config array<LWPerkHours> PerkHours;
 
 var int BaseHours, RollHours, HardHours, ScalePct;
 
@@ -49,6 +58,7 @@ static function Apply()
 		bAllIn = ValueOf(Unit, 'LWX2AllIn') > 0;
 		bHurt = Unit.GetCurrentStat(eStat_HP) < Unit.GetMaxStat(eStat_HP);
 		H = (bAllIn || bHurt) ? default.HardHours : default.BaseHours + Rand(default.RollHours);
+		H += PowersHours(Unit);
 		H = H * default.ScalePct / 100;
 		Wound = WoundHours(Unit);
 		if (bAllIn)
@@ -170,6 +180,24 @@ static function MarkAllIn()
 	}
 	if (NewGameState != none)
 		History.AddGameStateToHistory(NewGameState);
+}
+
+/** The hours the soldier's psi powers and gene mods add. */
+static function int PowersHours(XComGameState_Unit Unit)
+{
+	local LWPerkHours P;
+	local name Ability;
+	local int H;
+
+	foreach default.PerkHours(P)
+	{
+		Ability = class'X2Ability_LWStandins'.static.PsiAbilityFor(P.Perk);
+		if (Ability == '')
+			Ability = class'X2Ability_LWStandins'.static.GeneAbilityFor(P.Perk);
+		if (Ability != '' && Unit.HasSoldierAbility(Ability, true))
+			H += P.Hours;
+	}
+	return H;
 }
 
 /** The hours left of a soldier's healing (its heal project), none if not healing. */

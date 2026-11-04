@@ -255,6 +255,15 @@ out.push(
   'SurgeryFoundry=30',
   'SurgeryScale=0.7',
 )
+// Long War's fatigue (XGFacility_Barracks.DetermineTimeOut; LWFatigue): the hours a psi power's or a gene mod's own adds.
+const perkHours = [...core.matchAll(/^ItemBalance_Easy=\(eItem=(\d+),.*?iEng=(\d+)\)/gm)].filter((m) => Number(m[2]) > 0)
+out.push(
+  '',
+  "; Long War's fatigue (LWFatigue): the hours each psi power or gene mod adds to a soldier's rest (ItemBalance_Easy: the",
+  '; perk, its iEng).',
+  '[LongWarX2.LWFatigue]',
+  ...perkHours.map((m) => `+PerkHours=(Perk=${m[1]}, Hours=${m[2]})`),
+)
 console.log(out.join('\r\n'))
 
 /**
