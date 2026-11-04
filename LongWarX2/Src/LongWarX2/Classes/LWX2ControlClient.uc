@@ -1090,8 +1090,8 @@ static function string AlienPerksOf(XComGameState_Unit Unit)
 	return S != "" ? S : "-";
 }
 
-/** The pieces whose mesh's path holds Part, and how many tiles above their bottom units can enter and stand on (a floor
- *  higher than the piece's base): 0 where nothing can be stood on (features/lw-missions.md, cars and sandbags). */
+/** The pieces whose mesh's path holds Part: how many have tiles over them (a floor higher than the piece's base) units
+ *  can enter, and how many such tiles a soldier can walk to (features/lw-missions.md, cars and sandbags). */
 function string Standable(string Part)
 {
 	local Actor A;
@@ -1099,10 +1099,13 @@ function string Standable(string Part)
 	local XComWorldData World;
 	local TTile Lo, Hi, T;
 	local vector Floor, Corner;
-	local int Pieces, Over, Stand;
+	local int Pieces, Over, Stand, Reached, Climbable, Destinations;
+	local array<XComGameState_Unit> Units;
+	local array<TTile> Path;
 
 	World = `XWORLD;
-	if (World == none)
+	Units = FieldXCom();
+	if (World == none || Units.Length == 0)
 		return "ERR not in a mission";
 	foreach class'WorldInfo'.static.GetWorldInfo().AllActors(class'Actor', A)
 		foreach A.ComponentList(class'StaticMeshComponent', C)
@@ -1110,6 +1113,8 @@ function string Standable(string Part)
 			if (C.StaticMesh == none || InStr(PathName(C.StaticMesh), Part) < 0)
 				continue;
 			Pieces++;
+			if (XComLevelActor(A) != none && XComLevelActor(A).bCanClimbOnto)
+				Climbable++;
 			Corner = C.Bounds.Origin - C.Bounds.BoxExtent;
 			Lo = World.GetTileCoordinatesFromPosition(Corner);
 			Corner = C.Bounds.Origin + C.Bounds.BoxExtent;
@@ -1119,11 +1124,17 @@ function string Standable(string Part)
 				for (T.Y = Lo.Y; T.Y <= Hi.Y; T.Y++)
 					for (T.Z = Lo.Z; T.Z <= Hi.Z + 1; T.Z++)
 						if (World.CanUnitsEnterTile(T) && World.GetFloorPositionForTile(T, Floor) && Floor.Z > C.Bounds.Origin.Z - C.Bounds.BoxExtent.Z + 24)
+						{
 							Stand++;
+							if (World.IsFloorTileAndValidDestination(T))
+								Destinations++;
+							if (class'X2PathSolver'.static.BuildPath(Units[0], Units[0].TileLocation, T, Path, false))
+								Reached++;
+						}
 			if (Stand > 0)
 				Over++;
 		}
-	return Pieces @ "pieces of" @ Part $ ";" @ Over @ "with tiles over them units can stand on";
+	return Pieces @ "pieces of" @ Part @ "(" $ Climbable @ "climbable onto);" @ Over @ "with tiles over them units can enter;" @ Destinations @ "such tiles valid destinations," @ Reached @ "a soldier can walk to";
 }
 
 /** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */
