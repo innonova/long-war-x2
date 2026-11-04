@@ -52,6 +52,8 @@ struct LWX2Look
 	var name Kind;
 	var string Diffuse;
 	var string Normal;
+	/** For the cut-out kinds: the diffuse's alpha in green and blue, which XCOM 2's cut-out parents read (mask-textures.ts). */
+	var string Mask;
 };
 
 struct LWX2Standin
@@ -67,6 +69,8 @@ struct LWX2Standin
  */
 var config string PropParent;
 var config string FoliageParent;
+/** The parent for EW's cut-out materials (tree cards, signs, fences, road paint), given the look's mask as its Masks. */
+var config string MaskedParent;
 var config string AlienParent;
 /** Scalars set on every stand-in (SpecularScale 0: the parents' placeholder mask made EW's surfaces glossy and grey). */
 var config array<LWX2Scalar> StandinScalars;
@@ -396,7 +400,7 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	if (k != INDEX_NONE)
 	{
 		L = Map().Looks[k];
-		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : default.PropParent);
+		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : ((L.Kind == 'Masked' && default.MaskedParent != "") ? default.MaskedParent : default.PropParent));
 	}
 	if (ParentPath != "" && L.Diffuse != "")
 	{
@@ -419,6 +423,12 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 		T = Texture(DynamicLoadObject(L.Diffuse, class'Texture', true));
 		if (T != none)
 			MIC.SetTextureParameterValue('Diffuse', T);
+		if (L.Mask != "")
+		{
+			T = Texture(DynamicLoadObject(L.Mask, class'Texture', true));
+			if (T != none)
+				MIC.SetTextureParameterValue('Masks', T);
+		}
 		if (L.Normal != "")
 		{
 			T = Texture(DynamicLoadObject(L.Normal, class'Texture', true));

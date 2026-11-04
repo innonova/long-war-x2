@@ -22,7 +22,7 @@ export interface EWMap {
   pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean; fractured: boolean; cover: string[]; frac?: { indices: number; minZ: number; maxZ: number; toughness: string } }[]
   /** EW's doors (ew-map.ts): mesh, AnimTree, AnimSets, physics, where, the idle animation, the interaction points. */
   doors: { mesh: string; materials: string[]; tree: string; physics: string; sets: string[]; loc: number[]; rot: number[]; scale: number[]; idle: string; blocksSight: boolean; window: boolean; points: Record<string, string>[] }[]
-  looks: Map<string, { kind: string; diffuse: string; normal: string }>
+  looks: Map<string, { kind: string; diffuse: string; normal: string; mask: string }>
   lights: { kind: string; loc: number[]; rot: number[]; radius: number; brightness: number; color: number[]; falloff: number; inner: number; outer: number }[]
   /** EW's building volumes, each with its floors (a box each). */
   buildings: { center: number[]; extent: number[]; floors: { center: number[]; extent: number[] }[]; ufo: boolean }[]
@@ -49,7 +49,7 @@ export function readSection(text: string): EWMap {
       if (boxes.length) m.buildings.push({ ...boxes[0]!, floors: boxes.slice(1), ufo: /Ufo=true/.test(line) })
     }
     else if (line.startsWith('+Looks='))
-      m.looks.set(str(line, 'Material'), { kind: /Kind=(\w+)/.exec(line)?.[1] ?? 'Prop', diffuse: str(line, 'Diffuse'), normal: str(line, 'Normal') })
+      m.looks.set(str(line, 'Material'), { kind: /Kind=(\w+)/.exec(line)?.[1] ?? 'Prop', diffuse: str(line, 'Diffuse'), normal: str(line, 'Normal'), mask: str(line, 'Mask') })
     else if (line.startsWith('+Doors=')) {
       const sets = /AnimSets=\(([^)]*)\)/.exec(line)?.[1] ?? ''
       const mats = /Materials=\(([^)]*)\)/.exec(line)?.[1] ?? ''
@@ -338,10 +338,11 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       const tags: T[] = [tObj('Parent', importRef(settings.parents[look.kind]!, 'Material')), tGuid('LightingGuid')]
       const texParams: [string, number][] = [['Diffuse', importRef(look.diffuse, 'Texture2D')]]
       if (look.normal) texParams.push(['Normal', importRef(look.normal, 'Texture2D')])
-      // The kinds cut out by the diffuse's alpha take it as their masks too: XCOM 2's masked parents read the opacity
-      // from one of the two.
+      // The kinds cut out by the diffuse's alpha: XCOM 2's cut-out parents read the opacity from a colour channel of
+      // their Masks (Props_OpcMask_TC green, Vegetations_VO blue), so the converter's mask with the alpha in those
+      // (mask-textures.ts); a map converted before it had masks, the diffuse itself.
       const cutOut = settings.diffuseMasks?.includes(look.kind)
-      if (cutOut) texParams.push(['Masks', importRef(look.diffuse, 'Texture2D')])
+      if (cutOut) texParams.push(['Masks', importRef(look.mask || look.diffuse, 'Texture2D')])
       for (const [n, t] of settings.textures) if (!(cutOut && n === 'Masks')) texParams.push([n, importRef(t, 'Texture2D')])
       // TextureParameterValues: an array of (ParameterName, ParameterValue, ExpressionGUID) structs, tagged.
       tags.push({

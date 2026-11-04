@@ -21,6 +21,7 @@ import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
+import { addMaskTextures } from './mask-textures.ts'
 
 /** Raised when what a conversion writes changes so that maps converted before must be converted again
  *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods,
@@ -28,8 +29,9 @@ import { inlineTextures } from './inline-textures.ts'
  *  name made unique; materials cut out by their diffuse's alpha, a kind of their own; 6: walls marked fractured, so the
  *  plot imports them as such; the buildings' surface textures, Diffuse_Base; 7: the doors, the pieces' cover flags;
  *  8: the walls' fracture data and toughness, for XCOM 2's breakable walls; 9: the textures of materials cooked without
- *  their expressions, read from the compiled shader (the road paint, asphalt patches), translucent ones masked). */
-export const CONVERTER_VERSION = 9
+ *  their expressions, read from the compiled shader (the road paint, asphalt patches), translucent ones masked; 10: masks for the
+ *  cut-out looks, the diffuse's alpha in green and blue, which XCOM 2's cut-out parents read their opacity from). */
+export const CONVERTER_VERSION = 10
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -582,7 +584,7 @@ for (const level of ['Stream', 'EWI', 'CNH']) {
 // not compile any), so the mod replaces each with an instance of an XCOM 2 parent given
 // the EW material's diffuse and normal maps. Read here: an instance's texture parameters
 // (its parents' for those it does not set), a material's texture expressions.
-interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' }
+interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien'; mask?: string }
 const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
 /** Root materials drawn see-through (EW's BlendMode BLEND_Translucent: road paint, decals), by name. */
 const translucent = new Set<string>()
@@ -734,11 +736,20 @@ exports.forEach((e) => {
 })
 // The textures with their mips uncompressed in the package (inline-textures.ts), after the stub.
 const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'))
-const outBytes = new Uint8Array(bytes.length + stub.length + tex.appended.length)
-outBytes.set(bytes)
-outBytes.set(stub, stubAt)
-outBytes.set(tex.appended, stubAt + stub.length)
-writeFileSync(out, outBytes)
+const inlined = new Uint8Array(bytes.length + stub.length + tex.appended.length)
+inlined.set(bytes)
+inlined.set(stub, stubAt)
+inlined.set(tex.appended, stubAt + stub.length)
+// The cut-out looks' masks (mask-textures.ts): XCOM 2's cut-out parents read the opacity from Masks, not the diffuse.
+const cutOutDiffuses = new Map<string, number>()
+for (const l of looks.values())
+  if ((l.kind === 'Masked' || l.kind === 'Foliage') && l.diffuse) {
+    const k = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
+    if (k >= 0) cutOutDiffuses.set(l.diffuse, k + 1)
+  }
+const masked = addMaskTextures(inlined, [...cutOutDiffuses.values()])
+for (const l of looks.values()) if (masked.masks.has(cutOutDiffuses.get(l.diffuse) ?? 0)) l.mask = l.diffuse + '_LWX2Mask'
+writeFileSync(out, masked.bytes)
 
 // --- The pieces as config ------------------------------------------------------------
 // Names are shared by everything in the package: a mesh named like a carried package was renamed with it.
@@ -798,7 +809,7 @@ const lines = [
   ),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
-    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}")`,
+    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''})`,
   ),
   ...pieces.map(
     (p) =>
@@ -807,7 +818,7 @@ const lines = [
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')
 const meshes = new Set(pieces.map((p) => p.mesh))
-console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed (${nested} nested), ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB)`)
+console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed (${nested} nested), ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB), ${masked.masks.size} masks for cut-out looks`)
 const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
 console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points (${spawnPoints.filter((p) => p[3]).length} civilian), ${lights.length} lights, ${buildings.length} buildings (${buildings.reduce((a, b) => a + b.floors.length, 0)} floors)`)

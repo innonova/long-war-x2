@@ -31,21 +31,6 @@ export function readConsts(upkBytes) {
   return consts
 }
 
-/**
- * An enum's names in EW's XComGame.upk (EPerkType: index = Long War's perk number in its ini): the Enum export's data
- * holds its net index, None, Next, then the count and the names (name index and number, 8 bytes each).
- */
-export function readEnum(upkBytes, enumName) {
-  const bytes = decompressPackage(upkBytes)
-  const pkg = new Package(bytes)
-  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  const e = pkg.exports.find((x) => x.type === 'Enum' && x.name === enumName)
-  if (!e) throw new Error(`no enum ${enumName}`)
-  const names = pkg.names.map((n) => String(n.name ?? n))
-  const count = v.getInt32(e.offset + 16, true)
-  return Array.from({ length: count }, (_, i) => names[v.getInt32(e.offset + 20 + i * 8, true)])
-}
-
 /** The words file, from Long War's DefaultGameCore.ini and XComGame.int texts and EW's constants. */
 export function makeWords({ plan, core, loc, consts }) {
   const locOf = (key, perk) => loc.match(new RegExp(`^${key}\\[${perk}\\]="(.*)"\\s*$`, 'm'))?.[1] ?? ''
