@@ -304,3 +304,14 @@ repository); a spec for the work, not done yet:
   a canister with explosives; the HUD's canister line. (EW's countdown from the mission's start is as
   here: `m_bBeginCountdownWhenSeen` is off by default and none of the places read sets it.) The meld tutorial map's places are in its
   streamed level, not read.
+
+## The grey market: read, not built (2026-11-04 night)
+
+- EW's rule (`XGGreyMarketUI`, `XGItemTree.GetItemSalePrice`, `CanBeSold`): an item in stores sells for
+  its cash value (`ItemBalance_Normal`'s `iCash`), 40% of it for an item that can be built (its
+  `iTime` is not -1); a short list never sells (the skeleton key, the hyperwave beacon, the satellite,
+  interceptors …), nor anything at cash -1.
+- What stops it tonight: Long War renumbered and renamed EW's items (its corpses and artifacts sit in
+  slots EW's enum calls captives and placeholders), so the port's corpses and artifacts need Long War's
+  names for its item numbers (its `XComGame.int`) before a price can be put on them. And where the
+  player sells (EW's own Grey Market screen, or the stores' list) is the person's to choose.
