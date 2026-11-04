@@ -21,7 +21,7 @@ import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
-import { addMaskTextures } from './mask-textures.ts'
+import { addMaskTextures, maskMip } from './mask-textures.ts'
 
 /** Raised when what a conversion writes changes so that maps converted before must be converted again
  *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods,
@@ -82,13 +82,14 @@ function uniqueNames(bytes: Uint8Array): number {
  *  player's setup program as well as from the command line. */
 export function convertMap(src: string, out: string, iniOut: string): void {
 const original = new Uint8Array(readFileSync(src))
-const bytes = decompressPackage(original)
+let bytes = decompressPackage(original)
 const renumbered = uniqueNames(bytes)
-// Two readers of the same bytes: upk's for names, paths and table entries; package's for object data.
-const meta: any = new Package(bytes)
-const pkg: any = openPackage(bytes)
-const exports = meta.exports as any[]
-const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+// Two readers of the same bytes: upk's for names, paths and table entries; package's for object data. (Read again once
+// the masks are added, below.)
+let meta: any = new Package(bytes)
+let pkg: any = openPackage(bytes)
+let exports = meta.exports as any[]
+let v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 
 // --- The placements, read before anything is changed -----------------------------
 const f32 = (t: Tag | undefined, k: number) => (t ? new DataView(t.value.buffer, t.value.byteOffset).getFloat32(4 * k, true) : 0)
@@ -682,6 +683,24 @@ function lookOf(r: number): Look {
 const looks = new Map<number, Look>()
 for (const p of [...pieces, ...doors]) for (const m of p.materials) if (m && !looks.has(m)) looks.set(m, lookOf(m))
 
+// The cut-out looks' masks (mask-textures.ts): XCOM 2's cut-out parents read the opacity from Masks, not the diffuse.
+// Added now, while the package is small; their mips are made as the textures are inlined. Additions go at the tables'
+// ends, so every reference read so far stays good.
+const cutOut = new Map<string, number>()
+for (const l of looks.values())
+  if ((l.kind === 'Masked' || l.kind === 'Foliage') && l.diffuse) {
+    const k = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
+    if (k >= 0) cutOut.set(l.diffuse, k + 1)
+  }
+const masked = addMaskTextures(bytes, [...cutOut.values()])
+for (const l of looks.values()) if (masked.masks.has(cutOut.get(l.diffuse) ?? 0)) l.mask = l.diffuse + '_LWX2Mask'
+bytes = masked.bytes
+meta = new Package(bytes)
+pkg = openPackage(bytes)
+exports = meta.exports as any[]
+v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+const maskExports = new Set([...masked.masks.values()].map((r) => exports[r - 1]))
+
 // --- The package: the world neutralized, the carried packages and the caches renamed -
 // XCOM 2 reads every object of a package it loads, and reads EW's level objects wrong.
 // So each object of the world becomes a plain object of a simple class the package
@@ -735,21 +754,13 @@ exports.forEach((e) => {
   }
 })
 // The textures with their mips uncompressed in the package (inline-textures.ts), after the stub.
-const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'))
-const inlined = new Uint8Array(bytes.length + stub.length + tex.appended.length)
-inlined.set(bytes)
-inlined.set(stub, stubAt)
-inlined.set(tex.appended, stubAt + stub.length)
-// The cut-out looks' masks (mask-textures.ts): XCOM 2's cut-out parents read the opacity from Masks, not the diffuse.
-const cutOutDiffuses = new Map<string, number>()
-for (const l of looks.values())
-  if ((l.kind === 'Masked' || l.kind === 'Foliage') && l.diffuse) {
-    const k = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
-    if (k >= 0) cutOutDiffuses.set(l.diffuse, k + 1)
-  }
-const masked = addMaskTextures(inlined, [...cutOutDiffuses.values()])
-for (const l of looks.values()) if (masked.masks.has(cutOutDiffuses.get(l.diffuse) ?? 0)) l.mask = l.diffuse + '_LWX2Mask'
-writeFileSync(out, masked.bytes)
+const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'),
+  (e, format, mip) => (maskExports.has(e) ? maskMip(format, mip) : undefined))
+const outBytes = new Uint8Array(bytes.length + stub.length + tex.appended.length)
+outBytes.set(bytes)
+outBytes.set(stub, stubAt)
+outBytes.set(tex.appended, stubAt + stub.length)
+writeFileSync(out, outBytes)
 
 // --- The pieces as config ------------------------------------------------------------
 // Names are shared by everything in the package: a mesh named like a carried package was renamed with it.

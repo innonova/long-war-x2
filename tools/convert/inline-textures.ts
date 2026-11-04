@@ -29,6 +29,8 @@ export function inlineTextures(
   cacheDir: string,
   base: number,
   skip: (e: Export) => boolean = () => false,
+  /** A texture's mips made otherwise (by its pixel format), as they are written: the masks (mask-textures.ts). */
+  transform?: (e: Export, format: string, mip: Uint8Array) => Uint8Array | undefined,
 ): { appended: Uint8Array; textures: number; mips: number } {
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   const caches = new Map<string, Uint8Array>()
@@ -46,6 +48,7 @@ export function inlineTextures(
     let o = e.offset + 4 // net index
     let cacheName = ''
     let cacheAt = -1
+    let format = ''
     // Tagged properties: name, type, size, array index, then the value.
     for (;;) {
       const n = v.getInt32(o, true)
@@ -61,6 +64,7 @@ export function inlineTextures(
         o += 1
         continue
       }
+      if (names[n] === 'Format' && type === 'ByteProperty') format = names[v.getInt32(o, true)]!
       if (names[n] === 'TextureFileCacheName' && type === 'NameProperty') {
         cacheName = names[v.getInt32(o, true)]!
         cacheAt = o
@@ -106,7 +110,8 @@ export function inlineTextures(
     o += 4
     push(i32s(n))
     for (let k = 0; k < n; k++) {
-      const data = bulk()
+      const read = bulk()
+      const data = read && transform ? (transform(e, format, read) ?? read) : read
       const w = v.getInt32(o, true)
       const h = v.getInt32(o + 4, true)
       o += 8
