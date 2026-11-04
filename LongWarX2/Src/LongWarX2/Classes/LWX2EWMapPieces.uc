@@ -77,6 +77,14 @@ var config array<LWX2Scalar> StandinScalars;
 /** Textures set on every stand-in (Masks white: the parents' own value for "no mask"; their placeholder darkened everything). */
 var config array<LWX2TextureParam> StandinTextures;
 /** EW's alien pods (lw-missions.md, step 2): where its aliens stand, the commander's pod, how many. */
+/** A place of EW's meld canisters (XComMeldContainerSpawnPoint; lw-loot.md): its drop zone's group, the turn it is gone, hard or easy. */
+struct LWX2Meld
+{
+	var vector Loc;
+	var int Group;
+	var int Turns;
+	var bool Hard;
+};
 struct LWX2Pod
 {
 	var vector Loc;

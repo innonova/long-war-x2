@@ -13,4 +13,5 @@ var config vector PlayExtent;
 var config array<vector> DropZones;
 var config array<LWX2EWMapPieces.LWX2Pod> Pods;
 var config array<vector> SpawnPoints;
+var config array<LWX2EWMapPieces.LWX2Meld> MeldPoints;
 var config array<LWX2EWMapPieces.LWX2Light> Lights;

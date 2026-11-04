@@ -280,3 +280,27 @@ repository); a spec for the work, not done yet:
   in groups 0–2 (its three player starts), easy and hard, self-destructing on turns 4 to 11; the
   bar 4, all group 0, on turns 4 and 8. The meld tutorial's are not in its persistent level (its
   streamed level, to read).
+
+## Report (2026-11-04 day, meld canisters)
+
+- **Built:** the converter reads EW's meld canisters' places (`MeldPoints` in each map's section:
+  the place, its group, its turn, hard or easy; converter version 16, so the setup converts the
+  maps again). As the mission's HUD comes up, `LWMeld` places Long War's canisters on an
+  abduction, crash site or landed UFO played on an EW map: the spawn group of the drop zone
+  nearest the soldiers, one hard, an easy one on a roll of 2 or more, a second hard on 3 (EW's
+  rule). Each is XCOM 2's timed loot drop (its marker with the turns left, taken by a soldier who
+  walks up to it, brought home in the backpack) holding the aliens' resources / 10 meld, 5 to 30;
+  gone at the start of XCOM's turn EW gives it.
+- **Seen** (the bar, an abduction): "2 canisters (roll 2, group 0; 2 hard, 2 easy places), 11
+  meld each"; the markers at EW's places (by the parking lot, in the kitchen); the easy one's turns
+  4 → 1 after two turns ended; the Scout walked into the kitchen, XCOM 2's LOOT RECOVERY "Meld x11";
+  the mission won, the Geoscape's meld 14 (11 of them the canister's).
+- **Decisions:** the loot drop keeps the first soldier as its source (XCOM 2 wants one; the place
+  and the turns are set after). Its recovery dialog therefore names that soldier as where the meld
+  came from. Without a source it would say "Meld canister", but the one run made so crashed at
+  the end of the first turn; with the source kept, five turns, the pick-up and the mission's end
+  went through. Not proven to be the cause.
+- **Not like EW yet:** EW's canister model and its sounds (XCOM 2's loot marker instead); EW's
+  countdown that starts only once a canister is seen (`m_bBeginCountdownWhenSeen`); destroying a
+  canister with explosives; the HUD's canister line. The meld tutorial map's places are in its
+  streamed level, not read.

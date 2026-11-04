@@ -32,8 +32,9 @@ import { addMaskTextures, maskMip } from './mask-textures.ts'
  *  their expressions, read from the compiled shader (the road paint, asphalt patches), translucent ones masked; 10: masks for the
  *  cut-out looks, the diffuse's alpha in green and blue, which XCOM 2's cut-out parents read their opacity from;
  *  11: vehicles not to be stood on; 12: nor sandbags; 13: their tops no valid destinations; 14: no path written as
- *  none, not as the map's name and a dot; 15: EW's materials made inert, XCOM 2 compiling each as the map loaded). */
-export const CONVERTER_VERSION = 15
+ *  none, not as the map's name and a dot; 15: EW's materials made inert, XCOM 2 compiling each as the map loaded;
+ *  16: the meld canisters' places, MeldPoints). */
+export const CONVERTER_VERSION = 16
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -413,6 +414,9 @@ function brushBox(index: number): { center: number[]; extent: number[] } | undef
 // EW's alien pods (where its aliens stand: the commander's pod, how many) and its spawn points.
 const pods: { loc: number[]; commander: boolean; min: number; max: number; level: string }[] = []
 const spawnPoints: number[][] = []
+// EW's meld canisters' places (XComMeldContainerSpawnPoint: lw-loot.md): its spawn group (the drop zone's, in order), the
+// turn it self-destructs on (EW's default 3), hard or easy.
+const meldPoints: { loc: number[]; group: number; turns: number; hard: boolean }[] = []
 // EW's lights (lw-missions.md, step 2): baked into its lightmaps, which XCOM 2 cannot use, so
 // the mod spawns each as a movable light. Kind, place, direction, and its component's values
 // (Unreal's defaults where the map does not set them).
@@ -481,6 +485,16 @@ exports.forEach((e, i) => {
         max: i32(t!.find((x) => x.name === 'NumAliens_Max'), 0),
         level: e.type === 'XComAlienPod_Abduction' ? 'Abduction' : '',
       })
+  }
+  if (e.type === 'XComMeldContainerSpawnPoint') {
+    const t = actorTags(i)
+    const loc = t?.find((x) => x.name === 'Location')
+    if (!loc) return
+    const group = t!.find((x) => x.name === 'm_iSpawnGroup')
+    const turns = t!.find((x) => x.name === 'm_iDestroyedOnTurn')
+    const diff = t!.find((x) => x.name === 'm_eDifficulty')
+    const diffName = diff && diff.value.byteLength >= 8 ? meta.names[new DataView(diff.value.buffer, diff.value.byteOffset).getInt32(0, true)] : ''
+    meldPoints.push({ loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)], group: group ? i32(group, 0) : 0, turns: turns ? i32(turns, 0) : 3, hard: /Hard/.test(diffName ?? '') })
   }
   if (LIGHTS[e.type]) {
     const t = actorTags(i) ?? []
@@ -839,6 +853,8 @@ const lines = [
   ...pods.map((p) => `+Pods=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Commander=${p.commander},Min=${p.min},Max=${p.max}${p.level ? `,Level=${p.level}` : ''})`),
   ...spawnPoints.filter((p) => !p[3]).map((p) => `+SpawnPoints=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
   ...spawnPoints.filter((p) => p[3]).map((p) => `+CivilianSpawns=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
+  "; EW's meld canisters' places (Group: the drop zone's, in their order; Turns: when it self-destructs; Hard or easy).",
+  ...meldPoints.map((p) => `+MeldPoints=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Group=${p.group},Turns=${p.turns},Hard=${p.hard})`),
   "; EW's lights (point, spot, its sun and sky), spawned as movable lights.",
   ...lights.map(
     (l) =>
@@ -860,7 +876,7 @@ const meshes = new Set(pieces.map((p) => p.mesh))
 console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed (${nested} nested), ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB), ${masked.masks.size} masks for cut-out looks, ${materialsStubbed} materials made inert`)
 const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
-console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points (${spawnPoints.filter((p) => p[3]).length} civilian), ${lights.length} lights, ${buildings.length} buildings (${buildings.reduce((a, b) => a + b.floors.length, 0)} floors)`)
+console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points (${spawnPoints.filter((p) => p[3]).length} civilian), ${meldPoints.length} meld points, ${lights.length} lights, ${buildings.length} buildings (${buildings.reduce((a, b) => a + b.floors.length, 0)} floors)`)
 console.log(`${iniOut}: ${pieces.length} pieces of ${meshes.size} meshes, ${doors.length} doors${renumbered ? `; ${renumbered} objects of a name shared renumbered` : ''}${Object.keys(skipped).length ? `; components not read: ${JSON.stringify(skipped)}` : ''}`)
 }
 
