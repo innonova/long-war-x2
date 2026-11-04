@@ -90,6 +90,7 @@ static function bool Apply(XComGameState_Unit Unit)
 	if (Pawn.Mesh.SkeletalMesh != none && string(Pawn.Mesh.SkeletalMesh.Name) == Mid(B.Mesh, InStr(B.Mesh, ".") + 1))
 	{
 		QuietControls(Pawn);
+		FixMasks(Pawn);
 		return false;
 	}
 	Mesh = SkeletalMesh(DynamicLoadObject(B.Mesh, class'SkeletalMesh', true));
@@ -102,6 +103,7 @@ static function bool Apply(XComGameState_Unit Unit)
 			Pawn.Mesh.SetMaterial(i, Material);
 	Pawn.UpdateAnimations();
 	QuietControls(Pawn);
+	FixMasks(Pawn);
 	Weapon(Unit, B);
 	return true;
 }
@@ -126,6 +128,95 @@ static function QuietControls(XComUnitPawn Pawn)
 		for (Control = Tree.SkelControlLists[i].ControlHead; Control != none; Control = Control.NextControl)
 			if (SkelControlFootPlacement(Control) == none && Control.ControlStrength > 0)
 				Control.SetSkelControlStrength(0, 0);
+}
+
+/**
+ * XCOM 2's channel masks (XComAnimNodeBlendMasks: full body, upper body, the arms, the head) start from its skeletons'
+ * bones ("Root", "Spine1", "lShoulder", "rShoulder", "Neck"); on EW's skeletons they covered no bone, so no full-body
+ * animation reached the body and every EW body stood in its reference pose (the person's "arms-out" Sectoids; found
+ * 2026-11-04 night). Each such mask is rebuilt on EW's bones: its start bone mapped (Root: the mesh's first bone; the rest
+ * EW's RigSpine1, RigLArmCollarbone, RigRArmCollarbone, RigNeck where the skeleton has them), every bone under it in the
+ * mask, and the chain from the root to it as the bones blended in model space, as XCOM 2 builds them. The start bone is
+ * then EW's, so a mask done is not done again; a tree made anew has XCOM 2's names and is done again.
+ */
+static function FixMasks(XComUnitPawn Pawn)
+{
+	local XComAnimNodeBlendMasks Masks;
+	local array<name> Bones;
+	local array<byte> Chain;
+	local name Start, Bone;
+	local int i, k, n;
+
+	foreach Pawn.Mesh.AllAnimNodes(class'XComAnimNodeBlendMasks', Masks)
+	{
+		for (i = 0; i < Masks.BlendMasks.Length; i++)
+		{
+			if (Pawn.Mesh.MatchRefBone(Masks.BlendMasks[i].BranchStartBoneName) != INDEX_NONE)
+				continue;
+			if (Bones.Length == 0)
+				for (k = 0; k < 1024 && Pawn.Mesh.GetBoneName(k) != ''; k++)
+					Bones.AddItem(Pawn.Mesh.GetBoneName(k));
+			Start = EWBoneFor(Masks.BlendMasks[i].BranchStartBoneName, Bones);
+			if (Start == '')
+				continue;
+			Masks.BlendMasks[i].PerBoneMask.Length = Bones.Length;
+			for (k = 0; k < Bones.Length; k++)
+			{
+				Masks.BlendMasks[i].PerBoneMask[k] = 0;
+				Bone = Bones[k];
+				n = 0;
+				while (Bone != '' && n < 64)
+				{
+					if (Bone == Start)
+					{
+						Masks.BlendMasks[i].PerBoneMask[k] = 1;
+						break;
+					}
+					Bone = Pawn.Mesh.GetParentBone(Bone);
+					n++;
+				}
+			}
+			// The chain from the root down to the start bone.
+			Chain.Length = 0;
+			Bone = Start;
+			n = 0;
+			while (Bone != '' && n < 64)
+			{
+				Chain.InsertItem(0, Pawn.Mesh.MatchRefBone(Bone));
+				Bone = Pawn.Mesh.GetParentBone(Bone);
+				n++;
+			}
+			Masks.BlendMasks[i].ModelSpaceBones = Chain;
+			Masks.BlendMasks[i].BranchStartBoneName = Start;
+		}
+	}
+}
+
+/** An XCOM 2 skeleton's bone named as on an EW skeleton (none where the skeleton has no such bone). */
+static function name EWBoneFor(name X2Bone, array<name> Bones)
+{
+	local name EW;
+
+	switch (X2Bone)
+	{
+	case 'Root':
+		return Bones.Length > 0 ? Bones[0] : '';
+	case 'Spine1':
+		EW = 'RigSpine1';
+		break;
+	case 'lShoulder':
+		EW = 'RigLArmCollarbone';
+		break;
+	case 'rShoulder':
+		EW = 'RigRArmCollarbone';
+		break;
+	case 'Neck':
+		EW = 'RigNeck';
+		break;
+	default:
+		return '';
+	}
+	return Bones.Find(EW) != INDEX_NONE ? EW : '';
 }
 
 /** The unit's primary weapon drawn as EW's (its mesh and a stand-in), where the body names one and XCOM 2's is skeletal. */

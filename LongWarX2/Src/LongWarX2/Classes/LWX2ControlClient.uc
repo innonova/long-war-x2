@@ -946,6 +946,30 @@ function string OpenArmory(int Index)
 	return "ERR no such soldier";
 }
 
+/** A tree's nodes under a node, indented, with the weights of each blend's children (control aid anims n relink8). */
+function TreeLines(out array<string> Out, AnimNode Node, int Depth)
+{
+	local AnimNodeBlendBase Blend;
+	local string Pad;
+	local int i;
+
+	if (Node == none || Depth > 22 || Out.Length > 500)
+		return;
+	for (i = 0; i < Depth; i++)
+		Pad $= "  ";
+	Blend = AnimNodeBlendBase(Node);
+	Out.AddItem("  " $ Pad $ Node.Class.Name @ Node.NodeName @ "total" @ Node.NodeTotalWeight $ (AnimNodeSequence(Node) != none ? " anim " $ AnimNodeSequence(Node).AnimSeqName $ (AnimNodeSequence(Node).AnimSeq != none ? "" : " MISSING") : ""));
+	if (Blend == none)
+		return;
+	for (i = 0; i < Blend.Children.Length; i++)
+	{
+		if (Blend.Children[i].Weight <= 0.001 && Depth > 0)
+			continue;
+		Out.AddItem("  " $ Pad $ "- child" @ i @ Blend.Children[i].Name @ "weight" @ Blend.Children[i].Weight);
+		TreeLines(Out, Blend.Children[i].Anim, Depth + 1);
+	}
+}
+
 /** Each soldier's body parts: name, and the armour the part belongs to (MISSING: no such part). */
 function Parts(out array<string> Out)
 {
@@ -1362,6 +1386,14 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 	local AnimNodeSequence Seq;
 	local SkelControlBase Control;
 	local AnimNodeBlendPerBone PerBone;
+	local AnimTree Simple;
+	local AnimNodeAdditiveBlending Additive;
+	local AnimNodeAimOffset Aim;
+	local XComAnimNodeBlendMasks Masks;
+	local AnimNodeSequence One;
+	local array<name> Bones;
+	local name Bone;
+	local vector At;
 	local int Best;
 	local StateObjectReference Ref;
 	local CustomAnimParams Params;
@@ -1370,6 +1402,11 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 	local string Sets;
 
 	Best = 9999;
+	Bones.AddItem('RigLArmUpperarm');
+	Bones.AddItem('RigLArmHand');
+	Bones.AddItem('RigRArmUpperarm');
+	Bones.AddItem('RigRArmHand');
+	Bones.AddItem('RigHead');
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 	{
 		if (Unit.GetTeam() == eTeam_XCom || !Unit.IsAlive() || Unit.bRemovedFromPlay || XGUnit(Unit.GetVisualizer()) == none)
@@ -1400,6 +1437,95 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 		Pawn.UpdateAnimations();
 	if (Relink == 2)
 		Pawn.Mesh.UpdateAnimations();
+	// The tree made again on the mesh as it is now (its nodes linked to EW's skeleton, not XCOM 2's).
+	if (Relink == 3)
+		Pawn.Mesh.SetAnimTreeTemplate(Pawn.Mesh.AnimTreeTemplate);
+	// The skeleton composed from the tree now (whether an update is what is missing).
+	if (Relink == 4)
+		Pawn.Mesh.ForceSkelUpdate();
+	// Only the sets whose tracks are the mesh's (XCOM 2's own set, for its own skeleton, taken off), relinked.
+	if (Relink == 6)
+	{
+		for (i = Pawn.Mesh.AnimSets.Length - 1; i >= 0; i--)
+			if (Pawn.Mesh.AnimSets[i] == none || Pawn.Mesh.AnimSets[i].TrackBoneNames.Length == 0 || Pawn.Mesh.MatchRefBone(Pawn.Mesh.AnimSets[i].TrackBoneNames[0]) == INDEX_NONE)
+				Pawn.Mesh.AnimSets.Remove(i, 1);
+		Pawn.Mesh.UpdateAnimations();
+	}
+	// A minimal tree (one looping node, the idle), as the display actor that played EW's animations had.
+	if (Relink == 7)
+	{
+		Simple = new class'AnimTree';
+		One = new class'AnimNodeSequence';
+		Simple.Children.Length = 1;
+		Simple.Children[0].Anim = One;
+		Simple.Children[0].Weight = 1.0;
+		Pawn.Mesh.SetAnimTreeTemplate(Simple);
+		foreach Pawn.Mesh.AllAnimNodes(class'AnimNodeSequence', Seq)
+		{
+			Seq.SetAnim('NO_IdleGunUpA');
+			Seq.PlayAnim(true);
+		}
+		Out.AddItem("  minimal tree:" @ Pawn.Mesh.Animations);
+	}
+	// The additive layers off (XCOM 2's reproportioning and joint offsets, whose animations EW's bodies lack).
+	if (Relink == 9)
+	{
+		foreach Pawn.Mesh.AllAnimNodes(class'AnimNodeAdditiveBlending', Additive)
+		{
+			Additive.SetBlendTarget(0, 0);
+			Out.AddItem("  additive off:" @ Additive.NodeName);
+		}
+	}
+	// The aim offsets off.
+	if (Relink == 10)
+	{
+		foreach Pawn.Mesh.AllAnimNodes(class'AnimNodeAimOffset', Aim)
+		{
+			Aim.Aim.X = 0;
+			Aim.Aim.Y = 0;
+			Aim.bBakeFromAnimations = false;
+			Aim.SetActiveProfileByIndex(-1);
+			Out.AddItem("  aim offset off:" @ Aim.NodeName @ Aim.CurrentProfileIndex);
+		}
+	}
+	// XCOM 2's channel masks (BlendChannels): each mask's start bone, weights, how many bones it covers, its child.
+	if (Relink == 11)
+	{
+		foreach Pawn.Mesh.AllAnimNodes(class'XComAnimNodeBlendMasks', Masks)
+		{
+			Out.AddItem("  masks" @ Masks.NodeName @ Masks.BlendMasks.Length @ "children" @ Masks.Children.Length);
+			for (i = 0; i < Masks.BlendMasks.Length; i++)
+			{
+				b = 0;
+				for (n = 0; n < Masks.BlendMasks[i].PerBoneMask.Length; n++)
+					if (Masks.BlendMasks[i].PerBoneMask[n] != 0)
+						b++;
+				Sets = "";
+				for (n = 0; n < Masks.BlendMasks[i].PerBoneMask.Length && n < 12; n++)
+					Sets @= string(Masks.BlendMasks[i].PerBoneMask[n]);
+				Sets $= " | model space" @ Masks.BlendMasks[i].ModelSpaceBones.Length $ ":";
+				for (n = 0; n < Masks.BlendMasks[i].ModelSpaceBones.Length && n < 12; n++)
+					Sets @= string(Masks.BlendMasks[i].ModelSpaceBones[n]);
+				Out.AddItem("      values" $ Sets);
+				Out.AddItem("    mask" @ i @ Masks.BlendMasks[i].BranchStartBoneName @ (Pawn.Mesh.MatchRefBone(Masks.BlendMasks[i].BranchStartBoneName) != INDEX_NONE ? "on the mesh" : "NOT on the mesh") @ "weight" @ Masks.BlendMasks[i].CurrentWeight @ "desired" @ Masks.BlendMasks[i].DesiredWeight @ "bones" @ b $ "/" $ Masks.BlendMasks[i].PerBoneMask.Length @ "child" @ (i + 1 < Masks.Children.Length ? Masks.Children[i + 1].Name : 'None'));
+			}
+		}
+	}
+	// The tree from its root: each blend node's children, their weights, to a depth (where the body's pose goes).
+	if (Relink == 8)
+		TreeLines(Out, Pawn.Mesh.Animations, 0);
+	// Every node with no animation that still counts given the idle (whether one of them holds the body in its pose).
+	if (Relink == 5)
+	{
+		foreach Pawn.Mesh.AllAnimNodes(class'AnimNodeSequence', Seq)
+		{
+			if (Seq.AnimSeq != none || Seq.NodeTotalWeight <= 0 || XComAnimNodeSequenceAdditive(Seq) != none)
+				continue;
+			Out.AddItem("  given the idle:" @ Seq.NodeName @ Seq.AnimSeqName);
+			Seq.SetAnim('NO_IdleGunUpA');
+			Seq.PlayAnim(true);
+		}
+	}
 	foreach Pawn.Mesh.AnimSets(Set)
 		Sets @= (Set != none ? string(Set.Name) $ "(" $ Set.Sequences.Length $ ")" : "none");
 	Out.AddItem(Pick.GetMyTemplateName() @ "mesh" @ PathName(Pawn.Mesh.SkeletalMesh) @ "tree" @ PathName(Pawn.Mesh.AnimTreeTemplate) @ "sets" $ Sets);
@@ -1428,6 +1554,30 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 		Out.AddItem("  playing" @ Play @ (Pawn.GetAnimTreeController().CanPlayAnimation(Play) ? "found" : "MISSING"));
 		Pawn.GetAnimTreeController().PlayFullBodyDynamicAnim(Params);
 	}
+	// Where the arm joints are now, in the unit's own frame (from its mesh's origin, unturned by its rotation).
+	Sets = "";
+	foreach Bones(Bone)
+	{
+		if (Pawn.Mesh.MatchRefBone(Bone) == INDEX_NONE)
+			continue;
+		At = (Pawn.Mesh.GetBoneLocation(Bone) - Pawn.Mesh.GetPosition()) << Pawn.Mesh.GetRotation();
+		Sets @= Bone $ "=" $ int(At.X) $ "," $ int(At.Y) $ "," $ int(At.Z);
+	}
+	// A mesh without those bones (XCOM 2's own): a few by index.
+	if (Sets == "")
+	{
+		for (b = 10; b < 70; b += 20)
+		{
+			Bone = Pawn.Mesh.GetBoneName(b);
+			if (Bone == '')
+				continue;
+			At = (Pawn.Mesh.GetBoneLocation(Bone) - Pawn.Mesh.GetPosition()) << Pawn.Mesh.GetRotation();
+			Sets @= Bone $ "=" $ int(At.X) $ "," $ int(At.Y) $ "," $ int(At.Z);
+		}
+	}
+	Out.AddItem("  joints:" $ Sets);
+	Out.AddItem("  lod: predicted" @ Pawn.Mesh.PredictedLODLevel @ "forced" @ Pawn.Mesh.ForcedLodModel @ "of" @ Pawn.Mesh.SkeletalMesh.LODInfo.Length @ "| recently rendered" @ Pawn.Mesh.bRecentlyRendered);
+	Out.AddItem("  mesh: force ref pose" @ Pawn.Mesh.bForceRefpose @ "| no skeleton update" @ Pawn.Mesh.bNoSkeletonUpdate @ "| anims paused" @ Pawn.Mesh.bPauseAnims @ "| update when not rendered" @ Pawn.Mesh.bUpdateSkelWhenNotRendered @ "| tree" @ Pawn.Mesh.Animations @ "| parent anim comp" @ Pawn.Mesh.ParentAnimComponent @ "| hidden" @ Pawn.Mesh.HiddenGame @ "| pawn class" @ Pawn.Class.Name);
 	// The per-bone blends whose start bones the mesh has (the rest do nothing on it): their bones, children and weights.
 	foreach Pawn.Mesh.AllAnimNodes(class'AnimNodeBlendPerBone', PerBone)
 	{
@@ -1451,7 +1601,7 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 	}
 	foreach Pawn.Mesh.AllAnimNodes(class'AnimNodeSequence', Seq)
 		if (Seq.NodeTotalWeight > 0.01 || (bAll && Seq.AnimSeqName != ''))
-			Out.AddItem("  " $ Seq.Class.Name @ Seq.AnimSeqName @ (Seq.AnimSeq != none ? "found" : "MISSING") @ "weight" @ Seq.NodeTotalWeight @ (Seq.bPlaying ? "playing" : "stopped") @ "at" @ Seq.CurrentTime);
+			Out.AddItem("  " $ Seq.Class.Name @ Seq.AnimSeqName @ (Seq.AnimSeq != none ? "found (" $ PathName(Seq.AnimSeq) $ ")" : "MISSING") @ "weight" @ Seq.NodeTotalWeight @ (Seq.bPlaying ? "playing" : "stopped") @ "at" @ Seq.CurrentTime);
 }
 
 /** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */
