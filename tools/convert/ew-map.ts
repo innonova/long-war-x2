@@ -33,8 +33,9 @@ import { addMaskTextures, maskMip } from './mask-textures.ts'
  *  cut-out looks, the diffuse's alpha in green and blue, which XCOM 2's cut-out parents read their opacity from;
  *  11: vehicles not to be stood on; 12: nor sandbags; 13: their tops no valid destinations; 14: no path written as
  *  none, not as the map's name and a dot; 15: EW's materials made inert, XCOM 2 compiling each as the map loaded;
- *  16: the meld canisters' places, MeldPoints). */
-export const CONVERTER_VERSION = 16
+ *  16: the meld canisters' places, MeldPoints; 17: what units see through (EW's VisibilityBlockingData on every piece:
+ *  windows, foliage, cars), written onto the plot's pieces). */
+export const CONVERTER_VERSION = 17
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -128,7 +129,7 @@ const archetypeOf = (index: number) => v.getInt32(exports[index].entryOffset + 2
  * from the placed actor, then its archetypes; what none sets is its class's default (a destructible's, a car's or
  * sandbags', is not to be stood on; XCOM 2 places every piece as an XComLevelActor, whose default is).
  */
-interface Cover { onto: boolean; over: boolean; destination: boolean; ignore: boolean; force: string }
+interface Cover { onto: boolean; over: boolean; destination: boolean; ignore: boolean; force: string; sight: boolean; window: boolean }
 const COVER_DEFAULTS: Record<string, Partial<Cover>> = {
   XComDestructibleActor: { onto: false },
   XComFracLevelActor: { onto: false },
@@ -147,6 +148,12 @@ function coverOf(index: number, own: Tag[]): Cover {
       else if (t.name === 'bCanClimbOver' && found.over === undefined) found.over = !!t.boolValue
       else if (t.name === 'bIsValidDestination' && found.destination === undefined) found.destination = !!t.boolValue
       else if (t.name === 'bIgnoreForCover' && found.ignore === undefined) found.ignore = !!t.boolValue
+      // Whether units see through it (EW's windows, glass: bBlockUnitVisibility off), as for the doors.
+      else if (t.name === 'VisibilityBlockingData' && found.sight === undefined) {
+        const vis = readTags(new Reader(t.value), pkg)
+        found.sight = vis.find((x) => x.name === 'bBlockUnitVisibility')?.boolValue !== 0
+        found.window = !!vis.find((x) => x.name === 'bIsWindow')?.boolValue
+      }
       else if (t.name === 'CoverForceFlag' && found.force === undefined)
         found.force = String(pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name)
     }
@@ -172,6 +179,8 @@ function coverOf(index: number, own: Tag[]): Cover {
     destination: found.destination ?? d.destination ?? true,
     ignore: found.ignore ?? d.ignore ?? false,
     force: found.force ?? 'CoverForce_Default',
+    sight: found.sight ?? true,
+    window: found.window ?? false,
   }
 }
 /** A property's tag on an export or the first of its archetypes that has it. */
@@ -819,7 +828,8 @@ const rename = (path: string) => {
 const n = (x: number) => (Math.abs(x) < 1e-4 ? '0' : String(Math.round(x * 1000) / 1000))
 /** A piece's cover flags where they differ from an XComLevelActor's defaults (what the plot places). */
 const coverText = (c: Cover) =>
-  (c.onto ? '' : ',ClimbOnto=false') + (c.over ? ',ClimbOver=true' : '') + (c.destination ? '' : ',Destination=false')
+  (c.onto ? '' : ',ClimbOnto=false') + (c.over ? ',ClimbOver=true' : '') + (c.destination ? '' : ',Destination=false') +
+  (c.sight ? '' : ',BlocksSight=false') + (c.window ? ',Window=true' : '')
   + (c.ignore ? ',IgnoreForCover=true' : '') + (c.force !== 'CoverForce_Default' ? `,CoverForce=${c.force}` : '')
 const lines = [
   `; The static meshes of ${basename(src)}, converted on this machine by tools/convert/ew-map.ts.`,

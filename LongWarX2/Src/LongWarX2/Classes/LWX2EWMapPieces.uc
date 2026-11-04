@@ -28,6 +28,8 @@ struct LWX2Piece
 	/** Its cover flags where they differ from an XComLevelActor's (the plot sets them; read here only so the line parses). */
 	var bool ClimbOnto, ClimbOver, Destination, IgnoreForCover;
 	var name CoverForce;
+	/** Seen through (EW's windows, foliage, cars) and windows: the plot sets them too. */
+	var bool BlocksSight, Window;
 	var LWX2PieceFrac Frac;
 };
 

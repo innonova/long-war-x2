@@ -14,7 +14,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
 import { inlineTextures } from './inline-textures.ts'
-import { stubMaterials } from './stub-materials.ts'
+import { quietParticleNotifies, stubMaterials } from './stub-materials.ts'
 import { renameAnims, X2_SECTOID } from './ew-unit-anims.ts'
 
 /** EW's texture caches and the names they take in a converted package (the same lengths). */
@@ -56,13 +56,14 @@ pkg.nameEntries.forEach((e: { name: string; offset: number }) => {
 // EW's materials made inert (stub-materials.ts): XCOM 2 would compile each as the package loads, for nothing it draws.
 const stubbed = stubMaterials(bytes)
 bytes = stubbed.bytes
+const quieted = quietParticleNotifies(bytes)
 const tex = inlineTextures(bytes, pkg.exports, pkg.names, dirname(src), bytes.length)
 const outBytes = new Uint8Array(bytes.length + tex.appended.length)
 outBytes.set(bytes)
 outBytes.set(tex.appended, bytes.length)
 writeFileSync(out, outBytes)
 
-return `${out}: ${outBytes.length} bytes, decompressed; caches ${renamed.join(', ') || 'none named'}; ${tex.textures} textures rewritten (${tex.mips} mips); ${stubbed.count} materials made inert${changed}`
+return `${out}: ${outBytes.length} bytes, decompressed; caches ${renamed.join(', ') || 'none named'}; ${tex.textures} textures rewritten (${tex.mips} mips); ${stubbed.count} materials made inert; ${quieted} animations' particle effects left out${changed}`
 }
 
 if (/ew-package\.ts$/.test(process.argv[1] ?? '')) {

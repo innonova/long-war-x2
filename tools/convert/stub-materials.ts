@@ -6,6 +6,7 @@
 // material wherever one is expected, nothing to compile, XCOM 2's default material if anything draws it. (As a plain
 // object of another class, the game crashed loading the Sectoid's package.)
 import { Package } from '@innonova/upkit/upk'
+import { readProps } from './ew-anim-mirror.ts'
 
 /** The package's Material exports turned into empty objects; returns the bytes with the stub they share appended. */
 export function stubMaterials(bytes: Uint8Array): { bytes: Uint8Array; count: number } {
@@ -37,4 +38,25 @@ export function stubMaterials(bytes: Uint8Array): { bytes: Uint8Array; count: nu
     o.setInt32(at + 36, stubAt, true) // serial offset
   }
   return { bytes: out, count: materials.filter((e: any) => e.type === 'Material').length }
+}
+
+/**
+ * EW's particle effects that its animations start (AnimNotify_PlayParticleEffect: a Drone's muzzle flash on its own body,
+ * the Floater's jets) left without a template, so they start nothing: their materials are made inert above, and the game
+ * crashed as a Drone fired (the person's log and the test machine, 2026-11-04). XCOM 2's own shot effects still play.
+ * Changes the bytes in place; returns how many.
+ */
+export function quietParticleNotifies(bytes: Uint8Array): number {
+  const meta: any = new Package(bytes)
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  let n = 0
+  for (const e of meta.exports) {
+    if (e.type !== 'AnimNotify_PlayParticleEffect' || e.size <= 4) continue
+    const { props } = readProps(meta, bytes.subarray(e.offset, e.offset + e.size))
+    const ps = props.find((p) => p.name === 'PSTemplate' && p.size === 4)
+    if (!ps) continue
+    v.setInt32(e.offset + ps.at, 0, true)
+    n++
+  }
+  return n
 }

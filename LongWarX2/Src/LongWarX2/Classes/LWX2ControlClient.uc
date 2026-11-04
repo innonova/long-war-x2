@@ -251,10 +251,14 @@ function Handle(string Line, out array<string> Out)
 		XComTacticalController(GetALocalPlayerController()).PerformEndTurn(ePlayerEndTurnType_PlayerInput);
 		Out.AddItem("ok end of turn asked");
 		return;
+	case "seethrough":
+		// How many placed pieces units see through (EW's windows, foliage, cars), and how many are windows.
+		Out.AddItem(SeeThrough());
+		return;
 	case "look":
-		if (Args.Length < 3)
+		if (Args.Length < 3 && !(Args.Length == 2 && Args[1] == "unit"))
 		{
-			Out.AddItem("ERR look <x> <y> [z] (Enemy Within's coordinates on its placed map; 'look pod <n>' its pod n)");
+			Out.AddItem("ERR look <x> <y> [z] (Enemy Within's coordinates on its placed map; 'look pod <n>' its pod n; 'look unit [n]' the n-th living unit, none: the list)");
 			return;
 		}
 		Out.AddItem(Look(Args));
@@ -1037,9 +1041,39 @@ function string CaptureNearest()
 function string Look(array<string> Args)
 {
 	local X2Camera_LookAtLocationTimed Camera;
+	local XComGameState_Unit Unit;
 	local vector At;
+	local int n;
+	local string Name;
 
-	if (Args[1] == "pod")
+	if (Args[1] == "unit")
+	{
+		// A unit on the field by its place among the living ones with a body (any side): where its body is. 'look unit'
+		// with no number lists them.
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		{
+			if (!Unit.IsAlive() || Unit.bRemovedFromPlay || XGUnit(Unit.GetVisualizer()) == none)
+				continue;
+			if (Args.Length < 3)
+			{
+				Name @= n $ "=" $ Unit.GetMyTemplateName() $ (Unit.IsSoldier() ? "(" $ Unit.GetLastName() $ ")" : "");
+				n++;
+				continue;
+			}
+			if (n++ != int(Args[2]))
+				continue;
+			Name = string(Unit.GetMyTemplateName());
+			if (XGUnit(Unit.GetVisualizer()) == none)
+				return "ERR no body";
+			At = XGUnit(Unit.GetVisualizer()).Location - class'LWX2PartPlacer'.default.EWShift;
+			break;
+		}
+		if (Args.Length < 3)
+			return "units:" $ Name;
+		if (At == vect(0, 0, 0))
+			return "ERR no such unit";
+	}
+	else if (Args[1] == "pod")
 	{
 		if (int(Args[2]) >= class'LWX2EWMapPieces'.static.Map().Pods.Length)
 			return "ERR no such pod";
@@ -1059,7 +1093,23 @@ function string Look(array<string> Args)
 	`CAMERASTACK.AddCamera(Camera);
 	// Fog of war off, so the place is seen (never seen ground is drawn black).
 	GetALocalPlayerController().ConsoleCommand("SetFOW false");
-	return "ok looking at" @ At;
+	return "ok looking at" @ At @ Name;
+}
+
+function string SeeThrough()
+{
+	local XComLevelActor A;
+	local int All, Through, Windows;
+
+	foreach WorldInfo.AllActors(class'XComLevelActor', A)
+	{
+		All++;
+		if (!A.VisibilityBlockingData.bBlockUnitVisibility)
+			Through++;
+		if (A.VisibilityBlockingData.bIsWindow)
+			Windows++;
+	}
+	return All @ "level actors," @ Through @ "seen through," @ Windows @ "windows";
 }
 
 function string SpawnAlien(name CharacterTemplate, int Tiles, optional int Species, optional int LeaderLevel)
@@ -1310,6 +1360,8 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 	local XComGameState_Unit Unit, Pick, Soldier;
 	local XComUnitPawn Pawn;
 	local AnimNodeSequence Seq;
+	local SkelControlBase Control;
+	local AnimNodeBlendPerBone PerBone;
 	local int Best;
 	local StateObjectReference Ref;
 	local CustomAnimParams Params;
@@ -1375,6 +1427,27 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 		Params.Looping = true;
 		Out.AddItem("  playing" @ Play @ (Pawn.GetAnimTreeController().CanPlayAnimation(Play) ? "found" : "MISSING"));
 		Pawn.GetAnimTreeController().PlayFullBodyDynamicAnim(Params);
+	}
+	// The per-bone blends whose start bones the mesh has (the rest do nothing on it): their bones, children and weights.
+	foreach Pawn.Mesh.AllAnimNodes(class'AnimNodeBlendPerBone', PerBone)
+	{
+		Sets = "";
+		for (b = 0; b < PerBone.BranchStartBoneName.Length; b++)
+			if (Pawn.Mesh.MatchRefBone(PerBone.BranchStartBoneName[b]) != INDEX_NONE)
+				Sets @= PerBone.BranchStartBoneName[b];
+		if (Sets == "")
+			continue;
+		Out.AddItem("  per-bone" @ PerBone.NodeName @ "from" $ Sets @ "weight" @ PerBone.NodeTotalWeight @ "child 1 weight" @ (PerBone.Children.Length > 1 ? PerBone.Children[1].Weight : 0.0) @ "child 1" @ ((PerBone.Children.Length > 1 && PerBone.Children[1].Anim != none) ? string(PerBone.Children[1].Anim.NodeName) $ "(" $ PerBone.Children[1].Anim.Class.Name $ ")" : "none"));
+	}
+	// The skeletal controls acting on the bones after the animation (IK, look-at, aim), with their strength.
+	if (AnimTree(Pawn.Mesh.Animations) != none)
+	{
+		for (i = 0; i < AnimTree(Pawn.Mesh.Animations).SkelControlLists.Length; i++)
+		{
+			for (Control = AnimTree(Pawn.Mesh.Animations).SkelControlLists[i].ControlHead; Control != none; Control = Control.NextControl)
+				if (Control.ControlStrength > 0)
+					Out.AddItem("  control" @ Control.Class.Name @ Control.ControlName @ "on" @ AnimTree(Pawn.Mesh.Animations).SkelControlLists[i].BoneName @ "strength" @ Control.ControlStrength);
+		}
 	}
 	foreach Pawn.Mesh.AllAnimNodes(class'AnimNodeSequence', Seq)
 		if (Seq.NodeTotalWeight > 0.01 || (bAll && Seq.AnimSeqName != ''))

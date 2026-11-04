@@ -56,6 +56,23 @@ function find(bytes: Uint8Array, u: EWUnit): { mesh: string; sets: string[]; dif
   }
 }
 
+/**
+ * EW's weapon without the socket XCOM 2's left-hand IK reaches for (XComUnitPawn.UpdateLeftHandIK: on whenever the weapon has
+ * a 'left_hand' socket). EW's own animations place the hands; XCOM 2's IK, run on EW's skeleton, threw the Sectoid's left arm
+ * out sideways (the person's "arms-out pose", 2026-11-04). The name renamed in place, its length kept.
+ */
+function noLeftHandIK(bytes: Uint8Array): { bytes: Uint8Array; report: string } {
+  const pkg: any = new Package(bytes)
+  for (const e of pkg.nameEntries as { name: string; offset: number }[]) {
+    if (e.name !== 'left_hand') continue
+    const at = e.offset + 4
+    if (new TextDecoder('latin1').decode(bytes.subarray(at, at + 9)) !== 'left_hand') throw new Error('left_hand is not where it was read')
+    bytes.set(new TextEncoder().encode('left_hanX'), at)
+    return { bytes, report: "its 'left_hand' socket renamed (no XCOM 2 left-hand IK)" }
+  }
+  return { bytes, report: 'no left_hand socket' }
+}
+
 /** Each EW unit converted into content and the mod's list of bodies written; returns report lines. */
 export function convertUnits(cooked: string, mod: string, content: string, say: (line: string) => void = console.log): number {
   const lines = [
@@ -81,7 +98,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
         const wb = decompressPackage(new Uint8Array(readFileSync(join(cooked, `${w.pkg}.upk`))))
         const wf = find(wb, { ...u, mesh: w.mesh, sets: [], diffuse: w.diffuse, normal: w.normal })
         if (wf.mesh) {
-          convertPackage(join(cooked, `${w.pkg}.upk`), join(content, `${w.pkg}.upk`))
+          convertPackage(join(cooked, `${w.pkg}.upk`), join(content, `${w.pkg}.upk`), noLeftHandIK)
           weapon = `, WeaponMesh="${leaf(wf.mesh, w.pkg)}", WeaponDiffuse="${leaf(wf.diffuse, w.pkg)}", WeaponNormal="${leaf(wf.normal, w.pkg)}"`
         }
       }

@@ -88,7 +88,10 @@ static function bool Apply(XComGameState_Unit Unit)
 	B = default.Bodies[Pick];
 	// Given already (asked every two seconds in a mission: a load each time would read the package again).
 	if (Pawn.Mesh.SkeletalMesh != none && string(Pawn.Mesh.SkeletalMesh.Name) == Mid(B.Mesh, InStr(B.Mesh, ".") + 1))
+	{
+		QuietControls(Pawn);
 		return false;
+	}
 	Mesh = SkeletalMesh(DynamicLoadObject(B.Mesh, class'SkeletalMesh', true));
 	if (Mesh == none || Pawn.Mesh.SkeletalMesh == Mesh)
 		return false;
@@ -98,8 +101,31 @@ static function bool Apply(XComGameState_Unit Unit)
 		for (i = 0; i < Mesh.Materials.Length; i++)
 			Pawn.Mesh.SetMaterial(i, Material);
 	Pawn.UpdateAnimations();
+	QuietControls(Pawn);
 	Weapon(Unit, B);
 	return true;
+}
+
+/**
+ * XCOM 2's soldier tree turns bones after the animation (twist bones, look-ats, the elbow and knee "splitters", the arms'
+ * IK), finding them by name; EW's skeletons have bones of those names (the Sectoid's LArmTwist01, LElbowSplitter …), which
+ * EW's animations pose themselves, and the controls threw the Sectoid's left arm out sideways (the person's "arms-out
+ * pose", 2026-11-04). On an EW body every control but the feet's placement is off; asked again with the body (every two
+ * seconds), as the tree may switch them on again.
+ */
+static function QuietControls(XComUnitPawn Pawn)
+{
+	local AnimTree Tree;
+	local SkelControlBase Control;
+	local int i;
+
+	Tree = AnimTree(Pawn.Mesh.Animations);
+	if (Tree == none)
+		return;
+	for (i = 0; i < Tree.SkelControlLists.Length; i++)
+		for (Control = Tree.SkelControlLists[i].ControlHead; Control != none; Control = Control.NextControl)
+			if (SkelControlFootPlacement(Control) == none && Control.ControlStrength > 0)
+				Control.SetSkelControlStrength(0, 0);
 }
 
 /** The unit's primary weapon drawn as EW's (its mesh and a stand-in), where the body names one and XCOM 2's is skeletal. */

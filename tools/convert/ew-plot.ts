@@ -85,7 +85,7 @@ export function readSection(text: string): EWMap {
           return f ? { indices: Number(f[1]), minZ: Number(f[2]), maxZ: Number(f[3]), toughness: f[4]! } : undefined
         })(),
         // Its cover flags where they differ from an XComLevelActor's (ew-map.ts: ClimbOnto=false, CoverForce=…).
-        cover: [...line.matchAll(/,(ClimbOnto|ClimbOver|Destination|IgnoreForCover|CoverForce)=(\w+)/g)].map((m) => `${m[1]}=${m[2]}`),
+        cover: [...line.matchAll(/,(ClimbOnto|ClimbOver|Destination|IgnoreForCover|CoverForce|BlocksSight|Window)=(\w+)/g)].map((m) => `${m[1]}=${m[2]}`),
       })
     } else if (line.startsWith('+Lights=')) {
       const c = sub(line, 'Color')
@@ -418,8 +418,17 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     // XCOM 2's building visibility would hide it with the floor it overlaps.
     if (piece.backdrop) set(atags, tBool('bExcludeFromBuildingVolume', true))
     // What units may do with it, as in EW (a car's hood, sandbags: not to be stood on).
+    // Whether units see through it (EW's windows, foliage, cars: their VisibilityBlockingData), as for the doors.
+    const seeThrough = piece.cover.includes('BlocksSight=false')
+    if (seeThrough || piece.cover.includes('Window=true'))
+      set(atags, { name: 'VisibilityBlockingData', type: 'StructProperty', struct: 'VisibilityBlocking', arrayIndex: 0, value: serialize({
+        head: new Uint8Array(0),
+        tags: [tBool('bBlockUnitVisibility', !seeThrough), ...(piece.cover.includes('Window=true') ? [tBool('bIsWindow', true)] : [])],
+        tail: new Uint8Array(0),
+      }) })
     for (const c of piece.cover) {
       const [k, val] = c.split('=') as [string, string]
+      if (k === 'BlocksSight' || k === 'Window') continue
       if (k === 'CoverForce') set(atags, tEnum('CoverForceFlag', 'ECoverForceFlag', val))
       else set(atags, tBool({ ClimbOnto: 'bCanClimbOnto', ClimbOver: 'bCanClimbOver', Destination: 'bIsValidDestination', IgnoreForCover: 'bIgnoreForCover' }[k]!, val === 'true'))
     }
