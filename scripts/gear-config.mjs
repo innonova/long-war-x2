@@ -61,6 +61,7 @@ out.push(
   '; SmallItems: Kind (Grenade, Medikit, Launcher, Rocket, Passive); Look: the XCOM 2 item whose abilities, effects and look it',
   '; takes; Damage, Environment; Radius and Range in tiles; Aim, Crit, HP while carried; Ammo: shots x this; Classes: who may carry it.',
 )
+const scopeCrit = Number(core.match(/^FOUNDRY_SCOPE_CRIT_BONUS=(\d+)/m)[1])
 for (const x of SMALL) {
   const w = weapons.get(x.item)
   if (!w) throw new Error(`no Weapons= line for small item ${x.item}`)
@@ -71,6 +72,9 @@ for (const x of SMALL) {
     `+SmallItems=(Item=${x.item}, Template=${smallTemplate(x.item)}, Enum=${ITEMS[x.item]}, Kind=${x.kind}, Look=${x.look}, Damage=${Math.max(0, n('iDamage'))}, Environment=${n('iEnvironmentDamage')}, ` +
       `Radius=${Math.round(n('iRadius') / 96 - 0.01)}, Range=${Math.round(n('iRange') / 1.5)}, Aim=${n('iOffenseBonus')}, Crit=${x.crit ?? n('iCritical')}, HP=${n('iHPBonus')}, ` +
       `Ammo=${x.ammo ?? 1}, Pierce=${x.pierce ?? 0}, CritAgainstReaction=${x.critAgainstReaction ?? 0}, Infinite=${INFINITE.includes(x.item)}` +
+      // The Foundry's S.C.O.P.E. project: crit for a carrier of the targeting module, half for the laser sight (item 79), not
+      // with a pistol (XGAbility_Targeted.CalcCriticalChance; FOUNDRY_SCOPE_CRIT_BONUS).
+      (x.item === 74 || x.item === 79 ? `, ScopeCrit=${Math.trunc(scopeCrit / (x.item === 79 ? 2 : 1))}` : '') +
       (anyone ? '' : `, Classes=(${classes.map((c) => `LWS_${c}`).join(',')})`) +
       ')',
   )

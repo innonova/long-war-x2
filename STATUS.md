@@ -25,7 +25,7 @@ buttons and text, no art).
 | The base | most | plain | the grid, digging, facilities, power, upkeep, steam | facilities' effects (containment, Hyperwave, Gollop chamber); removing a facility | `lw-base` |
 | Research | most | X2 + plain | Long War's techs, costs, times, prerequisites, credits; labs and their adjacency (`lw-base`) | XCOM 2's research room still shows its own staff | `lw-research` |
 | Engineering | most | plain | building items and armour at Long War's costs and requirements; workshops' discount and rebate (`lw-base`) | | `lw-gear`, `lw-research` |
-| Foundry | part | plain | projects run; done: the air and salvage projects, pistols, Improved Medikit, Ammo Conservation, Tactical Rigging, Alien Grenades | SHIV and MEC projects, SCOPE, Improved Arc Thrower, Shaped Armor, Elerium fuel, the Alien Grenades perk | `lw-research` |
+| Foundry | part | plain | projects run; done: the air and salvage projects, pistols, Improved Medikit, Ammo Conservation, Tactical Rigging, Alien Grenades, S.C.O.P.E. (the laser sight's half; the targeting module is not an item yet) | SHIV and MEC projects, Improved Arc Thrower, Shaped Armor, Elerium fuel, the Alien Grenades perk | `lw-research` |
 | Loot | most | plain | kill loot, corpses, fragments, captives (arc thrower), salvage, the first mission's, meld canisters at EW's places | the grey market; explosions destroying loot | `lw-loot` |
 | Psi Labs | most | plain | training at Long War's hours and chance (0.45) | psi ranks and XP; fatigue | `lw-psi` |
 | Genetics Lab | most | plain | the ten mods, slots, cost and time | the mods' fatigue | `lw-genemods` |

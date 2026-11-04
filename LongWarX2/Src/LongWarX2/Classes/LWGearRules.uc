@@ -96,6 +96,8 @@ struct LWSmallDef
 	var int Pierce;
 	/** Reaction shots' crit chance taken off its wearer (the Chameleon Suit). */
 	var int CritAgainstReaction;
+	/** Crit while carried once the Foundry's S.C.O.P.E. project is done (not with a pistol). */
+	var int ScopeCrit;
 	var bool Infinite;
 	/** The classes that may carry it; empty: any. */
 	var array<name> Classes;

@@ -265,3 +265,12 @@ builds the alien grenade otherwise (its item tree gives Foundry 255).
   script around it (× `UFO_PSI_LINK_SURVIVE`, 0.61, and who cannot be
   stunned). To measure in the original with the EW harness
   (`ew-harness.md`).
+
+## Report (2026-11-04 night, the Foundry's S.C.O.P.E.)
+
+- Long War's code (`XGFacility_Barracks` gives perk 109 for project 18; `XGAbility_Targeted`'s crit):
+  with S.C.O.P.E. done, a soldier carrying the targeting module gets `FOUNDRY_SCOPE_CRIT_BONUS` (8)
+  crit, one carrying the laser sight (item 79) half of it, not with a pistol (`eWP_Pistol`).
+- Ported on the small items' effect (`ScopeCrit`, generated into `XComLWGear.ini`: 4 for the laser
+  sight; the targeting module is not one of the port's items yet). Seen (perk probe, a Sniper with a
+  laser sight, the project marked done): the rifle's shot "S.C.O.P.E.: crit=4", the pistol's none.
