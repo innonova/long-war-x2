@@ -1452,3 +1452,18 @@ from the evening, one from the morning) give two exception addresses:
 - Control aids: `meshes <part of a mesh path>` (each placed piece: class, hidden, cut heights,
   the building floors caching it), `buildings` as before.
 
+### 2026-11-04 day, loading time
+
+- The person's log held 53 "Missing cached shader map … compiling" lines: EW's own materials
+  (`CHA_Aliens`, its effects' `M_Blood_*`, `M_Steam_*`, the maps' `PROP_Glass`, wood and metal
+  chunks …), loaded with the converted unit, weapon and map packages, each compiled by XCOM 2 at
+  about 1.75 s (31 s back to back, more in the gaps), at the game's start and at each mission's
+  loading, for nothing drawn: the mod's stand-ins draw EW's things. **Now** the converters make
+  every EW material and material instance an empty material instance (no parent, nothing to
+  compile; `tools/convert/stub-materials.ts`, the map's in ew-map.ts's world stubbing): 18
+  materials in the Sectoid's package, 115 in the store's map. Converter version 15. Two tries
+  crashed the game as the Sectoid's package loaded: the materials as plain objects of another
+  class, and with only the parents emptied (an instance with static permutations, the
+  Sectoid's own, builds them from its parent). Checked with the units converted so: no crash,
+  no compiles at the game's start.
+
