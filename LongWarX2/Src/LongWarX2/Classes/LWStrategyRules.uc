@@ -87,6 +87,8 @@ var config int Panic4ReductionChance[4];
 var config int PanicLowReductionChance[4];
 var config int AbductionLurkPct;
 var config int CrashSiteHours, LandedUfoHours, AbductionHours, TerrorHours;
+/** The aliens' research bonus at the campaign's start (Long War: INTERCEPTOR_REFUEL_HOURS, set as eRecap_Score in XGWorld). */
+var config int AlienResearchStart;
 var config int InterceptorDetectPct;
 /** A hunting UFO's chance (%) to find a satellite over its target (Long War's UFO_FIND_SAT). */
 var config int UfoFindSatPct;

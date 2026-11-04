@@ -134,3 +134,19 @@ document the encodings):
   closing, the Ethereals' Psi Drain; the Commander's Mind Control and the Ethereals' powers in
   their AI.
 
+## Report (2026-11-04 day, the aliens' research clock)
+
+- **Read from Long War's code** (upkit's decompiler; kept out of the repository): Long War keeps
+  the aliens' research in a repurposed recap stat, set each day to the campaign's days plus a
+  bonus (`XGFacility_Barracks.HealAndRest`: `eRecap_Score`); the bonus starts at
+  `INTERCEPTOR_REFUEL_HOURS` (−90, a repurposed setting; `XGWorld`) and grows: +20 each month
+  (`FillUFOPool`), +2 a month for each country gone (`MakeMonthlyPlan`), and for each UFO that
+  finishes its flight (`LogUFORecord`; not the Ethereals', not a hunt): +1 back whole, +0 or 1
+  above half its hull (not a pact's), and a research flight by its size (small scout 3, large
+  scout 5, abductor 8, larger 10); +1 for each soldier missing in action (not ported: no MIA yet).
+- **Ported:** `XComGameState_LWStrategy.AlienResearch()` (the days, or the days and the bonus when
+  more), the bonus kept as above; `LWAlienStats.ResearchLevel` uses it in place of the days
+  (the approximation noted before). `AlienResearchStart` in `XComLWStrategy.ini`.
+- **Seen** (a campaign run four months automatically, no satellites bought, so every UFO got
+  away): research 1 on day 1, 31 on day 31, 61 on day 61, 124 on day 91, 211 on day 121.
+

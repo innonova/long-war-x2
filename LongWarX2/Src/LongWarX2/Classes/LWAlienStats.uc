@@ -41,7 +41,7 @@ static function int ResearchLevel()
 	local XComGameState_LWStrategy S;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
-	return S != none ? S.Days() : 0;
+	return S != none ? S.AlienResearch() : 0;
 }
 
 /** The campaign's difficulty, 0-3 (XCOM 2's Rookie … Legend as Long War's Normal … Impossible). */

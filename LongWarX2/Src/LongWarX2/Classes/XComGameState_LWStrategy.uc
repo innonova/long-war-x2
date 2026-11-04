@@ -75,6 +75,13 @@ var int Hours;
 var int Month;
 var int AlienResources;
 var int AlienAggression;
+/**
+ * The aliens' research, as Long War keeps it (features/lw-aliens.md): each day it is the campaign's days plus this bonus
+ * (XGFacility_Barracks.HealAndRest, eRecap_Score), which starts at AlienResearchStart and grows with the aliens' successes:
+ * each month's plan (+20, and +2 for each country gone), each UFO that finishes its flight (XGStrategyAI.LogUFORecord).
+ */
+var int AlienResearchBonus;
+var bool bAlienResearchStarted;
 var array<LWUfo> Ufos;
 var int NextGroup;
 var array<LWSite> Sites;
@@ -187,6 +194,8 @@ function Begin()
 	local LWCountry C;
 	local array<int> Open;
 	local int Points, Step, k;
+
+	StartAlienResearch();
 
 	foreach class'LWStrategyRules'.default.Countries(Def)
 	{
@@ -479,6 +488,10 @@ function PlanMonth()
 
 	ForgetFinished();
 	AlienResources = Clamp(AlienResources + 20 * NumLeft(), 9 * Month, 300);
+	// The aliens' research (XGStrategyAI.FillUFOPool, MakeMonthlyPlan): +20 a month, +2 for each country gone.
+	StartAlienResearch();
+	AlienResearchBonus += 20 + 2 * NumLeft();
+	`log("LongWarX2: the aliens' research" @ AlienResearch() @ "on day" @ Days() @ "(bonus" @ AlienResearchBonus $ ")", , 'LongWarX2');
 	Tier = Clamp(AlienResources / 50, 0, 4);
 	Start = Month * HoursPerMonth();
 	if (class'LWStrategyRules'.static.PlanFor(Tier, Clamp(AlienAggression, 0, 4), Cell))
@@ -867,6 +880,17 @@ function UfoDone(int i)
 		AlienResources += class'LWStrategyRules'.static.HarvestOf(U.Ufo) + Rand(5);
 	if (U.bDetected && U.Objective != 5 && U.Objective != 6 && U.Objective != 7)
 		Note("The" @ ShipName(U.Ufo) @ "over" @ CountryName(U.Country) @ "finished its mission.");
+	// The aliens' research (XGStrategyAI.LogUFORecord), for a UFO that was not the Ethereals' and not hunting: +1 come
+	// back whole, +0 or 1 above half its hull (not for a pact's); a research flight (recon) by its size: a small scout 3,
+	// a large scout 5, an abductor 8, larger 10.
+	if (U.Ufo != 9 && U.Objective != 4)
+	{
+		StartAlienResearch();
+		if (U.Objective != 7)
+			AlienResearchBonus += Intact >= 1.0 ? 1 : (Intact >= 0.5 ? Rand(2) : 0);
+		if (U.Objective == 0)
+			AlienResearchBonus += U.Ufo == 4 ? 3 : (U.Ufo == 5 ? 5 : (U.Ufo == 6 ? 8 : (U.Ufo >= 7 ? 10 : 0)));
+	}
 	if (!U.bLast)
 		return;
 	switch (U.Objective)
@@ -900,6 +924,21 @@ function UfoDone(int i)
 		AddHQSite();
 		break;
 	}
+}
+
+/** The bonus set to Long War's start once (a campaign begun before it was kept starts it at its first month or UFO). */
+function StartAlienResearch()
+{
+	if (bAlienResearchStarted)
+		return;
+	bAlienResearchStarted = true;
+	AlienResearchBonus += class'LWStrategyRules'.default.AlienResearchStart;
+}
+
+/** The aliens' research level (Long War's eRecap stat 1): the days, or the days and the bonus when that is more. */
+function int AlienResearch()
+{
+	return Max(Days(), Days() + AlienResearchBonus);
 }
 
 /** A hunt's chance to find the satellite (XGAlienObjective.FoundSatellite): by its UFO's damage, more on a second pass. */

@@ -119,6 +119,8 @@ const out = [
   ...arr('PanicLowReductionChance', four('PANIC_LOW_REDUCTION_CHANCE')),
   `AbductionLurkPct=${one('ABDUCTION_LURK_PCT')}`,
   "; Mission timers, in hours (Long War's are half-hours).",
+  "; The aliens' research: the campaign's days plus a bonus, from this (Long War keeps it in INTERCEPTOR_REFUEL_HOURS, XGWorld).",
+  `AlienResearchStart=${one('INTERCEPTOR_REFUEL_HOURS')}`,
   `CrashSiteHours=${one('UFO_CRASH_TIMER') / 2}`,
   `LandedUfoHours=${one('UFO_LANDED_TIMER') / 2}`,
   `AbductionHours=${one('ABDUCTION_TIMER') / 2}`,
