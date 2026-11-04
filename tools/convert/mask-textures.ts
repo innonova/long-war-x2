@@ -23,7 +23,8 @@ export function addMaskTextures(bytes: Uint8Array, textures: number[]): { bytes:
   }
   // The names first (each moves every offset after the name table), then the exports.
   const flagsOf = (ref: number) => {
-    const n = pkg.nameEntries[pkg.findName(pkg.exports[ref - 1]!.name)]!
+    // The name its entry points at (an export's name may carry a number: Leaves_2 is Leaves, number 3).
+    const n = pkg.nameEntries[new DataView(pkg.bytes.buffer, pkg.bytes.byteOffset).getInt32(pkg.exports[ref - 1]!.entryOffset + 12, true)]!
     return pkg.bytes.slice(n.offset + n.size - 8, n.offset + n.size)
   }
   for (const m of made) if (pkg.findName(masks.get(m.ref)!) < 0) pkg.addName(nameEntry(masks.get(m.ref)!, flagsOf(m.ref)))

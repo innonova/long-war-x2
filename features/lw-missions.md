@@ -1368,4 +1368,13 @@ from the evening, one from the morning) give two exception addresses:
   paint and asphalt patches get their textures; street arrows, graffiti, blast and rubble decals,
   drawn before as opaque squares, are cut out. Glass (translucent, no diffuse) unchanged.
   Converter version 9.
+- **Then the crosswalk vanished** instead of turning white: XCOM 2's cut-out parents do not read
+  the diffuse's alpha. Read from the SDK's uncooked `Materials.upk`: `Props_OpcMask_TC`'s opacity
+  mask is StandardShader's "Mask G", the **green** of its Masks texture; `Vegetations_VO`'s is
+  "Mask B", the blue. The stand-ins were given the diffuse as Masks, so every cut-out piece
+  (tree cards, fences, signs, and now the road paint) was cut by its diffuse's colour: grey
+  paint fell under the clip. **Fix:** the converter adds beside each cut-out diffuse a mask
+  texture of its own (`mask-textures.ts`: same size, format and mips, red white, green and blue
+  the diffuse's alpha, DXT5 and DXT1), the looks name it (`Mask=`), the plot and the mod's own
+  placement give it as Masks. Converter version 10.
 
