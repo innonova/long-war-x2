@@ -149,4 +149,7 @@ document the encodings):
   (the approximation noted before). `AlienResearchStart` in `XComLWStrategy.ini`.
 - **Seen** (a campaign run four months automatically, no satellites bought, so every UFO got
   away): research 1 on day 1, 31 on day 31, 61 on day 61, 124 on day 91, 211 on day 121.
+- **The Sectoid Commander's Mind Control** in its AI (the Sectoid's tree, which it shares): tried
+  before Mind Merge, a plain Sectoid having none. Seen: a Commander spawned beside the squad moved
+  and shot for two turns and mind-controlled a soldier on the third.
 
