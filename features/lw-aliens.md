@@ -103,3 +103,5 @@ document the encodings):
 - **Stand-ins only so far:** perks that are Long War's own and not yet working for soldiers
   either (Combined Arms, Repair Servos, Damage Control, Advanced Fire Control …) are named
   and do nothing, as on soldiers; they work when the soldiers' do.
+- **Release** `LongWarX2-20261104-041a0b4.zip`, checked from the zip: the store's 7 Sectoids at
+  3 HP, each with Ranger.
