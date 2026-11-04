@@ -1,6 +1,6 @@
 ---
 title: "Long War's fatigue: soldiers out of action after a mission"
-status: planned
+status: in-progress
 priority: 3
 dependsOn:
   - lw-classes
@@ -54,3 +54,8 @@ decompiler, kept out of the repository) and its `DefaultGameCore.ini`:
 2. The squad selection marks fatigued soldiers; sending one makes them all in.
 3. The all-in cost (1 maximum HP).
 4. War of the Chosen's own fatigue switched off (its will loss on missions), if so decided.
+
+## Response (2026-11-04)
+
+The person: Long War's fatigue **in place of** War of the Chosen's (the proposal: Long War's
+hours shown as War of the Chosen's "Tired").
