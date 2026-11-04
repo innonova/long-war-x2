@@ -206,3 +206,10 @@ The download is `LongWarX2-20261104-9b029f8.zip` on v0.1.0-preview.1. Its conver
 (the meld canisters' places), so the setup converts the 83 maps again: 379 s on the test machine,
 "83 converted", 474 canister places. Checked from the zip: the bar, the farm and the fast food load
 with their canisters; three turns ended on the fast food without trouble.
+
+## Report (2026-11-04 night)
+
+The download is `LongWarX2-20261104-59316ae.zip` on v0.1.0-preview.1 (converter 17: the setup
+converts the maps again, 382 s on the test machine). Checked from the zip: the bar and the truck stop
+load; a Sectoid's joints off its reference pose (animated); a Sectoid and a Drone fired, the game went
+on.
