@@ -199,3 +199,10 @@ replaces), and the packages and their sections are kept in `Content`.
 - When a future change does need the maps converted again (the converter's
   output changes), the setup will have to say so and redo them; today it
   only compares file presence.
+
+## Report (2026-11-04, end of the day's release)
+
+The download is `LongWarX2-20261104-9b029f8.zip` on v0.1.0-preview.1. Its converter is version 16
+(the meld canisters' places), so the setup converts the 83 maps again: 379 s on the test machine,
+"83 converted", 474 canister places. Checked from the zip: the bar, the farm and the fast food load
+with their canisters; three turns ended on the fast food without trouble.
