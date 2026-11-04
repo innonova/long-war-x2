@@ -213,3 +213,7 @@ The download is `LongWarX2-20261104-59316ae.zip` on v0.1.0-preview.1 (converter 
 converts the maps again, 382 s on the test machine). Checked from the zip: the bar and the truck stop
 load; a Sectoid's joints off its reference pose (animated); a Sectoid and a Drone fired, the game went
 on.
+
+Later that night: `LongWarX2-20261104-9a14bf4.zip` (the fatigue, the squad sent rested first, the units'
+shared animations, S.C.O.P.E.). Same converter (17): a setup from `59316ae` converts no map again.
+Checked from the zip: a mission's squad "Tired 4–6 Days" after it, rested eight days on; no crash.
