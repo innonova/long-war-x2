@@ -7,6 +7,8 @@ class UILWEWSituationRoom extends UILWEWScreen dependson(LWStrategyRules);
 /** The council's countries in the order EW's Situation Room lists them (XGSituationRoomUI.SortSitCountries: North
  *  America, South America, Africa, Europe, Asia, each continent's countries as XGWorld.CreateCountries adds them). */
 var array<name> Order;
+/** The earth's texture, held: Flash fetches it a frame later, by its path, and found nothing once it had been collected. */
+var Texture2D EarthTexture;
 
 static function string Open()
 {
@@ -55,7 +57,8 @@ function AddEarth()
 	local UIImage Earth;
 	local float W, H, X, Y, FH;
 
-	if (DynamicLoadObject("FX_Globe.T_Earth_Holo", class'Texture2D', true) == none)
+	EarthTexture = Texture2D(DynamicLoadObject("FX_Globe.T_Earth_Holo", class'Texture2D', true));
+	if (EarthTexture == none)
 		return;
 	W = MC.GetNum("MAP_WIDTH");
 	H = MC.GetNum("MAP_HEIGHT");

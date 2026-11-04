@@ -316,3 +316,4 @@ hologram texture's raw channels (dark blue, red borders), over the movie at half
 - Still different from EW: the room behind the screens (EW's 3D Situation Room), the
   objectives panel and the menu (launch satellite, bonuses, finances, the Gray Market),
   the country rows' size.
+- **Held:** the earth's texture is held by the screen; in a fresh install's first run Flash fetched it a frame later by its path and found nothing (it had been collected), drawing a garbled placeholder. Seen right in two fresh starts.
