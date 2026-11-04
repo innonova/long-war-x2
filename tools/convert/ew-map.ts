@@ -31,8 +31,8 @@ import { addMaskTextures, maskMip } from './mask-textures.ts'
  *  8: the walls' fracture data and toughness, for XCOM 2's breakable walls; 9: the textures of materials cooked without
  *  their expressions, read from the compiled shader (the road paint, asphalt patches), translucent ones masked; 10: masks for the
  *  cut-out looks, the diffuse's alpha in green and blue, which XCOM 2's cut-out parents read their opacity from;
- *  11: vehicles not to be stood on; 12: nor sandbags). */
-export const CONVERTER_VERSION = 12
+ *  11: vehicles not to be stood on; 12: nor sandbags; 13: their tops no valid destinations). */
+export const CONVERTER_VERSION = 13
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -133,9 +133,10 @@ const COVER_DEFAULTS: Record<string, Partial<Cover>> = {
   XComDecoFracLevelActor: { onto: false },
 }
 /** EW's vehicles (its VEH_ packages) and sandbags (SandBag): not to be stood on, whatever EW's data says (EW's sedan
- *  prefab and some sandbag piles set bCanClimbOnto, and XCOM 2 then makes their tops floors). The person, 2026-11-03:
+ *  prefab and some sandbag piles set bCanClimbOnto, and XCOM 2 then makes their tops floors; a sandbag is low enough to be
+ *  stepped onto without a climb, so their tops are no valid destination either). The person, 2026-11-03:
  *  "you should not be able to stand on the sandbags", nor "on the hood and trunk" of a car. */
-const notStoodOn = (mesh: string, c: Cover): Cover => (/^(VEH_|SandBag\.)/.test(mesh) ? { ...c, onto: false } : c)
+const notStoodOn = (mesh: string, c: Cover): Cover => (/^(VEH_|SandBag\.)/.test(mesh) ? { ...c, onto: false, destination: false } : c)
 function coverOf(index: number, own: Tag[]): Cover {
   const found: Partial<Cover> = {}
   const take = (tags: Tag[]) => {

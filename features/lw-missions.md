@@ -1411,4 +1411,8 @@ from the evening, one from the morning) give two exception addresses:
   `URB_Demolition_EWI` all 33 sandbag pieces now not climbable onto).
 - (A dev sync builds the mod with the test machine's own older converted maps; converter
   changes are checked on a release install.)
+- Checked from the zip (`b95f5cd`, version 12): the farm's 17 sandbag pieces none climbable
+  onto, but 7 tiles on them still reachable: a sandbag is low enough to be stepped onto without
+  a climb. So the rule also makes their tops no valid destination (`bIsValidDestination`, EW's
+  and XCOM 2's flag for exactly this), cars included. Converter version 13.
 
