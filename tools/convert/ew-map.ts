@@ -32,8 +32,8 @@ import { addMaskTextures, maskMip } from './mask-textures.ts'
  *  their expressions, read from the compiled shader (the road paint, asphalt patches), translucent ones masked; 10: masks for the
  *  cut-out looks, the diffuse's alpha in green and blue, which XCOM 2's cut-out parents read their opacity from;
  *  11: vehicles not to be stood on; 12: nor sandbags; 13: their tops no valid destinations; 14: no path written as
- *  none, not as the map's name and a dot). */
-export const CONVERTER_VERSION = 14
+ *  none, not as the map's name and a dot; 15: EW's materials made inert, XCOM 2 compiling each as the map loaded). */
+export const CONVERTER_VERSION = 15
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -724,8 +724,12 @@ const stub = new Uint8Array(12)
 new DataView(stub.buffer).setInt32(0, -1, true)
 new DataView(stub.buffer).setInt32(4, noneIndex, true)
 let neutralized = 0
+// And EW's materials (stub-materials.ts): XCOM 2 would compile each as the map loads, for nothing it draws (the plot's
+// stand-ins draw the map).
+let materialsStubbed = 0
 exports.forEach((e) => {
-  if (e.fullName.split('.')[0] !== 'TheWorld') return
+  if (e.type === 'Material') materialsStubbed++
+  else if (e.fullName.split('.')[0] !== 'TheWorld') return
   const at = e.entryOffset
   v.setInt32(at + 0, donorClass, true) // class
   v.setInt32(at + 4, 0, true) // super
@@ -839,7 +843,7 @@ const lines = [
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')
 const meshes = new Set(pieces.map((p) => p.mesh))
-console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed (${nested} nested), ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB), ${masked.masks.size} masks for cut-out looks`)
+console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed (${nested} nested), ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB), ${masked.masks.size} masks for cut-out looks, ${materialsStubbed} materials made inert`)
 const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
 console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points (${spawnPoints.filter((p) => p[3]).length} civilian), ${lights.length} lights, ${buildings.length} buildings (${buildings.reduce((a, b) => a + b.floors.length, 0)} floors)`)
