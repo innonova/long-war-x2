@@ -334,3 +334,16 @@ hologram texture's raw channels (dark blue, red borders), over the movie at half
 - EW's room's menu (launch satellite, code decryption, finances, Grey Market, pending requests:
   `UpdateMainMenu`) is EW's strategy HUD's, not this movie's.
 
+## Report (2026-11-04 day, the strategy HUD's placeholders)
+
+- EW's strategy HUD showed its engineering queue's placeholders ("PROJECT QUEUE", "P", "E" and a
+  "LALALAL"): the queue is not fed (its `AddProjectToQueue`'s arguments not read yet). It is
+  hidden now, each refresh (the movie shows it again as it lays itself out).
+- Still showing: a "LALALAL" in the current-research panel, whose name and days fields do not
+  take what `SetCurrentResearch` is given (its title does); `currentresearch_temp` hidden made
+  no difference. To read: the panel's fields.
+- The HUD has its own objectives (`SetObjectives(title, text)`, objectives joined by `//`: where
+  EW showed them, not the Situation Room's movie). Tried with the story's steps: they show at the
+  bottom centre, behind the clock and over the Geoscape window's buttons; not kept until the
+  screens' layout leaves room. Control aid `ewhudcall <function> [args]`.
+

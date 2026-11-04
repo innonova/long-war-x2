@@ -168,6 +168,10 @@ function Handle(string Line, out array<string> Out)
 	case "ewscreen":
 		Out.AddItem(Args.Length > 1 ? class'UILWEWScreen'.static.ShowMovie(Args[1], Args.Length > 2 ? Args[2] : "") : "ERR ewscreen <EW movie: MissionControl, StrategyHUD …>");
 		return;
+	case "ewhudcall":
+		// ewhudcall <function> [arguments; _ for a space]: a function of EW's strategy HUD movie (a test aid).
+		Out.AddItem(HUDCall(Args));
+		return;
 	case "ewhud":
 		class'UILWEWStrategyHUD'.static.ShowIfAvailable();
 		Out.AddItem("ok");
@@ -1255,6 +1259,28 @@ function string Crew()
 	for (i = 0; i < Ranks.Length; i++)
 		S @= "rank" @ i $ ":" @ Ranks[i];
 	return n @ "soldiers;" $ S;
+}
+
+/** A function of EW's strategy HUD, which is loaded beside the screen stack, not on it. */
+function string HUDCall(array<string> Args)
+{
+	local UILWEWStrategyHUD HUD;
+	local int i;
+
+	foreach AllActors(class'UILWEWStrategyHUD', HUD)
+		break;
+	if (HUD == none || Args.Length < 2)
+		return "ERR no EW strategy HUD up, or no function given";
+	HUD.MC.BeginFunctionOp(Args[1]);
+	for (i = 2; i < Args.Length; i++)
+	{
+		if (string(int(Args[i])) == Args[i])
+			HUD.MC.QueueNumber(int(Args[i]));
+		else
+			HUD.MC.QueueString(Repl(Args[i], "_", " "));
+	}
+	HUD.MC.EndOp();
+	return "ok" @ HUD.MCPath $ "." $ Args[1] @ "with" @ (Args.Length - 2) @ "arguments";
 }
 
 /** A pod of two Sectoids (species 4) spawned the missions' way, Tiles east of the first soldier. */

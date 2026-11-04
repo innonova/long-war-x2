@@ -65,6 +65,9 @@ function Refresh()
 	AddResource("MELD", string(Meld), Meld > 0);
 	SetClock(S);
 	SetResearch(XComHQ);
+	// Nor the engineering queue: not fed yet (its AddProjectToQueue not read), it showed its placeholders ("LALALAL", "P",
+	// "E"). Each refresh: the movie shows it again as it lays itself out.
+	Movie.SetVariableBool(MCPath $ ".engineeringQueue._visible", false);
 }
 
 /** EW's current project panel: XCOM's research under way (its name, the days left, how far along). */
