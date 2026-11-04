@@ -69,6 +69,16 @@ struct LWPsiAbility
 var config array<LWPsiAbility> PsiAbilities;
 /** Long War's gene mods: the ability each gives (features/lw-genemods.md). */
 var config array<LWPsiAbility> GeneAbilities;
+/** Long War's aliens' perks (pod leaders' and navigators', by EW's perk number): the ability each gives (features/lw-aliens.md). */
+var config array<LWPsiAbility> AlienAbilities;
+
+static function name AlienAbilityFor(int Perk)
+{
+	local int k;
+
+	k = default.AlienAbilities.Find('Perk', Perk);
+	return k == INDEX_NONE ? '' : default.AlienAbilities[k].Ability;
+}
 
 static function name GeneAbilityFor(int Perk)
 {

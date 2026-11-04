@@ -297,8 +297,8 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem(MoveUnit(int(Args[1]), int(Args[2]), int(Args[3]), Args.Length > 4 ? int(Args[4]) : -1));
 		return;
 	case "spawn":
-		// spawn [template] [tiles] [Long War species, as the pods tag theirs: its EW body by species]
-		Out.AddItem(SpawnAlien(Args.Length > 1 ? name(Args[1]) : 'Sectoid', Args.Length > 2 ? int(Args[2]) : 2, Args.Length > 3 ? int(Args[3]) : 0));
+		// spawn [template] [tiles] [Long War species, as the pods tag theirs: its EW body by species] [leader level]
+		Out.AddItem(SpawnAlien(Args.Length > 1 ? name(Args[1]) : 'Sectoid', Args.Length > 2 ? int(Args[2]) : 2, Args.Length > 3 ? int(Args[3]) : 0, Args.Length > 4 ? int(Args[4]) : 0));
 		return;
 	case "use":
 		if (Args.Length < 3)
@@ -1033,7 +1033,7 @@ function string Look(array<string> Args)
 	return "ok looking at" @ At;
 }
 
-function string SpawnAlien(name CharacterTemplate, int Tiles, optional int Species)
+function string SpawnAlien(name CharacterTemplate, int Tiles, optional int Species, optional int LeaderLevel)
 {
 	local XComTacticalCheatManager Cheats;
 	local XComGameState_Unit Unit, Newest;
@@ -1060,11 +1060,30 @@ function string SpawnAlien(name CharacterTemplate, int Tiles, optional int Speci
 			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a test alien's species");
 			Newest = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Newest.ObjectID));
 			Newest.SetUnitFloatValue('LWX2Species', Species, eCleanup_Never);
-			class'LWAlienStats'.static.ApplyTo(Newest, Species);
+			class'LWAlienStats'.static.ApplyTo(Newest, Species, LeaderLevel, NewGameState);
 			`TACTICALRULES.SubmitGameState(NewGameState);
 		}
 	}
-	return "dropped" @ CharacterTemplate @ Tiles @ "tiles from" @ Unit.GetFullName() @ (Species > 0 ? "as species" @ Species : "");
+	return "dropped" @ CharacterTemplate @ Tiles @ "tiles from" @ Unit.GetFullName() @ (Species > 0 ? "as species" @ Species @ "leader level" @ LeaderLevel : "");
+}
+
+/** The abilities a unit has for Long War's alien perks (X2Ability_LWStandins.AlienAbilities), and the scale; "-" for none. */
+static function string AlienPerksOf(XComGameState_Unit Unit)
+{
+	local StateObjectReference Ref;
+	local XComGameState_Ability Ability;
+	local UnitValue Scale;
+	local string S;
+
+	foreach Unit.Abilities(Ref)
+	{
+		Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Ability != none && class'X2Ability_LWStandins'.default.AlienAbilities.Find('Ability', Ability.GetMyTemplateName()) != INDEX_NONE)
+			S $= (S != "" ? "," : "") $ Ability.GetMyTemplateName();
+	}
+	if (Unit.GetUnitValue('LWX2Scale', Scale))
+		S $= " scale" @ int(Scale.fValue) $ "%";
+	return S != "" ? S : "-";
 }
 
 /** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */
@@ -1315,7 +1334,8 @@ function Enemies(out array<string> Out, optional bool bAll)
 			@ "weapon" @ WeaponMeshOf(Unit)
 			@ "aim" @ int(Unit.GetCurrentStat(eStat_Offense)) @ "def" @ int(Unit.GetCurrentStat(eStat_Defense)) @ "mob" @ int(Unit.GetCurrentStat(eStat_Mobility))
 			@ "dmg+" $ (Unit.GetUnitValue('LWX2DamageBonus', DmgBonus) ? string(int(DmgBonus.fValue)) : "-")
-			@ "lwdmg" @ (Unit.GetUnitValue('LWX2WeaponDamage', DmgBonus) ? string(int(DmgBonus.fValue)) : "-") @ "passive" @ (Unit.FindAbility('LWX2_AlienDamage').ObjectID > 0));
+			@ "lwdmg" @ (Unit.GetUnitValue('LWX2WeaponDamage', DmgBonus) ? string(int(DmgBonus.fValue)) : "-") @ "passive" @ (Unit.FindAbility('LWX2_AlienDamage').ObjectID > 0)
+			@ "perks" @ AlienPerksOf(Unit));
 		// Where a unit of XCOM's that is not a soldier came from: the change that first held it.
 		if (Unit.GetTeam() == eTeam_XCom && Unit.GetMyTemplateName() != 'Soldier')
 			Out.AddItem("  a soldier" @ Unit.IsSoldier() @ "in XCOM's squad" @ (XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom')).Squad.Find('ObjectID', Unit.ObjectID) != INDEX_NONE)

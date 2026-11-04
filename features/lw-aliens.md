@@ -83,3 +83,23 @@ document the encodings):
   99% navigator line noted Gunslinger (perk 94) on each.
 - **Next:** the perks given (EW's perk number → the mod's ability, as the classes' generator
   maps soldiers' perks; added to the alien as its pod spawns), Gunslinger first.
+
+## Report (2026-11-04 night, the aliens' perks)
+
+- **The perks given:** `scripts/classes-config.mjs` reads the perk numbers of the `+Leader`
+  lines, names them by EW's `EPerkType` (read from `XComGame.upk`, `lw-words.readEnum`) and
+  maps each as it maps a soldier's perk: XCOM 2's own ability where it is the same, else Long
+  War's (`LW_…`, working where the soldiers' already works, else a named stand-in). 51 perks,
+  `+AlienAbilities` in `XComLWClasses.ini`. As a pod spawns, each perk a leader or navigator
+  line gives is added to the alien in the spawning game state
+  (`X2TacticalGameRuleset.InitAbilityForUnit`, which activates passives then).
+- EW's Gunslinger slot is Long War's **Ranger** (+1 damage with primary weapons and pistols),
+  so that is what the Sectoids' 99% navigator line gives.
+- **Seen** (the store, day 1): the Sectoids with `LW_Ranger`, the Drones' navigator line at
+  −20% scale; a Thin Man spawned as a leader of level 7 with its seven perks (Executioner,
+  Sharpshooter, Bombard, Squadsight, Rapid Reaction, Sprinter, Lightning Reflexes), mobility
+  18 with Sprinter's +4. The control aid `spawn <template> <tiles> <species> <leader level>`
+  makes such a leader; `enemies` lists an alien's Long War perks and scale.
+- **Stand-ins only so far:** perks that are Long War's own and not yet working for soldiers
+  either (Combined Arms, Repair Servos, Damage Control, Advanced Fire Control …) are named
+  and do nothing, as on soldiers; they work when the soldiers' do.

@@ -99,8 +99,9 @@ particle systems as they are; its materials it cannot draw).
   new cover fields and logged a redscreen per piece; its struct has them now.
 - **Weapons:** EW's alien weapons are packages of their own (skeletal meshes); the
   converter converts the species' weapon too and names it in the bodies' list; the mod
-  sets it on the unit's XCOM 2 weapon visual (`XComWeapon.Mesh`) with a stand-in (Props_SD,
-  which skeletal meshes may wear). Sectoid: plasma pistol; Thin Man, Floater, Outsider:
+  sets it on the unit's XCOM 2 weapon visual (`XComWeapon.Mesh`) with a stand-in material
+  (the bodies' parent, `AlienUnit_TC`: the class's Props_SD default never applied, being a
+  config property's, and was removed on 2026-11-04). Sectoid: plasma pistol; Thin Man, Floater, Outsider:
   light plasma rifle; Muton: plasma rifle; Muton Elite: heavy plasma. The species with
   nothing in their hands (Drone, Seeker, Cyberdisc, Chryssalid, Zombie, Berserker,
   Mechtoid) have XCOM 2's weapon hidden. Seen: the Muton with EW's plasma rifle, the

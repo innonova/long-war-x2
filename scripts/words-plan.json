@@ -321,6 +321,50 @@
   {
    "name": "LW_AdaptiveBoneMarrow",
    "perk": "ePerk_GeneMod_BoneMarrow"
+  },
+  {
+   "name": "LW_WillToSurvive",
+   "perk": "ePerk_WillToSurvive"
+  },
+  {
+   "name": "LW_FoundryArcThrowerII",
+   "perk": "ePerk_Foundry_ArcThrowerII"
+  },
+  {
+   "name": "LW_EleriumFuel",
+   "perk": "ePerk_Foundry_EleriumFuel"
+  },
+  {
+   "name": "LW_AdvancedFireControl",
+   "perk": "ePerk_AdvancedFireControl"
+  },
+  {
+   "name": "LW_DamageControl",
+   "perk": "ePerk_DamageControl"
+  },
+  {
+   "name": "LW_CombinedArms",
+   "perk": "ePerk_ExpandedStorage"
+  },
+  {
+   "name": "LW_RepairServos",
+   "perk": "ePerk_RepairServos"
+  },
+  {
+   "name": "LW_FortioresUna",
+   "perk": "ePerk_Overdrive"
+  },
+  {
+   "name": "LW_AbsorptionFields",
+   "perk": "ePerk_AbsorptionFields"
+  },
+  {
+   "name": "LW_ShockAbsorbentArmor",
+   "perk": "ePerk_ShockAbsorbentArmor"
+  },
+  {
+   "name": "LW_ReactiveTargetingSensors",
+   "perk": "ePerk_ReactiveTargetingSensors"
   }
  ]
 }

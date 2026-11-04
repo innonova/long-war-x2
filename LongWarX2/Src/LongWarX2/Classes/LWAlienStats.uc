@@ -66,7 +66,7 @@ static function int LeaderLevel()
 	return Clamp(L, 0, 7);
 }
 
-static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int LeaderLevel)
+static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int LeaderLevel, optional XComGameState NewGameState)
 {
 	local int k, HP, Aim, Defense, Mobility, Will, Crit, Shield, Research, Level, Damage;
 	local float DR;
@@ -75,6 +75,8 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int 
 	local LWAlienLeader L;
 	local int Scale, Perks;
 	local string PerkList;
+	local name Ability;
+	local X2AbilityTemplate AbilityTemplate;
 
 	k = default.Base.Find('Species', Species);
 	if (Unit == none || k == INDEX_NONE)
@@ -127,13 +129,23 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int 
 		{
 			Unit.SetUnitFloatValue(name("LWX2Perk" $ Perks), L.Perk, eCleanup_Never);
 			Perks++;
-			PerkList @= string(L.Perk);
+			// The ability a soldier's perk of that number is, given to the alien (in the game state that spawns it:
+			// InitAbilityForUnit activates a passive's effects then).
+			Ability = class'X2Ability_LWStandins'.static.AlienAbilityFor(L.Perk);
+			AbilityTemplate = Ability != '' ? class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate(Ability) : none;
+			if (AbilityTemplate != none && NewGameState != none && Unit.FindAbility(Ability).ObjectID == 0)
+			{
+				class'X2TacticalGameRuleset'.static.InitAbilityForUnit(AbilityTemplate, Unit, NewGameState, Unit.GetPrimaryWeapon().GetReference());
+				PerkList @= string(L.Perk) $ "=" $ Ability;
+			}
+			else
+				PerkList @= string(L.Perk) $ "=" $ (Ability != '' ? Ability : 'none') $ "(not given)";
 		}
 	}
 	if (Scale != 0)
 		Unit.SetUnitFloatValue('LWX2Scale', Scale, eCleanup_Never);
 	if (LeaderLevel > 0 || Perks > 0)
-		`log("LongWarX2: aliens: species" @ Species @ (LeaderLevel > 0 ? "leader of level" @ LeaderLevel : "navigator") $ ", scale" @ Scale $ "%, Long War perks" @ (PerkList != "" ? PerkList : "none") @ "(not given yet)", , 'LongWarX2');
+		`log("LongWarX2: aliens: species" @ Species @ (LeaderLevel > 0 ? "leader of level" @ LeaderLevel : "navigator") $ ", scale" @ Scale $ "%, Long War perks" @ (PerkList != "" ? PerkList : "none"), , 'LongWarX2');
 	SetStat(Unit, eStat_HP, Max(1, HP));
 	SetStat(Unit, eStat_Offense, Aim);
 	SetStat(Unit, eStat_Defense, Defense);

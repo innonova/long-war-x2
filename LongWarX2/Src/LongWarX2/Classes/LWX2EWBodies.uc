@@ -23,7 +23,7 @@ struct LWX2Body
 var config array<LWX2Body> Bodies;
 /** The parent of the bodies' materials (XCOM 2's material for its aliens). */
 var config string MaterialParent;
-/** The parent of the weapons' materials (XCOM 2's material for props, which skeletal meshes may wear). */
+/** The parent of the weapons' materials; unset (as the setup writes it), the bodies' parent, which draws EW's weapons. */
 var config string WeaponMaterialParent;
 
 /** The bodies' AnimSets in their templates' AdditionalAnimSets (as the templates are made). */
@@ -185,10 +185,4 @@ static function MaterialInterface Standin(LWX2Body B, optional string ParentPath
 	if (T != none)
 		MIC.SetTextureParameterValue('Normal', T);
 	return MIC;
-}
-
-defaultproperties
-{
-	MaterialParent="Materials.Approved.AlienUnit_TC"
-	WeaponMaterialParent="Materials.Approved.Props_SD"
 }

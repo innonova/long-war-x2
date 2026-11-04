@@ -15,7 +15,7 @@
 //
 //   node scripts/classes-config.mjs <Long War's DefaultGameCore.ini> <Long War's XComGame.int> [<XComGame.upk>]
 import { readFileSync, writeFileSync } from 'node:fs'
-import { readConsts, makeWords } from './lw-words.mjs'
+import { readConsts, readEnum, makeWords } from './lw-words.mjs'
 import { LAUNCHER_CATEGORY, classCategories, readWeapons, startingKit, weaponTemplate } from './lw-gear.mjs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -366,6 +366,17 @@ for (const m of core.slice(geneAt).matchAll(/^ItemBalance_Easy=\(eItem=(\d+),[^)
   geneLines.push(`+GeneAbilities=(Perk=${m[1]}, Ability=${q(abilityFor(m[2]))})`)
 }
 
+// --- The aliens' perks (features/lw-aliens.md) --------------------------------------------
+// Long War's pod leaders and navigators are given perks by number (EPerkType; XComLWAliens.ini's +Leader lines,
+// scripts/aliens-config.mjs, run first): each the ability a soldier's perk of that number is.
+const alienLines = []
+if (gameUpk) {
+  const perkNames = readEnum(new Uint8Array(readFileSync(gameUpk)), 'EPerkType')
+  const aliens = readFileSync(join(mod, 'Config', 'XComLWAliens.ini'), 'utf8')
+  const numbers = [...new Set([...aliens.matchAll(/^\+Leader=\(.*\bPerk=(\d+)/gm)].map((m) => Number(m[1])).filter((n) => n > 0))].sort((a, b) => a - b)
+  for (const n of numbers) alienLines.push(`+AlienAbilities=(Perk=${n}, Ability=${q(abilityFor(perkNames[n]))})`)
+}
+
 // --- The stand-ins ---------------------------------------------------------------------
 writeFileSync(
   join(mod, 'Config', 'XComLWClasses.ini'),
@@ -380,6 +391,8 @@ writeFileSync(
     ...psiLines,
     "; Long War's gene mods: the ability each gives (features/lw-genemods.md).",
     ...geneLines,
+    "; Long War's aliens' perks (pod leaders and navigators): the ability each gives (features/lw-aliens.md).",
+    ...alienLines,
     '',
     "; War of the Chosen's Skirmish Mode: Long War's classes armed like these XCOM 2 classes (LWX2SkirmishWeapons).",
     '[LongWarX2.LWX2SkirmishWeapons]',
