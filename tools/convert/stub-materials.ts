@@ -2,16 +2,19 @@
 // shaders are not in its caches and the cooked materials carry no expressions to compile), yet every one it loads it tries
 // to compile, about two seconds each: 53 in the person's log, half a minute and more of the game's start and of each
 // mission's loading, for nothing drawn (the mod's stand-ins draw EW's things). Each Material (a parent; its instances stay)
-// becomes a plain object of the package's Package class with no data, as the map's world is (ew-map.ts): an instance whose
-// parent it was gets none, and draws XCOM 2's default material if anything ever draws it.
+// becomes an empty material instance (the package's MaterialInstanceConstant class, no properties: no parent): still a
+// material wherever one is expected, nothing to compile, XCOM 2's default material if anything draws it. (As a plain
+// object of another class, the game crashed loading the Sectoid's package.)
 import { Package } from '@innonova/upkit/upk'
 
 /** The package's Material exports turned into empty objects; returns the bytes with the stub they share appended. */
 export function stubMaterials(bytes: Uint8Array): { bytes: Uint8Array; count: number } {
   const meta: any = new Package(bytes)
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  const donor = meta.exports.find((e: any) => e.type === 'Package')
-  const materials = meta.exports.filter((e: any) => e.type === 'Material')
+  const donor = meta.exports.find((e: any) => e.type === 'MaterialInstanceConstant')
+  // The materials and their instances: an instance with static permutations (the Sectoid's own) builds them from its parent
+  // as it loads, and with its parent an empty instance the game crashed. Decal materials are left (their own class).
+  const materials = meta.exports.filter((e: any) => e.type === 'Material' || e.type === 'MaterialInstanceConstant' || e.type === 'MaterialInstanceTimeVarying')
   if (!donor || materials.length === 0) return { bytes, count: 0 }
   const donorClass = v.getInt32(donor.entryOffset, true)
   const flagsLo = v.getUint32(donor.entryOffset + 24, true)
@@ -33,5 +36,5 @@ export function stubMaterials(bytes: Uint8Array): { bytes: Uint8Array; count: nu
     o.setInt32(at + 32, 12, true) // serial size
     o.setInt32(at + 36, stubAt, true) // serial offset
   }
-  return { bytes: out, count: materials.length }
+  return { bytes: out, count: materials.filter((e: any) => e.type === 'Material').length }
 }

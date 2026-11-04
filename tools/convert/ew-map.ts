@@ -726,10 +726,24 @@ new DataView(stub.buffer).setInt32(4, noneIndex, true)
 let neutralized = 0
 // And EW's materials (stub-materials.ts): XCOM 2 would compile each as the map loads, for nothing it draws (the plot's
 // stand-ins draw the map).
+// As empty material instances (no parent: a material wherever one is expected, nothing to compile), their instances too
+// (one with static permutations builds them from its parent as it loads: with an empty one the game crashed).
 let materialsStubbed = 0
+const micDonor = exports.find((e) => e.type === 'MaterialInstanceConstant')
 exports.forEach((e) => {
-  if (e.type === 'Material') materialsStubbed++
-  else if (e.fullName.split('.')[0] !== 'TheWorld') return
+  if ((e.type === 'Material' || e.type === 'MaterialInstanceConstant' || e.type === 'MaterialInstanceTimeVarying') && micDonor) {
+    const at = e.entryOffset
+    v.setInt32(at + 0, v.getInt32(micDonor.entryOffset + 0, true), true)
+    v.setInt32(at + 4, 0, true)
+    v.setInt32(at + 20, 0, true)
+    v.setUint32(at + 24, v.getUint32(micDonor.entryOffset + 24, true), true)
+    v.setUint32(at + 28, v.getUint32(micDonor.entryOffset + 28, true), true)
+    v.setInt32(at + 32, stub.length, true)
+    v.setInt32(at + 36, stubAt, true)
+    if (e.type === 'Material') materialsStubbed++
+    return
+  }
+  if (e.fullName.split('.')[0] !== 'TheWorld') return
   const at = e.entryOffset
   v.setInt32(at + 0, donorClass, true) // class
   v.setInt32(at + 4, 0, true) // super
