@@ -241,6 +241,20 @@ out.push(
   ...[28, 29, 30, 31].map((id) => `+Species=(Char=${id}, Name=ExaltElite${id}, Elerium=0, Alloys=0, Meld=${one('CB_FUNDING_BONUS')})`),
 )
 if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk), ...mapPlaces(strategyUpk))
+// Long War's wound recovery (XGFacility_Barracks.DetermineTimeOut; LWWounds).
+out.push(
+  '',
+  "; Long War's wound recovery (LWWounds): hours of the share of health lost out of WoundHours less WoundHours ×",
+  '; xx / (days + yy) (WoundDays = xxyy; BASE_DAYS_INJURED, RAND_DAYS_INJURED); Adaptive Bone Marrow takes off',
+  '; BoneMarrowBonus (GENEMOD_BONEMARROW_RECOVERY_BONUS); the Foundry project SurgeryFoundry ×SurgeryScale.',
+  '[LongWarX2.LWWounds]',
+  `WoundHours=${one('BASE_DAYS_INJURED')}`,
+  `WoundDays=${one('RAND_DAYS_INJURED')}`,
+  `BoneMarrowBonus=${one('GENEMOD_BONEMARROW_RECOVERY_BONUS')}`,
+  // Numbers of Long War's code (DetermineTimeOut), not its config.
+  'SurgeryFoundry=30',
+  'SurgeryScale=0.7',
+)
 console.log(out.join('\r\n'))
 
 /**

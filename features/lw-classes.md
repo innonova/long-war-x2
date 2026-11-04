@@ -669,3 +669,20 @@ new point, and the context's results are rebuilt for them.
 - **Left out:** Wet Work (`ePerk_OTS_XP`, kills ×1.25: the Officer Training School is not ported),
   an item that gives ×1.2 (item 223 in a hand patch, unclear), Star of Terra's +1/4 (medals not
   ported), Marathon's division; psi experience (`lw-psi`).
+
+## Report (2026-11-04 day, Long War's wound recovery)
+
+- **Read from Long War's code** (`XGFacility_Barracks.DetermineTimeOut`, the wounded's part) and its
+  `DefaultGameCore.ini`: a wounded soldier is out for Base hours × the share of health lost, less a
+  roll up to one hit point's share; Base = 1320 − 1320 × 27 / (days + 45) (`BASE_DAYS_INJURED`,
+  `RAND_DAYS_INJURED` = xxyy), so 528 hours on day 1, toward 1320 as the war goes on; Adaptive
+  Bone Marrow takes 66 % off (`GENEMOD_BONEMARROW_RECOVERY_BONUS`), the Foundry's alien surgery
+  (project 30) 30 %.
+- **Ported:** `LWWounds` (numbers in `XComLWStrategy.ini`, generated): when the Geoscape opens, each
+  XCOM 2 heal project not yet given Long War's hours gets them, spread over its blocks (XCOM 2 heals
+  a hit point a block; its projects follow Long War's clock already).
+- **Seen** (two soldiers hurt in a mission, won, day 5): "Gaston Moreau 2/5 HP, out 291 hours (13
+  days)", "Charlie Morrison 5/6 HP, out 11 hours". The health is XCOM 2's after a mission (its
+  armour's hit points off).
+- **Left out:** Long War's fatigue for the unhurt (`lw-fatigue`, a decision first); MECs' and SHIVs'
+  repairs; the Foundry's MEC repair (project 5) for augmented soldiers.
