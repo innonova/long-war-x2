@@ -1099,7 +1099,7 @@ function string Standable(string Part)
 	local XComWorldData World;
 	local TTile Lo, Hi, T;
 	local vector Floor, Corner;
-	local int Pieces, Over, Stand, Reached, Climbable, Destinations;
+	local int Pieces, Over, Stand, Reached, Climbable, Destinations, OnTop;
 	local array<XComGameState_Unit> Units;
 	local array<TTile> Path;
 
@@ -1129,12 +1129,17 @@ function string Standable(string Part)
 							if (World.IsFloorTileAndValidDestination(T))
 								Destinations++;
 							if (class'X2PathSolver'.static.BuildPath(Units[0], Units[0].TileLocation, T, Path, false))
+							{
 								Reached++;
+								// On the piece itself: its floor at the piece's top, not the ground beside it (slopes).
+								if (Abs(Floor.Z - (C.Bounds.Origin.Z + C.Bounds.BoxExtent.Z)) < 16)
+									OnTop++;
+							}
 						}
 			if (Stand > 0)
 				Over++;
 		}
-	return Pieces @ "pieces of" @ Part @ "(" $ Climbable @ "climbable onto);" @ Over @ "with tiles over them units can enter;" @ Destinations @ "such tiles valid destinations," @ Reached @ "a soldier can walk to";
+	return Pieces @ "pieces of" @ Part @ "(" $ Climbable @ "climbable onto);" @ Over @ "with tiles over them units can enter;" @ Destinations @ "such tiles valid destinations," @ Reached @ "a soldier can walk to," @ OnTop @ "of those at the piece's top";
 }
 
 /** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */
