@@ -24,10 +24,10 @@ const TABLE: Record<string, string[]> = {
   NO_FireStartA: ['AC_NO_EquipOnA'], NO_FireStopA: ['AC_NO_EquipOffA'],
   HL_FireStartA: ['AC_HL_Cover2FocusFire90', 'AC_HL_EquipOnA'], HL_FireStopA: ['AC_HL_FocusFire2Cover90', 'AC_HL_EquipOffA'],
   LL_FireStartA: ['AC_LL_Cover2FocusFire90', 'AC_LL_EquipOnA'], LL_FireStopA: ['AC_LL_FocusFire2Cover90', 'AC_LL_EquipOffA'],
-  HL_StepOutA: ['AC_HL_Cover2FocusFire90'], HL_StepInA: ['AC_HL_FocusFire2Cover90'],
-  HR_StepOutA: ['AC_HR_Cover2FocusFire90'], HR_StepInA: ['AC_HR_FocusFire2Cover90'],
+  HL_StepOutA: ['AC_HL_Cover2FocusFire90'], HL_StepInA: ['AC_HL_FocusFire2Cover90', 'AC_HL_FocusFire2CoverA', 'AC_HL_StayFocusFire2Cover90'],
+  HR_StepOutA: ['AC_HR_Cover2FocusFire90'], HR_StepInA: ['AC_HR_FocusFire2Cover90', 'AC_HR_FocusFire2CoverA'],
   HL_Run2CoverA: ['AC_HL_Run2CoverStopA'], HR_Run2CoverA: ['AC_HR_Run2CoverStopA'],
-  LL_Run2CoverA: ['AC_LL_Run2CoverStopA'], LR_Run2CoverA: ['AC_LR_Run2CoverStopA'], LL_Rush2CoverA: ['AC_LL_Run2CoverStopA'],
+  LL_Run2CoverA: ['AC_LL_Run2CoverStopA'], LR_Run2CoverA: ['AC_LR_Run2CoverStopA'], LL_Rush2CoverA: ['AC_LL_Run2CoverStopA'], HL_Rush2CoverA: ['AC_HL_Run2CoverStopA'], HR_Rush2CoverA: ['AC_HR_Run2CoverStopA'],
   HL_Peek_StartA: ['AC_HL_SideLookStartA'], HL_Peek_LoopA: ['AC_HL_SideLookA'], HL_Peek_StopA: ['AC_HL_SideLookStartA'],
   HR_Peek_StartA: ['AC_HL_SideLookStartA'], HR_Peek_LoopA: ['AC_HL_SideLookA'], HR_Peek_StopA: ['AC_HL_SideLookStartA'],
   HL_PeekFwd_StartA: ['AC_HL_SideLookStartA'], HL_PeekFwd_LoopA: ['AC_HL_SideLookA'], HL_PeekFwd_StopA: ['AC_HL_SideLookStartA'],
@@ -56,10 +56,10 @@ const TABLE: Record<string, string[]> = {
   MV_RunBackLeft_StartA: ['MV_RunBackA'], MV_RunBackRight_StartA: ['MV_RunBackA'],
   MV_RunTurn90LeftA: ['MV_RunLeftA'], MV_RunTurn90RightA: ['MV_RunRightA'], MV_WalkFwdA: ['MV_RunFwdA'],
   MV_ClimbDropHigh_StartA: ['AC_NO_ClimbHighDrop_StartA'], MV_ClimbDropHigh_StartWallA: ['AC_NO_ClimbHighDrop_StartB', 'AC_NO_ClimbHighDrop_StartA'],
-  MV_ClimbDropHigh_StopA: ['AC_NO_ClimbHighDrop_StopA'], MV_ClimbDropLow_StartA: ['AC_NO_ClimbLowDrop_StartA'],
-  MV_ClimbDropLow_StartWallA: ['AC_NO_ClimbLowDrop_StartB', 'AC_NO_ClimbLowDrop_StartA'], MV_ClimbDropLow_StopA: ['AC_NO_ClimbLowDrop_StopA'],
-  MV_ClimbDrop_StartA: ['AC_NO_ClimbLowDrop_StartA'], MV_ClimbDrop_StartB: ['AC_NO_ClimbLowDrop_StartB', 'AC_NO_ClimbLowDrop_StartA'],
-  MV_ClimbDrop_StopA: ['AC_NO_ClimbLowDrop_StopA'], MV_ClimbDrop_FurtherA: ['AC_NO_ClimbHighDrop_StopA'],
+  MV_ClimbDropHigh_StopA: ['AC_NO_ClimbHighDrop_StopA'], MV_ClimbDropLow_StartA: ['AC_NO_ClimbLowDrop_StartA', 'AC_NO_ClimbHighDrop_StartA'],
+  MV_ClimbDropLow_StartWallA: ['AC_NO_ClimbLowDrop_StartB', 'AC_NO_ClimbLowDrop_StartA', 'AC_NO_ClimbHighDrop_StartB'], MV_ClimbDropLow_StopA: ['AC_NO_ClimbLowDrop_StopA', 'AC_NO_ClimbHighDrop_StopA'],
+  MV_ClimbDrop_StartA: ['AC_NO_ClimbLowDrop_StartA', 'AC_NO_ClimbHighDrop_StartA'], MV_ClimbDrop_StartB: ['AC_NO_ClimbLowDrop_StartB', 'AC_NO_ClimbLowDrop_StartA', 'AC_NO_ClimbHighDrop_StartB'],
+  MV_ClimbDrop_StopA: ['AC_NO_ClimbLowDrop_StopA', 'AC_NO_ClimbHighDrop_StopA'], MV_ClimbDrop_FurtherA: ['AC_NO_ClimbHighDrop_StopA'],
   MV_ClimbLowObject_UpA: ['AC_NO_ClimbLowObject_UpA'], MV_ClimbLowObject_DwnA: ['AC_NO_ClimbLowObject_DwnA'],
   MV_ClimbLowObject_Over1TileA: ['AC_NO_ClimbLowObject_OverA'], MV_ClimbLowObject_Over2TilesA: ['AC_NO_ClimbLowObject_OverA'],
   MV_ClimbDrainUp_StartA: ['AC_NO_ClimbLadderUp_StartA'], MV_ClimbDrainUp_StopA: ['AC_NO_ClimbLadderUp_StopA'],
@@ -113,8 +113,28 @@ export function ewFor(x2: string, ew: Set<string>): string | undefined {
   if (turn && ew.has(`MV_Turn${turn[1]}${turn[2]}`)) return `MV_Turn${turn[1]}${turn[2]}`
   const signal = /^(HL|LL)_SignalLookAt/.exec(x2)
   if (signal && ew.has('AC_NO_IdleOnAlertA')) return 'AC_NO_IdleOnAlertA'
+  // Cover: EW plays the right side by mirroring the left (its own right-side sequences are empty), and its small units (the
+  // Sectoid) take low cover as high: their low-cover sequences are empty. So the right side falls back to the left, low
+  // cover to high.
+  const cover = /^(L|H)(L|R)_(.+)$/.exec(x2)
+  if (cover) {
+    const left = cover[2] === 'R' ? ewFor(`${cover[1]}L_${cover[3]}`, ew) : undefined
+    if (left) return left
+    const high = cover[1] === 'L' ? ewFor(`H${cover[2]}_${cover[3]}`, ew) : undefined
+    if (high) return high
+  }
   for (const [re, candidates] of KEYWORDS) if (re.test(x2)) for (const c of candidates) if (ew.has(c)) return c
   return undefined
+}
+
+/** Whether a sequence has its compressed animation: the byte array that ends the object, not empty. */
+function hasAnimationData(d: Uint8Array, propsEnd: number): boolean {
+  const v = new DataView(d.buffer, d.byteOffset, d.byteLength)
+  for (let o = propsEnd; o + 4 <= d.length; o++) {
+    const n = v.getInt32(o, true)
+    if (n > 0 && o + 4 + n === d.length) return true
+  }
+  return false
 }
 
 /** The converted unit package with the AnimSet's sequences also under XCOM 2's names; returns its bytes and a report. */
@@ -162,11 +182,22 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
     const t = (readTags(new Reader((pkg.data(ref) as Uint8Array).subarray(4)), pkg) as Tag[]).find((x) => x.name === 'Sequences')
     if (t) for (let k = 0; k < i32(t.value); k++) sources.push(i32(t.value, 4 + 4 * k))
   }
+  // The sequences by name, those without animation data left out: EW's cooker left the ones EW never plays empty (57 of the
+  // Sectoid's 178: its low cover, its right side …), and played they hold the unit in its reference pose (the person's
+  // posing Sectoids).
   const byName = new Map<string, number>()
+  let empty = 0
   for (const s of sources) {
     const d: Uint8Array = pkg.data(s)
     const r = new Reader(d.subarray(4))
-    for (const t of readTags(r, pkg) as Tag[]) if (t.name === 'SequenceName') byName.set(nameOf(i32(t.value)), s)
+    let seqName = ''
+    for (const t of readTags(r, pkg) as Tag[]) if (t.name === 'SequenceName') seqName = nameOf(i32(t.value))
+    if (!seqName) continue
+    if (!hasAnimationData(d, 4 + (r as any).o)) {
+      empty++
+      continue
+    }
+    byName.set(seqName, s)
   }
 
   // A copy of each EW sequence an XCOM 2 name needs, its SequenceName that name (the tag's value found by its bytes).
@@ -218,7 +249,7 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
   data.set(setRef, w.done())
 
   const bytes = writePackage(pkg, { data, names, imports: [], exports: added })
-  return { bytes, report: `${animSetPath}: ${seqs.length} sequences, ${copies.length} copies under XCOM 2's names, ${unmatched.length} XCOM 2 names without an EW animation${unmatched.length ? ` (${unmatched.join(' ')})` : ''}` }
+  return { bytes, report: `${animSetPath}: ${seqs.length} sequences (${empty} without animation data), ${copies.length} copies under XCOM 2's names, ${unmatched.length} XCOM 2 names without an EW animation${unmatched.length ? ` (${unmatched.join(' ')})` : ''}` }
 }
 
 if (/ew-unit-anims\.ts$/.test(process.argv[1] ?? '')) {
