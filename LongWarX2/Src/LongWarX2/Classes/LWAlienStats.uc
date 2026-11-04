@@ -140,6 +140,9 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int 
 	}
 	if (Scale != 0)
 		Unit.SetUnitFloatValue('LWX2Scale', Scale, eCleanup_Never);
+	// The kill's experience is more for a leader (LWExperience).
+	if (LeaderLevel > 0)
+		Unit.SetUnitFloatValue('LWX2Leader', LeaderLevel, eCleanup_Never);
 	foreach default.SpeciesAbilities(A)
 		if (A.Species == Species)
 			Give(Unit, A.Ability, NewGameState);

@@ -637,3 +637,32 @@ new point, and the context's results are rebuilt for them.
   `scripts/classes-config.mjs` now writes `Config/XComGameCore.ini` with Long War's number.
   Seen: a new campaign with 40 soldiers (control aid `crew`: the soldiers by rank).
 
+
+## Report (2026-11-04 day, Long War's experience)
+
+- **Read from Long War's code** (`XGTacticalGameCore.CalcXP`, `GetBasicKillXP`,
+  `GetBetterAlienKillXP`, `IsBetterAlien`, `DeservesBetterAlienBonus`; `XGBattle.AdditionalBonuses`;
+  `XGCharacter_Soldier.AddXP`, `LeveledUp`) and its `DefaultGameCore.ini`:
+  - the experience each rank needs: `m_iSoldierXPLevels` 0, 120, 350, 700, 1200, 2000, 3000, 4200;
+  - a kill: 20; a better alien's (Sectoid Commander, Muton Elite, Ethereal, Sectopod, Outsider,
+    Mechtoid) 40, for a soldier below rank 4; more by a tenth per level of the alien (read from a
+    hand-patched spot of the bytecode: the victim's leader level is our reading of it);
+  - a mission won, each soldier alive: 80, or 120 for a landed UFO, terror, an alien base or the HQ
+    assault; 110 / 180 for a soldier up to rank 4 once the squad has seen a better alien; +20 with
+    nobody lost;
+  - after a mission won, at most one rank's promotion (the experience capped just below the rank
+    after next).
+- **Ported:** XCOM 2 promotes by kills, so the ranks' kills are Long War's experience
+  (`Config/XComGameData_XpData.ini`, written by `scripts/classes-config.mjs` for every difficulty),
+  and as the mission summary opens `LWExperience.MissionOver` awards each soldier of the squad
+  Long War's experience for the mission, keeps it on the unit (`LWX2XP`) and makes it their kill
+  count through the kills XCOM 2 keeps for missions not played (`NonTacticalKills`; XCOM 2's own
+  kills still count in, a kill each, under it). The kills of the mission are those after the ones
+  counted before (`LWX2KillsCounted`); the leader level is now noted on the alien (`LWX2Leader`).
+  "Seen a better alien": one of the mission's was sighted (its pod's `EverSightedByEnemy`) or died.
+- **Seen** (a Geoscape round trip, the test win, no kills): each soldier "+100 (0 kills, mission
+  won, nobody lost): 450 of 700 for the next rank": Long War's thresholds read by XCOM 2.
+- **Not yet seen:** a kill's experience (the test win kills nobody); a promotion from it.
+- **Left out:** Wet Work (`ePerk_OTS_XP`, kills ×1.25: the Officer Training School is not ported),
+  an item that gives ×1.2 (item 223 in a hand patch, unclear), Star of Terra's +1/4 (medals not
+  ported), Marathon's division; psi experience (`lw-psi`).

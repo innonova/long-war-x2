@@ -28,6 +28,7 @@ event OnInit(UIScreen Screen)
 	if (UIMissionSummary(Screen) != none)
 	{
 		CountCivilians();
+		class'LWExperience'.static.MissionOver();
 		FieldSurgeon();
 	}
 	if (UITacticalHUD(Screen) == none)
