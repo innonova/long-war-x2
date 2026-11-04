@@ -49,9 +49,3 @@ decompiler, kept out of the repository) and its `DefaultGameCore.ini`:
 2. The squad selection marks fatigued soldiers; sending one makes them all in.
 3. The all-in cost (1 maximum HP).
 4. War of the Chosen's own fatigue switched off (its will loss on missions), if so decided.
-</content>
-</invoke>
-<invoke name="Bash">
-<parameter name="command">cd ~/projects/long-war-x2; git add features/lw-fatigue.md; git commit -qm "features/lw-fatigue (planned): Long War's fatigue as read from its code and ini; to decide: in place of War of the Chosen's
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && git push -q origin HEAD; grep -n -i "night" features/lw-missions.md | tail -12 | cut -c1-180
