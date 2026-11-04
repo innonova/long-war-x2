@@ -251,6 +251,11 @@ function Handle(string Line, out array<string> Out)
 		XComTacticalController(GetALocalPlayerController()).PerformEndTurn(ePlayerEndTurnType_PlayerInput);
 		Out.AddItem("ok end of turn asked");
 		return;
+	case "windowsight":
+		// Sight across each window piece (two tiles either side, along X and Y), and across walls for comparison.
+		Out.AddItem(WindowSight("Window"));
+		Out.AddItem(WindowSight("Wall"));
+		return;
 	case "seethrough":
 		// How many placed pieces units see through (EW's windows, foliage, cars), and how many are windows.
 		Out.AddItem(SeeThrough());
@@ -1118,6 +1123,47 @@ function string Look(array<string> Args)
 	// Fog of war off, so the place is seen (never seen ground is drawn black).
 	GetALocalPlayerController().ConsoleCommand("SetFOW false");
 	return "ok looking at" @ At @ Name;
+}
+
+function string WindowSight(string Part)
+{
+	local XComLevelActor A;
+	local XComWorldData World;
+	local GameRulesCache_VisibilityInfo Info;
+	local TTile T, From, To;
+	local vector At;
+	local string List;
+	local int Pieces, Through, Blocking, Axis;
+	local bool bSeen;
+
+	World = `XWORLD;
+	foreach WorldInfo.AllActors(class'XComLevelActor', A)
+	{
+		if (A.StaticMeshComponent == none || InStr(PathName(A.StaticMeshComponent.StaticMesh), Part) < 0)
+			continue;
+		Pieces++;
+		if (A.VisibilityBlockingData.bBlockUnitVisibility)
+			Blocking++;
+		At = A.Location + vect(0, 0, 64);
+		T = World.GetTileCoordinatesFromPosition(At);
+		// Seen across both ways: one of them crosses the piece (the other may only pass beside it).
+		bSeen = true;
+		for (Axis = 0; Axis < 2 && bSeen; Axis++)
+		{
+			From = T;
+			To = T;
+			if (Axis == 0) { From.X -= 2; To.X += 2; } else { From.Y -= 2; To.Y += 2; }
+			if (!World.CanSeeTileToTile(From, To, Info))
+				bSeen = false;
+		}
+		if (bSeen)
+			Through++;
+		if (Part == "Window" && Pieces <= 30)
+			List @= T.X $ "," $ T.Y $ "," $ T.Z $ (bSeen ? "+" : "-");
+	}
+	if (List != "")
+		`log("LongWarX2: control: window tiles" $ List, , 'LongWarX2');
+	return Part $ ":" @ Pieces @ "pieces," @ Blocking @ "blocking sight by their flag," @ Through @ "seen across both ways" $ List;
 }
 
 function string SeeThrough()
