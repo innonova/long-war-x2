@@ -152,4 +152,11 @@ document the encodings):
 - **The Sectoid Commander's Mind Control** in its AI (the Sectoid's tree, which it shares): tried
   before Mind Merge, a plain Sectoid having none. Seen: a Commander spawned beside the squad moved
   and shot for two turns and mind-controlled a soldier on the third.
+- **The Cyberdisc's Death Blossom, tried and taken out:** an ability around the Cyberdisc (EW's
+  four tiles, 4 to 6 damage, cooldown 4), usable only with an enemy within reach (a condition of
+  its own), used where the Gatekeeper's tree tried its Anima Consume. Each time a Cyberdisc used
+  it the game crashed showing it: with the scenery damaged and allies hit, with neither (as
+  XCOM 2's Sectopod's Lightning Field, the same kind of ability), and played as a shot. Without
+  the ability the same test runs. Not in the mod; to come back to (the visualisation of a
+  radius attack by a unit with an EW body is the suspect).
 
