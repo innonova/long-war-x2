@@ -1466,4 +1466,8 @@ from the evening, one from the morning) give two exception addresses:
   class, and with only the parents emptied (an instance with static permutations, the
   Sectoid's own, builds them from its parent). Checked with the units converted so: no crash,
   no compiles at the game's start.
+- **Sweep from release `62e2c9a`** (converter 15): the store, MeldTutorial, the fast food, the
+  office, the boulevard, the city scout, the pier terror, the supply ship, the bar, the farm, the
+  forest farm and the fallen highway all load, every door registered, no crash and no material
+  compiled while loading.
 
