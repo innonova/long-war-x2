@@ -662,7 +662,10 @@ new point, and the context's results are rebuilt for them.
   "Seen a better alien": one of the mission's was sighted (its pod's `EverSightedByEnemy`) or died.
 - **Seen** (a Geoscape round trip, the test win, no kills): each soldier "+100 (0 kills, mission
   won, nobody lost): 450 of 700 for the next rank": Long War's thresholds read by XCOM 2.
-- **Not yet seen:** a kill's experience (the test win kills nobody); a promotion from it.
+- **Seen, a kill** (a Sectoid dropped beside the squad, brought to 1 HP, shot by the Scout, the
+  mission then won): "William Thompson +120 (1 kills, mission won, nobody lost): 470 of 700", the
+  others +100.
+- **Not yet seen:** a promotion from it (the first squad starts at rank 2, 350; 700 is far).
 - **Left out:** Wet Work (`ePerk_OTS_XP`, kills ×1.25: the Officer Training School is not ported),
   an item that gives ×1.2 (item 223 in a hand patch, unclear), Star of Terra's +1/4 (medals not
   ported), Marathon's division; psi experience (`lw-psi`).
