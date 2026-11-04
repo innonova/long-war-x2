@@ -1393,3 +1393,15 @@ from the evening, one from the morning) give two exception addresses:
   version 10): the store's crosswalk white; on the forest farm (`LAbductor_FarmOutskirts`) the
   bushes, ferns and grass cut out as leaves (`logs/wingpu_foliage.png`), textures whole.
 
+### 2026-11-04 night, cars
+
+- The person (2026-11-03): units should not stand on a car's hood and trunk. EW's sedan prefab
+  sets `bCanClimbOnto` itself (the converter carried it over faithfully), and XCOM 2 makes every
+  flat surface of a climbable piece a floor. **Decision (the person's word over EW's data):**
+  EW's vehicles (its `VEH_` packages: sedans, vans, trucks …) are not to be stood on. Converter
+  version 11.
+- A control aid to check such things: `standable <part of a mesh's path>` counts the placed
+  pieces of such meshes and those with tiles over them units can enter and stand on. Before
+  (the store, version 10): 6 of 12 sedan pieces and 6 of 7 van pieces had such tiles; the
+  dumpsters none.
+
