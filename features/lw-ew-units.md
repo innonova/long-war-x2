@@ -165,4 +165,8 @@ particle systems as they are; its materials it cannot draw).
   sockets. The Sectoid gets 11 mirrored copies, the Thin Man 10, the Muton 10; where EW has its
   own right-side animation with data (the Sectoid's high step-outs) that is used.
 - Control aid `anims <n> play <name>`: an animation played on an enemy's whole body.
+- **No reference pose left:** the names still unanswered per species were mostly XCOM 2's own
+  abilities, but also ordinary actions (the Thin Man's ladders, window breaks, the Seeker's and
+  Cyberdisc's panic). A last fallback gives those the unit's idle; additive layers excepted.
+  The Thin Man answers every name now but the additive `Zero` ones.
 

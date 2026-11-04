@@ -126,6 +126,10 @@ export function ewFor(x2: string, ew: Set<string>): string | undefined {
     if (high) return high
   }
   for (const [re, candidates] of KEYWORDS) if (re.test(x2)) for (const c of candidates) if (ew.has(c)) return c
+  // Last, the unit's idle: an action EW's unit has no animation for (a Thin Man's ladder, a window broken through, a Seeker's
+  // panic) played as nothing holds it in its reference pose, arms out; standing idle is the lesser fault. Not the additive
+  // layers (an idle added on top of a pose distorts it).
+  if (!/^ADD_|Zero/.test(x2)) for (const c of ['AC_NO_IdleA', 'AC_HL_IdleA', 'AC_NO_IdleOnAlertA']) if (ew.has(c)) return c
   return undefined
 }
 
