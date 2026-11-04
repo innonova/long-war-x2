@@ -85,3 +85,9 @@ hours shown as War of the Chosen's "Tired").
   soldier; one is kept for each resting soldier, outside the headquarters' projects (XCOM 2 neither
   advances nor completes it), completing at Long War's hour. Seen (control aid `crew`, XCOM 2's own
   label): "Tired 6 Days", "Tired 4 Days" after a mission; none Tired eight days on.
+- **The squad sent:** the Long War Geoscape launches without XCOM 2's squad selection, with the first
+  soldiers able to go (`UILWHeadquarters.ReadySoldiers`), which would have sent the same tired soldiers
+  all in mission after mission. Now rested soldiers come first, then those resting, the nearest to
+  rested first. Seen: the squad of the last mission tired by the test aid, the next abduction sent six
+  others, none all in. To decide with the person: a squad selection of their own (Long War's player
+  picks, and may send a tired soldier all in on purpose).

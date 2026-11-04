@@ -101,18 +101,33 @@ function array<XComGameState_Unit> ReadySoldiers(int Max)
 	local XComGameState_HeadquartersXCom XComHQ;
 	local StateObjectReference Ref;
 	local XComGameState_Unit Unit;
+	local XComGameState_LWStrategy S;
 	local array<XComGameState_Unit> Out;
+	local array<int> Rests;
+	local UnitValue RestedAt;
+	local int Resting, i;
 
 	History = `XCOMHISTORY;
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
+	S = class'XComGameState_LWStrategy'.static.Get();
 	foreach XComHQ.Crew(Ref)
 	{
 		Unit = XComGameState_Unit(History.GetGameStateForObjectID(Ref.ObjectID));
 		// Not those in psi training (features/lw-psi.md).
-		if (Unit != none && Unit.IsSoldier() && Unit.CanGoOnMission() && Out.Length < Max
-			&& (class'XComGameState_LWStrategy'.static.Get() == none || !class'XComGameState_LWStrategy'.static.Get().InPsiTraining(Unit.ObjectID)))
-			Out.AddItem(Unit);
+		if (Unit == none || !Unit.IsSoldier() || !Unit.CanGoOnMission() || (S != none && S.InPsiTraining(Unit.ObjectID)))
+			continue;
+		// Rested soldiers first, then those resting (Long War's fatigue: they would go all in), the nearest to rested first.
+		Resting = 0;
+		if (S != none && Unit.GetUnitValue('LWX2RestedAt', RestedAt))
+			Resting = int(RestedAt.fValue) > S.Hours ? int(RestedAt.fValue) - S.Hours : 0;
+		i = 0;
+		while (i < Rests.Length && Rests[i] <= Resting)
+			i++;
+		Out.InsertItem(i, Unit);
+		Rests.InsertItem(i, Resting);
 	}
+	if (Out.Length > Max)
+		Out.Length = Max;
 	return Out;
 }
 
