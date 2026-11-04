@@ -285,6 +285,14 @@ function Handle(string Line, out array<string> Out)
 		// standable <part of a mesh's path>: for the placed pieces of such meshes, the tiles over them units can stand on.
 		Out.AddItem(Args.Length > 1 ? Standable(Args[1]) : "ERR standable <part of a mesh's path>");
 		return;
+	case "pod":
+		// pod [tiles]: a pod of two Sectoids spawned as the missions spawn Long War's pods (LWMissionSquads.SpawnPod), near the squad.
+		Out.AddItem(TestPod(Args.Length > 1 ? int(Args[1]) : 4));
+		return;
+	case "anims":
+		// anims [n] [all|relink1|relink2]: the n-th enemy's (else the nearest's) animation nodes in play: the name asked for, found or not, weight.
+		Anims(Out, Args.Length > 1 ? int(Args[1]) : -1, Args.Length > 2 && Args[2] == "all", (Args.Length > 2 && Left(Args[2], 6) == "relink") ? int(Mid(Args[2], 6)) : 0);
+		return;
 	case "flashnum":
 		// flashnum <path under the top screen's clip>: a Flash number there (where the EW screens' clips sit).
 		Out.AddItem(Args.Length > 1 ? (Args[1] @ "=" @ Pres().ScreenStack.GetCurrentScreen().MC.GetNum(Args[1])) : "ERR flashnum <path>");
@@ -1140,6 +1148,89 @@ function string Standable(string Part)
 				Over++;
 		}
 	return Pieces @ "pieces of" @ Part @ "(" $ Climbable @ "climbable onto);" @ Over @ "with tiles over them units can enter;" @ Destinations @ "such tiles valid destinations," @ Reached @ "a soldier can walk to," @ OnTop @ "of those at the piece's top";
+}
+
+/** A pod of two Sectoids (species 4) spawned the missions' way, Tiles east of the first soldier. */
+function string TestPod(int Tiles)
+{
+	local array<XComGameState_Unit> Units;
+	local vector Position;
+	local array<name> Templates;
+	local array<int> Species;
+
+	Units = FieldXCom();
+	if (Units.Length == 0)
+		return "ERR not in a mission";
+	Position = `XWORLD.GetPositionFromTileCoordinates(Units[0].TileLocation);
+	Position.X += Tiles * class'XComWorldData'.const.WORLD_StepSize;
+	Templates.AddItem('Sectoid');
+	Templates.AddItem('Sectoid');
+	Species.AddItem(4);
+	Species.AddItem(4);
+	class'LWMissionSquads'.static.SpawnPod('LWX2_TestPod', Position, Templates, Species);
+	return "pod of 2 Sectoids spawned near" @ Position;
+}
+
+/** An enemy's pawn's animation nodes with weight: what XCOM 2 asked its body to play, and whether its AnimSets have it. */
+function Anims(out array<string> Out, int Index, optional bool bAll, optional int Relink)
+{
+	local XComGameState_Unit Unit, Pick, Soldier;
+	local XComUnitPawn Pawn;
+	local AnimNodeSequence Seq;
+	local int Best;
+	local AnimSet Set;
+	local int n, i, b;
+	local string Sets;
+
+	Best = 9999;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Unit.GetTeam() == eTeam_XCom || !Unit.IsAlive() || Unit.bRemovedFromPlay || XGUnit(Unit.GetVisualizer()) == none)
+			continue;
+		if (n++ == Index)
+			Pick = Unit;
+		// No index: the one nearest the squad (one in sight, whose animations are ticking).
+		if (Index < 0)
+			foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Soldier)
+				if (Soldier.GetTeam() == eTeam_XCom && Soldier.IsSoldier() && !Soldier.bRemovedFromPlay && Soldier.TileDistanceBetween(Unit) < Best)
+				{
+					Best = Soldier.TileDistanceBetween(Unit);
+					Pick = Unit;
+				}
+	}
+	if (Pick == none)
+	{
+		Out.AddItem("ERR no such enemy");
+		return;
+	}
+	Pawn = XGUnit(Pick.GetVisualizer()).GetPawn();
+	if (Pawn == none || Pawn.Mesh == none)
+	{
+		Out.AddItem("ERR no pawn");
+		return;
+	}
+	if (Relink == 1)
+		Pawn.UpdateAnimations();
+	if (Relink == 2)
+		Pawn.Mesh.UpdateAnimations();
+	foreach Pawn.Mesh.AnimSets(Set)
+		Sets @= (Set != none ? string(Set.Name) $ "(" $ Set.Sequences.Length $ ")" : "none");
+	Out.AddItem(Pick.GetMyTemplateName() @ "mesh" @ PathName(Pawn.Mesh.SkeletalMesh) @ "tree" @ PathName(Pawn.Mesh.AnimTreeTemplate) @ "sets" $ Sets);
+	Sets = "";
+	foreach Pick.GetMyTemplate().AdditionalAnimSets(Set)
+		Sets @= (Set != none ? PathName(Set) $ "(" $ Set.Sequences.Length $ ")" : "none");
+	Out.AddItem("  the template's AdditionalAnimSets:" $ Sets @ "| difficulty variant" @ Pick.GetMyTemplate().Name @ Pick.GetMyTemplate());
+	foreach Pawn.Mesh.AnimSets(Set)
+		if (Set != none)
+		{
+			for (i = 0; i < Set.Sequences.Length && Set.Sequences[i].SequenceName != 'NO_IdleGunDwnA'; i++);
+			for (b = 0; b < Set.TrackBoneNames.Length && Pawn.Mesh.MatchRefBone(Set.TrackBoneNames[b]) != INDEX_NONE; b++);
+			Out.AddItem("  set" @ PathName(Set) @ "NO_IdleGunDwnA" @ (i < Set.Sequences.Length ? "in it" : "not in it") @ "| bones:" @ Set.TrackBoneNames.Length @ "tracks, the first" @ b @ "on the mesh" @ (b < Set.TrackBoneNames.Length ? "(not:" @ Set.TrackBoneNames[b] $ ")" : "") @ "| preview mesh" @ Set.PreviewSkelMeshName);
+		}
+	Out.AddItem("  the mesh finds NO_IdleGunDwnA:" @ (Pawn.Mesh.FindAnimSequence('NO_IdleGunDwnA') != none ? PathName(Pawn.Mesh.FindAnimSequence('NO_IdleGunDwnA')) : "none"));
+	foreach Pawn.Mesh.AllAnimNodes(class'AnimNodeSequence', Seq)
+		if (Seq.NodeTotalWeight > 0.01 || (bAll && Seq.AnimSeqName != ''))
+			Out.AddItem("  " $ Seq.Class.Name @ Seq.AnimSeqName @ (Seq.AnimSeq != none ? "found" : "MISSING") @ "weight" @ Seq.NodeTotalWeight @ (Seq.bPlaying ? "playing" : "stopped") @ "at" @ Seq.CurrentTime);
 }
 
 /** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */

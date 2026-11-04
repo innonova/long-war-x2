@@ -134,7 +134,7 @@ export interface PlotSettings {
  */
 const SKIPPED_MATERIAL = /Drop_Zone|DESIGN_Border|Sky\b|Sky_|NightSky|DuskSky|NoonSky|SkyDome|RoadPaint|Puddle|Decal|Scar|Asphalt_Patch|Burning|Charred|Black$/i
 const GLASS_MATERIAL = /Glass|Window/i
-const GLASS = { parent: 'Materials.Approved.Translucent_SD', diffuse: 'EngineResources.WhiteSquareTexture', opacity: 0.35, specular: 0.5 }
+const GLASS = { parent: 'Materials.Approved.Translucent_SD', diffuse: 'EngineResources.WhiteSquareTexture', opacity: Number(process.env.LWX2_GLASS_OPACITY ?? 0.35), specular: 0.5 }
 const GREY = { diffuse: 'EngineResources.WhiteSquareTexture', tint: [0.35, 0.35, 0.35, 1] }
 
 const TILE = 96
