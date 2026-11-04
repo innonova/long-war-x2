@@ -33,7 +33,8 @@ export function readSection(text: string): EWMap {
   const num = (s: string, k: string) => Number(new RegExp(`\\b${k}=(-?[\\d.e+-]+)`).exec(s)?.[1] ?? 0)
   const vec = (s: string) => ['X', 'Y', 'Z'].map((k) => num(s, k))
   const sub = (s: string, k: string) => new RegExp(`\\b${k}=\\(([^()]*)\\)`).exec(s)?.[1] ?? ''
-  const str = (s: string, k: string) => new RegExp(`\\b${k}="([^"]*)"`).exec(s)?.[1] ?? ''
+  // (A path that is only a package and a dot is none: converters before version 14 wrote an empty path so.)
+  const str = (s: string, k: string) => (new RegExp(`\\b${k}="([^"]*)"`).exec(s)?.[1] ?? '').replace(/^[^.]*\.$/, '')
   const m: EWMap = { name: '', mapPackage: '', playCenter: [0, 0, 0], playExtent: [0, 0, 0], dropZones: [], pieces: [], doors: [], looks: new Map(), lights: [], buildings: [] }
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim()
@@ -134,10 +135,9 @@ export interface PlotSettings {
  */
 const SKIPPED_MATERIAL = /Drop_Zone|DESIGN_Border|Sky\b|Sky_|NightSky|DuskSky|NoonSky|SkyDome|RoadPaint|Puddle|Decal|Scar|Asphalt_Patch|Burning|Charred|Black$/i
 const GLASS_MATERIAL = /Glass|Window/i
-/** Glass: XCOM 2's translucent parent (Translucent_SD) draws as opaque black on these plots (its colour unlit, its emissive
- *  switched off; the person's windows, 2026-11-04), so a pane is cut out entirely: the masked parent with a black mask
- *  (its opacity is the mask's green), the window a see-through frame. */
-const GLASS = { diffuse: 'EngineResources.WhiteSquareTexture', mask: 'EngineResources.Black' }
+/** Glass: a translucent pane (XCOM 2's Translucent_SD, white at some opacity), or cut out entirely (the masked parent with a
+ *  black mask: its opacity is the mask's green; the window a see-through frame). */
+const GLASS = { translucent: process.env.LWX2_GLASS !== 'cut', parent: 'Materials.Approved.Translucent_SD', diffuse: 'EngineResources.WhiteSquareTexture', mask: 'EngineResources.Black', opacity: Number(process.env.LWX2_GLASS_OPACITY ?? 0.2), specular: 0.5 }
 const GREY = { diffuse: 'EngineResources.WhiteSquareTexture', tint: [0.35, 0.35, 0.35, 1] }
 
 const TILE = 96
@@ -304,10 +304,10 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       const p = parse(pkg.data(sampleMIC), 4)
       const name = (n: string) => bin((x) => { const r = objName(n); x.i32(r.index).i32(r.number) })
       const param = (n: string, value: T) => serialize({ head: new Uint8Array(0), tags: [{ name: 'ParameterName', type: 'NameProperty', arrayIndex: 0, value: name(n) }, value], tail: new Uint8Array(0) })
-      const scalars: [string, number][] = settings.scalars
-      const textures: [string, string][] = glass ? [['Diffuse', GLASS.diffuse], ['Masks', GLASS.mask]] : [['Diffuse', GREY.diffuse]]
+      const scalars: [string, number][] = glass && GLASS.translucent ? [['Opacity', GLASS.opacity], ['SpecularScale', GLASS.specular]] : settings.scalars
+      const textures: [string, string][] = !glass ? [['Diffuse', GREY.diffuse]] : GLASS.translucent ? [['Diffuse', GLASS.diffuse]] : [['Diffuse', GLASS.diffuse], ['Masks', GLASS.mask]]
       const tags: T[] = [
-        tObj('Parent', importRef(glass ? settings.parents.Masked! : settings.parents.Prop!, 'Material')),
+        tObj('Parent', importRef(!glass ? settings.parents.Prop! : GLASS.translucent ? GLASS.parent : settings.parents.Masked!, 'Material')),
         tGuid('LightingGuid'),
         { name: 'TextureParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(textures.length); for (const [n, t] of textures) w.bytes(param(n, tObj('ParameterValue', importRef(t, 'Texture2D')))) }) },
         { name: 'ScalarParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(scalars.length); for (const [n, v] of scalars) w.bytes(param(n, tFloat('ParameterValue', v))) }) },

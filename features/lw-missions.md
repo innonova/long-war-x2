@@ -1422,3 +1422,33 @@ from the evening, one from the morning) give two exception addresses:
   the farm's sloped ground level with them (the probe cannot tell the floor's actor); to be
   looked at on the farm in the game. The aliens as before (Sectoids with Ranger, at 3 HP).
 
+### 2026-11-04 day, the person's windows and walls (EWI_MeldTutorial)
+
+- **The person (after release 8024653):** windows opaque and black (`windows.png`); missing walls
+  in the ice cream shop (`pose_and_walls.png`).
+- **Windows:** the panes are EW's glass, which has no diffuse map; the plot gives such glass a
+  translucent stand-in (`Translucent_SD`, white at some opacity). But a look without a diffuse
+  was written by the converter as `Diffuse="<map>."` (an empty path through the renaming of
+  carried packages: the map's name and a dot), which the plot took for a texture: every glass
+  pane got an opaque stand-in with a texture that does not exist, drawn black. Since converter
+  version 5. (A first reading, that Translucent_SD itself draws black, was wrong: that branch
+  never ran.) **Fixed:** empty paths stay empty (converter version 14) and the plot reads a bare
+  `<map>.` as none. Seen on wingpu: the shop's windows and the door's glass as pale panes, the
+  rooms behind faintly through them (`logs/wingpu_windows.png`); a fully cut-out pane
+  (`LWX2_GLASS=cut`) was tried too and shows the rooms clearly, but reads less as glass. The same
+  fault had kept the grey stand-in (materials without a diffuse) and the skipping of markers and
+  skies from ever running; they do now.
+- **Walls:** two findings.
+  - XCOM 2's building floors each cache every actor reaching into them; EW often builds a
+    building's walls as one mesh (the shop's three interior wall meshes reach from the ground to the
+    roof), so such a wall was on all three floors and was cut out with the upper floors whenever
+    the ground floor was viewed. Such an actor is now kept on the lowest floor it is on
+    (`LWX2PartPlacer.CacheBuildings`), as XCOM 2's ground-floor walls are; EW's breakable walls are
+    reset to shown at the battle's start as the level actors are.
+  - The shop's upper storey (the facade above its windows) is hidden whenever a unit or the
+    camera's focus is inside its building volume, which in EW's map covers the patio and the
+    sidewalk too (1570 x 2780 units): XCOM 2's cutaway, as EW's. With the focus far away the upper
+    floors are shown. Left as is; to compare with EW.
+- Control aids: `meshes <part of a mesh path>` (each placed piece: class, hidden, cut heights,
+  the building floors caching it), `buildings` as before.
+

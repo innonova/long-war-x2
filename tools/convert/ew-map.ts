@@ -31,8 +31,9 @@ import { addMaskTextures, maskMip } from './mask-textures.ts'
  *  8: the walls' fracture data and toughness, for XCOM 2's breakable walls; 9: the textures of materials cooked without
  *  their expressions, read from the compiled shader (the road paint, asphalt patches), translucent ones masked; 10: masks for the
  *  cut-out looks, the diffuse's alpha in green and blue, which XCOM 2's cut-out parents read their opacity from;
- *  11: vehicles not to be stood on; 12: nor sandbags; 13: their tops no valid destinations). */
-export const CONVERTER_VERSION = 13
+ *  11: vehicles not to be stood on; 12: nor sandbags; 13: their tops no valid destinations; 14: no path written as
+ *  none, not as the map's name and a dot). */
+export const CONVERTER_VERSION = 14
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -774,6 +775,9 @@ writeFileSync(out, outBytes)
 const mapPackage = basename(out, '.upk')
 const carriedNames = new Set(renamedPackages.values())
 const rename = (path: string) => {
+  // No path stays none (a look without a normal map, glass without a diffuse): written as the map package's name and a
+  // dot, the plot took it for a texture, and glass for an opaque surface (black windows, the person, 2026-11-04).
+  if (!path) return ''
   const p = path.split('.').map((part) => renamedPackages.get(part) ?? CACHES[part] ?? part).join('.')
   // Carried content, and objects at the root of the map's own package (a path of one part: URB_OfficePaper_EWI has a
   // StaticMesh_0 there, its road stripes; left bare, the plot imported a package of that name and the game crashed as

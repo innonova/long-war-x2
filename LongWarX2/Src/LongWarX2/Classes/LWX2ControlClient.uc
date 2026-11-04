@@ -1112,6 +1112,7 @@ function Meshes(string Part, out array<string> Out)
 	local float Cutdown, Cutout, Mask, PrevMask;
 	local int f, k, n;
 	local string Where;
+	local MaterialInterface M;
 
 	foreach class'WorldInfo'.static.GetWorldInfo().AllActors(class'Actor', A)
 		foreach A.ComponentList(class'StaticMeshComponent', C)
@@ -1131,6 +1132,16 @@ function Meshes(string Part, out array<string> Out)
 			else if (XComFracLevelActor(A) != none)
 				XComFracLevelActor(A).GetPrimitiveVisHeight(Cutdown, Cutout, Mask, PrevMask);
 			Out.AddItem(A.Class.Name @ A.Name @ "z" @ int(C.Bounds.Origin.Z - C.Bounds.BoxExtent.Z) $ ".." $ int(C.Bounds.Origin.Z + C.Bounds.BoxExtent.Z) @ "hidden" @ A.bHidden @ "comp hidden" @ C.HiddenGame @ "cutdown" @ Cutdown @ "cutout" @ Cutout @ "floors:" $ (Where != "" ? Where : " none"));
+			// Its materials as drawn: each element's, and the parent of an instance.
+			Where = "";
+			for (f = 0; f < C.GetNumElements(); f++)
+			{
+				M = C.GetMaterial(f);
+				Where @= f $ ":" $ (M == none ? "none" : string(M.Name));
+				if (MaterialInstance(M) != none && MaterialInstance(M).Parent != none)
+					Where $= "(" $ PathName(MaterialInstance(M).Parent) $ ")";
+			}
+			Out.AddItem("    materials" $ Where);
 		}
 	Out.AddItem(n @ "pieces of" @ Part);
 }

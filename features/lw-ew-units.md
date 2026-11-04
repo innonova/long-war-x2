@@ -120,3 +120,19 @@ particle systems as they are; its materials it cannot draw).
 - Bodies are applied again every two seconds in a mission (the win check's timer), so
   aliens that come after the pods (a Chryssalid's zombie, any spawn) get theirs.
 - **Release** `LongWarX2-20261103-ce8c076.zip`, checked from the zip: 15 bodies converted; a crash site (`CSmallScout_Farm`) with its Sectoids in EW's body and pistol.
+
+## Report (2026-11-04 day, the person's posing Sectoids)
+
+- **The person:** "animations do not seem to be working for the sectoids" (`pose_and_walls.png`:
+  Sectoids standing hunched, arms out).
+- **Read in the game** (a new control aid, `anims [n] [all]`: the pawn's animation sets, whether
+  its idle is found, every animation node with weight): the pods' Sectoids carry EW's set (113
+  bones, all on the mesh), find their animations and play them: in the open `NO_IdleGunUpA`, in
+  cover `LL_IdleA` and `LR_Peek_LoopA`, their time running. A pod spawned the missions' way beside
+  the squad (`pod` aid) the same. The hunched arms-out stance is EW's low-cover crouch
+  (`AC_LL_IdleA`) on XCOM 2's cover names.
+- **Real gap found:** EW plays its right-side cover animations by mirroring the left ones; the
+  table gives XCOM 2's right-side names (`LR_*`, `HR_*`) EW's left ones unmirrored, so a Sectoid
+  in cover on its right looks over the wrong side. To do: mirrored copies (EW's meshes carry a
+  mirror table).
+
