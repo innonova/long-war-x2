@@ -317,3 +317,20 @@ hologram texture's raw channels (dark blue, red borders), over the movie at half
   objectives panel and the menu (launch satellite, bonuses, finances, the Gray Market),
   the country rows' size.
 - **Held:** the earth's texture is held by the screen; in a fresh install's first run Flash fetched it a frame later by its path and found nothing (it had been collected), drawing a garbled placeholder. Seen right in two fresh starts.
+
+## Report (2026-11-04 day, the objectives and the ticker: tried, not kept)
+
+- EW's room shows the story's objectives and a news ticker (`XGSituationRoomUI.UpdateObjectives`:
+  the current objective and its steps, each with its state; `UpdateTicker`: the latest five news
+  items, joined by `//`; read with upkit's decompiler, kept out of the repository). The movie
+  (`ewxSituationRoom`) has `SetObjectivesTitle`, `AddObjective`, `ShowObjectives` and
+  `SetTickerText`, `ShowTicker` (its own test function calls them).
+- Tried: the story's steps (Outsider Shard, Skeleton Key, an alien base, Hyperwave, Psi Link,
+  Gollop Chamber, the Temple Ship, named by their templates) as objectives, the campaign's latest
+  events as the ticker. **Not kept:** the movie has no `objectivesPanel` clip (in no display mode:
+  EW drew its objectives from another movie), and the ticker clip sits at the stage's right edge
+  (x 1102 of 1280), its text not seen under the map. To come back to: which movie EW's objectives
+  live in (UIStrategyHUD's?), and the ticker's place.
+- EW's room's menu (launch satellite, code decryption, finances, Grey Market, pending requests:
+  `UpdateMainMenu`) is EW's strategy HUD's, not this movie's.
+
