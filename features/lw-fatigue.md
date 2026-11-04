@@ -29,8 +29,9 @@ decompiler, kept out of the repository) and its `DefaultGameCore.ini`:
   - 24 hours less with one perk (perk 122), none at all in one armour (item 65).
   - SHIVs: 24 + a roll of 0 to 23. MEC troopers: 120 + a roll of 0 to 23 (144 if all in or hurt).
 - Each hour counts down; at 0 the soldier is active again (`HealAndRest`).
-- In a mission, a fatigued soldier loses will (`XGUnitNativeBase.GetBattleFatigueWillPenalty`,
-  not yet read).
+- Sending a fatigued soldier ("all in") costs 1 maximum HP each time (a stat modifier, down to
+  1 HP) and the longer rest afterwards. `XGUnitNativeBase.GetBattleFatigueWillPenalty`, despite its
+  name, is about wounds in battle (will −5 below full health, −10 below half), not this fatigue.
 
 ## To decide
 
@@ -46,7 +47,7 @@ decompiler, kept out of the repository) and its `DefaultGameCore.ini`:
    set when a mission is back (where the mission's loot and wounds are handled), counted down
    with the campaign's hours.
 2. The squad selection marks fatigued soldiers; sending one makes them all in.
-3. The battle will penalty, once read.
+3. The all-in cost (1 maximum HP).
 4. War of the Chosen's own fatigue switched off (its will loss on missions), if so decided.
 </content>
 </invoke>
