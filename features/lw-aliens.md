@@ -121,8 +121,16 @@ document the encodings):
   Mindfray (even odds) on a soldier, the target chosen as XCOM 2 chose its Mindspin's.
 - **Seen** (a pod spawned beside the squad, one alien turn; a new control aid `history [n]`
   lists the last abilities used): the two Sectoids Mind Merged with each other.
-- Not yet: the other species' own abilities (the Floater's Launch, the Muton's Intimidate and
-  Blood Call, the Berserker's Bull Rush, the Drone's Overload, the Seeker's Stealth, the
-  Cyberdisc's closing, the Ethereals' Psi Drain); the Commander's Mind Control and the
-  Ethereals' powers in their AI (their trees are XCOM 2's Sectoid's and Codex's).
+- **The Muton's Blood Call** (`LW_BloodCall`, `X2Ability_LWAliens`): the Muton and its allies
+  within 8 tiles gain EW's +10 aim, +10 will, +4 mobility for its turn and the next; once a
+  battle (an approximation: EW's rule for how often was not read). Used where the Muton's tree
+  tried its bayonet. Seen: two Mutons beside the squad each Blood Called, then shot.
+- **The Drone's repair** (`LW_Repair`): a damaged robotic ally within 8 tiles and in sight
+  regains EW's 3 HP (`DRONE_REPAIR_HP`); EW's Drone repairs by its behaviour, not an `ABILITIES[]`
+  entry. Used where the MEC tree tried its micro missiles. Seen: a Drone repaired a hurt one,
+  which then shot. (`hurt` takes an alien's template or `#<object id>` now.)
+- Not yet: the Floater's Launch, the Muton's Intimidate, the Berserker's Bull Rush and
+  Bloodlust, the Drone's Overload, the Seeker's Stealth (and its strangling), the Cyberdisc's
+  closing, the Ethereals' Psi Drain; the Commander's Mind Control and the Ethereals' powers in
+  their AI.
 

@@ -1757,7 +1757,10 @@ function string Hurt(string Who, int Amount)
 
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 	{
-		if (!Unit.IsSoldier() || Unit.GetTeam() != eTeam_XCom || !Unit.IsAlive() || InStr(Locs(Unit.GetFullName() @ Unit.GetSoldierClassTemplateName()), Locs(Who)) < 0)
+		// A soldier by name or class, an alien by its template's name (the first one alive), any unit by #its object id.
+		if (!Unit.IsAlive() || Unit.bRemovedFromPlay)
+			continue;
+		if (Left(Who, 1) == "#" ? Unit.ObjectID != int(Mid(Who, 1)) : (Unit.GetTeam() == eTeam_XCom ? (!Unit.IsSoldier() || InStr(Locs(Unit.GetFullName() @ Unit.GetSoldierClassTemplateName()), Locs(Who)) < 0) : string(Unit.GetMyTemplateName()) != Who))
 			continue;
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: a soldier hurt");
 		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));

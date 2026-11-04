@@ -73,6 +73,7 @@ for (const [name, item] of Object.entries(WEAPONS)) {
 // Each species' own abilities (Characters= ABILITIES[]), where the mod has the power: Long War's psi powers, which its psi
 // soldiers use (X2Ability_LWStandins). The others (the Floater's Launch, the Muton's Blood Call …) are to come.
 const ABILITIES = {
+  eAbility_BloodCall: 'LW_BloodCall',
   eAbility_MindMerge: 'LW_MindMerge', eAbility_GreaterMindMerge: 'LW_MindMerge', eAbility_PsiPanic: 'LW_PsiPanic',
   eAbility_MindFray: 'LW_Mindfray', eAbility_Mindfray: 'LW_Mindfray', eAbility_PsiControl: 'LW_MindControl', eAbility_Rift: 'LW_Rift',
 }
@@ -82,4 +83,10 @@ for (const m of text.matchAll(/^Characters=\(.*?iType=(eChar_\w+),(.*)$/gm)) {
   if (s < 4 || s > 23) continue
   for (const a of new Set([...m[2].matchAll(/ABILITIES\[\d\]=(eAbility_\w+)/g)].map((x) => x[1]))) if (ABILITIES[a]) out.push(`+SpeciesAbilities=(Species=${s}, Ability="${ABILITIES[a]}")`)
 }
+// The Drone repairs damaged machines (its behaviour in EW, not an ABILITIES[] entry).
+out.push(`+SpeciesAbilities=(Species=${species('Drone')}, Ability="LW_Repair")`)
+// Their numbers: EW's constants (XGTacticalGameCoreNativeBase; read from its package as the classes' words are, so given
+// here as EW has them) and the ranges, which EW's AI chose by sight (an approximation).
+out.push('[LongWarX2.X2Ability_LWAliens]')
+out.push('BloodCallAim=10', 'BloodCallWill=10', 'BloodCallMobility=4', 'BloodCallTiles=8', 'RepairHP=3', 'RepairTiles=8')
 console.log(out.join('\r\n'))
