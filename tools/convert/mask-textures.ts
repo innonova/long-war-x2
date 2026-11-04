@@ -12,6 +12,7 @@ import { Package } from '@innonova/upkit/upk'
 /** The package with a copy of each texture (export references) added as its mask; the masks' references by texture. */
 export function addMaskTextures(bytes: Uint8Array, textures: number[]): { bytes: Uint8Array; masks: Map<number, number> } {
   const pkg = new Package(bytes)
+  const before = pkg.exports.map((e) => e.offset)
   const masks = new Map<number, number>()
   const view = () => new DataView(pkg.bytes.buffer, pkg.bytes.byteOffset, pkg.bytes.byteLength)
   const wanted = [...new Set(textures)].filter((ref) => pkg.exports[ref - 1]?.type === 'Texture2D')
@@ -40,7 +41,32 @@ export function addMaskTextures(bytes: Uint8Array, textures: number[]): { bytes:
     pkg.write(x.offset, data)
     masks.set(ref, added)
   }
+  if (masks.size) followBulkData(pkg, before)
   return { bytes: pkg.bytes, masks }
+}
+
+/**
+ * The objects' inline bulk data told where they are now. A bulk record (flags, element count, size on disk, offset in
+ * the file, then the data when inline) holds the data's absolute offset, which the additions to the header moved by as
+ * much as the object did: textures' mips (inline-textures.ts writes those again anyway), lightmaps', sounds'. A record
+ * is one whose offset is exactly where its data was (flags of a bulk record, a positive size), so nothing else is touched.
+ */
+function followBulkData(pkg: Package, before: number[]) {
+  const b = pkg.bytes
+  const v = new DataView(b.buffer, b.byteOffset, b.byteLength)
+  before.forEach((was, k) => {
+    const e = pkg.exports[k]!
+    const moved = e.offset - was
+    if (!moved) return
+    const end = e.offset + e.size
+    for (let p = e.offset + 4; p + 16 <= end; p++) {
+      if (v.getUint32(p, true) > 0xff) continue // flags
+      const size = v.getInt32(p + 8, true)
+      if (size <= 0 || p + 16 + size > end || v.getInt32(p + 12, true) !== p + 16 - moved) continue
+      v.setInt32(p + 12, p + 16, true)
+      p += 15 + size
+    }
+  })
 }
 
 /** A mask's name: its texture's (with the number it may carry) and _LWX2Mask. */
