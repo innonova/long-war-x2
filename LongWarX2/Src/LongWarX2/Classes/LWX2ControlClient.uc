@@ -299,8 +299,8 @@ function Handle(string Line, out array<string> Out)
 		History(Out, Args.Length > 1 ? int(Args[1]) : 20);
 		return;
 	case "anims":
-		// anims [n] [all|relink1|relink2]: the n-th enemy's (else the nearest's) animation nodes in play: the name asked for, found or not, weight.
-		Anims(Out, Args.Length > 1 ? int(Args[1]) : -1, Args.Length > 2 && Args[2] == "all", (Args.Length > 2 && Left(Args[2], 6) == "relink") ? int(Mid(Args[2], 6)) : 0);
+		// anims [n] [all|relink1|relink2|play <name>]: the n-th enemy's (else the nearest's) animation nodes in play: the name asked for, found or not, weight.
+		Anims(Out, Args.Length > 1 ? int(Args[1]) : -1, Args.Length > 2 && Args[2] == "all", (Args.Length > 2 && Left(Args[2], 6) == "relink") ? int(Mid(Args[2], 6)) : 0, (Args.Length > 3 && Args[2] == "play") ? name(Args[3]) : '');
 		return;
 	case "flashnum":
 		// flashnum <path under the top screen's clip>: a Flash number there (where the EW screens' clips sit).
@@ -1248,13 +1248,14 @@ function string TestPod(int Tiles)
 }
 
 /** An enemy's pawn's animation nodes with weight: what XCOM 2 asked its body to play, and whether its AnimSets have it. */
-function Anims(out array<string> Out, int Index, optional bool bAll, optional int Relink)
+function Anims(out array<string> Out, int Index, optional bool bAll, optional int Relink, optional name Play)
 {
 	local XComGameState_Unit Unit, Pick, Soldier;
 	local XComUnitPawn Pawn;
 	local AnimNodeSequence Seq;
 	local int Best;
 	local StateObjectReference Ref;
+	local CustomAnimParams Params;
 	local AnimSet Set;
 	local int n, i, b;
 	local string Sets;
@@ -1310,6 +1311,14 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 			Out.AddItem("  set" @ PathName(Set) @ "NO_IdleGunDwnA" @ (i < Set.Sequences.Length ? "in it" : "not in it") @ "| bones:" @ Set.TrackBoneNames.Length @ "tracks, the first" @ b @ "on the mesh" @ (b < Set.TrackBoneNames.Length ? "(not:" @ Set.TrackBoneNames[b] $ ")" : "") @ "| preview mesh" @ Set.PreviewSkelMeshName);
 		}
 	Out.AddItem("  the mesh finds NO_IdleGunDwnA:" @ (Pawn.Mesh.FindAnimSequence('NO_IdleGunDwnA') != none ? PathName(Pawn.Mesh.FindAnimSequence('NO_IdleGunDwnA')) : "none"));
+	// play <name>: the animation played on the whole body, looping, as XCOM 2's unit code plays one (its anim tree controller).
+	if (Play != '')
+	{
+		Params.AnimName = Play;
+		Params.Looping = true;
+		Out.AddItem("  playing" @ Play @ (Pawn.GetAnimTreeController().CanPlayAnimation(Play) ? "found" : "MISSING"));
+		Pawn.GetAnimTreeController().PlayFullBodyDynamicAnim(Params);
+	}
 	foreach Pawn.Mesh.AllAnimNodes(class'AnimNodeSequence', Seq)
 		if (Seq.NodeTotalWeight > 0.01 || (bAll && Seq.AnimSeqName != ''))
 			Out.AddItem("  " $ Seq.Class.Name @ Seq.AnimSeqName @ (Seq.AnimSeq != none ? "found" : "MISSING") @ "weight" @ Seq.NodeTotalWeight @ (Seq.bPlaying ? "playing" : "stopped") @ "at" @ Seq.CurrentTime);

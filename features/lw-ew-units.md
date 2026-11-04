@@ -153,4 +153,16 @@ particle systems as they are; its materials it cannot draw).
   Sectoid's unanswered names are now only the psi explosions (its XCOM 2 abilities, removed).
   Seen: a Sectoid behind a police car in EW's high-cover idle, animated
   (`logs/wingpu_sectoid_cover.png`).
+- **The right side mirrored** (`tools/convert/ew-anim-mirror.ts`): where XCOM 2's right-side cover
+  name gets an EW left-side animation, the copy now carries it mirrored as EW mirrors it (UE3's
+  AnimNodeMirror): every format of EW's sequences decoded (per-track and constant-key: Float96,
+  Fixed48, Fixed32, IntervalFixed32, Identity), each frame put in component space through the
+  mesh's reference skeleton, each bone given its mirror source's transform reflected on the
+  mesh's mirror axis (X) and turned back on its flip axis (the mesh's `SkelMirrorTable`: 96 of
+  the Sectoid's 113 bones swap sides), local again, written per track with a key a frame. Checked:
+  mirrored twice gives the original exactly; a written copy, read back and mirrored, gives EW's
+  original exactly; the reference pose mirrors onto itself but for the eyebrows and the weapon
+  sockets. The Sectoid gets 11 mirrored copies, the Thin Man 10, the Muton 10; where EW has its
+  own right-side animation with data (the Sectoid's high step-outs) that is used.
+- Control aid `anims <n> play <name>`: an animation played on an enemy's whole body.
 

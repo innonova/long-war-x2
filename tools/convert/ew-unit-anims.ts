@@ -11,6 +11,8 @@ import { openPackage, type Export, type NameEntry } from '@innonova/upkit/packag
 import { Reader, Writer } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { writePackage } from '@innonova/upkit/writer'
+import { Package } from '@innonova/upkit/upk'
+import { decodeSequence, encodePerTrack, mirrorSequence, readBones, readSkeleton, type Skeleton } from './ew-anim-mirror.ts'
 
 import { X2_ANIM_NAMES } from './x2-anim-names.ts'
 /** The names XCOM 2's Sectoid answers to (kept for ew-package.ts --anims). */
@@ -201,6 +203,69 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
   }
 
   // A copy of each EW sequence an XCOM 2 name needs, its SequenceName that name (the tag's value found by its bytes).
+  // The mirroring (ew-anim-mirror.ts): the unit's skeleton and mirror table, its tracks' bones, read once when needed.
+  const upk = new Package(source)
+  let mirrorCount = 0
+  let skel: { skeleton: Skeleton; trackBones: number[] } | null | undefined
+  const skeleton = () => {
+    if (skel !== undefined) return skel
+    skel = null
+    const tb = setTags.find((t) => t.name === 'TrackBoneNames')
+    if (!tb) return skel
+    const tracks = Array.from({ length: i32(tb.value) }, (_, k) => nameOf(i32(tb.value, 4 + 8 * k)))
+    // The unit's mesh: the skeletal mesh whose bones the tracks name.
+    for (let k = 0; k < upk.exports.length && !skel; k++) {
+      if (upk.exports[k]!.type !== 'SkeletalMesh') continue
+      const sk = readSkeleton(upk, k, readBones)
+      const trackBones = tracks.map((t) => sk.bones.findIndex((b) => b.name === t))
+      if (sk.mirror.length === sk.bones.length && trackBones.filter((b) => b >= 0).length >= tracks.length * 0.9) skel = { skeleton: sk, trackBones }
+    }
+    return skel
+  }
+  /** A copy's data with the sequence's animation mirrored: per-track keys, its offsets and compressed bytes replaced. */
+  const mirroredData = (d: Uint8Array, src: number): Uint8Array | undefined => {
+    const s = skel!
+    const seq = decodeSequence(upk, src - 1, s.trackBones.length)
+    const { rotations, positions } = mirrorSequence(seq, s.skeleton, s.trackBones)
+    const { stream, offsets } = encodePerTrack(rotations, positions)
+    const r = new Reader(d.subarray(4))
+    const tags: Tag[] = readTags(r, pkg)
+    const propsEnd = 4 + (r as any).o
+    // The compressed bytes: the array that ends the object; what is between the properties and it, kept.
+    const v = new DataView(d.buffer, d.byteOffset, d.byteLength)
+    let streamAt = -1
+    for (let o = propsEnd; o + 4 <= d.length; o++) {
+      const n = v.getInt32(o, true)
+      if (n > 0 && o + 4 + n === d.length) { streamAt = o; break }
+    }
+    if (streamAt < 0) return undefined
+    const w = new Writer()
+    w.bytes(d.subarray(0, 4))
+    const nr = (x: string) => { w.i32(nameIndex(x)).i32(0) }
+    const tag = (name: string, type: string, value: Uint8Array, arrayIndex = 0, sub?: string, bool?: number) => {
+      nr(name)
+      nr(type)
+      w.i32(value.length).i32(arrayIndex)
+      if (type === 'StructProperty' || type === 'ByteProperty') nr(sub ?? 'None')
+      else if (type === 'BoolProperty') w.u8(bool ?? 0)
+      w.bytes(value)
+    }
+    const nameValue = (x: string) => { const b = new Writer(); b.i32(nameIndex(x)).i32(0); return b.done() }
+    const offsetsValue = (() => { const b = new Writer(); b.i32(offsets.length); offsets.forEach((o) => b.i32(o)); return b.done() })()
+    let keyFormatWritten = false
+    for (const t of tags) {
+      if (t.name === 'KeyEncodingFormat') { tag(t.name, 'ByteProperty', nameValue('AKF_PerTrackCompression'), 0, t.enumName ?? 'AnimationKeyFormat'); keyFormatWritten = true }
+      else if (t.name === 'CompressedTrackOffsets') tag(t.name, 'ArrayProperty', offsetsValue)
+      else tag(t.name, t.type, t.value, t.arrayIndex, t.type === 'StructProperty' ? t.structName : t.enumName, t.boolValue)
+    }
+    if (!keyFormatWritten) tag('KeyEncodingFormat', 'ByteProperty', nameValue('AKF_PerTrackCompression'), 0, 'AnimationKeyFormat')
+    nr('None')
+    w.bytes(d.subarray(propsEnd, streamAt))
+    w.i32(stream.length)
+    w.bytes(stream)
+    return w.done()
+  }
+
   const copies: number[] = []
   const unmatched: string[] = []
   const ewNames = new Set(byName.keys())
@@ -225,9 +290,12 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
       }
     }
     if (!patched) { unmatched.push(x2); continue }
+    // XCOM 2's right side of cover, played by EW from its left side mirrored: the copy carries the mirrored animation.
+    const mirrored = /^(L|H)R_/.test(x2) && /^AC_(L|H)L_/.test(ew) && skeleton() ? mirroredData(d, src) : undefined
+    if (mirrored) mirrorCount++
     const e = pkg.exports[src - 1]
     const r = nameIndex(`${nameOf(e.objectName)}_X2_${x2}`)
-    added.push({ entry: { ...e, objectName: { index: r, number: 0 }, serialSize: 0, serialOffset: 0, netObjects: [] }, data: d })
+    added.push({ entry: { ...e, objectName: { index: r, number: 0 }, serialSize: 0, serialOffset: 0, netObjects: [] }, data: mirrored ?? d })
     copies.push(pkg.exports.length + added.length)
   }
 
@@ -251,7 +319,7 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
   data.set(setRef, w.done())
 
   const bytes = writePackage(pkg, { data, names, imports: [], exports: added })
-  return { bytes, report: `${animSetPath}: ${seqs.length} sequences (${empty} without animation data), ${copies.length} copies under XCOM 2's names, ${unmatched.length} XCOM 2 names without an EW animation${unmatched.length ? ` (${unmatched.join(' ')})` : ''}` }
+  return { bytes, report: `${animSetPath}: ${seqs.length} sequences (${empty} without animation data), ${copies.length} copies under XCOM 2's names (${mirrorCount} mirrored), ${unmatched.length} XCOM 2 names without an EW animation${unmatched.length ? ` (${unmatched.join(' ')})` : ''}` }
 }
 
 if (/ew-unit-anims\.ts$/.test(process.argv[1] ?? '')) {
