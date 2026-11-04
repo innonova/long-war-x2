@@ -129,7 +129,7 @@ particle systems as they are; its materials it cannot draw).
   its idle is found, every animation node with weight): the pods' Sectoids carry EW's set (113
   bones, all on the mesh), find their animations and play them: in the open `NO_IdleGunUpA`, in
   cover `LL_IdleA` and `LR_Peek_LoopA`, their time running. A pod spawned the missions' way beside
-  the squad (`pod` aid) the same. The hunched arms-out stance is EW's low-cover crouch
+  the squad (`pod` aid) the same. ~~The hunched arms-out stance is EW's low-cover crouch~~ (it was the reference pose: below)
   (`AC_LL_IdleA`) on XCOM 2's cover names.
 - **Real gap found:** EW plays its right-side cover animations by mirroring the left ones; the
   table gives XCOM 2's right-side names (`LR_*`, `HR_*`) EW's left ones unmirrored, so a Sectoid
@@ -142,4 +142,15 @@ particle systems as they are; its materials it cannot draw).
   (`SkelMirrorTable`, `SkelMirrorAxis`, `SkelMirrorFlipAxis`), each frame mirrored in
   component space (UE3's matrix mirror: the mirror axis's column negated, the bone's flip axis's
   row), and the result written per track (three-float keys, one per frame). Not done today.
+- **The cause, found later the same day:** EW's Sectoid package has 57 of its 178 sequences
+  **empty** (no compressed animation: EW's cooker left the ones EW never plays empty): its whole
+  low cover (EW's small units take low cover as high), most right-side ones, its climb-downs.
+  `AC_LL_IdleA` among them: XCOM 2's low-cover idle mapped to it held the Sectoid in its
+  reference pose, arms out (the person's screenshot). The Floater has 35 empty, the Muton 4.
+  **Fixed** (`ew-unit-anims.ts`): an empty sequence counts as missing; a right-side cover name
+  falls back to the left at the same height, a low-cover one to high cover (as EW plays a
+  Sectoid's); the high climb-downs and cover entries stand in where the low ones are empty. The
+  Sectoid's unanswered names are now only the psi explosions (its XCOM 2 abilities, removed).
+  Seen: a Sectoid behind a police car in EW's high-cover idle, animated
+  (`logs/wingpu_sectoid_cover.png`).
 
