@@ -365,4 +365,6 @@ hologram texture's raw channels (dark blue, red borders), over the movie at half
   moving the list did nothing (it lays itself out again). More rows want room the Geoscape window
   keeps: a decision about that window's layout. Seen: "XENOBIOLOGY 18" with the research icon
   (`logs/wingpu_hud_events.png`).
-- Not in the list yet: Engineering's and the Foundry's projects (counted in work, not hours).
+- Engineering's and the Foundry's projects too (their hours from the work left at the rate of their
+  engineers, as the Geoscape's lists count them). Seen: "SAWED-OFF SHOTGUN 1" with EW's
+  engineering icon, ahead of the research.

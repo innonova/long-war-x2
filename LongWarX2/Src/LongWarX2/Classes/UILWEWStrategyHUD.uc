@@ -80,7 +80,7 @@ function Refresh()
 /**
  * EW's event list (theEventList, one event a row as EW's HUD has it: UIStrategyComponent_EventList), whose title showed
  * its placeholders ("LALALAL") unfed: what Long War has coming, soonest first, the days to each. Its icons by EW's event
- * kinds (GetEventImageLabel). Not yet: Engineering's and the Foundry's projects (their work, not hours).
+ * kinds (GetEventImageLabel).
  */
 function SetEvents(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrategy S)
 {
@@ -88,6 +88,7 @@ function SetEvents(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 	local XComGameState_Tech Tech;
 	local XComGameState_LWAirWar AirWar;
 	local XComGameState_Unit Unit;
+	local LWGearRules.LWBuildDef B;
 	local array<string> Texts, Icons;
 	local array<int> Hours;
 	local string Shown;
@@ -99,6 +100,13 @@ function SetEvents(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 		PutEvent(Texts, Hours, Icons, Caps(Tech.GetDisplayName()), Project.GetCurrentNumHoursRemaining(), "_research");
 	for (i = 0; i < S.BaseJobs.Length; i++)
 		PutEvent(Texts, Hours, Icons, S.BaseJobs[i].Kind == 0 ? "EXCAVATION" : Caps(class'LWBase'.static.FacilityName(S.BaseJobs[i].Facility)), S.BaseJobs[i].HoursLeft, "_facility");
+	for (i = 0; i < S.Builds.Length; i++)
+	{
+		class'LWGearRules'.static.BuildFor(S.Builds[i].Item, B);
+		PutEvent(Texts, Hours, Icons, (S.Builds[i].Quantity > 1 ? S.Builds[i].Quantity $ "x " : "") $ Caps(class'LWEngineering'.static.ItemName(B.Template)), class'LWEngineering'.static.HoursFor(S.Builds[i].WorkLeft, S.Builds[i].Engineers, S.Engineers), "_itemProject");
+	}
+	for (i = 0; i < S.FoundryProjects.Length; i++)
+		PutEvent(Texts, Hours, Icons, Caps(class'LWEngineering'.static.FoundryName(S.FoundryProjects[i].Item)), class'LWEngineering'.static.HoursFor(S.FoundryProjects[i].WorkLeft, S.FoundryProjects[i].Engineers, S.Engineers), "_foundry");
 	AirWar = class'XComGameState_LWAirWar'.static.Get();
 	if (AirWar != none)
 		for (i = 0; i < AirWar.Orders.Length; i++)
