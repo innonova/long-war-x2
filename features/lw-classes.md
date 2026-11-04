@@ -665,7 +665,10 @@ new point, and the context's results are rebuilt for them.
 - **Seen, a kill** (a Sectoid dropped beside the squad, brought to 1 HP, shot by the Scout, the
   mission then won): "William Thompson +120 (1 kills, mission won, nobody lost): 470 of 700", the
   others +100.
-- **Not yet seen:** a promotion from it (the first squad starts at rank 2, 350; 700 is far).
+- **Seen, a promotion** (release `07204c2`, a new campaign of rookies): a rookie's kill and the
+  win, "Brittany Hayes +120 (1 kills, mission won, nobody lost): 120 of 120"; on the Avenger her
+  Armory page offers PROMOTE SOLDIER (`logs/wingpu_promotion.png`). XCOM 2 promotes when the
+  player does it there, as before.
 - **Left out:** Wet Work (`ePerk_OTS_XP`, kills ×1.25: the Officer Training School is not ported),
   an item that gives ×1.2 (item 223 in a hand patch, unclear), Star of Terra's +1/4 (medals not
   ported), Marathon's division; psi experience (`lw-psi`).

@@ -276,3 +276,7 @@ repository); a spec for the work, not done yet:
   are converted again); the canisters placed as the mission starts (XCOM 2's interactive objects,
   an EW-looking mesh); collecting, the countdown, the HUD line; the meld booked as loot when the
   Geoscape next opens.
+- **Seen in EW's maps** (the farm, the bar; a reading kept in /tmp): the farm has 12 spawn points
+  in groups 0–2 (its three player starts), easy and hard, self-destructing on turns 4 to 11; the
+  bar 4, all group 0, on turns 4 and 8. The meld tutorial's are not in its persistent level (its
+  streamed level, to read).
