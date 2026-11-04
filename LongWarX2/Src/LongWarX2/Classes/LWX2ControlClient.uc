@@ -281,6 +281,10 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(Blast(vect(0,0,0) + vect(1,0,0) * float(Args[1]) + vect(0,1,0) * float(Args[2]) + vect(0,0,1) * float(Args[3]), Args.Length > 4 ? float(Args[4]) : 192.0, Args.Length > 5 ? int(Args[5]) : 10));
 		return;
+	case "standable":
+		// standable <part of a mesh's path>: for the placed pieces of such meshes, the tiles over them units can stand on.
+		Out.AddItem(Args.Length > 1 ? Standable(Args[1]) : "ERR standable <part of a mesh's path>");
+		return;
 	case "flashnum":
 		// flashnum <path under the top screen's clip>: a Flash number there (where the EW screens' clips sit).
 		Out.AddItem(Args.Length > 1 ? (Args[1] @ "=" @ Pres().ScreenStack.GetCurrentScreen().MC.GetNum(Args[1])) : "ERR flashnum <path>");
@@ -1084,6 +1088,42 @@ static function string AlienPerksOf(XComGameState_Unit Unit)
 	if (Unit.GetUnitValue('LWX2Scale', Scale))
 		S $= " scale" @ int(Scale.fValue) $ "%";
 	return S != "" ? S : "-";
+}
+
+/** The pieces whose mesh's path holds Part, and how many tiles above their bottom units can enter and stand on (a floor
+ *  higher than the piece's base): 0 where nothing can be stood on (features/lw-missions.md, cars and sandbags). */
+function string Standable(string Part)
+{
+	local Actor A;
+	local StaticMeshComponent C;
+	local XComWorldData World;
+	local TTile Lo, Hi, T;
+	local vector Floor, Corner;
+	local int Pieces, Over, Stand;
+
+	World = `XWORLD;
+	if (World == none)
+		return "ERR not in a mission";
+	foreach class'WorldInfo'.static.GetWorldInfo().AllActors(class'Actor', A)
+		foreach A.ComponentList(class'StaticMeshComponent', C)
+		{
+			if (C.StaticMesh == none || InStr(PathName(C.StaticMesh), Part) < 0)
+				continue;
+			Pieces++;
+			Corner = C.Bounds.Origin - C.Bounds.BoxExtent;
+			Lo = World.GetTileCoordinatesFromPosition(Corner);
+			Corner = C.Bounds.Origin + C.Bounds.BoxExtent;
+			Hi = World.GetTileCoordinatesFromPosition(Corner);
+			Stand = 0;
+			for (T.X = Lo.X; T.X <= Hi.X; T.X++)
+				for (T.Y = Lo.Y; T.Y <= Hi.Y; T.Y++)
+					for (T.Z = Lo.Z; T.Z <= Hi.Z + 1; T.Z++)
+						if (World.CanUnitsEnterTile(T) && World.GetFloorPositionForTile(T, Floor) && Floor.Z > C.Bounds.Origin.Z - C.Bounds.BoxExtent.Z + 24)
+							Stand++;
+			if (Stand > 0)
+				Over++;
+		}
+	return Pieces @ "pieces of" @ Part $ ";" @ Over @ "with tiles over them units can stand on";
 }
 
 /** In a mission: each enemy, its HP and how far (tiles) from the nearest soldier. */

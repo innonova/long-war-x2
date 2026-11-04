@@ -30,8 +30,9 @@ import { addMaskTextures, maskMip } from './mask-textures.ts'
  *  plot imports them as such; the buildings' surface textures, Diffuse_Base; 7: the doors, the pieces' cover flags;
  *  8: the walls' fracture data and toughness, for XCOM 2's breakable walls; 9: the textures of materials cooked without
  *  their expressions, read from the compiled shader (the road paint, asphalt patches), translucent ones masked; 10: masks for the
- *  cut-out looks, the diffuse's alpha in green and blue, which XCOM 2's cut-out parents read their opacity from). */
-export const CONVERTER_VERSION = 10
+ *  cut-out looks, the diffuse's alpha in green and blue, which XCOM 2's cut-out parents read their opacity from;
+ *  11: vehicles not to be stood on). */
+export const CONVERTER_VERSION = 11
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -131,6 +132,10 @@ const COVER_DEFAULTS: Record<string, Partial<Cover>> = {
   XComFracLevelActor: { onto: false },
   XComDecoFracLevelActor: { onto: false },
 }
+/** EW's vehicles (its VEH_ packages): not to be stood on, whatever their prefabs say (EW's sedan sets bCanClimbOnto, and
+ *  XCOM 2 then makes its hood, roof and trunk floors). The person, 2026-11-03: "you should not be able to stand on the
+ *  hood and trunk" of a car. */
+const notStoodOn = (mesh: string, c: Cover): Cover => (/^VEH_/.test(mesh) ? { ...c, onto: false } : c)
 function coverOf(index: number, own: Tag[]): Cover {
   const found: Partial<Cover> = {}
   const take = (tags: Tag[]) => {
@@ -296,7 +301,7 @@ exports.forEach((e, i) => {
     extent: [0, 0, 0],
     // A wall's mesh is a FracturedStaticMesh: the plot imports it as that class (as a StaticMesh it is not found).
     fractured: exports.find((x) => x.fullName === mesh)?.type === 'FracturedStaticMesh',
-    cover: coverOf(i, tags),
+    cover: notStoodOn(mesh, coverOf(i, tags)),
     frac: comp.name === 'FracturedStaticMeshComponent' ? fracOf(i, tags, ref(comp) - 1, ctags) : undefined,
   })
 })
