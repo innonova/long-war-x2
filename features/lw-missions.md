@@ -1404,4 +1404,11 @@ from the evening, one from the morning) give two exception addresses:
   pieces of such meshes and those with tiles over them units can enter and stand on. Before
   (the store, version 10): 6 of 12 sedan pieces and 6 of 7 van pieces had such tiles; the
   dumpsters none.
+- **Checked from the zip** (release candidate `6ed4768`, version 11): on the store 0 of 12 sedan
+  and 0 of 7 van pieces climbable onto, no tile on them a soldier can walk to (12 each before).
+  The farm's sandbags still had 9 of 17 climbable onto (EW's own data for some piles) and 7
+  tiles on them reachable: **sandbags join the rule** (converter version 12; on
+  `URB_Demolition_EWI` all 33 sandbag pieces now not climbable onto).
+- (A dev sync builds the mod with the test machine's own older converted maps; converter
+  changes are checked on a release install.)
 
