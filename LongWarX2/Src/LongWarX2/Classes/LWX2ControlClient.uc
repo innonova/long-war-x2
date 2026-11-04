@@ -1124,8 +1124,10 @@ function string Look(array<string> Args)
 	Camera.LookAtDuration = 20;
 	Camera.Priority = eCameraPriority_Cinematic;
 	`CAMERASTACK.AddCamera(Camera);
-	// Fog of war off, so the place is seen (never seen ground is drawn black).
-	GetALocalPlayerController().ConsoleCommand("SetFOW false");
+	// Fog of war off, so the place is seen (never seen ground is drawn black); 'fow' as the last word keeps it (what the
+	// soldiers see).
+	if (Args[Args.Length - 1] != "fow")
+		GetALocalPlayerController().ConsoleCommand("SetFOW false");
 	return "ok looking at" @ At @ Name;
 }
 

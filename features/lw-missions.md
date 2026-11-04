@@ -1480,4 +1480,6 @@ from the evening, one from the morning) give two exception addresses:
   piece carries it into the plot (`BlocksSight=false`, `Window=true`; converter version 17).
 - Checked with XCOM 2's own sight test (control aid `windowsight`: two tiles either side of each
   piece, both ways): windows 13 of 25 seen across both ways, walls 5 of 52 (a piece's pivot is not
-  always its middle, so the test is rough). Not yet looked at from a soldier at the window.
+  always its middle, so the test is rough). Looked at with the fog on (control aid `look … fow`): a
+  Scout outside the truck stop's shop beside its window, the shop's interior beyond the wall shown,
+  not fogged (`logs/wingpu_window_sight.png`).
