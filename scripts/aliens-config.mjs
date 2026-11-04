@@ -43,4 +43,18 @@ for (const m of text.matchAll(/^BalanceMods_Normal=\(\s*eType=(eChar_\w+),(.*)\)
   out.push(`+Upgrade=(Species=${s}, Research=${field(l, 'iCritHit')}, Damage=${field(l, 'iDamage')}, Aim=${aim % 100}, Crit=${Math.trunc(aim / 100)}, ` +
     `Defense=${def % 100}, DR=${Math.trunc(def / 100) / 10}, HP=${hp % 100}, Shield=${Math.trunc(hp / 100)}, Mobility=${field(l, 'iMobility')}, Will=${will % 100}, Regen=${Math.trunc(will / 100)})`)
 }
+// Each species' weapon (EW's: the item its unit carries) and Long War's damage for it; the alien's shots with its XCOM 2
+// weapon are shifted from that weapon's base damage to this (X2Effect_LWAlienDamage).
+const WEAPONS = {
+  Sectoid: 'SectoidPlasmaPistol', SectoidCommander: 'PlasmaPistol', Floater: 'PlasmaLightRifle_Floater', FloaterHeavy: 'HeavyPlasma_Floater',
+  Thinman: 'PlasmaLightRifle_ThinMan', Muton: 'PlasmaAssaultRifle_Muton', MutonElite: 'HeavyPlasma_Muton', MutonBerserker: 'MutonBlade',
+  Cyberdisc: 'CyberdiscWeapon', Drone: 'DroneBeam', Outsider: 'OutsiderWeapon', Seeker: 'SeekerPlasmaPistol', Mechtoid: 'MechtoidPlasmaCannon',
+  Chryssalid: 'ChryssalidClaw', Zombie: 'ZombieFist', Sectopod: 'SectopodChestCannon', Ethereal: 'PlasmaLightRifle', EtherealUber: 'PlasmaLightRifle',
+}
+out.push("; Each species' weapon's damage (Long War's Weapons= line for the item EW's unit carries).")
+for (const [name, item] of Object.entries(WEAPONS)) {
+  const line = new RegExp(`^Weapons=\\(\\s*strName="",\\s*iType=eItem_${item},.*$`, 'm').exec(text)?.[0]
+  if (!line) throw new Error(`no Weapons= line for eItem_${item}`)
+  out.push(`+Weapon=(Species=${species(name)}, Damage=${field(line, 'iDamage')})`)
+}
 console.log(out.join('\r\n'))

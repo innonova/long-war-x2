@@ -8,10 +8,21 @@ class LWAlienStats extends Object config(LWAliens) dependson(LWStrategyRules);
 struct LWAlienBase { var int Species, HP, Aim, Defense, Mobility, Sight, Will, Crit; };
 struct LWAlienDifficulty { var int Species, Level, Damage, Aim, Defense, HP, Mobility, Will; };
 struct LWAlienUpgrade { var int Species, Research, Damage, Aim, Crit, Defense, HP, Shield, Mobility, Will, Regen; var float DR; };
+struct LWAlienWeapon { var int Species, Damage; };
 
 var config array<LWAlienBase> Base;
 var config array<LWAlienDifficulty> Difficulty;
 var config array<LWAlienUpgrade> Upgrade;
+/** Each species' weapon's damage in Long War (its shots with the XCOM 2 weapon are shifted to it). */
+var config array<LWAlienWeapon> Weapon;
+/**
+ * XCOM 2's abilities of the templates Long War's species fight as that no Long War alien has (Blazing Pinions on a Floater,
+ * a Cyberdisc raising the dead, a Sectoid reanimating corpses …), taken off those templates; each species' own Enemy
+ * Within abilities are to come (features/lw-aliens.md). Basic attacks and immunities stay.
+ */
+var array<name> NotLongWar;
+/** The same for their weapons' abilities: "<weapon template>:<ability>" (the Viper's tongue on a Thin Man …). */
+var array<string> NotLongWarWeapons;
 
 /**
  * The aliens' research level: Long War's grows about a day a day ("roughly days passed", its config says); the campaign's
@@ -88,6 +99,9 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species)
 	if (DR > 0)
 		SetStat(Unit, eStat_ArmorMitigation, Round(DR));
 	Unit.SetUnitFloatValue('LWX2DamageBonus', Damage, eCleanup_Never);
+	k = default.Weapon.Find('Species', Species);
+	if (k != INDEX_NONE)
+		Unit.SetUnitFloatValue('LWX2WeaponDamage', default.Weapon[k].Damage, eCleanup_Never);
 	return true;
 }
 
@@ -98,6 +112,9 @@ static function AddAbilities()
 	local array<X2DataTemplate> Templates;
 	local X2DataTemplate T;
 	local LWFightAs F;
+	local X2ItemTemplateManager Items;
+	local string Pair;
+	local int k, n;
 
 	Manager = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager();
 	foreach class'LWStrategyRules'.default.FightAs(F)
@@ -107,7 +124,81 @@ static function AddAbilities()
 		foreach Templates(T)
 			if (X2CharacterTemplate(T) != none && X2CharacterTemplate(T).Abilities.Find('LWX2_AlienDamage') == INDEX_NONE)
 				X2CharacterTemplate(T).Abilities.AddItem('LWX2_AlienDamage');
+		foreach Templates(T)
+			if (X2CharacterTemplate(T) != none)
+				for (k = X2CharacterTemplate(T).Abilities.Length - 1; k >= 0; k--)
+					if (default.NotLongWar.Find(X2CharacterTemplate(T).Abilities[k]) != INDEX_NONE)
+					{
+						X2CharacterTemplate(T).Abilities.Remove(k, 1);
+						n++;
+					}
 	}
+	Items = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
+	foreach default.NotLongWarWeapons(Pair)
+	{
+		Templates.Length = 0;
+		Items.FindDataTemplateAllDifficulties(name(Left(Pair, InStr(Pair, ":"))), Templates);
+		foreach Templates(T)
+			if (X2WeaponTemplate(T) != none)
+			{
+				k = X2WeaponTemplate(T).Abilities.Find(name(Mid(Pair, InStr(Pair, ":") + 1)));
+				if (k != INDEX_NONE)
+				{
+					X2WeaponTemplate(T).Abilities.Remove(k, 1);
+					n++;
+				}
+			}
+	}
+	`log("LongWarX2: aliens:" @ n @ "of XCOM 2's abilities no Long War alien has taken off their templates and weapons", , 'LongWarX2');
+}
+
+defaultproperties
+{
+	// Sectoid (and Sectoid Commander): XCOM 2's psionics and its weakness to blades.
+	NotLongWar(0)=PsiReanimation
+	NotLongWar(1)=KillSiredZombies
+	NotLongWar(2)=DelayedPsiExplosion
+	NotLongWar(3)=Mindspin
+	NotLongWar(4)=VulnerabilityMelee
+	// Floater (Archon): Blazing Pinions, frenzy.
+	NotLongWar(5)=BlazingPinionsStage1
+	NotLongWar(6)=FrenzyDamageListener
+	// Thin Man (Viper): bind.
+	NotLongWar(7)=Bind
+	// Cyberdisc (Gatekeeper): the Anima abilities.
+	NotLongWar(8)=AnimaInversion
+	NotLongWar(9)=AnimaConsume
+	NotLongWar(10)=AnimaGate
+	// Outsider (Codex): teleporting, cloning, the psi bomb, its weakness to hacking.
+	NotLongWar(11)=Teleport
+	NotLongWar(12)=Malfunction
+	NotLongWar(13)=PsiBombStage1
+	NotLongWar(14)=Superposition
+	NotLongWar(15)=TriggerSuperpositionDamageListener
+	NotLongWar(16)=TechVulnerability
+	// Muton Elite (Andromedon): the robot suit, its punch, smashing walls, the acid launcher.
+	NotLongWar(17)=SwitchToRobot
+	NotLongWar(18)=RobotBattlesuit
+	NotLongWar(19)=BigDamnPunch
+	NotLongWar(20)=WallBreaking
+	NotLongWar(21)=WallSmash
+	NotLongWar(22)=ShellLauncher
+	// Muton: XCOM 2's counterattack; Berserker: its rage; Chryssalid: burrowing.
+	NotLongWar(23)=CounterattackPreparation
+	NotLongWar(24)=CounterattackDescription
+	NotLongWar(25)=TriggerRageDamageListener
+	NotLongWar(26)=ChryssalidBurrow
+	// Their weapons: the Viper's tongue (Thin Man), the Archon's melee (Floater), the Muton's bayonet and execute, the
+	// MECs' micro missiles (Drone, Mechtoid).
+	NotLongWarWeapons(0)="Viper_Tongue_WPN:GetOverHere"
+	NotLongWarWeapons(1)="Archon_MeleeAttack:StandardMelee"
+	NotLongWarWeapons(2)="Muton_MeleeAttack:Bayonet"
+	NotLongWarWeapons(3)="Muton_MeleeAttack:CounterattackBayonet"
+	NotLongWarWeapons(4)="Muton_WPN:Execute"
+	NotLongWarWeapons(5)="AdvMEC_M1_Shoulder_WPN:MicroMissiles"
+	NotLongWarWeapons(6)="AdvMEC_M1_Shoulder_WPN:MicroMissileFuse"
+	NotLongWarWeapons(7)="AdvMEC_M2_Shoulder_WPN:MicroMissiles"
+	NotLongWarWeapons(8)="AdvMEC_M2_Shoulder_WPN:MicroMissileFuse"
 }
 
 static function SetStat(XComGameState_Unit Unit, ECharStatType Stat, float Value)

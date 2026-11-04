@@ -1056,6 +1056,7 @@ function string SpawnAlien(name CharacterTemplate, int Tiles, optional int Speci
 			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a test alien's species");
 			Newest = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Newest.ObjectID));
 			Newest.SetUnitFloatValue('LWX2Species', Species, eCleanup_Never);
+			class'LWAlienStats'.static.ApplyTo(Newest, Species);
 			`TACTICALRULES.SubmitGameState(NewGameState);
 		}
 	}
@@ -1309,7 +1310,8 @@ function Enemies(out array<string> Out, optional bool bAll)
 			@ "mesh" @ ((Vis != none && Vis.GetPawn() != none && Vis.GetPawn().Mesh != none) ? PathName(Vis.GetPawn().Mesh.SkeletalMesh) : "-")
 			@ "weapon" @ WeaponMeshOf(Unit)
 			@ "aim" @ int(Unit.GetCurrentStat(eStat_Offense)) @ "def" @ int(Unit.GetCurrentStat(eStat_Defense)) @ "mob" @ int(Unit.GetCurrentStat(eStat_Mobility))
-			@ "dmg+" $ (Unit.GetUnitValue('LWX2DamageBonus', DmgBonus) ? string(int(DmgBonus.fValue)) : "-") @ "passive" @ (Unit.FindAbility('LWX2_AlienDamage').ObjectID > 0));
+			@ "dmg+" $ (Unit.GetUnitValue('LWX2DamageBonus', DmgBonus) ? string(int(DmgBonus.fValue)) : "-")
+			@ "lwdmg" @ (Unit.GetUnitValue('LWX2WeaponDamage', DmgBonus) ? string(int(DmgBonus.fValue)) : "-") @ "passive" @ (Unit.FindAbility('LWX2_AlienDamage').ObjectID > 0));
 		// Where a unit of XCOM's that is not a soldier came from: the change that first held it.
 		if (Unit.GetTeam() == eTeam_XCom && Unit.GetMyTemplateName() != 'Soldier')
 			Out.AddItem("  a soldier" @ Unit.IsSoldier() @ "in XCOM's squad" @ (XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom')).Squad.Find('ObjectID', Unit.ObjectID) != INDEX_NONE)

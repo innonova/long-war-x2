@@ -42,3 +42,25 @@ document the encodings):
 - **Release** `LongWarX2-20261103-b82cf5d.zip` (with the breakable walls), checked from the
   zip: the store's Sectoids and Drones at Long War's HP in EW's bodies, with the passive;
   79 walls given toughness; no redscreens from the map's config.
+
+## Report (2026-11-04 night, weapons and abilities)
+
+- **Weapon damage:** each species' weapon in EW (the Sectoid's plasma pistol 3, the
+  Floater's light plasma rifle 5, the Muton's plasma rifle 8, the Cyberdisc's 9 …) is read
+  from Long War's `Weapons=` lines (`XComLWAliens.ini`, `+Weapon`); the alien's shots with
+  its own weapon are shifted from the XCOM 2 weapon's base damage to it (XCOM 2's spread
+  and crit damage kept), the upgrades' bonus on every attack. Seen: a Floater's hit for 5
+  where the Archon's gun did 11 and killed a soldier outright.
+- **XCOM 2's abilities no Long War alien has** taken off the templates and their weapons
+  (140 entries over the templates' difficulty variants): the Sectoid's Psi Reanimation and
+  Mindspin and its weakness to blades, the Archon's Blazing Pinions, frenzy and melee, the
+  Viper's Bind and tongue, the Gatekeeper's Anima abilities, the Codex's teleport, clones
+  and psi bomb, the Andromedon's robot suit, punch, wall smashing and acid launcher, the
+  Muton's counterattack, bayonet and execute, the Berserker's rage, the Chryssalid's
+  burrowing, the MECs' micro missiles. What stays is shooting, overwatch, suppression,
+  melee where EW's species has it, the Thin Man's poison spit, the Chryssalid's poison.
+  Seen: no Blazing Pinions or tongue; the Thin Man spat poison.
+- **Not yet:** the species' own EW abilities (Mind Merge, the Floater's Launch, the Muton's
+  Blood Call, the Cyberdisc's Death Blossom, the Seeker's cloak and strangle, the Drone's
+  repair …); the Sectoid Commander lost Mindspin with the Sectoid (one template) and has no
+  psionics until its own.
