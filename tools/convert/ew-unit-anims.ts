@@ -191,17 +191,32 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
   // The sequences by name, those without animation data left out: EW's cooker left the ones EW never plays empty (57 of the
   // Sectoid's 178: its low cover, its right side …), and played they hold the unit in its reference pose (the person's
   // posing Sectoids).
+  // A sequence whose animation is another's (EW's cooker kept one copy of identical data: CompressedStreamRefIndex, an
+  // index into the set's sequences, the Sectoid's EquipOff90A playing Cover2FocusFire90's) counts as having it; its copies
+  // are made from that one's data (dataOf), so they need no reference.
   const byName = new Map<string, number>()
+  const dataOf = new Map<number, number>()
   let empty = 0
+  let shared = 0
   for (const s of sources) {
     const d: Uint8Array = pkg.data(s)
     const r = new Reader(d.subarray(4))
     let seqName = ''
-    for (const t of readTags(r, pkg) as Tag[]) if (t.name === 'SequenceName') seqName = nameOf(i32(t.value))
+    let refIndex = -1
+    for (const t of readTags(r, pkg) as Tag[]) {
+      if (t.name === 'SequenceName') seqName = nameOf(i32(t.value))
+      else if (t.name === 'CompressedStreamRefIndex') refIndex = i32(t.value)
+    }
     if (!seqName) continue
     if (!hasAnimationData(d, 4 + (r as any).o)) {
-      empty++
-      continue
+      const owner = refIndex >= 0 && refIndex < seqs.length ? seqs[refIndex]! : 0
+      const od: Uint8Array | undefined = owner ? pkg.data(owner) : undefined
+      if (!od || !hasAnimationData(od, 4 + (() => { const rr = new Reader(od.subarray(4)); readTags(rr, pkg); return (rr as any).o })())) {
+        empty++
+        continue
+      }
+      dataOf.set(s, owner)
+      shared++
     }
     byName.set(seqName, s)
   }
@@ -277,7 +292,7 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
     if (byName.has(x2)) continue
     const ew = ewFor(x2, ewNames)
     if (!ew) { unmatched.push(x2); continue }
-    const src = byName.get(ew)!
+    const src = dataOf.get(byName.get(ew)!) ?? byName.get(ew)!
     const d = Uint8Array.from(pkg.data(src) as Uint8Array)
     // No network index of its own (the source's, copied, made the game log a duplicate for each copy).
     new DataView(d.buffer).setInt32(0, -1, true)
@@ -323,7 +338,7 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
   data.set(setRef, w.done())
 
   const bytes = writePackage(pkg, { data, names, imports: [], exports: added })
-  return { bytes, report: `${animSetPath}: ${seqs.length} sequences (${empty} without animation data), ${copies.length} copies under XCOM 2's names (${mirrorCount} mirrored), ${unmatched.length} XCOM 2 names without an EW animation${unmatched.length ? ` (${unmatched.join(' ')})` : ''}` }
+  return { bytes, report: `${animSetPath}: ${seqs.length} sequences (${empty} without animation data, ${shared} sharing another's), ${copies.length} copies under XCOM 2's names (${mirrorCount} mirrored), ${unmatched.length} XCOM 2 names without an EW animation${unmatched.length ? ` (${unmatched.join(' ')})` : ''}` }
 }
 
 if (/ew-unit-anims\.ts$/.test(process.argv[1] ?? '')) {

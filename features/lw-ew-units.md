@@ -205,7 +205,12 @@ particle systems as they are; its materials it cannot draw).
   effects), whose materials the converter makes inert; those notifies now start nothing
   (`stub-materials.ts`, `quietParticleNotifies`). Seen: the Drone fired (and missed), the game went
   on.
-- **Open:** EW's sequences that share another's data (`CompressedStreamRefIndex`, the "57 without
-  animation data" of the Sectoid) are treated as empty; they may be playable. The non-humanoid
+- **The "empty" sequences were not:** EW's cooker kept one copy of identical animation data; the
+  others point at it (`CompressedStreamRefIndex`: an index into the set's sequences, frames and
+  tracks matching: the Sectoid's EquipOff90A plays Cover2FocusFire90's). The converter now counts
+  them as having it and makes their copies from that data, self-contained: the Sectoid 57 such, the
+  Floater 35, the Cyberdisc 11, every species but the Outsider (4 truly empty) none empty. So EW's own
+  low cover and right side are played where EW has them, rather than this morning's fallbacks.
+  Checked: the Sectoid animated, an alien turn with Sectoids, a Floater and a Drone moving. The non-humanoid
   species' masks have only the root (the Drone, the Cyberdisc): their partial animations (upper body)
   do nothing.
