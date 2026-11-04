@@ -347,3 +347,22 @@ hologram texture's raw channels (dark blue, red borders), over the movie at half
   bottom centre, behind the clock and over the Geoscape window's buttons; not kept until the
   screens' layout leaves room. Control aid `ewhudcall <function> [args]`.
 
+
+## Report (2026-11-04 day, the HUD's "LALALAL" gone: EW's event list fed)
+
+- The "LALALAL"s at the bottom right were EW's event list's title (`theEventList.SetTitle`: its
+  title, and "DAYS" faded), not the research panel's; the research panel's own description showed
+  nothing either (read with a small ActionScript 2 disassembler kept in /tmp: `SetCurrentResearch`
+  sets `description.text`, a text component of EW's StrategyComponents whose own class set its
+  fields; XCOM 2's class of that name is the one loaded).
+- **Now:** the event list is fed, as EW's `UIStrategyComponent_EventList` feeds it (`clear`,
+  `AddEvent(text, "DAYS", days, icon)`, EW's icons by event kind), with what Long War has coming:
+  the research, the base's excavations and facilities, interceptor orders, psi testing, gene mods,
+  the council report; soonest first, given again only when it changes. The research panel is hidden
+  (EW shows it only in the labs; its research is in the list).
+- **Shown: the soonest event only, without the list's title row.** The title row lies level with the
+  Geoscape window's buttons (its DAYS over CLOSE) and a second row reaches the screen's bottom edge;
+  moving the list did nothing (it lays itself out again). More rows want room the Geoscape window
+  keeps: a decision about that window's layout. Seen: "XENOBIOLOGY 18" with the research icon
+  (`logs/wingpu_hud_events.png`).
+- Not in the list yet: Engineering's and the Foundry's projects (counted in work, not hours).
