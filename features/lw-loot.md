@@ -300,7 +300,7 @@ repository); a spec for the work, not done yet:
   came from. Without a source it would say "Meld canister", but the one run made so crashed at
   the end of the first turn; with the source kept, five turns, the pick-up and the mission's end
   went through. Not proven to be the cause.
-- **Not like EW yet:** EW's canister model and its sounds (XCOM 2's loot marker instead); EW's
-  countdown that starts only once a canister is seen (`m_bBeginCountdownWhenSeen`); destroying a
-  canister with explosives; the HUD's canister line. The meld tutorial map's places are in its
+- **Not like EW yet:** EW's canister model and its sounds (XCOM 2's loot marker instead); destroying
+  a canister with explosives; the HUD's canister line. (EW's countdown from the mission's start is as
+  here: `m_bBeginCountdownWhenSeen` is off by default and none of the places read sets it.) The meld tutorial map's places are in its
   streamed level, not read.

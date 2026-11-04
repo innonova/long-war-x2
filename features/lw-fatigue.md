@@ -40,6 +40,11 @@ decompiler, kept out of the repository) and its `DefaultGameCore.ini`:
   what Long War is balanced around.
 - Where the player sees it: the squad selection (a fatigued soldier marked, with the hours
   left), the barracks' list and the soldier's screen.
+- **A way to have both answered at once** (proposed 2026-11-04): Long War's hours shown through War
+  of the Chosen's own "Tired" state. XCOM 2's squad selection, barracks and soldier screens already
+  show Tired and let a Tired soldier be sent, as Long War lets a fatigued one go "all in". Long War's
+  rules decide who is Tired and for how long; XCOM 2's will loss per mission stops driving it.
+  That is "in place of", with XCOM 2's screens; "beside" would need marks of the mod's own.
 
 ## Plan (proposed)
 
