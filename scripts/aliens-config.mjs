@@ -73,7 +73,7 @@ for (const [name, item] of Object.entries(WEAPONS)) {
 // Each species' own abilities (Characters= ABILITIES[]), where the mod has them: Long War's psi powers, which its psi
 // soldiers use too (X2Ability_LWStandins), and the aliens' own (the Muton's Blood Call, the Floater's Launch: X2Ability_LWAliens).
 const ABILITIES = {
-  eAbility_BloodCall: 'LW_BloodCall', eAbility_Launch: 'LW_Launch',
+  eAbility_BloodCall: 'LW_BloodCall', eAbility_Launch: 'LW_Launch', eAbility_Intimidate: 'LW_Intimidate', eAbility_Bloodlust: 'LW_IntimidateBerserker',
   eAbility_MindMerge: 'LW_MindMerge', eAbility_GreaterMindMerge: 'LW_MindMerge', eAbility_PsiPanic: 'LW_PsiPanic',
   eAbility_MindFray: 'LW_Mindfray', eAbility_Mindfray: 'LW_Mindfray', eAbility_PsiControl: 'LW_MindControl', eAbility_Rift: 'LW_Rift',
 }
@@ -96,4 +96,7 @@ out.push('[LongWarX2.X2Ability_LWAliens]')
 out.push('BloodCallAim=10', 'BloodCallWill=10', 'BloodCallMobility=4', 'BloodCallTiles=8', 'RepairHP=3', 'RepairTiles=8')
 // DEATH_BLOSSOM_RANGE 384 (four tiles), DAMAGE_MIN 4, DAMAGE_MAX 6, COOLDOWN 4.
 out.push('DeathBlossomTiles=4', 'DeathBlossomMin=4', 'DeathBlossomMax=6', 'DeathBlossomCooldown=4')
+// INTIMIDATE_CHANCE_MUTON 33, _BERSERKER 66; the morale event's will (CalcWillValue, eMoraleEvent_MutonIntimidate) 40; the
+// panic test's chance to fail at even will (PerformPanicTest's PassesWillTest) 30.
+out.push('IntimidateChance=33', 'IntimidateChanceBerserker=66', 'IntimidateMorale=40', 'IntimidateEvenFail=30')
 console.log(out.join('\r\n'))

@@ -231,3 +231,18 @@ document the encodings):
   charges are its multiplayer's); no cloak animation (EW's `FF_Cloak`) or shimmer; EW's lessening of the strangle for
   the units it calls immune; the Seeker keeps XCOM 2's Faceless's claws ability (unused by its AI; a mind-controlled
   Seeker would show it).
+
+## Report (2026-11-05 night, the Muton's Intimidate; the Floater's melee)
+
+- **Intimidate** (`LW_Intimidate`, the Berserker's `LW_IntimidateBerserker`), EW's as read (`XGUnit.Intimidate`,
+  `XGAction_Berserk`, `OnMoraleEvent`): a Muton hurt by a soldier on that soldier's own turn (not overwatch), once a
+  turn, with the soldier in sight, intimidates them at EW's chance (33 in 100; a Berserker 66): a panic test against the
+  morale event's will (40), failed 30 in 100 at even will; failed, XCOM 2's panic. EW's will test is native code not
+  read, so the test is a line through its even point (a point more or less for each point of will), as the psi powers'
+  will checks are approximations (`X2AbilityToHitCalc_LWIntimidate`). Seen with the chances raised on the test machine
+  only: a Muton shot, "LW_Intimidate … miss" (the test passed), a second Muton shot, "hit", and the soldier fired on
+  their own at once (XCOM 2's panic); a Muton killed by the shot does not intimidate.
+- **Not yet:** the Berserker's Bloodlust charge at whoever hurt it.
+- **The Floater no longer strikes in melee:** EW's Floaters have none; the removal of the Archon's melee named the
+  function that makes its staff (`Archon_MeleeAttack`), not the weapon (`ArchonStaff`), so it never applied (seen in
+  the release check: a Floater meleed three times). Corrected.

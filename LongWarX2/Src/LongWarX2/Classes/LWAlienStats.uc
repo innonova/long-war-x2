@@ -271,7 +271,7 @@ defaultproperties
 	// Their weapons: the Viper's tongue (Thin Man), the Archon's melee (Floater), the Muton's bayonet and execute, the
 	// MECs' micro missiles (Drone, Mechtoid).
 	NotLongWarWeapons(0)="Viper_Tongue_WPN:GetOverHere"
-	NotLongWarWeapons(1)="Archon_MeleeAttack:StandardMelee"
+	NotLongWarWeapons(1)="ArchonStaff:StandardMelee"
 	NotLongWarWeapons(2)="Muton_MeleeAttack:Bayonet"
 	NotLongWarWeapons(3)="Muton_MeleeAttack:CounterattackBayonet"
 	NotLongWarWeapons(4)="Muton_WPN:Execute"

@@ -11,6 +11,8 @@ var config int RepairHP, RepairTiles;
 /** The Cyberdisc's Death Blossom (EW's DEATH_BLOSSOM_*): everyone within DeathBlossomTiles of it takes DeathBlossomMin to
  *  DeathBlossomMax damage; then DeathBlossomCooldown turns. */
 var config int DeathBlossomTiles, DeathBlossomMin, DeathBlossomMax, DeathBlossomCooldown;
+/** Intimidate (EW's INTIMIDATE_CHANCE_MUTON, _BERSERKER; the morale event's will and the panic test's chance at even will). */
+var config int IntimidateChance, IntimidateChanceBerserker, IntimidateMorale, IntimidateEvenFail;
 
 static function array<X2DataTemplate> CreateTemplates()
 {
@@ -24,6 +26,8 @@ static function array<X2DataTemplate> CreateTemplates()
 	Templates.AddItem(Strangle('LW_Strangle'));
 	Templates.AddItem(Strangle('LW_StrangleSustained'));
 	Templates.AddItem(SeekerCloak());
+	Templates.AddItem(Intimidate('LW_Intimidate', default.IntimidateChance));
+	Templates.AddItem(Intimidate('LW_IntimidateBerserker', default.IntimidateChanceBerserker));
 	return Templates;
 }
 
@@ -408,4 +412,76 @@ static function X2AbilityTemplate SeekerCloak()
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
 	return Template;
+}
+
+/**
+ * The Muton's Intimidate (EW's eAbility_Intimidate; the Berserker's comes with its Bloodlust, at its own chance): hurt by a
+ * soldier on that soldier's turn (not by overwatch), once a turn, with the soldier in sight, the Muton may intimidate them:
+ * a panic test (X2AbilityToHitCalc_LWIntimidate) and XCOM 2's panic if failed. EW's Berserker also charges at whoever hurt
+ * it (its Bloodlust); not here.
+ */
+static function X2AbilityTemplate Intimidate(name AbilityName, int Chance)
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityToHitCalc_LWIntimidate HitCalc;
+	local X2AbilityTrigger_EventListener Trigger;
+	local X2AbilityCooldown Cooldown;
+	local X2Condition_UnitProperty Soldier;
+	local X2Condition_UnitEffects NotPanicked;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, AbilityName);
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_intimidate";
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_NeverShow;
+	Template.Hostility = eHostility_Offensive;
+	HitCalc = new class'X2AbilityToHitCalc_LWIntimidate';
+	HitCalc.Chance = Chance;
+	HitCalc.Morale = default.IntimidateMorale;
+	HitCalc.EvenFail = default.IntimidateEvenFail;
+	Template.AbilityToHitCalc = HitCalc;
+	Template.AbilityTargetStyle = default.SimpleSingleTarget;
+	Trigger = new class'X2AbilityTrigger_EventListener';
+	Trigger.ListenerData.Deferral = ELD_OnStateSubmitted;
+	Trigger.ListenerData.EventID = 'UnitTakeEffectDamage';
+	Trigger.ListenerData.Filter = eFilter_Unit;
+	Trigger.ListenerData.EventFn = IntimidateListener;
+	Template.AbilityTriggers.AddItem(Trigger);
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Soldier = new class'X2Condition_UnitProperty';
+	Soldier.ExcludeDead = true;
+	Soldier.ExcludeFriendlyToSource = true;
+	Soldier.ExcludeRobotic = true;
+	Template.AbilityTargetConditions.AddItem(Soldier);
+	Template.AbilityTargetConditions.AddItem(default.GameplayVisibilityCondition);
+	NotPanicked = new class'X2Condition_UnitEffects';
+	NotPanicked.AddExcludeEffect(class'X2AbilityTemplateManager'.default.PanickedName, 'AA_UnitIsPanicked');
+	Template.AbilityTargetConditions.AddItem(NotPanicked);
+	Cooldown = new class'X2AbilityCooldown';
+	Cooldown.iNumTurns = 1;
+	Template.AbilityCooldown = Cooldown;
+	Template.AddTargetEffect(class'X2StatusEffects'.static.CreatePanickedStatusEffect());
+	Template.bSkipFireAction = true;
+	Template.FrameAbilityCameraType = eCameraFraming_Never;
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
+	return Template;
+}
+
+/** A Muton hurt: Intimidate against whoever hurt it, if that was an enemy acting on their own side's turn. */
+static function EventListenerReturn IntimidateListener(Object EventData, Object EventSource, XComGameState GameState, Name EventID, Object CallbackData)
+{
+	local XComGameState_Ability Ability;
+	local XComGameState_Unit Me, Attacker;
+	local XComGameStateContext_Ability Context;
+
+	Ability = XComGameState_Ability(CallbackData);
+	Me = XComGameState_Unit(EventData);
+	Context = XComGameStateContext_Ability(GameState.GetContext());
+	if (Ability == none || Me == none || Context == none || !Me.IsAlive())
+		return ELR_NoInterrupt;
+	Attacker = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Context.InputContext.SourceObject.ObjectID));
+	if (Attacker == none || !Attacker.IsEnemyUnit(Me) || Attacker.ControllingPlayer.ObjectID != `TACTICALRULES.GetCachedUnitActionPlayerRef().ObjectID)
+		return ELR_NoInterrupt;
+	Ability.AbilityTriggerAgainstSingleTarget(Attacker.GetReference(), false);
+	return ELR_NoInterrupt;
 }
