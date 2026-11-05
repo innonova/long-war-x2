@@ -242,7 +242,11 @@ document the encodings):
   will checks are approximations (`X2AbilityToHitCalc_LWIntimidate`). Seen with the chances raised on the test machine
   only: a Muton shot, "LW_Intimidate … miss" (the test passed), a second Muton shot, "hit", and the soldier fired on
   their own at once (XCOM 2's panic); a Muton killed by the shot does not intimidate.
-- **Not yet:** the Berserker's Bloodlust charge at whoever hurt it.
+- **The Berserker's Bloodlust** (`LW_Bloodlust`, brought by its Intimidate as EW's Bloodlust carries both): hurt by a
+  soldier on that soldier's turn, with the soldier in sight, it charges at once, out of its turn (an action point and
+  XCOM 2's AI run for one move, `LWBloodlustRoot` in `XComAI.ini`: into melee reach of a soldier, else toward the
+  nearest; EW moves it half its path toward whoever hurt it). Seen: a Berserker shot ("LW_IntimidateBerserker … miss",
+  "LW_Bloodlust … hit") moved from five tiles out to beside the squad during XCOM's turn.
 - **The Floater no longer strikes in melee:** EW's Floaters have none; the removal of the Archon's melee named the
   function that makes its staff (`Archon_MeleeAttack`), not the weapon (`ArchonStaff`), so it never applied (seen in
   the release check: a Floater meleed three times). Corrected.
