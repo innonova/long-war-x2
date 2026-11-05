@@ -246,3 +246,12 @@ document the encodings):
 - **The Floater no longer strikes in melee:** EW's Floaters have none; the removal of the Archon's melee named the
   function that makes its staff (`Archon_MeleeAttack`), not the weapon (`ArchonStaff`), so it never applied (seen in
   the release check: a Floater meleed three times). Corrected.
+
+## Report (2026-11-05 night, the aliens' abilities named)
+
+- The aliens' own abilities (Blood Call, the Drone's repair, Death Blossom, Launch, Strangle, the Seeker's stealth,
+  Intimidate) had no name or description: the enemy's info panel and the flyovers showed nothing. They now take the
+  name and description of EW's perk for each (`ePerk_Launch`, `ePerk_SeekerStrangle` …), written with the classes' words
+  from the player's Long War install (`scripts/lw-words.mjs`, `ALIEN_PERKS`; Long War's text, never in the repository).
+  Checked: the test machine's installed words have the eight sections, by the same route as the soldiers' perks, whose
+  names show in the game; these new ones not looked at on screen yet.

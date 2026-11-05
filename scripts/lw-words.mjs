@@ -31,6 +31,13 @@ export function readConsts(upkBytes) {
   return consts
 }
 
+/** The mod's alien abilities and the EW perks whose words they take. */
+const ALIEN_PERKS = {
+  LW_BloodCall: 'ePerk_BloodCall', LW_Repair: 'ePerk_Repair', LW_DeathBlossom: 'ePerk_DeathBlossom', LW_Launch: 'ePerk_Launch',
+  LW_Strangle: 'ePerk_SeekerStrangle', LW_StrangleSustained: 'ePerk_SeekerStrangle', LW_SeekerCloak: 'ePerk_SeekerStealth',
+  LW_Intimidate: 'ePerk_Intimidate', LW_IntimidateBerserker: 'ePerk_Intimidate',
+}
+
 /** The words file, from Long War's DefaultGameCore.ini and XComGame.int texts and EW's constants. */
 export function makeWords({ plan, core, loc, consts }) {
   const locOf = (key, perk) => loc.match(new RegExp(`^${key}\\[${perk}\\]="(.*)"\\s*$`, 'm'))?.[1] ?? ''
@@ -126,6 +133,13 @@ export function makeWords({ plan, core, loc, consts }) {
       const title = clean(titleOf(perk))
       const text = clean(fill(locOf('m_strPassiveTxt', perk)))
       return ['', `[${name} X2AbilityTemplate]`, `LocFriendlyName=${q(title)}`, `LocLongDescription=${q(text)}`, `LocHelpText=${q(text)}`, `LocPromotionPopupText=${q(text)}`, `LocFlyOverText=${q(title)}`]
+    }),
+    // The aliens' own abilities (X2Ability_LWAliens), named and described as EW's perks for them are: the enemy's info
+    // panel and the flyovers show these.
+    ...Object.entries(ALIEN_PERKS).flatMap(([name, perk]) => {
+      const title = clean(titleOf(perk))
+      const text = clean(fill(locOf('m_strPassiveTxt', perk)))
+      return ['', `[${name} X2AbilityTemplate]`, `LocFriendlyName=${q(title)}`, `LocLongDescription=${q(text)}`, `LocHelpText=${q(text)}`, `LocFlyOverText=${q(title)}`]
     }),
   ]
   return { text: lines.join('\r\n') + '\r\n', unfilled: [...unfilled], perks: plan.standins.length, ranks: rankNames.length }
