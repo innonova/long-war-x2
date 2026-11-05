@@ -220,5 +220,11 @@ document the encodings):
 - **Seen** (a Seeker beside the squad; `history`, `effects`): seized Killian Murphy (8 HP): 7, 5, 1, then bleeding out
   at the fourth squeeze; the Seeker moved on and seized Paolo Moletta; one hit on the Seeker (4 to 1 HP) freed him. The
   Seeker coiled around the soldier: `logs/wingpu_seeker_strangle.png`. No crash.
-- **Not yet:** the Seeker's stealth (EW's cloak with charges, lost when wounded); EW's lessening for the units it calls
-  immune; the Seeker keeps XCOM 2's Faceless's claws ability (unused by its AI; a mind-controlled Seeker would show it).
+- **Its stealth** (`LW_SeekerCloak`, EW's eAbility_Stealth): the Seeker cloaks as a move (an action, not its turn) and is
+  out of its enemies' sight and reach (XCOM 2's Vanish, the Chosen Assassin's) until it seizes someone, is hurt, or five of
+  its turns have passed (EW: five turns unseen). Its AI cloaks as its first action when it cannot strangle yet. Seen: a
+  Seeker seven tiles out cloaked, moved beside the squad unseen, and on its next turn seized a soldier and was shown.
+- **Not yet:** EW's limits on the cloak (no cloaking near a soldier who sees cloaked units, a MEC or a battle scanner; EW's
+  charges are its multiplayer's); no cloak animation (EW's `FF_Cloak`) or shimmer; EW's lessening of the strangle for
+  the units it calls immune; the Seeker keeps XCOM 2's Faceless's claws ability (unused by its AI; a mind-controlled
+  Seeker would show it).

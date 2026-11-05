@@ -23,6 +23,7 @@ static function array<X2DataTemplate> CreateTemplates()
 	Templates.AddItem(Launch());
 	Templates.AddItem(Strangle('LW_Strangle'));
 	Templates.AddItem(Strangle('LW_StrangleSustained'));
+	Templates.AddItem(SeekerCloak());
 	return Templates;
 }
 
@@ -329,6 +330,7 @@ static function X2AbilityTemplate Strangle(name AbilityName)
 	local X2AbilityTemplate Template;
 	local X2Effect Effect;
 	local X2Condition Condition;
+	local X2Effect_RemoveEffects Uncloak;
 
 	if (AbilityName == 'LW_Strangle')
 	{
@@ -347,9 +349,60 @@ static function X2AbilityTemplate Strangle(name AbilityName)
 			Effect.bApplyOnHit = false;
 	}
 	Template.AddTargetEffect(new class'X2Effect_LWStrangleDamage');
+	// Seizing someone shows a cloaked Seeker (LW_SeekerCloak).
+	if (AbilityName == 'LW_Strangle')
+	{
+		Uncloak = new class'X2Effect_RemoveEffects';
+		Uncloak.EffectNamesToRemove.AddItem('LW_SeekerCloak');
+		Template.AddShooterEffect(Uncloak);
+	}
 	// A soldier in high cover can be seized too (XCOM 2's Viper cannot bind one; EW's Seeker strangles anyone it reaches).
 	foreach Template.AbilityTargetConditions(Condition)
 		if (X2Condition_Visibility(Condition) != none)
 			X2Condition_Visibility(Condition).bRequireNotMatchCoverType = false;
+	return Template;
+}
+
+/**
+ * The Seeker's stealth (EW's eAbility_Stealth): it cloaks as a move (an action, not its turn) and is out of its enemies'
+ * sight and reach until it seizes someone, is hurt (EW's abort with a wound), or five of its turns have passed (EW ends it
+ * after five turns unseen). Played as XCOM 2's Vanish (the Chosen Assassin's): hidden from XCOM's side in play and on
+ * screen, shown again when it ends. EW's AI cloaks only with someone to strangle and no soldier able to see it near;
+ * here XCOM 2's tree cloaks as the first action when it cannot strangle yet.
+ */
+static function X2AbilityTemplate SeekerCloak()
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityCost_ActionPoints Cost;
+	local X2Effect_Vanish Cloak;
+	local X2Condition_UnitEffects NotCloaked;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'LW_SeekerCloak');
+	Template.IconImage = "img:///UILibrary_XPACK_Common.PerkIcons.UIPerk_vanishingwind";
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
+	Template.Hostility = eHostility_Neutral;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SelfTarget;
+	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Template.AddShooterEffectExclusions();
+	NotCloaked = new class'X2Condition_UnitEffects';
+	NotCloaked.AddExcludeEffect('LW_SeekerCloak', 'AA_DuplicateEffectIgnored');
+	NotCloaked.AddExcludeEffect(class'X2AbilityTemplateManager'.default.BoundName, 'AA_UnitIsBound');
+	Template.AbilityShooterConditions.AddItem(NotCloaked);
+	Cost = new class'X2AbilityCost_ActionPoints';
+	Cost.iNumPoints = 1;
+	Template.AbilityCosts.AddItem(Cost);
+	Cloak = new class'X2Effect_Vanish';
+	Cloak.EffectName = 'LW_SeekerCloak';
+	Cloak.BuildPersistentEffect(5, false, true, false, eGameRule_PlayerTurnBegin);
+	Cloak.bRemoveWhenSourceDamaged = true;
+	Cloak.DuplicateResponse = eDupe_Ignore;
+	Template.AddTargetEffect(Cloak);
+	Template.bSkipFireAction = true;
+	Template.bShowActivation = true;
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
 	return Template;
 }

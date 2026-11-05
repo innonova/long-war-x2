@@ -87,8 +87,9 @@ for (const m of text.matchAll(/^Characters=\(.*?iType=(eChar_\w+),(.*)$/gm)) {
 out.push(`+SpeciesAbilities=(Species=${species('Drone')}, Ability="LW_Repair")`)
 // The Cyberdisc's Death Blossom (its behaviour in EW too).
 out.push(`+SpeciesAbilities=(Species=${species('Cyberdisc')}, Ability="LW_DeathBlossom")`)
-// The Seeker's Strangle (its weapon's ability in EW).
+// The Seeker's Strangle (its weapon's ability in EW) and its stealth (ABILITIES[1], given here with the Strangle it serves).
 out.push(`+SpeciesAbilities=(Species=${species('Seeker')}, Ability="LW_Strangle")`)
+out.push(`+SpeciesAbilities=(Species=${species('Seeker')}, Ability="LW_SeekerCloak")`)
 // Their numbers: EW's constants (XGTacticalGameCoreNativeBase; read from its package as the classes' words are, so given
 // here as EW has them) and the ranges, which EW's AI chose by sight (an approximation).
 out.push('[LongWarX2.X2Ability_LWAliens]')
