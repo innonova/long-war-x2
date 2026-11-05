@@ -217,3 +217,14 @@ on.
 Later that night: `LongWarX2-20261104-9a14bf4.zip` (the fatigue, the squad sent rested first, the units'
 shared animations, S.C.O.P.E.). Same converter (17): a setup from `59316ae` converts no map again.
 Checked from the zip: a mission's squad "Tired 4–6 Days" after it, rested eight days on; no crash.
+
+## Report (2026-11-05 night)
+
+The download is `LongWarX2-20261105-ffd69de.zip` on v0.1.0-preview.1 (in place of `9a14bf4`): the
+Cyberdisc's Death Blossom back, the Seeker's regeneration gone, the Floater's Launch, the Seeker's
+Strangle and cloak, the Muton's Intimidate, the Floater without melee. Same converter (17), so no map is
+converted again for its maps' sake; the units are converted again at every setup (the Floater's and the
+Seeker's new animations come with that). Checked from the zip on the test machine: two Floaters, a
+Seeker and a Muton beside the squad for four turns: the Floaters shot and one launched every other turn,
+the Seeker cloaked, seized a soldier, held him two turns and cloaked again, the Muton called its allies
+and shot; no crash.
