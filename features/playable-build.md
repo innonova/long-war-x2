@@ -233,3 +233,7 @@ Later that night: `LongWarX2-20261105-5c39af5.zip` (the Cyberdisc in EW's body, 
 track; the aliens' abilities named as EW's perks, written by the setup from the player's install). Same converter (17).
 Checked from the zip: the setup wrote the abilities' names; a Cyberdisc and a Seeker beside the squad for two turns:
 Death Blossom, the cloak, a soldier seized; no crash.
+
+Later still: `LongWarX2-20261105-43256f6.zip` (a squad spawned in a pocket of an EW map moved out to open floor; the
+Berserker's Bloodlust). Same converter (17). Checked from the zip: on URB_StreetHurricane, where the whole squad
+spawned on one doorway tile, a soldier moved out and the others beside her; an alien turn went by.
