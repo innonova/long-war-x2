@@ -411,6 +411,10 @@ function FreeBoxedIn()
 
 	Moved = class'LWX2PartPlacer'.static.FreeBoxedIn();
 	`log("LongWarX2: EW map: boxed-in try" @ BoxedTries @ "->" @ Moved, , 'LongWarX2');
+	// No one reaching anywhere a few tries in (their places long taken): the squad is in a pocket; one soldier out of it,
+	// the others brought beside them at the next try.
+	if (Moved < 0 && BoxedTries >= 3 && BoxedTries % 3 == 0)
+		class'LWX2PartPlacer'.static.MoveOutOfPocket();
 	if ((Moved >= 0 || ++BoxedTries >= 20) && HUD() != none)
 		HUD().ClearTimer(nameof(FreeBoxedIn), self);
 }

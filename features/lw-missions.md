@@ -1483,3 +1483,14 @@ from the evening, one from the morning) give two exception addresses:
   always its middle, so the test is rough). Looked at with the fog on (control aid `look … fow`): a
   Scout outside the truck stop's shop beside its window, the shop's interior beyond the wall shown,
   not fogged (`logs/wingpu_window_sight.png`).
+
+## Report (2026-11-05 night, a squad spawned in a pocket)
+
+- **Seen** on URB_StreetHurricane: XCOM 2's group spawn put all six soldiers on one doorway tile, from which none could
+  reach anywhere. The boxed-in check brings a boxed-in soldier beside the one who reaches the most; with no one reaching
+  anywhere it waited for a minute and gave up, and the squad could not move.
+- **Fix** (`LWX2PartPlacer.MoveOutOfPocket`): when no soldier reaches anywhere a few tries in, the first soldier is moved
+  to the nearest free floor tile with open floor around it, and the next try brings the others beside them. Seen on the
+  same map: "the whole squad boxed in at 38,14,0; Moon Song moved out to 37,13,0", then the five others beside her, who
+  reaches 363 tiles. Why the group spawn found one tile there (the spawn point's floor in the converted map) is not looked
+  into; other maps with a spawn like it are now freed the same way.

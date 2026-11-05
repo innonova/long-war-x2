@@ -505,6 +505,75 @@ static function int FreeBoxedIn(optional int MinReach = 40)
 	return Moved;
 }
 
+/**
+ * A squad none of whom can reach anywhere (XCOM 2's group spawn put every soldier on one doorway tile of
+ * URB_StreetHurricane, 2026-11-05: FreeBoxedIn has no one to bring them beside): the first soldier moved to the nearest
+ * free floor tile with at least MinOpen floor tiles units can enter around it (eleven by eleven); FreeBoxedIn, tried
+ * again, then brings the others beside them. True if one moved.
+ */
+static function bool MoveOutOfPocket(optional int MinOpen = 40)
+{
+	local XComWorldData World;
+	local XComGameState_Unit UnitState, Mover;
+	local array<TTile> Taken;
+	local TTile From, T, U;
+	local XComGameState NewGameState;
+	local int r, dx, dy, dz, ox, oy, ax, ay, Open;
+
+	World = `XWORLD;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', UnitState)
+	{
+		if (UnitState.bRemovedFromPlay || !UnitState.IsAlive())
+			continue;
+		Taken.AddItem(UnitState.TileLocation);
+		if (Mover == none && UnitState.GetTeam() == eTeam_XCom && UnitState.IsSoldier())
+			Mover = UnitState;
+	}
+	if (Mover == none)
+		return false;
+	From = Mover.TileLocation;
+	for (r = 1; r <= 15; r++)
+		for (dx = -r; dx <= r; dx++)
+			for (dy = -r; dy <= r; dy++)
+			{
+				ax = dx < 0 ? -dx : dx;
+				ay = dy < 0 ? -dy : dy;
+				if (ax != r && ay != r)
+					continue;
+				for (dz = -1; dz <= 1; dz++)
+				{
+					T = From;
+					T.X += dx;
+					T.Y += dy;
+					T.Z += dz;
+					if (T.Z < 0 || TakenAt(Taken, T) || !World.IsFloorTileAndValidDestination(T, Mover))
+						continue;
+					Open = 0;
+					for (ox = -5; ox <= 5; ox++)
+						for (oy = -5; oy <= 5; oy++)
+						{
+							U = T;
+							U.X += ox;
+							U.Y += oy;
+							if (World.IsFloorTileAndValidDestination(U, Mover))
+								Open++;
+						}
+					if (Open < MinOpen)
+						continue;
+					NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a squad boxed in on the EW map, one soldier moved out");
+					XComGameStateContext_ChangeContainer(NewGameState.GetContext()).BuildVisualizationFn = class'LWMissionSquads'.static.BuildPodVisualization;
+					UnitState = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Mover.ObjectID));
+					UnitState.bRequiresVisibilityUpdate = true;
+					UnitState.SetVisibilityLocation(T);
+					`TACTICALRULES.SubmitGameState(NewGameState);
+					`log("LongWarX2: EW map: the whole squad boxed in at" @ From.X $ "," $ From.Y $ "," $ From.Z $ ";" @ UnitState.GetFullName() @ "moved out to" @ T.X $ "," $ T.Y $ "," $ T.Z @ "(" $ Open @ "floor tiles around)", , 'LongWarX2');
+					return true;
+				}
+			}
+	`log("LongWarX2: EW map: the whole squad boxed in at" @ From.X $ "," $ From.Y $ "," $ From.Z $ "; no open floor within 15 tiles", , 'LongWarX2');
+	return false;
+}
+
 static function bool TakenAt(array<TTile> Taken, TTile T)
 {
 	local TTile X;

@@ -28,6 +28,7 @@ static function array<X2DataTemplate> CreateTemplates()
 	Templates.AddItem(SeekerCloak());
 	Templates.AddItem(Intimidate('LW_Intimidate', default.IntimidateChance));
 	Templates.AddItem(Intimidate('LW_IntimidateBerserker', default.IntimidateChanceBerserker));
+	Templates.AddItem(Bloodlust());
 	return Templates;
 }
 
@@ -418,7 +419,7 @@ static function X2AbilityTemplate SeekerCloak()
  * The Muton's Intimidate (EW's eAbility_Intimidate; the Berserker's comes with its Bloodlust, at its own chance): hurt by a
  * soldier on that soldier's turn (not by overwatch), once a turn, with the soldier in sight, the Muton may intimidate them:
  * a panic test (X2AbilityToHitCalc_LWIntimidate) and XCOM 2's panic if failed. EW's Berserker also charges at whoever hurt
- * it (its Bloodlust); not here.
+ * it (its Bloodlust: LW_Bloodlust, brought by its Intimidate).
  */
 static function X2AbilityTemplate Intimidate(name AbilityName, int Chance)
 {
@@ -460,6 +461,9 @@ static function X2AbilityTemplate Intimidate(name AbilityName, int Chance)
 	Cooldown.iNumTurns = 1;
 	Template.AbilityCooldown = Cooldown;
 	Template.AddTargetEffect(class'X2StatusEffects'.static.CreatePanickedStatusEffect());
+	// The Berserker's Bloodlust brings its charge.
+	if (AbilityName == 'LW_IntimidateBerserker')
+		Template.AdditionalAbilities.AddItem('LW_Bloodlust');
 	Template.bSkipFireAction = true;
 	Template.FrameAbilityCameraType = eCameraFraming_Never;
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
@@ -484,4 +488,53 @@ static function EventListenerReturn IntimidateListener(Object EventData, Object 
 		return ELR_NoInterrupt;
 	Ability.AbilityTriggerAgainstSingleTarget(Attacker.GetReference(), false);
 	return ELR_NoInterrupt;
+}
+
+
+/**
+ * The Berserker's Bloodlust (EW's eAbility_Bloodlust; XGUnit.Intimidate's move): hurt by a soldier on that soldier's turn,
+ * with the soldier in sight, it charges at once, out of its turn: an action point and XCOM 2's AI run for one move
+ * (XComAI.ini, LWBloodlustRoot: into melee reach of a soldier, else toward the nearest). EW moves it half its path toward
+ * whoever hurt it; one action's move is XCOM 2's nearest measure, and its target is the AI's pick.
+ */
+static function X2AbilityTemplate Bloodlust()
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityTrigger_EventListener Trigger;
+	local X2Condition_UnitProperty Enemy;
+	local X2Effect_GrantActionPoints Point;
+	local X2Effect_RunBehaviorTree Charge;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'LW_Bloodlust');
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_beserk";
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_NeverShow;
+	Template.Hostility = eHostility_Neutral;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SimpleSingleTarget;
+	Trigger = new class'X2AbilityTrigger_EventListener';
+	Trigger.ListenerData.Deferral = ELD_OnStateSubmitted;
+	Trigger.ListenerData.EventID = 'UnitTakeEffectDamage';
+	Trigger.ListenerData.Filter = eFilter_Unit;
+	Trigger.ListenerData.EventFn = IntimidateListener;
+	Template.AbilityTriggers.AddItem(Trigger);
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Template.AddShooterEffectExclusions();
+	Enemy = new class'X2Condition_UnitProperty';
+	Enemy.ExcludeDead = true;
+	Enemy.ExcludeFriendlyToSource = true;
+	Template.AbilityTargetConditions.AddItem(Enemy);
+	Template.AbilityTargetConditions.AddItem(default.GameplayVisibilityCondition);
+	Point = new class'X2Effect_GrantActionPoints';
+	Point.NumActionPoints = 1;
+	Point.PointType = class'X2CharacterTemplateManager'.default.StandardActionPoint;
+	Template.AddShooterEffect(Point);
+	Charge = new class'X2Effect_RunBehaviorTree';
+	Charge.BehaviorTreeName = 'LWBloodlustRoot';
+	Template.AddShooterEffect(Charge);
+	Template.bSkipFireAction = true;
+	Template.FrameAbilityCameraType = eCameraFraming_Never;
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
+	return Template;
 }
