@@ -400,6 +400,24 @@ export function mirrorSequence(seq: Sequence, skeleton: Skeleton, trackBones: nu
   return { rotations, positions }
 }
 
+/**
+ * A sequence as it is, a key a frame per track (the tracks sampled, the reference pose where a track has nothing), for
+ * writing it again per track (encodePerTrack): the form the converter's mirrored copies take, which XCOM 2 plays in full.
+ */
+export function sampleSequence(seq: Sequence, skeleton: Skeleton, trackBones: number[]): { rotations: Quat[][]; positions: Vec3[][] } {
+  const frames = Math.max(1, seq.frames)
+  const rotations: Quat[][] = trackBones.map(() => [])
+  const positions: Vec3[][] = trackBones.map(() => [])
+  for (let f = 0; f < frames; f++)
+    trackBones.forEach((b, j) => {
+      const t = seq.tracks[j]
+      const bone = b >= 0 ? skeleton.bones[b] : undefined
+      rotations[j]!.push(t?.rotation ? sampleKeys(t.rotation, f, frames, nlerp) : bone?.rotation ?? [0, 0, 0, 1])
+      positions[j]!.push(t?.position ? sampleKeys(t.position, f, frames, lerp3) : bone?.position ?? [0, 0, 0])
+    })
+  return { rotations, positions }
+}
+
 /** Per-track compressed bytes for a key a frame (three floats each, w rebuilt) and the offsets: two per track. */
 export function encodePerTrack(rotations: Quat[][], positions: Vec3[][]): { stream: Uint8Array; offsets: number[] } {
   const parts: number[] = []

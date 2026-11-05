@@ -214,3 +214,17 @@ particle systems as they are; its materials it cannot draw).
   Checked: the Sectoid animated, an alien turn with Sectoids, a Floater and a Drone moving. The non-humanoid
   species' masks have only the root (the Drone, the Cyberdisc): their partial animations (upper body)
   do nothing.
+
+## Report (2026-11-05 night, the Cyberdisc's body)
+
+- **Seen:** the Cyberdisc stood as a disc with spikes all round, at rest and in action. Rendered offline (Blender, from
+  the converter's glTF export), that is EW's reference pose; EW's idle folds the blades into its body. In the game the
+  idle played (found, at full weight; the same with a tree of the idle alone), so the data reached the bones, but the
+  blades, which EW moves by translation, stayed: XCOM 2 played the rotations of EW's compressed keys and not their
+  translations (the converted data itself decodes right offline; the AnimSet's rotation-only flag is false as EW's).
+- **Fix:** the Cyberdisc's animations written again per track, a key a frame (`reencode` in `ew-units.ts`;
+  `sampleSequence`, the form the mirrored copies already take and XCOM 2 plays in full). Seen: the Cyberdisc in EW's
+  body, blades swept back (`logs/wingpu_cyberdisc_body.png`); it used Death Blossom, the mission went on. Also its
+  closed and open states (`MV_JetClosedState`, `MV_JetOpenState`), which the tree asks for by EW's names, now in its set.
+- **Not done:** the other species are not rewritten (their bodies move by rotation; rewriting all costs about a key
+  a frame per track in every copy). A species that looks as the Cyberdisc did would be one line in `ew-units.ts`.

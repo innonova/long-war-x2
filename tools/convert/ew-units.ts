@@ -16,7 +16,9 @@ import { X2_ANIM_NAMES } from './x2-anim-names.ts'
 /** EW's weapon for it: its package, mesh, textures by name. */
 export interface EWWeapon { pkg: string; mesh: string; diffuse: RegExp; normal: RegExp }
 /** species: Long War's species (EW's ECharacter) when it shares its template with another (its own body before the template's). */
-export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon }
+/** reencode: its animations written again per track (ew-unit-anims.ts: XCOM 2 plays those in full; the Cyberdisc's
+ *  blades move by translation, which it did not play from EW's compression). */
+export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean }
 const PLASMA_LIGHT: EWWeapon = { pkg: 'Weapon_PlasmaRifle_ThinMan_SF', mesh: 'SM_LightPlasmaRifle', diffuse: /^LightAssaultRiflePlasma_DIF$/, normal: /^LightAssaultRiflePlasma_NRM$/ }
 export const EW_UNITS: EWUnit[] = [
   { template: 'Sectoid', pkg: 'GameUnit_XComSectoid_SF', mesh: 'SM_SectoidSoldier', sets: ['AS_SectoidPistol'], diffuse: /^SectoidSoldier_DIF$/, normal: /^SectoidSoldier_NRM$/,
@@ -29,7 +31,7 @@ export const EW_UNITS: EWUnit[] = [
     weapon: { pkg: 'Weapon_HeavyPlasmaFloater_SF', mesh: 'SM_AssaultRiflePlasma', diffuse: /^AssaultRiflePlasma_DIF$/, normal: /^AssaultRiflePlasma_NRM$/ } },
   { template: 'Viper', pkg: 'GameUnit_XComThinMan_SF', mesh: 'SM_ThinMan', sets: ['AS_ThinManPistol'], diffuse: /^ThinMan_DIF/, normal: /^ThinMan_NRM/, weapon: PLASMA_LIGHT },
   { template: 'Faceless', pkg: 'GameUnit_Seeker_SF', mesh: 'SM_Seeker', sets: ['AS_SeekerDefault'], diffuse: /^Seeker_DIF/, normal: /^Seeker_NRM/ },
-  { template: 'Gatekeeper', pkg: 'GameUnit_XComCyberDisc_SF', mesh: 'SM_Cyberdisc', sets: ['AS_Cyberdisc'], diffuse: /^T_Cyberdisc_DIF$/, normal: /^T_Cyberdisc_NRM$/ },
+  { template: 'Gatekeeper', pkg: 'GameUnit_XComCyberDisc_SF', mesh: 'SM_Cyberdisc', sets: ['AS_Cyberdisc'], diffuse: /^T_Cyberdisc_DIF$/, normal: /^T_Cyberdisc_NRM$/, reencode: true },
   { template: 'Muton', pkg: 'GameUnit_XComMuton_SF', mesh: 'SM_MutonSoldier', sets: ['AS_MutonRifle'], diffuse: /^MutonSoldier_DIF/, normal: /^MutonSoldier_NRM/,
     weapon: { pkg: 'Weapon_PlasmaRifleMuton_SF', mesh: 'SM_AssaultRiflePlasmaMuton', diffuse: /^AssaultRiflePlasma_DIF$/, normal: /^AssaultRiflePlasma_NRM$/ } },
   { template: 'Chryssalid', pkg: 'GameUnit_XComChryssalid_SF', mesh: 'SM_Cryssalid', sets: ['AS_CryssalidDefault'], diffuse: /^CHA_Cryssalid_DIF$/, normal: /^CHA_Cryssalid_NRM$/ },
@@ -88,7 +90,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
     try {
       let found = find(decompressPackage(new Uint8Array(readFileSync(src))), u)
       if (!found.mesh || !found.sets.length) { say(`${u.pkg}: no ${u.mesh} or ${u.sets.join('/')}, XCOM 2's ${u.template} kept`); continue }
-      const report = convertPackage(src, join(content, `${u.pkg}.upk`), (bytes) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.template] ?? []), ...(ABILITY_ANIMS[u.template] ?? [])]))
+      const report = convertPackage(src, join(content, `${u.pkg}.upk`), (bytes) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.template] ?? []), ...(ABILITY_ANIMS[u.template] ?? [])], u.reencode))
       const leaf = (p: string, pkg = u.pkg) => (p ? `${pkg}.${p.split('.').pop()}` : '')
       // Its weapon: EW's, converted as it is (textures inlined), in place of the XCOM 2 weapon's mesh; a species with none in
       // its hands (the Drone, the Seeker, the Cyberdisc …) has the XCOM 2 weapon hidden (WeaponMesh="none").

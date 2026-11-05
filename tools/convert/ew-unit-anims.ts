@@ -12,18 +12,20 @@ import { Reader, Writer } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { writePackage } from '@innonova/upkit/writer'
 import { Package } from '@innonova/upkit/upk'
-import { decodeSequence, encodePerTrack, mirrorSequence, readBones, readSkeleton, type Skeleton } from './ew-anim-mirror.ts'
+import { decodeSequence, encodePerTrack, mirrorSequence, readBones, readSkeleton, sampleSequence, type Skeleton } from './ew-anim-mirror.ts'
 
 import { X2_ANIM_NAMES } from './x2-anim-names.ts'
 /** The names XCOM 2's Sectoid answers to (kept for ew-package.ts --anims). */
 export const X2_SECTOID = X2_ANIM_NAMES.Sectoid!
 
 /**
- * XCOM 2 names a template's own animation sets lack that the mod's abilities play on it (features/lw-aliens.md): the
- * Floater's Launch is played as XCOM 2's teleport (the Codex's), its start and stop; the Seeker's Strangle as XCOM 2's Bind
- * (the Viper's).
+ * Names a template's own animation sets lack that are asked for on it (features/lw-aliens.md): the Floater's Launch is
+ * played as XCOM 2's teleport (the Codex's), its start and stop; the Seeker's Strangle as XCOM 2's Bind (the Viper's); and
+ * the Cyberdisc's closed and open states, EW's own, which the tree it plays under asks for by EW's names (without the
+ * closed state its petals stood in their reference pose, spikes all round).
  */
 export const ABILITY_ANIMS: Record<string, string[]> = {
+  Gatekeeper: ['MV_JetClosedState', 'MV_JetOpenState'],
   Archon: ['HL_TeleportStartA', 'HL_TeleportStopA'],
   Faceless: ['NO_BindStartA', 'NO_BindLoopA', 'NO_BindStopA', 'NO_BindHurtA', 'HL_BindDeathA'],
 }
@@ -156,7 +158,7 @@ function hasAnimationData(d: Uint8Array, propsEnd: number): boolean {
 }
 
 /** The converted unit package with the AnimSet's sequences also under XCOM 2's names; returns its bytes and a report. */
-export function renameAnims(source: Uint8Array, animSetPaths: string | string[], x2Names: string[]): { bytes: Uint8Array; report: string } {
+export function renameAnims(source: Uint8Array, animSetPaths: string | string[], x2Names: string[], reencode = false): { bytes: Uint8Array; report: string } {
   // The copies go into the first set; the EW animations they copy may be in any of them.
   const paths = typeof animSetPaths === 'string' ? [animSetPaths] : animSetPaths
   const animSetPath = paths[0]!
@@ -237,6 +239,7 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
   // The mirroring (ew-anim-mirror.ts): the unit's skeleton and mirror table, its tracks' bones, read once when needed.
   const upk = new Package(source)
   let mirrorCount = 0
+  let rewriteCount = 0
   let skel: { skeleton: Skeleton; trackBones: number[] } | null | undefined
   const skeleton = () => {
     if (skel !== undefined) return skel
@@ -249,15 +252,17 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
       if (upk.exports[k]!.type !== 'SkeletalMesh') continue
       const sk = readSkeleton(upk, k, readBones)
       const trackBones = tracks.map((t) => sk.bones.findIndex((b) => b.name === t))
-      if (sk.mirror.length === sk.bones.length && trackBones.filter((b) => b >= 0).length >= tracks.length * 0.9) skel = { skeleton: sk, trackBones }
+      if (trackBones.filter((b) => b >= 0).length >= tracks.length * 0.9) skel = { skeleton: sk, trackBones }
     }
     return skel
   }
-  /** A copy's data with the sequence's animation mirrored: per-track keys, its offsets and compressed bytes replaced. */
-  const mirroredData = (d: Uint8Array, src: number): Uint8Array | undefined => {
+  const canMirror = () => !!skeleton() && skel!.skeleton.mirror.length === skel!.skeleton.bones.length
+  /** A copy's data with the sequence's animation written again per track (mirrored, or as it is): per-track keys, its
+   *  offsets and compressed bytes replaced. */
+  const mirroredData = (d: Uint8Array, src: number, mirror = true): Uint8Array | undefined => {
     const s = skel!
     const seq = decodeSequence(upk, src - 1, s.trackBones.length)
-    const { rotations, positions } = mirrorSequence(seq, s.skeleton, s.trackBones)
+    const { rotations, positions } = mirror ? mirrorSequence(seq, s.skeleton, s.trackBones) : sampleSequence(seq, s.skeleton, s.trackBones)
     const { stream, offsets } = encodePerTrack(rotations, positions)
     const r = new Reader(d.subarray(4))
     const tags: Tag[] = readTags(r, pkg)
@@ -322,11 +327,15 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
     }
     if (!patched) { unmatched.push(x2); continue }
     // XCOM 2's right side of cover, played by EW from its left side mirrored: the copy carries the mirrored animation.
-    const mirrored = /^(L|H)R_/.test(x2) && /^AC_(L|H)L_/.test(ew) && skeleton() ? mirroredData(d, src) : undefined
+    const mirrored = /^(L|H)R_/.test(x2) && /^AC_(L|H)L_/.test(ew) && canMirror() ? mirroredData(d, src) : undefined
     if (mirrored) mirrorCount++
+    // Written again per track where asked (the Cyberdisc: XCOM 2 played its EW-compressed keys' rotations but not their
+    // translations, its blades left in their reference pose).
+    const rewritten = !mirrored && reencode && skeleton() ? mirroredData(d, src, false) : undefined
+    if (rewritten) rewriteCount++
     const e = pkg.exports[src - 1]
     const r = nameIndex(`${nameOf(e.objectName)}_X2_${x2}`)
-    added.push({ entry: { ...e, objectName: { index: r, number: 0 }, serialSize: 0, serialOffset: 0, netObjects: [] }, data: mirrored ?? d })
+    added.push({ entry: { ...e, objectName: { index: r, number: 0 }, serialSize: 0, serialOffset: 0, netObjects: [] }, data: mirrored ?? rewritten ?? d })
     copies.push(pkg.exports.length + added.length)
   }
 
@@ -350,7 +359,7 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
   data.set(setRef, w.done())
 
   const bytes = writePackage(pkg, { data, names, imports: [], exports: added })
-  return { bytes, report: `${animSetPath}: ${seqs.length} sequences (${empty} without animation data, ${shared} sharing another's), ${copies.length} copies under XCOM 2's names (${mirrorCount} mirrored), ${unmatched.length} XCOM 2 names without an EW animation${unmatched.length ? ` (${unmatched.join(' ')})` : ''}` }
+  return { bytes, report: `${animSetPath}: ${seqs.length} sequences (${empty} without animation data, ${shared} sharing another's), ${copies.length} copies under XCOM 2's names (${mirrorCount} mirrored${rewriteCount ? `, ${rewriteCount} written again per track` : ""}), ${unmatched.length} XCOM 2 names without an EW animation${unmatched.length ? ` (${unmatched.join(' ')})` : ''}` }
 }
 
 if (/ew-unit-anims\.ts$/.test(process.argv[1] ?? '')) {
