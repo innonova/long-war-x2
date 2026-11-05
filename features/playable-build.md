@@ -228,3 +228,8 @@ Seeker's new animations come with that). Checked from the zip on the test machin
 Seeker and a Muton beside the squad for four turns: the Floaters shot and one launched every other turn,
 the Seeker cloaked, seized a soldier, held him two turns and cloaked again, the Muton called its allies
 and shot; no crash.
+
+Later that night: `LongWarX2-20261105-5c39af5.zip` (the Cyberdisc in EW's body, its animations written again per
+track; the aliens' abilities named as EW's perks, written by the setup from the player's install). Same converter (17).
+Checked from the zip: the setup wrote the abilities' names; a Cyberdisc and a Seeker beside the squad for two turns:
+Death Blossom, the cloak, a soldier seized; no crash.
