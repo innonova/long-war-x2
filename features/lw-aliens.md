@@ -200,3 +200,25 @@ document the encodings):
   walked and shot; it went up out of sight and landed upright. No crash. `logs/wingpu_floater_launch.png`.
 - **Not yet:** the ability has no name or text of its own (no flyover); EW's two-turn wait between
   one Floater's launches is not kept (a turn of each side in EW's count, so every alien turn).
+
+## Report (2026-11-05 night, the Seeker's Strangle)
+
+- **Built** (`LW_Strangle`, `LW_StrangleSustained`), EW's Strangle as read (`XGUnit.TakeStrangleDamage`, the Seeker's
+  weapon's ability): the Seeker seizes a soldier within reach; both are held, neither acts; on each of the Seeker's turns
+  the soldier takes 1 as it is seized, then 2, 4, 8, and 4 more each turn after (plus the aliens' damage bonus, as on all
+  their attacks); the hold ends when the soldier is down or the Seeker is hurt (EW's abort with a wound) or dies. Played as
+  XCOM 2's Bind (the Viper's: its hold, its per-turn ability, its visualisation), with EW's damage
+  (`X2Effect_LWStrangleDamage`, the squeezes counted on the held soldier) and the Seeker's own animations, EW's strangle
+  start, loop and stop converted under Bind's names (`ABILITY_ANIMS`). Unlike the Viper's, a soldier in high cover can be
+  seized (EW's Seeker strangles anyone it reaches).
+- AI: where the Faceless's tree tried its Scything Claws (the target chosen as the Viper's Bind's); the tree's move toward
+  a melee target stays, so the Seeker closes in and seizes.
+- **Two fixes on the way, for every alien:** the mod gave a species' ability without the abilities it brings
+  (`LWAlienStats.Give`, now with its `AdditionalAbilities`: the hold each turn); and the shift of an alien's damage to its
+  Long War weapon's applied to any attack carrying its weapon, so abilities with damage of their own (Strangle, Death
+  Blossom) were shifted too; now only attacks doing their weapon's damage (`X2Effect_LWAlienDamage.DoesWeaponDamage`).
+- **Seen** (a Seeker beside the squad; `history`, `effects`): seized Killian Murphy (8 HP): 7, 5, 1, then bleeding out
+  at the fourth squeeze; the Seeker moved on and seized Paolo Moletta; one hit on the Seeker (4 to 1 HP) freed him. The
+  Seeker coiled around the soldier: `logs/wingpu_seeker_strangle.png`. No crash.
+- **Not yet:** the Seeker's stealth (EW's cloak with charges, lost when wounded); EW's lessening for the units it calls
+  immune; the Seeker keeps XCOM 2's Faceless's claws ability (unused by its AI; a mind-controlled Seeker would show it).

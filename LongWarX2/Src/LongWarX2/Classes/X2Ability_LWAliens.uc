@@ -21,6 +21,8 @@ static function array<X2DataTemplate> CreateTemplates()
 	Templates.AddItem(Repair());
 	Templates.AddItem(DeathBlossom());
 	Templates.AddItem(Launch());
+	Templates.AddItem(Strangle('LW_Strangle'));
+	Templates.AddItem(Strangle('LW_StrangleSustained'));
 	return Templates;
 }
 
@@ -314,4 +316,40 @@ simulated function Launch_BuildVisualization(XComGameState VisualizeGameState)
 	Turn = X2Action_MoveTurn(class'X2Action_MoveTurn'.static.AddToVisualizationTree(Track, AbilityContext));
 	Turn.m_vFacePoint = AbilityContext.InputContext.TargetLocations[0];
 	class'X2VisualizerHelpers'.static.ParsePath(AbilityContext, Track);
+}
+
+/**
+ * The Seeker's Strangle (EW's eAbility_Strangle) and its hold each turn after: played as XCOM 2's Bind (the Viper's): the
+ * Seeker and the soldier held where they meet, neither acting, until the soldier dies or the Seeker is hurt (EW's abort with
+ * a wound: XCOM 2's bind broken by any damage to its source) or dies. EW's damage (X2Effect_LWStrangleDamage) in place of
+ * the Viper's; the Seeker's animations are EW's strangle under Bind's names (tools/convert/ew-unit-anims.ts).
+ */
+static function X2AbilityTemplate Strangle(name AbilityName)
+{
+	local X2AbilityTemplate Template;
+	local X2Effect Effect;
+	local X2Condition Condition;
+
+	if (AbilityName == 'LW_Strangle')
+	{
+		Template = class'X2Ability_Viper'.static.CreateBindAbility(true, AbilityName, 'LW_StrangleSustained');
+		Template.AdditionalAbilities.RemoveItem('BindSustained');
+		Template.AdditionalAbilities.AddItem('LW_StrangleSustained');
+	}
+	else
+		Template = class'X2Ability_Viper'.static.CreateBindSustainedAbility(AbilityName);
+	// The Viper's damage switched off (the template's effects are its own to write), EW's added.
+	foreach Template.AbilityTargetEffects(Effect)
+	{
+		if (X2Effect_ViperBindSustained(Effect) != none)
+			X2Effect_ViperBindSustained(Effect).FragileAmount = 1;
+		if (Effect.Class == class'X2Effect_ApplyWeaponDamage')
+			Effect.bApplyOnHit = false;
+	}
+	Template.AddTargetEffect(new class'X2Effect_LWStrangleDamage');
+	// A soldier in high cover can be seized too (XCOM 2's Viper cannot bind one; EW's Seeker strangles anyone it reaches).
+	foreach Template.AbilityTargetConditions(Condition)
+		if (X2Condition_Visibility(Condition) != none)
+			X2Condition_Visibility(Condition).bRequireNotMatchCoverType = false;
+	return Template;
 }

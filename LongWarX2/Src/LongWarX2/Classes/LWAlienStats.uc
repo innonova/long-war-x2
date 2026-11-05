@@ -165,16 +165,20 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int 
 	return true;
 }
 
-/** An ability given to the unit in the game state that spawns it (InitAbilityForUnit activates a passive's effects then);
- *  false where there is no such ability, no game state, or the unit has it. */
+/** An ability given to the unit in the game state that spawns it (InitAbilityForUnit activates a passive's effects then),
+ *  with the abilities it brings (its AdditionalAbilities: the Seeker's Strangle's hold each turn, as XCOM 2 gives a
+ *  character's); false where there is no such ability, no game state, or the unit has it. */
 static function bool Give(XComGameState_Unit Unit, name Ability, XComGameState NewGameState)
 {
 	local X2AbilityTemplate Template;
+	local name Other;
 
 	Template = Ability != '' ? class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate(Ability) : none;
 	if (Template == none || NewGameState == none || Unit.FindAbility(Ability).ObjectID != 0)
 		return false;
 	class'X2TacticalGameRuleset'.static.InitAbilityForUnit(Template, Unit, NewGameState, Unit.GetPrimaryWeapon().GetReference());
+	foreach Template.AdditionalAbilities(Other)
+		Give(Unit, Other, NewGameState);
 	return true;
 }
 

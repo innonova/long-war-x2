@@ -19,14 +19,19 @@ import { X2_ANIM_NAMES } from './x2-anim-names.ts'
 export const X2_SECTOID = X2_ANIM_NAMES.Sectoid!
 
 /**
- * XCOM 2 names a template's own animation sets lack that the mod's abilities play on it: the Floater's Launch is played as
- * XCOM 2's teleport (the Codex's), its start and stop (features/lw-aliens.md).
+ * XCOM 2 names a template's own animation sets lack that the mod's abilities play on it (features/lw-aliens.md): the
+ * Floater's Launch is played as XCOM 2's teleport (the Codex's), its start and stop; the Seeker's Strangle as XCOM 2's Bind
+ * (the Viper's).
  */
-export const ABILITY_ANIMS: Record<string, string[]> = { Archon: ['HL_TeleportStartA', 'HL_TeleportStopA'] }
+export const ABILITY_ANIMS: Record<string, string[]> = {
+  Archon: ['HL_TeleportStartA', 'HL_TeleportStopA'],
+  Faceless: ['NO_BindStartA', 'NO_BindLoopA', 'NO_BindStopA', 'NO_BindHurtA', 'HL_BindDeathA'],
+}
 
 /** Where the rules below do not reach: the EW animation for an XCOM 2 name (first that the unit has). */
 const TABLE: Record<string, string[]> = {
   HL_TeleportStartA: ['AC_NO_JetUpGround_StartA'], HL_TeleportStopA: ['AC_NO_JetDownGround_StopA'],
+  NO_BindStartA: ['AC_NO_Strangle_StartA'], NO_BindLoopA: ['AC_NO_Strangle_LoopA'], NO_BindStopA: ['AC_NO_Strangle_StopA'],
   NO_IdleGunUpA: ['AC_NO_IdleA'], NO_IdleGunDwnA: ['AC_NO_IdleA'],
   NO_IdleAlertGunUpA: ['AC_NO_IdleOnAlertA', 'AC_NO_IdleA'], NO_IdleAlertGunDwnA: ['AC_NO_IdleOnAlertA', 'AC_NO_IdleA'],
   HL_IdleAlertA: ['AC_HL_IdleB', 'AC_HL_IdleA'], LL_IdleAlertA: ['AC_LL_IdleA'],
