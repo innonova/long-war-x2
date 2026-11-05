@@ -201,8 +201,9 @@ static function X2AbilityTemplate DeathBlossom()
 /**
  * The Floater's Launch (EW's eAbility_Launch): it jets up and comes down anywhere in sight of its side with open sky above,
  * and its turn is over (a fire action in EW). As EW's AI has it: only with another Floater on the field, one Floater a turn
- * (XGAIPlayer.UpdateLaunchCandidate), from under open sky. Played as XCOM 2's teleport (the Codex's): its game state and
- * path, its start and stop animations (EW's jet up and jet down, converted under those names, tools/convert/ew-unit-anims.ts).
+ * (XGAIPlayer.UpdateLaunchCandidate), each every other turn at most, from under open sky. Played as XCOM 2's teleport (the
+ * Codex's): its game state and path, its start and stop animations (EW's jet up and jet down, converted under those names,
+ * tools/convert/ew-unit-anims.ts).
  */
 static function X2AbilityTemplate Launch()
 {
@@ -235,7 +236,9 @@ static function X2AbilityTemplate Launch()
 	Cost.iNumPoints = 1;
 	Cost.bConsumeAllPoints = true;
 	Template.AbilityCosts.AddItem(Cost);
+	// One Floater a turn; each again two of its turns later (EW's MIN_TURNS_TO_LAUNCH, its battle's turns being rounds).
 	Cooldown = new class'X2AbilityCooldown_LocalAndGlobal';
+	Cooldown.iNumTurns = 2;
 	Cooldown.NumGlobalTurns = 1;
 	Template.AbilityCooldown = Cooldown;
 	Template.ModifyNewContextFn = Launch_ModifyContext;

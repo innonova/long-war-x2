@@ -198,8 +198,11 @@ document the encodings):
 - **Seen** (two Floaters beside the squad, on two maps): one launched each time ("Launch: unit …
   to 40,10,0", 13 tiles in one move; on the other map behind the squad, flanking it), the other
   walked and shot; it went up out of sight and landed upright. No crash. `logs/wingpu_floater_launch.png`.
-- **Not yet:** the ability has no name or text of its own (no flyover); EW's two-turn wait between
-  one Floater's launches is not kept (a turn of each side in EW's count, so every alien turn).
+- **Not yet:** the ability has no name or text of its own (no flyover).
+- **Corrected the same night:** EW's wait between one Floater's launches (`MIN_TURNS_TO_LAUNCH`, 2) is
+  in its battle's turns, which are rounds (`XGBattle_SP` counts one as XCOM's turn comes round), not
+  each side's turns as first written; a Floater now launches every other turn at most (a cooldown of
+  2 of its turns). Before that fix, the release check saw one Floater launch on three turns running.
 
 ## Report (2026-11-05 night, the Seeker's Strangle)
 
