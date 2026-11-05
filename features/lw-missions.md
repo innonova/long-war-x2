@@ -1494,3 +1494,14 @@ from the evening, one from the morning) give two exception addresses:
   same map: "the whole squad boxed in at 38,14,0; Moon Song moved out to 37,13,0", then the five others beside her, who
   reaches 363 tiles. Why the group spawn found one tile there (the spawn point's floor in the converted map) is not looked
   into; other maps with a spawn like it are now freed the same way.
+
+## Report (2026-11-05 night, 66 of the 83 maps swept)
+
+- Each map forced in turn on the test machine (release 43256f6's build), a Geoscape mission flown to it, and 25 s after
+  the battle's start: crashed or not, the squad's reach (the boxed-in check), the doors registered. **66 maps, no crash,
+  no squad left stuck.** Squads boxed in at the start and freed by the mod: URB_StreetHurricane_Terror URB_CemeteryGrand (URB_StreetHurricane_Terror the same
+  pocket as its plain version, all on one tile, freed by the new step). Not reached in the time (two hours): URB_Demolition_EWI,
+  URB_PierA_Asian, LLrgScout_Hillside, URB_StreetOverpass, URB_Trainyard, URB_HighwayBridge, URB_MilitaryAmmo,
+  URB_SmallCemetery, CAbductor_Cliffside, URB_CommercialAlley_Terror, DLC1_2_CnfndLight, COverseer_StoneWall,
+  URB_Truckstop, URB_CommercialAlley_EWI (and URB_SlaughterhouseA, URB_Boulevard, URB_StreetHurricane, played earlier the
+  same night).
