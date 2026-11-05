@@ -18,8 +18,15 @@ import { X2_ANIM_NAMES } from './x2-anim-names.ts'
 /** The names XCOM 2's Sectoid answers to (kept for ew-package.ts --anims). */
 export const X2_SECTOID = X2_ANIM_NAMES.Sectoid!
 
+/**
+ * XCOM 2 names a template's own animation sets lack that the mod's abilities play on it: the Floater's Launch is played as
+ * XCOM 2's teleport (the Codex's), its start and stop (features/lw-aliens.md).
+ */
+export const ABILITY_ANIMS: Record<string, string[]> = { Archon: ['HL_TeleportStartA', 'HL_TeleportStopA'] }
+
 /** Where the rules below do not reach: the EW animation for an XCOM 2 name (first that the unit has). */
 const TABLE: Record<string, string[]> = {
+  HL_TeleportStartA: ['AC_NO_JetUpGround_StartA'], HL_TeleportStopA: ['AC_NO_JetDownGround_StopA'],
   NO_IdleGunUpA: ['AC_NO_IdleA'], NO_IdleGunDwnA: ['AC_NO_IdleA'],
   NO_IdleAlertGunUpA: ['AC_NO_IdleOnAlertA', 'AC_NO_IdleA'], NO_IdleAlertGunDwnA: ['AC_NO_IdleOnAlertA', 'AC_NO_IdleA'],
   HL_IdleAlertA: ['AC_HL_IdleB', 'AC_HL_IdleA'], LL_IdleAlertA: ['AC_LL_IdleA'],

@@ -176,3 +176,27 @@ document the encodings):
 - **Ten species together, six turns** (a Sectoid, a Muton, a Thin Man, a Floater, a Drone, a
   Cyberdisc, a Chryssalid, a Seeker, a Berserker, a Muton Elite beside the squad): shots, a grenade,
   poison spit, claws, Mind Merge, Blood Call, Death Blossom; no crash.
+
+## Report (2026-11-05 night, the Floater's Launch)
+
+- **Built** (`LW_Launch`, X2Ability_LWAliens), EW's Launch as read (`XGAbility_Launch`,
+  `XGAIBehavior_Floater`, `XGAIPlayer.UpdateLaunchCandidate`): the Floater (light and heavy, from
+  Long War's `ABILITIES[]`) jets up and comes down anywhere in its side's sight with open sky
+  above, and its turn is over (a fire action in EW). As EW's AI has it: only from under open sky,
+  only with another Floater on the field, one Floater a turn (XCOM 2's global cooldown).
+- Played as XCOM 2's teleport (the Codex's game state and path): its start and stop animations are
+  EW's jet up from the ground and jet down to the ground, converted under the teleport's names
+  for the Archon's body (`ABILITY_ANIMS`, `tools/convert/ew-unit-anims.ts`; the units are
+  reconverted at the next setup).
+- AI: where the Archon's tree tried Blazing Pinions (taken off Long War's Floaters), as its first
+  action, to a spot flanking a soldier (the search is the Codex's offensive teleport's, within dash
+  range; EW's flew to an isolated soldier from anywhere). XCOM 2's search knows nothing of the sky,
+  so a spot under a roof is moved to the nearest floor within three tiles that has it.
+- The player's aim (for a mind-controlled Floater): XCOM 2's teleport cursor, refused where there
+  is a roof (`X2TargetingMethod_LWLaunch`; the Archon King's Icarus Jump does the same, in a DLC's
+  package the mod does not count on).
+- **Seen** (two Floaters beside the squad, on two maps): one launched each time ("Launch: unit …
+  to 40,10,0", 13 tiles in one move; on the other map behind the squad, flanking it), the other
+  walked and shot; it went up out of sight and landed upright. No crash. `logs/wingpu_floater_launch.png`.
+- **Not yet:** the ability has no name or text of its own (no flyover); EW's two-turn wait between
+  one Floater's launches is not kept (a turn of each side in EW's count, so every alien turn).

@@ -20,6 +20,7 @@ static function array<X2DataTemplate> CreateTemplates()
 	Templates.AddItem(BloodCall());
 	Templates.AddItem(Repair());
 	Templates.AddItem(DeathBlossom());
+	Templates.AddItem(Launch());
 	return Templates;
 }
 
@@ -194,3 +195,123 @@ static function X2AbilityTemplate DeathBlossom()
 	return Template;
 }
 
+/**
+ * The Floater's Launch (EW's eAbility_Launch): it jets up and comes down anywhere in sight of its side with open sky above,
+ * and its turn is over (a fire action in EW). As EW's AI has it: only with another Floater on the field, one Floater a turn
+ * (XGAIPlayer.UpdateLaunchCandidate), from under open sky. Played as XCOM 2's teleport (the Codex's): its game state and
+ * path, its start and stop animations (EW's jet up and jet down, converted under those names, tools/convert/ew-unit-anims.ts).
+ */
+static function X2AbilityTemplate Launch()
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityCost_ActionPoints Cost;
+	local X2AbilityCooldown_LocalAndGlobal Cooldown;
+	local X2AbilityTarget_Cursor Cursor;
+	local X2Condition_UnitProperty Outdoors;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'LW_Launch');
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_codex_teleport";
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
+	Template.Hostility = eHostility_Movement;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Cursor = new class'X2AbilityTarget_Cursor';
+	Cursor.bRestrictToSquadsightRange = true;
+	Template.AbilityTargetStyle = Cursor;
+	Template.TargetingMethod = class'X2TargetingMethod_LWLaunch';
+	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Outdoors = new class'X2Condition_UnitProperty';
+	Outdoors.ExcludeFriendlyToSource = false;
+	Outdoors.IsOutdoors = true;
+	Outdoors.HasClearanceToMaxZ = true;
+	Template.AbilityShooterConditions.AddItem(Outdoors);
+	Template.AbilityShooterConditions.AddItem(new class'X2Condition_LWLaunchMate');
+	Template.AddShooterEffectExclusions();
+	Cost = new class'X2AbilityCost_ActionPoints';
+	Cost.iNumPoints = 1;
+	Cost.bConsumeAllPoints = true;
+	Template.AbilityCosts.AddItem(Cost);
+	Cooldown = new class'X2AbilityCooldown_LocalAndGlobal';
+	Cooldown.NumGlobalTurns = 1;
+	Template.AbilityCooldown = Cooldown;
+	Template.ModifyNewContextFn = Launch_ModifyContext;
+	Template.BuildNewGameStateFn = class'X2Ability_Cyberus'.static.Teleport_BuildGameState;
+	Template.BuildVisualizationFn = Launch_BuildVisualization;
+	Template.bFrameEvenWhenUnitIsHidden = true;
+	return Template;
+}
+
+/** A spot with open sky above it (EW's HasOverheadClearance for a Launch, to the top of the level). */
+static function bool OpenSky(vector Loc)
+{
+	return `XWORLD.HasOverheadClearance(Loc, class'XComWorldData'.const.WORLD_FloorHeightsPerLevel * class'XComWorldData'.const.WORLD_TotalLevels * class'XComWorldData'.const.WORLD_FloorHeight);
+}
+
+/**
+ * The path: XCOM 2's teleport's. The AI's destination search knows nothing of the sky, so a spot under a roof is moved to
+ * the nearest floor within three tiles that has open sky (the player's cursor allows only those).
+ */
+static simulated function Launch_ModifyContext(XComGameStateContext Context)
+{
+	local XComGameStateContext_Ability AbilityContext;
+	local XComWorldData World;
+	local TTile Tile, Try, Best;
+	local vector Loc;
+	local int X, Y, Z, D, BestD;
+
+	AbilityContext = XComGameStateContext_Ability(Context);
+	World = `XWORLD;
+	if (AbilityContext.InputContext.TargetLocations.Length > 0)
+		Loc = AbilityContext.InputContext.TargetLocations[0];
+	if (AbilityContext.InputContext.TargetLocations.Length > 0 && !OpenSky(Loc))
+	{
+		Tile = World.GetTileCoordinatesFromPosition(Loc);
+		BestD = 1000;
+		for (X = -3; X <= 3; X++)
+			for (Y = -3; Y <= 3; Y++)
+				for (Z = -2; Z <= 2; Z++)
+				{
+					Try = Tile;
+					Try.X += X;
+					Try.Y += Y;
+					Try.Z += Z;
+					D = X * X + Y * Y + Z * Z;
+					if (D >= BestD || !World.IsFloorTileAndValidDestination(Try) || World.IsTileOccupied(Try))
+						continue;
+					Loc = World.GetPositionFromTileCoordinates(Try);
+					if (!OpenSky(Loc))
+						continue;
+					Best = Try;
+					BestD = D;
+				}
+		if (BestD < 1000)
+			AbilityContext.InputContext.TargetLocations[0] = World.GetPositionFromTileCoordinates(Best);
+		`log("LongWarX2: Launch: no open sky at" @ Tile.X $ "," $ Tile.Y $ "," $ Tile.Z $ (BestD < 1000 ? ", lands at" @ Best.X $ "," $ Best.Y $ "," $ Best.Z : ", none near"), , 'LongWarX2');
+	}
+	if (AbilityContext.InputContext.TargetLocations.Length > 0)
+	{
+		Loc = AbilityContext.InputContext.TargetLocations[0];
+		Tile = World.GetTileCoordinatesFromPosition(Loc);
+		`log("LongWarX2: Launch: unit" @ AbilityContext.InputContext.SourceObject.ObjectID @ "to" @ Tile.X $ "," $ Tile.Y $ "," $ Tile.Z, , 'LongWarX2');
+	}
+	class'X2Ability_Cyberus'.static.Teleport_ModifyActivatedAbilityContext(Context);
+}
+
+/** XCOM 2's teleport's visualization (X2Ability_Cyberus.Teleport_BuildVisualization), for a unit alone: turn, then the path. */
+simulated function Launch_BuildVisualization(XComGameState VisualizeGameState)
+{
+	local XComGameStateHistory History;
+	local XComGameStateContext_Ability AbilityContext;
+	local VisualizationActionMetadata Track;
+	local X2Action_MoveTurn Turn;
+
+	History = `XCOMHISTORY;
+	AbilityContext = XComGameStateContext_Ability(VisualizeGameState.GetContext());
+	Track.StateObject_OldState = History.GetGameStateForObjectID(AbilityContext.InputContext.SourceObject.ObjectID, eReturnType_Reference, VisualizeGameState.HistoryIndex - 1);
+	Track.StateObject_NewState = VisualizeGameState.GetGameStateForObjectID(AbilityContext.InputContext.SourceObject.ObjectID);
+	Track.VisualizeActor = History.GetVisualizer(AbilityContext.InputContext.SourceObject.ObjectID);
+	Turn = X2Action_MoveTurn(class'X2Action_MoveTurn'.static.AddToVisualizationTree(Track, AbilityContext));
+	Turn.m_vFacePoint = AbilityContext.InputContext.TargetLocations[0];
+	class'X2VisualizerHelpers'.static.ParsePath(AbilityContext, Track);
+}

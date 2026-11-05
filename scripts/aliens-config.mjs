@@ -70,10 +70,10 @@ for (const [name, item] of Object.entries(WEAPONS)) {
   if (!line) throw new Error(`no Weapons= line for eItem_${item}`)
   out.push(`+Weapon=(Species=${species(name)}, Damage=${field(line, 'iDamage')})`)
 }
-// Each species' own abilities (Characters= ABILITIES[]), where the mod has the power: Long War's psi powers, which its psi
-// soldiers use (X2Ability_LWStandins). The others (the Floater's Launch, the Muton's Blood Call …) are to come.
+// Each species' own abilities (Characters= ABILITIES[]), where the mod has them: Long War's psi powers, which its psi
+// soldiers use too (X2Ability_LWStandins), and the aliens' own (the Muton's Blood Call, the Floater's Launch: X2Ability_LWAliens).
 const ABILITIES = {
-  eAbility_BloodCall: 'LW_BloodCall',
+  eAbility_BloodCall: 'LW_BloodCall', eAbility_Launch: 'LW_Launch',
   eAbility_MindMerge: 'LW_MindMerge', eAbility_GreaterMindMerge: 'LW_MindMerge', eAbility_PsiPanic: 'LW_PsiPanic',
   eAbility_MindFray: 'LW_Mindfray', eAbility_Mindfray: 'LW_Mindfray', eAbility_PsiControl: 'LW_MindControl', eAbility_Rift: 'LW_Rift',
 }

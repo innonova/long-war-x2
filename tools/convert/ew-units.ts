@@ -9,7 +9,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
 import { convertPackage } from './ew-package.ts'
-import { renameAnims } from './ew-unit-anims.ts'
+import { ABILITY_ANIMS, renameAnims } from './ew-unit-anims.ts'
 import { X2_ANIM_NAMES } from './x2-anim-names.ts'
 
 /** XCOM 2's template, EW's package, its mesh and AnimSets (the first takes the renamed copies), its textures by name. */
@@ -88,7 +88,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
     try {
       let found = find(decompressPackage(new Uint8Array(readFileSync(src))), u)
       if (!found.mesh || !found.sets.length) { say(`${u.pkg}: no ${u.mesh} or ${u.sets.join('/')}, XCOM 2's ${u.template} kept`); continue }
-      const report = convertPackage(src, join(content, `${u.pkg}.upk`), (bytes) => renameAnims(bytes, found.sets, X2_ANIM_NAMES[u.template] ?? []))
+      const report = convertPackage(src, join(content, `${u.pkg}.upk`), (bytes) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.template] ?? []), ...(ABILITY_ANIMS[u.template] ?? [])]))
       const leaf = (p: string, pkg = u.pkg) => (p ? `${pkg}.${p.split('.').pop()}` : '')
       // Its weapon: EW's, converted as it is (textures inlined), in place of the XCOM 2 weapon's mesh; a species with none in
       // its hands (the Drone, the Seeker, the Cyberdisc …) has the XCOM 2 weapon hidden (WeaponMesh="none").
