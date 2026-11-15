@@ -154,7 +154,6 @@ Seen:
 
 ### Left open
 
-- **The bonuses that make soldiers:** Foreign Legion, Cadre, Kiryu-Kai Commander.
 - **The bonuses that wait on their system:**
   - SHIVs and MECs: Ghost in the Machine, Robotics, NeoPanzers, Cyberware (NeoPanzers and
     Cyberware are wired into item costs already and act once those items exist);
@@ -201,3 +200,22 @@ points go into the pool. Seen: Australian recruits spending 42 points, Long War'
 
 Seen in the game: Cheyenne Mountain's three lifts down the shaft, and a dig in row 2 for §5
 instead of §10. The rest is built and compiles, but hasn't been seen in the game yet.
+
+## Report (2026-11-15, the bonuses that make soldiers)
+
+Long War's `XGFacility_Barracks.InitNewGame`: Foreign Legion adds its number of recruits,
+Kiryu-Kai Commander a Japanese soldier of its rank in a random base class, Cadre four of its
+rank, one of each base class. They are made the way XCOM 2 makes its starting soldiers (the
+character pool, kit, barracks: `LWBonusEffects.NewSoldier`). A ranked one gets one of its
+base class's two Long War classes at random, ranks up to the bonus's rank, and gets the
+experience that rank needs, so no promotion waits. Like every recruit, they then get the
+rookie stat roll and the soldier bonuses.
+
+Seen (Canada, Cadre): Édith Girard as a sniper, François Thomas as a rocketeer, Thor Jensen
+as a medic, Kate Hill as infantry, all at rank 3, with rolled stats.
+
+### Decisions
+
+- Which of a base class's two Long War classes a made soldier gets is random. Long War
+  creates them in the base class, and its subclass follows from the perk taken later. The
+  port has no base-class stage.

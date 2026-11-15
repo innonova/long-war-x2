@@ -40,6 +40,18 @@ static function AtStart(XComGameState NewGameState, XComGameState_LWStrategy S)
 		class'LWHangar'.static.NewJet(AirWar, 1, Home);
 		class'LWHangar'.static.NewJet(AirWar, 1, Home);
 	}
+	// The soldiers the bonuses bring (XGFacility_Barracks.InitNewGame): Foreign Legion recruits, a Kiryu-Kai Commander
+	// (a Japanese soldier of its rank, of a random base class), Cadre's four of its rank, one of each base class.
+	v = class'LWBonuses'.static.Has(class'LWBonuses'.const.FOREIGN_LEGION, S);
+	for (i = 0; i < v; i++)
+		NewSoldier(NewGameState, XComHQ, 0, 0);
+	v = class'LWBonuses'.static.Has(class'LWBonuses'.const.KIRYU_KAI, S);
+	if (v > 0)
+		NewSoldier(NewGameState, XComHQ, 1 + Rand(4), v, 'Country_Japan');
+	v = class'LWBonuses'.static.Has(class'LWBonuses'.const.CADRE, S);
+	if (v > 0)
+		for (i = 1; i <= 4; i++)
+			NewSoldier(NewGameState, XComHQ, i, v);
 	for (i = 0; i < class'LWBonuses'.default.Bonuses.Length; i++)
 		if (class'LWBonuses'.default.Bonuses[i].Kind == 0 && class'LWBonuses'.default.Bonuses[i].Choice == S.StartChoice
 			&& class'LWBonuses'.default.Bonuses[i].Country == S.Countries[S.HomeCountry()].Id)
@@ -131,6 +143,53 @@ static function AdjustFoundry(out LWGearRules.LWFoundryDef F)
 	F.Cash = Off(F.Cash, v);
 	F.Alloys = Off(F.Alloys, v);
 	F.Elerium = Off(F.Elerium, v);
+}
+
+/**
+ * A soldier added to the barracks, as XCOM 2 makes its starting soldiers (from the character pool, kit, barracks). With a
+ * base class (EW's ESoldierClass: 1 sniper, 2 heavy weapons, 3 support, 4 assault) and rank: one of its two Long War
+ * classes, at that rank, with the experience it needs (so no promotion waits); with a country, a name of that country.
+ */
+static function XComGameState_Unit NewSoldier(XComGameState NewGameState, XComGameState_HeadquartersXCom XComHQ, int BaseClass, int Rank, optional name Country)
+{
+	local XComGameState_Unit Unit;
+	local XGCharacterGenerator Generator;
+	local TSoldier Made;
+	local array<name> Classes;
+	local int i;
+
+	Unit = `CHARACTERPOOLMGR.CreateCharacter(NewGameState, `XPROFILESETTINGS.Data.m_eCharPoolUsage);
+	if (Country != '')
+	{
+		Generator = `XCOMGRI.Spawn(Unit.GetMyTemplate().CharacterGeneratorClass);
+		Made = Generator.CreateTSoldier('Soldier', EGender(Unit.kAppearance.iGender), Country);
+		Unit.SetTAppearance(Made.kAppearance);
+		Unit.SetCharacterName(Made.strFirstName, Made.strLastName, Made.strNickName);
+		Unit.SetCountry(Made.nmCountry);
+		Generator.Destroy();
+	}
+	Unit.RandomizeStats();
+	Unit.ApplyInventoryLoadout(NewGameState);
+	Unit.SetHQLocation(eSoldierLoc_Barracks);
+	XComHQ.AddToCrew(NewGameState, Unit);
+	if (BaseClass > 0 && Rank > 0)
+	{
+		switch (BaseClass)
+		{
+		case 1: Classes.AddItem('LWS_Sniper'); Classes.AddItem('LWS_Scout'); break;
+		case 2: Classes.AddItem('LWS_Rocketeer'); Classes.AddItem('LWS_Gunner'); break;
+		case 3: Classes.AddItem('LWS_Medic'); Classes.AddItem('LWS_Engineer'); break;
+		default: Classes.AddItem('LWS_Assault'); Classes.AddItem('LWS_Infantry'); break;
+		}
+		Unit.RankUpSoldier(NewGameState, Classes[Rand(Classes.Length)]);
+		Unit.ApplySquaddieLoadout(NewGameState, XComHQ);
+		for (i = 1; i < Rank; i++)
+			Unit.RankUpSoldier(NewGameState);
+		Unit.SetUnitFloatValue('LWX2XP', class'X2ExperienceConfig'.static.GetRequiredKills(Rank), eCleanup_Never);
+		Unit.NonTacticalKills = class'X2ExperienceConfig'.static.GetRequiredKills(Rank);
+	}
+	`log("LongWarX2: bonuses: a soldier for the barracks:" @ Unit.GetFullName() $ (Rank > 0 ? "," @ Unit.GetSoldierClassTemplateName() @ "rank" @ Unit.GetRank() : ""), , 'LongWarX2');
+	return Unit;
 }
 
 static function GrantFoundry(XComGameState_LWStrategy S, int Id)

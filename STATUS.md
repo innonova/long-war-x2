@@ -30,7 +30,7 @@ buttons and text, no art).
 | Psi Labs | most | plain | training at Long War's hours and chance (0.45) | psi ranks and XP; fatigue | `lw-psi` |
 | Genetics Lab | most | plain | the ten mods, slots, cost and time | the mods' fatigue | `lw-genemods` |
 | Officer Training School | part | plain | squad size I and II (7, 8) | the officers and their abilities | `lw-officers` (planned) |
-| Start and country bonuses | most | LW | the start screen (EW's own ContinentSelect: home country and starting bonus together), all 62 bonuses as config with Long War's `HasBonus`; what acts at the start (money, Foundry projects, jets, steam vents, starting facilities) and on soldiers (stats at creation, by base class); the bonuses on costs, funding, abductions, research, labs, psi, gene mods, fatigue and the Officer Training School; words from the player's Long War | those that make soldiers; those waiting on SHIVs, MECs, the grey market, officers, council requests | `lw-startbonus` |
+| Start and country bonuses | most | LW | the start screen (EW's own ContinentSelect: home country and starting bonus together), all 62 bonuses as config with Long War's `HasBonus`; what acts at the start (money, Foundry projects, jets, steam vents, starting facilities, soldiers) and on soldiers (stats at creation, by base class); the bonuses on costs, funding, abductions, research, labs, psi, gene mods, fatigue and the Officer Training School; words from the player's Long War | those waiting on SHIVs, MECs, the grey market, officers, council requests | `lw-startbonus` |
 | The story | most | plain | alien bases, Overseers, the Temple Ship | the HQ assault from month 4; Act 3; EXALT | `lw-story` |
 | EXALT | none | | | all of it | |
 | MECs, SHIVs, cybernetics | none | | | all of it | |
