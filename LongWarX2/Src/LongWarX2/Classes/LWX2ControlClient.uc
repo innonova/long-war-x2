@@ -87,6 +87,10 @@ function Handle(string Line, out array<string> Out)
 		AmbientColour = `XENGINE.GetNonDirectionalAmbientCubeLighting();
 		Out.AddItem("ambient cube colour" @ AmbientColour.R $ "," $ AmbientColour.G $ "," $ AmbientColour.B);
 		return;
+	case "hub":
+		// A test aid: the hub driven as its clicks drive it: hub <room 0-4> | option <n> | back | mc.
+		Out.AddItem(HubCommand(Args));
+		return;
 	case "lights":
 		// A test aid: the world's lights that are not EW's base's own (class, on, brightness, colour, distance from the base),
 		// how many are the base's, and the actors of a lighting kind by class (features/lw-base-view.md).
@@ -2623,6 +2627,27 @@ function Bonuses(XComGameState_LWStrategy S, out array<string> Out)
 }
 
 /** The Geoscape screen, opened if it is not up (only on the Avenger). */
+/** The hub command. */
+function string HubCommand(array<string> Args)
+{
+	local UILWEWHub Hub;
+
+	Hub = UILWEWHub(Pres().ScreenStack.GetFirstInstanceOf(class'UILWEWHub'));
+	if (Hub == none)
+		return "ERR no hub (open hub)";
+	if (Args.Length < 2)
+		return "room" @ Hub.Room @ "options" @ Hub.RoomOptions.Length;
+	if (Args[1] ~= "back")
+		Hub.LeaveRoom();
+	else if (Args[1] ~= "mc")
+		Hub.EnterMissionControl();
+	else if (Args[1] ~= "option" && Args.Length > 2 && int(Args[2]) < Hub.RoomOptions.Length)
+		Hub.ChooseOption(Hub.RoomOptions[int(Args[2])]);
+	else
+		Hub.EnterRoom(int(Args[1]));
+	return "ok room" @ Hub.Room @ "options" @ Hub.RoomOptions.Length;
+}
+
 /** The lightoff command: actors of the class switched off (or on again). */
 function string LightOff(string ClassName, bool bOn, float MinRadius)
 {

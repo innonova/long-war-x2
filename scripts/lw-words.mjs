@@ -334,3 +334,42 @@ export function makeSmallWords({ loc, strategyLoc, items }) {
   }
   return { text: out.join('\r\n'), named }
 }
+
+/** The hub's words (UILWEWHub, in the mod's LongWarX2.int): EW's room names as its top menu shows them and its rooms'
+ *  menu options with their help lines, from the strategy text (sections XGEngineeringUI, XGResearchUI, XGBarracksUI,
+ *  XGHangarUI, XGSituationRoomUI, XGLocalizedData). */
+export function makeHubWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const inSection = (section, key) => {
+    const at = text.indexOf(`\n[${section}]\n`)
+    if (at < 0) return undefined
+    const end = text.indexOf('\n[', at + 2)
+    const body = text.slice(at, end < 0 ? undefined : end)
+    const m = body.match(new RegExp(`^${key.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))
+    return m ? m[1].trim().replace(/^"(.*)"$/, '$1') : undefined
+  }
+  const anywhere = (key) => text.match(new RegExp(`^${key.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const words = [
+    ['RoomNames[0]', anywhere('m_aFacilityNamesCaps[eFacility_Research]')],
+    ['RoomNames[1]', anywhere('m_aFacilityNamesCaps[eFacility_Engineering]')],
+    ['RoomNames[2]', anywhere('m_aFacilityNamesCaps[eFacility_Barracks]')],
+    ['RoomNames[3]', anywhere('m_aFacilityNamesCaps[eFacility_Hangar]')],
+    ['RoomNames[4]', anywhere('m_aFacilityNamesCaps[eFacility_SitRoom]')],
+    ['MissionControlName', anywhere('m_aFacilityNamesCaps[eFacility_MissionControl]')],
+    ['NewResearch', inSection('XGResearchUI', 'm_strLabelNewProject')],
+    ['BuildItems', inSection('XGEngineeringUI', 'm_strOptBuildBuy')],
+    ['BuildItemsHelp', inSection('XGEngineeringUI', 'm_strHelpBuildBuy')],
+    ['BuildFacilities', inSection('XGEngineeringUI', 'm_strOptBuildFacilities')],
+    ['BuildFacilitiesHelp', inSection('XGEngineeringUI', 'm_strHelpBuildFacilities')],
+    ['Foundry', inSection('XGEngineeringUI', 'm_strOptFoundry')],
+    ['FoundryHelp', inSection('XGEngineeringUI', 'm_strHelpFoundry')],
+    ['ViewSoldiers', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_SoldierList]')],
+    ['ViewSoldiersHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_SoldierList]')],
+    ['AircraftList', inSection('XGHangarUI', 'm_strHeaderNames[eHangarView_ShipList]')],
+    ['AircraftListHelp', inSection('XGHangarUI', 'm_strHeaderHelp[eHangarView_ShipList]')],
+    ['SituationRoom', anywhere('m_aFacilityNames[eFacility_SitRoom]')],
+    ['GreyMarket', inSection('XGSituationRoomUI', 'm_stdLabelVisitGreyMarket')],
+    ['GreyMarketHelp', inSection('XGSituationRoomUI', 'm_stdLabelVisitGreyMarketHelp')],
+  ].filter(([, v]) => v)
+  return { text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}

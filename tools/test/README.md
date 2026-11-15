@@ -80,6 +80,7 @@ And around it:
     tools/test/lw.sh ots 'ots buy'            # the Officer Training School's next squad size: what it needs; bought
     tools/test/lw.sh 'open base'               # the Geoscape's base screen (hangar, engineering)
     tools/test/lw.sh 'open hub'                # the Long War hub: EW's base and its room menu
+    tools/test/lw.sh 'hub 1' 'hub option 0'    # the hub: a room entered (0-4), one of its options; 'hub back', 'hub mc'
     tools/test/lw.sh lights                    # the world's lights besides EW's base's own, and lighting actors by class
     tools/test/lw.sh ambient                   # the ambient light's colour as the engine has it
     tools/test/lw.sh 'lightoff LightInjector'  # actors of a lighting kind off by class ([on] [min radius])

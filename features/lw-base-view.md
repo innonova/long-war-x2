@@ -199,3 +199,51 @@ actors), `lightoff <class> [on] [min radius]`, `ambient` (the engine's ambient c
 - EW's shared tile-border glow mesh (`HQ_RoomBorderFX`) isn't converted.
 - The base's levels converted by the player's setup; the hub on by default.
 - Squad select and the armory in EW's rooms (plan step 4).
+
+## Report (2026-11-15, the hub on EW's layout)
+
+A screenshot of EW's own base, from the EW harness (a Long War 1.0 Geoscape save loaded on
+wingpu; `logs/wingpu_ew_original_base_top.png`, not committed), showed what the hub had
+wrong. EW shows its base close, through its own camera, with black between the rooms; its
+top menu has five rooms; MISSION CONTROL sits above the clock; and choosing a room moves the
+camera into it and shows the room's own menu. The hub now does the same:
+
+- **The base's view** is EW's own camera (`Base`, field of view 45): the rooms at the top,
+  close, as in EW. `ViewFOV=0`; the whole-base view stays in the config.
+- **The top menu** has EW's rooms: Research, Engineering, Barracks, Hangar, Situation Room.
+  **MISSION CONTROL** is EW's own button above the clock (`SetHotlink`, its
+  `missionControlButton`), opening the Long War Geoscape.
+- **Entering a room:** the camera moves over a second into the room through EW's camera for
+  it (`ScienceLab`, `ENGINEERING`, `BARRACKS`, `HANGAR`, `Cam_SituationRoom`;
+  `LWX2EWBase.LookAt`, a camera actor of ours per EW camera), and the room's menu shows,
+  with EW's options and help lines:
+  - Research: Start New Research Project;
+  - Engineering: Build/Buy Items, Build Facilities, and The Foundry once the Foundry is
+    built (as EW's `XGEngineeringUI.UpdateMainMenu`; it was a button of its own);
+  - Barracks: View Soldiers (XCOM 2's soldier list and armory, the Avenger given back);
+  - Hangar: View Aircraft List;
+  - Situation Room: the Situation Room, Visit the Gray Market (where EW has it).
+  Escape, or choosing the room again, goes back to the base's view; Escape there closes
+  the hub. A screen opened from a room returns to the room.
+- **EW's words** for the rooms and options come from the player's install, written by the
+  setup into `LongWarX2.int` (`makeHubWords`, 20 words), with plain fallbacks.
+- **The lighting level** is now loaded once and only shown and hidden with the base.
+  Removed and added again at once (a screen over the hub hides the base and the next shows
+  it), it came back unseen, and the Avenger's red ambient light with it.
+
+Checked on wingpu: the base's view (`logs/wingpu_ew_hub.png`, not committed) next to EW's own
+screenshot; Engineering's room and menu (`logs/wingpu_ew_hub_engineering.png`); Build/Buy
+Items and back into the room; View Soldiers and back to the barracks' view; Mission Control.
+The ambient colour stayed neutral (255, 255, 243) throughout.
+
+Control port: `hub <room 0-4>`, `hub option <n>`, `hub back`, `hub mc`.
+
+### Decisions
+
+- The room's menu is XCOM 2's list (`UIList`) at EW's submenu place, not EW's own submenu
+  clip: `subMenuMC` takes `AddOption` but creates no options; its option symbol
+  (`StrategyHUD_FacilitySubMenuOption`) comes from EW's shared components movie, which
+  doesn't resolve in XCOM 2. Fixing that in the UI converter would let EW's clip be used.
+- Of EW's room options, those Long War's port has no screen for yet are left out (the
+  research archives and credits, the memorial, hiring, the psi labs, the repair bay and
+  augmentation, the Situation Room's finances, requests and bonuses).

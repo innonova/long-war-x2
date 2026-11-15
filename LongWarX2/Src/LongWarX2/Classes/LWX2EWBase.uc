@@ -12,8 +12,8 @@ class LWX2EWBase extends Actor config(LWEWMaps);
 var config vector BaseOffset;
 /** EW's fixed rooms (Command1's always-loaded Static_ levels). */
 var config array<string> FixedLevels;
-/** The view of the whole base (EW's own, tagged Base, framed a part of it for 4:3 and panned): where the camera stands in
- *  EW's coordinates and its field of view; zero: EW's own. */
+/** A view of the base in place of EW's own (tagged Base): where the camera stands in EW's coordinates and its field of
+ *  view; zero: EW's own (as EW shows its base: the rooms at the top, close; features/lw-base-view.md). */
 var config vector ViewLoc;
 var config float ViewFOV;
 
@@ -21,7 +21,10 @@ var array<Actor> Fixed;
 var array<Actor> Tiles;
 /** The tiles' types and facilities as placed (Refresh places them again when they differ). */
 var array<int> PlacedType, PlacedFacility;
-var CameraActor View;
+/** The cameras of ours where EW's stood (LookAt), by their tags, and the view the base is seen through. */
+var array<name> CamTags;
+var array<CameraActor> Cams;
+var name ViewTag;
 /** The strategy world's sky lights and suns switched off while the base is in view (Fog), to switch on again. */
 var array<LightComponent> WorldLights;
 /** The lighting level streamed in at the base while it is in view, for its ambient light (one of XCOM 2's environment
@@ -60,9 +63,7 @@ static function LWX2EWMapData Data(string Level)
 function Show()
 {
 	local LWX2EWMapData Command;
-	local LWX2EWMapPieces.LWX2Camera C;
 	local string Level;
-	local int k;
 
 	if (!Converted())
 		return;
@@ -72,11 +73,15 @@ function Show()
 	// campaign to the next.)
 	Fog(false);
 	AvengerShown(false);
+	// (Loaded once and kept; shown and hidden with the base: removed and added again at once, as a screen over the hub
+	// hides the base and the next shows it, it came back unseen, and the Avenger's ambient light with it.)
 	if (BaseLighting != "" && LightingLevel == none)
 	{
 		LightingLevel = `MAPS.AddStreamingMap(BaseLighting, BaseOffset, rot(0, 0, 0), false, true, true);
 		`log("LongWarX2: EW base: lighting level" @ BaseLighting @ (LightingLevel != none ? "streamed in" : "not found"), , 'LongWarX2');
 	}
+	else if (LightingLevel != none)
+		`MAPS.SetStreamingLevelVisible(LightingLevel, true);
 	if (Fixed.Length == 0)
 	{
 		class'LWX2EWMapPieces'.static.PlaceOf(Command, self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
@@ -91,31 +96,53 @@ function Show()
 		`log("LongWarX2: EW base: the shell and" @ FixedLevels.Length @ "fixed rooms placed," @ Fixed.Length @ "actors", , 'LongWarX2');
 	}
 	Refresh();
-	k = Command.Cameras.Find('Tag', 'Base');
+	LookAt(ViewTag, 0);
+}
+
+/**
+ * The view through one of EW's cameras (Command1's, by tag: Base, the base's view; a room's, as EW enters a room:
+ * ScienceLab, ENGINEERING, BARRACKS, HANGAR, Cam_SituationRoom, MissionControl; Expansion …), moved to over Interp
+ * seconds. XCOM 2's HQ camera takes a room view from a camera actor with the room's tag (XComHeadquartersCamera.
+ * StartRoomView, GetViewFromCameraName), so each EW camera gets an actor of ours, tagged LWX2EWBase_<tag>, where EW's
+ * stood. (A CameraActor cannot be spawned while the game runs: its spawnable kind.)
+ */
+function LookAt(name Tag, optional float Interp)
+{
+	local LWX2EWMapData Command;
+	local LWX2EWMapPieces.LWX2Camera C;
+	local CameraActor Cam;
+	local name CamName;
+	local int k;
+
+	Command = Data("Command1");
+	k = Command.Cameras.Find('Tag', Tag);
 	if (k == INDEX_NONE)
+	{
+		`log("LongWarX2: EW base: no camera" @ Tag, , 'LongWarX2');
 		return;
+	}
 	C = Command.Cameras[k];
-	if (ViewFOV > 0)
+	if (Tag == 'Base' && ViewFOV > 0)
 	{
 		C.Loc = ViewLoc;
 		C.FOV = ViewFOV;
 	}
-	// A camera of our own, tagged, where EW's was: XCOM 2's HQ camera takes a room view from a camera actor with the
-	// room's tag (XComHeadquartersCamera.StartRoomView, GetViewFromCameraName).
-	if (View == none)
+	CamName = name("LWX2EWBase_" $ Tag);
+	k = CamTags.Find(CamName);
+	if (k == INDEX_NONE)
 	{
-		// (A CameraActor cannot be spawned while the game runs: its spawnable kind.)
-		View = Spawn(class'DynamicCameraActor', self, 'LWX2EWBase', C.Loc + BaseOffset, C.Rot);
-		if (View != none)
-		{
-			View.FOVAngle = C.FOV;
-			View.bConstrainAspectRatio = false;
-			NeutralLook(View);
-		}
-		`log("LongWarX2: EW base: its camera" @ (View != none ? "at" @ View.Location : "not spawned"), , 'LongWarX2');
+		Cam = Spawn(class'DynamicCameraActor', self, CamName, C.Loc + BaseOffset, C.Rot);
+		if (Cam == none)
+			return;
+		Cam.FOVAngle = C.FOV;
+		Cam.bConstrainAspectRatio = false;
+		NeutralLook(Cam);
+		CamTags.AddItem(CamName);
+		Cams.AddItem(Cam);
 	}
+	ViewTag = Tag;
 	if (`HQPRES != none)
-		`HQPRES.CAMLookAtNamedLocation("LWX2EWBase", 0);
+		`HQPRES.CAMLookAtNamedLocation(string(CamName), Interp);
 }
 
 /** The camera's own post-process, which XCOM 2's HQ camera takes from the camera it views through
@@ -202,11 +229,9 @@ function AvengerShown(bool bShown)
 /** The camera given back to the strategy layer (the Avenger's views). */
 function Hide()
 {
+	ViewTag = 'Base';
 	if (LightingLevel != none)
-	{
-		`MAPS.RemoveStreamingMapByNameAndLocation(BaseLighting, BaseOffset);
-		LightingLevel = none;
-	}
+		`MAPS.SetStreamingLevelVisible(LightingLevel, false);
 	AvengerShown(true);
 	if (`HQPRES != none)
 		`HQPRES.CAMLookAtNamedLocation("Base", 0);
@@ -312,5 +337,6 @@ static function string LevelFor(int Type, int Facility, bool bShaft)
 
 defaultproperties
 {
+	ViewTag = Base
 	bHidden = true
 }
