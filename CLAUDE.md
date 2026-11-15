@@ -7,6 +7,16 @@
   The person, 2026-10-31, before an overnight session: "if you document any
   decisions along the way please keep going ... get as far as you can
   towards the end goal".
+- **There is no clock and no budget to finish within.** A long turn is
+  normal here. A full context is not a limit (compaction carries the work
+  on), and nothing is lost by continuing. A milestone is not an ending
+  either: it goes in the chat (`am say`) and the work goes on. Ending a
+  turn stops the work until the person comes back, so it is for when the
+  agreed work is done or everything left needs them. When unsure, ask
+  in the chat (`am say --question`) and carry on with something else.
+  Before a final message, name the next item and whether it needs the
+  person. Closing the game, clearing scratch and writing a summary are
+  what stopping looks like, not reasons to stop (2026-11-15).
 - **Log decisions as they are made**, in the feature file being worked on:
   a `### Decisions` list in the day's report, each one line with its reason
   ("Floater shown as a plain actor first, not a unit: proves the content in
