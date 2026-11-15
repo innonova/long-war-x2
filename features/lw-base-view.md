@@ -285,3 +285,48 @@ Control port: `hub <room 0-4>`, `hub option <n>`, `hub back`, `hub mc`.
 Checked on wingpu along the player's path: the Avenger's button opens the hub; Engineering;
 Mission Control; a mission answered there opens squad select with the soldiers in the
 Avenger's launch bay.
+
+## Report (2026-11-16, squad select in EW's hangar; the base's light settled)
+
+**Squad select stands the squad in EW's hangar** (plan step 4, the squad half), where EW
+lined it up in front of the Skyranger, in place of the Avenger's launch bay:
+- through EW's own camera for it (`AwayTeam`), a camera actor of ours that
+  `UISquadSelect.UIDisplayCam` names;
+- the soldiers in a row in front of it, facing it, in the order of the slots on screen
+  (`LWX2EWBase.SquadSpot`; `SquadDistance` 600, `SquadSpacing` 80, `SquadFloorZ` −1714, the
+  floor's surface: the floor mesh's origin, −1922, lies below it);
+- no cinematic: the launch bay's walk-up and lineup are XCOM 2's Kismet in the Avenger. The
+  soldiers stand idle (`CharacterCustomization`), shown (XCOM 2 makes cinematic pawns
+  hidden), the screen shows at once, as the lineup's `PreM_LineupUI` shows it, and launching
+  or backing out goes straight on (no `PreM_Exit` to wait for; the 20 s fallback stays for
+  the launch bay);
+- the Avenger comes back while the armory or a soldier's screens are over squad select
+  (they stand the soldier in its armory), and the hangar again when it has focus back.
+Checked on wingpu: a mission answered on the Geoscape opens squad select in EW's hangar with
+six soldiers (`logs/wingpu_squad_ew_hangar.png`, not committed); backing out leaves the
+mission on the Geoscape; launching loads the mission at once.
+
+**The base's light, settled.** Three causes, each found by switching things off:
+- **EW's sky lights.** Spawned in XCOM 2's strategy world they lit the base saturated red at
+  times (lighting-only view: flat red by facing; off, gone). Left out of the base
+  (`PlaceLightsOf ... bNoSky`).
+- **The ambient cube is captured**: taken while the camera was still at the Avenger, it
+  kept the Avenger's light. Taken again once the camera has arrived (0.5 s and 1.5 s).
+- **The Avenger's levels stayed visible** where XCOM 2's own hiding did not hold. Now every
+  streamed level but the base's lighting level is hidden while the base is in view, asked
+  of the engine directly (`ClientUpdateLevelStreamingStatus`), and exactly those shown again
+  after (`HideWorld`, `ShowWorld`). In view of the base only its lighting level is visible
+  (`ambient` lists them).
+- EW's lights in the base at three times EW's brightness (`BaseLightScale`), as before.
+The hub and squad select came out the same in repeated campaigns. The base is darker than
+with the sky lights, as EW's own gaps between rooms are.
+
+Test aids: `lights near <radius>` (the lights on near the camera), `ambient` (with the
+visible streamed levels).
+
+### Left open (next)
+
+- Squad select's slots 7 and 8 (Long War's squad of eight; the hangar has room).
+- The armory in EW's rooms (its loadout and soldier screens still stand the soldier in the
+  Avenger's armory).
+- EW's glowing light strips; EW's own submenu clip.

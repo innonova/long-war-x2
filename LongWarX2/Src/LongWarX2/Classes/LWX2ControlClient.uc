@@ -40,6 +40,7 @@ function Handle(string Line, out array<string> Out)
 	local XComGameState_Unit EffUnit;
 	local int Before;
 	local Color AmbientColour;
+	local LevelStreaming Streamed;
 
 	ParseStringIntoArray(Line, Args, " ", true);
 	if (Args.Length == 0)
@@ -86,6 +87,10 @@ function Handle(string Line, out array<string> Out)
 		// sky-and-light level for the hour, or EW's base's own, LWX2EWBase.BaseLighting).
 		AmbientColour = `XENGINE.GetNonDirectionalAmbientCubeLighting();
 		Out.AddItem("ambient cube colour" @ AmbientColour.R $ "," $ AmbientColour.G $ "," $ AmbientColour.B);
+		// And the streamed levels visible now (one of them brings the ambient cube).
+		foreach Pres().WorldInfo.StreamingLevels(Streamed)
+			if (Streamed != none && Streamed.bIsVisible)
+				Out.AddItem("visible level" @ Streamed.PackageName @ (Streamed.bShouldBeVisible ? "" : "(to be hidden)"));
 		return;
 	case "hub":
 		// A test aid: the hub driven as its clicks drive it: hub <room 0-4> | option <n> | back | mc.
@@ -93,8 +98,12 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "lights":
 		// A test aid: the world's lights that are not EW's base's own (class, on, brightness, colour, distance from the base),
-		// how many are the base's, and the actors of a lighting kind by class (features/lw-base-view.md).
-		LightsReport(Out);
+		// how many are the base's, and the actors of a lighting kind by class (features/lw-base-view.md); lights near <radius>:
+		// every light that is on within that distance of the camera, the nearest first.
+		if (Args.Length > 2 && Args[1] ~= "near")
+			LightsNear(Out, float(Args[2]));
+		else
+			LightsReport(Out);
 		return;
 	case "peek":
 		// A test aid: the Geoscape hidden (or shown again) to look at what is behind it (EW's base, features/lw-base-view.md).
@@ -2671,6 +2680,26 @@ function string LightOff(string ClassName, bool bOn, float MinRadius)
 		n++;
 	}
 	return n @ ClassName @ (bOn ? "on" : "off");
+}
+
+/** The lights that are on near the camera (the lights near command). */
+function LightsNear(out array<string> Out, float Radius)
+{
+	local Light L;
+	local vector At;
+	local float D;
+
+	At = XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.Location;
+	foreach Pres().AllActors(class'Light', L)
+	{
+		if (L.LightComponent == none || !L.LightComponent.bEnabled)
+			continue;
+		D = VSize(L.Location - At);
+		if (D > Radius)
+			continue;
+		Out.AddItem(int(D) @ string(L.Class.Name) @ "brightness" @ L.LightComponent.Brightness @ "colour" @ L.LightComponent.LightColor.R $ "," $ L.LightComponent.LightColor.G $ "," $ L.LightComponent.LightColor.B
+			@ (PointLightComponent(L.LightComponent) != none ? "radius" @ int(PointLightComponent(L.LightComponent).Radius) : ""));
+	}
 }
 
 /** The world's lights and lighting actors (the lights command). */

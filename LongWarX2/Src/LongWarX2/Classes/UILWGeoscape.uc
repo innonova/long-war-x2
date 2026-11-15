@@ -405,8 +405,10 @@ simulated function bool ChooseSquad(int Kind, int Index)
 		StatusText.SetText("No soldier is able to go.");
 		return false;
 	}
-	// The Avenger back first: squad select stands the soldiers in its launch bay as it opens, before this screen loses focus.
-	class'LWX2EWBase'.static.Get(self).Hide();
+	// The Avenger back first when squad select stands the soldiers in its launch bay, as it opens, before this screen loses
+	// focus (in EW's hangar, the base stays).
+	if (!class'LWX2EWBase'.static.SquadHere())
+		class'LWX2EWBase'.static.Get(self).Hide();
 	Select = Spawn(class'UILWSquadSelect', Movie.Pres);
 	Movie.Pres.ScreenStack.Push(Select);
 	return true;
@@ -477,7 +479,9 @@ static function ForgetChosen(int MissionID)
 simulated function OnLoseFocus()
 {
 	super.OnLoseFocus();
-	class'LWX2EWBase'.static.Get(self).Hide();
+	// (Squad select in EW's hangar keeps the base: hidden and shown again at once, the base took the Avenger's light.)
+	if (!(class'LWX2EWBase'.static.SquadHere() && UILWSquadSelect(Movie.Pres.ScreenStack.GetCurrentScreen()) != none))
+		class'LWX2EWBase'.static.Get(self).Hide();
 }
 
 simulated function OnReceiveFocus()

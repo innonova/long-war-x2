@@ -270,7 +270,7 @@ static function int PlaceLights(Actor Spawner, vector Shift)
 }
 
 /** A converted map's lights (those of LightKinds), moved by Shift; returns how many, and adds them to Placed. */
-static function int PlaceLightsOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed, optional bool bNoShadows)
+static function int PlaceLightsOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed, optional bool bNoShadows, optional float Scale, optional bool bNoSky)
 {
 	local LWX2Light L;
 	local Light A;
@@ -279,6 +279,9 @@ static function int PlaceLightsOf(LWX2EWMapData D, Actor Spawner, vector Shift, 
 	foreach D.Lights(L)
 	{
 		if (default.LightKinds.Find(L.Kind) == INDEX_NONE)
+			continue;
+		// (bNoSky: EW's sky lights left out; spawned in XCOM 2's strategy world they lit EW's base saturated red at times.)
+		if (bNoSky && L.Kind == 'Sky')
 			continue;
 		switch (L.Kind)
 		{
@@ -302,7 +305,8 @@ static function int PlaceLightsOf(LWX2EWMapData D, Actor Spawner, vector Shift, 
 			SpotLightComponent(A.LightComponent).InnerConeAngle = L.Inner;
 			SpotLightComponent(A.LightComponent).OuterConeAngle = L.Outer;
 		}
-		A.LightComponent.SetLightProperties(L.Brightness * (default.LightScale > 0 ? default.LightScale : 1.0), L.Color);
+		// (Scale: the caller's; else LightScale, for a map placed at run time.)
+		A.LightComponent.SetLightProperties(L.Brightness * (Scale > 0 ? Scale : (default.LightScale > 0 ? default.LightScale : 1.0)), L.Color);
 		A.ReattachComponent(A.LightComponent);
 		Placed.AddItem(A);
 		Count++;

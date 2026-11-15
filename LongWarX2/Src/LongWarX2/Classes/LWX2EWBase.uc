@@ -31,7 +31,17 @@ var array<LightComponent> WorldLights;
  *  lighting levels, as a map's plot has: its ambient cube lights the base evenly; its sun and fog are switched off with
  *  the world's). "": none, the base lit by EW's own lights alone (dark: EW baked most of its light). */
 var config string BaseLighting;
+/** XCOM 2's squad select in EW's hangar (UILWSquadSelect), where EW lined its squad up in front of the Skyranger: through
+ *  EW's camera for it (SquadCamera), the soldiers in a row SquadDistance in front of it, SquadSpacing apart, standing on
+ *  SquadFloorZ (EW's coordinates), facing it. Off: the Avenger's launch bay. */
+var config bool SquadInHangar;
+/** EW's lights in the base at this brightness (1: EW's own). */
+var config float BaseLightScale;
+var config name SquadCamera;
+var config float SquadDistance, SquadSpacing, SquadFloorZ;
 var LevelStreaming LightingLevel;
+/** The streamed levels hidden while the base is in view (HideWorld), to show again. */
+var array<name> HiddenLevels;
 
 /** The base of this world (made the first time). */
 static function LWX2EWBase Get(Actor Finder)
@@ -72,7 +82,7 @@ function Show()
 	// terrain, and its sky-and-light level for the hour, whose ambient light cast the base blue, purple, red or green from one
 	// campaign to the next.)
 	Fog(false);
-	AvengerShown(false);
+	HideWorld();
 	// (Loaded once and kept; shown and hidden with the base: removed and added again at once, as a screen over the hub
 	// hides the base and the next shows it, it came back unseen, and the Avenger's ambient light with it.)
 	if (BaseLighting != "" && LightingLevel == none)
@@ -86,13 +96,13 @@ function Show()
 	if (Fixed.Length == 0)
 	{
 		class'LWX2EWMapPieces'.static.PlaceOf(Command, self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
-		class'LWX2EWMapPieces'.static.PlaceLightsOf(Command, self, BaseOffset, Fixed, true);
+		class'LWX2EWMapPieces'.static.PlaceLightsOf(Command, self, BaseOffset, Fixed, true, BaseLightScale, true);
 		foreach FixedLevels(Level)
 		{
 			if (Data(Level).Pieces.Length == 0)
 				continue;
 			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
-			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, BaseOffset, Fixed, true);
+			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, BaseOffset, Fixed, true, BaseLightScale, true);
 		}
 		`log("LongWarX2: EW base: the shell and" @ FixedLevels.Length @ "fixed rooms placed," @ Fixed.Length @ "actors", , 'LongWarX2');
 	}
@@ -144,9 +154,18 @@ function LookAt(name Tag, optional float Interp)
 	ViewTag = Tag;
 	if (`HQPRES != none)
 		`HQPRES.CAMLookAtNamedLocation(string(CamName), Interp);
-	// (The Avenger hidden after the camera's move: XCOM 2's HQ camera shows it again as it leaves its globe view for a room
-	// view, XComHeadquartersCamera.StartRoomView.)
-	AvengerShown(false);
+	// (The world hidden after the camera's move: XCOM 2's HQ camera shows the Avenger again as it leaves its globe view for a
+	// room view, XComHeadquartersCamera.StartRoomView.)
+	HideWorld();
+	RefreshAmbient();
+	// And again once the camera has arrived: the ambient light comes from a cube the engine captures, and one captured while
+	// the camera was still elsewhere (the Avenger, a moment before) kept that place's light.
+	SetTimer(Interp + 0.5, false, nameof(RefreshAmbient));
+	SetTimer(Interp + 1.5, false, nameof(RefreshAmbientLater));
+}
+
+function RefreshAmbientLater()
+{
 	RefreshAmbient();
 }
 
@@ -229,6 +248,74 @@ function RefreshAmbient()
 		XComEngine(class'Engine'.static.GetEngine()).bRefreshAmbientCubeRequested = true;
 }
 
+/** Whether XCOM 2's squad select stands the squad in EW's hangar (converted here, and asked for). */
+static function bool SquadHere()
+{
+	return default.SquadInHangar && Converted() && Data("Command1").Cameras.Find('Tag', default.SquadCamera) != INDEX_NONE;
+}
+
+/** Where a soldier of the squad stands in EW's hangar: Column of Columns, left to right as the camera sees them. */
+static function SquadSpot(int Column, int Columns, out vector Loc, out rotator Rot)
+{
+	local LWX2EWMapPieces.LWX2Camera C;
+	local vector Forward, Right;
+	local LWX2EWMapData Command;
+
+	Command = Data("Command1");
+	C = Command.Cameras[Command.Cameras.Find('Tag', default.SquadCamera)];
+	Forward = vector(C.Rot);
+	Forward.Z = 0;
+	Forward = Normal(Forward);
+	// (Unreal's axes: Z up, left-handed; the camera's right is Forward rotated a quarter turn about Z.)
+	Right.X = -Forward.Y;
+	Right.Y = Forward.X;
+	Loc = C.Loc + Forward * default.SquadDistance + Right * (Column - (Columns - 1) / 2.0) * default.SquadSpacing;
+	Loc.Z = default.SquadFloorZ;
+	Loc += default.BaseOffset;
+	Rot = rotator(-Forward);
+}
+
+/**
+ * Every streamed level hidden while EW's base is in view but its own lighting level: the Avenger, its terrain, its rooms
+ * and their lighting and display levels. The engine takes its ambient light from the visible lighting levels, and the
+ * Avenger's (its sky and light of the hour, its rooms', its photo booth's) lit the base red, blue or teal. Asked of the
+ * engine directly (PlayerController.ClientUpdateLevelStreamingStatus): XCOM 2's own hiding of the Avenger
+ * (XGBase.SetAvengerVisibility) did not hold on every path. Shown again, exactly those, by ShowWorld.
+ */
+function HideWorld()
+{
+	local LevelStreaming L;
+	local PlayerController PC;
+	local int n;
+
+	PC = GetALocalPlayerController();
+	if (PC == none)
+		return;
+	foreach WorldInfo.StreamingLevels(L)
+	{
+		if (L == none || L == LightingLevel || !L.bShouldBeVisible || HiddenLevels.Find(L.PackageName) != INDEX_NONE)
+			continue;
+		HiddenLevels.AddItem(L.PackageName);
+		PC.ClientUpdateLevelStreamingStatus(L.PackageName, true, false, false);
+		n++;
+	}
+	if (n > 0)
+		`log("LongWarX2: EW base:" @ n @ "streamed levels hidden," @ HiddenLevels.Length @ "in all", , 'LongWarX2');
+}
+
+/** The levels HideWorld hid shown again. */
+function ShowWorld()
+{
+	local PlayerController PC;
+	local name N;
+
+	PC = GetALocalPlayerController();
+	if (PC != none)
+		foreach HiddenLevels(N)
+			PC.ClientUpdateLevelStreamingStatus(N, true, true, false);
+	HiddenLevels.Length = 0;
+}
+
 /** The Avenger shown or hidden, as XCOM 2 does it for its globe (XGBase.SetAvengerVisibility). */
 function AvengerShown(bool bShown)
 {
@@ -242,6 +329,7 @@ function AvengerShown(bool bShown)
 /** The camera given back to the strategy layer (the Avenger's views). */
 function Hide()
 {
+	ShowWorld();
 	ViewTag = 'Base';
 	if (LightingLevel != none)
 		`MAPS.SetStreamingLevelVisible(LightingLevel, false);
@@ -298,7 +386,7 @@ function Refresh()
 				continue;
 			Placed.Length = 0;
 			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, Command.Rooms[k].Loc + BaseOffset, class'DynamicSMActor_Spawnable', Placed, false, true);
-			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed, true);
+			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed, true, BaseLightScale, true);
 			foreach Placed(A)
 				Tiles.AddItem(A);
 			n++;
