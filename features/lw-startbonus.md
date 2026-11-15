@@ -155,10 +155,6 @@ Seen:
 ### Left open
 
 - **The bonuses that make soldiers:** Foreign Legion, Cadre, Kiryu-Kai Commander.
-- **Per Ardua Ad Astra:** it adds points to Long War's random rookie-stat roll
-  (`XGFacility_Barracks.RandomizeStats`, which Long War runs unless its second-wave option is
-  on). The port has no such roll: its recruits take XCOM 2's flat stats. That roll is a gap
-  of its own (lw-classes). The bonus comes with it.
 - **The bonuses that wait on their system:**
   - SHIVs and MECs: Ghost in the Machine, Robotics, NeoPanzers, Cyberware (NeoPanzers and
     Cyberware are wired into item costs already and act once those items exist);
@@ -199,6 +195,9 @@ named:
 - **Fatigue:** Gift of Osiris cuts every psi power's and gene mod's hours; without it, Call
   to Arms cuts those whose line has alloys (`DetermineTimeOut`). The generator now writes
   each line's iAlloys.
+
+Per Ardua Ad Astra now acts too, through Long War's rookie stat roll (lw-classes): its 5
+points go into the pool. Seen: Australian recruits spending 42 points, Long War's 37 and 5.
 
 Seen in the game: Cheyenne Mountain's three lifts down the shaft, and a dig in row 2 for §5
 instead of §10. The rest is built and compiles, but hasn't been seen in the game yet.

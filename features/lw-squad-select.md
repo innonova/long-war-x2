@@ -70,11 +70,6 @@ How it is built:
   direct launch.
 - Control port: `continue` on squad select presses its launch with the squad as it stands.
 
-### Seen, not this feature's
-
-- In a fresh campaign every starting soldier shows as a Lance Corporal with PROMOTE
-  available. Long War starts them as rookies. To look into (lw-classes).
-
 ### Decisions
 
 - XCOM 2's screen shows at most 6 slots (`MaxDisplayedSlots`). Squads of 7 and 8 get the

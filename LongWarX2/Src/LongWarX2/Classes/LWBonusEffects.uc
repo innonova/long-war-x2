@@ -167,6 +167,9 @@ static function bool GiveSoldier(XComGameState_Unit Unit)
 		return false;
 	if (Stage == 0)
 	{
+		// Long War's rookie stats first (XGFacility_Barracks.RandomizeStats, which also takes Per Ardua Ad Astra), then the
+		// bonuses CreateSoldier adds after it.
+		class'LWRookieStats'.static.Roll(Unit);
 		Raise(Unit, eStat_Mobility, class'LWBonuses'.static.Has(class'LWBonuses'.const.PAX_NIGERINA));
 		Raise(Unit, eStat_Offense, class'LWBonuses'.static.Has(class'LWBonuses'.const.SAS));
 		Raise(Unit, eStat_Will, class'LWBonuses'.static.Has(class'LWBonuses'.const.PATRIAE));

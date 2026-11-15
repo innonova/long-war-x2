@@ -267,6 +267,24 @@ out.push(
   // Alloys: its iAlloys, which Call to Arms asks for (> 0: its hours cut).
   ...perkHours.map((m) => `+PerkHours=(Perk=${m[1]}, Hours=${m[2]}, Alloys=${m[3]})`),
 )
+// Long War's rookie stats (XGFacility_Barracks.RandomizeStats; LWRookieStats): the soldier's Characters= line is the
+// midpoint; HIGH_WILL, LOW_AIM, LOW_MOBILITY and LOW_WILL the minimums of HP, aim, mobility and will, HIGH_MOBILITY the
+// defence's offset; ROOKIE_STARTING_WILL (xxyy: HP, will), ROOKIE_AIM and ROOKIE_MOBILITY (xxyy: defence, mobility) the
+// points each costs.
+const soldier = /^Characters=\(\s*strName="",\s*iType=eChar_Soldier,\s*HP=(\d+),\s*Offense=(\d+),\s*Defense=(-?\d+),\s*Mobility=(\d+),.*?Will=(\d+)/m.exec(core)
+if (!soldier) throw new Error('no soldier Characters= line')
+const rsw = one('ROOKIE_STARTING_WILL'), rm = one('ROOKIE_MOBILITY')
+out.push(
+  '',
+  "; Long War's rookie stats (LWRookieStats, XGFacility_Barracks.RandomizeStats): each stat's midpoint, minimum (defence: its",
+  '; offset) and cost in points; a recruit starts at the minimums and spends a pool worth the midpoints.',
+  '[LongWarX2.LWRookieStats]',
+  `HP=(Mid=${soldier[1]}, Min=${one('HIGH_WILL')}, Cost=${Math.floor(rsw / 100)})`,
+  `Aim=(Mid=${soldier[2]}, Min=${one('LOW_AIM')}, Cost=${one('ROOKIE_AIM')})`,
+  `Defense=(Mid=${soldier[3]}, Min=${Number(soldier[3]) + one('HIGH_MOBILITY')}, Cost=${Math.floor(rm / 100)})`,
+  `Mobility=(Mid=${soldier[4]}, Min=${one('LOW_MOBILITY')}, Cost=${rm % 100})`,
+  `Will=(Mid=${soldier[5]}, Min=${one('LOW_WILL')}, Cost=${rsw % 100})`,
+)
 // Long War's bonuses (features/lw-startbonus.md): ItemBalance_Classic's eItem 0 (a starting bonus: Choice, the start
 // screen's option, with its home country), 1 (a country's, while that country is under a satellite and on the council)
 // and 2 (a continent's, while all its countries are under satellites; iAlloys the continent); iTime the bonus's type

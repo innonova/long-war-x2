@@ -689,3 +689,34 @@ new point, and the context's results are rebuilt for them.
   armour's hit points off).
 - **Left out:** Long War's fatigue for the unhurt (`lw-fatigue`, a decision first); MECs' and SHIVs'
   repairs; the Foundry's MEC repair (project 5) for augmented soldiers.
+
+## Report (2026-11-15, Long War's rookie stats)
+
+No two recruits alike, as in Long War (`XGFacility_Barracks.RandomizeStats`, which Long War
+runs unless its second-wave option is on). Recruits had taken XCOM 2's flat soldier stats.
+
+- **`LWRookieStats`**, generated into `XComLWStrategy.ini` from stock Long War: each stat's
+  midpoint, minimum and cost. HP 3–5 at 3 points, aim 58–72 at 1, defence −5 to +5 at 1,
+  mobility 11–15 at 4, will 16–44 at 1, a pool of 37 points.
+- The roll is Long War's, step for step. A recruit starts at the minimums, and each draw
+  picks a stat weighted by its range: 1260 × range / (1 + max(1, (range − 1) / 3)). It buys
+  one point (HP, mobility) or 1 + Rand((range − 1) / 3) points (aim, defence, will), never
+  past twice the range, until the pool is spent or 512 draws. Per Ardua Ad Astra adds its
+  points to the pool.
+- Rolled once per soldier, in the soldier pass that gives the bonuses (`LWBonusEffects.
+  GiveSoldier`, before the bonuses, as Long War's `CreateSoldier` orders them).
+
+Seen in a new campaign (Australia, Per Ardua Ad Astra): every soldier rolled differently,
+e.g. "HP 4, aim 64, defence −2, mobility 14, will 34". The points spent come to 42, the 37
+and Per Ardua's 5.
+
+### Decisions
+
+- Each stat is set as the difference from XCOM 2's soldier template, so a soldier who has
+  ranked up keeps the ranks' gains.
+- Will and mobility take Long War's numbers (will around 30 instead of XCOM 2's 50, mobility
+  around 13 instead of 12). The port already uses Long War's numbers for perks and items,
+  and the psi rules expect Long War's will. War of the Chosen's tired and shaken bands are
+  shares of the maximum, so they follow.
+- In a campaign begun before this, each soldier is rolled once, the next time the soldier
+  pass runs (the Geoscape, armory, squad select). Their will drops to Long War's range.
