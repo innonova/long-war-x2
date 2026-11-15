@@ -22,6 +22,8 @@ var int ActionKind[MAX_ACTIONS];
 var int ActionIndex[MAX_ACTIONS];
 var UIButton HourButton, SixHoursButton, RunButton, BuildSatButton, LaunchSatButton, SquadButton, AirButton, CloseGeoButton;
 var int SelectedCountry;
+/** Missions go through XCOM 2's squad select (UILWSquadSelect); off, the first soldiers able to go are sent at once. */
+var config bool UseSquadSelect;
 var bool bLossShown;
 var bool bWinShown;
 
@@ -352,9 +354,92 @@ simulated function bool Act(int n)
 		return true;
 	}
 	// A mission: crash site 1, landed UFO 2, abduction 3, terror 4 for the Geoscape's state.
-	class'XComGameState_LWStrategy'.static.MissionSent(ActionKind[n] - 1, ActionIndex[n]);
-	OnLaunch(none);
+	if (!UseSquadSelect)
+	{
+		class'XComGameState_LWStrategy'.static.MissionSent(ActionKind[n] - 1, ActionIndex[n]);
+		OnLaunch(none);
+		return true;
+	}
+	return ChooseSquad(ActionKind[n] - 1, ActionIndex[n]);
+}
+
+/** The mission chosen, its site made with the first soldiers able to go, and XCOM 2's squad select opened on it. */
+simulated function bool ChooseSquad(int Kind, int Index)
+{
+	local int MissionID;
+	local UILWSquadSelect Select;
+
+	class'XComGameState_LWStrategy'.static.MissionChosen(Kind, Index);
+	MissionID = PrepareMission();
+	if (MissionID == 0)
+	{
+		class'XComGameState_LWStrategy'.static.MissionCancelled();
+		StatusText.SetText("No soldier is able to go.");
+		return false;
+	}
+	Select = Spawn(class'UILWSquadSelect', Movie.Pres);
+	Movie.Pres.ScreenStack.Push(Select);
 	return true;
+}
+
+/** Squad select launched the chosen mission: the mission goes ahead with the squad picked there. */
+function LaunchChosen(int MissionID)
+{
+	DropPsiTrainees();
+	if (class'UIUtilities_Strategy'.static.GetXComHQ().Squad.Length == 0)
+	{
+		`log("LongWarX2: Long War Geoscape: no soldier left in the squad; the mission is not sent", , 'LongWarX2');
+		ForgetChosen(MissionID);
+		Refresh();
+		return;
+	}
+	class'XComGameState_LWStrategy'.static.MissionCommitted();
+	LaunchMission(MissionID);
+}
+
+/**
+ * Soldiers in Long War's psi training (features/lw-psi.md) taken out of the squad: XCOM 2's squad select offers them,
+ * since their training is Long War's, not XCOM 2's.
+ */
+function DropPsiTrainees()
+{
+	local XComGameState NewGameState;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_LWStrategy S;
+	local int i;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	for (i = XComHQ.Squad.Length - 1; i >= 0; i--)
+	{
+		if (XComHQ.Squad[i].ObjectID == 0 || !S.InPsiTraining(XComHQ.Squad[i].ObjectID))
+			continue;
+		if (NewGameState == none)
+		{
+			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: psi trainees stay home");
+			XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
+		}
+		`log("LongWarX2: Long War Geoscape: soldier" @ XComHQ.Squad[i].ObjectID @ "is in psi training and stays home", , 'LongWarX2');
+		XComHQ.Squad.Remove(i, 1);
+	}
+	if (NewGameState != none)
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+}
+
+/** Squad select backed out of: the chosen mission's site removed, and nothing pending. */
+static function ForgetChosen(int MissionID)
+{
+	local XComGameState NewGameState;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local StateObjectReference EmptyRef;
+
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission not sent");
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	XComHQ.MissionRef = EmptyRef;
+	if (MissionID > 0 && `XCOMHISTORY.GetGameStateForObjectID(MissionID) != none)
+		NewGameState.RemoveStateObject(MissionID);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	class'XComGameState_LWStrategy'.static.MissionCancelled();
 }
 
 simulated function OnReceiveFocus()

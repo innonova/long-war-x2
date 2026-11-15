@@ -65,7 +65,8 @@ static function Generate(XComGameState_LWStrategy S)
 			}
 		}
 	}
-	for (i = 0; i < class'LWBaseRules'.default.SteamVents && DeepRock.Length > 0; i++)
+	// Ring of Fire: more steam vents (features/lw-startbonus.md).
+	for (i = 0; i < class'LWBaseRules'.default.SteamVents + class'LWBonuses'.static.Has(class'LWBonuses'.const.RING_OF_FIRE, S) && DeepRock.Length > 0; i++)
 	{
 		k = Rand(DeepRock.Length);
 		S.TileType[DeepRock[k]] = ROCK_STEAM;
@@ -77,6 +78,29 @@ static function Generate(XComGameState_LWStrategy S)
 	SetFacility(S, 4, 6, 0);
 	SetFacility(S, 6, 3, 1);
 	SetFacility(S, 9, 2, 1);
+	// The starting bonuses that build (Long War's XGBase.GenerateTiles): Cheyenne Mountain three lifts down the shaft,
+	// Skunkworks a Foundry, Advanced Preparations a lab and a workshop, Roscosmos a second small radar, Wei Renmin Fuwu a
+	// repair bay and a workshop.
+	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.CHEYENNE_MOUNTAIN, S) > 0)
+	{
+		SetFacility(S, 6, 3, 2);
+		SetFacility(S, 6, 3, 3);
+		SetFacility(S, 6, 3, 4);
+	}
+	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.SKUNKWORKS, S) > 0)
+		SetFacility(S, 11, 4, 1);
+	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.ADVANCED_PREPARATIONS, S) > 0)
+	{
+		SetFacility(S, 7, 4, 1);
+		SetFacility(S, 8, 5, 1);
+	}
+	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.ROSCOSMOS, S) > 0)
+		SetFacility(S, 9, 1, 1);
+	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.WEI_RENMIN, S) > 0)
+	{
+		SetFacility(S, 22, 4, 1);
+		SetFacility(S, 8, 5, 1);
+	}
 }
 
 static function SetFacility(XComGameState_LWStrategy S, int Id, int X, int Y)
@@ -324,9 +348,16 @@ static function string FacilityName(int Id)
 	return (Template != none && Template.DisplayName != "") ? Template.DisplayName : "facility" @ Id;
 }
 
+/** Digging a tile of row Y (Long War's GetConstructionProjectCost: Cheyenne Mountain takes its share off). */
 static function int DigCost(int Y)
 {
-	return int(class'LWBaseRules'.default.ExcavateCash * 2.0 ** (Y - 1));
+	local int Cash, Off;
+
+	Cash = int(class'LWBaseRules'.default.ExcavateCash * 2.0 ** (Y - 1));
+	Off = class'LWBonuses'.static.Has(class'LWBonuses'.const.CHEYENNE_MOUNTAIN);
+	if (Off > 0)
+		Cash *= 1.0 - Off / 100.0;
+	return Cash;
 }
 
 /** Staff a facility needs (GetFacilityProjectCost: labs scientists, workshops and uplinks engineers; 0: none). */

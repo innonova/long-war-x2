@@ -26,9 +26,13 @@ static function XComGameState_LWAirWar InState(XComGameState NewGameState)
 	return AirWar;
 }
 
+/** The home country's continent, where XCOM's base and first jets are. */
 static function int HomeContinent()
 {
-	return class'LWStrategyRules'.default.Countries[0].Continent;
+	local XComGameState_LWStrategy S;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	return class'LWStrategyRules'.default.Countries[S != none ? S.HomeCountry() : 0].Continent;
 }
 
 static function int MaxHp(XComGameState_LWAirWar.LWJet J)

@@ -1,6 +1,6 @@
 ---
 title: "Long War's home country and its bonuses: the starting bonus and the country bonuses"
-status: planned
+status: in-progress
 priority: 32
 dependsOn: [lw-geoscape]
 ---
@@ -77,3 +77,98 @@ feature to shape with the person, not to rush at the end of a night.
    bonus) at the start of a Long War campaign.
 2. The effects, system by system: they touch the base, engineering, psi,
    gene mods, soldiers at creation, and the Foundry, which exist now.
+
+## Report (2026-11-15, the start screen and what acts at the start)
+
+The person (2026-11-15): start bonuses and officers aren't his to decide; follow Long War's
+code. So this follows `XGContinentUI`, `XGHeadQuarters.HasBonus` and the code that asks it.
+
+Built and seen in the game on wingpu:
+
+- **The bonuses as config.** `scripts/strategy-config.mjs` writes `[LongWarX2.LWBonuses]`
+  in `XComLWStrategy.ini`. That is all 62 of `ItemBalance_Classic`'s bonus lines (39
+  starting, 16 country, 5 continent, in order, the commented-out ones left out, as the game
+  reads it), plus `Scale` (FundingBalance 8 to 11).
+- **`LWBonuses.Has(type)`** is Long War's `HasBonus`, the sum of every bonus of the type that
+  holds:
+  - a starting bonus holds when its option was chosen with its home country;
+  - a country's holds while that country (not home) is under a satellite and on the council;
+  - a continent's holds while all its countries are under satellites.
+
+  The types are named after the stock bonus that carries each. They were read off the
+  decompiled `HasBonus` calls (the enum names there are garbled, `eCB_Experts_<n>`, type =
+  6 + (n + 1) / 2^24), and the ini's comments agree for every type checked.
+- **The words** come from the player's Long War. `lw-words.mjs` `makeBonusWords` writes
+  `Localization/LongWarX2.int` (gitignored) with each type's name and description, plus
+  the start screen's labels. The setup and `write-words.mjs` write it beside
+  `XComGame.int`.
+- **The start screen** (`UILWStartSelect`) uses Enemy Within's own ContinentSelect movie,
+  from the converted strategy UI package, driven as Long War drives it. It shows on the
+  first opening of the Long War Geoscape in a campaign not yet begun, over the black
+  backdrop the Situation Room uses.
+  - Its 40 options are the (option, country) pairs. Each line shows the country and its
+    bonus's name ("MEXICO: WEALTHY BENEFACTOR").
+  - The info panel shows the country, its starting money, the bonus's words with its
+    number, and the continent bonus.
+  - Click or arrows select, double click, Enter or Begin Game start. There is no way back.
+- **What it begins with** (`XComGameState_LWStrategy.GetOrCreate(home, option)`): the home
+  country's satellite, Long War's objectives aimed at the home, and the jets based on the
+  home continent.
+- **Acting at the start** (`LWBonusEffects.AtStart`, `LWBase.Generate`):
+  - Wealthy Benefactor's money.
+  - The Foundry projects granted: Resourceful (with Advanced Salvage), Jai Jawan, Sukhoi
+    Company, Their Finest Hour, For the Sake of Glory.
+  - Jai Jawan's two interceptors.
+  - Ring of Fire's steam vents.
+  - Cheyenne Mountain's lifts, and its cheaper digging.
+  - Skunkworks' Foundry, Advanced Preparations' lab and workshop, Roscosmos's second small
+    radar, Wei Renmin Fuwu's repair bay and workshop.
+- **Per soldier** (`LWBonusEffects.GiveSoldier`, once each, in the arming pass):
+  - every recruit's: Pax Nigerina, SAS, Patriae Semper Vigilis, Survival Training;
+  - then, once the soldier has a Long War class, its base class's: 1st Recce, Southern
+    Cross, Task Force Arrowhead, Spetznaz.
+- **Control port:** `start` lists the options and `start <n>` chooses one; `bonuses` shows
+  the home and what holds; `continue` on the start screen begins with the selected option.
+
+Seen:
+
+- **The screen.** 40 options with their bonuses, the info panel ("ARGENTINA, Starting:
+  §500, Patriae Semper Vigilis: All soldiers receive +5 will", the continent's Power to the
+  People), and Begin Game, on black.
+- **Mexico, Wealthy Benefactor:** §1000 (§500 and the bonus's 500), the satellite over
+  Mexico, the bonus in the events.
+- **Japan, Ring of Fire:** both jets based in Asia, 4 steam vents (1 and the bonus's 3).
+- **Argentina, Patriae Semper Vigilis:** every soldier +5 will (41 in the log).
+
+### Decisions
+
+- The option list shows the country and the bonus's name, in a smaller font. EW lists the
+  country alone, which with up to five options per country can only be read through the
+  info panel.
+- The bonuses that come with a soldier are given when the arming pass first sees the
+  soldier (the Geoscape, armory, squad select, after-action report), as they hold then.
+  Long War gives them as it makes the soldier. A soldier who was already there in a
+  campaign begun before this gets the country and continent bonuses holding now.
+- A campaign begun before the start screen keeps the United States as home, with no
+  starting bonus.
+
+### Left open (in the order I'd take them)
+
+- **The bonuses that change a rule as it is used:**
+  - costs: aircraft, power facilities, the Foundry, labs and workshops, facility build time,
+    satellites, gene mods, Officer Training School cash;
+  - funding (Wealth of Nations) and abduction cash (Bounties);
+  - research: credits (Expertise), autopsies and interrogations (We Have Ways), lab
+    adjacency (Jai Vidwan);
+  - psi chance and time (Legacy of Uxmal, The Old Path);
+  - fatigue (Gift of Osiris, Call to Arms);
+  - Per Ardua Ad Astra (its iMultiple[5] still to be read).
+- **The bonuses that make soldiers:** Foreign Legion, Cadre, Kiryu-Kai Commander.
+- **The bonuses that wait on their system:**
+  - SHIVs and MECs: Ghost in the Machine, Robotics, NeoPanzers, Cyberware;
+  - the grey market: Xenological Remedies;
+  - officers: Sandhurst, Special Warfare School;
+  - council requests and intel: Quai d'Orsay;
+  - the Illuminator Gunsight item: Ancient Artifact;
+  - small slots on early armour: Jungle Scouts.
+- **The country bonuses on the Situation Room,** as EW shows them.

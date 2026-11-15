@@ -56,6 +56,7 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem("campaign [difficulty 0-3, default 1] [first]: a new campaign from the main menu, without its first mission unless 'first'");
 		Out.AddItem("continue: the top screen's own way on (reports, loot, alerts, tips; else Enter) | key <UIUtilities_Input code>: any input (300 A, 301 B, 510 Esc, 513 Space)");
 		Out.AddItem("sat build | sat launch <country> | win | exec <console command>");
+		Out.AddItem("start [option]: Long War's start screen's options (home country and starting bonus); with an option, chosen there (the campaign begins) | bonuses: the bonuses holding now, and the home");
 		Out.AddItem("give-to <soldier> <item template>: an item put on a soldier (a test aid) | abilities: in a mission, each soldier's abilities and charges | use <soldier> <ability> [target, 99: force the nearest enemy, 98: at the soldier's feet, 97: at the nearest alien]: an ability used (no target: the targets) | enemies | spawn [alien] [tiles]: an alien dropped near the squad | capture: the arc thrower's capture on the nearest enemy (test aids)");
 		Out.AddItem("builds: what engineering can build (Long War's item numbers, cost, time) and its projects | build <item> [n]: n of it begun | give <template> <n>: items put in the stores (a test aid)");
 		Out.AddItem("foundry: the Foundry's available projects (ids), the one under way, those done | foundry <id>: that project begun | foundry done <id>: marked done (a test aid) | hqassault: the HQ assault from now (a test aid)");
@@ -388,6 +389,12 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem("ERR open base|hangar|engineering|loadout");
 		return;
 	}
+	// Long War's start screen, before the campaign's Geoscape exists.
+	if (Cmd == "start")
+	{
+		Out.AddItem(StartCampaign(Args.Length > 1 ? int(Args[1]) : -1));
+		return;
+	}
 	// The rest needs the campaign's Geoscape.
 	if (S == none)
 	{
@@ -408,6 +415,9 @@ function Handle(string Line, out array<string> Out)
 		S = class'XComGameState_LWStrategy'.static.Get();
 		NewEvents(S, Before, Out);
 		Refreshed();
+		return;
+	case "bonuses":
+		Bonuses(S, Out);
 		return;
 	case "act":
 		Geo = OpenGeoscape();
@@ -619,6 +629,10 @@ function string Continue()
 		WorldInfo.bContinueToSeamlessTravelDestination = true; // what the Skyranger's "press any key" sets (X2TacticalGameRuleset waits on it)
 	else if (UIAfterAction(Top) != none)
 		UIAfterAction(Top).OnContinue();
+	else if (UILWStartSelect(Top) != none)
+		UILWStartSelect(Top).Accept(); // the option selected (the first, unless one was picked)
+	else if (UILWSquadSelect(Top) != none)
+		UILWSquadSelect(Top).OnLaunchMission(none); // the squad as it stands (squad select fills it with the first able to go)
 	else if (UIAlert(Top) != none)
 		UIAlert(Top).OnConfirmClicked(none);
 	else if (UIInventory_LootRecovered(Top) != none || UIMissionSummary(Top) != none || UITutorialBox(Top) != none || UIRewardsRecap(Top) != none
@@ -2505,6 +2519,53 @@ function AutoPlay(int Hours, int WinPct, int Stance, bool bSatellites, out array
 }
 
 /** A jet with HP left. */
+/** Long War's start screen: its options, or one chosen (the screen opened first if it is not up). */
+function string StartCampaign(int Option)
+{
+	local XComHQPresentationLayer HQ;
+	local UILWStartSelect Start;
+	local string Line;
+	local int i;
+
+	HQ = XComHQPresentationLayer(Pres());
+	if (HQ == none)
+		return "ERR not on the Avenger";
+	if (class'XComGameState_LWStrategy'.static.Get() != none)
+		return "ERR the campaign has begun (home" @ class'XComGameState_LWStrategy'.static.Get().CountryName(class'XComGameState_LWStrategy'.static.Get().HomeCountry()) $ ")";
+	Start = UILWStartSelect(HQ.ScreenStack.GetScreen(class'UILWStartSelect'));
+	if (Start == none)
+	{
+		class'UILWStartSelect'.static.OpenGeoscape(HQ);
+		return "start screen opened (start again once it is up)";
+	}
+	if (Option < 0)
+	{
+		for (i = 0; i < Start.Choices.Length; i++)
+			Line $= i $ "=" $ Start.OptionLabel(i) $ "; ";
+		return Line;
+	}
+	Start.Select(Option);
+	Start.Accept();
+	return "ok" @ Start.OptionLabel(Option);
+}
+
+/** The bonuses that hold now, and the home and its starting option. */
+function Bonuses(XComGameState_LWStrategy S, out array<string> Out)
+{
+	local array<string> Lines;
+	local string L;
+
+	if (S == none)
+	{
+		Out.AddItem("ERR the campaign has not begun");
+		return;
+	}
+	Out.AddItem("home" @ S.CountryName(S.HomeCountry()) @ "start option" @ S.StartChoice);
+	Lines = class'LWBonuses'.static.Holding(S);
+	foreach Lines(L)
+		Out.AddItem(L);
+}
+
 /** The Geoscape screen, opened if it is not up (only on the Avenger). */
 function UILWGeoscape OpenGeoscape()
 {

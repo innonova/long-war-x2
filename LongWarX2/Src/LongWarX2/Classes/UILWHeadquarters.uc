@@ -131,7 +131,23 @@ function array<XComGameState_Unit> ReadySoldiers(int Max)
 	return Out;
 }
 
+/** The mission launched at once with the first soldiers able to go (this screen's LAUNCH MISSION; the Geoscape without
+ * squad select). */
 function OnLaunch(UIButton Button)
+{
+	local int MissionID;
+
+	MissionID = PrepareMission();
+	if (MissionID > 0)
+		LaunchMission(MissionID);
+}
+
+/**
+ * A mission site for the pending Long War mission (or a guerrilla op without one), with Long War's aliens for it and the
+ * first soldiers able to go as its squad (XComHQ.Squad, and XComHQ.MissionRef on it, as XCOM 2's squad select wants them);
+ * its id, or 0 when no soldier can go.
+ */
+function int PrepareMission()
 {
 	local XComGameStateHistory History;
 	local XComGameState NewGameState;
@@ -147,7 +163,6 @@ function OnLaunch(UIButton Button)
 	local int Kind;
 	local array<XComGameState_Unit> Soldiers;
 	local XComGameState_Unit Unit;
-	local XGStrategy Game;
 	local int Attempt;
 	local Vector2D Where;
 	local XComGameState_LWStrategy LW;
@@ -155,7 +170,7 @@ function OnLaunch(UIButton Button)
 
 	Soldiers = ReadySoldiers(SquadSize());
 	if (Soldiers.Length == 0)
-		return;
+		return 0;
 	History = `XCOMHISTORY;
 	Strategy = class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager();
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
@@ -215,23 +230,35 @@ function OnLaunch(UIButton Button)
 			LW.PendingKind = Kind;
 		class'LWMissionSquads'.static.ApplyTo(Mission, LW.PendingSquad);
 	}
+	// Long War's squad size, for XCOM 2's squad select too (GetMaxSoldiersAllowedOnMission reads the mission's).
+	Mission.GeneratedMission.Mission.MaxSoldiers = SquadSize();
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 	XComHQ.Squad.Length = 0;
 	foreach Soldiers(Unit)
 		XComHQ.Squad.AddItem(Unit.GetReference());
+	XComHQ.AllSquads.Length = 0;
+	XComHQ.MissionRef = Mission.GetReference();
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
-	`log("LongWarX2: Long War HQ: launching" @ Mission.GeneratedMission.Mission.sType @ "on" @ Mission.GeneratedMission.Plot.MapName @ "with" @ Soldiers.Length @ "soldiers", , 'LongWarX2');
+	`log("LongWarX2: Long War HQ: mission" @ Mission.ObjectID @ "is" @ Mission.GeneratedMission.Mission.sType @ "on" @ Mission.GeneratedMission.Plot.MapName $ "; squad of" @ Soldiers.Length @ "(up to" @ SquadSize() $ ")", , 'LongWarX2');
+	return Mission.ObjectID;
+}
 
+/** The prepared mission (PrepareMission) launched with XComHQ's squad: its map loads a moment later. */
+function LaunchMission(int MissionID)
+{
+	local XGStrategy Game;
+
+	`log("LongWarX2: Long War HQ: launching mission" @ MissionID @ "with" @ class'UIUtilities_Strategy'.static.GetXComHQ().Squad.Length @ "soldiers", , 'LongWarX2');
 	if (class'XComGameState_LWStrategy'.static.Get() != none && class'XComGameState_LWStrategy'.static.Get().PendingKind != 0)
-		class'XComGameState_LWStrategy'.static.MissionLaunched(Mission.ObjectID);
+		class'XComGameState_LWStrategy'.static.MissionLaunched(MissionID);
 	Game = `GAME;
-	Game.PrepareTacticalBattle(Mission.ObjectID);
+	Game.PrepareTacticalBattle(MissionID);
 	// The map is loaded a moment later, not in this frame (lw-missions.md, the load crash): XCOM 2 died now and then in
 	// LoadMap, on Wwise's thread, in a sound's duration callback that reached for the world while it was being torn down.
 	// A sound posted as the launch begins (its narrative voices load here) has its callback by then; voices are stopped.
 	if (TestVoiceAtLaunch)
 		`HQPRES.UINarrative(XComNarrativeMoment'X2NarrativeMoments.Strategy.Avenger_Skyranger_Deployed');
-	PendingLaunch = Mission.ObjectID;
+	PendingLaunch = MissionID;
 	if (LaunchDelay <= 0)
 		LoadMapNow();
 	else

@@ -7,7 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { decodeInt, makeArmourWords, makeFacilityWords, makeFoundryWords, makeItemWords, makeSmallWords, makeTechWords, makeWeaponWords, makeWords, readConsts } from './lw-words.mjs'
+import { decodeInt, makeArmourWords, makeBonusWords, makeFacilityWords, makeFoundryWords, makeItemWords, makeSmallWords, makeTechWords, makeWeaponWords, makeWords, readConsts } from './lw-words.mjs'
 import plan from './words-plan.json' with { type: 'json' }
 
 /** The words for an XEW folder, as { text, report }; undefined (with the reason) if Long War is not there. */
@@ -63,9 +63,14 @@ export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '', baseI
     strategyLoc: strategyText,
     items: [...gearIni.matchAll(/^\+SmallItems=\(Item=(\d+), Template=\w+, Enum=(\w+), Kind=(\w+), Look=(\w+)/gm)].map((m) => ({ item: Number(m[1]), enum: m[2], kind: m[3], look: m[4] })),
   })
+  // The bonuses' words, for the mod's own package (LongWarX2.int: the classes of the mod read theirs from it).
+  const bonus = strategyText
+    ? makeBonusWords({ strategyLoc: strategyText, types: [...new Set([...strategyIni.matchAll(/^\+Bonuses=\(.*?Type=(\d+)/gm)].map((m) => Number(m[1])))] })
+    : { text: '', named: 0 }
   return {
+    modText: bonus.text,
     text: words.text + '\r\n' + tech.text + '\r\n' + items.text + '\r\n' + gear.text + '\r\n' + armour.text + '\r\n' + foundry.text + '\r\n' + facilities.text + '\r\n' + small.text,
-    report: `${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}, ${tech.named} techs, ${items.named} artifacts and corpses, ${gear.named} weapons, ${armour.named} armours, ${foundry.named} Foundry projects, ${facilities.named} facilities, ${small.named} small items`,
+    report: `${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}, ${tech.named} techs, ${items.named} artifacts and corpses, ${gear.named} weapons, ${armour.named} armours, ${foundry.named} Foundry projects, ${facilities.named} facilities, ${small.named} small items, ${bonus.named} bonuses`,
   }
 }
 
@@ -88,5 +93,6 @@ if (self && process.argv[1] === self) {
   }
   mkdirSync(join(mod, 'Localization'), { recursive: true })
   writeFileSync(join(mod, 'Localization', 'XComGame.int'), w.text)
+  writeFileSync(join(mod, 'Localization', 'LongWarX2.int'), w.modText)
   console.log(`Long War's words written: ${w.report}`)
 }

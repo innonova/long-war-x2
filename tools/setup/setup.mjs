@@ -240,6 +240,7 @@ async function main() {
   }
   mkdirSync(join(target, 'Localization'), { recursive: true })
   writeFileSync(join(target, 'Localization', 'XComGame.int'), words.text)
+  writeFileSync(join(target, 'Localization', 'LongWarX2.int'), words.modText)
   say(`Long War's words written from ${ew}: ${words.report}.`)
   await convertEW(ew, target)
   say('')

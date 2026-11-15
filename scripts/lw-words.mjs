@@ -274,6 +274,32 @@ export function makeFoundryWords({ strategyLoc, projects }) {
   return { text: out.join('\r\n'), named }
 }
 
+/**
+ * Long War's bonuses' words (features/lw-startbonus.md) for the mod's own LongWarX2.int: each type's name and description
+ * (ContinentBonusNames, ContinentBonusDesc: <XGParam:IntValue0> stands for its number), and the start screen's labels
+ * (XGContinentUI), under the class that reads them ([LWBonuses]).
+ */
+export function makeBonusWords({ strategyLoc, types }) {
+  const one = (key, k) => strategyLoc.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1]
+  const label = (key) => strategyLoc.match(new RegExp(`^\\[XGContinentUI\\][^\\[]*?^${key}="([^\\r\\n]*)"\\s*$`, 'ms'))?.[1]
+  const out = ['[LWBonuses]']
+  let named = 0
+  for (const t of types) {
+    const name = one('ContinentBonusNames', t)
+    if (!name) continue
+    named++
+    out.push(`Names[${t}]="${name}"`)
+    const desc = one('ContinentBonusDesc', t)
+    if (desc) out.push(`Descs[${t}]="${desc}"`)
+  }
+  for (const [ours, theirs] of [['LabelBaseLocation', 'm_strLabelBaseLocation'], ['LabelBegin', 'm_strlabelBeginGame'], ['LabelStarting', 'm_strLabelReturnToContinent'], ['LabelContinentBonus', 'm_strLabelBonus']]) {
+    const v = label(theirs)
+    if (v !== undefined) out.push(`${ours}="${v}"`)
+  }
+  out.push('')
+  return { text: out.join('\r\n'), named }
+}
+
 /** Long War's facility names (m_aFacilityNames, by enum) for the templates that carry them (LWFacility_<id>). */
 export function makeFacilityWords({ strategyLoc, facilities }) {
   const out = []

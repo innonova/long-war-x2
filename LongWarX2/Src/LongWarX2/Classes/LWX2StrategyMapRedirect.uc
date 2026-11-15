@@ -21,7 +21,7 @@ event Tick(float DeltaTime)
 			return;
 	}
 	if (!HQ.ScreenStack.IsInStack(class'UILWGeoscape'))
-		HQ.ScreenStack.Push(HQ.Spawn(class'UILWGeoscape', HQ));
+		class'UILWStartSelect'.static.OpenGeoscape(HQ);
 	Destroy();
 }
 

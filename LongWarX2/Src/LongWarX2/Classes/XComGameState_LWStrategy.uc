@@ -70,6 +70,10 @@ struct LWBaseJob
 };
 
 var array<LWCountry> Countries;
+/** XCOM's home country (an index of Countries) and the starting bonus chosen with it (LWBonuses' Choice), from Long War's
+ * start screen (UILWStartSelect); a campaign begun before it was offered: the United States and none. */
+var int HomeIndex;
+var int StartChoice;
 /** Hours since the campaign began; its first hour is the first of a month. */
 var int Hours;
 var int Month;
@@ -160,8 +164,11 @@ static function XComGameState_LWStrategy Get()
 	return XComGameState_LWStrategy(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_LWStrategy', true));
 }
 
-/** The campaign's Geoscape, made the first time it is asked for (any campaign, new or loaded). */
-static function XComGameState_LWStrategy GetOrCreate()
+/**
+ * The campaign's Geoscape, made the first time it is asked for (any campaign, new or loaded): with the home country and
+ * starting bonus chosen on the start screen (UILWStartSelect), or else the United States and no starting bonus.
+ */
+static function XComGameState_LWStrategy GetOrCreate(optional int Home = -1, optional int Choice = -1)
 {
 	local XComGameState NewGameState;
 	local XComGameState_LWStrategy S;
@@ -172,6 +179,8 @@ static function XComGameState_LWStrategy GetOrCreate()
 		return S;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: the Geoscape");
 	S = XComGameState_LWStrategy(NewGameState.CreateNewStateObject(class'XComGameState_LWStrategy'));
+	S.HomeIndex = Home >= 0 ? Home : 0;
+	S.StartChoice = Choice;
 	S.Begin();
 	S.SyncResearchIn(NewGameState);
 	// Long War's campaign begins with its first mission won: what its aliens left (XCOM 2's first
@@ -183,6 +192,8 @@ static function XComGameState_LWStrategy GetOrCreate()
 	XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 	XComHQ.AddResource(NewGameState, 'Supplies', Round(class'LWStrategyRules'.default.Countries[S.HomeCountry()].StartingCash * class'LWStrategyRules'.default.StartingCashBalance[class'LWStrategyRules'.static.Difficulty()]) - XComHQ.GetSupplies());
+	// The bonuses that act once, at the start (Wealthy Benefactor's money, Foundry projects granted, a free item ...).
+	class'LWBonusEffects'.static.AtStart(NewGameState, S);
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	return Get();
 }
@@ -221,10 +232,9 @@ function Begin()
 	Scientists = class'LWResearchRules'.default.StartingScientists;
 	Engineers = class'LWResearchRules'.default.StartingEngineers;
 	class'LWBase'.static.Generate(self);
-	// Long War (XGWorld.SetStartingContinent): a satellite over the home country. The choice of
-	// home is not offered yet: the United States.
-	Countries[0].bSatellite = true;
-	Note("Day 1. The council funds XCOM. A satellite watches the United States.");
+	// Long War (XGWorld.SetStartingContinent): a satellite over the home country.
+	Countries[HomeIndex].bSatellite = true;
+	Note("Day 1. The council funds XCOM. A satellite watches" @ (HomeIndex == 0 ? "the United States" : (HomeIndex == 3 ? "the United Kingdom" : CountryName(HomeIndex))) $ ".");
 	PlanMonth();
 }
 
@@ -777,10 +787,10 @@ function int CountryIndex(name Id)
 	return class'LWStrategyRules'.default.Countries.Find('Id', Id);
 }
 
-/** XCOM's home country, where it began with a satellite. The choice is not offered yet: the United States. */
+/** XCOM's home country, where it began with a satellite (chosen on the start screen). */
 function int HomeCountry()
 {
-	return 0;
+	return HomeIndex;
 }
 
 /** The campaign's day, from 1 (Long War's eRecap_Days). */
@@ -1157,13 +1167,23 @@ function array<int> MissionSquad()
 		AlienAggression, AlienResources, PendingKind == 3 ? AbductionDifficulty(Country) : 0, TerrorsTaken);
 }
 
-/** A mission is sent to a crash site (1), landed UFO (2), abduction (3) or terror site (4). */
+/** A mission is sent to a crash site (1), landed UFO (2), abduction (3) or terror site (4): chosen and committed at once. */
 static function MissionSent(int Kind, int Index, optional bool bCapture)
+{
+	MissionChosen(Kind, Index, bCapture);
+	MissionCommitted();
+}
+
+/**
+ * A mission chosen on the Geoscape, its squad still to be picked (XCOM 2's squad select, UILWSquadSelect): the pending
+ * mission's kind and target, nothing else changed, so backing out (MissionCancelled) leaves the campaign as it was.
+ */
+static function MissionChosen(int Kind, int Index, optional bool bCapture)
 {
 	local XComGameState NewGameState;
 	local XComGameState_LWStrategy S;
 
-	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission sent");
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission chosen");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	S.PendingKind = Kind;
 	S.PendingIndex = Index;
@@ -1172,13 +1192,42 @@ static function MissionSent(int Kind, int Index, optional bool bCapture)
 	S.PendingSquad.Length = 0;
 	S.PendingCivilians = -1;
 	S.PendingCiviliansSaved = -1;
-	if (Kind <= 2)
-		S.Ufos[Index].Status = 5;
-	else if (Kind <= 4 || Kind == 7)
-		S.Sites[Index].Status = 2;
+	S.PendingMission = 0;
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+}
+
+/** The chosen mission goes ahead: its UFO or site taken up by XCOM, an alien base's Skeleton Key spent. */
+static function MissionCommitted()
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission sent");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
+	if (S.PendingKind <= 2)
+		S.Ufos[S.PendingIndex].Status = 5;
+	else if (S.PendingKind <= 4 || S.PendingKind == 7)
+		S.Sites[S.PendingIndex].Status = 2;
 	// An alien base takes a Skeleton Key, whatever comes of it (XGStrategy: STORAGE().RemoveItem(184)).
-	if (Kind == 5)
+	if (S.PendingKind == 5)
 		class'LWEngineering'.static.Take(NewGameState, 'LWItem_Skeleton_Key', 1);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+}
+
+/** Backed out of squad select: no mission pending, the campaign as before it was chosen. */
+static function MissionCancelled()
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission not sent");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
+	S.PendingKind = 0;
+	S.PendingIndex = 0;
+	S.bPendingCapture = false;
+	S.PendingSquad.Length = 0;
+	S.PendingEWMap = "";
+	S.PendingMission = 0;
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 }
 
@@ -1825,6 +1874,45 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 			AddDecision(Kinds, Indexes, Labels, 6, AlienBases[i], "ASSAULT: the alien base in" @ CountryName(AlienBases[i]) @ "(a Skeleton Key)");
 	if (!bCampaignWon && TileFacility.Length > 0 && class'LWBase'.static.Count(self, 19) > 0)
 		AddDecision(Kinds, Indexes, Labels, 7, 0, "ASSAULT: the Temple Ship");
+}
+
+/** The pending mission in words, for squad select's mission panel: its title and what it brings home. */
+function PendingWords(out string Title, out string Reward)
+{
+	switch (PendingKind)
+	{
+	case 1:
+		Title = "Crash site:" @ ShipName(Ufos[PendingIndex].Ufo) @ "in" @ CountryName(Ufos[PendingIndex].Country);
+		Reward = "The UFO's salvage";
+		break;
+	case 2:
+		Title = "Landed UFO:" @ ShipName(Ufos[PendingIndex].Ufo) @ "in" @ CountryName(Ufos[PendingIndex].Country);
+		Reward = "The UFO's salvage";
+		break;
+	case 3:
+		Title = "Abductions in" @ CountryName(Sites[PendingIndex].Country);
+		Reward = "Cash, and the country's panic down";
+		break;
+	case 4:
+		Title = "Terror in" @ CountryName(Sites[PendingIndex].Country);
+		Reward = "The civilians saved";
+		break;
+	case 5:
+		Title = "The alien base in" @ CountryName(PendingIndex);
+		Reward = "The country back, and the Hyperwave Beacon";
+		break;
+	case 6:
+		Title = "The Temple Ship";
+		Reward = "The end of the war";
+		break;
+	case 7:
+		Title = "XCOM's headquarters under attack";
+		Reward = "XCOM's survival";
+		break;
+	default:
+		Title = "";
+		Reward = "";
+	}
 }
 
 static function AddDecision(out array<int> Kinds, out array<int> Indexes, out array<string> Labels, int Kind, int Index, string Label)

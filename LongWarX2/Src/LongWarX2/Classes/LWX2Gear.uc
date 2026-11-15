@@ -178,6 +178,13 @@ static function int ArmAll()
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 	ApplyRigging(NewGameState, XComHQ);
 	ApplyFoundryGear(NewGameState, XComHQ);
+	// The bonuses that come with a soldier (LWBonusEffects): once each, rookies too.
+	foreach XComHQ.Crew(Ref)
+	{
+		Unit = XComGameState_Unit(History.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit != none && Unit.IsSoldier() && class'LWBonusEffects'.static.SoldierDue(Unit))
+			class'LWBonusEffects'.static.GiveSoldier(XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID)));
+	}
 	foreach XComHQ.Crew(Ref)
 	{
 		Unit = XComGameState_Unit(History.GetGameStateForObjectID(Ref.ObjectID));

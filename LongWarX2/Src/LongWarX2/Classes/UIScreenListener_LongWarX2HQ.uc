@@ -26,7 +26,8 @@ function OnOpen(UIButton Button)
 	Pres = `HQPRES;
 	if (Pres.ScreenStack.IsInStack(class'UILWHeadquarters') || Pres.ScreenStack.IsInStack(class'UILWGeoscape'))
 		return;
-	Pres.ScreenStack.Push(Pres.Spawn(class'UILWGeoscape', Pres));
+	// Long War's start screen first, in a campaign not yet begun.
+	class'UILWStartSelect'.static.OpenGeoscape(Pres);
 	`log("LongWarX2: Long War HQ shown", , 'LongWarX2');
 }
 

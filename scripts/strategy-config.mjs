@@ -264,6 +264,26 @@ out.push(
   '[LongWarX2.LWFatigue]',
   ...perkHours.map((m) => `+PerkHours=(Perk=${m[1]}, Hours=${m[2]})`),
 )
+// Long War's bonuses (features/lw-startbonus.md): ItemBalance_Classic's eItem 0 (a starting bonus: Choice, the start
+// screen's option, with its home country), 1 (a country's, while that country is under a satellite and on the council)
+// and 2 (a continent's, while all its countries are under satellites; iAlloys the continent); iTime the bonus's type
+// (EContinentBonus, what Long War's code asks HQ().HasBonus for), iEng its number, scaled by FundingBalance[8 + difficulty]
+// (XGWorld.GetContinentByBonus). Commented lines (the "coded" bonuses not offered) are left out, as the game reads them.
+const bonuses = [...core.matchAll(/^ItemBalance_Classic=\(eItem=(\d+),\s*iCash=(-?\d+),\s*iElerium=(-?\d+),\s*iAlloys=(-?\d+),\s*iTime=(\d+),\s*iEng=(-?\d+)\)/gm)].map((m) => ({
+  kind: Number(m[1]), choice: Number(m[2]), country: Number(m[3]), continent: Number(m[4]), type: Number(m[5]), value: Number(m[6]),
+}))
+if (bonuses.filter((b) => b.kind === 0).length < 16) throw new Error(`${bonuses.length} bonus lines read: is this Long War's DefaultGameCore.ini?`)
+for (const b of bonuses) if (b.kind !== 2 && !CONTINENT[COUNTRY[b.country]] && CONTINENT[COUNTRY[b.country]] !== 0) throw new Error(`a bonus for country ${b.country}, not on the council`)
+out.push(
+  '',
+  "; Long War's bonuses (features/lw-startbonus.md), in ItemBalance_Classic's order: Kind 0 a starting bonus (Choice: the",
+  "; start screen's option, Country its home), 1 a country's (while under a satellite and on the council), 2 a continent's",
+  "; (while all its countries are under satellites); Type what Long War's code asks for (EContinentBonus), Value its number",
+  '; (x Scale by difficulty).',
+  '[LongWarX2.LWBonuses]',
+  ...bonuses.map((b) => `+Bonuses=(Kind=${b.kind}, Choice=${b.choice}, ${b.kind === 2 ? `Continent=${b.continent}` : `Country=${COUNTRY[b.country]}`}, Type=${b.type}, Value=${b.value})`),
+  ...arr('Scale', values('FundingBalance').slice(8, 12)),
+)
 console.log(out.join('\r\n'))
 
 /**
