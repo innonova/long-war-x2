@@ -157,7 +157,6 @@ Seen:
 - **The bonuses that wait on their system:**
   - SHIVs and MECs: Ghost in the Machine, Robotics, NeoPanzers, Cyberware (NeoPanzers and
     Cyberware are wired into item costs already and act once those items exist);
-  - the grey market: Xenological Remedies;
   - officers: the officer side of Sandhurst, and Gift of Osiris's medal hours;
   - council requests and intel: Quai d'Orsay;
   - the Illuminator Gunsight item: Ancient Artifact;
@@ -219,3 +218,5 @@ as a medic, Kate Hill as infantry, all at rank 3, with rolled stats.
 - Which of a base class's two Long War classes a made soldier gets is random. Long War
   creates them in the base class, and its subclass follows from the perk taken later. The
   port has no base-class stage.
+
+Xenological Remedies acts now too, on the grey market's corpse prices (lw-greymarket): Sectoid corpses at §4 instead of §2 with China's.
