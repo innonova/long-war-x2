@@ -113,6 +113,20 @@ struct LWX2Light
 	var float Outer;
 	var float Lower;
 };
+/** EW's base (features/lw-base-view.md): a room location (XComHQ_RoomLocation, tagged R<row>_C<column>) and a camera
+ *  (CameraActor, by its tag: the base's view, each tile's, each room's). */
+struct LWX2Room
+{
+	var name Tag;
+	var vector Loc;
+};
+struct LWX2Camera
+{
+	var name Tag;
+	var vector Loc;
+	var rotator Rot;
+	var float FOV;
+};
 /** Each light's brightness times this (EW's lightmaps added bounced light the movable lights do not). */
 var config float LightScale;
 /** Which kinds are placed (the mission's own sun and sky light the map too). */
@@ -239,12 +253,18 @@ static function string ChooseMap(name Kind, int Ship)
 /** Spawns EW's lights (of LightKinds) moved by Shift; returns how many were placed. */
 static function int PlaceLights(Actor Spawner, vector Shift)
 {
+	local array<Actor> Placed;
+
+	return PlaceLightsOf(Map(), Spawner, Shift, Placed);
+}
+
+/** A converted map's lights (those of LightKinds), moved by Shift; returns how many, and adds them to Placed. */
+static function int PlaceLightsOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed)
+{
 	local LWX2Light L;
 	local Light A;
 	local int Count;
-	local LWX2EWMapData D;
 
-	D = Map();
 	foreach D.Lights(L)
 	{
 		if (default.LightKinds.Find(L.Kind) == INDEX_NONE)
@@ -271,6 +291,7 @@ static function int PlaceLights(Actor Spawner, vector Shift)
 		}
 		A.LightComponent.SetLightProperties(L.Brightness * (default.LightScale > 0 ? default.LightScale : 1.0), L.Color);
 		A.ReattachComponent(A.LightComponent);
+		Placed.AddItem(A);
 		Count++;
 	}
 	`log("LongWarX2: EW map:" @ Count @ "of" @ D.Lights.Length @ "lights placed", , 'LongWarX2');
@@ -295,6 +316,12 @@ static function int PlaceAll(Actor Spawner, vector Origin)
  */
 static function Place(Actor Spawner, vector Center, float Radius, vector At, class<Actor> ActorClass, out array<Actor> Placed, optional bool bCollideInPlayOnly)
 {
+	PlaceOf(Map(), Spawner, Center, Radius, At, ActorClass, Placed, bCollideInPlayOnly);
+}
+
+/** Place for a given converted map (its package loaded first). */
+static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Radius, vector At, class<Actor> ActorClass, out array<Actor> Placed, optional bool bCollideInPlayOnly)
+{
 	local LWX2Piece P;
 	local StaticMesh Mesh;
 	local Actor A;
@@ -302,10 +329,9 @@ static function Place(Actor Spawner, vector Center, float Radius, vector At, cla
 	local int Missing, i, Backdrop;
 	local array<LWX2Standin> Standins;
 	local MaterialInterface M;
-	local LWX2EWMapData D;
 
-	LoadPackage();
-	D = Map();
+	if (D.MapPackage != "")
+		DynamicLoadObject(D.MapPackage $ ".TheWorld", class'Object', true);
 	foreach D.Pieces(P)
 	{
 		if (Radius > 0 && VSize2D(P.Loc - Center) > Radius)
@@ -343,7 +369,7 @@ static function Place(Actor Spawner, vector Center, float Radius, vector At, cla
 		}
 		for (i = 0; i < P.Materials.Length; i++)
 		{
-			M = MaterialFor(P.Materials[i], A, Standins);
+			M = MaterialFor(P.Materials[i], A, Standins, D);
 			if (M != none)
 				Comp.SetMaterial(i, M);
 		}
@@ -390,7 +416,7 @@ static function int CountBlocked(XComWorldData World, vector At)
 }
 
 /** The material a slot gets: the EW material's XCOM 2 stand-in, made once; the EW material itself when it has none. */
-static function MaterialInterface MaterialFor(string Path, Object InOuter, out array<LWX2Standin> Standins)
+static function MaterialInterface MaterialFor(string Path, Object InOuter, out array<LWX2Standin> Standins, optional LWX2EWMapData D)
 {
 	local int k;
 	local LWX2Look L;
@@ -400,16 +426,18 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	local MaterialInstanceConstant MIC;
 	local Texture T;
 
+	if (D == none)
+		D = Map();
 	if (Path == "")
 		return none;
 	k = Standins.Find('Material', Path);
 	if (k != INDEX_NONE)
 		return Standins[k].Standin;
 	S.Material = Path;
-	k = Map().Looks.Find('Material', Path);
+	k = D.Looks.Find('Material', Path);
 	if (k != INDEX_NONE)
 	{
-		L = Map().Looks[k];
+		L = D.Looks[k];
 		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : ((L.Kind == 'Masked' && default.MaskedParent != "") ? default.MaskedParent : default.PropParent));
 	}
 	if (ParentPath != "" && L.Diffuse != "")

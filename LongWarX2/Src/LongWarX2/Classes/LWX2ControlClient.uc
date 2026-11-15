@@ -69,6 +69,28 @@ function Handle(string Line, out array<string> Out)
 	case "state":
 		Out.AddItem(GameState());
 		return;
+	case "basecam":
+		// A test aid: EW's base view asked for again, and where the camera is (features/lw-base-view.md).
+		class'LWX2EWBase'.static.Get(Pres()).Show();
+		Out.AddItem("camera at" @ XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.Location @ "fov" @ XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.FOV
+			@ "rooms" @ class'LWX2EWBase'.static.Data("Command1").Rooms.Length @ "cameras" @ class'LWX2EWBase'.static.Data("Command1").Cameras.Length);
+		return;
+	case "peek":
+		// A test aid: the Geoscape hidden (or shown again) to look at what is behind it (EW's base, features/lw-base-view.md).
+		Geo = UILWGeoscape(Pres().ScreenStack.GetFirstInstanceOf(class'UILWGeoscape'));
+		if (Geo == none)
+			Out.AddItem("ERR no Geoscape");
+		else if (Geo.bIsVisible)
+		{
+			Geo.Hide();
+			Out.AddItem("Geoscape hidden");
+		}
+		else
+		{
+			Geo.Show();
+			Out.AddItem("Geoscape shown");
+		}
+		return;
 	case "ping":
 		Out.AddItem("pong" @ (Pres().ScreenStack.GetCurrentScreen() != none ? string(Pres().ScreenStack.GetCurrentScreen().Class.Name) : "none"));
 		return;

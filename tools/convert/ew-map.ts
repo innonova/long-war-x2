@@ -423,6 +423,10 @@ function brushBox(index: number): { center: number[]; extent: number[] } | undef
 // EW's alien pods (where its aliens stand: the commander's pod, how many) and its spawn points.
 const pods: { loc: number[]; commander: boolean; min: number; max: number; level: string }[] = []
 const spawnPoints: number[][] = []
+/** EW's base (features/lw-base-view.md): its room locations (XComHQ_RoomLocation, tagged R<row>_C<column>) and its cameras
+ *  (CameraActor: the base's view, each tile's, each room's and its displays'), by their tags. */
+const rooms: { tag: string; loc: number[] }[] = []
+const cameras: { tag: string; loc: number[]; rot: number[]; fov: number }[] = []
 // EW's meld canisters' places (XComMeldContainerSpawnPoint: lw-loot.md): its spawn group (the drop zone's, in order), the
 // turn it self-destructs on (EW's default 3), hard or easy.
 const meldPoints: { loc: number[]; group: number; turns: number; hard: boolean }[] = []
@@ -476,6 +480,19 @@ exports.forEach((e, i) => {
     const t = actorTags(i)
     const loc = t?.find((x) => x.name === 'Location')
     if (loc) starts.push([f32(loc, 0), f32(loc, 1), f32(loc, 2)])
+  }
+  if (e.type === 'XComHQ_RoomLocation' || e.type === 'CameraActor') {
+    const t = actorTags(i)
+    const tag = t?.find((x) => x.name === 'Tag')
+    const loc = t?.find((x) => x.name === 'Location')
+    const name = tag ? meta.names[new DataView(tag.value.buffer, tag.value.byteOffset).getInt32(0, true)] : ''
+    if (!name || !loc) return
+    if (e.type === 'XComHQ_RoomLocation') rooms.push({ tag: name, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)] })
+    else {
+      const rot = t!.find((x) => x.name === 'Rotation')
+      const fov = t!.find((x) => x.name === 'FOVAngle')
+      cameras.push({ tag: name, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)], rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)], fov: fov ? f32(fov, 0) : 90 })
+    }
   }
   if (e.type === 'XComAlienPod' || e.type === 'XComAlienPod_Abduction' || e.type === 'XComAlienPod_Terror' || e.type === 'XComSpawnPoint') {
     const t = actorTags(i)
@@ -736,8 +753,9 @@ const maskExports = new Set([...masked.masks.values()].map((r) => exports[r - 1]
 // So each object of the world becomes a plain object of a simple class the package
 // already uses (PhysicalMaterial): no archetype, plain flags, and as data a stub
 // appended to the file: a net index and "None" (no properties).
-const donor = exports.find((e) => e.type === 'PhysicalMaterial')
-if (!donor) throw new Error('no PhysicalMaterial in the package to borrow a class from')
+// (Small levels, as EW's base's tiles, have none: then a carried package's class, Core.Package, as plain.)
+const donor = exports.find((e) => e.type === 'PhysicalMaterial') ?? exports.find((e) => e.type === 'Package')
+if (!donor) throw new Error('no PhysicalMaterial or Package in the package to borrow a class from')
 const donorClass = v.getInt32(donor.entryOffset + 0, true)
 const donorFlagsLo = v.getUint32(donor.entryOffset + 24, true)
 const donorFlagsHi = v.getUint32(donor.entryOffset + 28, true)
@@ -863,6 +881,9 @@ const lines = [
   ...pods.map((p) => `+Pods=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Commander=${p.commander},Min=${p.min},Max=${p.max}${p.level ? `,Level=${p.level}` : ''})`),
   ...spawnPoints.filter((p) => !p[3]).map((p) => `+SpawnPoints=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
   ...spawnPoints.filter((p) => p[3]).map((p) => `+CivilianSpawns=(X=${n(p[0]!)},Y=${n(p[1]!)},Z=${n(p[2]!)})`),
+  ...(rooms.length || cameras.length ? ["; EW's base (features/lw-base-view.md): its room locations (R<row>_C<column>) and its cameras, by their tags."] : []),
+  ...rooms.map((r) => `+Rooms=(Tag=${r.tag},Loc=(X=${n(r.loc[0]!)},Y=${n(r.loc[1]!)},Z=${n(r.loc[2]!)}))`),
+  ...cameras.map((c) => `+Cameras=(Tag=${c.tag},Loc=(X=${n(c.loc[0]!)},Y=${n(c.loc[1]!)},Z=${n(c.loc[2]!)}),Rot=(Pitch=${c.rot[0]},Yaw=${c.rot[1]},Roll=${c.rot[2]}),FOV=${n(c.fov)})`),
   "; EW's meld canisters' places (Group: the drop zone's, in their order; Turns: when it self-destructs; Hard or easy).",
   ...meldPoints.map((p) => `+MeldPoints=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Group=${p.group},Turns=${p.turns},Hard=${p.hard})`),
   "; EW's lights (point, spot, its sun and sky), spawned as movable lights.",

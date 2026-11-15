@@ -15,3 +15,6 @@ var config array<LWX2EWMapPieces.LWX2Pod> Pods;
 var config array<vector> SpawnPoints;
 var config array<LWX2EWMapPieces.LWX2Meld> MeldPoints;
 var config array<LWX2EWMapPieces.LWX2Light> Lights;
+/** EW's base (Command1): its room locations and cameras (features/lw-base-view.md). */
+var config array<LWX2EWMapPieces.LWX2Room> Rooms;
+var config array<LWX2EWMapPieces.LWX2Camera> Cameras;

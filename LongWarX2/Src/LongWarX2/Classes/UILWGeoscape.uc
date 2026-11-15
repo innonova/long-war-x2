@@ -118,14 +118,18 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	if (XComHQPresentationLayer(Movie.Pres) != none && XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD != none)
 		XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD.UpdateResources();
 	ShowAvengerButton(false);
+	// EW's base behind it, when converted on this machine (features/lw-base-view.md).
+	class'LWX2EWBase'.static.Get(self).Show();
 	`log("LongWarX2: Long War Geoscape shown", , 'LongWarX2');
 }
 
 simulated function OnRemoved()
 {
 	ShowAvengerButton(true);
+	class'LWX2EWBase'.static.Get(self).Hide();
 	super.OnRemoved();
 }
+
 
 /** The Avenger's LONG WAR GEOSCAPE button (UIScreenListener_LongWarX2HQ) is drawn above this screen: hidden while it is up. */
 simulated function ShowAvengerButton(bool bShow)
@@ -468,6 +472,8 @@ simulated function OnReceiveFocus()
 {
 	super.OnReceiveFocus();
 	Refresh();
+	// The base's tiles brought up to date, and its view back (a screen over this one may have moved the camera).
+	class'LWX2EWBase'.static.Get(self).Show();
 }
 
 defaultproperties
