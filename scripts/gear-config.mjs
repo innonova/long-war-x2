@@ -141,4 +141,19 @@ for (const m of core.matchAll(/^FoundryBalance=\((.*?)\)/gm)) {
       ')',
   )
 }
+// The grey market (XGItemTree.GetItemSalePrice, CanBeSold; LWGreyMarket): what Long War buys and for how much, its
+// ItemBalance_Normal's iCash (an item engineering builds, iTime not -1: 40% of it); never craft, their weapons, the satellite
+// or the Skyranger (CanBeSold's list). Corpse: Xenological Remedies raises its price (XGFacility_Engineering.IsCorpseItem).
+const UNSELLABLE = new Set([66, 100, 101, 102, 103, 104, 105, 116, 117, 118, 119, 120, 121, 122, 125, 126, 127, 184, 106, 192])
+const isCorpse = (i) => i === 187 || i === 188 || (i >= 134 && i <= 144) || (i >= 146 && i <= 147)
+out.push(
+  '',
+  "; The grey market (LWGreyMarket): Long War's price for each item it buys (built items at 40%), Corpse for Xenological Remedies.",
+  '[LongWarX2.LWGreyMarket]',
+  ...[...balance]
+    .filter(([item, b]) => item > 0 && b.cash > 0 && !UNSELLABLE.has(item) && ITEMS[item] && !/^eItem_(BEGIN|END)_/.test(ITEMS[item]))
+    .sort((a, b) => a[0] - b[0])
+    // Alloys and elerium are XCOM 2's own resources in the port (X2Item_LWArtifacts.ItemFor).
+    .map(([item, b]) => `+Sales=(Item=${item}, Template=${{ 161: 'EleriumDust', 162: 'AlienAlloy' }[item] ?? itemTemplate(item, ITEMS)}, Cash=${b.days !== -1 ? Math.trunc(b.cash * 0.4) : b.cash}${isCorpse(item) ? ', Corpse=true' : ''})`),
+)
 console.log(out.join('\r\n'))

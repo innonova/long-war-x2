@@ -16,7 +16,7 @@ buttons and text, no art).
 
 | System | Status | Looks | What is in | What is missing | Feature |
 |---|---|---|---|---|---|
-| EW's own strategy screens | part | LW | the start screen, research, engineering (items, manufacturing), the Foundry, the hangar (ship list, loadout), the strategy HUD (resources, clock) and the Situation Room (countries, panic, funding, satellites, doom tracker, HQ, UFOs on EW's earth) | each screen wired to Long War's state; EW's pictures; the 3D globe and base | `lw-ew-screens` |
+| EW's own strategy screens | part | LW | the start screen, research, engineering (items, manufacturing), the Foundry, the hangar (ship list, loadout), the grey market, the strategy HUD (resources, clock) and the Situation Room (countries, panic, funding, satellites, doom tracker, HQ, UFOs on EW's earth) | each screen wired to Long War's state; EW's pictures; the 3D globe and base | `lw-ew-screens` |
 | The Geoscape: clock, month, decisions | most | plain | Long War's time, month and events on a screen of our own, over XCOM 2's Avenger | a globe; the squad's flight time; XCOM 2's resource bar still shows | `lw-geoscape` |
 | Council, panic, funding | done | plain | countries, panic, leaving, the council report, funding | the monthly tallies (terrors thwarted …) in the report | `lw-geoscape` |
 | Satellites | done | plain | launching, coverage, detection | | `lw-geoscape` |
@@ -34,6 +34,7 @@ buttons and text, no art).
 | The story | most | plain | alien bases, Overseers, the Temple Ship | the HQ assault from month 4; Act 3; EXALT | `lw-story` |
 | EXALT | none | | | all of it | |
 | MECs, SHIVs, cybernetics | none | | | all of it | |
+| Grey market | done | LW | Long War's prices (built items at 40%, corpses with Xenological Remedies), what can be sold, NOT RESEARCHED, on EW's own GreyMarket screen | | `lw-greymarket` |
 | Squad selection and loadout | most | X2 | XCOM 2's squad select and armory for a Long War mission (Long War's squad size, rested soldiers first, Long War's launch, backing out leaves the mission) | slots 7 and 8 are filled, not picked; the scene is still the Avenger's launch bay | `lw-squad-select` |
 | Fatigue | most | X2 | Long War's hours, all in, shown as War of the Chosen's Tired | officers' hours, the country bonuses' | `lw-fatigue` |
 | Soldiers: recruits, ranks | most | X2 | Long War's eight classes, ranks, stat gains and experience in XCOM 2's barracks; Long War's random rookie stats | Wet Work, medals' experience | `lw-classes` |
