@@ -415,8 +415,34 @@ clicks showed "TIME: 8 hours, COST: 3 x (§0, 1 Shotgun)". START PROJECT began t
   Salvage, each with its words. No pictures: Long War's Foundry pictures are EW's, not yet
   converted.
 
+## Report (2026-11-15, the hangar on EW's own screens)
+
+- **`UILWEWHangar`** is EW's ShipList movie, driven as `UIShipList` drives it:
+  - each continent's hangar with its count of 6 ("ASIA (4/6)", FULL when full);
+  - each craft with its weapon and status (ready with its HP, repairing, refitting, on
+    its way somewhere, with the time left);
+  - the interceptors ordered ("Interceptor Purchase, Ready in 3 days");
+  - one empty bay.
+
+  A craft's row opens its loadout. TRANSFER picks the craft up, and every other
+  continent's empty bay then offers TRANSFER HERE (Escape or CANCEL TRANSFER drops it). An
+  empty bay's ORDER INTERCEPTORS asks to confirm, with the price and delivery time, in
+  XCOM 2's dialog box. The rules are `LWHangar`'s.
+- **`UILWEWShipLoadout`** is EW's ShipLoadout movie: the craft weapons XCOM has (Avalanche
+  and Stingray missiles always, the rest as many as are in the stores), with Long War's
+  numbers for the one selected (hit chance, firing time, damage, armour piercing) and the
+  refit time. A click equips it once confirmed (`LWHangar.Equip`).
+- The ShipList movie places itself by the stage's edges, so it isn't scaled up (scaled, it
+  ran off the left edge).
+- The Geoscape's HANGAR opens it. Without EW's screens converted, the plain hangar opens.
+
+Seen in a new campaign from India with Jai Jawan: Asia's hangar with four Ravens (the
+starting two and the bonus's two). An interceptor ordered to North America (§200, 3 days)
+showed as a pending purchase. Raven-1 transferred from Asia to Europe ("to Europe, 36h").
+Raven-1's loadout listed Stingray and Avalanche with their numbers.
+
 ### Left open
 
-- The hangar, base building and the grey market on their own screens.
-- The Foundry's pictures.
+- Base building and the grey market on their own screens.
+- The Foundry's and the craft weapons' pictures, and EW's craft icons in the ship list.
 - The strategy HUD (money, resources) is under the backdrop while these screens are up.

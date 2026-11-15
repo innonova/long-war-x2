@@ -288,9 +288,10 @@ simulated function string StoresText(XComGameState_LWStrategy S)
 	return Text;
 }
 
+/** The hangar on EW's own screen (the plain one without EW's screens). */
 simulated function OnHangar(UIButton Button)
 {
-	Movie.Pres.ScreenStack.Push(Spawn(class'UILWHangar', Movie.Pres));
+	class'UILWEWHangar'.static.Open(XComHQPresentationLayer(Movie.Pres));
 }
 
 simulated function OnBase(UIButton Button)
