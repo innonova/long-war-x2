@@ -29,10 +29,12 @@ ssh "$host" "tar -cf - --exclude=Content -C '$(dirname "$game")' LongWarX2" | ta
 ssh "$host" "cd C:\\Users\\aekms\\projects\\long-war-x2; git checkout -q -B main origin/main" >/dev/null 2>&1 || true
 
 # Nothing of the games, the player's config.
-rm -rf "$stage/LongWarX2/Content" "$stage/LongWarX2/Localization/XComGame.int" "$stage/LongWarX2/Config/XComLWX2EWMap.ini" "$stage/LongWarX2/Config/XComLWX2EWUnits.ini"
+rm -rf "$stage/LongWarX2/Content" "$stage/LongWarX2/Localization/XComGame.int" "$stage/LongWarX2/Localization/LongWarX2.int" "$stage/LongWarX2/Config/XComLWX2EWMap.ini" "$stage/LongWarX2/Config/XComLWX2EWUnits.ini"
 node scripts/airwar-config.mjs ../xcom-ew-lw-tree/data/airwar.json --player > "$stage/LongWarX2/Config/XComLWAirWar.ini"
 # The mod's own maps (ours: the template plot the setup program writes each EW map's plot from, the empty parcel).
 mkdir -p "$stage/LongWarX2/Content" && cp tools/maps/*.umap "$stage/LongWarX2/Content/"
+# No Long War words either (the setup writes them from the player's install).
+if find "$stage" -iname '*.int' | grep -q .; then echo "Long War's words in the download:"; find "$stage" -iname '*.int'; exit 1; fi
 if find "$stage" -iname '*.upk' -o -iname '*.tfc' -o -iname '*.png' | grep -q .; then echo "game content in the download:"; find "$stage" -iname '*.upk' -o -iname '*.tfc' -o -iname '*.png'; exit 1; fi
 
 npm run -s setup:bundle >/dev/null
