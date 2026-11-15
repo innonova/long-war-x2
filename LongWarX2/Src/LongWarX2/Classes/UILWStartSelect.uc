@@ -29,7 +29,10 @@ static function OpenGeoscape(XComHQPresentationLayer HQPres)
 		`log("LongWarX2: start screen shown", , 'LongWarX2');
 		return;
 	}
-	if (!HQPres.ScreenStack.IsInStack(class'UILWGeoscape'))
+	// The hub (EW's base and room menu, features/lw-base-view.md) when EW's screens are converted; else the Geoscape.
+	if (class'UILWEWHub'.default.Enabled && class'UILWEWScreen'.static.HasEWScreens())
+		class'UILWEWHub'.static.Open(HQPres);
+	else if (!HQPres.ScreenStack.IsInStack(class'UILWGeoscape'))
 		HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWGeoscape', HQPres));
 }
 

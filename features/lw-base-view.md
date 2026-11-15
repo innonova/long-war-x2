@@ -99,3 +99,43 @@ tiles with the shaft, dug-out caves and rock, and the starting satellite uplink 
   backdrop over it), and the Geoscape's own background box, which covers it.
 - Squad select and the armory in EW's rooms (plan step 4), and the Avenger not loaded
   (step 5).
+
+## Report (2026-11-15, the hub)
+
+- **`UILWEWHub`**: the Long War hub on EW's layout. EW's base is in view behind it, and EW's
+  strategy HUD movie (`StrategyHUD`) provides the room menu, filled the way EW's
+  `UIStrategyHUD_FacilityMenu` fills it (`AddMenuOption`). The rooms are Mission Control
+  (the Long War Geoscape: time, decisions, countries), Situation Room, Research,
+  Engineering, Foundry, Barracks (XCOM 2's armory list, then its armory on the soldier),
+  Hangar, Base and Grey Market. Escape closes the hub, back to the Avenger. The resources,
+  clock and events stay on `UILWEWStrategyHUD` beside it, so the hub hides its own copies.
+  - EW lays its menu out when its items load, which doesn't happen here, so every item
+    sat at x 0. The hub lays them out itself in a centred row across the top.
+  - EW's menu items don't report clicks to XCOM 2. The hub asks each item's clip where
+    the mouse is (`_xmouse`, `_ymouse`), as the research screen does. The tab is drawn a
+    little above its clip's box, so half its height above the box counts too.
+  - A screen closed just before (the start screen) sends XCOM 2's camera back to the
+    Avenger afterwards, so the hub asks for the base's view again 0.6 s later.
+- **The height fog:** the base lies 60 000 units below the Avenger, inside the strategy
+  world's height fog, which drowned it in the sky colour (red, nothing else visible).
+  `LWX2EWBase.Fog` switches the world's `HeightFog` and `ExponentialHeightFog` off while
+  the base is shown, and back on when the Avenger's view returns. With it off, the tiles
+  show: caves, dug rooms, the uplink, the shaft.
+- **Gated:** `[LongWarX2.UILWEWHub] Enabled=false` (XComLWEWMaps.ini) until it looks right.
+  On, `UILWStartSelect.OpenGeoscape` opens the hub in place of the Geoscape; the Avenger's
+  screen listener and the strategy-map redirect go there too.
+
+Seen on wingpu (`logs/wingpu_ew_hub.png`, not committed): the menu across the top, the
+HUD, and EW's base behind. Mission Control opens the Geoscape, and closing it returns to
+the hub with the base in view.
+
+### Left open (next)
+
+- **Colour:** a red/purple cast over the whole base. The fog is off, so it comes from
+  the Avenger world's light or post-process.
+- **The fixed rooms** at the top barely show.
+- **Materials:** EW's base palette materials (`HQ_Master`) draw as checkerboards. EW's
+  shared tile-border glow mesh (`HQ_RoomBorderFX`) isn't converted. Solid rock draws black.
+- The base's levels converted by the player's setup.
+- Squad select and the armory in EW's rooms (plan step 4), and the Avenger not loaded
+  (step 5).

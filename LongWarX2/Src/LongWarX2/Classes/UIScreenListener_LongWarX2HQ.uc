@@ -24,7 +24,7 @@ function OnOpen(UIButton Button)
 	local XComHQPresentationLayer Pres;
 
 	Pres = `HQPRES;
-	if (Pres.ScreenStack.IsInStack(class'UILWHeadquarters') || Pres.ScreenStack.IsInStack(class'UILWGeoscape'))
+	if (Pres.ScreenStack.IsInStack(class'UILWHeadquarters') || Pres.ScreenStack.IsInStack(class'UILWGeoscape') || Pres.ScreenStack.IsInStack(class'UILWEWHub'))
 		return;
 	// Long War's start screen first, in a campaign not yet begun.
 	class'UILWStartSelect'.static.OpenGeoscape(Pres);

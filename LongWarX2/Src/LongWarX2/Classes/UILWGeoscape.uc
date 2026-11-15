@@ -126,7 +126,9 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 simulated function OnRemoved()
 {
 	ShowAvengerButton(true);
-	class'LWX2EWBase'.static.Get(self).Hide();
+	// The camera back to the Avenger, unless the hub is under this (it shows the base again as it gets the focus).
+	if (!Movie.Pres.ScreenStack.IsInStack(class'UILWEWHub'))
+		class'LWX2EWBase'.static.Get(self).Hide();
 	super.OnRemoved();
 }
 

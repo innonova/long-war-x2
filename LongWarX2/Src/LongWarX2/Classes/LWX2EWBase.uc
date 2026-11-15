@@ -98,6 +98,28 @@ function Show()
 	}
 	if (`HQPRES != none)
 		`HQPRES.CAMLookAtNamedLocation("LWX2EWBase", 0);
+	Fog(false);
+}
+
+/** The strategy world's height fog off while EW's base is in view (the base lies far below the Avenger, inside it: the
+ *  scene drowned in the Avenger's sky colour), back on with the Avenger's views. */
+function Fog(bool bOn)
+{
+	local HeightFog F;
+	local ExponentialHeightFog E;
+	local int n;
+
+	foreach AllActors(class'HeightFog', F)
+	{
+		F.Component.SetEnabled(bOn);
+		n++;
+	}
+	foreach AllActors(class'ExponentialHeightFog', E)
+	{
+		E.Component.SetEnabled(bOn);
+		n++;
+	}
+	`log("LongWarX2: EW base:" @ n @ "height fogs" @ (bOn ? "on" : "off"), , 'LongWarX2');
 }
 
 /** The camera given back to the strategy layer (the Avenger's views). */
@@ -105,6 +127,7 @@ function Hide()
 {
 	if (`HQPRES != none)
 		`HQPRES.CAMLookAtNamedLocation("Base", 0);
+	Fog(true);
 }
 
 /** Each tile below the top row with EW's level for it, placed again where the Long War base has changed. */

@@ -70,6 +70,11 @@ console.log(
     '; camera stands in EW\'s coordinates, looking as EW\'s does, and its field of view.',
     'ViewLoc=(X=1100, Y=9000, Z=-3600)',
     'ViewFOV=70',
+    '',
+    "; The Long War hub (UILWEWHub: EW's base and room menu) as the strategy layer's root in place of the Geoscape; off while",
+    '; it is being made (features/lw-base-view.md).',
+    '[LongWarX2.UILWEWHub]',
+    'Enabled=false',
     ...['Static_SituationRoom', 'Static_Infirmary', 'Static_ScienceLabs', 'Static_Barracks', 'Static_Hangar', 'Static_Hangar_CAP', 'Static_MissionControl', 'Static_Armory', 'Static_Engineering'].map((l) => `+FixedLevels="${l}"`),
   ].join('\r\n'),
 )
