@@ -24,8 +24,43 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 {
 	bHangar = class'LWX2EWBase'.static.SquadHere();
 	if (bHangar)
+	{
 		UIDisplayCam = "LWX2EWBase_" $ class'LWX2EWBase'.default.SquadCamera;
+		// Every slot of Long War's squad shown (up to eight, after the Officer Training School's upgrades): the hangar has
+		// room for them, where the launch bay has spots for six (XCOM 2's MaxDisplayedSlots; the rest go unseen). The two
+		// new slots at the ends of the row.
+		MaxDisplayedSlots = 8;
+		SlotListOrder.Length = 0;
+		SlotListOrder.AddItem(6);
+		SlotListOrder.AddItem(4);
+		SlotListOrder.AddItem(1);
+		SlotListOrder.AddItem(0);
+		SlotListOrder.AddItem(2);
+		SlotListOrder.AddItem(3);
+		SlotListOrder.AddItem(5);
+		SlotListOrder.AddItem(7);
+	}
 	super.InitScreen(InitController, InitMovie, InitName);
+	// (After the list's own init, which anchors it bottom-centre and moves it by half its width: UIList_SquadEditor.
+	// InitPosition.)
+	SetTimer(0.3f, false, nameof(FitSlots));
+}
+
+/** More slots than fit across the screen (a card is 282 wide): the row scaled down to fit, centred on the list's
+ *  bottom-centre anchor. */
+function FitSlots()
+{
+	local float RowWidth, Scale;
+
+	if (!bHangar || m_kSlotList == none)
+		return;
+	RowWidth = GetTotalSlots() * (class'UISquadSelect_ListItem'.default.width + LIST_ITEM_PADDING);
+	Scale = FMin(1.0, (Movie.UI_RES_X - 40) / RowWidth);
+	// (The list masks what lies beyond its width: as wide as the row, or the last card is cut and a scroll bar shows.)
+	if (m_kSlotList.Width < RowWidth)
+		m_kSlotList.SetWidth(RowWidth);
+	m_kSlotList.SetPanelScale(Scale);
+	m_kSlotList.SetX(-RowWidth * Scale / 2);
 }
 
 /** EW's hangar in view, through EW's camera for the squad. */
@@ -71,7 +106,7 @@ simulated function XComUnitPawn CreatePawn(StateObjectReference UnitRef, int ind
 	Column = SlotListOrder.Find(index);
 	if (Column == INDEX_NONE)
 		Column = index;
-	class'LWX2EWBase'.static.SquadSpot(Column, Max(SoldierSlotCount, SlotListOrder.Length), Loc, Rot);
+	class'LWX2EWBase'.static.SquadSpot(Column, SlotListOrder.Length, Loc, Rot);
 	UnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitRef.ObjectID));
 	UnitPawn = m_kPawnMgr.RequestCinematicPawn(self, UnitRef.ObjectID, Loc, Rot, name("Soldier" $ (index + 1)), '', true);
 	UnitPawn.GotoState('CharacterCustomization');
@@ -94,6 +129,7 @@ simulated function OnReceiveFocus()
 	if (bHangar && !bLaunched)
 		ShowHangar();
 	super.OnReceiveFocus();
+	FitSlots();
 }
 
 simulated function OnLoseFocus()

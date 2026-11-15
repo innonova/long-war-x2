@@ -36,7 +36,7 @@ buttons and text, no art).
 | EXALT | none | | | all of it | |
 | MECs, SHIVs, cybernetics | none | | | all of it | |
 | Grey market | done | LW | Long War's prices (built items at 40%, corpses with Xenological Remedies), what can be sold, NOT RESEARCHED, on EW's own GreyMarket screen | | `lw-greymarket` |
-| Squad selection and loadout | most | X2 | XCOM 2's squad select and armory for a Long War mission (Long War's squad size, rested soldiers first, Long War's launch, backing out leaves the mission) | slots 7 and 8 are filled, not picked; the scene is still the Avenger's launch bay | `lw-squad-select` |
+| Squad selection and loadout | most | X2 | XCOM 2's squad select and armory for a Long War mission (Long War's squad size, rested soldiers first, Long War's launch, backing out leaves the mission) | the armory and loadout still in the Avenger's armory (squad select itself is in EW's hangar, all slots picked) | `lw-squad-select` |
 | Fatigue | most | X2 | Long War's hours, all in, shown as War of the Chosen's Tired | officers' hours, the country bonuses' | `lw-fatigue` |
 | Soldiers: recruits, ranks | most | X2 | Long War's eight classes, ranks, stat gains and experience in XCOM 2's barracks; Long War's random rookie stats | Wet Work, medals' experience | `lw-classes` |
 

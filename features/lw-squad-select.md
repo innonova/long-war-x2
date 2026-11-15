@@ -82,3 +82,20 @@ How it is built:
   case is worth for now.
 - The launch bay's walk-up and departure cinematics stay, since the Avenger is still the
   scene. They go when the Avenger does.
+
+## Report (2026-11-16, in EW's hangar; slots 7 and 8 picked)
+
+Squad select now stands the squad in Enemy Within's hangar, in front of the Skyranger,
+through EW's camera for it (features/lw-base-view.md, plan step 4), in place of the Avenger's
+launch bay; launching and backing out go straight on (no launch-bay cinematic).
+
+- **Every slot is picked there**, up to Long War's eight: `MaxDisplayedSlots` 8 in the
+  hangar (the launch bay keeps XCOM 2's six, the rest added unseen at launch), the slot
+  order extended with the two new slots at the ends of the row, the soldiers placed in the
+  same order.
+- **The row of cards fits the screen**: more than six (a card is 282 wide) are scaled down
+  and centred, the list widened to the row so nothing is masked off.
+- Checked on wingpu with squad size 7 (an Officer Training School placed and the upgrade
+  bought on the control port): seven cards, seven soldiers in the hangar
+  (`logs/wingpu_squad_ew_hangar.png`, not committed); launched, all seven were in the
+  mission.
