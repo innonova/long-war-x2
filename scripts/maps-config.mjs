@@ -90,9 +90,9 @@ console.log(
       'Addon_GollopChamber', 'Addon_HyperwaveRadar', 'Addon_Laboratory', 'Addon_LargeRadar', 'Addon_OfficerTrainingSchool', 'Addon_PowerGenerator', 'Addon_PsionicLab', 'Addon_SmallRadar', 'Addon_SolidRock',
       'Addon_ThermalCave', 'Addon_ThermalPower', 'Addon_Workshop'].map((l) => `+BaseLevels="${l}"`),
     '',
-    "; The Long War hub (UILWEWHub: EW's base and room menu) as the strategy layer's root in place of the Geoscape; off while",
-    '; it is being made (features/lw-base-view.md).',
+    "; The Long War hub (UILWEWHub: EW's base, its rooms and Mission Control) as the strategy layer's root in place of the",
+    "; Geoscape, where EW's base is converted (the setup does it); false: the Geoscape (features/lw-base-view.md).",
     '[LongWarX2.UILWEWHub]',
-    'Enabled=false',
+    'Enabled=true',
   ].join('\r\n'),
 )

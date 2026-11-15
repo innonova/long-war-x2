@@ -290,6 +290,9 @@ async function convertEW(ew, target) {
       execFileSync(process.execPath, ['--convert-map', src, out, ini], {
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'pipe'],
+        // (A map takes seconds; a child that hangs, as one did once on the test machine after writing its files, fails
+        // that map instead of the setup waiting for ever: it is converted on the next run.)
+        timeout: 10 * 60 * 1000,
         env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=12288' },
         windowsHide: true,
       }),

@@ -264,7 +264,8 @@ const out = [
   "; Recruits become Long War's classes, not XCOM 2's.",
   ...['Ranger', 'Sharpshooter', 'Grenadier', 'Specialist'].flatMap((n) => [`[${n} X2SoldierClassTemplate]`, 'NumInForcedDeck=0', 'NumInDeck=0']),
 ]
-// The classes' starting kits: the item manager reads GameData (XComGameData.ini), not ClassData.
+// The classes' starting kits: the item manager reads GameData (XComGameData.ini), not ClassData. (And the Avenger's
+// sky-and-light level, also GameData's.)
 writeFileSync(
   join(mod, 'Config', 'XComGameData.ini'),
   [
@@ -284,6 +285,12 @@ writeFileSync(
     "; A recruit costs Long War's SOLDIER_COST on every difficulty (XCOM 2 asks more on Legend).",
     '[XComGame.XComGameState_HeadquartersResistance]',
     ...[0, 1, 2, 3].map((d) => `RecruitSupplyCosts[${d}]=${Number(core.match(/^SOLDIER_COST\s*=\s*(\d+)/m)[1])}`),
+    "; One sky-and-light level for the Avenger at every hour (XCOM 2's daylight): its ambient light reaches EW's base in the",
+    "; same world (features/lw-base-view.md), which took the Avenger's colour of the hour (red at sunrise, blue at night).",
+    '[XComGame.XGBase]',
+    '!GenericTimeOfDayMaps=()',
+    ...['eTimeOfDay_Dawn', 'eTimeOfDay_Noon', 'eTimeofDay_Sunset', 'eTimeOfDay_Dusk', 'eTimeOfDay_Night'].map((t) => `+GenericTimeOfDayMaps=(MapName="EnvLighting_Day_AVG", eTimeOfDay=${t})`),
+    '!BiomeTimeOfDayMaps=()',
   ].join('\r\n') + '\r\n',
 )
 const decode = (v) => {
