@@ -718,5 +718,14 @@ and Per Ardua's 5.
   around 13 instead of 12). The port already uses Long War's numbers for perks and items,
   and the psi rules expect Long War's will. War of the Chosen's tired and shaken bands are
   shares of the maximum, so they follow.
+
+### Fix (2026-11-15): recruits "Wounded" at the start
+
+Many recruits of a new campaign showed as Wounded or Gravely Wounded: HP 2/4 where the roll
+gave 4. `SetBaseMaxStat` sets the current HP to the new maximum itself (will it leaves), and
+the roll then added the change to the current HP again. Each stat now keeps the gap below its
+maximum the soldier had before the roll. Checked in a new campaign: 73 of 74 soldiers at full
+HP, the other one XCOM 2 starts out healing (4/5 before the roll, 2/3 after). Campaigns
+started on the 3dfb66b build keep their halved recruits; a new campaign is needed.
 - In a campaign begun before this, each soldier is rolled once, the next time the soldier
   pass runs (the Geoscape, armory, squad select). Their will drops to Long War's range.

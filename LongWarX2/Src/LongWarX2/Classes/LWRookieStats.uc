@@ -74,11 +74,15 @@ static function Roll(XComGameState_Unit Unit)
 static function SetStat(XComGameState_Unit Unit, ECharStatType Stat, int Value)
 {
 	local int Delta;
+	local float Gap;
 
 	Delta = Value - int(Unit.GetMyTemplate().CharacterBaseStats[Stat]);
 	if (Delta == 0)
 		return;
+	// The current value kept as far below the maximum as it was (a wound, will spent): SetBaseMaxStat sets the current
+	// HP to the new maximum itself, and leaves will as it was, so adding the change to the current value as well left
+	// fresh recruits with half their HP ("Wounded" at the campaign's start).
+	Gap = Unit.GetMaxStat(Stat) - Unit.GetCurrentStat(Stat);
 	Unit.SetBaseMaxStat(Stat, Unit.GetBaseStat(Stat) + Delta);
-	if (Stat == eStat_HP)
-		Unit.SetCurrentStat(eStat_HP, Max(1, Unit.GetCurrentStat(eStat_HP) + Delta));
+	Unit.SetCurrentStat(Stat, FMax(Stat == eStat_HP ? 1.0 : 0.0, Unit.GetMaxStat(Stat) - Gap));
 }

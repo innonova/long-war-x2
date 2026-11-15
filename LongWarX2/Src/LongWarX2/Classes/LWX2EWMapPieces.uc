@@ -78,6 +78,17 @@ var config string AlienParent;
 var config array<LWX2Scalar> StandinScalars;
 /** Textures set on every stand-in (Masks white: the parents' own value for "no mask"; their placeholder darkened everything). */
 var config array<LWX2TextureParam> StandinTextures;
+/**
+ * EW materials no stand-in can be made from (no diffuse map found), as the plot writer treats them (ew-plot.ts): by a part
+ * of their name, case aside. Skipped: not drawn (markers, skies, decal-like effects an opaque stand-in draws as slabs); a
+ * piece whose materials are all skipped is not placed. Glass: a translucent pane. Black (the name ending so): black.
+ * Anything else: plain grey (GreyTint). Before, EW's own material was kept, which XCOM 2 draws as its checkerboard.
+ */
+var config array<string> SkipMaterials;
+var config array<string> GlassMaterials;
+var config string GlassParent;
+var config float GlassOpacity;
+var config LinearColor GreyTint;
 /** EW's alien pods (lw-missions.md, step 2): where its aliens stand, the commander's pod, how many. */
 /** A place of EW's meld canisters (XComMeldContainerSpawnPoint; lw-loot.md): its drop zone's group, the turn it is gone, hard or easy. */
 struct LWX2Meld
@@ -259,7 +270,7 @@ static function int PlaceLights(Actor Spawner, vector Shift)
 }
 
 /** A converted map's lights (those of LightKinds), moved by Shift; returns how many, and adds them to Placed. */
-static function int PlaceLightsOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed)
+static function int PlaceLightsOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed, optional bool bNoShadows)
 {
 	local LWX2Light L;
 	local Light A;
@@ -271,8 +282,10 @@ static function int PlaceLightsOf(LWX2EWMapData D, Actor Spawner, vector Shift, 
 			continue;
 		switch (L.Kind)
 		{
-			case 'Point': A = Spawner.Spawn(class'LWX2PointLight', , , L.Loc + Shift, L.Rot); break;
-			case 'Spot': A = Spawner.Spawn(class'LWX2SpotLight', , , L.Loc + Shift, L.Rot); break;
+			// (Without shadows, bNoShadows: EW baked its lights' shadows into lightmaps; hundreds of movable shadowing lights,
+			// as in its base, are more than XCOM 2 draws, and which it draws changes.)
+			case 'Point': A = Spawner.Spawn(bNoShadows ? class'LWX2BasePointLight' : class'LWX2PointLight', , , L.Loc + Shift, L.Rot); break;
+			case 'Spot': A = Spawner.Spawn(bNoShadows ? class'LWX2BaseSpotLight' : class'LWX2SpotLight', , , L.Loc + Shift, L.Rot); break;
 			case 'Sun': A = Spawner.Spawn(class'LWX2SunLight', , , L.Loc + Shift, L.Rot); break;
 			case 'Sky': A = Spawner.Spawn(class'LWX2SkyLight', , , L.Loc + Shift, L.Rot); break;
 			default: A = none;
@@ -320,13 +333,13 @@ static function Place(Actor Spawner, vector Center, float Radius, vector At, cla
 }
 
 /** Place for a given converted map (its package loaded first). */
-static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Radius, vector At, class<Actor> ActorClass, out array<Actor> Placed, optional bool bCollideInPlayOnly)
+static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Radius, vector At, class<Actor> ActorClass, out array<Actor> Placed, optional bool bCollideInPlayOnly, optional bool bDirectLight)
 {
 	local LWX2Piece P;
 	local StaticMesh Mesh;
 	local Actor A;
 	local StaticMeshComponent Comp;
-	local int Missing, i, Backdrop;
+	local int Missing, i, Backdrop, Skipped;
 	local array<LWX2Standin> Standins;
 	local MaterialInterface M;
 
@@ -336,6 +349,11 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 	{
 		if (Radius > 0 && VSize2D(P.Loc - Center) > Radius)
 			continue;
+		if (AllSkipped(P, D))
+		{
+			Skipped++;
+			continue;
+		}
 		Mesh = StaticMesh(DynamicLoadObject(P.Mesh, class'StaticMesh', true));
 		if (Mesh == none)
 		{
@@ -350,6 +368,14 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 			DynamicSMActor(A).SetStaticMesh(Mesh);
 			Comp = DynamicSMActor(A).StaticMeshComponent;
 			A.SetCollision(false, false);
+			// Lit by the lights themselves (bDirectLight), not through the actor's light environment, which folds the
+			// lights near it into one approximation as it is made and keeps it: EW's base, placed while the Avenger's sun was
+			// on, kept that sun's colour of the hour (blue, purple, red, green from one campaign to the next).
+			if (bDirectLight && DynamicSMActor(A).LightEnvironment != none)
+			{
+				DynamicSMActor(A).LightEnvironment.SetEnabled(false);
+				Comp.SetLightEnvironment(none);
+			}
 		}
 		else
 		{
@@ -375,7 +401,7 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 		}
 		Placed.AddItem(A);
 	}
-	`log("LongWarX2: EW map:" @ Placed.Length @ "pieces placed as" @ ActorClass.Name $ "," @ Missing @ "meshes not found;" @ Standins.Length @ "materials" $ ";" @ Backdrop @ "backdrop pieces without collision", , 'LongWarX2');
+	`log("LongWarX2: EW map:" @ Placed.Length @ "pieces placed as" @ ActorClass.Name $ "," @ Missing @ "meshes not found;" @ Standins.Length @ "materials" $ ";" @ Backdrop @ "backdrop pieces without collision;" @ Skipped @ "skipped (markers, skies, decals)", , 'LongWarX2');
 }
 
 /** Loads the converted map package (any of its objects loads it whole: then its meshes are found by their paths). */
@@ -415,6 +441,76 @@ static function int CountBlocked(XComWorldData World, vector At)
 	return n;
 }
 
+/** Whether a part of the path, case aside, is one of these. */
+static function bool Matches(string Path, array<string> Parts)
+{
+	local string P;
+
+	foreach Parts(P)
+		if (P != "" && InStr(Locs(Path), Locs(P)) != INDEX_NONE)
+			return true;
+	return false;
+}
+
+/** Whether every material of the piece is an EW material without a diffuse that is skipped (SkipMaterials). */
+static function bool AllSkipped(LWX2Piece P, LWX2EWMapData D)
+{
+	local string M;
+	local int k;
+
+	if (P.Materials.Length == 0 || default.SkipMaterials.Length == 0)
+		return false;
+	foreach P.Materials(M)
+	{
+		if (M == "")
+			continue;
+		k = D.Looks.Find('Material', M);
+		if (k == INDEX_NONE || D.Looks[k].Diffuse != "" || !Matches(M, default.SkipMaterials))
+			return false;
+	}
+	return true;
+}
+
+/** The stand-in for an EW material without a diffuse: glass a translucent pane, black black, else plain grey. */
+static function MaterialInterface PlainStandin(string Path, Object InOuter)
+{
+	local MaterialInstanceConstant MIC;
+	local Material Parent;
+	local Texture T;
+	local LinearColor Tint;
+	local bool bGlass;
+	local int k;
+
+	bGlass = Matches(Path, default.GlassMaterials) && default.GlassParent != "";
+	Parent = Material(DynamicLoadObject(bGlass ? default.GlassParent : default.PropParent, class'Material', true));
+	if (Parent == none)
+		return none;
+	MIC = new(InOuter) class'MaterialInstanceConstant';
+	MIC.SetParent(Parent);
+	T = Texture(DynamicLoadObject("EngineResources.WhiteSquareTexture", class'Texture', true));
+	if (T != none)
+		MIC.SetTextureParameterValue('Diffuse', T);
+	if (bGlass)
+	{
+		MIC.SetScalarParameterValue('Opacity', default.GlassOpacity);
+		MIC.SetScalarParameterValue('SpecularScale', 0.5);
+		return MIC;
+	}
+	for (k = 0; k < default.StandinScalars.Length; k++)
+		MIC.SetScalarParameterValue(default.StandinScalars[k].Name, default.StandinScalars[k].Value);
+	for (k = 0; k < default.StandinTextures.Length; k++)
+	{
+		T = Texture(DynamicLoadObject(default.StandinTextures[k].Path, class'Texture', true));
+		if (T != none)
+			MIC.SetTextureParameterValue(default.StandinTextures[k].Name, T);
+	}
+	Tint = default.GreyTint;
+	if (Right(Locs(Path), 5) == "black")
+		Tint = MakeLinearColor(0, 0, 0, 1);
+	MIC.SetVectorParameterValue('TintColor', Tint);
+	return MIC;
+}
+
 /** The material a slot gets: the EW material's XCOM 2 stand-in, made once; the EW material itself when it has none. */
 static function MaterialInterface MaterialFor(string Path, Object InOuter, out array<LWX2Standin> Standins, optional LWX2EWMapData D)
 {
@@ -439,6 +535,15 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	{
 		L = D.Looks[k];
 		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : ((L.Kind == 'Masked' && default.MaskedParent != "") ? default.MaskedParent : default.PropParent));
+	}
+	if (k != INDEX_NONE && L.Diffuse == "" && default.PropParent != "" && !Matches(Path, default.SkipMaterials))
+	{
+		S.Standin = PlainStandin(Path, InOuter);
+		if (S.Standin != none)
+		{
+			Standins.AddItem(S);
+			return S.Standin;
+		}
 	}
 	if (ParentPath != "" && L.Diffuse != "")
 	{

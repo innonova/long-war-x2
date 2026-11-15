@@ -22,6 +22,13 @@ var array<Actor> Tiles;
 /** The tiles' types and facilities as placed (Refresh places them again when they differ). */
 var array<int> PlacedType, PlacedFacility;
 var CameraActor View;
+/** The strategy world's sky lights and suns switched off while the base is in view (Fog), to switch on again. */
+var array<LightComponent> WorldLights;
+/** The lighting level streamed in at the base while it is in view, for its ambient light (one of XCOM 2's environment
+ *  lighting levels, as a map's plot has: its ambient cube lights the base evenly; its sun and fog are switched off with
+ *  the world's). "": none, the base lit by EW's own lights alone (dark: EW baked most of its light). */
+var config string BaseLighting;
+var LevelStreaming LightingLevel;
 
 /** The base of this world (made the first time). */
 static function LWX2EWBase Get(Actor Finder)
@@ -60,16 +67,26 @@ function Show()
 	if (!Converted())
 		return;
 	Command = Data("Command1");
+	// (The world's fog and sun off first: what is placed is lit without them. And the Avenger hidden: its rooms, its
+	// terrain, and its sky-and-light level for the hour, whose ambient light cast the base blue, purple, red or green from one
+	// campaign to the next.)
+	Fog(false);
+	AvengerShown(false);
+	if (BaseLighting != "" && LightingLevel == none)
+	{
+		LightingLevel = `MAPS.AddStreamingMap(BaseLighting, BaseOffset, rot(0, 0, 0), false, true, true);
+		`log("LongWarX2: EW base: lighting level" @ BaseLighting @ (LightingLevel != none ? "streamed in" : "not found"), , 'LongWarX2');
+	}
 	if (Fixed.Length == 0)
 	{
-		class'LWX2EWMapPieces'.static.PlaceOf(Command, self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed);
-		class'LWX2EWMapPieces'.static.PlaceLightsOf(Command, self, BaseOffset, Fixed);
+		class'LWX2EWMapPieces'.static.PlaceOf(Command, self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
+		class'LWX2EWMapPieces'.static.PlaceLightsOf(Command, self, BaseOffset, Fixed, true);
 		foreach FixedLevels(Level)
 		{
 			if (Data(Level).Pieces.Length == 0)
 				continue;
-			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed);
-			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, BaseOffset, Fixed);
+			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
+			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, BaseOffset, Fixed, true);
 		}
 		`log("LongWarX2: EW base: the shell and" @ FixedLevels.Length @ "fixed rooms placed," @ Fixed.Length @ "actors", , 'LongWarX2');
 	}
@@ -93,20 +110,49 @@ function Show()
 		{
 			View.FOVAngle = C.FOV;
 			View.bConstrainAspectRatio = false;
+			NeutralLook(View);
 		}
 		`log("LongWarX2: EW base: its camera" @ (View != none ? "at" @ View.Location : "not spawned"), , 'LongWarX2');
 	}
 	if (`HQPRES != none)
 		`HQPRES.CAMLookAtNamedLocation("LWX2EWBase", 0);
-	Fog(false);
 }
 
-/** The strategy world's height fog off while EW's base is in view (the base lies far below the Avenger, inside it: the
- *  scene drowned in the Avenger's sky colour), back on with the Avenger's views. */
+/** The camera's own post-process, which XCOM 2's HQ camera takes from the camera it views through
+ *  (XComCamState_HQ_BaseRoomView.GetViewFromCameraName): a neutral colour grade (no lookup table, tint or desaturation)
+ *  and no fog. Without it the world's settings apply, which follow the Avenger's time of day: the base cast blue, purple,
+ *  red or orange from one campaign to the next. */
+static function NeutralLook(CameraActor Cam)
+{
+	local vector One;
+
+	One = vect(1, 1, 1);
+	Cam.CamOverridePostProcessAlpha = 1.0;
+	Cam.CamOverridePostProcess.bOverride_Scene_ColorGradingLUT = true;
+	Cam.CamOverridePostProcess.ColorGrading_LookupTable = none;
+	Cam.CamOverridePostProcess.bOverride_Scene_Desaturation = true;
+	Cam.CamOverridePostProcess.Scene_Desaturation = 0;
+	Cam.CamOverridePostProcess.bOverride_Scene_Colorize = true;
+	Cam.CamOverridePostProcess.Scene_Colorize = One;
+	Cam.CamOverridePostProcess.bOverride_Scene_HighLights = true;
+	Cam.CamOverridePostProcess.Scene_HighLights = One;
+	Cam.CamOverridePostProcess.bOverride_Scene_MidTones = true;
+	Cam.CamOverridePostProcess.Scene_MidTones = One;
+	Cam.CamOverridePostProcess.bOverride_Scene_Shadows = true;
+	Cam.CamOverridePostProcess.Scene_Shadows = vect(0, 0, 0);
+	Cam.CamOverridePostProcess.bOverride_ShowFog = true;
+	Cam.CamOverridePostProcess.bShowFog = false;
+}
+
+/** The strategy world's height fog, sky lights and sun off while EW's base is in view, back on with the Avenger's views.
+ *  The base lies far below the Avenger, inside its fog (the scene drowned in the Avenger's sky colour), and the Avenger's
+ *  sky and sun reach everywhere (the scene cast in its sky's colour); EW's own lights, placed with the base, light it. */
 function Fog(bool bOn)
 {
 	local HeightFog F;
 	local ExponentialHeightFog E;
+	local Light L;
+	local LightComponent C;
 	local int n;
 
 	foreach AllActors(class'HeightFog', F)
@@ -119,12 +165,49 @@ function Fog(bool bOn)
 		E.Component.SetEnabled(bOn);
 		n++;
 	}
-	`log("LongWarX2: EW base:" @ n @ "height fogs" @ (bOn ? "on" : "off"), , 'LongWarX2');
+	if (bOn)
+	{
+		foreach WorldLights(C)
+			if (C != none)
+				C.SetEnabled(true);
+		WorldLights.Length = 0;
+	}
+	else
+	{
+		foreach AllActors(class'Light', L)
+		{
+			// (EW's own lights, placed with the base, are LWX2 lights, spawned without an owner.)
+			if (L.Owner == self || LWX2SkyLight(L) != none || L.LightComponent == none || !L.LightComponent.bEnabled)
+				continue;
+			if (DirectionalLight(L) != none || SkyLight(L) != none)
+			{
+				L.LightComponent.SetEnabled(false);
+				WorldLights.AddItem(L.LightComponent);
+			}
+		}
+	}
+	`log("LongWarX2: EW base:" @ n @ "height fogs" @ (bOn ? "on" : "off") $ "," @ WorldLights.Length @ "of the world's sky lights and suns off", , 'LongWarX2');
+}
+
+/** The Avenger shown or hidden, as XCOM 2 does it for its globe (XGBase.SetAvengerVisibility). */
+function AvengerShown(bool bShown)
+{
+	local XGGeoscape Geo;
+
+	Geo = `GAME != none ? `GAME.GetGeoscape() : none;
+	if (Geo != none && Geo.m_kBase != none)
+		Geo.m_kBase.SetAvengerVisibility(bShown);
 }
 
 /** The camera given back to the strategy layer (the Avenger's views). */
 function Hide()
 {
+	if (LightingLevel != none)
+	{
+		`MAPS.RemoveStreamingMapByNameAndLocation(BaseLighting, BaseOffset);
+		LightingLevel = none;
+	}
+	AvengerShown(true);
 	if (`HQPRES != none)
 		`HQPRES.CAMLookAtNamedLocation("Base", 0);
 	Fog(true);
@@ -175,8 +258,8 @@ function Refresh()
 			if (Level == "" || k == INDEX_NONE || Data(Level).Pieces.Length == 0)
 				continue;
 			Placed.Length = 0;
-			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, Command.Rooms[k].Loc + BaseOffset, class'DynamicSMActor_Spawnable', Placed);
-			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed);
+			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, Command.Rooms[k].Loc + BaseOffset, class'DynamicSMActor_Spawnable', Placed, false, true);
+			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed, true);
 			foreach Placed(A)
 				Tiles.AddItem(A);
 			n++;

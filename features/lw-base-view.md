@@ -139,3 +139,60 @@ the hub with the base in view.
 - The base's levels converted by the player's setup.
 - Squad select and the armory in EW's rooms (plan step 4), and the Avenger not loaded
   (step 5).
+
+## Report (2026-11-15, the base's light and the Avenger hidden)
+
+The cast over the base (red, purple, blue, orange or green from one campaign to the next)
+is gone, and the base looks the same in every campaign: EW's rooms in their own colours.
+
+- **The cause:** XCOM 2's ambient light comes from a cube in the visible lighting level,
+  here the Avenger's sky-and-light level for its region and hour (`XGBase.GetTimeOfDayMap`).
+  The base is placed far below the Avenger, in the same world, so it took that colour. Found
+  with `viewmode unlit`/`lightingonly` (neutral unlit; flat colours by facing in the light)
+  and the engine's ambient colour (`GetNonDirectionalAmbientCubeLighting`), which matched
+  the cast in each campaign.
+- **The fix:**
+  - while EW's base is in view, the Avenger is hidden as XCOM 2 hides it for its globe
+    (`XGBase.SetAvengerVisibility(false)`: its rooms, terrain and sky-and-light level);
+  - a fixed lighting level of XCOM 2's own is streamed in at the base for its ambient light
+    (`BaseLighting`, the EW map plots' clear day, `EnvLighting_Day_Arid`), and removed
+    again with the base;
+  - its sun and fog are switched off with the world's, as are the Avenger's (only lights
+    that aren't the base's own: EW's sky lights had been switched off too, as "the world's").
+- **Given back for XCOM 2's soldier screens:** squad select and the armory stand their
+  soldiers in the Avenger's rooms as they open, so the Geoscape and the hub give the
+  Avenger back before opening them, and whenever another screen takes the focus. EW's
+  screens put their own backdrop over it.
+- **The base's camera** takes a neutral colour grade and no fog of its own
+  (`CamOverridePostProcess`, which XCOM 2's HQ camera takes from the camera it views
+  through).
+- **Materials without a texture** (EW's vertex-coloured walls and lights, its screens) were
+  drawn as XCOM 2's checkerboard. The runtime placer now treats them as the plot writer
+  does: glass a translucent pane, markers, skies and decals left out, the rest plain grey.
+- **Fixed rooms missing:** the generated config had put the fixed rooms' list under the
+  hub's section, so none were placed. `maps-config.mjs` writes it under the base's.
+
+Checked on wingpu: the same colours in two new campaigns (pixel for pixel at the sampled
+points); Mission Control out to the Geoscape and back; the barracks list over the Avenger;
+squad select from the Geoscape with the soldiers in the launch bay, and back to the Geoscape
+with the base behind. Screenshot `logs/wingpu_ew_hub.png` (not committed).
+
+Test aids on the control port: `open hub`, `lights` (the world's lights and lighting
+actors), `lightoff <class> [on] [min radius]`, `ambient` (the engine's ambient colour).
+
+### Tried and dropped
+
+- Neutral post-process alone, the world's ambient variables (`WorldInfo.WorldAmbientCubemap`,
+  unused by the renderer), shadowless lights, lights without light environments: none
+  changed the cast. Shadowless light classes and direct lighting are kept for the base all
+  the same (`LWX2BaseSpotLight`, `LWX2BasePointLight`; hundreds of shadowing movable lights
+  are more than the renderer should carry, and EW baked its shadows).
+
+### Left open (next)
+
+- **The excavated walls and solid rock** draw plain grey: EW colours them by vertex colour
+  (`HQ_ColorizedLight_*`), which XCOM 2's prop parent doesn't read. EW's earth cross-section
+  look needs a parent that takes vertex colour, or the colour read into the look.
+- EW's shared tile-border glow mesh (`HQ_RoomBorderFX`) isn't converted.
+- The base's levels converted by the player's setup; the hub on by default.
+- Squad select and the armory in EW's rooms (plan step 4).

@@ -405,6 +405,8 @@ simulated function bool ChooseSquad(int Kind, int Index)
 		StatusText.SetText("No soldier is able to go.");
 		return false;
 	}
+	// The Avenger back first: squad select stands the soldiers in its launch bay as it opens, before this screen loses focus.
+	class'LWX2EWBase'.static.Get(self).Hide();
 	Select = Spawn(class'UILWSquadSelect', Movie.Pres);
 	Movie.Pres.ScreenStack.Push(Select);
 	return true;
@@ -468,6 +470,14 @@ static function ForgetChosen(int MissionID)
 		NewGameState.RemoveStateObject(MissionID);
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	class'XComGameState_LWStrategy'.static.MissionCancelled();
+}
+
+/** Another screen over this one: the Avenger back (squad select and the armory stand their soldiers in its rooms; EW's
+ *  screens put their own backdrop over it). */
+simulated function OnLoseFocus()
+{
+	super.OnLoseFocus();
+	class'LWX2EWBase'.static.Get(self).Hide();
 }
 
 simulated function OnReceiveFocus()

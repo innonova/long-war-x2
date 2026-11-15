@@ -79,6 +79,10 @@ And around it:
     tools/test/lw.sh gene 'gene 2 148'        # gene mods: costs, what is missing; soldier 2 into the tank for Iron Skin
     tools/test/lw.sh ots 'ots buy'            # the Officer Training School's next squad size: what it needs; bought
     tools/test/lw.sh 'open base'               # the Geoscape's base screen (hangar, engineering)
+    tools/test/lw.sh 'open hub'                # the Long War hub: EW's base and its room menu
+    tools/test/lw.sh lights                    # the world's lights besides EW's base's own, and lighting actors by class
+    tools/test/lw.sh ambient                   # the ambient light's colour as the engine has it
+    tools/test/lw.sh 'lightoff LightInjector'  # actors of a lighting kind off by class ([on] [min radius])
     tools/test/lw.sh 'use Sniper ThrowGrenade:LWSmall_82 98'  # an item's ability, at the soldier's own feet (97: at the nearest alien)
     tools/test/lw.sh 'look -7440 2544 200'     # the camera to an EW map place (EW's coordinates; 'look pod 1'), fog off
 

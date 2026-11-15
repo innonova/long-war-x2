@@ -110,6 +110,15 @@ simulated function OnReceiveFocus()
 	ShowAvengerButton(false);
 }
 
+/** Another screen over the hub: the Avenger back (the armory and squad select stand their soldiers in its rooms; EW's
+ *  screens put their own backdrop over it); the base again when the hub has focus back. */
+simulated function OnLoseFocus()
+{
+	super.OnLoseFocus();
+	ClearTimer(nameof(ShowBase));
+	class'LWX2EWBase'.static.Get(self).Hide();
+}
+
 simulated function OnRemoved()
 {
 	class'LWX2EWBase'.static.Get(self).Hide();
@@ -131,7 +140,11 @@ function Choose(int i)
 	case 2: class'UILWEWResearch'.static.Open(); break;
 	case 3: class'UILWEWEngineering'.static.Open(HQPres); break;
 	case 4: class'UILWEWEngineering'.static.Open(HQPres, true); break;
-	case 5: HQPres.UIPersonnel_Armory(OnSoldierChosen); break;
+	case 5:
+		// (The Avenger back first: the armory stands the soldier in its room as it opens.)
+		class'LWX2EWBase'.static.Get(self).Hide();
+		HQPres.UIPersonnel_Armory(OnSoldierChosen);
+		break;
 	case 6: class'UILWEWHangar'.static.Open(HQPres); break;
 	case 7: HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres)); break;
 	case 8: class'UILWEWGreyMarket'.static.Open(HQPres); break;

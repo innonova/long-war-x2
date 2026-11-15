@@ -39,6 +39,7 @@ function Handle(string Line, out array<string> Out)
 	local string Cmd, Why;
 	local XComGameState_Unit EffUnit;
 	local int Before;
+	local Color AmbientColour;
 
 	ParseStringIntoArray(Line, Args, " ", true);
 	if (Args.Length == 0)
@@ -74,6 +75,22 @@ function Handle(string Line, out array<string> Out)
 		class'LWX2EWBase'.static.Get(Pres()).Show();
 		Out.AddItem("camera at" @ XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.Location @ "fov" @ XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.FOV
 			@ "rooms" @ class'LWX2EWBase'.static.Data("Command1").Rooms.Length @ "cameras" @ class'LWX2EWBase'.static.Data("Command1").Cameras.Length);
+		return;
+	case "lightoff":
+		// A test aid: every actor of a lighting kind switched off or on by its class name (LightInjector,
+		// PostProcessVolume, a light class): lightoff <class> [on|off] [lights of at least this radius only].
+		Out.AddItem(LightOff(Args.Length > 1 ? Args[1] : "", Args.Length > 2 && Args[2] ~= "on", Args.Length > 3 ? float(Args[3]) : 0.0));
+		return;
+	case "ambient":
+		// A test aid: the ambient light's colour as the engine has it (from the visible lighting level's cube: the Avenger's
+		// sky-and-light level for the hour, or EW's base's own, LWX2EWBase.BaseLighting).
+		AmbientColour = `XENGINE.GetNonDirectionalAmbientCubeLighting();
+		Out.AddItem("ambient cube colour" @ AmbientColour.R $ "," $ AmbientColour.G $ "," $ AmbientColour.B);
+		return;
+	case "lights":
+		// A test aid: the world's lights that are not EW's base's own (class, on, brightness, colour, distance from the base),
+		// how many are the base's, and the actors of a lighting kind by class (features/lw-base-view.md).
+		LightsReport(Out);
 		return;
 	case "peek":
 		// A test aid: the Geoscape hidden (or shown again) to look at what is behind it (EW's base, features/lw-base-view.md).
@@ -397,6 +414,18 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem(OpenLoadout());
 			return;
 		}
+		// The Long War hub (EW's base and room menu), whether or not it is the strategy layer's root yet.
+		if (Args.Length > 1 && Args[1] ~= "hub")
+		{
+			if (`HQPRES == none)
+				Out.AddItem("ERR not on the Avenger");
+			else
+			{
+				class'UILWEWHub'.static.Open(`HQPRES);
+				Out.AddItem("ok hub");
+			}
+			return;
+		}
 		// A Geoscape screen opened, as its button opens it (a test aid: base, hangar, engineering).
 		Geo = OpenGeoscape();
 		if (Geo == none)
@@ -412,7 +441,7 @@ function Handle(string Line, out array<string> Out)
 		else if (Args.Length > 1 && Args[1] ~= "greymarket")
 			Geo.OnGreyMarket(none);
 		else
-			Out.AddItem("ERR open base|hangar|engineering|loadout");
+			Out.AddItem("ERR open base|hangar|engineering|foundry|greymarket|loadout|hub");
 		return;
 	}
 	// Long War's start screen, before the campaign's Geoscape exists.
@@ -2594,6 +2623,75 @@ function Bonuses(XComGameState_LWStrategy S, out array<string> Out)
 }
 
 /** The Geoscape screen, opened if it is not up (only on the Avenger). */
+/** The lightoff command: actors of the class switched off (or on again). */
+function string LightOff(string ClassName, bool bOn, float MinRadius)
+{
+	local Actor A;
+	local int n;
+
+	foreach Pres().AllActors(class'Actor', A)
+	{
+		if (!(string(A.Class.Name) ~= ClassName))
+			continue;
+		if (MinRadius > 0 && (Light(A) == none || PointLightComponent(Light(A).LightComponent) == none || PointLightComponent(Light(A).LightComponent).Radius < MinRadius))
+			continue;
+		if (LightInjector(A) != none)
+			LightInjector(A).SetEnabled(bOn);
+		else if (PostProcessVolume(A) != none)
+			PostProcessVolume(A).bEnabled = bOn;
+		else if (Light(A) != none && Light(A).LightComponent != none)
+			Light(A).LightComponent.SetEnabled(bOn);
+		else
+			A.SetHidden(!bOn);
+		n++;
+	}
+	return n @ ClassName @ (bOn ? "on" : "off");
+}
+
+/** The world's lights and lighting actors (the lights command). */
+function LightsReport(out array<string> Out)
+{
+	local Light L;
+	local Actor A;
+	local LWX2EWBase B;
+	local int Ours, k;
+	local array<string> Kinds;
+	local array<int> Counts;
+	local string Kind;
+
+	B = class'LWX2EWBase'.static.Get(Pres());
+	foreach Pres().AllActors(class'Light', L)
+	{
+		if (L.Owner == B)
+		{
+			Ours++;
+			continue;
+		}
+		Out.AddItem(string(L.Class.Name) @ string(L.Name) @ (L.LightComponent == none ? "no component" : ((L.LightComponent.bEnabled ? "on" : "off")
+			@ "brightness" @ L.LightComponent.Brightness @ "colour" @ L.LightComponent.LightColor.R $ "," $ L.LightComponent.LightColor.G $ "," $ L.LightComponent.LightColor.B))
+			@ "distance" @ int(VSize(L.Location - B.BaseOffset)));
+	}
+	Out.AddItem(Ours @ "lights of the base's own");
+	foreach Pres().AllActors(class'Actor', A)
+	{
+		Kind = string(A.Class.Name);
+		if (InStr(Locs(Kind), "light") == INDEX_NONE && InStr(Locs(Kind), "fog") == INDEX_NONE && InStr(Locs(Kind), "sky") == INDEX_NONE
+			&& InStr(Locs(Kind), "environment") == INDEX_NONE && InStr(Locs(Kind), "postprocess") == INDEX_NONE && InStr(Locs(Kind), "weather") == INDEX_NONE
+			&& InStr(Locs(Kind), "ambient") == INDEX_NONE && InStr(Locs(Kind), "reflection") == INDEX_NONE)
+			continue;
+		k = Kinds.Find(Kind);
+		if (k == INDEX_NONE)
+		{
+			Kinds.AddItem(Kind);
+			Counts.AddItem(1);
+		}
+		else
+			Counts[k]++;
+	}
+	for (k = 0; k < Kinds.Length; k++)
+		Out.AddItem("actors" @ Kinds[k] @ Counts[k]);
+}
+
 function UILWGeoscape OpenGeoscape()
 {
 	local XComHQPresentationLayer HQ;
