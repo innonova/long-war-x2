@@ -190,9 +190,12 @@ actors), `lightoff <class> [on] [min radius]`, `ambient` (the engine's ambient c
 
 ### Left open (next)
 
-- **The excavated walls and solid rock** draw plain grey: EW colours them by vertex colour
-  (`HQ_ColorizedLight_*`), which XCOM 2's prop parent doesn't read. EW's earth cross-section
-  look needs a parent that takes vertex colour, or the colour read into the look.
+- **Solid rock and the space behind the tiles** are empty black. The grey slabs over the
+  tiles were EW's `DoNothing` pieces (a material that draws nothing; with the grey rule they
+  drew grey): now skipped. EW's earth cross-section behind the tiles still needs finding,
+  best against a screenshot of EW's own base (the EW harness).
+- EW's emissive light strips (`HQ_ColorizedLight_*`, an HDR `TintColor`) draw grey: they
+  want an emissive stand-in in their colour.
 - EW's shared tile-border glow mesh (`HQ_RoomBorderFX`) isn't converted.
 - The base's levels converted by the player's setup; the hub on by default.
 - Squad select and the armory in EW's rooms (plan step 4).
