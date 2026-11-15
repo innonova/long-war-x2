@@ -104,7 +104,7 @@ for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number
     if (!b || b.cash < 0 || b.days < 0) continue
     out.push(
       `+Builds=(Item=${item}, Template=${itemTemplate(item, ITEMS)}, Cash=${b.cash}, Elerium=${b.elerium}, Alloys=${b.alloys}, Meld=${b.meld}, ` +
-        `Days=${b.days}, Engineers=${Math.abs(b.engineers)}` +
+        `Days=${b.days}, Engineers=${Math.abs(b.engineers)}, Category=${t.category ?? 0}` +
         (t.tech ? `, Tech=${t.tech.id}` : '') +
         (SPECIAL[item]
           ? `, ItemReq=${itemTemplate(SPECIAL[item][0][0], ITEMS)}, ItemReqCount=${SPECIAL[item][0][1]}` +

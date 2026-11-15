@@ -41,3 +41,19 @@ mission.
 - The abilities' numbers, beyond `INTERNATIONAL_WILL`: from Long War's code
   (as was done for psi and the bonuses), or its constants.
 - How this sits with XCOM 2's ranks, which the classes already use.
+
+## Note (2026-11-15, read from Long War's code)
+
+Long War's officers are Enemy Within's medals, repurposed:
+- Its officer abilities are EW's medal perks (`XGTacticalGameCoreNativeBase.IsMedalPerk`).
+- The Officer Training School's officer projects unlock them, gated by the barracks' ranks
+  (`XGTechTree.HasOTSPrereqs`, `GetNumMedalsAvailable`), with Sandhurst's cut.
+- A soldier is made an officer on EW's medal screen (`UIMedals`,
+  `UISoldierList_AssignMedal`).
+- An officer's fatigue carries `SPECIES_POINT_LIMIT` hours per medal
+  (`DetermineTimeOut`), with Gift of Osiris's cut.
+
+So building this means porting the medal screen, each officer ability as a tactical ability,
+and the medal count's place in fatigue. The person (2026-11-15) wants Long War's code
+followed, so nothing here waits on him. Left for after the strategy screens (playability
+first).

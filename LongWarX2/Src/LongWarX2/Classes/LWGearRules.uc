@@ -62,6 +62,8 @@ struct LWBuildDef
 	/** A unit is Days x Engineers x 24 hours of work (XGItemTree.GetItemBuildTime): Days at Engineers. */
 	var int Days;
 	var int Engineers;
+	/** Long War's item category (EItemCategory: 1 weapons, 2 armour, 3 vehicles), engineering's tab. */
+	var int Category;
 	/** The Long War tech researched first (its id; 0: none). */
 	var int Tech;
 	/** An item consumed per item built: ItemReqCount of it (0: one); and a second, ItemReq2Count of it. */

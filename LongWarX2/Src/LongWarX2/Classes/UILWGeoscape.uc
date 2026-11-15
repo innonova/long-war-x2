@@ -14,7 +14,7 @@ var UIButton ActionButtons[MAX_ACTIONS];
 /** Beside each mission: won without playing it (to try the strategy layer), and won with an alien taken alive. */
 var UIButton WinButtons[MAX_ACTIONS];
 var UIButton CaptureButtons[MAX_ACTIONS];
-var UIButton StoresButton, EngineeringButton, BaseButton, HangarButton, SitRoomButton;
+var UIButton StoresButton, EngineeringButton, FoundryButton, BaseButton, HangarButton, SitRoomButton;
 /** The right-hand text shows the stores instead of the events. */
 var bool bShowStores;
 /** For each action button: 1 intercept, 2 crash site, 3 landed UFO, 4 abduction, 5 terror; and the index. */
@@ -92,6 +92,9 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	StoresButton.SetPosition(1420, 960);
 	EngineeringButton = Spawn(class'UIButton', self).InitButton('LWGeoEngineering', "ENGINEERING", OnEngineering);
 	EngineeringButton.SetPosition(1580, 75);
+	// The Foundry on the plain engineering screen, until it has EW's own (engineering's items have: UILWEWEngineering).
+	FoundryButton = Spawn(class'UIButton', self).InitButton('LWGeoFoundry', "FOUNDRY", OnFoundry);
+	FoundryButton.SetPosition(870, 75);
 	BaseButton = Spawn(class'UIButton', self).InitButton('LWGeoBase', "BASE", OnBase);
 	BaseButton.SetPosition(1410, 75);
 	HangarButton = Spawn(class'UIButton', self).InitButton('LWGeoHangar', "HANGAR", OnHangar);
@@ -295,9 +298,19 @@ simulated function OnBase(UIButton Button)
 	Movie.Pres.ScreenStack.Push(Spawn(class'UILWBase', Movie.Pres));
 }
 
+/** Engineering's items on EW's own screen (the plain one without EW's screens). */
 simulated function OnEngineering(UIButton Button)
 {
-	Movie.Pres.ScreenStack.Push(Spawn(class'UILWEngineering', Movie.Pres));
+	class'UILWEWEngineering'.static.Open(XComHQPresentationLayer(Movie.Pres));
+}
+
+simulated function OnFoundry(UIButton Button)
+{
+	local UILWEngineering Plain;
+
+	Plain = Spawn(class'UILWEngineering', Movie.Pres);
+	Plain.bFoundry = true;
+	Movie.Pres.ScreenStack.Push(Plain);
 }
 
 simulated function OnSitRoom(UIButton Button)

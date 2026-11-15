@@ -368,3 +368,42 @@ hologram texture's raw channels (dark blue, red borders), over the movie at half
 - Engineering's and the Foundry's projects too (their hours from the work left at the rate of their
   engineers, as the Geoscape's lists count them). Seen: "SAWED-OFF SHOTGUN 1" with EW's
   engineering icon, ahead of the research.
+
+## Report (2026-11-15, engineering on EW's own screens)
+
+The person (2026-11-15): the strategy layer moves mostly to EW's own screens. Engineering
+is the next after research.
+
+- **`UILWEWEngineering`** is EW's BuildItem movie, driven as `UIBuildItem` drives it:
+  - EW's three tabs: weapons, armour, vehicles. A tab with nothing unlocked is disabled.
+    Long War's item category is now in the generated `+Builds` lines (`Category`, from the
+    Tree's item data).
+  - Each unlocked item, with how many XCOM holds. Items it can't afford are greyed.
+  - The info panel shows the name, Long War's cost and time with its engineers, what it is
+    short of, the item's words and its picture.
+  - Click or arrows select, left and right change tab, double click or Enter or MANUFACTURE
+    go on.
+  - EW's `BatchAddOptions` took nothing in XCOM 2, so the list is filled with its
+    `AddOption`, one call per item.
+- **`UILWEWManufacturing`** is EW's Manufacturing movie, for the quantity: the item's name,
+  picture, words, time and cost for that many, XCOM's engineers. START PROJECT begins it
+  (`LWEngineering.Start`), BACK returns.
+  - EW drives its spinners through a widget helper. Here the quantity line is read-only
+    (it shows the number), the movie's second spinner supplies the arrows, moved up beside
+    it, and the first is hidden. The arrows' clicks ("-1", "-2"), the arrow keys and the
+    wheel change it.
+  - The two centre buttons (cancel an order, rush) aren't Long War X2's, so they're hidden.
+- Both sit on the Situation Room's black backdrop, so the Avenger doesn't show through.
+- The Geoscape's ENGINEERING opens it. Without EW's screens converted, the plain screen
+  opens as before. A FOUNDRY button opens the plain Foundry until it has EW's own screen.
+
+Seen on wingpu in a new campaign: the weapons tab with the sawed-off shotgun (its picture,
+"BUILD COST: §0, 1 Shotgun, TIME: 1 days (1 engineers)"). Manufacturing at 3 after two
+clicks showed "TIME: 8 hours, COST: 3 x (§0, 1 Shotgun)". START PROJECT began the project
+(`builds`: item 254, quantity 1, from the run before).
+
+### Left open
+
+- EW's Foundry (`UIFoundry`), the hangar, base building and the grey market on their own
+  screens.
+- The strategy HUD (money, resources) is under the backdrop while these screens are up.
