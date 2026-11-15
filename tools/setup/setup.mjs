@@ -11,7 +11,7 @@
 // Bundled with upkit into one Windows program (tools/setup/bundle.mjs); runs from the repository
 // too: node tools/setup/setup.mjs --mod LongWarX2 …
 import { cpSync, existsSync, readFileSync, renameSync, rmSync, writeFileSync, mkdirSync, statSync, readdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { execFileSync } from 'node:child_process'
 import { wordsFrom } from '../../scripts/write-words.mjs'
@@ -286,7 +286,11 @@ async function convertEW(ew, target) {
   // sections kept in Content/ewmaps) are joined in again even when no new ones are wanted: the mod's folder was just
   // replaced, and with it its list of converted maps.
   {
-    convertMaps(cooked, target, [...(want ? maps : []), ...baseLevels(target)], content, join(content, 'ewmaps'), (src, out, ini) =>
+    // The base's levels are small: converted in this process. The maps, which can need a large heap, each in a child of
+    // its own. (A child converting one of the base's levels, done in a second, twice wrote its files and never exited.)
+    const base = new Set(baseLevels(target))
+    convertMaps(cooked, target, [...(want ? maps : []), ...base], content, join(content, 'ewmaps'), (src, out, ini) =>
+      base.has(basename(src, '.upk')) ? convertHere(src, out, ini) :
       execFileSync(process.execPath, ['--convert-map', src, out, ini], {
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -311,6 +315,19 @@ async function convertEW(ew, target) {
   const air = join(target, 'Config', 'XComLWAirWar.ini')
   writeFileSync(air, readFileSync(air, 'utf8').replace(/^PlaceEWMapWhole=.*$/m, `PlaceEWMapWhole=${sections > 0}`))
   say(sections > 0 ? `Missions play on Enemy Within's maps (${sections} converted).` : "Missions play on XCOM 2's maps (Enemy Within's not converted: run this again with --maps).")
+}
+
+/** A level converted in this process, returning what the converter printed (as a child's output would be). */
+function convertHere(src, out, ini) {
+  const lines = []
+  const log = console.log
+  console.log = (...a) => lines.push(a.join(' '))
+  try {
+    convertMap(src, out, ini)
+  } finally {
+    console.log = log
+  }
+  return lines.join('\n')
 }
 
 async function run() {
