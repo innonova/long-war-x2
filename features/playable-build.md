@@ -237,3 +237,23 @@ Death Blossom, the cloak, a soldier seized; no crash.
 Later still: `LongWarX2-20261105-43256f6.zip` (a squad spawned in a pocket of an EW map moved out to open floor; the
 Berserker's Bloodlust). Same converter (17). Checked from the zip: on URB_StreetHurricane, where the whole squad
 spawned on one doorway tile, a soldier moved out and the others beside her; an alien turn went by.
+
+## Report (2026-11-15, release 3dfb66b)
+
+`LongWarX2-20261115-3dfb66b.zip` replaces 43256f6 as the only file on the draft
+v0.1.0-preview.1. New in it:
+- squad selection on XCOM 2's screen (lw-squad-select);
+- Long War's start screen and its bonuses (lw-startbonus);
+- Long War's random rookie stats (lw-classes);
+- engineering, the Foundry, the hangar and the grey market on EW's own screens
+  (lw-ew-screens, lw-greymarket).
+
+The setup now also writes `Localization/LongWarX2.int` (the bonuses' words) from the
+player's Long War. The packaging script leaves it out and refuses any `.int` in the
+download.
+
+Checked on wingpu from the zip: its setup ran, re-wrote the 83 maps' plots in about 3 s
+each, and wrote both words files (50 bonus names and descriptions). The game came up to
+the main menu with the mod loaded. The behaviour itself was seen in the development build
+of the same commit (the feature files' reports), since the player's build has no control
+port.
