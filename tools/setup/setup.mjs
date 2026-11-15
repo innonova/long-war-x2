@@ -20,7 +20,7 @@ import { convertPackage } from '../convert/ew-package.ts'
 import { convertUnits } from '../convert/ew-units.ts'
 import { tealEarth } from '../convert/ew-earth.ts'
 import { convertMap } from '../convert/ew-map.ts'
-import { convertMaps, listedMaps, writePlots } from '../convert/ew-maps.ts'
+import { baseLevels, convertMaps, listedMaps, missionSections, writePlots } from '../convert/ew-maps.ts'
 
 const MOD = 'LongWarX2'
 const args = process.argv.slice(2)
@@ -282,10 +282,11 @@ async function convertEW(ew, target) {
     )
     want = /^y/i.test(String(answer).trim())
   }
-  // Maps converted by an earlier setup (their sections kept in Content/ewmaps) are joined in again even when no new
-  // ones are wanted: the mod's folder was just replaced, and with it its list of converted maps.
-  if (want || existsSync(join(content, 'ewmaps'))) {
-    convertMaps(cooked, target, want ? maps : [], content, join(content, 'ewmaps'), (src, out, ini) =>
+  // EW's base, the strategy layer's scene (LWX2EWBase), always: 32 small levels. Maps converted by an earlier setup (their
+  // sections kept in Content/ewmaps) are joined in again even when no new ones are wanted: the mod's folder was just
+  // replaced, and with it its list of converted maps.
+  {
+    convertMaps(cooked, target, [...(want ? maps : []), ...baseLevels(target)], content, join(content, 'ewmaps'), (src, out, ini) =>
       execFileSync(process.execPath, ['--convert-map', src, out, ini], {
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -302,7 +303,8 @@ async function convertEW(ew, target) {
       plots.map((p) => `+arrPlots=(MapName="${p}", strType="LWX2_EW", ExcludeFromStrategy=true, ValidBiomes[0]="Arid", ObjectiveTags[0]="LWX2_EW")`).join('\r\n') + '\r\n')
   }
   // The missions on Enemy Within's maps when this machine has them converted.
-  const sections = existsSync(join(target, 'Config', 'XComLWX2EWMap.ini')) ? (readFileSync(join(target, 'Config', 'XComLWX2EWMap.ini'), 'latin1').match(/ LWX2EWMapData\]/g) ?? []).length : 0
+  // (The base's levels are in the same file: only the mission maps count.)
+  const sections = missionSections(target)
   const air = join(target, 'Config', 'XComLWAirWar.ini')
   writeFileSync(air, readFileSync(air, 'utf8').replace(/^PlaceEWMapWhole=.*$/m, `PlaceEWMapWhole=${sections > 0}`))
   say(sections > 0 ? `Missions play on Enemy Within's maps (${sections} converted).` : "Missions play on XCOM 2's maps (Enemy Within's not converted: run this again with --maps).")

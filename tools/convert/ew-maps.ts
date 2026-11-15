@@ -7,7 +7,8 @@
 // (the setup program), the mod's Content.
 // Then each converted map's own plot (writePlots: ew-plot.ts, LWX2_<map>.umap beside the packages).
 // --all: every map Long War lists for its missions (Config/XComLWEWMaps.ini); --kind Abduction|Crash|Landed|Terror:
-// those of a kind. A map already converted is skipped unless --force.
+// those of a kind; --base: EW's base's levels (BaseLevels, for LWX2EWBase; no plots), with any of the others. A map
+// already converted is skipped unless --force.
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -48,8 +49,9 @@ export function writePlots(mod: string, content: string, work: string, template:
   const settings = plotSettings(mod)
   const bytes = new Uint8Array(readFileSync(template))
   const plots: string[] = []
+  const base = new Set(baseLevels(mod).map((l) => `${l}.ini`))
   let old = 0
-  for (const f of readdirSync(work).filter((f) => f.endsWith('.ini')).sort()) {
+  for (const f of readdirSync(work).filter((f) => f.endsWith('.ini') && !base.has(f)).sort()) {
     const ini = join(work, f)
     if (!sectionCurrent(ini)) {
       old++
@@ -62,6 +64,19 @@ export function writePlots(mod: string, content: string, work: string, template:
   }
   say(`${plots.length} maps written as plots of their own${old ? `; ${old} converted by an older version, placed at run time until converted again` : ''}`)
   return plots
+}
+
+/** The levels of EW's base (the mod's Config/XComLWEWMaps.ini, BaseLevels): converted like maps, but no plots of their own. */
+export function baseLevels(mod: string): string[] {
+  return [...readFileSync(join(mod, 'Config', 'XComLWEWMaps.ini'), 'latin1').matchAll(/^\+BaseLevels="([^"]+)"/gm)].map((m) => m[1]!)
+}
+
+/** How many mission maps (not the base's levels) the mod's Config/XComLWX2EWMap.ini holds. */
+export function missionSections(mod: string): number {
+  const ini = join(mod, 'Config', 'XComLWX2EWMap.ini')
+  if (!existsSync(ini)) return 0
+  const base = new Set(baseLevels(mod))
+  return [...readFileSync(ini, 'latin1').matchAll(/^\[(\S+) LWX2EWMapData\]/gm)].filter((m) => !base.has(m[1]!)).length
 }
 
 /** The maps Long War lists for its missions (the mod's Config/XComLWEWMaps.ini): their names and kinds. */
@@ -128,7 +143,7 @@ if (/ew-maps\.ts$/.test(process.argv[1] ?? '')) {
   const args = process.argv.slice(2).filter((a) => a !== '--')
   const [cooked, mod] = args
   if (!mod) {
-    console.error('usage: ew-maps.ts <EW CookedPCConsole> <mod folder> [--all | --kind <Kind> | <map> …] [--force] [--out <folder>]')
+    console.error('usage: ew-maps.ts <EW CookedPCConsole> <mod folder> [--all | --kind <Kind> | <map> …] [--base] [--force] [--out <folder>]')
     process.exit(2)
   }
   const listed = listedMaps(mod)
@@ -141,6 +156,7 @@ if (/ew-maps\.ts$/.test(process.argv[1] ?? '')) {
     const values = new Set([at('--kind'), at('--out')].filter((i) => i >= 0).map((i) => i + 1))
     maps = args.slice(2).filter((a, i) => !a.startsWith('--') && !values.has(i + 2))
   }
+  if (args.includes('--base')) maps = [...maps, ...baseLevels(mod)]
   const content = at('--out') >= 0 ? args[at('--out') + 1]! : join(mod, '..', 'BuildCache', 'ewcontent')
   const converter = join(dirname(fileURLToPath(import.meta.url)), 'ew-map.ts')
   const work = join(mod, '..', 'BuildCache', 'ewmaps')

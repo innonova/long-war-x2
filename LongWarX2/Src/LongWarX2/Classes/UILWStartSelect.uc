@@ -30,7 +30,7 @@ static function OpenGeoscape(XComHQPresentationLayer HQPres)
 		return;
 	}
 	// The hub (EW's base and room menu, features/lw-base-view.md) when EW's screens are converted; else the Geoscape.
-	if (class'UILWEWHub'.default.Enabled && class'UILWEWScreen'.static.HasEWScreens())
+	if (class'UILWEWHub'.default.Enabled && class'UILWEWScreen'.static.HasEWScreens() && class'LWX2EWBase'.static.Converted())
 		class'UILWEWHub'.static.Open(HQPres);
 	else if (!HQPres.ScreenStack.IsInStack(class'UILWGeoscape'))
 		HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWGeoscape', HQPres));
