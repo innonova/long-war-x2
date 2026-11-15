@@ -3,6 +3,7 @@
 // EW's UIBuildItem drives the movie (SetLabels, SetTabState, SetSelectedCategory, BatchAddOptions, SetFocus,
 // UpdateInfo, SetConfirmButton; clicks 391 select an option or a tab or confirm, 398 select and confirm). Confirmed, the
 // quantity is chosen on EW's Manufacturing screen (UILWEWManufacturing). The rules are LWEngineering's.
+// With bFoundry, the Foundry's projects on the same movie, as EW's UIFoundry shows them (its tabs off, BEGIN PROJECT).
 class UILWEWEngineering extends UILWEWScreen;
 
 /** EW's tabs and Long War's item categories (EItemCategory) on them. */
@@ -10,15 +11,20 @@ var array<int> Tabs;
 var int Tab;
 var array<int> Items;
 var int Selected;
+/** The Foundry's available projects instead of engineering's items (Items holds their ids). */
+var bool bFoundry;
 
 /** The screen pushed over the Avenger (EW's screens converted); else the plain engineering screen. */
-static function Open(XComHQPresentationLayer HQPres)
+static function Open(XComHQPresentationLayer HQPres, optional bool bFoundryProjects)
 {
 	local UILWEWEngineering EWScreen;
+	local UILWEngineering Plain;
 
 	if (!class'UILWEWScreen'.static.HasEWScreens())
 	{
-		HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWEngineering', HQPres));
+		Plain = HQPres.Spawn(class'UILWEngineering', HQPres);
+		Plain.bFoundry = bFoundryProjects;
+		HQPres.ScreenStack.Push(Plain);
 		return;
 	}
 	DynamicLoadObject(default.UIPackage $ ".ewxBuildItem", class'Object', true);
@@ -27,13 +33,14 @@ static function Open(XComHQPresentationLayer HQPres)
 	EWScreen = HQPres.Spawn(class'UILWEWEngineering', HQPres);
 	EWScreen.Package = name("/ package/ewxBuildItem/BuildItem");
 	EWScreen.MCName = 'theBuildScreen';
+	EWScreen.bFoundry = bFoundryProjects;
 	HQPres.ScreenStack.Push(EWScreen);
 }
 
 simulated function OnInit()
 {
 	super.OnInit();
-	MC.FunctionString("SetConfirmButton", "MANUFACTURE");
+	MC.FunctionString("SetConfirmButton", bFoundry ? "BEGIN PROJECT" : "MANUFACTURE");
 	Fill();
 }
 
@@ -44,6 +51,11 @@ function Fill()
 	local array<int> All;
 	local int i, Item;
 
+	if (bFoundry)
+	{
+		FillFoundry();
+		return;
+	}
 	All = class'LWEngineering'.static.Buildable();
 	MC.BeginFunctionOp("SetLabels");
 	MC.QueueString("BUILD" @ TabName(Tabs[Tab]));
@@ -77,6 +89,76 @@ function Fill()
 	}
 	`log("LongWarX2: EW engineering: tab" @ TabName(Tabs[Tab]) @ "with" @ Items.Length @ "items", , 'LongWarX2');
 	Select(0);
+}
+
+/** The Foundry's available projects (EW's UIFoundry.RealizeAvailableProjects: no tabs, no counts). */
+function FillFoundry()
+{
+	local LWGearRules.LWFoundryDef F;
+	local int i;
+
+	Items = class'LWEngineering'.static.FoundryAvailable();
+	MC.BeginFunctionOp("SetLabels");
+	MC.QueueString("FOUNDRY PROJECTS");
+	MC.QueueString("");
+	MC.QueueString("");
+	MC.EndOp();
+	MC.FunctionVoid("clear");
+	for (i = 0; i < Tabs.Length; i++)
+	{
+		MC.BeginFunctionOp("SetTabState");
+		MC.QueueNumber(i);
+		MC.QueueNumber(1);
+		MC.EndOp();
+	}
+	MC.FunctionString("ShowNoProjectMessage", Items.Length == 0 ? "NO PROJECTS AVAILABLE" : "");
+	for (i = 0; i < Items.Length; i++)
+	{
+		class'LWGearRules'.static.FoundryFor(Items[i], F);
+		MC.BeginFunctionOp("AddOption");
+		MC.QueueNumber(i);
+		MC.QueueString("<font size='20'>" $ class'UIUtilities_Text'.static.GetColoredText(Caps(class'LWEngineering'.static.FoundryName(Items[i])), class'LWEngineering'.static.FoundryShort(F) != "" ? eUIState_Disabled : eUIState_Normal) $ "</font>");
+		MC.QueueBoolean(false);
+		MC.QueueNumber(0);
+		MC.EndOp();
+	}
+	`log("LongWarX2: EW Foundry:" @ Items.Length @ "projects", , 'LongWarX2');
+	SelectFoundry(0);
+}
+
+/** A Foundry project selected: its name, cost and time, words and picture. */
+function SelectFoundry(int Index)
+{
+	local LWGearRules.LWFoundryDef F;
+	local X2TechTemplate Template;
+	local XComGameState_LWStrategy S;
+	local string Short;
+
+	if (Items.Length == 0)
+	{
+		MC.BeginFunctionOp("UpdateInfo");
+		MC.QueueString("");
+		MC.QueueString("");
+		MC.QueueString("");
+		MC.QueueString("");
+		MC.EndOp();
+		return;
+	}
+	Selected = (Index + Items.Length) % Items.Length;
+	class'LWGearRules'.static.FoundryFor(Items[Selected], F);
+	Template = X2TechTemplate(class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager().FindStrategyElementTemplate(class'LWGearRules'.static.FoundryTemplateFor(Items[Selected])));
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Short = class'LWEngineering'.static.FoundryShort(F);
+	MC.FunctionString("SetFocus", string(Selected));
+	MC.BeginFunctionOp("UpdateInfo");
+	MC.QueueString(Caps(class'LWEngineering'.static.FoundryName(Items[Selected])));
+	MC.QueueString("PROJECT COST:" @ class'LWEngineering'.static.FoundryCostText(F) $ "<br>"
+		$ "TIME:" @ class'LWEngineering'.static.HoursText(class'LWEngineering'.static.HoursFor(class'LWEngineering'.static.FoundryWork(F, S.Credits), F.Engineers, S.Engineers))
+		@ "(" $ F.Engineers @ "engineers)"
+		$ (Short != "" ? "<br>" $ class'UIUtilities_Text'.static.GetColoredText("Short of" @ Short, eUIState_Bad) : ""));
+	MC.QueueString(Template != none ? Template.Summary : "");
+	MC.QueueString(Template != none ? Template.strImage : "");
+	MC.EndOp();
 }
 
 static function string TabName(int Category)
@@ -115,6 +197,12 @@ function Select(int Index)
 	local XComGameState_LWStrategy S;
 	local string Info, Short;
 
+	if (bFoundry)
+	{
+		SelectFoundry(Index);
+		return;
+	}
+
 	if (Items.Length == 0)
 	{
 		MC.BeginFunctionOp("UpdateInfo");
@@ -148,7 +236,7 @@ function Accept()
 {
 	if (Items.Length == 0)
 		return;
-	class'UILWEWManufacturing'.static.Open(XComHQPresentationLayer(Movie.Pres), Items[Selected], self);
+	class'UILWEWManufacturing'.static.Open(XComHQPresentationLayer(Movie.Pres), Items[Selected], self, bFoundry);
 }
 
 simulated function OnRemoved()
@@ -184,6 +272,8 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 
 function ToTab(int i)
 {
+	if (bFoundry)
+		return;
 	if (i < 0 || i >= Tabs.Length || i == Tab)
 		return;
 	Tab = i;

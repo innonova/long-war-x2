@@ -402,8 +402,21 @@ Seen on wingpu in a new campaign: the weapons tab with the sawed-off shotgun (it
 clicks showed "TIME: 8 hours, COST: 3 x (§0, 1 Shotgun)". START PROJECT began the project
 (`builds`: item 254, quantity 1, from the run before).
 
+- **The Foundry** on the same movies, as EW's `UIFoundry` shows it:
+  - the BuildItem movie with its tabs off, "FOUNDRY PROJECTS", the available projects
+    (greyed when short), and "NO PROJECTS AVAILABLE" when there are none;
+  - the info panel shows Long War's project words, its cost, time and engineers, and what
+    it is short of;
+  - BEGIN PROJECT goes to the Manufacturing movie without a quantity, and START PROJECT
+    begins it (`LWEngineering.StartFoundry`).
+
+  The Geoscape's FOUNDRY button opens it. Seen with Germany's Skunkworks Foundry and Alien
+  Materials given: Enhanced Ballistics, Alien Metallurgy, Aircraft Boosters, Improved
+  Salvage, each with its words. No pictures: Long War's Foundry pictures are EW's, not yet
+  converted.
+
 ### Left open
 
-- EW's Foundry (`UIFoundry`), the hangar, base building and the grey market on their own
-  screens.
+- The hangar, base building and the grey market on their own screens.
+- The Foundry's pictures.
 - The strategy HUD (money, resources) is under the backdrop while these screens are up.

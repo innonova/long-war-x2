@@ -92,7 +92,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	StoresButton.SetPosition(1420, 960);
 	EngineeringButton = Spawn(class'UIButton', self).InitButton('LWGeoEngineering', "ENGINEERING", OnEngineering);
 	EngineeringButton.SetPosition(1580, 75);
-	// The Foundry on the plain engineering screen, until it has EW's own (engineering's items have: UILWEWEngineering).
+	// The Foundry's projects (EW's screen, as engineering's).
 	FoundryButton = Spawn(class'UIButton', self).InitButton('LWGeoFoundry', "FOUNDRY", OnFoundry);
 	FoundryButton.SetPosition(870, 75);
 	BaseButton = Spawn(class'UIButton', self).InitButton('LWGeoBase', "BASE", OnBase);
@@ -304,13 +304,10 @@ simulated function OnEngineering(UIButton Button)
 	class'UILWEWEngineering'.static.Open(XComHQPresentationLayer(Movie.Pres));
 }
 
+/** The Foundry's projects on EW's own screen (the plain one without EW's screens). */
 simulated function OnFoundry(UIButton Button)
 {
-	local UILWEngineering Plain;
-
-	Plain = Spawn(class'UILWEngineering', Movie.Pres);
-	Plain.bFoundry = true;
-	Movie.Pres.ScreenStack.Push(Plain);
+	class'UILWEWEngineering'.static.Open(XComHQPresentationLayer(Movie.Pres), true);
 }
 
 simulated function OnSitRoom(UIButton Button)

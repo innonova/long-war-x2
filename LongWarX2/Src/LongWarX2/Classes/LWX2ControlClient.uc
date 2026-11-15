@@ -385,6 +385,8 @@ function Handle(string Line, out array<string> Out)
 			Geo.OnHangar(none);
 		else if (Args.Length > 1 && Args[1] ~= "engineering")
 			Geo.OnEngineering(none);
+		else if (Args.Length > 1 && Args[1] ~= "foundry")
+			Geo.OnFoundry(none);
 		else
 			Out.AddItem("ERR open base|hangar|engineering|loadout");
 		return;

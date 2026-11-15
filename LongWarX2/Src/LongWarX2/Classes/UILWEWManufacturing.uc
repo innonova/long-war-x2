@@ -8,8 +8,10 @@ class UILWEWManufacturing extends UILWEWScreen;
 var int Item;
 var int Quantity;
 var UILWEWEngineering From;
+/** A Foundry project (Item its id): no quantity, begun with LWEngineering.StartFoundry (EW's UIManufacturing.InitFoundry). */
+var bool bFoundry;
 
-static function Open(XComHQPresentationLayer HQPres, int ItemNumber, UILWEWEngineering Caller)
+static function Open(XComHQPresentationLayer HQPres, int ItemNumber, UILWEWEngineering Caller, optional bool bFoundryProject)
 {
 	local UILWEWManufacturing EWScreen;
 
@@ -20,6 +22,7 @@ static function Open(XComHQPresentationLayer HQPres, int ItemNumber, UILWEWEngin
 	EWScreen.Item = ItemNumber;
 	EWScreen.Quantity = 1;
 	EWScreen.From = Caller;
+	EWScreen.bFoundry = bFoundryProject;
 	HQPres.ScreenStack.Push(EWScreen);
 }
 
@@ -42,6 +45,8 @@ function HideUnused()
 	MC.ChildSetBool("centerButton1", "_visible", false);
 	MC.ChildSetBool("centerButton2", "_visible", false);
 	MC.ChildSetBool("option0", "_visible", false);
+	if (bFoundry)
+		MC.ChildSetBool("option1", "_visible", false);
 	// The arrows that stay (the movie's second spinner) moved up into the hidden one's place, beside the quantity.
 	MC.ChildSetNum("option1", "_y", Movie.GetVariableNumber(MCPath $ ".option0._y"));
 }
@@ -62,6 +67,11 @@ function Refresh()
 	local XComGameState_LWStrategy S;
 	local string Short, Cost;
 
+	if (bFoundry)
+	{
+		RefreshFoundry();
+		return;
+	}
 	if (!class'LWGearRules'.static.BuildFor(Item, B))
 		return;
 	Template = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(B.Template);
@@ -87,6 +97,37 @@ function Refresh()
 	MC.EndOp();
 }
 
+/** A Foundry project: its name, engineers, time and cost, words and picture; no quantity. */
+function RefreshFoundry()
+{
+	local LWGearRules.LWFoundryDef F;
+	local X2TechTemplate Template;
+	local XComGameState_LWStrategy S;
+	local string Short;
+
+	if (!class'LWGearRules'.static.FoundryFor(Item, F))
+		return;
+	Template = X2TechTemplate(class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager().FindStrategyElementTemplate(class'LWGearRules'.static.FoundryTemplateFor(Item)));
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Short = class'LWEngineering'.static.FoundryShort(F);
+	MC.FunctionString("SetTitle", "<font size='26'>" $ Caps(class'LWEngineering'.static.FoundryName(Item)) $ "</font>");
+	MC.BeginFunctionOp("SetEngineerLine");
+	MC.QueueString("ENGINEERS");
+	MC.QueueString(string(F.Engineers));
+	MC.EndOp();
+	MC.BeginFunctionOp("SetQuantityLine");
+	MC.QueueString("");
+	MC.QueueString("");
+	MC.QueueBoolean(true);
+	MC.EndOp();
+	MC.BeginFunctionOp("UpdateInfo");
+	MC.QueueString("TIME:" @ class'LWEngineering'.static.HoursText(class'LWEngineering'.static.HoursFor(class'LWEngineering'.static.FoundryWork(F, S.Credits), F.Engineers, S.Engineers))
+		$ "\n" $ "COST:" @ class'LWEngineering'.static.FoundryCostText(F) $ (Short != "" ? "\n" $ class'UIUtilities_Text'.static.GetColoredText("Short of" @ Short, eUIState_Bad) : ""));
+	MC.QueueString(Template != none ? Template.Summary : "");
+	MC.QueueString(Template != none ? Template.strImage : "");
+	MC.EndOp();
+}
+
 /** The cost of one, for n: "§30, 4 Alloys" for 2 is "2 x (§30, 4 Alloys)". */
 static function string Times(string One, int n)
 {
@@ -95,6 +136,8 @@ static function string Times(string One, int n)
 
 function Change(int By)
 {
+	if (bFoundry)
+		return;
 	Quantity = Clamp(Quantity + By, 1, 99);
 	Refresh();
 }
@@ -104,7 +147,7 @@ function Submit()
 {
 	local string Why;
 
-	if (!class'LWEngineering'.static.Start(Item, Quantity, Why))
+	if (bFoundry ? !class'LWEngineering'.static.StartFoundry(Item, Why) : !class'LWEngineering'.static.Start(Item, Quantity, Why))
 	{
 		`log("LongWarX2: EW manufacturing:" @ Why, , 'LongWarX2');
 		Movie.Pres.PlayUISound(eSUISound_MenuClose);
