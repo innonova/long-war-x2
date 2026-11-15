@@ -256,13 +256,16 @@ out.push(
   'SurgeryScale=0.7',
 )
 // Long War's fatigue (XGFacility_Barracks.DetermineTimeOut; LWFatigue): the hours a psi power's or a gene mod's own adds.
-const perkHours = [...core.matchAll(/^ItemBalance_Easy=\(eItem=(\d+),.*?iEng=(\d+)\)/gm)].filter((m) => Number(m[2]) > 0)
+const perkHours = [...core.matchAll(/^ItemBalance_Easy=\(eItem=(\d+),.*?iAlloys=(-?\d+),.*?iEng=(\d+)\)/gm)]
+  .filter((m) => Number(m[3]) > 0)
+  .map((m) => [m[0], m[1], m[3], m[2]])
 out.push(
   '',
   "; Long War's fatigue (LWFatigue): the hours each psi power or gene mod adds to a soldier's rest (ItemBalance_Easy: the",
   '; perk, its iEng).',
   '[LongWarX2.LWFatigue]',
-  ...perkHours.map((m) => `+PerkHours=(Perk=${m[1]}, Hours=${m[2]})`),
+  // Alloys: its iAlloys, which Call to Arms asks for (> 0: its hours cut).
+  ...perkHours.map((m) => `+PerkHours=(Perk=${m[1]}, Hours=${m[2]}, Alloys=${m[3]})`),
 )
 // Long War's bonuses (features/lw-startbonus.md): ItemBalance_Classic's eItem 0 (a starting bonus: Choice, the start
 // screen's option, with its home country), 1 (a country's, while that country is under a satellite and on the council)

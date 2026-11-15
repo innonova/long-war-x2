@@ -74,7 +74,7 @@ function Refresh()
 	OrdersText.SetText("ORDERED:" @ (Orders != "" ? Orders : "none"));
 	ContinentButton.SetText("CONTINENT:" @ Caps(class'LWStrategyRules'.static.ContinentName(Continent)) @ "(" $ class'LWHangar'.static.BaysTaken(AirWar, Continent) $ "/" $ class'LWBaseRules'.default.HangarBays $ ")");
 	WeaponButton.SetText("WEAPON:" @ Caps(class'LWHangar'.static.WeaponName(Weapon)) @ (class'LWHangar'.static.WeaponItem(Weapon) != '' ? "(" $ class'LWEngineering'.static.Held(class'LWHangar'.static.WeaponItem(Weapon)) @ "in stores)" : ""));
-	OrderButton.SetText("ORDER AN INTERCEPTOR (" $ class'LWStrategyRules'.static.Money(class'LWBaseRules'.default.InterceptorCost) $ ")");
+	OrderButton.SetText("ORDER AN INTERCEPTOR (" $ class'LWStrategyRules'.static.Money(class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.InterceptorCost)) $ ")");
 	StatusText.SetText(Status != "" ? Status : "SEND: to the continent chosen. REFIT: with the weapon chosen.");
 }
 

@@ -219,14 +219,14 @@ static function bool Order(int Continent, int Count, out string Why)
 		Why = class'LWStrategyRules'.static.ContinentName(Continent) $ "'s hangar has" @ (class'LWBaseRules'.default.HangarBays - BaysTaken(AirWar, Continent)) @ "free bays.";
 		return false;
 	}
-	if (class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies() < class'LWBaseRules'.default.InterceptorCost * Count)
+	if (class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies() < class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.InterceptorCost) * Count)
 	{
-		Why = "They cost" @ class'LWStrategyRules'.static.Money(class'LWBaseRules'.default.InterceptorCost * Count) $ ".";
+		Why = "They cost" @ class'LWStrategyRules'.static.Money(class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.InterceptorCost) * Count) $ ".";
 		return false;
 	}
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: interceptors ordered");
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
-	XComHQ.AddResource(NewGameState, 'Supplies', -class'LWBaseRules'.default.InterceptorCost * Count);
+	XComHQ.AddResource(NewGameState, 'Supplies', -class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.InterceptorCost) * Count);
 	AirWar = InState(NewGameState);
 	O.Continent = Continent;
 	O.Count = Count;
@@ -354,7 +354,7 @@ static function int Upkeep()
 	if (AirWar == none)
 		return 0;
 	for (i = 0; i < AirWar.Jets.Length; i++)
-		U += AirWar.Jets[i].Type == 3 ? class'LWBaseRules'.default.FirestormUpkeep : class'LWBaseRules'.default.InterceptorUpkeep;
+		U += class'LWBonusEffects'.static.AirCost(AirWar.Jets[i].Type == 3 ? class'LWBaseRules'.default.FirestormUpkeep : class'LWBaseRules'.default.InterceptorUpkeep);
 	return U;
 }
 

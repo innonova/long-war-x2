@@ -161,6 +161,7 @@ static function bool BuildFor(int Item, out LWBuildDef B)
 	if (k == INDEX_NONE)
 		return false;
 	B = default.Builds[k];
+	class'LWBonusEffects'.static.AdjustBuild(B);
 	return true;
 }
 
@@ -172,6 +173,7 @@ static function bool FoundryFor(int Id, out LWFoundryDef F)
 	if (k == INDEX_NONE)
 		return false;
 	F = default.Foundry[k];
+	class'LWBonusEffects'.static.AdjustFoundry(F);
 	return true;
 }
 

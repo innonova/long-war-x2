@@ -3,7 +3,7 @@
 // each soldier as Long War makes it (XGFacility_Barracks.CreateSoldier: every recruit; XGStrategySoldier.SetSoldierClass:
 // by the soldier's base class). The bonuses that change a rule as it is used (costs, funding, research, psi) are asked for
 // where that rule is, with LWBonuses.Has.
-class LWBonusEffects extends Object;
+class LWBonusEffects extends Object dependson(LWGearRules, LWBaseRules);
 
 /** At the campaign's start, in the state that makes it (S not yet submitted). */
 static function AtStart(XComGameState NewGameState, XComGameState_LWStrategy S)
@@ -45,6 +45,92 @@ static function AtStart(XComGameState NewGameState, XComGameState_LWStrategy S)
 			&& class'LWBonuses'.default.Bonuses[i].Country == S.Countries[S.HomeCountry()].Id)
 			S.Note("Starting bonus:" @ class'LWBonuses'.static.Text(i));
 	`log("LongWarX2: bonuses: home" @ S.CountryName(S.HomeCountry()) $ ", start option" @ S.StartChoice $ "; holding:" @ JoinLines(class'LWBonuses'.static.Holding(S)), , 'LongWarX2');
+}
+
+// --- The bonuses on costs, asked for where the cost is read -------------------------------------------------------
+
+/** A share off: Long War's "x *= 1 - bonus / 100" (truncated, as its ints are). */
+static function int Off(int Amount, int Percent)
+{
+	return Percent > 0 ? int(Amount * (1.0 - Percent / 100.0)) : Amount;
+}
+
+/** A facility's price and upkeep (XGItemTree.GetFacility): Architects of the Future for labs and workshops, Power to the
+ * People for the generators. */
+static function AdjustFacility(out LWBaseRules.LWFacilityDef F)
+{
+	local int v;
+
+	switch (F.Id)
+	{
+	case 7:
+	case 8:
+		v = class'LWBonuses'.static.Has(class'LWBonuses'.const.ARCHITECTS);
+		break;
+	case 10:
+	case 15:
+	case 16:
+		v = class'LWBonuses'.static.Has(class'LWBonuses'.const.POWER_TO_THE_PEOPLE);
+		break;
+	}
+	if (v > 0 && F.Cash > 0)
+		F.Cash = Off(F.Cash, v);
+	if (v > 0 && F.Upkeep > 0)
+		F.Upkeep = Off(F.Upkeep, v);
+}
+
+/** A facility's build time in hours (XGItemTree.GetFacilityBuildTime: Baumeister takes its share off). */
+static function int FacilityHours(int Days)
+{
+	return Off(Days * 24, class'LWBonuses'.static.Has(class'LWBonuses'.const.BAUMEISTER));
+}
+
+/** An aircraft's price or upkeep (GetItem for interceptors, Firestorms and their weapons; GetShipMaintenanceCost): Air
+ * Superiority takes its share off. */
+static function int AirCost(int Amount)
+{
+	return Off(Amount, class'LWBonuses'.static.Has(class'LWBonuses'.const.AIR_SUPERIORITY));
+}
+
+/** An item engineering builds (XGItemTree.GetItem, before the workshops' cut): Air Superiority for craft and their weapons
+ * (items 103, 104, 116 to 122), NeoPanzers for SHIV and MEC primary weapons, Cyberware for MEC weapons' meld. */
+static function AdjustBuild(out LWGearRules.LWBuildDef B)
+{
+	local int v;
+
+	if (B.Item == 103 || B.Item == 104 || (B.Item > 115 && B.Item < 123))
+	{
+		v = class'LWBonuses'.static.Has(class'LWBonuses'.const.AIR_SUPERIORITY);
+		B.Cash = Off(B.Cash, v);
+		B.Alloys = Off(B.Alloys, v);
+		B.Elerium = Off(B.Elerium, v);
+	}
+	switch (B.Item)
+	{
+	case 29: case 186: case 190: case 30: case 149: case 110: case 111: case 112:
+		v = class'LWBonuses'.static.Has(class'LWBonuses'.const.NEOPANZERS);
+		B.Cash = Off(B.Cash, v);
+		B.Alloys = Off(B.Alloys, v);
+		B.Elerium = Off(B.Elerium, v);
+		break;
+	}
+	switch (B.Item)
+	{
+	case 22: case 23: case 24: case 25: case 26: case 27: case 29: case 186: case 190: case 30:
+		B.Meld = Off(B.Meld, class'LWBonuses'.static.Has(class'LWBonuses'.const.CYBERWARE));
+		break;
+	}
+}
+
+/** A Foundry project (XGTechTree.GetFoundryTech): New Warfare takes its share off the cash, alloys and elerium. */
+static function AdjustFoundry(out LWGearRules.LWFoundryDef F)
+{
+	local int v;
+
+	v = class'LWBonuses'.static.Has(class'LWBonuses'.const.NEW_WARFARE);
+	F.Cash = Off(F.Cash, v);
+	F.Alloys = Off(F.Alloys, v);
+	F.Elerium = Off(F.Elerium, v);
 }
 
 static function GrantFoundry(XComGameState_LWStrategy S, int Id)

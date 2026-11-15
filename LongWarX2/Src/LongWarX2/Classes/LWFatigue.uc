@@ -14,6 +14,8 @@ struct LWPerkHours
 {
 	var int Perk;
 	var int Hours;
+	/** Its line's iAlloys: above 0, Call to Arms cuts its hours. */
+	var int Alloys;
 };
 var config array<LWPerkHours> PerkHours;
 
@@ -183,6 +185,21 @@ static function MarkAllIn()
 }
 
 /** The hours the soldier's psi powers and gene mods add. */
+/** A power's or gene mod's hours (DetermineTimeOut): Gift of Osiris cuts every one by its share; without it, Call to Arms
+ * cuts those whose line has alloys. */
+static function int PerkHoursNow(LWPerkHours P)
+{
+	local int Gift, Call;
+
+	Gift = class'LWBonuses'.static.Has(class'LWBonuses'.const.GIFT_OF_OSIRIS);
+	if (Gift > 0)
+		return int((1.0 - Gift / 100.0) * P.Hours);
+	Call = class'LWBonuses'.static.Has(class'LWBonuses'.const.CALL_TO_ARMS);
+	if (Call > 0 && P.Alloys > 0)
+		return int((1.0 - Call / 100.0) * P.Hours);
+	return P.Hours;
+}
+
 static function int PowersHours(XComGameState_Unit Unit)
 {
 	local LWPerkHours P;
@@ -195,7 +212,7 @@ static function int PowersHours(XComGameState_Unit Unit)
 		if (Ability == '')
 			Ability = class'X2Ability_LWStandins'.static.GeneAbilityFor(P.Perk);
 		if (Ability != '' && Unit.HasSoldierAbility(Ability, true))
-			H += P.Hours;
+			H += PerkHoursNow(P);
 	}
 	return H;
 }

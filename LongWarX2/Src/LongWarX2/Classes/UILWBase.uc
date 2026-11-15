@@ -134,7 +134,7 @@ function RefreshOTS(XComGameState_LWStrategy S)
 	OTSButton.Show();
 	class'XComGameState_LWStrategy'.static.CanBuySquadSize(S, Why);
 	if (S.SquadSizesBought < class'LWStrategyRules'.default.SquadSizes.Length)
-		OTSText.SetText("Officer Training School: squad" @ class'UILWHeadquarters'.static.SquadSize() @ "->" @ (class'UILWHeadquarters'.static.SquadSize() + 1) $ "," @ class'LWStrategyRules'.static.Money(class'LWStrategyRules'.default.SquadSizes[S.SquadSizesBought].Cash) $ (Why != "" ? " (needs" @ Why $ ")" : ""));
+		OTSText.SetText("Officer Training School: squad" @ class'UILWHeadquarters'.static.SquadSize() @ "->" @ (class'UILWHeadquarters'.static.SquadSize() + 1) $ "," @ class'LWStrategyRules'.static.Money(class'XComGameState_LWStrategy'.static.SquadSizeNext(S).Cash) $ (Why != "" ? " (needs" @ Why $ ")" : ""));
 	else
 		OTSText.SetText("Officer Training School: squad" @ class'UILWHeadquarters'.static.SquadSize() $ ", both squad sizes bought");
 }

@@ -184,6 +184,17 @@ static function string ContinentName(int Continent)
 }
 
 /** XCOM 2's difficulty (0 Rookie … 3 Legend), Long War's index for the per-difficulty arrays. */
+/** A satellite's price (XGItemTree.GetItem, eItem_Satellite: Roscosmos takes its share off). */
+static function int SatelliteCash()
+{
+	local int Cash;
+
+	Cash = default.SatelliteCost;
+	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.ROSCOSMOS) > 0)
+		Cash *= 1.0 - class'LWBonuses'.static.Has(class'LWBonuses'.const.ROSCOSMOS) / 100.0;
+	return Cash;
+}
+
 static function int Difficulty()
 {
 	return Clamp(`CAMPAIGNDIFFICULTYSETTING, 0, 3);

@@ -152,23 +152,53 @@ Seen:
 - A campaign begun before the start screen keeps the United States as home, with no
   starting bonus.
 
-### Left open (in the order I'd take them)
+### Left open
 
-- **The bonuses that change a rule as it is used:**
-  - costs: aircraft, power facilities, the Foundry, labs and workshops, facility build time,
-    satellites, gene mods, Officer Training School cash;
-  - funding (Wealth of Nations) and abduction cash (Bounties);
-  - research: credits (Expertise), autopsies and interrogations (We Have Ways), lab
-    adjacency (Jai Vidwan);
-  - psi chance and time (Legacy of Uxmal, The Old Path);
-  - fatigue (Gift of Osiris, Call to Arms);
-  - Per Ardua Ad Astra (its iMultiple[5] still to be read).
 - **The bonuses that make soldiers:** Foreign Legion, Cadre, Kiryu-Kai Commander.
+- **Per Ardua Ad Astra:** it adds points to Long War's random rookie-stat roll
+  (`XGFacility_Barracks.RandomizeStats`, which Long War runs unless its second-wave option is
+  on). The port has no such roll: its recruits take XCOM 2's flat stats. That roll is a gap
+  of its own (lw-classes). The bonus comes with it.
 - **The bonuses that wait on their system:**
-  - SHIVs and MECs: Ghost in the Machine, Robotics, NeoPanzers, Cyberware;
+  - SHIVs and MECs: Ghost in the Machine, Robotics, NeoPanzers, Cyberware (NeoPanzers and
+    Cyberware are wired into item costs already and act once those items exist);
   - the grey market: Xenological Remedies;
-  - officers: Sandhurst, Special Warfare School;
+  - officers: the officer side of Sandhurst, and Gift of Osiris's medal hours;
   - council requests and intel: Quai d'Orsay;
   - the Illuminator Gunsight item: Ancient Artifact;
   - small slots on early armour: Jungle Scouts.
 - **The country bonuses on the Situation Room,** as EW shows them.
+
+## Report (2026-11-15, the bonuses that change a rule as it is used)
+
+Each is asked for where its rule is, with `LWBonuses.Has`, following the Long War function
+named:
+
+- **Costs** (`LWBonusEffects`, applied where the def is read, so screens and prices agree):
+  - Architects of the Future: labs and workshops, price and upkeep (`GetFacility`);
+  - Power to the People: the three generators, price and upkeep;
+  - Baumeister: facility build time (`GetFacilityBuildTime`);
+  - Cheyenne Mountain: digging (`GetConstructionProjectCost`);
+  - Air Superiority: interceptors, Firestorms and craft weapons (`GetItem`), interceptor
+    orders, craft upkeep (`GetShipMaintenanceCost`);
+  - NeoPanzers and Cyberware: SHIV and MEC items (`GetItem`);
+  - New Warfare: Foundry projects' cash, alloys and elerium (`GetFoundryTech`);
+  - Roscosmos: satellites;
+  - Deus Ex: gene mods' cash, meld and hours (`BuildGeneModTech`);
+  - Special Warfare School: the Officer Training School's cash (`GetOTSTech`);
+  - Sandhurst: the ranks its squad sizes need (`HasOTSPrereqs`).
+- **Money:** Wealth of Nations raises the council's funding (`GetIncome`). Bounties raises
+  an abduction's cash, before its difficulty's scale (`DetermineAbductionReward`).
+- **Research:** Expertise adds its points to every research credit, for techs and Foundry
+  projects (`GetCreditAdjustedTechHours`). We Have Ways cuts autopsies and interrogations
+  (`GetTech`). Jai Vidwan makes each lab adjacency worth more (`UpdateLabBonus`). The techs'
+  time cuts are set again at each research sync, since country bonuses come and go with
+  satellites.
+- **Psi:** The Old Path cuts training time (`AddSoldier`). Legacy of Uxmal adds to the
+  chance, up to 99 (`RollForGift`).
+- **Fatigue:** Gift of Osiris cuts every psi power's and gene mod's hours; without it, Call
+  to Arms cuts those whose line has alloys (`DetermineTimeOut`). The generator now writes
+  each line's iAlloys.
+
+Seen in the game: Cheyenne Mountain's three lifts down the shaft, and a dig in row 2 for §5
+instead of §10. The rest is built and compiles, but hasn't been seen in the game yet.

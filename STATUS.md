@@ -30,13 +30,13 @@ buttons and text, no art).
 | Psi Labs | most | plain | training at Long War's hours and chance (0.45) | psi ranks and XP; fatigue | `lw-psi` |
 | Genetics Lab | most | plain | the ten mods, slots, cost and time | the mods' fatigue | `lw-genemods` |
 | Officer Training School | part | plain | squad size I and II (7, 8) | the officers and their abilities | `lw-officers` (planned) |
-| Start and country bonuses | part | LW | the start screen (EW's own ContinentSelect: home country and starting bonus together), all 62 bonuses as config with Long War's `HasBonus`, what acts at the start (money, Foundry projects, jets, steam vents, starting facilities, cheaper digging) and on soldiers (stats at creation, by base class); words from the player's Long War | the bonuses on costs, funding, research, psi and fatigue; those that make soldiers; those waiting on SHIVs, MECs, the grey market, officers, council requests | `lw-startbonus` |
+| Start and country bonuses | most | LW | the start screen (EW's own ContinentSelect: home country and starting bonus together), all 62 bonuses as config with Long War's `HasBonus`; what acts at the start (money, Foundry projects, jets, steam vents, starting facilities) and on soldiers (stats at creation, by base class); the bonuses on costs, funding, abductions, research, labs, psi, gene mods, fatigue and the Officer Training School; words from the player's Long War | those that make soldiers; Per Ardua (waits on the rookie stat roll); those waiting on SHIVs, MECs, the grey market, officers, council requests | `lw-startbonus` |
 | The story | most | plain | alien bases, Overseers, the Temple Ship | the HQ assault from month 4; Act 3; EXALT | `lw-story` |
 | EXALT | none | | | all of it | |
 | MECs, SHIVs, cybernetics | none | | | all of it | |
 | Squad selection and loadout | most | X2 | XCOM 2's squad select and armory for a Long War mission (Long War's squad size, rested soldiers first, Long War's launch, backing out leaves the mission) | slots 7 and 8 are filled, not picked; the scene is still the Avenger's launch bay | `lw-squad-select` |
 | Fatigue | most | X2 | Long War's hours, all in, shown as War of the Chosen's Tired | officers' hours, the country bonuses' | `lw-fatigue` |
-| Soldiers: recruits, ranks | most | X2 | Long War's eight classes, ranks, stat gains and experience in XCOM 2's barracks | Wet Work, medals' experience | `lw-classes` |
+| Soldiers: recruits, ranks | most | X2 | Long War's eight classes, ranks, stat gains and experience in XCOM 2's barracks | Wet Work, medals' experience; Long War's random rookie stats (RandomizeStats) | `lw-classes` |
 
 ## Tactical
 

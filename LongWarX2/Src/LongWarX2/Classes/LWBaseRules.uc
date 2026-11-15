@@ -94,6 +94,7 @@ static function bool FacilityFor(int Id, out LWFacilityDef F)
 	if (k == INDEX_NONE)
 		return false;
 	F = default.Facilities[k];
+	class'LWBonusEffects'.static.AdjustFacility(F);
 	return true;
 }
 
@@ -114,23 +115,35 @@ static function bool PsiPowerFor(int Perk, out LWPsiPower P)
 	return true;
 }
 
-/** Hours to train a power (XGFacility_PsiLabs.AddSoldier): PsiTrainingHours x its target will / the soldier's will. */
+/** Hours to train a power (XGFacility_PsiLabs.AddSoldier): PsiTrainingHours x its target will / the soldier's will; The Old
+ * Path takes its share off. */
 static function int PsiHours(int Will, LWPsiPower P)
 {
-	return default.PsiTrainingHours * P.TargetWill / Max(1, Will);
+	local int H, v;
+
+	H = default.PsiTrainingHours * P.TargetWill / Max(1, Will);
+	v = class'LWBonuses'.static.Has(class'LWBonuses'.const.THE_OLD_PATH);
+	if (v > 0)
+		H *= 1.0 - v / 100.0;
+	return H;
 }
 
-/** The chance (%) that training succeeds (XGFacility_PsiLabs.RollForGift; its council bonus left out). */
+/** The chance (%) that training succeeds (XGFacility_PsiLabs.RollForGift; Legacy of Uxmal adds its points, to 99). */
 static function int PsiChance(int Will, LWPsiPower P)
 {
-	local int W, T, G;
+	local int W, T, G, Chance, v;
 
 	W = Max(1, Will);
 	T = P.TargetWill;
 	G = Round(100 * default.PsiGiftChance);
 	if (W <= T + 80 - G)
-		return Max(1, W - T + G);
-	return Min(99, int(100 - 400.0 / float((W - T) + (G - 60))));
+		Chance = Max(1, W - T + G);
+	else
+		Chance = Min(99, int(100 - 400.0 / float((W - T) + (G - 60))));
+	v = class'LWBonuses'.static.Has(class'LWBonuses'.const.LEGACY_OF_UXMAL);
+	if (v > 0)
+		Chance = Min(99, Chance + v);
+	return Chance;
 }
 
 static function bool GeneModFor(int Perk, out LWGeneMod G)
@@ -141,5 +154,24 @@ static function bool GeneModFor(int Perk, out LWGeneMod G)
 	if (k == INDEX_NONE)
 		return false;
 	G = default.GeneMods[k];
+	// Deus Ex (XGTechTree.BuildGeneModTech): its share off the meld and cash (and the time: GeneHours).
+	k = class'LWBonuses'.static.Has(class'LWBonuses'.const.DEUS_EX);
+	if (k > 0)
+	{
+		G.Meld *= 1.0 - k / 100.0;
+		G.Cash *= 1.0 - k / 100.0;
+	}
 	return true;
+}
+
+/** A gene mod's hours in the tank: Days x 24, Deus Ex's share off. */
+static function int GeneHours(LWGeneMod G)
+{
+	local int H, k;
+
+	H = G.Days * 24;
+	k = class'LWBonuses'.static.Has(class'LWBonuses'.const.DEUS_EX);
+	if (k > 0)
+		H *= 1.0 - k / 100.0;
+	return H;
 }

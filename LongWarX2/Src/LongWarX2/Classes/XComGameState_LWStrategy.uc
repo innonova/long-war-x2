@@ -310,6 +310,8 @@ function SyncResearchIn(XComGameState NewGameState)
 	Target = Round(ResearchPerHour() * class'X2StrategyGameRulesetDataStructures'.default.ResearchProject_TimeScalar[class'LWStrategyRules'.static.Difficulty()]);
 	Base = XComHQ.GetScienceScore(true) - XComHQ.BonusScienceScore;
 	XComHQ.BonusScienceScore = Target - Base;
+	// The techs' time cuts, which the bonuses change as satellites come and go.
+	TechTimesIn(NewGameState);
 	// No XCOM 2 inspirations or breakthroughs (Long War has neither): their timers never run out, and
 	// one already given is taken back.
 	class'X2StrategyGameRulesetDataStructures'.static.SetTime(XComHQ.InspiredTechTimer, 0, 0, 0, 1, 1, 9999);
@@ -343,14 +345,29 @@ static function CreditHeld(XComGameState NewGameState, int Credit)
 	if (S.Credits.Find(Credit) == INDEX_NONE)
 		S.Credits.AddItem(Credit);
 	S.Note("A research credit is held: research it covers will cost less.");
+	S.TechTimesIn(NewGameState);
+}
+
+/** Every Long War tech's time cut (LWResearchRules.TimeCut: the credits held, Expertise, We Have Ways) set on XCOM 2's
+ * tech where it differs. */
+function TechTimesIn(XComGameState NewGameState)
+{
+	local XComGameState_Tech Tech;
+	local LWResearchRules.LWTechDef T;
+	local float Cut;
+
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Tech', Tech)
 	{
 		foreach class'LWResearchRules'.default.Techs(T)
 		{
 			if (class'LWResearchRules'.static.TemplateFor(T) != Tech.GetMyTemplateName())
 				continue;
-			Tech = XComGameState_Tech(NewGameState.ModifyStateObject(class'XComGameState_Tech', Tech.ObjectID));
-			Tech.TimeReductionScalar = class'LWResearchRules'.static.CreditCut(T, S.Credits);
+			Cut = class'LWResearchRules'.static.TimeCut(T, Credits, self);
+			if (Abs(Tech.TimeReductionScalar - Cut) > 0.0001)
+			{
+				Tech = XComGameState_Tech(NewGameState.ModifyStateObject(class'XComGameState_Tech', Tech.ObjectID));
+				Tech.TimeReductionScalar = Cut;
+			}
 			break;
 		}
 	}
@@ -1642,7 +1659,11 @@ function GiveAbductionReward(XComGameState NewGameState, int Country)
 	local int Cash, Diff;
 
 	Diff = AbductionDifficulty(Country);
-	Cash = int(class'LWStrategyRules'.default.AbductionRewardCash * (Diff == 0 ? 0.8 : (Diff == 1 ? 0.9 : (Diff == 2 ? 1.0 : 1.15))));
+	Cash = class'LWStrategyRules'.default.AbductionRewardCash;
+	// Bounties (DetermineAbductionReward): more, before the difficulty's scale.
+	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.BOUNTIES, self) > 0)
+		Cash *= 1.0 + class'LWBonuses'.static.Has(class'LWBonuses'.const.BOUNTIES, self) / 100.0;
+	Cash = int(Cash * (Diff == 0 ? 0.8 : (Diff == 1 ? 0.9 : (Diff == 2 ? 1.0 : 1.15))));
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
 	if (XComHQ == none)
 		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
@@ -1659,11 +1680,11 @@ static function bool BuildSatellite()
 	local XComGameState_HeadquartersXCom XComHQ;
 
 	XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
-	if (XComHQ.GetSupplies() < class'LWStrategyRules'.default.SatelliteCost)
+	if (XComHQ.GetSupplies() < class'LWStrategyRules'.static.SatelliteCash())
 		return false;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a satellite ordered");
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
-	XComHQ.AddResource(NewGameState, 'Supplies', -class'LWStrategyRules'.default.SatelliteCost);
+	XComHQ.AddResource(NewGameState, 'Supplies', -class'LWStrategyRules'.static.SatelliteCash());
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	S.SatellitesDue.AddItem(S.Hours + 24 * class'LWStrategyRules'.default.SatelliteDays);
 	S.Note("A satellite ordered: ready in" @ class'LWStrategyRules'.default.SatelliteDays @ "days.");
@@ -1755,6 +1776,9 @@ function EndMonth()
 			|| (Blocks > 1 && Rand(100) < class'LWStrategyRules'.default.PanicLowReductionChance[d]))
 			AddPanic(i, -class'LWStrategyRules'.default.SatPanicReduction[d]);
 	}
+	// Wealth of Nations (XGWorld.GetIncome): the funding raised by its share.
+	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.WEALTH_OF_NATIONS, self) > 0)
+		Funding = int(Funding + Funding * (class'LWBonuses'.static.Has(class'LWBonuses'.const.WEALTH_OF_NATIONS, self) / 100.0));
 	History = `XCOMHISTORY;
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
 	XComHQ = XComGameState_HeadquartersXCom(GetParentGameState().ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
@@ -2085,10 +2109,10 @@ static function bool StartGeneMod(int UnitID, int Perk, out string Why)
 	class'LWEngineering'.static.Take(NewGameState, class'X2Item_LWArtifacts'.static.ItemFor('Meld'), G.Meld);
 	T.Unit = UnitID;
 	T.Perk = Perk;
-	T.HoursLeft = G.Days * 24;
+	T.HoursLeft = class'LWBaseRules'.static.GeneHours(G);
 	S.GeneTrainees.AddItem(T);
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
-	`log("LongWarX2: gene mods:" @ Unit.GetFullName() @ "in the tank for" @ class'X2Ability_LWStandins'.static.GeneAbilityFor(Perk) @ "," @ G.Days @ "days", , 'LongWarX2');
+	`log("LongWarX2: gene mods:" @ Unit.GetFullName() @ "in the tank for" @ class'X2Ability_LWStandins'.static.GeneAbilityFor(Perk) @ "," @ T.HoursLeft @ "hours", , 'LongWarX2');
 	return true;
 }
 
@@ -2130,6 +2154,23 @@ static function int RanksInBarracks()
 }
 
 /** Whether the next squad size can be bought now; Why says what is missing. */
+/** The next squad size, as the Officer Training School offers it (XGTechTree.GetOTSTech, HasOTSPrereqs): Special Warfare
+ * School takes its share off the cash, Sandhurst off the ranks it needs. */
+static function LWStrategyRules.LWSquadSize SquadSizeNext(XComGameState_LWStrategy S)
+{
+	local LWStrategyRules.LWSquadSize Next;
+	local int v;
+
+	Next = class'LWStrategyRules'.default.SquadSizes[Min(S.SquadSizesBought, class'LWStrategyRules'.default.SquadSizes.Length - 1)];
+	v = class'LWBonuses'.static.Has(class'LWBonuses'.const.SPECIAL_WARFARE_SCHOOL, S);
+	if (v > 0)
+		Next.Cash *= 1.0 - v / 100.0;
+	v = class'LWBonuses'.static.Has(class'LWBonuses'.const.SANDHURST, S);
+	if (v > 0)
+		Next.Ranks = int(Next.Ranks * (1.0 - v / 100.0));
+	return Next;
+}
+
 static function bool CanBuySquadSize(XComGameState_LWStrategy S, out string Why)
 {
 	local LWStrategyRules.LWSquadSize Next;
@@ -2139,7 +2180,7 @@ static function bool CanBuySquadSize(XComGameState_LWStrategy S, out string Why)
 		Why = "nothing: both bought";
 	else
 	{
-		Next = class'LWStrategyRules'.default.SquadSizes[S.SquadSizesBought];
+		Next = SquadSizeNext(S);
 		if (class'LWBase'.static.Count(S, 12) == 0)
 			Why = "the Officer Training School";
 		else if (RanksInBarracks() < Next.Ranks)
@@ -2160,7 +2201,7 @@ static function bool BuySquadSize(out string Why)
 	S = Get();
 	if (S == none || !CanBuySquadSize(S, Why))
 		return false;
-	Cash = class'LWStrategyRules'.default.SquadSizes[S.SquadSizesBought].Cash;
+	Cash = SquadSizeNext(S).Cash;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: squad size bought");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));

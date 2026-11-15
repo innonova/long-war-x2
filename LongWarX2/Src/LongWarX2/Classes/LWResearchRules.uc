@@ -65,7 +65,7 @@ static function name TemplateForId(int Id)
 }
 
 /** The share (0..1) research credits take off a tech: each held credit that covers it, stacking by multiplying (XGTechTree.GetCreditAdjustedTechHours). */
-static function float CreditCut(LWTechDef T, array<int> Held)
+static function float CreditCut(LWTechDef T, array<int> Held, optional XComGameState_LWStrategy S)
 {
 	local float Left;
 	local int c, k;
@@ -76,8 +76,31 @@ static function float CreditCut(LWTechDef T, array<int> Held)
 		if (T.Credits.Find(c) == INDEX_NONE && c != 9)
 			continue;
 		k = default.CreditShare.Find('Credit', c);
+		// Expertise (GetCreditAdjustedTechHours): each credit worth its share more.
 		if (k != INDEX_NONE)
-			Left *= 1.0 - default.CreditShare[k].Percent / 100.0;
+			Left *= 1.0 - (default.CreditShare[k].Percent + class'LWBonuses'.static.Has(class'LWBonuses'.const.EXPERTISE, S)) / 100.0;
 	}
 	return 1.0 - Left;
+}
+
+/** A tech's whole time cut: the credits', and We Have Ways' for autopsies and interrogations (XGTechTree.GetTech). */
+static function float TimeCut(LWTechDef T, array<int> Held, optional XComGameState_LWStrategy S)
+{
+	local float Left;
+
+	Left = 1.0 - CreditCut(T, Held, S);
+	if (IsAutopsy(T.Id) || IsInterrogation(T.Id))
+		Left *= 1.0 - class'LWBonuses'.static.Has(class'LWBonuses'.const.WE_HAVE_WAYS, S) / 100.0;
+	return 1.0 - Left;
+}
+
+/** Long War's autopsies and interrogations (XGFacility_Labs.IsAutopsyTech, IsInterrogationTech). */
+static function bool IsAutopsy(int Id)
+{
+	return Id != 49 && ((Id >= 44 && Id < 59) || Id == 6);
+}
+
+static function bool IsInterrogation(int Id)
+{
+	return Id >= 35 && Id <= 43;
 }

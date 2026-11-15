@@ -372,7 +372,7 @@ static function int FoundryWork(LWGearRules.LWFoundryDef F, array<int> Held)
 			continue;
 		k = class'LWResearchRules'.default.CreditShare.Find('Credit', c);
 		if (k != INDEX_NONE)
-			Work -= Max(24, Work * class'LWResearchRules'.default.CreditShare[k].Percent / 100);
+			Work -= Max(24, Work * (class'LWResearchRules'.default.CreditShare[k].Percent + class'LWBonuses'.static.Has(class'LWBonuses'.const.EXPERTISE)) / 100);
 	}
 	return Max(0, Work);
 }

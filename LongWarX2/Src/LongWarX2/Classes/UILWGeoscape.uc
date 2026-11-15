@@ -163,7 +163,7 @@ function Refresh()
 		CountryButtons[i].SetText((i == SelectedCountry ? "> " : "") $ class'LWStrategyRules'.default.Countries[i].Name);
 		CountryTexts[i].SetText(CountryLine(S, i));
 	}
-	BuildSatButton.SetText("BUILD SATELLITE (" $ class'LWStrategyRules'.static.Money(class'LWStrategyRules'.default.SatelliteCost) $ ")");
+	BuildSatButton.SetText("BUILD SATELLITE (" $ class'LWStrategyRules'.static.Money(class'LWStrategyRules'.static.SatelliteCash()) $ ")");
 	LaunchSatButton.SetText("LAUNCH SATELLITE (" $ S.SatellitesReady @ "ready" $ (S.SatellitesDue.Length > 0 ? "," @ S.SatellitesDue.Length @ "building" : "") $ ")");
 	LaunchSatButton.SetDisabled(S.SatellitesReady <= 0 || SelectedCountry < 0);
 

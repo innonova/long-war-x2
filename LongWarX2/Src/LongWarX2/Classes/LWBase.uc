@@ -286,8 +286,11 @@ static function int Upkeep(XComGameState_LWStrategy S)
 	local int U;
 
 	foreach class'LWBaseRules'.default.Facilities(F)
+	{
+		class'LWBonusEffects'.static.AdjustFacility(F);
 		if (F.Upkeep > 0)
 			U += F.Upkeep * Count(S, F.Id);
+	}
 	return U + class'LWBaseRules'.default.SkyrangerUpkeep + class'LWHangar'.static.Upkeep();
 }
 
@@ -296,7 +299,8 @@ static function float LabBonus(XComGameState_LWStrategy S)
 {
 	if (S.TileFacility.Length == 0)
 		return 0;
-	return class'LWResearchRules'.default.LabBonus * Count(S, 7) + class'LWBaseRules'.default.LabAdjacencyBonus * Adjacencies(S, ADJ_SCIENCE);
+	// Jai Vidwan: each lab adjacency worth its share more.
+	return class'LWResearchRules'.default.LabBonus * Count(S, 7) + (class'LWBonuses'.static.Has(class'LWBonuses'.const.JAI_VIDWAN, S) / 100.0 + class'LWBaseRules'.default.LabAdjacencyBonus) * Adjacencies(S, ADJ_SCIENCE);
 }
 
 /** An item's cash cost after the workshops' cut (XGItemTree.ScaleCost). */
@@ -490,7 +494,7 @@ static function bool Work(int X, int Y, int Facility, out string Why)
 		}
 		Job.Kind = 1;
 		Job.Facility = Facility;
-		Job.HoursLeft = F.Days * 24;
+		Job.HoursLeft = class'LWBonusEffects'.static.FacilityHours(F.Days);
 	}
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: work in the base");
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));

@@ -712,7 +712,7 @@ function Hangar(out array<string> Out)
 	for (i = 0; i < 5; i++)
 		Line @= i $ "=" $ class'LWStrategyRules'.static.ContinentName(i) @ class'LWHangar'.static.BaysTaken(AirWar, i) $ "/" $ class'LWBaseRules'.default.HangarBays $ ";";
 	Out.AddItem(Line);
-	Out.AddItem("interceptor" @ class'LWStrategyRules'.static.Money(class'LWBaseRules'.default.InterceptorCost) @ "upkeep" @ class'LWStrategyRules'.static.Money(class'LWHangar'.static.Upkeep()) $ "/month");
+	Out.AddItem("interceptor" @ class'LWStrategyRules'.static.Money(class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.InterceptorCost)) @ "upkeep" @ class'LWStrategyRules'.static.Money(class'LWHangar'.static.Upkeep()) $ "/month");
 }
 
 /** The base: a line per row of tiles, its numbers, and each facility that could be built with what it needs. */
@@ -739,6 +739,7 @@ function Base(XComGameState_LWStrategy S, out array<string> Out)
 	{
 		if (F.Cash < 0)
 			continue;
+		class'LWBonusEffects'.static.AdjustFacility(F);
 		class'LWBase'.static.CanBuild(S, F, Why);
 		Out.AddItem("facility" @ F.Id @ class'LWBase'.static.FacilityName(F.Id) @ class'LWStrategyRules'.static.Money(F.Cash) @ "power" @ F.Power @ "days" @ F.Days @ (Why != "" ? "needs" @ Why : "ok"));
 	}
@@ -2481,7 +2482,7 @@ function AutoPlay(int Hours, int WinPct, int Stance, bool bSatellites, out array
 				if (class'LWBase'.static.GrowForUplink(Why))
 					Out.AddItem("day" @ S.Days() @ "base:" @ Why);
 			}
-			else if (XComHQ.GetSupplies() >= class'LWStrategyRules'.default.SatelliteCost && class'XComGameState_LWStrategy'.static.BuildSatellite())
+			else if (XComHQ.GetSupplies() >= class'LWStrategyRules'.static.SatelliteCash() && class'XComGameState_LWStrategy'.static.BuildSatellite())
 				Out.AddItem("satellite ordered");
 			// Two interceptors kept at home: a lost one replaced.
 			if (class'LWHangar'.static.BaysTaken(class'XComGameState_LWAirWar'.static.Get(), class'LWHangar'.static.HomeContinent()) < 2
