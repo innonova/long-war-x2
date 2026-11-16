@@ -1,7 +1,7 @@
 // Long War's damage reduction (features/lw-damage-reduction.md): a passive on every character (AddAbilities) whose
 // effect (X2Effect_LWDamageReduction) takes Long War's reduction off each hit. Absorb is Long War's XGUnit.AbsorbDamage
 // for what the port has: the unit's own (Long War's aliens, LWAlienStats; armour, LWGearRules), the target's shield,
-// acid, Shock-Absorbent Armor, Absorption Fields, cover as the attacker sees it, hunkering, Will to Survive, Fortiores
+// Chitin Plating, acid, Shock-Absorbent Armor, Absorption Fields, cover as the attacker sees it, hunkering, Will to Survive, Fortiores
 // Una; the attacker's Combined Arms and Gauss weapons; shotguns' extra penalty. The numbers are Long War's (scripts/classes-config.mjs).
 class X2Ability_LWDamageReduction extends X2Ability config(LWClasses) dependson(LWSHIVs, LWMECs);
 
@@ -21,6 +21,9 @@ var config float ShieldFactor;
 var config float AcidMin, AcidShare;
 /** Shotguns: the reduction taken off once more times this (0.5; Breaching Ammo would cancel it). */
 var config float ShotgunExtra;
+/** Chitin Plating (its item's template): a melee hit times ChitinFactor (0.6). */
+var config name ChitinPlating;
+var config float ChitinFactor;
 /** Shock-Absorbent Armor: the damage times ShockFactor from an attacker within ShockTiles (0.67, 4). */
 var config float ShockFactor;
 var config int ShockTiles;
@@ -159,7 +162,7 @@ static function bool LongWarWeapon(XComGameState_Item Weapon, out LWGearRules.LW
 }
 
 /** Long War's AbsorbDamage: the damage left of Damage (a fraction), and what took it off (Parts, for the control port). */
-static function float Absorb(XComGameState_Unit Target, XComGameState_Unit Attacker, XComGameState_Item Weapon, int Damage, out string Parts)
+static function float Absorb(XComGameState_Unit Target, XComGameState_Unit Attacker, XComGameState_Item Weapon, int Damage, out string Parts, optional bool bMelee)
 {
 	local float F, Cover, X;
 	local LWGearRules.LWWeaponDef W;
@@ -172,6 +175,12 @@ static function float Absorb(XComGameState_Unit Target, XComGameState_Unit Attac
 	{
 		F -= X;
 		Parts @= "own" @ X;
+	}
+	// Chitin Plating against a melee attack (and the Kinetic Strike): x ChitinFactor (0.6).
+	if (bMelee && HasItem(Target, default.ChitinPlating))
+	{
+		F *= default.ChitinFactor;
+		Parts @= "chitin x" $ default.ChitinFactor;
 	}
 	if (Target.GetCurrentStat(eStat_ShieldHP) > 0)
 	{
@@ -240,6 +249,21 @@ static function float Absorb(XComGameState_Unit Target, XComGameState_Unit Attac
 		Parts @= "shotgun x" $ (1 + default.ShotgunExtra);
 	}
 	return FMax(F, 0);
+}
+
+/** Whether the unit carries an item of the template. */
+static function bool HasItem(XComGameState_Unit Unit, name Template)
+{
+	local XComGameState_Item Item;
+	local array<XComGameState_Item> Items;
+
+	if (Template == '')
+		return false;
+	Items = Unit.GetAllInventoryItems();
+	foreach Items(Item)
+		if (Item.GetMyTemplateName() == Template)
+			return true;
+	return false;
 }
 
 /** A fraction rounded up by chance (Long War: up when a roll is under the fraction). */

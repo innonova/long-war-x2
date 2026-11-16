@@ -437,3 +437,21 @@ New control port aids:
 - `armory <n>`, XCOM 2's armory on a soldier;
 - in missions, `enemies`, `spawn`, `capture` and `use <soldier> <ability>`;
 - `tools/test/to-mission.sh`, a fresh campaign into a mission.
+
+## Report (2026-11-16, Chitin Plating)
+
+**Chitin Plating** (Long War's item 72) is a small item now (`LWSmall_72`):
+- its stat line's +3 HP;
+- built in engineering and sold on the grey market under that template (Long War's costs);
+- Long War's name and summary from the words.
+
+Like Long War's `XGUnit.AbsorbDamage`, a melee hit on its wearer is ×0.6. The rule counts XCOM 2's
+melee abilities and the Kinetic Strike (`X2Ability_LWDamageReduction`, `ChitinPlating`,
+`ChitinFactor`). The Seeker's Strangle cannot seize its wearer (`X2Condition_LWNoItem`; Long War's
+text: "a strangulation countermeasure").
+
+**Checked on wingpu** (`dr … melee`, a new test option): a Sectoid's 6 left 3.6 on a soldier with
+the plating as a melee hit, 6 as a shot.
+
+**Not checked:** the Strangle condition in play. A Seeker was spawned beside the plated soldier,
+but the control port lists only how many targets Strangle has, not which.

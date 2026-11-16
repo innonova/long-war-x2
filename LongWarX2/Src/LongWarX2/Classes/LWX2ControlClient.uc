@@ -257,7 +257,7 @@ function Handle(string Line, out array<string> Out)
 			HitChance(Out, int(Mid(Args[1], InStr(Args[1], "#") == 0 ? 1 : 0)), int(Mid(Args[2], InStr(Args[2], "#") == 0 ? 1 : 0)), Args.Length > 3 ? name(Args[3]) : 'StandardShot');
 		return;
 	case "dr":
-		// Long War's damage reduction: 'dr' each unit's own; 'dr <attacker #id> <target #id> <damage>' what a hit leaves, and why.
+		// Long War's damage reduction: 'dr' each unit's own; 'dr <attacker #id> <target #id> <damage> [melee]' what a hit leaves, and why.
 		DamageReduction(Args, Out);
 		return;
 	case "effects":
@@ -2326,7 +2326,7 @@ function DamageReduction(array<string> Args, out array<string> Out)
 			Out.AddItem("ERR dr <attacker #id> <target #id> <damage>");
 			return;
 		}
-		Left = class'X2Ability_LWDamageReduction'.static.Absorb(Target, Attacker, Attacker.GetPrimaryWeapon(), int(Args[3]), Parts);
+		Left = class'X2Ability_LWDamageReduction'.static.Absorb(Target, Attacker, Attacker.GetPrimaryWeapon(), int(Args[3]), Parts, Args.Length > 4 && Args[4] == "melee");
 		Out.AddItem(Attacker.GetFullName() @ "(" $ (Attacker.GetPrimaryWeapon() != none ? string(Attacker.GetPrimaryWeapon().GetMyTemplateName()) : "no weapon") $ ") on"
 			@ Target.GetFullName() @ "for" @ Args[3] $ ": left" @ Left $ ";" $ (Parts != "" ? Parts : " nothing taken off"));
 		return;

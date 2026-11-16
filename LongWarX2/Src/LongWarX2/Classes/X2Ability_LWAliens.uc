@@ -381,6 +381,7 @@ static function X2AbilityTemplate Strangle(name AbilityName)
 {
 	local X2AbilityTemplate Template;
 	local X2Effect Effect;
+	local X2Condition_LWNoItem NoChitin;
 	local X2Condition Condition;
 	local X2Effect_RemoveEffects Uncloak;
 
@@ -407,6 +408,10 @@ static function X2AbilityTemplate Strangle(name AbilityName)
 		Uncloak = new class'X2Effect_RemoveEffects';
 		Uncloak.EffectNamesToRemove.AddItem('LW_SeekerCloak');
 		Template.AddShooterEffect(Uncloak);
+		// Chitin Plating: not strangled (Long War's item text: "a strangulation countermeasure").
+		NoChitin = new class'X2Condition_LWNoItem';
+		NoChitin.Item = class'X2Ability_LWDamageReduction'.default.ChitinPlating;
+		Template.AbilityTargetConditions.AddItem(NoChitin);
 	}
 	// A soldier in high cover can be seized too (XCOM 2's Viper cannot bind one; EW's Seeker strangles anyone it reaches).
 	foreach Template.AbilityTargetConditions(Condition)

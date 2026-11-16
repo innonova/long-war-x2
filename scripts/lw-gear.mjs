@@ -205,6 +205,8 @@ export const SMALL = [
   { item: 123, kind: 'Passive', look: 'CommonPCSFocus', ammo: 3 },
   { item: 95, kind: 'Passive', look: 'CommonPCSConditioning' },
   { item: 94, kind: 'Passive', look: 'CommonPCSAgility', critAgainstReaction: 100 },
+  // Chitin Plating: melee damage x0.6 on its wearer (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction), its stat line's HP.
+  { item: 72, kind: 'Passive', look: 'CommonPCSConditioning' },
   // Long War's MEC subsystems (features/lw-shivs-mecs.md, phase 4), MEC classes only, each an XCOM 2 item standing in for
   // EW's ability (APPROXIMATIONS, Decisions there): the Grenade Launcher a thrown frag, the Proximity Mine Launcher XCOM 2's
   // proximity mine, the Flamethrower a firebomb, the Electro Pulse an EMP grenade, the Restorative Mist a medikit's heal.

@@ -14,7 +14,8 @@ function int GetDefendingDamageModifier(XComGameState_Effect EffectState, XComGa
 	// (Burning, acid and poison each turn pass by XCOM 2's armour, and by Long War's reduction.)
 	if (Target == none || CurrentDamage <= 0 || (WeaponDamageEffect != none && WeaponDamageEffect.bIgnoreArmor))
 		return 0;
-	Left = class'X2Ability_LWDamageReduction'.static.Absorb(Target, Attacker, AbilityState != none ? AbilityState.GetSourceWeapon() : none, CurrentDamage, Parts);
+	Left = class'X2Ability_LWDamageReduction'.static.Absorb(Target, Attacker, AbilityState != none ? AbilityState.GetSourceWeapon() : none, CurrentDamage, Parts,
+		AbilityState != none && X2AbilityToHitCalc_StandardMelee(AbilityState.GetMyTemplate().AbilityToHitCalc) != none);
 	if (Left >= CurrentDamage)
 		return 0;
 	// The preview shows the nearer whole number; the hit itself rolls the fraction.
