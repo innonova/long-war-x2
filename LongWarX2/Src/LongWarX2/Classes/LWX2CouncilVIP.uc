@@ -129,6 +129,12 @@ static function bool Update()
 		VIP = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Ref.ObjectID));
 		if (VIP != none && (P.First != "" || P.Last != ""))
 			VIP.SetCharacterName(P.First, P.Last, "");
+		// (A rescue's VIP moves on XCOM's first turn, as EW's spawned already on XCOM's side.)
+		if (VIP != none && !P.bApproach && VIP.ActionPoints.Length == 0)
+		{
+			VIP.ActionPoints.AddItem(class'X2CharacterTemplateManager'.default.StandardActionPoint);
+			VIP.ActionPoints.AddItem(class'X2CharacterTemplateManager'.default.StandardActionPoint);
+		}
 		// The Skyranger: XCOM 2's evac zone where EW's arrow pointed.
 		class'XComGameState_EvacZone'.static.PlaceEvacZone(NewGameState, Floor(Skyranger(P)), eTeam_XCom);
 		`TACTICALRULES.SubmitGameState(NewGameState);

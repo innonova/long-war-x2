@@ -211,3 +211,59 @@ every soldier has both actions.
   abduction-style squad (the decision above).
 - EW's "find the bomb before it reaches full power" phase (the countdown's first label) is played as the
   bomb being known from the start.
+
+## Report (2026-11-16, step 2: the VIP extractions and rescues)
+
+EW's VIP missions are streamed levels too (`URB_PierA_Stream`, `URB_StreetHurricane_Stream`,
+`URB_HighwayFallen_Stream`, `URB_CommercialAlley_Stream`, `URB_ResearchOutpost_Rescue`). Their Kismet, read:
+- `SeqAct_SpawnCivilian` puts the VIP at a spawn point and names them (`XComSetUnitName`).
+- **An extraction** (Street Hurricane, Highway Fallen): the VIP waits, neutral ("Locate …", "Approach …"),
+  until an XCOM soldier walks into the volume around them (`SeqEvent_Touch` → `SeqAct_SwapTeams` to XCOM).
+- **A rescue** (Pier, Commercial Alley, Research Outpost): the VIP is XCOM's from the start, and on the Pier
+  the squad lands beside them, at the far end of the map (the level's own drop zone).
+- Then "Escort … to the Skyranger": an arrow to the Skyranger as the escort begins; the VIP killed loses
+  the mission (`LoseBattle`). After the VIP is out: "Kill any remaining aliens", or "All soldiers report
+  to the EVAC zone".
+- Each also brings Thin Man reinforcements (`SeqAct_SpawnAlien`) as the squad crosses trigger volumes, and
+  the extractions have bodyguards (1 HP civilians). Neither is in the port yet.
+
+**Done:**
+- `ew-objectives.ts` `readVIP` (with a small Kismet reader, `readKismet`: ops, output links, variable
+  links) writes each VIP mission into `XComLWX2EWObjectives.ini` (`[LongWarX2.LWX2CouncilVIP] +VIPs=`): the
+  VIP's place and name, where they are reached (none in a rescue), the Skyranger (the escort arrow's
+  target) and EW's objective texts, all from the player's install.
+- The variant levels are converted with their maps and joined into `LWX2V_<map>` plots as the bombs'
+  are; a variant with its own drop zone (the Pier) lands the squad there.
+- `LWX2CouncilVIP` (and `XComGameState_LWX2VIP`):
+  - The VIP is XCOM 2's friendly VIP civilian (`FriendlyVIPCivilian`: evacuates, takes cover). Neutral in
+    an extraction until a soldier comes within 4 tiles of EW's volume (`ApproachTiles`; the volume's own
+    size is not read), then swapped to XCOM with XCOM 2's own team change (`XGBattle_SP.SwapTeams`).
+    XCOM's from the start in a rescue.
+  - **The Skyranger** is XCOM 2's evac zone, on the ground at the map's drop zone nearest EW's arrow (the
+    arrow points at the Skyranger's roof).
+  - The objective list follows EW's texts: "Locate …" until a soldier sees the VIP, "Approach …",
+    "Escort … to the Skyranger.", then "Kill any remaining aliens. All soldiers report to the EVAC zone."
+  - **Lost** if the VIP dies. **Won** once the VIP has evacuated and every alien is dead or taken, or every
+    soldier still standing has evacuated too.
+- A won mission with aliens still standing brings no loot from them (`PendingSurvivors`; until now every
+  win had killed them all).
+- Control port: `council` lists the VIP, where they are reached, the evac zone; `put <unit|#id> x y z`
+  sets a unit on a tile; `spawns` lists the soldier spawns.
+
+**Checked on wingpu:**
+- **Highway Fallen** (extraction): "Locate General Van Doorn."; a soldier put beside him: he joined XCOM,
+  "Escort General Van Doorn back to the Skyranger."; the evac zone at the squad's landing on the
+  highway; he evacuated, "Kill any remaining aliens. All soldiers report to the EVAC zone."; the squad
+  evacuated, the mission won with 0 of 12 aliens killed, and the council paid (§163, a soldier, 2
+  scientists, panic −10).
+- **Pier** (rescue): the squad landed at the pier's north end beside Sgt. Carlock, the evac zone at the
+  south end; Carlock evacuated, the aliens killed, won and paid (§185, 4 scientists).
+- **Street Hurricane** (extraction): Thomas Hutch waited, joined when reached.
+
+**Not done:**
+- **Street Hurricane's drop zone is boxed in.** XCOM 2 finds no open floor around EW's drop zone on this
+  map (already seen on 2026-11-05: the squad is moved out of the pocket, 20 tiles away). The evac zone
+  stands there too, where no one can reach it. That is the converted map's, to look into; until then this
+  extraction cannot be finished.
+- EW's Thin Man reinforcements and the bodyguards.
+- Commercial Alley and the Research Outpost are read but their maps are not converted here (step 1).
