@@ -412,7 +412,8 @@ out.push(
   '+AllowedWeapons=(SlotType=eInvSlot_PrimaryWeapon, WeaponType="lw_shiv")',
   '+AllowedArmors="lw_shiv"',
   '+CannotEditSlots=eInvSlot_Armor',
-  '+SoldierRanks=(AbilitySlots=(), aStatProgression=())',
+  // (Its one rank gives XCOM 2's robot immunities, which a SHIV has anyway: a rank with nothing to take shows XCOM 2's promote icon.)
+  '+SoldierRanks=(AbilitySlots=((AbilityType=(AbilityName="RobotImmunities"))), aStatProgression=())',
 )
 writeFileSync(join(mod, 'Config', 'XComClassData.ini'), out.join('\r\n') + '\r\n')
 

@@ -18,8 +18,10 @@ event OnInit(UIScreen Screen)
 
 	if (!default.PromoteRookies || UIAvengerHUD(Screen) == none)
 		return;
+	// (The classes dealt to recruits only: not the SHIVs' or the MECs'.)
 	foreach class'X2SoldierClass_DefaultClasses'.default.SoldierClasses(ClassName)
-		if (Left(string(ClassName), 4) == "LWS_")
+		if (Left(string(ClassName), 4) == "LWS_" && class'X2SoldierClassTemplateManager'.static.GetSoldierClassTemplateManager().FindSoldierClassTemplate(ClassName) != none
+			&& class'X2SoldierClassTemplateManager'.static.GetSoldierClassTemplateManager().FindSoldierClassTemplate(ClassName).NumInDeck > 0)
 			Classes.AddItem(ClassName);
 	if (Classes.Length == 0)
 		return;
