@@ -286,3 +286,10 @@ classes only): XCOM 2's sword slice (move and strike an adjacent enemy) with Lon
 built in engineering at Long War's cost. Checked on wingpu: a MEC beside a Drone struck it ("SwordSlice
 on AdvMEC_M1 hit"). The grey market sells the robots' gear under its own templates now (it had
 named items that do not exist for the MEC suits and weapons, the Sentry Gun and the module).
+
+## Report (2026-11-16, MECs' rest and repair)
+
+A MEC trooper rests Long War's own hours after a mission (`DetermineTimeOut`, `IsAugmented`):
+144 if it went all in or was hurt, else 120 and up to 24 more; nothing for officer ranks or
+perks. Its wounds take four fifths as long once the Foundry's Vehicle Repair is done. Checked on
+wingpu: a MEC back from a won mission rested 137 hours (the soldiers beside it 102 and 106).

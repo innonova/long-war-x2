@@ -25,6 +25,9 @@ static function int HoursFor(XComGameState_Unit Unit, XComGameState_LWStrategy S
 	MaxHP = Max(1, int(Unit.GetBaseStat(eStat_HP)));
 	Base = default.WoundHours - default.WoundHours * (default.WoundDays / 100) / (S.Days() + default.WoundDays % 100);
 	H = Base - Base * HP / MaxHP - Rand(Max(1, Base / MaxHP));
+	// A MEC's wounds four fifths as long once the Foundry's Vehicle Repair is done (DetermineTimeOut, IsAugmented).
+	if (class'LWMECs'.static.IsMEC(Unit) && S.FoundryDone.Find(class'LWSHIVs'.default.RepairFoundry) != INDEX_NONE)
+		H *= 0.8;
 	if (Unit.HasSoldierAbility('LW_AdaptiveBoneMarrow'))
 		H *= 1.0 - default.BoneMarrowBonus;
 	if (S.FoundryDone.Find(default.SurgeryFoundry) != INDEX_NONE)

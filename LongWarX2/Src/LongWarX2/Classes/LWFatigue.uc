@@ -63,6 +63,10 @@ static function Apply()
 		bHurt = Unit.GetCurrentStat(eStat_HP) < Unit.GetMaxStat(eStat_HP);
 		if (bSHIV)
 			H = class'LWSHIVs'.static.RestHoursFor();
+		// A MEC trooper (DetermineTimeOut, IsAugmented): 144 hours all in or hurt, else 120 and up to 24 more; nothing for
+		// officers' ranks or the perks' own (a MEC is neither).
+		else if (class'LWMECs'.static.IsMEC(Unit))
+			H = (bAllIn || bHurt) ? 144 : 120 + Rand(24);
 		else
 		{
 			H = (bAllIn || bHurt) ? default.HardHours : default.BaseHours + Rand(default.RollHours);
