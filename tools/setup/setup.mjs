@@ -17,6 +17,7 @@ import { execFileSync } from 'node:child_process'
 import { wordsFrom } from '../../scripts/write-words.mjs'
 import { convertUI } from '../convert/ew-ui.ts'
 import { openImages } from '../convert/ew-images.ts'
+import { writeObjectives } from '../convert/ew-objectives.ts'
 import { convertPackage } from '../convert/ew-package.ts'
 import { convertUnits } from '../convert/ew-units.ts'
 import { tealEarth } from '../convert/ew-earth.ts'
@@ -302,6 +303,12 @@ async function convertEW(ew, target) {
         windowsHide: true,
       }),
     false, say)
+  }
+  // The council missions' objectives on EW's maps (ew-objectives.ts): the bomb disposals' bombs, nodes and timers.
+  try {
+    say(`Enemy Within's council missions: ${writeObjectives(cooked, target)} bomb disposals read.`)
+  } catch (e) {
+    say(`Enemy Within's council missions' objectives could not be read (${e?.message ?? e}); they play as assaults.`)
   }
   // EW's strategy pictures, in the converted base (ew-images.ts).
   try {
