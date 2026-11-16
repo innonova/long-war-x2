@@ -106,6 +106,25 @@ static function CopyLooks()
 	`log("LongWarX2: gear:" @ Copied @ "of" @ class'LWGearRules'.default.SmallItems.Length @ "small items look like XCOM 2's", , 'LongWarX2');
 }
 
+/** The Ghost Grenade's stealth (Long War's eAbility_GhostGrenadeStealth): XCOM 2's concealment of one unit, for the allies
+ *  in the blast who are not panicking, until their next turn begins. */
+static function X2Effect GhostStealth()
+{
+	local X2Effect_RangerStealth Stealth;
+	local X2Condition_UnitProperty Allies;
+
+	Stealth = new class'X2Effect_RangerStealth';
+	Stealth.BuildPersistentEffect(1, false, true, false, eGameRule_PlayerTurnBegin);
+	Stealth.bRemoveWhenTargetConcealmentBroken = true;
+	Allies = new class'X2Condition_UnitProperty';
+	Allies.ExcludeHostileToSource = true;
+	Allies.ExcludeFriendlyToSource = false;
+	Allies.ExcludeDead = true;
+	Allies.ExcludePanicked = true;
+	Stealth.TargetConditions.AddItem(Allies);
+	return Stealth;
+}
+
 static function CopyLook(X2ItemTemplate Mine, X2ItemTemplate Look, LWGearRules.LWSmallDef D)
 {
 	local X2GrenadeTemplate MyGrenade, LookGrenade;
@@ -150,6 +169,13 @@ static function CopyLook(X2ItemTemplate Mine, X2ItemTemplate Look, LWGearRules.L
 	{
 		MyGrenade.ThrownGrenadeEffects = LookGrenade.ThrownGrenadeEffects;
 		MyGrenade.LaunchedGrenadeEffects = LookGrenade.LaunchedGrenadeEffects;
+		// (The Ghost Grenade: no smoke, only the allies in its blast hidden until their next turn.)
+		if (D.Stealth)
+		{
+			MyGrenade.ThrownGrenadeEffects.Length = 0;
+			MyGrenade.ThrownGrenadeEffects.AddItem(GhostStealth());
+			MyGrenade.LaunchedGrenadeEffects = MyGrenade.ThrownGrenadeEffects;
+		}
 		MyGrenade.OnThrowBarkSoundCue = LookGrenade.OnThrowBarkSoundCue;
 	}
 }

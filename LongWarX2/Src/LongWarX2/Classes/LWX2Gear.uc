@@ -280,7 +280,7 @@ static function array<XComGameState_Item> ForbiddenSmallItems(XComGameState_Unit
 	{
 		if (class'LWGearRules'.static.SmallFor(Item.GetMyTemplateName(), D))
 		{
-			if (D.Classes.Length > 0 && D.Classes.Find(Unit.GetSoldierClassTemplateName()) == INDEX_NONE)
+			if ((D.Classes.Length > 0 && D.Classes.Find(Unit.GetSoldierClassTemplateName()) == INDEX_NONE) || (D.Psionic && !class'LWGearRules'.static.IsPsionic(Unit)))
 				Out.AddItem(Item);
 		}
 		// XCOM 2's own small items (its frag grenade), the XPad apart (it takes no slot).

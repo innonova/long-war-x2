@@ -104,6 +104,10 @@ struct LWSmallDef
 	var int ScopeCrit;
 	/** Crit for its carrier's shots with any weapon but a pistol (Reaper Rounds). */
 	var int WeaponCrit;
+	/** Psionic soldiers only (Long War's eWP_Psionic: the Psi and Ghost Grenades). */
+	var bool Psionic;
+	/** Its blast hides the allies in it until their next turn (the Ghost Grenade). */
+	var bool Stealth;
 	/** Will while carried (the Mind Shield). */
 	var int Will;
 	/** Defense and mobility while carried, and damage reduction (Reinforced Armor: Long War's BalanceMods_Classic line). */
@@ -192,6 +196,17 @@ static function bool FoundryFor(int Id, out LWFoundryDef F)
 static function name FoundryTemplateFor(int Id)
 {
 	return name("LWFoundry_" $ Id);
+}
+
+/** Whether a soldier is psionic (has a Long War psi power: X2Ability_LWStandins.PsiAbilities). */
+static function bool IsPsionic(XComGameState_Unit Unit)
+{
+	local int i;
+
+	for (i = 0; i < class'X2Ability_LWStandins'.default.PsiAbilities.Length; i++)
+		if (Unit.HasSoldierAbility(class'X2Ability_LWStandins'.default.PsiAbilities[i].Ability))
+			return true;
+	return false;
 }
 
 static function bool SmallFor(name Template, out LWSmallDef D)

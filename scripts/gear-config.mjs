@@ -70,7 +70,7 @@ for (const x of SMALL) {
   const w = weapons.get(x.item)
   if (!w) throw new Error(`no Weapons= line for small item ${x.item}`)
   const n = (k) => Number(w[k] ?? 0)
-  const classes = x.mec ? MEC_CLASSES : Object.entries(CLASS_PROPERTY).filter(([, p]) => equippable(p, w.props.includes('AnyClass') || w.props.length === 0 ? ['AnyClass'] : w.props, x.item)).map(([c]) => c)
+  const classes = x.mec ? MEC_CLASSES : x.psi ? Object.keys(CLASS_PROPERTY) : Object.entries(CLASS_PROPERTY).filter(([, p]) => equippable(p, w.props.includes('AnyClass') || w.props.length === 0 ? ['AnyClass'] : w.props, x.item)).map(([c]) => c)
   const anyone = !x.mec && classes.length === Object.keys(CLASS_PROPERTY).length
   out.push(
     `+SmallItems=(Item=${x.item}, Template=${smallTemplate(x.item)}, Enum=${ITEMS[x.item]}, Kind=${x.kind}, Look=${x.look}, Damage=${Math.max(0, n('iDamage'))}, Environment=${n('iEnvironmentDamage')}, ` +
@@ -80,6 +80,7 @@ for (const x of SMALL) {
       // with a pistol (XGAbility_Targeted.CalcCriticalChance; FOUNDRY_SCOPE_CRIT_BONUS).
       (x.item === 74 || x.item === 79 ? `, ScopeCrit=${Math.trunc(scopeCrit / (x.item === 79 ? 2 : 1))}` : '') +
       (x.weaponCrit ? `, WeaponCrit=${x.weaponCrit}` : '') +
+      (x.psi ? ', Psionic=true' : '') + (x.stealth ? ', Stealth=true' : '') +
       (x.balance ? `, Defense=${balanceOf(x.item, 'iDefense')}, Mobility=${balanceOf(x.item, 'iMobility')}, DR=${itemDR.get(x.item) ?? 0}` : '') +
       (anyone ? '' : `, Classes=(${classes.map((c) => `LWS_${c}`).join(',')})`) +
       ')',

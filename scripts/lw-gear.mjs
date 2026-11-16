@@ -197,6 +197,11 @@ export const SMALL = [
   { item: 86, kind: 'Grenade', look: 'GasGrenade' },
   { item: MIMIC, kind: 'Grenade', look: 'MimicBeacon' },
   { item: 97, kind: 'Grenade', look: 'BattleScanner' },
+  // The Psi Grenade: a flashbang (its eAbility_Flashbang) with its line's wider blast; psionic soldiers only (eWP_Psionic).
+  { item: 96, kind: 'Grenade', look: 'FlashbangGrenade', psi: true },
+  // The Ghost Grenade (eAbility_GhostGrenade, _GhostGrenadeStealth): stealth for the allies in its blast until their next
+  // turn, as XCOM 2's concealment (Stealth); psionic soldiers only.
+  { item: 85, kind: 'Grenade', look: 'SmokeGrenade', psi: true, stealth: true },
   { item: 69, kind: 'Medikit', look: 'Medikit' },
   { item: 73, kind: 'ArcThrower', look: 'Medikit' },
   { item: 218, kind: 'Launcher', look: 'RocketLauncher' },
