@@ -1635,8 +1635,15 @@ function MECs(array<string> Args, out array<string> Out)
 		if (Unit != none)
 		{
 			Unit.SetUnitFloatValue('LWX2TestFirst', 1, eCleanup_Never);
-			// ('mec make <item>': that item, a subsystem, in its utility slot.)
-			if (Args.Length > 2 && class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(name(Args[2])) != none)
+			// ('mec make <item>': that item, a subsystem, in its utility slot; a suit in place of the first.)
+			if (Args.Length > 2 && X2ArmorTemplate(class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(name(Args[2]))) != none)
+			{
+				Suit = Unit.GetItemInSlot(eInvSlot_Armor, NewGameState);
+				if (Suit != none)
+					Unit.RemoveItemFromInventory(XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Suit.ObjectID)), NewGameState);
+				Unit.AddItemToInventory(class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(name(Args[2])).CreateInstanceFromTemplate(NewGameState), eInvSlot_Armor, NewGameState);
+			}
+			else if (Args.Length > 2 && class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(name(Args[2])) != none)
 				Unit.AddItemToInventory(class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(name(Args[2])).CreateInstanceFromTemplate(NewGameState), eInvSlot_Utility, NewGameState);
 		}
 		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);

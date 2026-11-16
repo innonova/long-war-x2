@@ -332,8 +332,10 @@ Strike). `XComLWMECs.ini` carries each item's `Enum=` for this.
 - **Squad select:** EW's idle, with EW's minigun in its hand.
 
 **Not checked:**
-- Mark II and III on screen.
-- A shot or Kinetic Strike with the last build.
+- ~~Mark II and III on screen.~~ Seen later the same day: a Mark II and a Mark III MEC side by side
+  in a mission, whole, in EW's suits (`mec make <suit>` now gives a MEC another suit).
+- ~~A shot with the last build.~~ The Mark III MEC's shot hit a Sectoid. Kinetic Strike was not
+  tried again.
 - The armory after the gun change.
 
 Test aid: `anims -10` (and `-11` …) reads squad select's line-up pawns: their sets, and what
