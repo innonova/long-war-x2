@@ -261,9 +261,26 @@ EW's VIP missions are streamed levels too (`URB_PierA_Stream`, `URB_StreetHurric
 - **Street Hurricane** (extraction): Thomas Hutch waited, joined when reached.
 
 **Not done:**
-- **Street Hurricane's drop zone is boxed in.** XCOM 2 finds no open floor around EW's drop zone on this
-  map (already seen on 2026-11-05: the squad is moved out of the pocket, 20 tiles away). The evac zone
-  stands there too, where no one can reach it. That is the converted map's, to look into; until then this
-  extraction cannot be finished.
 - EW's Thin Man reinforcements and the bodyguards.
 - Commercial Alley and the Research Outpost are read but their maps are not converted here (step 1).
+
+## Report (2026-11-16, step 2: each mission's map and level from Long War's own list)
+
+- **Long War's DefaultMaps.ini names each council mission's map and variant level**: the entry whose
+  DisplayName carries the mission's variant ("URB_StreetHurricane_Terror (Mission Variant Urban Street Hurricane
+  Extraction)"), with the level in its StreamingMaps. `council-config.mjs` now reads it, so
+  `XComLWCouncil.ini` has each mission's `Map` and `Level` as Long War finds them, and the hand-written
+  tables in the converter are gone (`ew-objectives.ts councilMissions`):
+  - Street Hurricane's extraction is on **URB_StreetHurricane_Terror**, not the plain map.
+  - The **Boulevard extraction** (15) has no entry, so Long War never offers it; neither does the port now.
+  - The **assaults** have variant levels too (`URB_PierA_StreamB`, `URB_StreetOverpass_Stream`, …): they are
+    converted and joined into their plots as well. Their Kismet is not read yet (they play as clearing the map).
+- Plots are named by the level (`LWX2V_<level>`): the Pier has two (its assault and its rescue).
+  `LWCouncil.MapOfLevel` gives a plot's map back.
+- The setup (and `ew-maps.ts --all`) converts the council missions' maps too: Commercial Alley and the
+  Research Outpost are in no other list, which is why they were not converted before.
+- **Street Hurricane's boxed-in drop zone** was the converter's (pieces at the origin, `lw-missions.md`,
+  converter 18). Converted again, the squad lands at EW's drop zone under EW's Skyranger, reaching 589 tiles.
+
+**Checked on wingpu:** the Street Hurricane extraction on `LWX2V_URB_StreetHurricane_Stream`: the squad
+at the Skyranger in the evac zone, Thomas Hutch reached, evacuated, the aliens killed, won.
