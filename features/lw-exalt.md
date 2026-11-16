@@ -273,3 +273,37 @@ Trainyard placed the operative and took both relays the same way.
 - A hack's effect on EXALT: EW blinds and disables the EXALT soldiers already fighting for a turn and holds the
   pods still (`OnExaltHackingArrayInteraction`). Not yet.
 - The Kismet's reinforcements as the operative nears each relay, and the wave spawner.
+
+## Report (2026-11-16, EXALT's data recovery)
+
+Long War's capture and hold (`XGBattle_SPCaptureAndHold`, `XComCapturePointVolume`, `XComWaveSystem`,
+`XGOvermind.DetermineCaptureAndHoldTactics`) and the `_CNH` levels:
+- **Which mission**: Long War's `CreateNextMission`: the kind not offered yet, else either at even odds. The
+  decision now reads "COVERT OPERATION: extraction / data recovery in <country>".
+- **Its maps**: the 10 in rotation, each with its `_CNH` level, converted into `LWX2V_<level>` plots.
+- **The capture areas** (`ew-objectives.ts readRecovery`): each volume's box, its turns (`m_iTurnsToCapture`, 3 or
+  EW's default 2) and its order (the transmitter, then the backup relay). At each new XCOM turn, an area with EXALT
+  and no soldier in it goes a turn on; at its turns it falls. The transmitter fallen, the backup is next; both
+  fallen, the mission is lost.
+- **EXALT's waves** (the level's wave system): each group's turn after its set begins, its count and its spawn
+  points (14 groups on most maps; the second set begins as the transmitter falls). The soldiers are of the
+  mission's own EXALT kinds. EXALT then makes for the active area (XCOM 2's map-wide alert at the area's floor,
+  as EW's hunt target there).
+- **Won** once every wave of the first set has come and every EXALT soldier is dead or taken: "Eliminate all
+  EXALT forces.". Long War's §120 (`m_iAllPointsSafeCashRewardAmount`) when the transmitter held.
+- EW's texts from the Kismet: "Protect the capture area. (k / 3)", "Protect the backup capture area.", "Eliminate
+  all EXALT forces.".
+
+**Checked on wingpu** (Industrial Office, `ForceMap` on the test machine): **lost**: the waves came on turns 3, 5
+and 7, EXALT went for the transmitter, held it 3 turns ("area 0 fell"), then the backup, "every area fell, the
+mission is lost", and on the Geoscape the cell moved and the operation failed. **Won**: two soldiers held the
+transmitter (no capture while they stood in it), all first-set waves came, the rest killed: "The covert
+operation in Russia succeeded …", "The data recovery brought §120 home.".
+
+**Not done:**
+- **Commercial Restaurant's first area is a roof deck with no floor** in the converted map: units cannot stand
+  there, so EXALT cannot take it and XCOM cannot hold it. Converter 19 lets wide breakable pieces be stood on, but
+  XCOM 2 still makes no floor tile on this deck; to look into (`lw-missions.md`).
+- The capture areas are not marked on the map (EW drew their border); the objective's count is the only sign.
+- The covert extraction's and the data recovery's reinforcement drops tied to Kismet events (the relays'
+  proximity) are not in.
