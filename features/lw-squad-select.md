@@ -136,3 +136,6 @@ as abilities in the armory ("Missing LocFriendlyName").
 **Left open:** the real cause in `LWX2EWBase.HideWorld` (why the blueprint levels stay hidden
 after `ShowWorld`) is not pinned down; the watch mends its effect on the 3D screens. A SHIV has no
 pawn on the armory's platform.
+- XCOM 2's soldier list, opened from the hub's Barracks, stands over the Avenger's outside view
+  (the camera it moves to, with the Avenger's rooms hidden); showing EW's barracks behind it again
+  was tried and did not hold (the list moves the camera after the hub's timer).
