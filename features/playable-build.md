@@ -282,3 +282,23 @@ on its platform when opened from squad select.
 Checked on wingpu from the zip: its setup (`--no-maps`) wrote the words (22 small items with the
 subsystems) and drew 18 units as Enemy Within's; with the control port on for the check (off
 again after), a new campaign, a SHIV added, the hub's Barracks: the SHIV in XCOM 2's soldier list.
+
+## Release (2026-11-16, evening)
+
+`LongWarX2-20261116-7b367a9.zip` replaces `1c5b0cb` on the draft v0.1.0-preview.1.
+
+New since 1c5b0cb:
+- **MEC troopers in EW's MEC suits:** Mark I, II or III by the suit worn; EW's idle in squad select
+  with EW's minigun.
+- **MEC names:** MEC suits and weapons carry Long War's names.
+- **Kinetic Strike** and the MECs' rest and repair.
+- **The Alloy SHIV as cover:** high cover for the soldiers beside it ("Armored Shell").
+- **The Hover SHIV flies.**
+- **Officer ranks in the soldier lists** (LT, CAPT …).
+
+**Checked on wingpu from the zip:**
+- Its setup (`--no-maps`) wrote the words: 13 MEC words, 1 mobile cover word.
+- It drew 25 units as Enemy Within's, including the seven MEC suit bodies.
+- With the control port on for the check (off again after), in a new campaign an officer showed
+  CAPT in the Barracks list, through the release's own class override.
+- The mod came up through squad select.
