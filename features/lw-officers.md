@@ -1,6 +1,6 @@
 ---
 title: "Long War's officers: the Officer Training School's officer ranks and their abilities"
-status: planned
+status: review
 priority: 33
 dependsOn: [lw-base, lw-classes, lw-missions]
 ---
@@ -177,6 +177,48 @@ Control port: `officers` (posts, ranks, who is promotable and why), `officers bu
 
 ### Left open
 
-- The promotion screen (EW's officer screen) for the player; until then the control port.
+- ~~The promotion screen (EW's officer screen) for the player; until then the control port.~~
+  Done: the report below.
+- Fortiores Una, waiting on Long War's damage reduction (STATUS).
+- Officer rank shown on the soldier (EW put the rank's insignia beside the class).
+
+## Report (2026-11-16, the promotion screen)
+
+Officer promotions are in the hub's Barracks room as **Officer Promotions** (EW's own word
+from the player's install), once the first officer project is bought, as EW's appeared once
+medals were. The screen (`UILWOfficers`) is built from XCOM 2's widgets over EW's base,
+through the barracks' camera:
+
+- **Officer Billets:** the five ranks, each with its open billets or LOCKED (EW's words).
+- A rank with an open billet chosen: XCOM 2's soldier list (`UIPersonnel_LWOfficer`) with
+  only the soldiers Long War lets be promoted to it (`LWOfficers.CanPromote`: the rank below,
+  the soldier's rank, missions in grade, not psionic, not in the labs).
+- A soldier chosen: **ASSIGN ABILITY - <rank>** with the rank's two powers as buttons and
+  their descriptions (Long War's text, its numbers filled in).
+- A power chosen: EW's confirmation, in EW's words ("Awarding a promotion is permanent…"),
+  with the power named; Yes promotes (`LWOfficers.Promote`). Esc steps back from the powers to
+  the ranks, and from the ranks out to the hub.
+
+Verified on wingpu in a new campaign (Officer Training School placed and the lieutenant
+project bought by the control port, two soldiers readied with the new `officers ready` aid):
+both promoted by mouse through the screen, one to each power. `officers` then showed
+"Lieutenant: open 1 filled 2", each soldier officer rank 1 with the power chosen.
+
+A first try clicked a power button with no dialog; the same click raised it on every try
+since, with the button's mouse events logged. I could not make it happen again and found
+nothing in the log, so it is noted here rather than fixed.
+
+Control port: `officers ready <soldier|#id>` ranks a soldier up to the next officer rank's
+requirement and counts its missions in grade done (a test aid).
+
+### Decisions
+
+- XCOM 2's widgets rather than EW's Officer Billets movie (posted in the chat): the movie's
+  rows come from EW's shared components, which don't resolve in XCOM 2 (the hub's submenu has
+  the same cause), and renaming those classes broke the hub's menu. EW's movie can come back
+  once that is solved.
+
+### Left open
+
 - Fortiores Una, waiting on Long War's damage reduction (STATUS).
 - Officer rank shown on the soldier (EW put the rank's insignia beside the class).

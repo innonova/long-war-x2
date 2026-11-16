@@ -43,6 +43,7 @@ const OPT_GREYMARKET = 7;
 const OPT_OTS = 8;
 const OPT_PSI = 9;
 const OPT_GENE = 10;
+const OPT_OFFICERS = 11;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
 const FACILITY_FOUNDRY = 11;
@@ -197,7 +198,7 @@ simulated function OnLoseFocus()
 	ClearTimer(nameof(ShowBase));
 	// (A screen that shows the base itself, building in it, keeps it.)
 	Next = UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen());
-	if (Next == none || !Next.bShowsBase)
+	if ((Next == none || !Next.bShowsBase) && UILWOfficers(Movie.Pres.ScreenStack.GetCurrentScreen()) == none)
 		class'LWX2EWBase'.static.Get(self).Hide();
 }
 
@@ -244,6 +245,9 @@ function EnterRoom(int i)
 		S = class'XComGameState_LWStrategy'.static.Get();
 		if (S != none && class'LWBase'.static.Count(S, 12) > 0)
 			RoomOptions.AddItem(OPT_OTS);
+		// (Officer promotions once a rank is open, as EW's once medals are.)
+		if (S != none && S.OfficerProjectsBought > 0)
+			RoomOptions.AddItem(OPT_OFFICERS);
 		if (S != none && class'LWBase'.static.Count(S, 17) > 0)
 			RoomOptions.AddItem(OPT_PSI);
 		if (S != none && class'LWBase'.static.Count(S, 23) > 0)
@@ -291,6 +295,7 @@ function string OptionName(int Option)
 	case OPT_OTS: return Word(OTS, "Officer Training School");
 	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
 	case OPT_GENE: return class'LWBase'.static.FacilityName(23);
+	case OPT_OFFICERS: return Word(class'UILWOfficers'.default.Promotions, "Officer Promotions");
 	}
 	return "";
 }
@@ -307,6 +312,7 @@ function string OptionHelp(int Option)
 	case OPT_GREYMARKET: return GreyMarketHelp;
 	case OPT_OTS: return OTSHelp;
 	case OPT_PSI: return PsiLabsHelp;
+	case OPT_OFFICERS: return class'UILWOfficers'.default.PromotionsHelp;
 	}
 	return "";
 }
@@ -346,6 +352,9 @@ function ChooseOption(int Option)
 	case OPT_GREYMARKET: class'UILWEWGreyMarket'.static.Open(HQPres); break;
 	// (The plain base screen holds the Officer Training School's, the Psi Labs' and the Genetics Lab's panels, until each
 	// has EW's own screen.)
+	case OPT_OFFICERS:
+		HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWOfficers', HQPres));
+		break;
 	case OPT_OTS:
 		if (class'UILWEWScreen'.static.HasEWScreens())
 		{

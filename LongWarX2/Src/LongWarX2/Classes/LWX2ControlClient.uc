@@ -2692,6 +2692,17 @@ function Officers(array<string> Args, out array<string> Out)
 		Out.AddItem(class'LWOfficers'.static.Buy(int(Args[2]), Why) ? "ok" : "ERR" @ Why);
 	else if (Args.Length > 2 && Args[1] ~= "promote" && int(Args[2]) < Soldiers.Length)
 		Out.AddItem(class'LWOfficers'.static.Promote(Soldiers[int(Args[2])].ObjectID, Args.Length > 3 && Args[3] ~= "second", Why) ? "ok" : "ERR" @ Why);
+	else if (Args.Length > 2 && Args[1] ~= "ready" && (Left(Args[2], 1) == "#" || int(Args[2]) < Soldiers.Length))
+	{
+		// A test aid: the soldier ranked up to the next officer rank's requirement and its missions in grade counted done.
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: officer ready (control port)");
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Left(Args[2], 1) == "#" ? int(Mid(Args[2], 1)) : Soldiers[int(Args[2])].ObjectID));
+		while (Unit.GetRank() < class'LWOfficers'.static.Rank(Unit) + 3)
+			Unit.RankUpSoldier(NewGameState, Unit.GetSoldierClassTemplateName());
+		Unit.SetUnitFloatValue('LWX2OfficerMissionsAt', Unit.GetNumMissions() - class'LWOfficers'.default.MissionsPerGrade, eCleanup_Never);
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		Out.AddItem("ok" @ Unit.GetFullName() @ "rank" @ Unit.GetRank());
+	}
 	else if (Args.Length > 4 && Args[1] ~= "set" && (Left(Args[2], 1) == "#" || int(Args[2]) < Soldiers.Length))
 	{
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: officer set (control port)");

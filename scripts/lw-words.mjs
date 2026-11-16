@@ -456,5 +456,26 @@ export function makeOfficerWords({ strategyLoc, loc }) {
     ['Command', one(game, 'AbilityNames[eAbility_WarCry]')],
     ['CommandDesc', one(game, 'HelpMessages[eAbility_WarCry]')],
   ].filter(([, v]) => v)
-  return { text: ['[LWOfficers]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+  // The promotion screen's words (UILWOfficers), EW's medals screen's (XGMedalsUI).
+  const inSection = (section, key) => {
+    const at = strat.indexOf(`\n[${section}]\n`)
+    if (at < 0) return undefined
+    const end = strat.indexOf('\n[', at + 2)
+    const m = strat.slice(at, end < 0 ? undefined : end).match(new RegExp(`^${key}=(.*)$`, 'm'))
+    return m ? m[1].trim().replace(/^"(.*)"$/, '$1') : undefined
+  }
+  const screen = [
+    ['BilletsTitle', inSection('XGMedalsUI', 'm_strTitleCurrentMedals')],
+    ['OpenBillets', inSection('XGMedalsUI', 'm_strMedalMainMenuStatus')],
+    ['Locked', inSection('XGMedalsUI', 'm_strMedalMainMenuLocked')],
+    ['AssignAbility', inSection('XGMedalsUI', 'm_strTitleAssignPower')],
+    ['ConfirmTitle', inSection('XGMedalsUI', 'm_sConfirmAssignMedalTitle')],
+    ['ConfirmBody', inSection('XGMedalsUI', 'm_sConfirmAssignMedalBody')],
+    ['Promotions', inSection('XGBarracksUI', 'm_strBaseViewNames\\[eBarracksView_Medals\\]')],
+    ['PromotionsHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp\\[eBarracksView_Medals\\]')],
+  ].filter(([, v]) => v)
+  return {
+    text: ['[LWOfficers]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWOfficers]', ...screen.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
+    named: words.length + screen.length,
+  }
 }
