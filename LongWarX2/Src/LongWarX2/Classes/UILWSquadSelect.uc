@@ -135,9 +135,29 @@ simulated function OnReceiveFocus()
 simulated function OnLoseFocus()
 {
 	super.OnLoseFocus();
-	// (The armory, its loadout and the soldier's screens stand the soldier in the Avenger's armory.)
+	// (The armory, its loadout and the soldier's screens stand the soldier in the Avenger's armory: the Avenger back. XCOM 2's
+	// squad select opens the armory waiting on the launch bay's own scene to bring the soldier and the menu in
+	// (PreM_SwitchToSoldier, PreM_CustomizeUI); in EW's hangar there is none, so they are told here, and the armory shows
+	// itself in its room.)
 	if (bHangar && !bLaunched)
-		class'LWX2EWBase'.static.Get(self).Hide();
+	{
+		class'LWX2EWBase'.static.Get(self).Hide(true);
+		// (The screen above is not on the stack yet when this one loses focus: looked for a moment later.)
+		SetTimer(1.5, false, nameof(TellArmory));
+	}
+}
+
+/** The armory opened from here (its screen inited by now): the launch bay scene's events it waits on. */
+function TellArmory()
+{
+	local UIArmory Armory;
+
+	Armory = UIArmory(Movie.Pres.ScreenStack.GetFirstInstanceOf(class'UIArmory'));
+	if (Armory == none)
+		return;
+	Armory.OnRemoteEvent('PreM_SwitchToSoldier');
+	Armory.OnRemoteEvent('PreM_CustomizeUI');
+	`log("LongWarX2: squad select: the armory told its scene's events in EW's hangar", , 'LongWarX2');
 }
 
 /** The mission panel: Long War's mission (what was chosen on the Geoscape, its objective, what it brings home), not the

@@ -326,8 +326,9 @@ function AvengerShown(bool bShown)
 		Geo.m_kBase.SetAvengerVisibility(bShown);
 }
 
-/** The camera given back to the strategy layer (the Avenger's views). */
-function Hide()
+/** The camera given back to the strategy layer (the Avenger's views). bKeepCamera: where the next screen has already set
+ *  its own (the armory, opened from squad select, looks at its room: the Avenger's overview would take its place). */
+function Hide(optional bool bKeepCamera)
 {
 	ShowWorld();
 	ViewTag = 'Base';
@@ -335,7 +336,7 @@ function Hide()
 		`MAPS.SetStreamingLevelVisible(LightingLevel, false);
 	RefreshAmbient();
 	AvengerShown(true);
-	if (`HQPRES != none)
+	if (`HQPRES != none && !bKeepCamera)
 		`HQPRES.CAMLookAtNamedLocation("Base", 0);
 	Fog(true);
 }

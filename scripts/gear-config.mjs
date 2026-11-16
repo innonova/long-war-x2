@@ -97,8 +97,9 @@ out.push(
   '; Builds: Cash (\u00a7), Elerium, Alloys, Meld; Days and Engineers: a unit is Days x Engineers x 24 hours of work;',
   '; Tech: the Long War tech id researched first; ItemReq: one consumed per item built; Foundry: the project done first.',
 )
-// The SHIVs (features/lw-shivs-mecs.md): engineering builds the robot itself, a unit of XCOM's crew (its character template).
-const SHIVS = { 100: 'LWSHIV', 101: 'LWSHIV_Alloy', 102: 'LWSHIV_Hover' }
+// The SHIVs (features/lw-shivs-mecs.md): engineering builds the robot itself, a unit of XCOM's crew (its character template),
+// and the SHIVs' weapons (X2Item_LWSHIVWeapons; the Minigun comes with every SHIV and is never built).
+const SHIVS = { 100: 'LWSHIV', 101: 'LWSHIV_Alloy', 102: 'LWSHIV_Hover', 109: 'LWSHIV_Minigun', 110: 'LWSHIV_Sentry', 111: 'LWSHIV_Laser', 112: 'LWSHIV_Plasma' }
 for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number), CRAFT, SMALL.map((x) => x.item), Object.keys(SHIVS).map(Number)]) {
   for (const item of items) {
     if (item === null) continue

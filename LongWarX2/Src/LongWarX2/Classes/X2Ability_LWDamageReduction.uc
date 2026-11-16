@@ -36,6 +36,10 @@ static function X2AbilityTemplate DamageReduction()
 	local X2Effect_LWDamageReduction Effect;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, 'LWX2_DamageReduction');
+	// (A rule's carrier, not a perk: not listed among the soldier's abilities in the armory.)
+	Template.bDisplayInUITooltip = false;
+	Template.bDisplayInUITacticalText = false;
+	Template.bDontDisplayInAbilitySummary = true;
 	Template.AbilitySourceName = 'eAbilitySource_Standard';
 	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
 	Template.Hostility = eHostility_Neutral;

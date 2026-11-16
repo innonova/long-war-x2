@@ -79,6 +79,9 @@ And around it:
     tools/test/lw.sh killaliens                # in a mission: every alien killed, civilians spared (KillAllAIs kills them)
     tools/test/lw.sh 'remove #551'             # in a mission: a unit taken off the field (a mind-controlled soldier, an alien)
     tools/test/lw.sh 'aoe #2242 LWRiftProfile' # in a mission: where that alien's AI would aim the profile's area ability now, and why not
+    tools/test/lw.sh 'levels armory' 'levelshow AVG_Armory_CAP [false]'  # streamed levels: should be loaded/visible, are; one shown or hidden
+    tools/test/lw.sh 'ui3d UIBlueprint_ArmoryMenu [show]'  # XCOM 2's 3D UI displays and blueprints with that tag, drawn or not; the 3D movie shown on it
+    tools/test/lw.sh 'open loadout #1486'      # a unit's armory loadout (default: the first soldier)
     tools/test/lw.sh 'unbox 500'                 # soldiers reaching fewer than 500 tiles moved beside the best placed (-1: paths unknown)
     tools/test/lw.sh 'near Sniper 8'           # a soldier put 8 tiles from the nearest alien (a target in view)
     tools/test/lw.sh 'next Quinn Price'        # a soldier put on a free tile beside another (a medikit's reach)

@@ -26,6 +26,10 @@ static function X2AbilityTemplate OfficerPowers()
 	local X2Effect_LWOfficerPowers Effect;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, 'LWX2_OfficerPowers');
+	// (A rule's carrier, not a perk: not listed among the soldier's abilities in the armory.)
+	Template.bDisplayInUITooltip = false;
+	Template.bDisplayInUITacticalText = false;
+	Template.bDontDisplayInAbilitySummary = true;
 	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_command";
 	Template.AbilitySourceName = 'eAbilitySource_Perk';
 	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;

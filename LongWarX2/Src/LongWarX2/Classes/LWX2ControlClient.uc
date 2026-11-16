@@ -82,6 +82,24 @@ function Handle(string Line, out array<string> Out)
 		// PostProcessVolume, a light class): lightoff <class> [on|off] [lights of at least this radius only].
 		Out.AddItem(LightOff(Args.Length > 1 ? Args[1] : "", Args.Length > 2 && Args[2] ~= "on", Args.Length > 3 ? float(Args[3]) : 0.0));
 		return;
+	case "levels":
+		// levels [filter]: every streamed level (whose name holds the filter), whether it should be loaded and visible, and
+		// whether it is (a test aid: what LWX2EWBase hid and showed again).
+		foreach `XWORLDINFO.StreamingLevels(Streamed)
+			if (Streamed != none && (Args.Length < 2 || InStr(Locs(string(Streamed.PackageName)), Locs(Args[1])) != INDEX_NONE))
+				Out.AddItem(Streamed.PackageName @ "load" @ Streamed.bShouldBeLoaded @ "visible" @ Streamed.bShouldBeVisible
+					@ "(" $ (Streamed.LoadedLevel != none ? "loaded" : "not loaded") $ (Streamed.bHasLoadRequestPending ? ", pending" : "") $ ")");
+		return;
+	case "ui3d":
+		// ui3d [tag] [show]: XCOM 2's 3D UI displays (UIDisplay_LevelActor) and blueprints with that tag, whether each is
+		// drawn; show: the 3D movie shown on it, as the armory asks (a test aid).
+		UI3D(Args.Length > 1 ? name(Args[1]) : '', Args.Length > 2 && Args[2] == "show", Out);
+		return;
+	case "levelshow":
+		// levelshow <package> [false]: a streamed level made visible (or hidden), as the engine is asked to (a test aid).
+		GetALocalPlayerController().ClientUpdateLevelStreamingStatus(name(Args[1]), true, Args.Length < 3 || Args[2] != "false", false);
+		Out.AddItem("ok" @ Args[1]);
+		return;
 	case "ambient":
 		// A test aid: the ambient light's colour as the engine has it (from the visible lighting level's cube: the Avenger's
 		// sky-and-light level for the hour, or EW's base's own, LWX2EWBase.BaseLighting).
@@ -467,10 +485,10 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem(OpenGeoscape() != none ? "ok" : "ERR not on the Avenger");
 		return;
 	case "open":
-		// The armory's loadout of the first soldier (arm's order), as the armory opens it.
+		// The armory's loadout of the first soldier (arm's order), or of a unit ('open loadout #<id>'), as the armory opens it.
 		if (Args.Length > 1 && Args[1] ~= "loadout")
 		{
-			Out.AddItem(OpenLoadout());
+			Out.AddItem(OpenLoadout(Args.Length > 2 ? int(Mid(Args[2], 1)) : 0));
 			return;
 		}
 		// The Long War hub (EW's base and room menu), whether or not it is the strategy layer's root yet.
@@ -955,7 +973,7 @@ function FoundryDone(int Id)
 }
 
 /** The armory's loadout screen for the first soldier (a test aid: the small-item slots seen as the player sees them). */
-function string OpenLoadout()
+function string OpenLoadout(optional int UnitID)
 {
 	local XComHQPresentationLayer HQPres;
 	local XComGameState_Unit Unit;
@@ -967,7 +985,7 @@ function string OpenLoadout()
 	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
 	{
 		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
-		if (Unit == none || !Unit.IsSoldier())
+		if (Unit == none || !Unit.IsSoldier() || (UnitID != 0 && Unit.ObjectID != UnitID))
 			continue;
 		HQPres.UIArmory_Loadout(Ref);
 		return "ok" @ Unit.GetFullName() $ "'s loadout";
@@ -1498,6 +1516,42 @@ function string Standable(string Part)
 }
 
 /** The last N abilities used (their contexts in the history), oldest first. */
+function UI3D(name Tag, bool bShow, out array<string> Out)
+{
+	local UIDisplay_LevelActor Display;
+	local XComBlueprint Blueprint;
+	local array<Actor> Actors;
+	local Actor A;
+
+	foreach `XWORLDINFO.AllActors(class'UIDisplay_LevelActor', Display)
+		if (Tag == '' || Display.Tag == Tag)
+			Out.AddItem("display" @ Display.Name @ "tag" @ Display.Tag @ "hidden" @ Display.StaticMeshComponent.HiddenGame @ "level" @ Display.GetPackageName() @ "at" @ Display.Location);
+	foreach `XWORLDINFO.AllActors(class'XComBlueprint', Blueprint)
+	{
+		if (Tag != '' && Blueprint.Tag != Tag)
+			continue;
+		Actors.Length = 0;
+		Blueprint.GetLoadedLevelActors(Actors);
+		Out.AddItem("blueprint" @ Blueprint.Name @ "tag" @ Blueprint.Tag @ Actors.Length @ "actors at" @ Blueprint.Location
+			@ "its level" @ (Blueprint.StreamingLevel != none ? Blueprint.StreamingLevel.PackageName @ "visible" @ Blueprint.StreamingLevel.bShouldBeVisible
+				@ "in world list" @ (`XWORLDINFO.StreamingLevels.Find(Blueprint.StreamingLevel) != INDEX_NONE) : "none"));
+		foreach Actors(A)
+			if (UIDisplay_LevelActor(A) != none)
+				Out.AddItem("  its display" @ A.Name @ "hidden" @ UIDisplay_LevelActor(A).StaticMeshComponent.HiddenGame @ "actor hidden" @ A.bHidden
+					@ "attached" @ UIDisplay_LevelActor(A).StaticMeshComponent.bAttached @ "at" @ A.Location @ "level" @ A.GetPackageName()
+					@ "material" @ UIDisplay_LevelActor(A).StaticMeshComponent.GetMaterial(0));
+	}
+	if (`HQPRES != none)
+		Out.AddItem("3D movie inited" @ `HQPRES.Get3DMovie().bIsInited @ "visible" @ `HQPRES.Get3DMovie().bIsVisible
+			@ "screens on it:" @ `HQPRES.ScreenStack.GetCurrentScreen().Movie == `HQPRES.Get3DMovie());
+	if (bShow && `HQPRES != none)
+	{
+		`HQPRES.Get3DMovie().Show();
+		`HQPRES.Get3DMovie().ShowDisplay(Tag);
+		Out.AddItem("shown" @ Tag);
+	}
+}
+
 function SHIVs(array<string> Args, out array<string> Out)
 {
 	local XComGameState NewGameState;

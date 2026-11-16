@@ -99,3 +99,40 @@ launch bay; launching and backing out go straight on (no launch-bay cinematic).
   bought on the control port): seven cards, seven soldiers in the hangar
   (`logs/wingpu_squad_ew_hangar.png`, not committed); launched, all seven were in the
   mission.
+
+## Report (2026-11-16, the armory's menu was not drawn)
+
+**Found while equipping a SHIV:** the armory, opened from squad select's EDIT or from the hub's
+Barracks, showed the soldier in the Avenger's armory room but no menu (nor the loadout), so no
+loadout could be changed. Not a SHIV matter: every soldier.
+
+**The cause:** XCOM 2 draws its 3D screens (the armory, its loadout, promotion) onto display
+meshes its blueprints place in the rooms (`UIDisplay_LevelActor`, in the blueprint's own level,
+which the world's actor lists do not reach). Those meshes were detached
+(`StaticMeshComponent.bAttached` false; the `ui3d` aid shows it), with the blueprint's level not
+visible, after EW's base had hidden the world's streamed levels while in view
+(`LWX2EWBase.HideWorld`); `UIMovie_3D.ShowDisplay` only unhides a display, so nothing was drawn.
+Attaching the mesh by hand brought the menu up at once.
+
+**The fix:** `UIScreenListener_LWX2Displays` and `LWX2DisplayWatch`: whenever a strategy screen
+opens or comes back, for a few seconds the display of the 3D screen on top (its blueprint by its
+`DisplayTag`) is attached again once XCOM 2 has shown its movie there, and other blueprints'
+displays still showing the movie are hidden, as `UIMovie_3D.HideAllDisplays` would have done had
+it reached them (without this the main menu stayed up behind the loadout).
+
+**And from squad select in EW's hangar:** XCOM 2's squad select opens the armory waiting on the
+launch bay's own scene to bring the soldier and the menu in (`PreM_SwitchToSoldier`,
+`PreM_CustomizeUI`); EW's hangar has no such scene. Squad select now gives the Avenger back without
+moving the camera to the Avenger's overview (`LWX2EWBase.Hide(true)`) and tells the armory those
+two events itself a moment later (`TellArmory`); the armory then shows itself in its room.
+
+**Checked on wingpu:** the hub's Barracks → a soldier → the armory's menu → the loadout, clean (no
+second menu behind it); squad select → EDIT on a SHIV → its menu → its loadout → the Sentry Gun
+equipped in place of the Autocannon (the control port read `weapon LWSHIV_Sentry`).
+
+**Also:** Long War's two rule carriers (damage reduction, officers' powers) are no longer listed
+as abilities in the armory ("Missing LocFriendlyName").
+
+**Left open:** the real cause in `LWX2EWBase.HideWorld` (why the blueprint levels stay hidden
+after `ShowWorld`) is not pinned down; the watch mends its effect on the 3D screens. A SHIV has no
+pawn on the armory's platform.
