@@ -316,3 +316,23 @@ the tree's next steps take it), `remove #<unit>` (a unit taken off the field).
 - **The Rift's reach is sight (27 tiles) and only where the squad sees** (`bRestrictToSquadsightRange`):
   EW aims it freely (`eProp_FreeAim`); its reach is not in Long War's ability table. The
   soldiers' Rift (a psi power) gets the same; before, a soldier could aim it anywhere on the map.
+
+## Report (2026-11-16, the Drone's Overload; Bull Rush; the Cyberdisc's closing)
+
+Read from Long War's `XComGame.upk`:
+- **The Drone's Overload** (`eAbility_ShotOverload`, its `ABILITIES[1]`): the Drone's AI
+  (`XGAIBehavior_SectopodDrone`) goes into its suicide mode with more than 7 enemies in sight and overloads when more
+  than one is within 384 (four tiles); its death explosion (`XComAlienPawn.GetDeathExplosionRadius`, `…Damage`) is
+  two tiles for the Drone and half its maximum health, clamped to 3..8. **`LW_Overload`**: the Drone destroys itself
+  and everyone within two tiles takes that; available only with 8 enemies in sight and 2 within four tiles
+  (`X2Condition_LWEnemyNear`, now with a count and a sight requirement). In its AI before its repair (the MEC tree's
+  micro missiles step is now a selector: Overload, else repair). EW's name and text (`ePerk_Overload`).
+- **The Berserker's Bull Rush** (`XGAbility_BullRush`: a charge and a melee blow): the Berserker fights as XCOM 2's,
+  whose blow is a move and a punch; it now carries EW's name and text (`DevastatingPunch` as `ePerk_BullRush`).
+- **The Cyberdisc's Close** (`eAbility_CloseCyberdisc`): no rule in Long War's script but pathing; its AI closes the
+  Cyberdisc as its last action, which is the look XCOM 2's Gatekeeper already has (open to attack, closed to move).
+  Nothing added.
+
+**Checked on wingpu** (with `OverloadSeen=1` on the test machine only: a squad of six never shows 8 enemies): drones
+overloaded beside the squad (`history`: five `LW_Overload` over three turns), the soldiers next to them losing up to
+3 health, the drones gone. Not looked at: the blast's look (no animation of its own).
