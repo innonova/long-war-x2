@@ -747,3 +747,15 @@ do not show this.) Javelin's longer reach not looked at on screen.
 
 Still stand-ins from the list above: Concealment, Bombard's range, Extra Conditioning, Snap Shot for rockets, Dense
 Smoke's wider cloud. (Field Surgeon and Fire in the Hole were done earlier: the wound rule, the scatter.)
+
+## Report (2026-11-16, Long War's reach for explosives: Bombard, Grenadier, Javelin, Snap Shot)
+
+- **Read** (Long War's repurposed `XGUnit.GetMoveModifierCost`, its numbers in the code): a thrown or launched
+  grenade (items 81–97, Plague, the MEC's launchers) reaches ×1.4 with Bombard, else ×1.2 with Grenadier; a rocket
+  ×1.25 with Javelin Rockets, and after moving only ×0.4, ×0.6 with Snap Shot. (It also divides the reach by each of
+  being suppressed, poisoned, and two other effects: not done.)
+- **Done**: `X2AbilityTarget_LWRangeCursor` replaces XCOM 2's cursor on its grenade throw and launch
+  (`GrenadeAbilities`) and on the rocket launcher, its factors in `XComLWClasses.ini`.
+- **Checked on wingpu** (the new `range` aid): a Rocketeer's grenade 10 tiles, rocket 20; after moving 3 tiles, the
+  rocket 8 (×0.4). The perks' factors not seen in a mission (the `perk` aid gives a crew member a perk, not a soldier
+  already in the mission).
