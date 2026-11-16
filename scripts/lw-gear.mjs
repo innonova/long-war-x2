@@ -177,7 +177,7 @@ export function itemTemplate(item, ITEMS) {
 /**
  * Long War's small items and the Rocketeer's launcher (features/lw-gear.md, phase 5): each with the XCOM 2 item whose
  * abilities, effects and look it takes, Long War's numbers from its Weapons= line (ranges in metres, 1.5 a tile;
- * radii in units, 96 a tile) and from its code where they are there:
+ * radii in units, 96 a tile, written in metres as XCOM 2 reads a radius) and from its code where they are there:
  * - charges: one per item (XGUnit.UpdateItemCharges);
  * - Laser Sight: +4 aim (its line) and half the SCOPE's crit with a non-pistol (XGAbility_Targeted, FOUNDRY_SCOPE_CRIT_BONUS / 2);
  * - Hi-Cap Mags and Drum Mags: a shot costs half, a third of the ammo (XGAbility_Targeted): twice, three times the shots;

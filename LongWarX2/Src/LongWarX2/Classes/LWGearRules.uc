@@ -89,7 +89,7 @@ struct LWSmallDef
 	var name Look;
 	var int Damage;
 	var int Environment;
-	/** In tiles. */
+	/** In metres, as XCOM 2 reads a weapon's radius (X2WeaponTemplate.iRadius); Long War's units / 96 x 1.5. */
 	var int Radius;
 	var int Range;
 	var int Aim;
