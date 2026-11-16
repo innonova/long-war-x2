@@ -519,3 +519,16 @@ Small items can now carry will (`Will=`).
 
 **Still missing:** the Respirator Implant, Reaper Rounds, the Ghost Grenade and the Psi Grenade.
 They are abilities rather than stats.
+
+## Report (2026-11-16, Reaper Rounds)
+
+- **Reaper Rounds** (Long War's item 78) is a small item now (`LWSmall_78`, buildable after its Foundry project as
+  Long War has it, and in the grey market): +16 crit with any weapon but a pistol (`XGAbility_Targeted.GetCriticalChance`;
+  `WeaponCrit`). Its text's doubled range penalty for shotguns and sniper rifles is not in Long War's script (the
+  engine's native code): not done.
+- **Checked on wingpu:** a Sniper carrying it, against a Sectoid 5 tiles away: "Reaper Rounds=16(crit)" in the shot's
+  breakdown (`hit` aid).
+
+**Still missing:** the Respirator Implant (bleeding out instead of dying the first time: XCOM 2's bleed-out is a roll
+in `XComGameState_Unit.ShouldBleedOut`, which a mod cannot change; an effect's `PreDeathCheck` is the way to try),
+the Ghost Grenade and the Psi Grenade (psionic soldiers only, which the armory does not check yet).
