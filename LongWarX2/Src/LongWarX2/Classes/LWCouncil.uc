@@ -7,7 +7,8 @@ class LWCouncil extends Object config(LWCouncil) dependson(XComGameState_LWStrat
 
 struct LWCouncilRewardDef
 {
-	/** 1 cash, 3 a soldier, 4 engineers, 5 scientists, 6 the country's panic, 8 elerium (Long War's EFCRewardType). */
+	/** 1 cash, 3 a soldier, 4 scientists, 5 engineers, 6 the country's panic, 8 elerium (Long War's EFCRewardType: GrantFCRewards
+	 *  adds eResource_Scientists for 4, eResource_Engineers for 5). */
 	var int Type;
 	var int Amount;
 	/** Cash: this times RandMoneyRewardAmount. */
@@ -275,8 +276,8 @@ static function string RewardsText(array<XComGameState_LWStrategy.LWCouncilRewar
 		{
 		case 1: T $= class'LWStrategyRules'.static.Money(R.Amount); break;
 		case 3: T $= "a soldier"; break;
-		case 4: T $= R.Amount @ "engineers"; break;
-		case 5: T $= R.Amount @ "scientists"; break;
+		case 4: T $= R.Amount @ "scientists"; break;
+		case 5: T $= R.Amount @ "engineers"; break;
 		case 6: T $= "panic" @ R.Amount; break;
 		case 8: T $= R.Amount @ "elerium"; break;
 		default: T $= "?";
@@ -312,10 +313,10 @@ static function Grant(XComGameState NewGameState, XComGameState_LWStrategy S, in
 				S.Note(Soldier.GetFullName() @ "joins XCOM from" @ S.CountryName(Country) $ ".");
 			break;
 		case 4:
-			S.Engineers += R.Amount;
+			S.Scientists += R.Amount;
 			break;
 		case 5:
-			S.Scientists += R.Amount;
+			S.Engineers += R.Amount;
 			break;
 		case 6:
 			S.AddPanic(Country, R.Amount);
