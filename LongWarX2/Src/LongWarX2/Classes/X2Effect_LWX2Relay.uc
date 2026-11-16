@@ -13,5 +13,5 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
 	Covert = XComGameState_LWX2Covert(NewGameState.ModifyStateObject(class'XComGameState_LWX2Covert', Covert.ObjectID));
 	Covert.Hacked[i] = true;
 	Covert.HackedOnTurn = class'LWX2CovertExtraction'.static.TurnNow();
-	`log("LongWarX2: covert extraction: relay" @ Covert.Active[i] @ "hacked;" @ Covert.Left() @ "left", , 'LongWarX2');
+	`log("LongWarX2: covert extraction: relay" @ Covert.Active[i] @ "hacked;" @ Covert.RelaysLeft() @ "left", , 'LongWarX2');
 }

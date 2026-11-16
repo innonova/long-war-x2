@@ -165,10 +165,10 @@ static function bool Update()
 		XComGameState_LWX2Covert(NewGameState.ModifyStateObject(class'XComGameState_LWX2Covert', Covert.ObjectID)).bExtracted = true;
 		`TACTICALRULES.SubmitGameState(NewGameState);
 		Covert = State();
-		`log("LongWarX2: covert extraction: the operative evacuated with" @ Covert.Left() @ "relays left", , 'LongWarX2');
+		`log("LongWarX2: covert extraction: the operative evacuated with" @ Covert.RelaysLeft() @ "relays left", , 'LongWarX2');
 	}
 	// (Away before both relays are hacked: the mission is not won, EW's "Get to the EVAC zone" retreat.)
-	if (!Covert.bExtracted || Covert.Left() > 0)
+	if (!Covert.bExtracted || Covert.RelaysLeft() > 0)
 	{
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 			if (Unit.GetTeam() == eTeam_XCom && Unit.IsSoldier() && Unit.IsAlive() && !Unit.bRemovedFromPlay)
@@ -232,8 +232,8 @@ static function string ObjectiveText()
 	if (!Active(C))
 		return "";
 	Covert = State();
-	if (Covert == none || Covert.Left() > 0)
-		return C.Hack @ C.Left $ (Covert != none ? Covert.Left() : 2);
+	if (Covert == none || Covert.RelaysLeft() > 0)
+		return C.Hack @ C.Left $ (Covert != none ? Covert.RelaysLeft() : 2);
 	if (!Covert.bExtracted)
 		return C.Escort;
 	return C.Cleanup;

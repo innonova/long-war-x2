@@ -8,7 +8,7 @@ var int HackedOnTurn;
 var bool bPlaced;
 var bool bExtracted;
 
-function int Left()
+function int RelaysLeft()
 {
 	local int i, n;
 
