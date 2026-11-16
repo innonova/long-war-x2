@@ -163,7 +163,20 @@ Screenshots (gitignored): `logs/wingpu_shivs_squad_select.png`, `logs/wingpu_shi
 
 - Cover: they play on the ADVENT MEC's pawn (no cover animations); EW's SHIVs took cover.
 - The Hover SHIV's flight (its deck's `eAbility_Fly`, 6 fuel).
-- The Foundry's SHIV projects (SHIV Suppression, SHIV repair in missions) and Ghost in the
-  Machine's two free SHIVs and aim, Robotics' aim.
+- ~~The Foundry's SHIV projects~~ (below); the Arc Thrower's field repair (Field Repairs, 8), Ghost
+  in the Machine's two free SHIVs and aim, Robotics' aim.
 - Engineering's screen shows the bodies by their character names; their pictures are XCOM 2's
   default.
+
+## Report (2026-11-16, the Foundry's SHIV projects)
+
+As Long War's `XGFacility_Barracks.UpdateFoundryPerksForSoldier` gives a tank its Foundry
+projects, a SHIV gets in a mission (XCOM 2's `FinalizeUnitAbilitiesForInit` hook,
+`LWSHIVs.AddFoundryAbilities`):
+- **SHIV Suppression** (16): XCOM 2's Suppression with its primary weapon;
+- **Advanced Servomotors** (21): Sprinter (Long War's perk 31);
+- **Sentinel Drone** (23): Repair Servos (perk 139; a stand-in without effect yet, as the
+  Mechtoid's).
+
+Checked on wingpu: with 16 and 21 done (the control port's `foundry done`), a SHIV in a mission had
+Suppression, SuppressionShot and LW_Sprinter beside its shot and overwatch.

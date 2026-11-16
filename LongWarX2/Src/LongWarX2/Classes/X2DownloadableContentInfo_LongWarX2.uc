@@ -129,3 +129,11 @@ static event OnPostTemplatesCreated()
 	class'X2Ability_LWStandins'.static.AddBlocks();
 	class'X2Ability_LWStandins'.static.AddScatter();
 }
+
+/** Abilities a unit gets for the mission beyond its template's and its class's (XCOM 2's hook): the SHIVs' Foundry
+ *  projects (LWSHIVs.AddFoundryAbilities). */
+static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out array<AbilitySetupData> SetupData, optional XComGameState StartState, optional XComGameState_Player PlayerState, optional bool bMultiplayerDisplay)
+{
+	class'LWSHIVs'.static.AddFoundryAbilities(UnitState, SetupData);
+}
+

@@ -128,6 +128,41 @@ static function int RestHoursFor()
 	return default.RestHours + Rand(default.RestRollHours);
 }
 
+/** A SHIV's abilities in a mission, as Long War's XGFacility_Barracks.UpdateFoundryPerksForSoldier gives a tank its
+ *  Foundry projects: SHIV Suppression (16) suppression with its primary weapon; Advanced Servomotors (21) Sprinter;
+ *  Sentinel Drone (23) Repair Servos. (From X2DownloadableContentInfo_LongWarX2.FinalizeUnitAbilitiesForInit.) */
+static function AddFoundryAbilities(XComGameState_Unit Unit, out array<AbilitySetupData> SetupData)
+{
+	if (!IsSHIV(Unit))
+		return;
+	if (class'X2Effect_LWFoundry'.static.Done(16))
+	{
+		AddAbility(Unit, 'Suppression', eInvSlot_PrimaryWeapon, SetupData);
+		AddAbility(Unit, 'SuppressionShot', eInvSlot_PrimaryWeapon, SetupData);
+	}
+	if (class'X2Effect_LWFoundry'.static.Done(21))
+		AddAbility(Unit, 'LW_Sprinter', eInvSlot_Unknown, SetupData);
+	if (class'X2Effect_LWFoundry'.static.Done(23))
+		AddAbility(Unit, 'LW_RepairServos', eInvSlot_Unknown, SetupData);
+}
+
+static function AddAbility(XComGameState_Unit Unit, name AbilityName, EInventorySlot Slot, out array<AbilitySetupData> SetupData)
+{
+	local AbilitySetupData Data;
+	local X2AbilityTemplate Template;
+
+	if (SetupData.Find('TemplateName', AbilityName) != INDEX_NONE)
+		return;
+	Template = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate(AbilityName);
+	if (Template == none)
+		return;
+	Data.TemplateName = AbilityName;
+	Data.Template = Template;
+	if (Slot != eInvSlot_Unknown && Unit.GetItemInSlot(Slot) != none)
+		Data.SourceWeaponRef = Unit.GetItemInSlot(Slot).GetReference();
+	SetupData.AddItem(Data);
+}
+
 /** The SHIVs XCOM has. */
 static function int Count()
 {
