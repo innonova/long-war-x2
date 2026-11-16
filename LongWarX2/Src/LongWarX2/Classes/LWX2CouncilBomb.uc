@@ -18,6 +18,15 @@ var config array<LWX2BombDef> Bombs;
 /** How far from a node or the bomb a soldier may act on it, in tiles (EW: an adjacent tile). */
 var config float ReachTiles;
 
+/** EW's own words for the mission ([XSpecialMissions], written from the player's EW by scripts/write-words.mjs). */
+var localized string FindBomb, NodesDelay, Defuse, KillRest, Countdown;
+
+/** A word: EW's, else the mod's own. */
+static function string Word(string EW, string Own)
+{
+	return EW != "" ? EW : Own;
+}
+
 /** The bomb disposal being played, if this mission is one: a council bomb disposal on its EW map with its objects read. */
 static function bool Active(out LWX2BombDef B)
 {
@@ -101,7 +110,7 @@ static function bool Update()
 		Timer.UiState = Left <= 1 ? eUIState_Bad : eUIState_Normal;
 		Timer.ShouldShow = true;
 		Timer.DisplayMsgTitle = "BOMB";
-		Timer.DisplayMsgSubtitle = "Turns remaining";
+		Timer.DisplayMsgSubtitle = Word(default.Countdown, "Turns remaining");
 		Timer.TimerValue = Left;
 		Timer.IsTimer = true;
 		`TACTICALRULES.SubmitGameState(NewGameState);
@@ -124,8 +133,8 @@ static function string ObjectiveText()
 		return "";
 	Bomb = State();
 	if (Bomb != none && Bomb.bDisarmed)
-		return "Kill or capture every alien (the bomb is disarmed)";
-	return "Disarm the bomb (power nodes off:" @ (Bomb != none ? Bomb.NodesOff() : 0) @ "of" @ B.NodeAt.Length $ ", each a turn more)";
+		return Word(default.KillRest, "Kill any remaining aliens.");
+	return Word(default.Defuse, "Approach and defuse the bomb.") @ Word(default.NodesDelay, "Deactivate power nodes to delay explosion.") @ "(" $ (Bomb != none ? Bomb.NodesOff() : 0) @ "/" @ B.NodeAt.Length $ ")";
 }
 
 /** The nearest active node within reach of a tile (its index), or -1; the bomb in reach (-2) when bBomb. */

@@ -561,6 +561,25 @@ export function makeMobileCoverWords({ strategyLoc }) {
   return name ? { text: ['[X2Effect_LWMobileCover]', `MobileCoverReason="${name}"`, ''].join('\r\n'), named: 1 } : { text: '', named: 0 }
 }
 
+/** The council's bomb disposal's words (features/lw-council-missions.md), from EW's own [XSpecialMissions]: the objectives
+ *  and the countdown for LWX2CouncilBomb (the mod's package), and the two actions' help (XComGame.int): "Deactivate power
+ *  nodes to delay explosion.", "Approach and defuse the bomb." The actions' names are the mod's. */
+export function makeBombWords({ loc }) {
+  const text = loc.replace(/\r/g, '')
+  const at = text.indexOf('\n[XSpecialMissions]\n')
+  if (at < 0) return { modText: '', text: '', named: 0 }
+  const end = text.indexOf('\n[', at + 2)
+  const section = text.slice(at, end < 0 ? undefined : end)
+  const one = (key) => section.match(new RegExp(`^${key}="(.*)"\\s*$`, 'm'))?.[1]
+  const words = { FindBomb: one('m_strBombObj1'), NodesDelay: one('m_strBombObj1A'), Defuse: one('m_strBombObj2'), KillRest: one('m_strBombObj3'), Countdown: one('m_strBombCountdown1')?.replace(/:\s*$/, '') }
+  const named = Object.values(words).filter(Boolean).length
+  const q = (t) => `"${t}"`
+  const modText = ['[LWX2CouncilBomb]', ...Object.entries(words).filter(([, v]) => v).map(([k, v]) => `${k}=${q(v)}`), ''].join('\r\n')
+  const ability = (name, title, help) => (help ? ['', `[${name} X2AbilityTemplate]`, `LocFriendlyName=${q(title)}`, `LocHelpText=${q(help)}`, `LocLongDescription=${q(help)}`, `LocFlyOverText=${q(title)}`] : [])
+  const abilities = [...ability('LWX2_DeactivateNode', 'Deactivate Power Node', words.NodesDelay), ...ability('LWX2_DisarmBomb', 'Defuse Bomb', words.Defuse), '']
+  return { modText, text: abilities.join('\r\n'), named }
+}
+
 /** The MECs' words (features/lw-shivs-mecs.md): Long War's item names and summaries for the MEC suits (LWMEC_Suit_<id>) and
  *  weapons (LWMEC_Weapon_<id>, and the Kinetic Strike Module, LWMEC_KineticStrike), from XComLWMECs.ini's Enum= names. */
 export function makeMECWords({ loc, strategyLoc, mecsIni }) {

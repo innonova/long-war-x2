@@ -7,8 +7,8 @@ static function array<X2DataTemplate> CreateTemplates()
 {
 	local array<X2DataTemplate> Templates;
 
-	Templates.AddItem(Part('LWX2_DeactivateNode', false, "img:///UILibrary_PerkIcons.UIPerk_hack_reward"));
-	Templates.AddItem(Part('LWX2_DisarmBomb', true, "img:///UILibrary_PerkIcons.UIPerk_hack_reward_debuff"));
+	Templates.AddItem(Part('LWX2_DeactivateNode', false, "img:///UILibrary_PerkIcons.UIPerk_interact"));
+	Templates.AddItem(Part('LWX2_DisarmBomb', true, "img:///UILibrary_PerkIcons.UIPerk_hack"));
 	return Templates;
 }
 
