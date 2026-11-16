@@ -1,0 +1,530 @@
+// EXALT (features/lw-exalt.md), Long War's XGExaltSimulation on the Long War Geoscape: from the second month EXALT has a
+// base in a council country and places cells in others, which steal money, raise panic and set research back, exposing
+// themselves for a few days when they act; XCOM scans to expose them all, and gathers clues to accuse the right country.
+// Its state is on XComGameState_LWStrategy (Exalt*); Long War's numbers by difficulty and its clues are generated from the
+// package's defaults (scripts/strategy-config.mjs, [LongWarX2.LWExalt]).
+class LWExalt extends Object config(LWStrategy);
+
+struct LWExaltTuning
+{
+	var int StartDelay, StartDelayVariation, SweepCost;
+	var float SweepIncrease;
+	var int CovertDays;
+	var int MinDaysBetweenCellOperations, MinDaysBetweenOperations, MaxDaysBetweenOperations;
+	var int MinDaysToHide, MaxDaysToHide, MinDaysBetweenCells, MaxDaysBetweenCells, MaxCells;
+	var int MinResearchHackDays;
+	var float ResearchHackShare;
+	var float PlaceChance, PlaceSatellite, PlaceStealthSatellite;
+	var array<float> PanicScore;
+	var float CountryLeftScore, SatelliteScore, HomeScore, NoCellsScore, OnlyOneLeftScore, ContinentLeftScore, OnlyWithoutSatelliteScore;
+};
+
+/** A clue: the countries it rules out (Invalid), or the only ones it leaves (Valid); its words (Text) from Long War's. */
+struct LWExaltClue
+{
+	var int Text;
+	var array<name> Invalid, Valid;
+};
+
+var config array<LWExaltTuning> Tuning;
+var config array<LWExaltClue> Clues;
+
+/** Simulation states (Long War's EExaltSimulationState). */
+const NOT_BEGUN = 0;
+const STARTING = 1;
+const ACTIVE = 2;
+const ENDED = 3;
+
+/** Long War's Foundry project Stealth Satellites (placement is harder under them). */
+const FOUNDRY_STEALTH_SATELLITES = 17;
+/** Long War's laboratory (each takes a fifth off a research hack). */
+const FACILITY_LAB = 7;
+
+static function LWExaltTuning Tune()
+{
+	return default.Tuning[Clamp(class'LWStrategyRules'.static.Difficulty(), 0, default.Tuning.Length - 1)];
+}
+
+static function bool IsActive(XComGameState_LWStrategy S)
+{
+	return S.ExaltState == ACTIVE;
+}
+
+/** Each hour (XComGameState_LWStrategy.Tick): begun in the second month; a day passed every 24 hours. */
+static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
+{
+	if (default.Tuning.Length == 0)
+		return;
+	if (S.ExaltState == NOT_BEGUN)
+	{
+		if (S.Month > 1)
+			Begin(S);
+		return;
+	}
+	if (S.ExaltState == ENDED || S.Hours % 24 != 12)
+		return;
+	S.bExaltSweepAllowed = true;
+	DayForOperative(S);
+	if (S.ExaltOperative <= 0)
+		DayForExalt(NewGameState, S);
+}
+
+/** Long War's BeginSimulation: EXALT's country (a council country), its clues, the delay before its first cells. */
+static function Begin(XComGameState_LWStrategy S)
+{
+	S.ExaltCountry = Rand(S.Countries.Length);
+	SelectClues(S);
+	S.ExaltCooldown = Tune().StartDelay + Rand(Tune().StartDelayVariation);
+	S.ExaltState = STARTING;
+	`log("LongWarX2: EXALT: begun, its base in" @ S.CountryName(S.ExaltCountry) $ "," @ S.ExaltClues.Length @ "clues; cells in" @ S.ExaltCooldown @ "days", , 'LongWarX2');
+}
+
+/** The covert operative's day (phase 3, features/lw-exalt.md): counted down. */
+static function DayForOperative(XComGameState_LWStrategy S)
+{
+	if (S.ExaltOperative > 0 && S.ExaltOperativeDays > 0)
+		S.ExaltOperativeDays--;
+}
+
+/** Long War's NextDayForExalt. */
+static function DayForExalt(XComGameState NewGameState, XComGameState_LWStrategy S)
+{
+	local int i;
+
+	if (S.ExaltState == STARTING)
+	{
+		if (--S.ExaltCooldown > 0)
+			return;
+		S.ExaltState = ACTIVE;
+		PlaceNextCell(S, true);
+		PlaceNextCell(S, true);
+		if (S.ExaltCells.Length > 0)
+			PerformRandomOperation(NewGameState, S, S.ExaltCells[0].Country);
+		return;
+	}
+	if (--S.ExaltCooldown <= 0)
+		PlaceNextCell(S);
+	S.ExaltDaysSinceOperation++;
+	for (i = 0; i < S.ExaltCells.Length; i++)
+	{
+		if (S.ExaltCells[i].DaysUntilHidden <= 0)
+		{
+			S.ExaltCells[i].DaysUntilNextActivity = Max(0, S.ExaltCells[i].DaysUntilNextActivity - 1);
+			if (S.ExaltCells[i].DaysUntilNextActivity == 0 && S.ExaltDaysSinceOperation > Tune().MinDaysBetweenCellOperations)
+			{
+				PerformRandomOperation(NewGameState, S, S.ExaltCells[i].Country);
+				// (The cell may have moved: the list changed under the loop.)
+				if (i < S.ExaltCells.Length)
+					S.ExaltCells[i].DaysUntilNextActivity = Between(Tune().MinDaysBetweenOperations, Tune().MaxDaysBetweenOperations);
+			}
+		}
+		else if (--S.ExaltCells[i].DaysUntilHidden == 0)
+			S.Note("The EXALT cell in" @ S.CountryName(S.ExaltCells[i].Country) @ "has gone back into hiding.");
+	}
+}
+
+static function int Between(int Lo, int Hi)
+{
+	return Lo + Rand(Max(1, Hi - Lo + 1));
+}
+
+static function int CellIndex(XComGameState_LWStrategy S, int Country)
+{
+	local int i;
+
+	for (i = 0; i < S.ExaltCells.Length; i++)
+		if (S.ExaltCells[i].Country == Country)
+			return i;
+	return INDEX_NONE;
+}
+
+static function bool HasCell(XComGameState_LWStrategy S, int Country)
+{
+	return IsActive(S) && CellIndex(S, Country) != INDEX_NONE;
+}
+
+static function bool IsExposed(XComGameState_LWStrategy S, int Country)
+{
+	local int i;
+
+	i = IsActive(S) ? CellIndex(S, Country) : INDEX_NONE;
+	return i != INDEX_NONE && S.ExaltCells[i].DaysUntilHidden > 0;
+}
+
+/** Council countries of a continent still in XCOM. */
+static function int RemainingOn(XComGameState_LWStrategy S, int Continent)
+{
+	local int i, n;
+
+	for (i = 0; i < S.Countries.Length; i++)
+		if (S.CountryContinent(i) == Continent && !S.Countries[i].bLeft)
+			n++;
+	return n;
+}
+
+static function int SatellitesOn(XComGameState_LWStrategy S, int Continent)
+{
+	local int i, n;
+
+	for (i = 0; i < S.Countries.Length; i++)
+		if (S.CountryContinent(i) == Continent && S.Countries[i].bSatellite)
+			n++;
+	return n;
+}
+
+static function int CellsOn(XComGameState_LWStrategy S, int Continent)
+{
+	local int i, n;
+
+	for (i = 0; i < S.ExaltCells.Length; i++)
+		if (S.CountryContinent(S.ExaltCells[i].Country) == Continent)
+			n++;
+	return n;
+}
+
+/** Long War's ScoreCountryForCellPlacementAttempt. */
+static function float Score(XComGameState_LWStrategy S, int Country)
+{
+	local LWExaltTuning T;
+	local float F;
+	local int Continent, Remaining;
+
+	T = Tune();
+	Continent = S.CountryContinent(Country);
+	Remaining = RemainingOn(S, Continent);
+	F = T.PanicScore[Clamp(S.Countries[Country].Panic / 20, 0, 4)];
+	if (CellsOn(S, Continent) == 0)
+		F += T.NoCellsScore;
+	if (Remaining == 0)
+		F += T.ContinentLeftScore;
+	else if (S.Countries[Country].bLeft)
+		F += T.CountryLeftScore;
+	else if (Remaining == 1)
+		F += T.OnlyOneLeftScore;
+	if (S.Countries[Country].bSatellite)
+		F += T.SatelliteScore;
+	else if (SatellitesOn(S, Continent) == 1)
+		F += T.OnlyWithoutSatelliteScore;
+	if (Continent == S.CountryContinent(S.HomeCountry()))
+		F += T.HomeScore;
+	return F;
+}
+
+/** Long War's SelectCountryForCellPlacementAttempt: each country without a cell kept with chance by its score. */
+static function int SelectCountry(XComGameState_LWStrategy S)
+{
+	local int i, Selected;
+	local float Total, F;
+
+	Selected = INDEX_NONE;
+	for (i = 0; i < S.Countries.Length; i++)
+	{
+		if (CellIndex(S, i) != INDEX_NONE)
+			continue;
+		F = Score(S, i);
+		if (F <= 0)
+			continue;
+		Total += F;
+		if (FRand() < F / Total)
+			Selected = i;
+	}
+	return Selected != INDEX_NONE ? Selected : Rand(S.Countries.Length);
+}
+
+/** Long War's PlaceNextCell (with the dice unless forced). */
+static function PlaceNextCell(XComGameState_LWStrategy S, optional bool bForce)
+{
+	local XComGameState_LWStrategy.LWExaltCell Cell;
+	local LWExaltTuning T;
+	local int Country;
+	local float Chance;
+
+	T = Tune();
+	if (!IsActive(S) || S.ExaltCells.Length >= T.MaxCells)
+		return;
+	Country = SelectCountry(S);
+	if (CellIndex(S, Country) == INDEX_NONE)
+	{
+		Chance = T.PlaceChance;
+		if (S.Countries[Country].bSatellite)
+			Chance += class'LWAirWar'.static.FoundryDone(FOUNDRY_STEALTH_SATELLITES) ? T.PlaceStealthSatellite : T.PlaceSatellite;
+		if (bForce || FRand() < Chance)
+		{
+			Cell.Country = Country;
+			Cell.DaysUntilNextActivity = Between(T.MinDaysBetweenOperations, T.MaxDaysBetweenOperations);
+			S.ExaltCells.AddItem(Cell);
+			`log("LongWarX2: EXALT: a cell placed in" @ S.CountryName(Country), , 'LongWarX2');
+		}
+	}
+	S.ExaltCooldown = Between(T.MinDaysBetweenCells, T.MaxDaysBetweenCells);
+}
+
+/** Long War's ExposeCell: shown for some days (a day count already running is not renewed). */
+static function Expose(XComGameState_LWStrategy S, int Country)
+{
+	local int i;
+
+	i = CellIndex(S, Country);
+	if (i == INDEX_NONE || S.ExaltCells[i].DaysUntilHidden > 0)
+		return;
+	S.ExaltCells[i].DaysUntilHidden = Between(Tune().MinDaysToHide, Tune().MaxDaysToHide);
+}
+
+/** Long War's RelocateCell: removed, and another placed at once. */
+static function Relocate(XComGameState_LWStrategy S, int Country)
+{
+	local int i;
+
+	i = CellIndex(S, Country);
+	if (i == INDEX_NONE)
+		return;
+	S.ExaltCells.Remove(i, 1);
+	S.Note("The EXALT cell in" @ S.CountryName(Country) @ "has moved.");
+	PlaceNextCell(S, true);
+}
+
+/** Long War's PerformRandomOperation: what the cell can do (GetPossibleOperationTypes), one at random; nothing: it moves. */
+static function PerformRandomOperation(XComGameState NewGameState, XComGameState_LWStrategy S, int Country)
+{
+	local array<int> Kinds;
+
+	if (class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies() >= 0)
+		Kinds.AddItem(1);
+	if (!S.Countries[Country].bLeft)
+		Kinds.AddItem(2);
+	if (ResearchDone(NewGameState) > Tune().ResearchHackShare)
+		Kinds.AddItem(3);
+	if (Kinds.Length == 0)
+	{
+		Relocate(S, Country);
+		return;
+	}
+	switch (Kinds[Rand(Kinds.Length)])
+	{
+	case 1: Sabotage(NewGameState, S, Country); break;
+	case 2: Propaganda(S, Country); break;
+	case 3: ResearchHack(NewGameState, S, Country); break;
+	}
+}
+
+/** Long War's sabotage: 40 x the month + 0..99 stolen. */
+static function Sabotage(XComGameState NewGameState, XComGameState_LWStrategy S, int Country)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local int Amount;
+
+	Expose(S, Country);
+	Amount = 40 * S.Month + Rand(100);
+	if (Amount <= 0)
+		return;
+	XComHQ = HQIn(NewGameState);
+	XComHQ.AddResource(NewGameState, 'Supplies', -Amount);
+	S.ExaltDaysSinceOperation = 0;
+	S.Note("EXALT sabotage in" @ S.CountryName(Country) $ ": XCOM lost" @ class'LWStrategyRules'.static.Money(Amount) $ ".");
+}
+
+/** Long War's propaganda: +40 panic in the country, +20 in another of its continent still in XCOM. */
+static function Propaganda(XComGameState_LWStrategy S, int Country)
+{
+	local int i, Valid, Other;
+
+	if (S.Countries[Country].bLeft)
+		return;
+	S.AddPanic(Country, 40);
+	Other = INDEX_NONE;
+	for (i = 0; i < S.Countries.Length; i++)
+		if (i != Country && S.CountryContinent(i) == S.CountryContinent(Country) && !S.Countries[i].bLeft)
+			if (Rand(++Valid) == 0)
+				Other = i;
+	if (Other != INDEX_NONE)
+		S.AddPanic(Other, 20);
+	Expose(S, Country);
+	S.ExaltDaysSinceOperation = 0;
+	S.Note("EXALT propaganda in" @ S.CountryName(Country) $ ": panic rises" $ (Other != INDEX_NONE ? ", and in" @ S.CountryName(Other) : "") $ ".");
+}
+
+static function XComGameState_HeadquartersXCom HQIn(XComGameState NewGameState)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	if (XComHQ == none)
+		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	return XComHQ;
+}
+
+static function XComGameState_HeadquartersProjectResearch Research()
+{
+	return class'UIUtilities_Strategy'.static.GetXComHQ().GetCurrentResearchProject();
+}
+
+/** How much of the current research is done (0..1; none under way: 0). */
+static function float ResearchDone(XComGameState NewGameState)
+{
+	local XComGameState_HeadquartersProjectResearch P;
+
+	P = Research();
+	if (P == none || P.InitialProjectPoints <= 0)
+		return 0;
+	return 1.0 - float(P.ProjectPointsRemaining) / float(P.InitialProjectPoints);
+}
+
+/** Long War's research hack: the larger of a share of the estimate and some days set back, at most what was done, less a
+ *  fifth for each laboratory. */
+static function ResearchHack(XComGameState NewGameState, XComGameState_LWStrategy S, int Country)
+{
+	local XComGameState_HeadquartersProjectResearch P;
+	local float PerHour, Estimate, Remaining, Hacked;
+
+	P = Research();
+	if (P == none || P.InitialProjectPoints <= 0)
+		return;
+	PerHour = FMax(1, S.ResearchPerHour());
+	Estimate = P.InitialProjectPoints / PerHour;
+	Remaining = P.ProjectPointsRemaining / PerHour;
+	Hacked = FMax(Estimate * Tune().ResearchHackShare, Tune().MinResearchHackDays * 24);
+	Hacked = FMin(Hacked, Estimate - Remaining);
+	Hacked -= Hacked * class'LWBase'.static.Count(S, FACILITY_LAB) * 0.2;
+	Hacked = FMax(0, Hacked);
+	P = XComGameState_HeadquartersProjectResearch(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersProjectResearch', P.ObjectID));
+	P.ProjectPointsRemaining = Min(P.InitialProjectPoints, P.ProjectPointsRemaining + Round(Hacked * PerHour));
+	Expose(S, Country);
+	S.ExaltDaysSinceOperation = 0;
+	S.Note("EXALT hacked XCOM's research from" @ S.CountryName(Country) $ ": set back" @ Round(Hacked / 24) @ "days.");
+}
+
+/** Long War's GetPanicMod: panic rising in a country rises up to 10 more while a hidden cell is on its continent (a coin
+ *  flip for each; no operative in the field). */
+static function int PanicMod(XComGameState_LWStrategy S, int Country, int Base)
+{
+	local int i;
+
+	if (!IsActive(S) || Base <= 0 || S.ExaltOperative > 0)
+		return 0;
+	for (i = 0; i < S.ExaltCells.Length; i++)
+		if (S.CountryContinent(S.ExaltCells[i].Country) == S.CountryContinent(Country) && S.ExaltCells[i].DaysUntilHidden <= 0 && Rand(2) == 0)
+			return Min(10, Base);
+	return 0;
+}
+
+/** Long War's GetSweepCost: more each time in the month, less by the country bonus that says so (16). */
+static function int SweepCost(XComGameState_LWStrategy S)
+{
+	local float Cost;
+	local int i;
+
+	Cost = Tune().SweepCost;
+	for (i = 0; i < S.ExaltSweeps; i++)
+		Cost += Cost * Tune().SweepIncrease;
+	if (class'LWBonuses'.static.Has(16, S) > 0)
+		Cost *= 1 - class'LWBonuses'.static.Has(16, S) / 100.0;
+	return int(Cost);
+}
+
+static function bool CanSweep(XComGameState_LWStrategy S, out string Why)
+{
+	Why = "";
+	if (!IsActive(S))
+		Why = "EXALT is not active";
+	else if (!S.bExaltSweepAllowed)
+		Why = "a scan already today";
+	if (Why == "" && class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies() < SweepCost(S))
+		Why = class'LWStrategyRules'.static.Money(SweepCost(S));
+	return Why == "";
+}
+
+/** Long War's PerformSweep: every cell exposed, paid for. */
+static function bool Sweep(out string Why)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local int i, Cost;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || !CanSweep(S, Why))
+		return false;
+	Cost = SweepCost(S);
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a scan for EXALT");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	for (i = 0; i < S.ExaltCells.Length; i++)
+		Expose(S, S.ExaltCells[i].Country);
+	HQIn(NewGameState).AddResource(NewGameState, 'Supplies', -Cost);
+	S.ExaltSweeps++;
+	S.bExaltSweepAllowed = false;
+	S.Note("XCOM scanned for EXALT (" $ class'LWStrategyRules'.static.Money(Cost) $ "):" @ S.ExaltCells.Length @ (S.ExaltCells.Length == 1 ? "cell" : "cells") @ "exposed.");
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	return true;
+}
+
+/** Pay day (Long War's PayDay): the month's scans counted again from nothing. */
+static function MonthEnded(XComGameState_LWStrategy S)
+{
+	S.ExaltSweeps = 0;
+}
+
+/** Long War's IsCountryRuledOutByClue. */
+static function bool RuledOut(XComGameState_LWStrategy S, int Country, LWExaltClue C)
+{
+	if (C.Valid.Length > 0)
+		return C.Valid.Find(S.Countries[Country].Id) == INDEX_NONE;
+	return C.Invalid.Find(S.Countries[Country].Id) != INDEX_NONE;
+}
+
+static function int RuledOutCount(XComGameState_LWStrategy S, LWExaltClue C)
+{
+	return C.Valid.Length > 0 ? S.Countries.Length - C.Valid.Length : C.Invalid.Length;
+}
+
+/** Long War's SelectClues: clues that leave EXALT's country, chosen weighted toward those ruling out many, each kept if it
+ *  rules out another of those remaining, until one is left. */
+static function SelectClues(XComGameState_LWStrategy S)
+{
+	local array<int> Candidates, Remaining, Kept;
+	local float Weight, Total;
+	local int i, Chosen, Before;
+
+	S.ExaltClues.Length = 0;
+	for (i = 0; i < default.Clues.Length; i++)
+		if (!RuledOut(S, S.ExaltCountry, default.Clues[i]))
+			Candidates.AddItem(i);
+	for (i = 0; i < S.Countries.Length; i++)
+		Remaining.AddItem(i);
+	while (Candidates.Length > 0 && Remaining.Length > 1)
+	{
+		Chosen = 0;
+		Total = 0;
+		for (i = 0; i < Candidates.Length; i++)
+		{
+			Weight = RuledOutCount(S, default.Clues[Candidates[i]]);
+			Weight += Weight * Weight * 0.2;
+			Total += Weight;
+			if (Total > 0 && FRand() < Weight / Total)
+				Chosen = i;
+		}
+		Before = Remaining.Length;
+		Kept.Length = 0;
+		for (i = 0; i < Remaining.Length; i++)
+			if (!RuledOut(S, Remaining[i], default.Clues[Candidates[Chosen]]))
+				Kept.AddItem(Remaining[i]);
+		Remaining = Kept;
+		if (Remaining.Length < Before)
+			S.ExaltClues.AddItem(Candidates[Chosen]);
+		Candidates.Remove(Chosen, 1);
+	}
+}
+
+/** The clues XCOM holds (as many as its EXALT intelligence). */
+static function int CluesHeld(XComGameState_LWStrategy S)
+{
+	return Min(S.ExaltIntel, S.ExaltClues.Length);
+}
+
+static function bool RuledOutByHeldClues(XComGameState_LWStrategy S, int Country)
+{
+	local int i;
+
+	for (i = 0; i < CluesHeld(S); i++)
+		if (RuledOut(S, Country, default.Clues[S.ExaltClues[i]]))
+			return true;
+	return false;
+}

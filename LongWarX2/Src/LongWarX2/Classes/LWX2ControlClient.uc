@@ -210,6 +210,11 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem("squad size" @ class'UILWHeadquarters'.static.SquadSize() $ "; ranks in the barracks" @ class'XComGameState_LWStrategy'.static.RanksInBarracks() $ (Why != "" ? "; the next needs" @ Why : "; the next can be bought"));
 		}
 		return;
+	case "exalt":
+		// EXALT: 'exalt' its state; 'exalt begin' (active now, two cells), 'exalt place', 'exalt act <country>', 'exalt sweep',
+		// 'exalt intel <n>' (test aids but the sweep).
+		Exalt(Args, Out);
+		return;
 	case "dr":
 		// Long War's damage reduction: 'dr' each unit's own; 'dr <attacker #id> <target #id> <damage>' what a hit leaves, and why.
 		DamageReduction(Args, Out);
@@ -1911,6 +1916,58 @@ function array<XComGameState_Unit> FieldXCom()
 		if (Unit.GetTeam() == eTeam_XCom && Unit.IsAlive() && !Unit.bRemovedFromPlay && Unit.TileLocation.X >= 0 && !Unit.GetMyTemplate().bIsCosmetic)
 			Units.AddItem(Unit);
 	return Units;
+}
+
+function Exalt(array<string> Args, out array<string> Out)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local string Why, Line;
+	local int i;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none)
+	{
+		Out.AddItem("ERR no Long War campaign");
+		return;
+	}
+	if (Args.Length > 1 && Args[1] ~= "sweep")
+	{
+		Out.AddItem(class'LWExalt'.static.Sweep(Why) ? "ok" : "ERR" @ Why);
+		S = class'XComGameState_LWStrategy'.static.Get();
+	}
+	else if (Args.Length > 1)
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: EXALT (control port)");
+		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+		if (Args[1] ~= "begin")
+		{
+			if (S.ExaltState == class'LWExalt'.const.NOT_BEGUN)
+				class'LWExalt'.static.Begin(S);
+			S.ExaltCooldown = 1;
+			class'LWExalt'.static.DayForExalt(NewGameState, S);
+		}
+		else if (Args[1] ~= "place")
+			class'LWExalt'.static.PlaceNextCell(S, true);
+		else if (Args[1] ~= "act" && Args.Length > 2)
+			class'LWExalt'.static.PerformRandomOperation(NewGameState, S, int(Args[2]));
+		else if (Args[1] ~= "intel" && Args.Length > 2)
+			S.ExaltIntel = int(Args[2]);
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		class'XComGameState_LWStrategy'.static.SyncResearch();
+		S = class'XComGameState_LWStrategy'.static.Get();
+		Out.AddItem("ok");
+	}
+	Out.AddItem("state" @ S.ExaltState @ "base" @ (S.ExaltState > 0 ? S.CountryName(S.ExaltCountry) : "-") @ "cooldown" @ S.ExaltCooldown @ "days since an operation" @ S.ExaltDaysSinceOperation
+		@ "scans" @ S.ExaltSweeps @ "(next" @ class'LWStrategyRules'.static.Money(class'LWExalt'.static.SweepCost(S)) $ (class'LWExalt'.static.CanSweep(S, Why) ? ")" : "; not now:" @ Why $ ")") @ "intel" @ S.ExaltIntel);
+	for (i = 0; i < S.ExaltCells.Length; i++)
+		Out.AddItem("cell" @ S.ExaltCells[i].Country @ S.CountryName(S.ExaltCells[i].Country) @ (S.ExaltCells[i].DaysUntilHidden > 0 ? "EXPOSED for" @ S.ExaltCells[i].DaysUntilHidden : "hidden") @ "acts in" @ S.ExaltCells[i].DaysUntilNextActivity);
+	Line = "clues (of" @ class'LWExalt'.default.Clues.Length $ "):";
+	for (i = 0; i < S.ExaltClues.Length; i++)
+		Line @= string(class'LWExalt'.default.Clues[S.ExaltClues[i]].Text);
+	Out.AddItem(Line);
+	for (i = Max(0, S.Events.Length - 4); i < S.Events.Length; i++)
+		Out.AddItem("event" @ S.Events[i]);
 }
 
 function DamageReduction(array<string> Args, out array<string> Out)

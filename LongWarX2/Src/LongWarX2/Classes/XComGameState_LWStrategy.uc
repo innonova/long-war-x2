@@ -108,6 +108,15 @@ var array<int> TileType;
 var array<int> TileFacility;
 var array<LWBaseJob> BaseJobs;
 /** A soldier training a psi power in the Psi Labs (features/lw-psi.md): the unit, the power (Long War's perk id), the hours left. */
+/** An EXALT cell (features/lw-exalt.md; Long War's TExaltCellData): its country, the days it stays exposed, the days
+ *  before it acts again. */
+struct LWExaltCell
+{
+	var int Country;
+	var int DaysUntilHidden;
+	var int DaysUntilNextActivity;
+};
+
 struct LWPsiTrainee
 {
 	var int Unit;
@@ -160,6 +169,19 @@ var bool bHQAssaultCame;
 var bool bHadHyperwaveBeacon;
 var bool bHadPsiLink;
 var bool bCampaignWon;
+
+// EXALT (features/lw-exalt.md, LWExalt): its state (LWExalt's consts), its base's country, the clues chosen (LWExalt.Clues
+// indices, in order), its cells, the days before the next cell, the days since a cell acted, the month's scans and whether a
+// scan is allowed today; the countries accused; XCOM's EXALT intelligence (the clues it holds); the covert operative (a
+// unit's id), the country and days left.
+var int ExaltState, ExaltCountry;
+var array<int> ExaltClues;
+var array<LWExaltCell> ExaltCells;
+var int ExaltCooldown, ExaltDaysSinceOperation, ExaltSweeps;
+var bool bExaltSweepAllowed;
+var array<int> ExaltAccused;
+var int ExaltIntel;
+var int ExaltOperative, ExaltOperativeCountry, ExaltOperativeDays;
 
 // --- Making it ------------------------------------------------------------------------------
 
@@ -500,6 +522,7 @@ function Tick(XComGameState NewGameState)
 		TickUfo(i);
 	for (i = 0; i < Sites.Length; i++)
 		TickSite(i);
+	class'LWExalt'.static.Hour(NewGameState, self);
 	if (Hours % HoursPerMonth() == 0)
 		EndMonth();
 }
@@ -1738,6 +1761,8 @@ function EndMonth()
 	local int i, d, Blocks, Funding, Chance, Upkeep;
 	local string Report;
 
+	class'LWExalt'.static.MonthEnded(self);
+
 	d = class'LWStrategyRules'.static.Difficulty();
 	for (i = 0; i < Countries.Length; i++)
 	{
@@ -1813,6 +1838,8 @@ function AddPanic(int Country, int Amount)
 {
 	if (Country < 0 || Country >= Countries.Length || Countries[Country].bLeft)
 		return;
+	// (Long War's XGCountry.AddPanic: EXALT's hidden cells on the continent add to a rise.)
+	Amount += class'LWExalt'.static.PanicMod(self, Country, Amount);
 	Countries[Country].Panic = Clamp(Countries[Country].Panic + Amount, 0, 99);
 }
 

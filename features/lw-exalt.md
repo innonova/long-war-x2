@@ -1,0 +1,132 @@
+---
+title: "EXALT: the cells, their operations, scans, covert operatives, clues and the raid on EXALT's base"
+status: in-progress
+priority: 35
+dependsOn:
+  - lw-geoscape
+  - lw-missions
+---
+
+## Purpose
+
+Enemy Within's human enemy, kept by Long War: EXALT cells hide in council countries and steal
+money, raise panic and set research back, until XCOM scans for them, sends a covert operative in,
+fights the extraction, and gathers enough intelligence to accuse the right country and raid
+EXALT's base. The port has none of it (STATUS: EXALT, none).
+
+## Long War's rules, as read (2026-11-16)
+
+From stock Long War's `XGExaltSimulation` (its functions and defaults), `XGStrategyAI`'s EXALT
+missions and squads (read with the Tree's `upk_script.py` and upkit's `class`; the decompiled
+code stays out of the repository). Numbers by difficulty (Long War's Normal, Classic, Brutal,
+Impossible).
+
+**When.** The simulation begins in the second month (`AI().GetMonth() > 1`): EXALT's country is
+a random council country, its clues are chosen, and after 18 + 0..6 days (Brutal and
+Impossible 15 + 0..9) two cells are placed and the first acts at once. Then a day passes every
+48 half-hours of Geoscape time (not while the Geoscape is busy or on pay day).
+
+**Cells.** One per country, at most 10. A new one is tried every 7–10 days (Classic 7–11,
+Brutal 6–10, Impossible 6–9): a council country without a cell is picked with chance by its
+score, then placed with chance 0.9 (Classic 1.0), less 0.2 with a satellite over it (0.35 with
+the Foundry's Stealth Satellites). The score:
+- by its panic, in fifths of 0–100 (the fifth step from 80 up): Normal 0.0, 0.1, 0.2, 0.2, 0.1, rising toward
+  the higher steps on the harder difficulties (each difficulty's list is in the generated config);
+- +0.1 (Brutal +0.2) if no cell is on its continent;
+- −0.3 if its whole continent has left XCOM; else nothing more if it left itself; else −0.1 if it
+  is its continent's only one left in XCOM;
+- −0.3 (Classic and up −0.1) with a satellite over it; +0.2 if it is the only one on its
+  continent without one where the continent has a single satellite;
+- −0.1 on XCOM's home continent (not on Impossible).
+
+**Operations.** Each hidden cell acts every 7–21 days (Brutal and Impossible 7–15), and only
+when no cell has acted for more than 5 days (Classic 5, Brutal 4, Impossible 3). It picks at
+random among what it can do:
+- **sabotage** (XCOM has money): steals 40 × the month + 0..99 (Long War's own line, in place
+  of EW's share of XCOM's money);
+- **propaganda** (the country is still in XCOM): +40 panic there, +20 in another council country
+  of its continent still in XCOM;
+- **research hack** (the current research is more than 30% done; Classic 50%): sets it back the
+  larger of 30% (50%) of its estimate and 5 days, at most what has been done, less a fifth per
+  laboratory.
+A cell with nothing it can do moves (to a new country, placed at once). Acting **exposes** the
+cell for 4–7 days (Classic and up 2–5).
+
+**Panic.** While EXALT is active and no operative is in the field, panic rising in a country rises
+up to 10 more when a hidden cell is on its continent (each such cell, a coin flip).
+
+**Scans.** XCOM scans for EXALT (once a day at most, and only after a day has passed): every
+cell is exposed. §50, then 50% more each time in the month (Classic and up 100% more), the count
+back to zero on pay day; less by the country bonus that says so (`HasBonus(16)`).
+
+**Covert operatives.** A soldier sent into a country with a cell (exposed: the Situation Room
+shows those) is away 6 days, without their gear. Then a mission comes in that country (96 hours
+to answer): extraction or data recovery (the first of each, then at random). Not answered, the
+operative is lost (to the memorial). Won: the cell is cleared and the country loses 20 panic, and
+the other exposed cells move; lost: the cell moves. The operative comes back. The missions'
+squads are EXALT's (`DetermineCovertOpsSquad`: by how many such missions were fought, EXALT
+operatives, snipers, heavies, medics and their elites, a commander).
+
+**Clues.** Long War's clue definitions (28: "not in <country>", "not in Asia", "not in an
+English speaking country" …), chosen at the start so each rules out more of the remaining
+council countries, weighted toward those ruling out many, until one country is left. XCOM holds
+as many as it has EXALT intelligence (item 181) from covert missions.
+
+**Accusation.** XCOM accuses a council country once: right, the raid on EXALT's base is the next
+mission there; wrong, the country leaves XCOM (if it had already left, its continent's council
+countries +40 panic). The raid won ends EXALT; lost, EXALT's country leaves XCOM (or its
+neighbours +40 panic).
+
+## Plan
+
+1. **The simulation** (`LWExalt`, its state on `XComGameState_LWStrategy`): begin, cells,
+   operations, exposure, scans, the panic addition, clues and accusations, run by the Long War
+   Geoscape's clock; each event in the Geoscape's log; Long War's numbers in the generated config
+   (read from the class defaults by the config generator). Control-port aids to see and drive it.
+2. **The Situation Room's EXALT** on EW's own screen: the scan (its cost), cells on the map,
+   the clues, accusing a country.
+3. **Covert operatives and their missions**: a soldier sent and away, the mission after six days
+   with the operative in the squad, EXALT's squads as Long War gives them, the outcome.
+4. **The raid on EXALT's base.**
+
+## Report (2026-11-16, phase 1: the simulation)
+
+`LWExalt` runs Long War's `XGExaltSimulation` on the Long War Geoscape, its state on
+`XComGameState_LWStrategy` (`Exalt*`), each hour from the strategy clock (a day every 24 hours):
+- begun in the second month: EXALT's base in a council country, its clues chosen
+  (`SelectClues`, weighted as Long War weighs them), its first two cells after the start delay,
+  the first acting at once;
+- cells placed by Long War's score and dice (panic, cells and departures on the continent,
+  satellites, the home continent, Stealth Satellites), at most 10;
+- operations every 7–21 days (by difficulty), no sooner than the gap between any two:
+  sabotage (40 × the month + 0..99), propaganda (+40 panic, +20 in a neighbour), research hack
+  (XCOM 2's project set back by Long War's share or days, less a fifth per laboratory); a cell with
+  nothing to do moves; acting exposes it for some days, then it hides again;
+- the panic addition inside every panic rise (`AddPanic`, as Long War's `XGCountry.AddPanic`);
+- scans (`LWExalt.Sweep`): every cell exposed, Long War's cost rising through the month (reset on
+  pay day), the country bonus' cut; one a day;
+- clue bookkeeping (the clues held: as many as XCOM's EXALT intelligence).
+Each event is a line in the Geoscape's log.
+
+Long War's numbers by difficulty and its 28 clues are generated from the package's defaults
+(`scripts/strategy-config.mjs`, `exaltRules`: upkit's `class XGExaltSimulation`, its
+`defaultproperties` parsed) into `[LongWarX2.LWExalt]`.
+
+**Checked on wingpu** (control port, a new campaign, EXALT begun by the aid): base in Argentina,
+cells in Japan and the United Kingdom, Japan's sabotage (§68) exposing it for 4 days; in another,
+base in the United States, nine clues each ruling out more of the council, propaganda in China
+raising panic there and in Australia, a cell placed in Canada 9 days later, sabotage §88, China's
+cell hiding again after its days.
+
+Control port: `exalt` (state, cells, clues, last events), `exalt begin|place|act <country>|intel
+<n>` (test aids), `exalt sweep`.
+
+### Found on the way
+
+- Long War's `XGCountry.AddPanic` also halves a rise with a chance by the country (its `iScience`
+  column); the port's `AddPanic` does not. Left for the Geoscape's feature.
+
+### Left open
+
+- Phase 2 (the Situation Room's EXALT on EW's screen), phase 3 (covert operatives and their
+  missions; until then no intelligence and no clues held), phase 4 (the raid).

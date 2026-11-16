@@ -244,7 +244,7 @@ out.push(
     ['Muton', 7], ['Archon', 10], ['Berserker', 15], ['Andromedon', 11], ['Codex', 9], ['AdventPsiWitch', 12]].map(([g, c]) => `+CaptureAs=(Group=${g}, Char=${c})`),
   ...[28, 29, 30, 31].map((id) => `+Species=(Char=${id}, Name=ExaltElite${id}, Elerium=0, Alloys=0, Meld=${one('CB_FUNDING_BONUS')})`),
 )
-if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk), ...mapPlaces(strategyUpk))
+if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk), ...mapPlaces(strategyUpk), ...exaltRules(strategyUpk))
 // Long War's wound recovery (XGFacility_Barracks.DetermineTimeOut; LWWounds).
 out.push(
   '',
@@ -406,6 +406,94 @@ function mapPlaces(upk) {
   }
   if (places.length !== 16) throw new Error(`XGWorld.CreateSatNodes: ${places.length} places read, expected 16`)
   return ["; Each council country's place on Enemy Within's world map (XGWorld.CreateSatNodes: x, y from 0 to 1).", ...places]
+}
+
+/** An UnrealScript struct literal's fields, "(a=1,b=(c=2),arr(0)=0.5)": nested structs as objects, indexed fields as arrays. */
+function parseStruct(text) {
+  let i = 0
+  const value = () => {
+    if (text[i] === '(') {
+      i++
+      const obj = {}
+      while (text[i] !== ')') {
+        const m = /^(\w+)(?:\((\d+)\))?=/.exec(text.slice(i))
+        if (!m) throw new Error(`struct literal: no field at ${text.slice(i, i + 40)}`)
+        i += m[0].length
+        const v = value()
+        if (m[2] !== undefined) (obj[m[1]] ??= [])[Number(m[2])] = v
+        else obj[m[1]] = v
+        if (text[i] === ',') i++
+      }
+      i++
+      return obj
+    }
+    const m = /^[^,)]*/.exec(text.slice(i))
+    i += m[0].length
+    return m[0].replace(/^"|"$/g, '')
+  }
+  return value()
+}
+
+/** A default of a class's defaultproperties that is a struct literal (name(index)=(…)), its text, whitespace dropped. */
+function defaultLiteral(block, name) {
+  const at = block.indexOf(`${name}=(`)
+  if (at < 0) return null
+  let i = at + name.length + 1
+  const start = i
+  let depth = 0
+  do {
+    if (block[i] === '(') depth++
+    else if (block[i] === ')') depth--
+    i++
+  } while (depth > 0)
+  // (upkit writes an array's elements a line each, without commas.)
+  return block.slice(start, i).replace(/\s*\n\s*/g, ',').replace(/\s+/g, '').replace(/,+/g, ',').replace(/\(,/g, '(').replace(/,\)/g, ')')
+}
+
+/**
+ * EXALT (features/lw-exalt.md): XGExaltSimulation's defaults in Long War's package: its tuning by difficulty (when it
+ * begins, its cells, their operations and placement, scans, covert operations) and its clues (the countries each rules out
+ * or leaves; their words come from the player's install).
+ */
+function exaltRules(upk) {
+  const upkit = process.env.UPKIT ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', '@innonova', 'upkit', 'dist', 'upkit.mjs')
+  const src = execFileSync(process.execPath, [upkit, 'class', upk, 'XGExaltSimulation'], { encoding: 'utf8', maxBuffer: 64 << 20 })
+  const block = src.slice(src.lastIndexOf('defaultproperties'))
+  const out = ['', "; EXALT (features/lw-exalt.md): Long War's XGExaltSimulation defaults. Tuning by difficulty; clues by the countries they rule out.", '[LongWarX2.LWExalt]']
+  const n = (v) => (v === undefined ? 0 : Number(v))
+  for (let d = 0; d < 4; d++) {
+    const lit = defaultLiteral(block, `m_arrExaltTuning(${d})`)
+    if (!lit) throw new Error(`XGExaltSimulation: no m_arrExaltTuning(${d})`)
+    const t = parseStruct(lit)
+    const c = t.m_kCellTuning ?? {}
+    const r = t.m_kPlacementRollTuning ?? {}
+    const sc = t.m_kPlacementScoreTuning ?? {}
+    const panic = Array.from({ length: 6 }, (_, k) => n((sc.m_arrPanicMod ?? [])[k]))
+    out.push(
+      `+Tuning=(StartDelay=${n(t.m_iExaltStartDelayDays)}, StartDelayVariation=${n(t.m_iExaltStartDelayDaysVariation)}, SweepCost=${n(t.m_iExaltSweepBaseCost)}, ` +
+        `SweepIncrease=${n(t.m_fExaltSweepCostIncrease)}, CovertDays=${n(t.m_iCovertOperationDuration)}, ` +
+        `MinDaysBetweenCellOperations=${n(c.m_iMinDaysBetweenDifferentCellOperations)}, MinDaysBetweenOperations=${n(c.m_iMinDaysBetweenOperations)}, ` +
+        `MaxDaysBetweenOperations=${n(c.m_iMaxDaysBetweenOperations)}, MinDaysToHide=${n(c.m_iMinDaysToHide)}, MaxDaysToHide=${n(c.m_iMaxDaysToHide)}, ` +
+        `MinDaysBetweenCells=${n(c.m_iMinDaysBetweenCells)}, MaxDaysBetweenCells=${n(c.m_iMaxDaysBetweenCells)}, MaxCells=${n(c.m_iMaxSimultaneousCells)}, ` +
+        `MinResearchHackDays=${n(c.m_iMinResearchHackDays)}, ResearchHackShare=${n(c.m_fResearchHackPercentage)}, ` +
+        `PlaceChance=${n(r.m_fBaseChance)}, PlaceSatellite=${n(r.m_fSatelliteMod)}, PlaceStealthSatellite=${n(r.m_fStealthSatelliteMod)}, ` +
+        `PanicScore=(${panic.join(',')}), CountryLeftScore=${n(sc.m_fCountryHasLeftXComMod)}, SatelliteScore=${n(sc.m_fSatelliteMod)}, HomeScore=${n(sc.m_fHomeContinentMod)}, ` +
+        `NoCellsScore=${n(sc.m_fContinentHasNoCellsMod)}, OnlyOneLeftScore=${n(sc.m_fOnContinentWithOnlyOneCountryLeftInXComMod)}, ` +
+        `ContinentLeftScore=${n(sc.m_fContinentHasLeftXComMod)}, OnlyWithoutSatelliteScore=${n(sc.m_fOnlyCountryOnContinentWithoutSatelliteMod)})`,
+    )
+  }
+  const country = (v) => v.replace(/^eCountry_/, '')
+  let k = 0
+  for (; ; k++) {
+    const lit = defaultLiteral(block, `m_arrClueDefinitions(${k})`)
+    if (!lit) break
+    const c = parseStruct(lit)
+    // (Only the lists a clue has: an empty one, "()", spoils the line for the game's config reader.)
+    const list = (name, v) => ((v ?? []).filter(Boolean).length ? `, ${name}=(${v.filter(Boolean).map(country).join(',')})` : '')
+    out.push(`+Clues=(Text=${n(c.m_iClueTextIndex)}${list('Invalid', c.m_arrInvalidCountries)}${list('Valid', c.m_arrValidCountries)})`)
+  }
+  if (k < 10) throw new Error(`XGExaltSimulation: ${k} clues read`)
+  return out
 }
 
 function monthlyPlan(upk) {
