@@ -22,7 +22,8 @@ export interface EWWeapon { pkg: string; mesh: string; diffuse: RegExp; normal: 
  *  SHIVs play on the ADVENT MEC's pawn). */
 /** setsPkg: the package holding its AnimSet, where it is not the unit's (EW's MECs keep theirs with the MEC Minigun); armor:
  *  the armour that brings this body (a MEC's suit), for a template with several. */
-export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean; animsAs?: string; setsPkg?: string; armor?: string }
+/** ownAnimsOnly: the pawn plays EW's animations only (LWX2EWBodies.OwnAnimsOnly). */
+export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean; animsAs?: string; setsPkg?: string; armor?: string; ownAnimsOnly?: boolean }
 const SHIV_MINIGUN: EWWeapon = { pkg: 'Weapon_ShivMinigun_SF', mesh: 'SM_ShivGatGun', diffuse: /^ShivGatlingGun_DIF$/, normal: /^ShivGatlingGun_NRM$/ }
 const PLASMA_LIGHT: EWWeapon = { pkg: 'Weapon_PlasmaRifle_ThinMan_SF', mesh: 'SM_LightPlasmaRifle', diffuse: /^LightAssaultRiflePlasma_DIF$/, normal: /^LightAssaultRiflePlasma_NRM$/ }
 export const EW_UNITS: EWUnit[] = [
@@ -55,15 +56,26 @@ export const EW_UNITS: EWUnit[] = [
 ]
 
 /**
- * EW's MEC suits for Long War's MEC troopers (features/lw-shivs-mecs.md), not converted yet: on the ADVENT MEC's pawn their
- * mesh came out torn into spikes (its skeleton is not the ADVENT MEC's), and before the animations were re-encoded the whole
- * picture went black once one moved. Kept here for that work; the MECs keep XCOM 2's ADVENT MEC body meanwhile.
+ * The idles XCOM 2's strategy screens play by name on a pawn that is not a soldier's body: squad select's line-up and the
+ * armory's customisation play its personality's (X2StrategyElement_DefaultSoldierPersonalities, the TLE's), the promotion
+ * screen the customisation manager's standing still. A body of EW's animations only (ownAnimsOnly) finds none of them in
+ * XCOM 2's sets and stood in its rest pose, its gun (on a bone EW's animations move) at its feet: they are copies of its idle.
+ */
+const STRATEGY_IDLES = [
+  'Idle_ByTheBook_TG02', 'Idle_LaidBackC_TG03', 'Idle_Normal_TG01', 'Idle_Normal_TG01A', 'Idle_Twitchy_TG01', 'Idle_HappyGoLuckyB_TG01', 'Idle_HardLuckB_TG01',
+  'Idle_Intense_TG02', 'Idle_TLE1_TG02', 'Idle_TLE2_TG02', 'Idle_TLE3_TG02', 'Idle_TLE4_TG02', 'Idle_TLE5_TG02', 'NO_IdleGunDwn',
+]
+
+/**
+ * EW's MEC suits for Long War's MEC troopers (features/lw-shivs-mecs.md), on the ADVENT MEC's pawn: Mark I, II and III by the
+ * Long War suit worn; their animations in the MEC Minigun's package, re-encoded per track (else the whole picture went black
+ * once one moved), and played alone (with the ADVENT MEC's own as well, the mesh came out torn into spikes).
  */
 export const EW_MEC_SUITS: EWUnit[] = [
   ...[[1, ['LWMEC_Suit_193']], [2, ['LWMEC_Suit_194', 'LWMEC_Suit_145']], [3, ['LWMEC_Suit_195', 'LWMEC_Suit_148', 'LWMEC_Suit_191', 'LWMEC_Suit_210']]].flatMap(([mark, suits]) =>
     (suits as string[]).map((armor) => ({
       template: 'LWMEC', animsAs: 'AdvMEC_M2', armor, pkg: `Unit_MecMark${mark}_SF`, mesh: mark === 1 ? 'SM_MEC_MarkI' : mark === 2 ? 'SM_Mec_MarkII' : 'SM_Mec_MarkIII',
-      sets: ['AS_MEC'], setsPkg: 'Weapon_MEC_Chaingun_SF', reencode: true, diffuse: new RegExp(`^MEC_Mark${mark}_DIF$`), normal: new RegExp(`^MEC_Mark${mark}_NRM$`),
+      sets: ['AS_MEC'], setsPkg: 'Weapon_MEC_Chaingun_SF', reencode: true, ownAnimsOnly: true, diffuse: new RegExp(`^MEC_Mark${mark}_DIF$`), normal: new RegExp(`^MEC_Mark${mark}_NRM$`),
       weapon: { pkg: 'Weapon_MEC_Chaingun_SF', mesh: 'SM_MECChainGun', diffuse: /^MEC_Chaingun_DIF$/, normal: /^MEC_Chaingun_NRM$/ },
     }))),
 ]
@@ -108,7 +120,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
   ]
   let n = 0
   const done = new Set<string>()
-  for (const u of EW_UNITS) {
+  for (const u of [...EW_UNITS, ...EW_MEC_SUITS]) {
     const src = join(cooked, `${u.pkg}.upk`)
     if (!existsSync(src)) { say(`${u.pkg}: not in this Enemy Within install, XCOM 2's ${u.template} kept`); continue }
     try {
@@ -119,7 +131,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
       let found = find(decompressPackage(new Uint8Array(readFileSync(src))), u)
       if (u.setsPkg) found = { ...found, sets: find(decompressPackage(new Uint8Array(readFileSync(setsSrc))), u).sets }
       if (!found.mesh || !found.sets.length) { say(`${u.pkg}: no ${u.mesh} or ${u.sets.join('/')}, XCOM 2's ${u.template} kept`); continue }
-      const rename = (bytes: Uint8Array) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.animsAs ?? u.template] ?? []), ...(ABILITY_ANIMS[u.animsAs ?? u.template] ?? [])], u.reencode)
+      const rename = (bytes: Uint8Array) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.animsAs ?? u.template] ?? []), ...(ABILITY_ANIMS[u.animsAs ?? u.template] ?? []), ...(u.ownAnimsOnly ? STRATEGY_IDLES : [])], u.reencode)
       // (Where the AnimSet's package is its weapon's too, the weapon's left-hand socket goes in the same pass.)
       const setsTransform = u.weapon?.pkg === setsPkg
         ? (bytes: Uint8Array) => { const r = rename(bytes); const w2 = noLeftHandIK(r.bytes); return { bytes: w2.bytes, report: `${r.report}; ${w2.report}` } }
@@ -142,7 +154,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
           weapon = `, WeaponMesh="${leaf(wf.mesh, w.pkg)}", WeaponDiffuse="${leaf(wf.diffuse, w.pkg)}", WeaponNormal="${leaf(wf.normal, w.pkg)}"`
         }
       }
-      lines.push(`+Bodies=(Template=${u.template},${u.species ? ` Species=${u.species},` : ''}${u.armor ? ` Armor=${u.armor},` : ''} Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!, setsPkg)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon})`)
+      lines.push(`+Bodies=(Template=${u.template},${u.species ? ` Species=${u.species},` : ''}${u.armor ? ` Armor=${u.armor},` : ''}${u.ownAnimsOnly ? ' OwnAnimsOnly=true,' : ''} Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!, setsPkg)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon})`)
       say(`${u.template} as Enemy Within's (${u.pkg}): ${report.split('; ').slice(-1)[0]}`)
       n++
     } catch (e: any) {
@@ -159,5 +171,5 @@ if (/ew-units\.ts$/.test(process.argv[1] ?? '')) {
     console.error('usage: ew-units.ts <EW>/CookedPCConsole <mod folder> [content folder]')
     process.exit(2)
   }
-  console.log(`${convertUnits(cooked!, mod!, content ?? join(mod!, 'Content'))} of ${EW_UNITS.length} units converted`)
+  console.log(`${convertUnits(cooked!, mod!, content ?? join(mod!, 'Content'))} of ${EW_UNITS.length + EW_MEC_SUITS.length} units converted`)
 }

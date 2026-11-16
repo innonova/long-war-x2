@@ -11,6 +11,8 @@ struct LWMECStats
 struct LWMECSuit
 {
 	var int Item;
+	/** Its EItemType name (for its words: scripts/lw-words.mjs). */
+	var name Enum;
 	var int HP, Defense, Mobility, Will, LargeItems, SmallItems;
 	var bool Built;
 	var int Cash, Elerium, Alloys, Meld, Days, Engineers, Tech, ItemReq;
@@ -19,6 +21,8 @@ struct LWMECSuit
 struct LWMECWeapon
 {
 	var int Item;
+	/** Its EItemType name (for its words: scripts/lw-words.mjs). */
+	var name Enum;
 	var int Damage, Crit, Aim, Environment, Ammo;
 	var bool Built;
 	var int Cash, Elerium, Alloys, Meld, Days, Engineers, Tech, ItemReq;

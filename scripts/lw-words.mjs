@@ -555,6 +555,27 @@ export function makeGeneWords({ strategyLoc }) {
   return { text: ['[UILWEWGeneMods]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
 
+/** The MECs' words (features/lw-shivs-mecs.md): Long War's item names and summaries for the MEC suits (LWMEC_Suit_<id>) and
+ *  weapons (LWMEC_Weapon_<id>, and the Kinetic Strike Module, LWMEC_KineticStrike), from XComLWMECs.ini's Enum= names. */
+export function makeMECWords({ loc, strategyLoc, mecsIni }) {
+  const one = (text, key, k) => (text ? text.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1] : undefined)
+  const out = []
+  let named = 0
+  const lines = [
+    ...[...mecsIni.matchAll(/^\+Suits=\(Item=(\d+), Enum=(\w+), HP=(-?\d+)/gm)].map((m) => ({ template: `LWMEC_Suit_${m[1]}`, kind: 'X2ArmorTemplate', item: m[1], enum: m[2], fallback: `+${m[3]} HP.` })),
+    ...[...mecsIni.matchAll(/^\+Weapons=\(Item=(\d+), Enum=(\w+), Damage=(\d+)/gm)].map((m) => ({ template: `LWMEC_Weapon_${m[1]}`, kind: 'X2WeaponTemplate', item: m[1], enum: m[2], fallback: `${m[3]} damage.` })),
+    ...[...mecsIni.matchAll(/^KineticStrike=\(Item=(\d+), Enum=(\w+), Damage=(\d+)/gm)].map((m) => ({ template: 'LWMEC_KineticStrike', kind: 'X2WeaponTemplate', item: m[1], enum: m[2], fallback: `${m[3]} damage.` })),
+  ]
+  for (const l of lines) {
+    const n = one(loc, 'm_aItemNames', l.enum) ?? one(loc, 'm_aItemNames', l.item)
+    if (!n) continue
+    named++
+    const summary = one(strategyLoc, 'ItemTypeSummary', l.enum) ?? one(strategyLoc, 'ItemTypeSummary', l.item)
+    out.push(`[${l.template} ${l.kind}]`, `FriendlyName="${n}"`, ...(summary ? [`BriefSummary="${summary}"`] : []), `TacticalText="${summary ?? `${n}: ${l.fallback}`}"`, '')
+  }
+  return { text: out.join('\r\n'), named }
+}
+
 /** The SHIVs' words (features/lw-shivs-mecs.md): Long War's item names for the bodies (the mod's characters), their weapons
  *  (with Long War's summaries) and the SHIVs' class. */
 export function makeSHIVWords({ loc, strategyLoc, shivsIni }) {

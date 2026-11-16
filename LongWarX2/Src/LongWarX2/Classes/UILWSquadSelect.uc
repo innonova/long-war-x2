@@ -44,6 +44,26 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	// (After the list's own init, which anchors it bottom-centre and moves it by half its width: UIList_SquadEditor.
 	// InitPosition.)
 	SetTimer(0.3f, false, nameof(FitSlots));
+	SetTimer(0.5f, true, nameof(KeepBodies));
+}
+
+/** The line-up's SHIVs and MECs kept in EW's bodies: squad select makes its pawns again as the squad changes, and starts
+ *  their idles (StartPawnAnimation, PlayHQIdleAnim) with XCOM 2's AnimSets put back, which a body of EW's animations only
+ *  cannot play (EW's MEC stood in its rest pose, its gun at its feet). Asked twice a second; a body given already costs a
+ *  look at its sets. */
+function KeepBodies()
+{
+	local XComGameState_Unit UnitState;
+	local int i;
+
+	for (i = 0; i < UnitPawns.Length && i < XComHQ.Squad.Length; i++)
+	{
+		if (UnitPawns[i] == none || XComHQ.Squad[i].ObjectID <= 0)
+			continue;
+		UnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(XComHQ.Squad[i].ObjectID));
+		if (class'LWSHIVs'.static.IsSHIV(UnitState) || class'LWMECs'.static.IsMEC(UnitState))
+			class'LWX2EWBodies'.static.ApplyToPawn(UnitPawns[i], UnitState.GetMyTemplateName(), class'LWX2EWBodies'.static.ArmorOf(UnitState), UnitState);
+	}
 }
 
 /** More slots than fit across the screen (a card is 282 wide): the row scaled down to fit, centred on the list's
@@ -115,7 +135,7 @@ simulated function XComUnitPawn CreatePawn(StateObjectReference UnitRef, int ind
 	UnitPawn.SetVisible(true);
 	// A SHIV or a MEC in EW's body, as in missions (features/lw-shivs-mecs.md).
 	if (class'LWSHIVs'.static.IsSHIV(UnitState) || class'LWMECs'.static.IsMEC(UnitState))
-		class'LWX2EWBodies'.static.ApplyToPawn(UnitPawn, UnitState.GetMyTemplateName(), class'LWX2EWBodies'.static.ArmorOf(UnitState));
+		class'LWX2EWBodies'.static.ApplyToPawn(UnitPawn, UnitState.GetMyTemplateName(), class'LWX2EWBodies'.static.ArmorOf(UnitState), UnitState);
 	GremlinPawn = m_kPawnMgr.GetCosmeticPawn(eInvSlot_SecondaryWeapon, UnitRef.ObjectID);
 	if (GremlinPawn != none)
 	{

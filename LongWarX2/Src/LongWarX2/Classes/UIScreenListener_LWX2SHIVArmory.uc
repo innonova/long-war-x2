@@ -28,7 +28,7 @@ static function Body(UIArmory Armory)
 	if (!class'LWSHIVs'.static.IsSHIV(Unit))
 		return;
 	if (XComUnitPawn(Armory.ActorPawn) != none)
-		class'LWX2EWBodies'.static.ApplyToPawn(XComUnitPawn(Armory.ActorPawn), Unit.GetMyTemplateName());
+		class'LWX2EWBodies'.static.ApplyToPawn(XComUnitPawn(Armory.ActorPawn), Unit.GetMyTemplateName(), , Unit);
 	// (And for the next few seconds, by the 3D screens' watch: LWX2DisplayWatch.)
 }
 

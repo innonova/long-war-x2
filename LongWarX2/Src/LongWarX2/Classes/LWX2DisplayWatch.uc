@@ -41,10 +41,10 @@ static function SHIVOnPlatform()
 	}
 	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Armory.UnitReference.ObjectID));
 	if (class'LWMECs'.static.IsMEC(Unit))
-		class'LWX2EWBodies'.static.ApplyToPawn(XComUnitPawn(Armory.ActorPawn), Unit.GetMyTemplateName(), class'LWX2EWBodies'.static.ArmorOf(Unit));
+		class'LWX2EWBodies'.static.ApplyToPawn(XComUnitPawn(Armory.ActorPawn), Unit.GetMyTemplateName(), class'LWX2EWBodies'.static.ArmorOf(Unit), Unit);
 	if (class'LWSHIVs'.static.IsSHIV(Unit))
 	{
-		class'LWX2EWBodies'.static.ApplyToPawn(XComUnitPawn(Armory.ActorPawn), Unit.GetMyTemplateName());
+		class'LWX2EWBodies'.static.ApplyToPawn(XComUnitPawn(Armory.ActorPawn), Unit.GetMyTemplateName(), , Unit);
 		// (The menu fills its list after the screen's init: what is not a SHIV's greyed again once it has.)
 		class'UIScreenListener_LWX2SHIVArmory'.static.Limit(UIArmory_MainMenu(Armory));
 	}

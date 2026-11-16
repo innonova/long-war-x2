@@ -295,3 +295,51 @@ A MEC trooper rests Long War's own hours after a mission (`DetermineTimeOut`, `I
 144 if it went all in or was hurt, else 120 and up to 24 more; nothing for officer ranks or
 perks. Its wounds take four fifths as long once the Foundry's Vehicle Repair is done. Checked on
 wingpu: a MEC back from a won mission rested 137 hours (the soldiers beside it 102 and 106).
+
+## Report (2026-11-16, EW's MEC bodies in)
+
+MEC troopers are drawn in **EW's MEC suits** now: Mark I for MEC-1, Mark II for MEC-2 and -3,
+Mark III from MEC-4. The suit worn picks the body. The setup converts them with the other EW bodies;
+`EW_MEC_SUITS` is in the default conversion.
+
+**The torn mesh** came from XCOM 2's ADVENT MEC animations playing alongside EW's on EW's
+skeleton. The two rigs share bone names but not poses. A body can now be set to play **EW's
+animations only** (`OwnAnimsOnly`): the pawn's other AnimSets are removed, and removed again
+whenever XCOM 2 puts them back.
+
+Three things followed from that:
+- **Squad select** gives its pawns back XCOM 2's sets when it starts their idle, which left the MEC
+  in its rest pose. `UILWSquadSelect` now re-applies the bodies twice a second.
+- **Idles by name:** XCOM 2's strategy screens play idles by name: the personality's in squad
+  select and customisation, and "standing still" on the promotion screen. EW's MEC had none of
+  these names. The converter now copies EW's idle under them for bodies that play EW's animations
+  only (`STRATEGY_IDLES`).
+- **The gun:** EW's MEC holds its gun on its `Inven_R_Hand` bone, which EW's animations move.
+  XCOM 2's ADVENT MEC gun hangs from the bone of the same name, so it stood at the feet while no
+  animation played. It is now drawn as **EW's MEC Minigun** on strategy pawns too
+  (`SeatWeapons`, `DressWeapon`). A weapon that hangs from no bone of the body is put in that
+  socket; any other loose weapon is hidden.
+
+**MEC suit and weapon names:** squad select had shown "Error! LWMEC_Weapon_28 has no…". They now
+carry Long War's names and summaries (`makeMECWords`, 13 words: 7 suits, 5 weapons, Kinetic
+Strike). `XComLWMECs.ini` carries each item's `Enum=` for this.
+
+**Checked on wingpu** (Mark I, a new campaign, a MEC made with `mec make`):
+- **In a mission:** the MEC walked whole and shot (`StandardShot hit`, before the gun change).
+  With the last build it stands in EW's idle, gun arm raised.
+- **Armory:** the MEC stood on the platform, posed, menu and header up. That was before the gun
+  change.
+- **Squad select:** EW's idle, with EW's minigun in its hand.
+
+**Not checked:**
+- Mark II and III on screen.
+- A shot or Kinetic Strike with the last build.
+- The armory after the gun change.
+
+Test aid: `anims -10` (and `-11` …) reads squad select's line-up pawns: their sets, and what
+plays.
+
+**A test pitfall, not a fault:** opening the hub, a room and an option in quick succession with
+the control port (`'open hub' 'hub 2' 'hub option 0'` in one call) leaves the hub's start-up
+timer to show the base again over the soldier list. The armory then opens behind the Avenger's
+overview, with no menu. With a moment between the steps, and by mouse, the armory opens right.

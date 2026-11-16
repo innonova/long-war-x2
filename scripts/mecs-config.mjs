@@ -41,15 +41,15 @@ const out = [
 ]
 for (const [id, a] of readArmours(core, ITEMS)) {
   if (!a.props.includes('MEC') || id === ITEMS.indexOf('eItem_MecCivvies')) continue
-  out.push(`+Suits=(Item=${id}, HP=${a.iHPBonus}, Defense=${a.iDefenseBonus}, Mobility=${a.iMobilityBonus}, Will=${a.iWillBonus}, LargeItems=${a.iLargeItems}, SmallItems=${a.iSmallItems}${build(id)})`)
+  out.push(`+Suits=(Item=${id}, Enum=${ITEMS[id]}, HP=${a.iHPBonus}, Defense=${a.iDefenseBonus}, Mobility=${a.iMobilityBonus}, Will=${a.iWillBonus}, LargeItems=${a.iLargeItems}, SmallItems=${a.iSmallItems}${build(id)})`)
 }
 out.push("; Weapons (Weapons= with eWP_Mec and a damage): Damage, Crit, Aim, Environment, Ammo (iSuppression's last two digits).")
 for (const [id, w] of readWeapons(core, ITEMS)) {
   if (!w.props.includes('Mec') || !(Number(w.iDamage) > 0) || /MEC_|Mec(Flame|Kinetic|Proximity|Electro|Grenade|Restorative)/i.test(ITEMS[id] ?? '')) continue
-  out.push(`+Weapons=(Item=${id}, Damage=${w.iDamage}, Crit=${w.iCritical}, Aim=${w.iOffenseBonus}, Environment=${w.iEnvironmentDamage}, Ammo=${Number(w.iSuppression) % 100}${build(id)})`)
+  out.push(`+Weapons=(Item=${id}, Enum=${ITEMS[id]}, Damage=${w.iDamage}, Crit=${w.iCritical}, Aim=${w.iOffenseBonus}, Environment=${w.iEnvironmentDamage}, Ammo=${Number(w.iSuppression) % 100}${build(id)})`)
 }
 // The Kinetic Strike Module (Weapons= eItem_MecKineticArm): its damage; a melee strike (X2Item_LWMECGear).
 const kinetic = ITEMS.indexOf('eItem_MecKineticArm')
 const k = readWeapons(core, ITEMS).get(kinetic)
-out.push("; The Kinetic Strike Module: a melee strike's Damage.", `KineticStrike=(Item=${kinetic}, Damage=${k.iDamage}, Environment=${Math.max(0, Number(k.iEnvironmentDamage))}${build(kinetic)})`)
+out.push("; The Kinetic Strike Module: a melee strike's Damage.", `KineticStrike=(Item=${kinetic}, Enum=eItem_MecKineticArm, Damage=${k.iDamage}, Environment=${Math.max(0, Number(k.iEnvironmentDamage))}${build(kinetic)})`)
 console.log(out.join('\r\n'))

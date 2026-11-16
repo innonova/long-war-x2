@@ -437,6 +437,7 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "anims":
 		// anims [n] [all|relink1|relink2|play <name>]: the n-th enemy's (else the nearest's) animation nodes in play: the name asked for, found or not, weight.
+		// (n -10, -11 …: squad select's line-up pawns, first, second ….)
 		Anims(Out, Args.Length > 1 ? int(Args[1]) : -1, Args.Length > 2 && Args[2] == "all", (Args.Length > 2 && Left(Args[2], 6) == "relink") ? int(Mid(Args[2], 6)) : 0, (Args.Length > 3 && Args[2] == "play") ? name(Args[3]) : '');
 		return;
 	case "flashnum":
@@ -1882,12 +1883,17 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 					Pick = Unit;
 				}
 	}
-	if (Pick == none)
+	// ('anims <-10 - n>': squad select's n-th line-up pawn, a strategy pawn.)
+	if (Index <= -10 && UISquadSelect(Pres().ScreenStack.GetFirstInstanceOf(class'UISquadSelect')) != none
+		&& -10 - Index < UISquadSelect(Pres().ScreenStack.GetFirstInstanceOf(class'UISquadSelect')).UnitPawns.Length)
+		Pawn = UISquadSelect(Pres().ScreenStack.GetFirstInstanceOf(class'UISquadSelect')).UnitPawns[-10 - Index];
+	else if (Pick == none)
 	{
 		Out.AddItem("ERR no such enemy");
 		return;
 	}
-	Pawn = XGUnit(Pick.GetVisualizer()).GetPawn();
+	else
+		Pawn = XGUnit(Pick.GetVisualizer()).GetPawn();
 	if (Pawn == none || Pawn.Mesh == none)
 	{
 		Out.AddItem("ERR no pawn");
@@ -1990,14 +1996,17 @@ function Anims(out array<string> Out, int Index, optional bool bAll, optional in
 		Sets @= (Set != none ? string(Set.Name) $ "(" $ Set.Sequences.Length $ ")" : "none");
 	Out.AddItem(Pick.GetMyTemplateName() @ "mesh" @ PathName(Pawn.Mesh.SkeletalMesh) @ "tree" @ PathName(Pawn.Mesh.AnimTreeTemplate) @ "sets" $ Sets);
 	Sets = "";
-	foreach Pick.Abilities(Ref)
-		if (XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID)) != none)
-			Sets @= XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID)).GetMyTemplateName();
-	Out.AddItem("  abilities:" $ Sets @ "| behaviour tree" @ Pick.GetMyTemplate().strBehaviorTree);
-	Sets = "";
-	foreach Pick.GetMyTemplate().AdditionalAnimSets(Set)
-		Sets @= (Set != none ? PathName(Set) $ "(" $ Set.Sequences.Length $ ")" : "none");
-	Out.AddItem("  the template's AdditionalAnimSets:" $ Sets @ "| difficulty variant" @ Pick.GetMyTemplate().Name @ Pick.GetMyTemplate());
+	if (Pick != none)
+	{
+		foreach Pick.Abilities(Ref)
+			if (XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID)) != none)
+				Sets @= XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID)).GetMyTemplateName();
+		Out.AddItem("  abilities:" $ Sets @ "| behaviour tree" @ Pick.GetMyTemplate().strBehaviorTree);
+		Sets = "";
+		foreach Pick.GetMyTemplate().AdditionalAnimSets(Set)
+			Sets @= (Set != none ? PathName(Set) $ "(" $ Set.Sequences.Length $ ")" : "none");
+		Out.AddItem("  the template's AdditionalAnimSets:" $ Sets @ "| difficulty variant" @ Pick.GetMyTemplate().Name @ Pick.GetMyTemplate());
+	}
 	foreach Pawn.Mesh.AnimSets(Set)
 		if (Set != none)
 		{

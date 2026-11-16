@@ -20,6 +20,9 @@ struct LWX2Body
 	var string WeaponNormal;
 	/** The armour that brings this body (a MEC's suit: Mark I, II or III), for a template with several (none: any). */
 	var name Armor;
+	/** EW's animations only, XCOM 2's pawn's own taken off: where they share bone names with EW's skeleton but not its
+	 *  poses (EW's MECs on the ADVENT MEC's pawn came out torn into spikes with both). */
+	var bool OwnAnimsOnly;
 };
 
 var config array<LWX2Body> Bodies;
@@ -90,14 +93,28 @@ static function bool Apply(XComGameState_Unit Unit)
 }
 
 /** A strategy pawn (squad select's line-up, the armory) given its template's body (the mod's SHIVs and MECs). */
-static function bool ApplyToPawn(XComUnitPawn Pawn, name Template, optional name Armor)
+static function bool ApplyToPawn(XComUnitPawn Pawn, name Template, optional name Armor, optional XComGameState_Unit Unit)
 {
-	local int k;
+	local CustomAnimParams Idle;
+	local bool bGiven;
+	local int k, AnimsChanged;
 
 	k = PickFor(Template, 0, Armor);
 	if (k == INDEX_NONE || Pawn == none || Pawn.Mesh == none)
 		return false;
-	return ApplyBody(Pawn, default.Bodies[k]);
+	bGiven = ApplyBody(Pawn, default.Bodies[k], AnimsChanged);
+	// (Its weapon in its hand, drawn as EW's: the unit's primary weapon, found once its pawn has made it.)
+	SeatWeapons(Pawn, default.Bodies[k], PrimaryMesh(Unit));
+	// A body of EW's animations only, its AnimSets just put right: the idle XCOM 2 had it play (PlayHQIdleAnim, from the
+	// sets it put back) is gone, and it stood in its rest pose, its gun (on a bone EW's animations move) at its feet. EW's
+	// idle played again, under the name XCOM 2's strategy pawns idle by (the converter's copy of EW's AC_NO_IdleA).
+	if (AnimsChanged > 0 && Pawn.GetAnimTreeController() != none)
+	{
+		Idle.AnimName = 'NO_IdleGunDwnA';
+		Idle.Looping = true;
+		Pawn.GetAnimTreeController().PlayFullBodyDynamicAnim(Idle);
+	}
+	return bGiven;
 }
 
 /** The body for a template: its species' own before the template's, the one its armour brings before one for any armour. */
@@ -134,7 +151,7 @@ static function name ArmorOf(XComGameState_Unit Unit)
 }
 
 /** The body on a pawn: EW's mesh, its stand-in material, the animations again. */
-static function bool ApplyBody(XComUnitPawn Pawn, LWX2Body B)
+static function bool ApplyBody(XComUnitPawn Pawn, LWX2Body B, optional out int AnimsChanged)
 {
 	local SkeletalMesh Mesh;
 	local MaterialInterface Material;
@@ -145,6 +162,8 @@ static function bool ApplyBody(XComUnitPawn Pawn, LWX2Body B)
 	{
 		QuietControls(Pawn);
 		FixMasks(Pawn);
+		AnimsChanged = OwnAnims(Pawn, B) ? 1 : 0;
+		SeatWeapons(Pawn, B);
 		return false;
 	}
 	Mesh = SkeletalMesh(DynamicLoadObject(B.Mesh, class'SkeletalMesh', true));
@@ -158,7 +177,116 @@ static function bool ApplyBody(XComUnitPawn Pawn, LWX2Body B)
 	Pawn.UpdateAnimations();
 	QuietControls(Pawn);
 	FixMasks(Pawn);
+	AnimsChanged = OwnAnims(Pawn, B) ? 1 : 0;
+	SeatWeapons(Pawn, B);
 	return true;
+}
+
+/**
+ * Weapons hanging from no bone of the body. XCOM 2's ADVENT MEC gun hangs from a socket of the ADVENT MEC's skeleton; on
+ * EW's MEC it stood at the pawn's feet. The unit's primary weapon (Primary; else the one already drawn as the body's) drawn
+ * as EW's and put in EW's hand socket, Inven_R_Hand (as EW's chaingun says); the others, XCOM 2's sockets for them gone,
+ * hidden. Only for a body with EW's weapon and that socket.
+ */
+static function SeatWeapons(XComUnitPawn Pawn, LWX2Body B, optional SkeletalMeshComponent Primary)
+{
+	local array<SkeletalMeshComponent> Loose;
+	local SkeletalMeshComponent C;
+	local SkeletalMesh Mine;
+	local int i, n;
+
+	if (B.WeaponMesh == "" || B.WeaponMesh == "none" || Pawn == none || Pawn.Mesh.GetSocketByName('Inven_R_Hand') == none)
+		return;
+	Mine = SkeletalMesh(DynamicLoadObject(B.WeaponMesh, class'SkeletalMesh', true));
+	// (XCOM 2 attaches a weapon to its socket by name: on EW's skeleton the socket is not found and the weapon is left
+	// unattached, where its actor stands. One attached before the body was given hangs from a bone the body has not: the
+	// ADVENT MEC's gun from its Inven_R_Hand bone, which EW's MEC has as a socket only.)
+	if (Primary != none && !Pawn.Mesh.IsComponentAttached(Primary))
+		Loose.AddItem(Primary);
+	// (The primary drawn as EW's weapon wherever it hangs: on EW's MEC, XCOM 2's ADVENT MEC gun hangs from the same bone.)
+	if (Primary != none)
+		DressWeapon(Primary, B);
+	for (i = 0; i < Pawn.Mesh.Attachments.Length; i++)
+	{
+		C = SkeletalMeshComponent(Pawn.Mesh.Attachments[i].Component);
+		if (C != none && (C == Primary || XComWeapon(C.Owner) != none) && Pawn.Mesh.MatchRefBone(Pawn.Mesh.Attachments[i].BoneName) == INDEX_NONE && Loose.Find(C) == INDEX_NONE)
+			Loose.AddItem(C);
+	}
+	foreach Loose(C)
+	{
+		if (Pawn.Mesh.IsComponentAttached(C))
+			Pawn.Mesh.DetachComponent(C);
+		if (C == Primary || (Primary == none && C.SkeletalMesh != none && C.SkeletalMesh == Mine))
+		{
+			DressWeapon(C, B);
+			Pawn.Mesh.AttachComponentToSocket(C, 'Inven_R_Hand');
+			n++;
+		}
+		else
+			C.SetHidden(true);
+	}
+	if (Loose.Length > 0)
+		`log("LongWarX2: EW bodies:" @ Pawn.Name $ ":" @ n @ "weapon put in its hand," @ (Loose.Length - n) @ "hidden", , 'LongWarX2');
+}
+
+/** The unit's primary weapon's mesh on its pawn (in a mission, and on the strategy layer's pawns, which make its visualizer). */
+static function SkeletalMeshComponent PrimaryMesh(XComGameState_Unit Unit)
+{
+	local XComGameState_Item Item;
+
+	Item = Unit != none ? Unit.GetPrimaryWeapon() : none;
+	if (Item == none || XGWeapon(Item.GetVisualizer()) == none || XComWeapon(XGWeapon(Item.GetVisualizer()).m_kEntity) == none)
+		return none;
+	return SkeletalMeshComponent(XComWeapon(XGWeapon(Item.GetVisualizer()).m_kEntity).Mesh);
+}
+
+/** A weapon's mesh made the body's EW weapon (its mesh and a stand-in). */
+static function DressWeapon(SkeletalMeshComponent C, LWX2Body B)
+{
+	local SkeletalMesh Mesh;
+	local MaterialInterface Material;
+	local LWX2Body Look;
+	local int i;
+
+	Mesh = SkeletalMesh(DynamicLoadObject(B.WeaponMesh, class'SkeletalMesh', true));
+	if (Mesh == none || C.SkeletalMesh == Mesh)
+		return;
+	C.SetSkeletalMesh(Mesh);
+	Look.Diffuse = B.WeaponDiffuse;
+	Look.Normal = B.WeaponNormal;
+	Material = Standin(Look, default.WeaponMaterialParent);
+	if (Material != none)
+		for (i = 0; i < Mesh.Materials.Length; i++)
+			C.SetMaterial(i, Material);
+}
+
+/** For a body of EW's animations only: the pawn's AnimSets that are not EW's taken off (again, if XCOM 2 has put them back).
+ *  True when they changed. */
+static function bool OwnAnims(XComUnitPawn Pawn, LWX2Body B)
+{
+	local AnimSet Set;
+	local int i;
+	local bool bChanged;
+
+	if (!B.OwnAnimsOnly || Pawn.Mesh == none)
+		return false;
+	Set = AnimSet(DynamicLoadObject(B.AnimSet, class'AnimSet', true));
+	if (Set == none)
+		return false;
+	for (i = Pawn.Mesh.AnimSets.Length - 1; i >= 0; i--)
+		if (Pawn.Mesh.AnimSets[i] != Set)
+		{
+			Pawn.Mesh.AnimSets.Remove(i, 1);
+			bChanged = true;
+		}
+	if (Pawn.Mesh.AnimSets.Find(Set) == INDEX_NONE)
+	{
+		Pawn.Mesh.AnimSets.AddItem(Set);
+		bChanged = true;
+	}
+	if (bChanged)
+		Pawn.Mesh.UpdateAnimations();
+	return bChanged;
 }
 
 /**
@@ -277,10 +405,6 @@ static function Weapon(XComGameState_Unit Unit, LWX2Body B)
 {
 	local XComGameState_Item Item;
 	local XComWeapon Entity;
-	local SkeletalMesh Mesh;
-	local MaterialInterface Material;
-	local LWX2Body Look;
-	local int i;
 
 	if (B.WeaponMesh == "")
 		return;
@@ -295,16 +419,11 @@ static function Weapon(XComGameState_Unit Unit, LWX2Body B)
 			Entity.Mesh.SetHidden(true);
 		return;
 	}
-	Mesh = SkeletalMesh(DynamicLoadObject(B.WeaponMesh, class'SkeletalMesh', true));
-	if (Entity == none || SkeletalMeshComponent(Entity.Mesh) == none || Mesh == none)
+	if (Entity == none || SkeletalMeshComponent(Entity.Mesh) == none)
 		return;
-	SkeletalMeshComponent(Entity.Mesh).SetSkeletalMesh(Mesh);
-	Look.Diffuse = B.WeaponDiffuse;
-	Look.Normal = B.WeaponNormal;
-	Material = Standin(Look, default.WeaponMaterialParent);
-	if (Material != none)
-		for (i = 0; i < Mesh.Materials.Length; i++)
-			Entity.Mesh.SetMaterial(i, Material);
+	DressWeapon(SkeletalMeshComponent(Entity.Mesh), B);
+	// (Hanging from no bone of the body: in its hand.)
+	SeatWeapons(XGUnit(Unit.GetVisualizer()).GetPawn(), B, SkeletalMeshComponent(Entity.Mesh));
 }
 
 /** Every unit on the field given its body (at the battle's start, after a load). Returns how many. */
