@@ -211,8 +211,10 @@ function Handle(string Line, out array<string> Out)
 		Parts(Out);
 		return;
 	case "crew":
-		// crew: how many soldiers XCOM has, and of what rank.
+		// crew: how many soldiers XCOM has, and of what rank; 'crew list': each soldier's id, name, class, rank and status.
 		Out.AddItem(Crew());
+		if (Args.Length > 1 && Args[1] ~= "list")
+			CrewList(Out);
 		return;
 	case "armory":
 		Out.AddItem(OpenArmory(Args.Length > 1 ? int(Args[1]) : 0));
@@ -1817,6 +1819,21 @@ function History(out array<string> Out, int N)
 }
 
 /** XCOM's soldiers: how many, by rank. */
+function CrewList(out array<string> Out)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_Unit Unit;
+	local int i;
+
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	for (i = 0; XComHQ != none && i < XComHQ.Crew.Length; i++)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(XComHQ.Crew[i].ObjectID));
+		if (Unit != none && Unit.IsSoldier())
+			Out.AddItem("#" $ Unit.ObjectID @ Unit.GetFullName() @ Unit.GetSoldierClassTemplateName() @ "rank" @ Unit.GetRank() @ Unit.GetStatus());
+	}
+}
+
 function string Crew()
 {
 	local XComGameState_HeadquartersXCom XComHQ;
