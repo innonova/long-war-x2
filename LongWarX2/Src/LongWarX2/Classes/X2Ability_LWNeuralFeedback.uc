@@ -22,7 +22,26 @@ static function array<X2DataTemplate> CreateTemplates()
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Templates.AddItem(Template);
 	Templates.AddItem(ExtraConditioning());
+	Templates.AddItem(Passive('LWX2_Concealment', new class'X2Effect_LWConcealment'));
 	return Templates;
+}
+
+/** A perk's hidden passive carrying one persistent effect. */
+static function X2AbilityTemplate Passive(name TemplateName, X2Effect_Persistent Effect)
+{
+	local X2AbilityTemplate Template;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, TemplateName);
+	Template.AbilitySourceName = 'eAbilitySource_Perk';
+	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
+	Template.Hostility = eHostility_Neutral;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SelfTarget;
+	Template.AbilityTriggers.AddItem(default.UnitPostBeginPlayTrigger);
+	Effect.BuildPersistentEffect(1, true, false, false);
+	Template.AddTargetEffect(Effect);
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	return Template;
 }
 
 /** Extra Conditioning's hit points by armour (X2Effect_LWExtraConditioning), given with the perk. */

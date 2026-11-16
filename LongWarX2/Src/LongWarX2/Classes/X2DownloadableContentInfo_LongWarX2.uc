@@ -146,6 +146,9 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	// Extra Conditioning's hit points by armour (X2Effect_LWExtraConditioning).
 	if (UnitState.GetTeam() == eTeam_XCom && UnitState.HasSoldierAbility('LW_ExtraConditioning'))
 		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_ExtraConditioning', eInvSlot_Unknown, SetupData);
+	// Concealment: hidden in high cover (X2Effect_LWConcealment).
+	if (UnitState.GetTeam() == eTeam_XCom && UnitState.HasSoldierAbility('LW_Concealment'))
+		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_Concealment', eInvSlot_Unknown, SetupData);
 	// Long War's ammo, every source added up (X2Effect_LWAmmoOdds).
 	if (UnitState.GetTeam() == eTeam_XCom && UnitState.IsSoldier())
 		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_AmmoOdds', eInvSlot_Unknown, SetupData);
