@@ -59,6 +59,8 @@ struct LWStandin
 var config array<LWStandin> Standins;
 /** Long War's rocket scatter: the average miss in metres with 0 aim at 20 metres (MIN_SCATTER; ScatterRocket). */
 var config float MinScatter;
+/** XCOM 2's abilities that throw or launch a grenade (their reach: X2AbilityTarget_LWRangeCursor). */
+var config array<name> GrenadeAbilities;
 
 /** Long War's psi powers: the ability each gives (features/lw-psi.md). */
 struct LWPsiAbility
@@ -925,12 +927,43 @@ static function AddBlocks()
 	}
 }
 
+/** An explosive's aim reaching as Long War's (X2AbilityTarget_LWRangeCursor): XCOM 2's cursor replaced by ours, its settings kept. */
+static function RangeCursor(X2AbilityTemplate Template, name Kind)
+{
+	local X2AbilityTarget_LWRangeCursor Cursor;
+
+	if (X2AbilityTarget_Cursor(Template.AbilityTargetStyle) == none || X2AbilityTarget_LWRangeCursor(Template.AbilityTargetStyle) != none)
+		return;
+	Cursor = new class'X2AbilityTarget_LWRangeCursor';
+	Cursor.Kind = Kind;
+	Cursor.bRestrictToWeaponRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).bRestrictToWeaponRange;
+	Cursor.IncreaseWeaponRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).IncreaseWeaponRange;
+	Cursor.bRestrictToSquadsightRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).bRestrictToSquadsightRange;
+	Cursor.FixedAbilityRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).FixedAbilityRange;
+	Template.AbilityTargetStyle = Cursor;
+}
+
+/** XCOM 2's grenades (thrown, launched) reaching as Long War's do with Bombard or Grenadier. */
+static function AddGrenadeRange()
+{
+	local array<X2AbilityTemplate> Templates;
+	local X2AbilityTemplate Template;
+	local name Ability;
+
+	foreach class'X2Ability_LWStandins'.default.GrenadeAbilities(Ability)
+	{
+		Templates.Length = 0;
+		class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplateAllDifficulties(Ability, Templates);
+		foreach Templates(Template)
+			RangeCursor(Template, 'Grenade');
+	}
+}
+
 /** XCOM 2's rocket launcher's rockets scatter as Long War's do (ScatterRocket). */
 static function AddScatter()
 {
 	local array<X2AbilityTemplate> Templates;
 	local X2AbilityTemplate Template;
-	local X2AbilityTarget_LWRocketCursor Cursor;
 
 	if (default.MinScatter <= 0)
 		return;
@@ -938,16 +971,7 @@ static function AddScatter()
 	foreach Templates(Template)
 	{
 		Template.ModifyNewContextFn = ScatterRocket;
-		// (Javelin Rockets: the aim's reach a quarter farther, X2AbilityTarget_LWRocketCursor.)
-		if (X2AbilityTarget_Cursor(Template.AbilityTargetStyle) != none && X2AbilityTarget_LWRocketCursor(Template.AbilityTargetStyle) == none)
-		{
-			Cursor = new class'X2AbilityTarget_LWRocketCursor';
-			Cursor.bRestrictToWeaponRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).bRestrictToWeaponRange;
-			Cursor.IncreaseWeaponRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).IncreaseWeaponRange;
-			Cursor.bRestrictToSquadsightRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).bRestrictToSquadsightRange;
-			Cursor.FixedAbilityRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).FixedAbilityRange;
-			Template.AbilityTargetStyle = Cursor;
-		}
+		RangeCursor(Template, 'Rocket');
 	}
 }
 

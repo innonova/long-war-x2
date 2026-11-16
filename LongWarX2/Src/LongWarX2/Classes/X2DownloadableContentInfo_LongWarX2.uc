@@ -129,6 +129,7 @@ static event OnPostTemplatesCreated()
 	class'X2Ability_LWStandins'.static.AddPsiChecks();
 	class'X2Ability_LWStandins'.static.AddBlocks();
 	class'X2Ability_LWStandins'.static.AddScatter();
+	class'X2Ability_LWStandins'.static.AddGrenadeRange();
 }
 
 /** Abilities a unit gets for the mission beyond its template's and its class's (XCOM 2's hook): the SHIVs' Foundry
