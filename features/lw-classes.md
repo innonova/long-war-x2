@@ -729,3 +729,21 @@ HP, the other one XCOM 2 starts out healing (4/5 before the roll, 2/3 after). Ca
 started on the 3dfb66b build keep their halved recruits; a new campaign is needed.
 - In a campaign begun before this, each soldier is rolled once, the next time the soldier
   pass runs (the Geoscape, armory, squad select). Their will drops to Long War's range.
+
+## Report (2026-11-16, Lock N' Load and Javelin Rockets)
+
+Read from Long War's `XComGame.upk` (the perks by their slots: Lock N' Load is `ePerk_Disabled_DEPRECATED`, 58;
+Javelin Rockets `ePerk_Implanted`, 66):
+- **Lock N' Load** (`XGAbility_Targeted.GraduatedOdds`): Long War's ammo is a sum: a shot with the primary weapon
+  pays its round once in 1 + adjustments, Lock N' Load +1, the Hi-Cap Mags (item 80) +1, the Drum Mags (123) +2.
+  The magazines had their own refund each, which would not add up; now one rule per soldier
+  (`X2Effect_LWAmmoOdds`, `LWX2_AmmoOdds`, given to every soldier) counts all three.
+- **Javelin Rockets** (`XGAction_Targeting.SetChainedDistance`): the rocket's reach ×1.25. XCOM 2's rocket launcher's
+  aim is now `X2AbilityTarget_LWRocketCursor`, the launcher's range a quarter farther for a soldier with the perk.
+
+**Checked on wingpu:** a Sniper with Lock N' Load fired twice at a Sectoid: the first shot took a round (5 → 4), the
+second did not (4); a Rocketeer without it paid each shot (3 → 2). (The `use … 99` forced shots pay no ammo, so they
+do not show this.) Javelin's longer reach not looked at on screen.
+
+Still stand-ins from the list above: Concealment, Bombard's range, Extra Conditioning, Snap Shot for rockets, Dense
+Smoke's wider cloud. (Field Surgeon and Fire in the Hole were done earlier: the wound rule, the scatter.)
