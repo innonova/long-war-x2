@@ -109,3 +109,27 @@ Long War's council missions come to the Geoscape now (`LWCouncil`, `XComLWCounci
 - **Two of Long War's maps are not converted here** (`URB_ResearchOutpost`, `URB_CommercialAlley`):
   with EW's maps on, their missions are not offered, as Long War skips missions without a valid map.
 - The Chryssalid hive, the Meld tutorial and Progeny are left for step 4; Slingshot is a DLC.
+
+## Step 2, read: EW's bomb disposal (2026-11-16)
+
+EW's mission variants are streamed sub-levels of the map: `URB_CemeteryGrand_Bomb.upk` beside
+`URB_CemeteryGrand.upk`, and `URB_PierA_Stream.upk` holding the Pier rescue's sequence
+(`EscortVIP`, `RescuePierVIP_01`…, `ExtractionSuccess`, `ExtractionVIPDead`). Their rules are Kismet,
+not script. They were read with a Kismet graph reader kept outside the repository (each op's class,
+properties, output links and variable links, with the variables' names and values).
+
+**The Grand Cemetery bomb** (`URB_CemeteryGrand_Bomb`, its Main_Sequence):
+- `Timer` starts at 3. At each of XCOM's turn ends (`SeqEvent_OnPlayerEndingTurn`) it loses 1. At
+  0 the bomb goes off: `Lost`, then `ReportToEvac`.
+- There are 10 power nodes (`#Nodes`), each an interactive actor (`ARC_AlienEnergyNode_XLA`).
+  Deactivating one gives the timer 1 turn back (`AddInt Timer +1`) and counts it
+  (`DeactivatedNodes`). With all ten off, the mission goes to its next state.
+- The bomb itself (`ARC_AlienBomb_XLA`) is disarmed by interacting with it (`BombDeactivated`).
+  Then the remaining aliens are to be killed (`KillAliens`), and victory.
+- The turn counter shows "turns remaining" against a maximum of 11.
+
+**Next:**
+- The other bomb levels' numbers.
+- The node and bomb placements, read by the map converter.
+- The rule as the mod's own: a node ability for a soldier beside one, the timer on XCOM 2's
+  mission timer UI, defeat when it runs out.
