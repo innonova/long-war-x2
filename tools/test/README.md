@@ -70,6 +70,12 @@ And around it:
     tools/test/lw.sh hurt <name|class> [n]     # in a mission: a soldier loses n health (their lowest in the mission too)
     tools/test/lw.sh ewscreen ChooseTech theChooseResearch  # on the Avenger: an EW screen's own movie (EWStrategyUI.upk in Content)
     tools/test/lw.sh ewcall SetTitle RESEARCH  # a function of the open EW movie (_ for a space)
+    tools/test/lw.sh 'ewcall subMenuMC.setFocus s:1'  # s:<text>: a string even when it reads as a number
+    tools/test/lw.sh 'ewinvoke theMenu.facilityMenu.items.getIndex s:1'  # a function called at once, its result printed
+    tools/test/lw.sh 'ewvar subMenuMC._visible' 'ewset subMenuMC._visible true'  # a variable read; set (true, false, a number)
+    tools/test/lw.sh exalt 'exalt begin' 'exalt intel 3'  # EXALT: state, cells, clues, the operative; begun now; clues held (test aids)
+    tools/test/lw.sh 'exalt sweep' 'exalt send #551 5' 'exalt accuse 13' 'exalt act 3' 'exalt place'  # a scan; an operative; an accusation; a cell acts; a cell placed
+    tools/test/on.sh 'tools\test\click.ps1 1322 125 -Move'  # the pointer moved there only (hover)
     tools/test/lw.sh killaliens                # in a mission: every alien killed, civilians spared (KillAllAIs kills them)
     tools/test/lw.sh 'unbox 500'                 # soldiers reaching fewer than 500 tiles moved beside the best placed (-1: paths unknown)
     tools/test/lw.sh 'near Sniper 8'           # a soldier put 8 tiles from the nearest alien (a target in view)
