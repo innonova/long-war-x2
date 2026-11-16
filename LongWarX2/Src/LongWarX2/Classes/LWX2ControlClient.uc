@@ -270,6 +270,10 @@ function Handle(string Line, out array<string> Out)
 		}
 		TileColumn(float(Args[1]), float(Args[2]), Out);
 		return;
+	case "evac":
+		// evac: XCOM's evac zone, whether Evac is allowed, and an EXALT covert extraction's state (a test aid).
+		Evac(Out);
+		return;
 	case "spawns":
 		// spawns: the map's soldier spawns (XComGroupSpawn) and the one XCOM 2 chose (a test aid).
 		Spawns(Out);
@@ -2730,6 +2734,29 @@ function TileColumn(float X, float Y, out array<string> Out)
 		Out.AddItem("from above, first hit at z" @ int(HitLocation.Z) @ ":" @ PathName(Hit) @ (StaticMeshActor(Hit) != none ? PathName(StaticMeshActor(Hit).StaticMeshComponent.StaticMesh) : ""));
 	else
 		Out.AddItem("from above: nothing hit");
+}
+
+function Evac(out array<string> Out)
+{
+	local XComGameState_EvacZone Zone;
+	local XComGameState_BattleData Battle;
+	local XComGameState_LWX2Covert Covert;
+	local XComGameState_Unit Op;
+	local int i;
+
+	Zone = class'XComGameState_EvacZone'.static.GetEvacZone(eTeam_XCom);
+	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+	Out.AddItem("evac zone" @ (Zone != none ? (Zone.CenterLocation.X @ Zone.CenterLocation.Y @ Zone.CenterLocation.Z) : "none")
+		@ "Evac disabled" @ (Battle != none && Battle.IsAbilityGloballyDisabled('Evac')));
+	Covert = class'LWX2CovertExtraction'.static.State();
+	Op = class'LWX2CovertExtraction'.static.Operative();
+	if (Covert != none)
+	{
+		for (i = 0; i < Covert.Active.Length; i++)
+			Out.AddItem("relay" @ Covert.Active[i] @ (Covert.Hacked[i] ? "hacked" : "active"));
+		Out.AddItem("hacked on turn" @ Covert.HackedOnTurn @ "now" @ class'LWX2CovertExtraction'.static.TurnNow() @ "operative" @ (Op != none ? Op.GetFullName() : "none")
+			@ "in reach of" @ class'LWX2CovertExtraction'.static.InReach(Op) @ "away" @ Covert.bExtracted);
+	}
 }
 
 function Spawns(out array<string> Out)

@@ -235,7 +235,7 @@ static function string ObjectiveText()
 		return "";
 	Covert = State();
 	if (Covert == none || Covert.RelaysLeft() > 0)
-		return C.Hack @ C.Left $ (Covert != none ? Covert.RelaysLeft() : 2);
+		return C.Hack @ C.Left @ (Covert != none ? Covert.RelaysLeft() : 2);
 	if (!Covert.bExtracted)
 		return C.Escort;
 	return C.Cleanup;
