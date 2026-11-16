@@ -2,8 +2,8 @@
 // effect (X2Effect_LWDamageReduction) takes Long War's reduction off each hit. Absorb is Long War's XGUnit.AbsorbDamage
 // for what the port has: the unit's own (Long War's aliens, LWAlienStats; armour, LWGearRules; a SHIV's deck, a MEC's
 // suit), Combat Stims, Chitin Plating, the target's shield, Shock-Absorbent Armor, Absorption Fields, acid, cover as the
-// attacker sees it, hunkering, Will to Survive, Fortiores Una; the attacker's Combined Arms and Gauss weapons; shotguns'
-// extra penalty. The numbers are Long War's (scripts/classes-config.mjs).
+// attacker sees it, hunkering, Will to Survive, Fortiores Una; the attacker's Combined Arms, Armor Piercing Ammo and Gauss
+// weapons; shotguns' extra penalty. The numbers are Long War's (scripts/classes-config.mjs).
 class X2Ability_LWDamageReduction extends X2Ability config(LWClasses) dependson(LWSHIVs, LWMECs);
 
 /** Cover's reduction, low and high (AbsorbDamage: 0.667, 1); hunkered down, as much again; Fortiores Una, as much again. */
@@ -22,6 +22,9 @@ var config float ShieldFactor;
 var config float AcidMin, AcidShare;
 /** Shotguns: the reduction taken off once more times this (0.5; Breaching Ammo would cancel it). */
 var config float ShotgunExtra;
+/** Armor Piercing Ammo (its item's template): its carrier's shots ignore this much (2). */
+var config name APAmmoItem;
+var config float APAmmo;
 /** Combat Stims: a hit times StimsFactor while they last (0.6). */
 var config float StimsFactor;
 /** Chitin Plating (its item's template): a melee hit times ChitinFactor (0.6). */
@@ -243,6 +246,12 @@ static function float Absorb(XComGameState_Unit Target, XComGameState_Unit Attac
 		{
 			F += default.CombinedArms;
 			Parts @= "combined-arms -" $ default.CombinedArms;
+		}
+		// Armor Piercing Ammo carried (item 198): +APAmmo, not with an Assault or Pistol weapon (shotguns, pistols).
+		if (bLongWarWeapon && HasItem(Attacker, default.APAmmoItem) && W.Family != 'Shotgun' && W.Family != 'SawedOff' && W.Family != 'Pistol' && W.Family != 'MachinePistol')
+		{
+			F += default.APAmmo;
+			Parts @= "ap-ammo -" $ default.APAmmo;
 		}
 		if (bLongWarWeapon && W.Tier == 'Gauss')
 		{

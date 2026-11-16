@@ -472,3 +472,17 @@ without them took 6.
 - **XCOM 2's stims in place of Long War's numbers for the boost.** Long War's version gives +4
   mobility, +40 will against panic, and no crits unless flanked; XCOM 2's stims multiply mobility
   and grant their own immunities. The damage cut is Long War's.
+
+## Report (2026-11-16, Armor Piercing Ammo)
+
+**Armor Piercing Ammo** (Long War's item 198) is a small item now (`LWSmall_198`):
+- for the classes Long War's properties allow (Gunner, Engineer);
+- built at Long War's cost after its tech and Foundry project.
+
+As in Long War's `AbsorbDamage`, its carrier's shots ignore 2 of the target's reduction, but not
+with an Assault or Pistol weapon (shotguns, pistols; `APAmmoItem`, `APAmmo`).
+
+**Checked on wingpu:** soldiers carrying it shot an ADVENT MEC (own reduction 1) for the full 6.
+A shotgunner without it left 4.5 (its own 1, then the shotgun's extra).
+
+**Not done:** the item text's "hardening against critical hits" part.
