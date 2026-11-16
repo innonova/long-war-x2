@@ -182,7 +182,8 @@ export function itemTemplate(item, ITEMS) {
  * - Laser Sight: +4 aim (its line) and half the SCOPE's crit with a non-pistol (XGAbility_Targeted, FOUNDRY_SCOPE_CRIT_BONUS / 2);
  * - Hi-Cap Mags and Drum Mags: a shot costs half, a third of the ammo (XGAbility_Targeted): twice, three times the shots;
  * - Ceramic Plating: +1 HP (its line); Chameleon Suit: reaction shots never crit its wearer (XGAbility_Targeted).
- * Kind: Grenade (thrown), Medikit, ArcThrower (stuns an alien to take it alive), Launcher (the Rocketeer's secondary weapon), Passive (a stat item), Rocket (another
+ * Kind: Grenade (thrown), Medikit, ArcThrower (stuns an alien to take it alive), Launcher (the Rocketeer's secondary weapon), Passive (a stat item), Stims (used
+ * on oneself, as XCOM 2's Combat Stims), Rocket (another
  * rocket for the launcher). Class: the classes that may carry it by Long War's properties (Overheats: Scouts, Heavy:
  * Rocketeers, Rifle: the rifle classes), empty for any.
  */
@@ -205,6 +206,8 @@ export const SMALL = [
   { item: 123, kind: 'Passive', look: 'CommonPCSFocus', ammo: 3 },
   { item: 95, kind: 'Passive', look: 'CommonPCSConditioning' },
   { item: 94, kind: 'Passive', look: 'CommonPCSAgility', critAgainstReaction: 100 },
+  // Combat Stims: XCOM 2's stims (a used item), and damage x0.6 while they last (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction).
+  { item: 70, kind: 'Stims', look: 'CombatStims' },
   // Chitin Plating: melee damage x0.6 on its wearer (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction), its stat line's HP.
   { item: 72, kind: 'Passive', look: 'CommonPCSConditioning' },
   // Long War's MEC subsystems (features/lw-shivs-mecs.md, phase 4), MEC classes only, each an XCOM 2 item standing in for

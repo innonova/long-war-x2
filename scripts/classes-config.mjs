@@ -485,7 +485,7 @@ writeFileSync(
     '[LongWarX2.X2Ability_LWDamageReduction]',
     'LowCover=0.667', 'HighCover=1.0', 'WillToSurvive=1.5', 'CombinedArms=1.0',
     `Gauss=${parseFloat(ini('COUNCIL_FUNDING_MULTIPLIER_EASY'))}`, 'GaussFoundry=44',
-    'ShieldFactor=0.5', 'AcidMin=3', 'AcidShare=0.5', 'ShotgunExtra=0.5', 'ShockFactor=0.67', 'ShockTiles=4', 'ChitinPlating=LWSmall_72', 'ChitinFactor=0.6',
+    'ShieldFactor=0.5', 'AcidMin=3', 'AcidShare=0.5', 'ShotgunExtra=0.5', 'ShockFactor=0.67', 'ShockTiles=4', 'ChitinPlating=LWSmall_72', 'ChitinFactor=0.6', 'StimsFactor=0.6',
     '',
     "; War of the Chosen's Skirmish Mode: Long War's classes armed like these XCOM 2 classes (LWX2SkirmishWeapons).",
     '[LongWarX2.LWX2SkirmishWeapons]',

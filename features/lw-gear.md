@@ -455,3 +455,20 @@ the plating as a melee hit, 6 as a shot.
 
 **Not checked:** the Strangle condition in play. A Seeker was spawned beside the plated soldier,
 but the control port lists only how many targets Strangle has, not which.
+
+## Report (2026-11-16, Combat Stims)
+
+**Combat Stims** (Long War's item 70) is a small item now (`LWSmall_70`):
+- built in engineering at Long War's cost (with a Berserker corpse) and sold on the grey market;
+- used as XCOM 2's Combat Stims (its mobility boost and its effect, for XCOM 2's duration);
+- while they last, Long War's damage ×0.6 (`XGUnit.AbsorbDamage`: `GetAppliedAbility(31)`;
+  `StimsFactor`).
+
+**Checked on wingpu:** a soldier who used the stims took 3.6 of a Sectoid's 6; one beside her
+without them took 6.
+
+### Decision
+
+- **XCOM 2's stims in place of Long War's numbers for the boost.** Long War's version gives +4
+  mobility, +40 will against panic, and no crits unless flanked; XCOM 2's stims multiply mobility
+  and grant their own immunities. The damage cut is Long War's.

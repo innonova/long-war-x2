@@ -1,8 +1,9 @@
 // Long War's damage reduction (features/lw-damage-reduction.md): a passive on every character (AddAbilities) whose
 // effect (X2Effect_LWDamageReduction) takes Long War's reduction off each hit. Absorb is Long War's XGUnit.AbsorbDamage
-// for what the port has: the unit's own (Long War's aliens, LWAlienStats; armour, LWGearRules), the target's shield,
-// Chitin Plating, acid, Shock-Absorbent Armor, Absorption Fields, cover as the attacker sees it, hunkering, Will to Survive, Fortiores
-// Una; the attacker's Combined Arms and Gauss weapons; shotguns' extra penalty. The numbers are Long War's (scripts/classes-config.mjs).
+// for what the port has: the unit's own (Long War's aliens, LWAlienStats; armour, LWGearRules; a SHIV's deck, a MEC's
+// suit), Combat Stims, Chitin Plating, the target's shield, Shock-Absorbent Armor, Absorption Fields, acid, cover as the
+// attacker sees it, hunkering, Will to Survive, Fortiores Una; the attacker's Combined Arms and Gauss weapons; shotguns'
+// extra penalty. The numbers are Long War's (scripts/classes-config.mjs).
 class X2Ability_LWDamageReduction extends X2Ability config(LWClasses) dependson(LWSHIVs, LWMECs);
 
 /** Cover's reduction, low and high (AbsorbDamage: 0.667, 1); hunkered down, as much again; Fortiores Una, as much again. */
@@ -21,6 +22,8 @@ var config float ShieldFactor;
 var config float AcidMin, AcidShare;
 /** Shotguns: the reduction taken off once more times this (0.5; Breaching Ammo would cancel it). */
 var config float ShotgunExtra;
+/** Combat Stims: a hit times StimsFactor while they last (0.6). */
+var config float StimsFactor;
 /** Chitin Plating (its item's template): a melee hit times ChitinFactor (0.6). */
 var config name ChitinPlating;
 var config float ChitinFactor;
@@ -175,6 +178,12 @@ static function float Absorb(XComGameState_Unit Target, XComGameState_Unit Attac
 	{
 		F -= X;
 		Parts @= "own" @ X;
+	}
+	// Combat Stims active (Long War's GetAppliedAbility(31)): x StimsFactor (0.6). XCOM 2's stims, whose stats effect this is.
+	if (Target.IsUnitAffectedByEffectName('StimStats'))
+	{
+		F *= default.StimsFactor;
+		Parts @= "stims x" $ default.StimsFactor;
 	}
 	// Chitin Plating against a melee attack (and the Kinetic Strike): x ChitinFactor (0.6).
 	if (bMelee && HasItem(Target, default.ChitinPlating))
