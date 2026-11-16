@@ -378,3 +378,25 @@ with One For All gives cover was about a code path no Long War MEC reaches, so t
 of it to port.
 
 Test aid: `hit <attacker #id> <target #id> [ability]` shows a shot's chance, crit and reasons.
+
+## Report (2026-11-16, the Hover SHIV flies)
+
+The **Hover SHIV flies**. Its character uses XCOM 2's flying traversal
+(`bCanUse_eTraversal_Flying`, as Archons have), so its paths go up and over what others must
+walk round.
+
+**Checked on wingpu:** in a mission it moved eight tiles to a tile five floors up, then down to the
+street. The paths completed and the turn went on. Its body is EW's hover SHIV, which looks right
+afloat.
+
+### Decision
+
+- **Flight with no fuel.** In EW and Long War the Hover SHIV's deck gives Fly, an activated
+  ability with 6 turns of fuel, like Archangel armour. XCOM 2 has no player flight with fuel.
+  Here the Hover SHIV may always fly, as XCOM 2's flyers do. It is a simplification: a Long War
+  Hover SHIV runs out of fuel and lands. Posted as a decision in the chat.
+
+### Not checked
+
+- How the body looks while climbing. The camera did not follow the move, and EW's hover SHIV
+  has no flight animations of its own to play.

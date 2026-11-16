@@ -36,6 +36,7 @@ static function X2CharacterTemplate SHIVTemplate(LWSHIVs.LWSHIVBody B)
 	T.bCanUse_eTraversal_BreakWindow = true;
 	T.bCanUse_eTraversal_KickDoor = true;
 	T.bCanUse_eTraversal_JumpUp = B.Fly;
+	T.bCanUse_eTraversal_Flying = B.Fly;
 	T.bCanUse_eTraversal_WallClimb = false;
 	T.bCanUse_eTraversal_BreakWall = false;
 	T.bAppearanceDefinesPawn = false;
