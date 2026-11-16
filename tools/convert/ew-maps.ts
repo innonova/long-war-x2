@@ -14,6 +14,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readSection, writePlot, type PlotSettings } from './ew-plot.ts'
+import { openImages } from './ew-images.ts'
 
 /** The converter version ew-map.ts writes into its sections (kept in step with its CONVERTER_VERSION; read from the
  *  section, so this file need not load the converter). */
@@ -164,6 +165,8 @@ if (/ew-maps\.ts$/.test(process.argv[1] ?? '')) {
     execFileSync(process.execPath, ['--max-old-space-size=12288', converter, '--', src, out, ini], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }),
     args.includes('--force'),
   )
+  // EW's strategy pictures in the converted base (ew-images.ts), as the setup makes them ready.
+  if (existsSync(join(content, 'Command1.upk'))) openImages(join(content, 'Command1.upk'))
   // Their plots, from the repository's template (tools/test/build.ps1 links and lists them on the test machine).
   writePlots(mod, content, work, join(dirname(fileURLToPath(import.meta.url)), '..', 'maps', 'LWX2_EWPlotTemplate.umap'))
 }

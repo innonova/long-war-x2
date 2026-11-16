@@ -401,6 +401,11 @@ function Realize()
 	Params.Remove(0, 1);
 	CallNow("bg.theDescription.description.setHTML", Params);
 	Params.Length = 0;
+	// The mod's picture (RealizeSelected: AS_SetCalloutImage), EW's own from its strategy pictures (tools/convert/
+	// ew-images.ts), or the locked one.
+	Params.AddItem(Str("img:///" $ class'UILWEWScreen'.const.EW_IMAGES $ ".GeneMods.GeneMods_" $ (bLocked ? "Locked" : ImageFor(G.Perk))));
+	CallNow("SetCalloutImage", Params);
+	Params.Length = 0;
 	if (!bLocked && !bHas)
 	{
 		bShortMeld = MeldHeld() < ChosenMeld(G.Meld);

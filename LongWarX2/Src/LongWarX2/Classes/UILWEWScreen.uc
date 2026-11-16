@@ -3,6 +3,10 @@
 // "/ package/ewx<Screen>/<Screen>". Nothing drives it yet: it shows what EW's movie draws by itself. Escape closes it.
 class UILWEWScreen extends UIScreen;
 
+// EW's strategy pictures, in EW's base as the setup converts it (tools/convert/ew-images.ts): asked for by the image
+// path "img:" + "///" + this + ".Group.Name", as EW asked for its UILibrary_StrategyImages.
+const EW_IMAGES = "Command1.QILibrary_StrategyImages";
+
 var string UIPackage;
 /** EW's movies are laid out for a 1280 x 720 stage, XCOM 2's is 1920 x 1080: a screen that does not place itself by the
  *  stage's edges (as EW's HUD does) is scaled up to fill it. */

@@ -241,6 +241,14 @@ function Handle(string Line, out array<string> Out)
 		// 'exalt intel <n>' (test aids but the sweep).
 		Exalt(Args, Out);
 		return;
+	case "img":
+		// img <path>: whether a texture loads (EW's strategy pictures, Command1.QILibrary_StrategyImages.GeneMods.GeneMods_Adrenal).
+		// ('img find <path>': only if in memory, nothing loaded.)
+		if (Args.Length > 2 && Args[1] == "find")
+			Out.AddItem(Args[2] @ "->" @ PathName(FindObject(Args[2], class'Object')) @ FindObject(Args[2], class'Object').Class);
+		else
+			Out.AddItem(Args.Length > 1 ? (Args[1] @ "->" @ PathName(DynamicLoadObject(Args[1], class'Object', true)) @ DynamicLoadObject(Args[1], class'Object', true).Class) : "ERR img <path>");
+		return;
 	case "hit":
 		// hit <attacker #id> <target #id> [ability, default StandardShot]: the shot's chance, crit and what made them.
 		if (Args.Length < 3)

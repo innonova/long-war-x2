@@ -309,3 +309,37 @@ Screenshots (gitignored): `logs/wingpu_ew_gene_mods.png`,
   fail the same way is not known.
 - The plain base screen's Genetics Lab line remains for where EW's screens are
   not converted.
+
+## Report (2026-11-16, the mods' pictures)
+
+The large panel now shows **EW's own picture of the chosen mod** (`SetCalloutImage`, as EW's
+`UISoldierGeneMods.RealizeSelected` sets it), or EW's locked picture for a mod not yet researched.
+
+EW keeps its strategy pictures (`UILibrary_StrategyImages`: gene mods, science, inventory,
+facility, interceptor, medal and credit icons; 303 textures) inside its base's map package,
+`Command1.upk`. The setup converts that package already for EW's base. The pictures were in the
+converted package, but they could not be found by their path. Their groups and textures kept
+EW's forced-export flag, so `tools/convert/ew-images.ts` clears it. The setup, and `ew-maps.ts`
+in development, run this step after converting the base, on every run; on a second run there
+is nothing left to clear. A picture then loads as
+`Command1.QILibrary_StrategyImages.<Group>.<Name>` (`UILWEWScreen.EW_IMAGES`).
+
+**Checked on wingpu:** the Gene Mods screen showed EW's locked picture, then, after the Muton
+Elite autopsy, EW's Secondary Heart picture when that mod was selected. The control port's `img`
+loads or finds a texture by its path.
+
+**Tried and dropped:**
+- Converting EW's shell package (`XComShell.upk`), which carries the same pictures, as a package
+  of its own: XCOM 2 loads such a package whole and crashed on the shell's level.
+- The same package converted as a map but named like the pictures' package: it did not load.
+
+### Left open
+
+- **The other screens' pictures** (research, engineering, the Foundry, facilities, craft). Long
+  War gives items, techs and projects image numbers (`BuildItem`'s `iImage` …). It turns them
+  into paths through a table that its script reads from `XComOnlineProfileSettings`'
+  `MultiplayerLoadoutSlots`, repurposed by Long War: "variable used to configure new
+  imagedata". That table is in none of stock Long War's config files, so it must be set at run
+  time; I have not found where. `UIUtilities.GetStrategyImagePath` holds only 69 of the paths.
+  Until that table is found, the screens keep XCOM 2's pictures.
+- The soldier on the lab's plinth.

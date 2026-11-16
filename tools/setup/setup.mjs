@@ -16,6 +16,7 @@ import { createInterface } from 'node:readline'
 import { execFileSync } from 'node:child_process'
 import { wordsFrom } from '../../scripts/write-words.mjs'
 import { convertUI } from '../convert/ew-ui.ts'
+import { openImages } from '../convert/ew-images.ts'
 import { convertPackage } from '../convert/ew-package.ts'
 import { convertUnits } from '../convert/ew-units.ts'
 import { tealEarth } from '../convert/ew-earth.ts'
@@ -301,6 +302,12 @@ async function convertEW(ew, target) {
         windowsHide: true,
       }),
     false, say)
+  }
+  // EW's strategy pictures, in the converted base (ew-images.ts).
+  try {
+    if (existsSync(join(content, 'Command1.upk'))) openImages(join(content, 'Command1.upk'))
+  } catch (e) {
+    say(`Enemy Within's pictures could not be made ready (${e?.message ?? e}); the screens show none.`)
   }
   // Each converted map as a plot of its own (ew-plot.ts), listed for the game in the mod's XComPlots.ini.
   if (existsSync(join(content, 'ewmaps')) && existsSync(join(content, 'LWX2_EWPlotTemplate.umap'))) {
