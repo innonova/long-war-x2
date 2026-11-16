@@ -185,3 +185,29 @@ of the bomb's and nodes' tiles, and `council disarm`):
   Converting the variant level and placing its pieces is next.
 - **The action's icons are XCOM 2's hack icons.** The actions have no names or texts of their own
   in the HUD yet.
+
+## Report (2026-11-16, step 2: the bomb and nodes drawn, EW's words)
+
+- **Drawn:** each bomb disposal's variant level (`URB_TrainStation_Stream` …) is converted with its map
+  (`ew-objectives.ts` `VARIANT_LEVELS`, by the setup and `ew-maps.ts`), and a plot of the two is written,
+  `LWX2V_<map>` (`ew-maps.ts` `writePlots`). A council bomb disposal plays on that plot when there is one
+  (`UILWHeadquarters.UseEWPlot`, bVariant), so the bomb and the power nodes are part of the map from the
+  start, with their collision and XCOM 2's tile data built over them. `LWX2EWMapPieces.MapName` and
+  `OnOwnPlot` know the `LWX2V_` plots.
+- **EW's words** (`lw-words.mjs` `makeBombWords`, from the player's EW `[XSpecialMissions]`): the objective
+  "Approach and defuse the bomb. Deactivate power nodes to delay explosion. (k / N)", then "Kill any
+  remaining aliens."; the timer's "Turns until bomb is fully charged"; the actions' help texts. The actions'
+  names are the mod's ("Deactivate Power Node", "Defuse Bomb"), their icons XCOM 2's interact and hack.
+
+**Checked on wingpu:** the Train Station bomb disposal on `LWX2V_URB_TrainStation`: the bomb stands on its
+marker by the platform and the power nodes where EW put them; the objective and the timer in EW's words;
+every soldier has both actions.
+
+**Not done:**
+- **A node switched off looks the same.** In EW the node is an interactive actor that powers down; here
+  it is a mesh. The objective's count shows it.
+- **The variant level's own aliens.** It has pods of its own (4 on the Train Station) and its Kismet
+  drops reinforcements (Thin Men, `SeqAct_SpawnAlien`). The mission's aliens are still the
+  abduction-style squad (the decision above).
+- EW's "find the bomb before it reaches full power" phase (the countdown's first label) is played as the
+  bomb being known from the start.
