@@ -270,3 +270,15 @@ Checked on wingpu from the zip: its setup (`--no-maps`) wrote the words (with 7 
 drew 18 units as Enemy Within's (the aliens and the three SHIVs); with the control port switched
 on in the installed config for the check (and back off after), a new campaign, the hub's
 Barracks → a soldier: the armory's menu was there.
+
+## Release (2026-11-16, afternoon)
+
+`LongWarX2-20261116-1c5b0cb.zip` replaces `bf19894` on the draft v0.1.0-preview.1. New since
+bf19894: SHIVs (in squad select and the armory in EW's bodies, their Foundry projects, their
+weapons in engineering), MEC troopers (the Cybernetics Lab's augmentation from Engineering, the
+eight MEC classes, suits, weapons and five subsystems; on the ADVENT MEC's body), the armory's pawn
+on its platform when opened from squad select.
+
+Checked on wingpu from the zip: its setup (`--no-maps`) wrote the words (22 small items with the
+subsystems) and drew 18 units as Enemy Within's; with the control port on for the check (off
+again after), a new campaign, a SHIV added, the hub's Barracks: the SHIV in XCOM 2's soldier list.
