@@ -43,6 +43,8 @@ var config int RewardLowDays, RewardMedDays;
 var config float RewardLowMult, RewardMedMult;
 var config int SoldierLevels[3];
 var config array<LWCouncilMission> Missions;
+/** Progeny on (EW's new-game option "EnableProgeny", XGFundingCouncil.m_bProgenyEnabled). */
+var config bool ProgenyEnabled;
 
 /** The kinds' names, for the decision and the events (the mod's own words). */
 var localized string KindNames[5];
@@ -97,6 +99,7 @@ static function string KindName(int Kind)
 	case 2: Fallback = "bomb disposal"; break;
 	case 3: Fallback = "extraction"; break;
 	case 4: Fallback = "rescue"; break;
+	case 5: Fallback = "special operation"; break;
 	default: Fallback = "operation";
 	}
 	return (Kind >= 0 && Kind < 5 && default.KindNames[Kind] != "") ? default.KindNames[Kind] : Fallback;
@@ -185,6 +188,26 @@ static function bool HasPlayable(int Kind)
 	return false;
 }
 
+/** Progeny's next mission, when Long War would offer it instead of the month's (DetermineNewFCMission, IsProgenyActive):
+ *  Portent from the second month; Deluge and Furies from the eighth, once the Psi Labs are built (PSILABS() != none,
+ *  AI().GetMonth() > 6). */
+static function bool ProgenyDue(XComGameState_LWStrategy S, out LWCouncilMission M)
+{
+	local int Next;
+
+	Next = NextProgeny(S);
+	if (!default.ProgenyEnabled || Next >= 28)
+		return false;
+	if (!((Next == 25 && S.Month > 0) || (class'LWBase'.static.Count(S, 17) > 0 && S.Month > 6)))
+		return false;
+	return MissionById(Next, M) && Playable(M);
+}
+
+static function int NextProgeny(XComGameState_LWStrategy S)
+{
+	return S.NextProgeny == 0 ? 25 : S.NextProgeny;
+}
+
 /** The Chryssalid hive, when Long War would offer it instead of the month's mission (DetermineNewFCMission): after day 35
  *  (IsChryssalidHiveValid: STAT_GetStat(eRecap_Days) > 35), once XCOM has ever held a Chryssalid corpse
  *  (STORAGE().EverHadItem(eItem_CryssalidCorpse)), and never before played (HasPlayedChryssalidHive). */
@@ -223,8 +246,8 @@ static function NewMission(XComGameState_LWStrategy S, optional int Id)
 	local LWCouncilMission M;
 	local int Country;
 
-	// (Id: that mission, a test aid.) The hive before the kinds' rotation, when it is due.
-	if (Id > 0 ? !MissionById(Id, M) : (!HiveDue(S, M) && !ChooseMission(S, M)))
+	// (Id: that mission, a test aid.) Progeny, then the hive, before the kinds' rotation, when they are due.
+	if (Id > 0 ? !MissionById(Id, M) : (!ProgenyDue(S, M) && !HiveDue(S, M) && !ChooseMission(S, M)))
 		return;
 	Country = M.Country != '' ? S.CountryIndex(M.Country) : ChooseCountry(S);
 	if (Country < 0)
@@ -280,6 +303,7 @@ static function string RewardsText(array<XComGameState_LWStrategy.LWCouncilRewar
 		case 5: T $= R.Amount @ "engineers"; break;
 		case 6: T $= "panic" @ R.Amount; break;
 		case 8: T $= R.Amount @ "elerium"; break;
+		case 9: T $= "a named soldier"; break;
 		default: T $= "?";
 		}
 	}
@@ -324,8 +348,17 @@ static function Grant(XComGameState NewGameState, XComGameState_LWStrategy S, in
 		case 8:
 			class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Elerium', R.Amount);
 			break;
+		case 9:
+			// A named soldier (Progeny's: GiveCustomSoldier).
+			Soldier = class'LWX2CustomSoldiers'.static.Give(NewGameState, XComHQ, S.Sites[SiteIndex].CouncilMission, R.Amount);
+			if (Soldier != none)
+				S.Note(Soldier.GetFullName() @ "joins XCOM.");
+			break;
 		}
 	}
+	// Progeny on to its next mission (PostCombat: m_eNextProgenyMission + 1; after Furies the chain is over).
+	if (S.Sites[SiteIndex].CouncilMission == NextProgeny(S))
+		S.NextProgeny = S.Sites[SiteIndex].CouncilMission + 1;
 	if (S.Sites[SiteIndex].CouncilMission == 29)
 		HivePanicBonus(S);
 	S.Note("The council paid for the" @ KindName(S.Sites[SiteIndex].CouncilKind) @ "in" @ S.CountryName(Country) $ ":" @ RewardsText(S.Sites[SiteIndex].Rewards) $ ".");
@@ -362,6 +395,9 @@ static function Failed(XComGameState_LWStrategy S, int SiteIndex)
 {
 	local LWCouncilMission M;
 
+	// Progeny lost or let go: the chain is over (PostCombat, OnMissionExpired: m_eNextProgenyMission = eFCM_PROGENY_END).
+	if (S.Sites[SiteIndex].CouncilMission == NextProgeny(S))
+		S.NextProgeny = 28;
 	if (MissionById(S.Sites[SiteIndex].CouncilMission, M) && M.PanicOnFailure > 0)
 		S.AddContinentPanic(S.CountryContinent(S.Sites[SiteIndex].Country), M.PanicOnFailure);
 	S.Note("The council's" @ KindName(S.Sites[SiteIndex].CouncilKind) @ "in" @ S.CountryName(S.Sites[SiteIndex].Country) @ "failed.");

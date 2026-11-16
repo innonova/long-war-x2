@@ -2904,7 +2904,8 @@ function Council(array<string> Args, out array<string> Out)
 				@ class'XComGameState_EvacZone'.static.GetEvacZone(eTeam_XCom).CenterLocation.Z @ "vip in it" @ (VIP != none && class'XComGameState_EvacZone'.static.GetEvacZone(eTeam_XCom).IsUnitInEvacZone(VIP)));
 		Out.AddItem("skyranger at" @ Tile.X @ Tile.Y @ Tile.Z @ "| objective:" @ class'LWX2CouncilVIP'.static.ObjectiveText());
 	}
-	Out.AddItem("council: next in" @ S.CouncilCountdown @ "hours; played" @ S.CouncilPlayed.Length);
+	Out.AddItem("council: next in" @ S.CouncilCountdown @ "hours; played" @ S.CouncilPlayed.Length @ "| Progeny next" @ class'LWCouncil'.static.NextProgeny(S)
+		@ (class'LWCouncil'.default.ProgenyEnabled ? "" : "(off)"));
 	for (i = 0; i < S.Sites.Length; i++)
 		if (S.Sites[i].bCouncil)
 			Out.AddItem(i @ "mission" @ S.Sites[i].CouncilMission @ class'LWCouncil'.static.KindName(S.Sites[i].CouncilKind) @ "in" @ S.CountryName(S.Sites[i].Country)

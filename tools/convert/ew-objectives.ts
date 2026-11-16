@@ -11,6 +11,8 @@ import { Package, decompressPackage } from '@innonova/upkit/upk'
 import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
+import { Linker } from '@innonova/upkit/linker'
+import { decompileFunction } from '@innonova/upkit/decompile'
 
 /** The council's missions (the mod's Config/XComLWCouncil.ini, from Long War's own data: scripts/council-config.mjs): each
  *  its kind (1 assault, 2 bomb, 3 extraction, 4 rescue), its EW map and the streamed level that carries its variant. */
@@ -256,14 +258,15 @@ export function readVIP(file: string, map: string, level: string): VIP | undefin
   if (!at || !extract || (!joins(civ) && !approach)) return undefined
   // EW's texts, by their localization keys: m_str<Place>Extract1..3 / m_str<Place>Rescue1, and the shared ones.
   const strings = K.ops.filter((o) => o.type === 'SeqVar_LocalizedString').map((o) => ({ key: K.str(o, 'strLookup').split('.').pop() ?? '', value: K.str(o, 'StrValue') }))
-  const texts = strings.filter((s) => /(Extract|Rescue)\d$/.test(s.key)).sort((a, b) => a.key.localeCompare(b.key)).map((s) => s.value)
-  const shared = (key: string) => strings.find((s) => s.key === key)?.value ?? ''
+  // (Progeny's Portent: m_strDLC2_1Obj1..3, then its own "kill the rest" and "report to evac", 4 and 5.)
+  const texts = strings.filter((s) => /(Extract|Rescue)\d$|DLC2_1Obj[1-3]$/.test(s.key)).sort((a, b) => a.key.localeCompare(b.key)).map((s) => s.value)
+  const shared = (key: string, other = '') => strings.find((s) => s.key === key)?.value ?? strings.find((s) => s.key === other)?.value ?? ''
   return {
     map, level, at, approach, extract, texts,
     first: text(naming.vars.get('First Name')?.[0]),
     last: text(naming.vars.get('Last Name')?.[0]),
-    killRest: shared('m_strBombObj3'),
-    report: shared('m_strBombObj4'),
+    killRest: shared('m_strBombObj3', 'm_strDLC2_1Obj4'),
+    report: shared('m_strBombObj4', 'm_strDLC2_1Obj5'),
   }
 }
 
@@ -630,6 +633,123 @@ export function readHive(file: string, map: string, level: string): Hive | undef
   }
 }
 
+export interface CustomSoldier {
+  mission: number
+  first: string
+  last: string
+  nick: string
+  /** EW's ECountry name without its prefix (USA, France, Egypt …), as the mod's countries are named. */
+  country: string
+  female: boolean
+  /** EW's base class (1 sniper, 2 heavy weapons, 3 support, 4 assault) and rank (1 squaddie … 7 colonel). */
+  baseClass: number
+  rank: number
+  hp: number
+  aim: number
+  will: number
+  /** What GiveCustomSoldier adds for this soldier (by its head or nickname): a mobility, psi powers (each with an
+   *  alternative it is given instead half the time; 0 none), the psi rank. */
+  mobility: number
+  perks: number[]
+  alt: number[]
+  psiRank: number
+}
+
+/** Long War's named soldiers that its council missions reward (XGFundingCouncil.BuildMission's arrRewardSoldiers, and
+ *  GiveCustomSoldier's additions), read from the player's own XComStrategyGame.upk with upkit's decompiler: Progeny's
+ *  (eFCM_Progeny_*). Their names are Long War's, so they are only ever written on the player's machine. */
+export function readCustomSoldiers(cooked: string): CustomSoldier[] {
+  if (!levelFile(cooked, 'XComStrategyGame')) return []
+  const linker = new Linker([cooked])
+  const pkg = linker.package('XComStrategyGame')
+  if (!pkg) return []
+  let build = ''
+  let give = ''
+  try {
+    build = decompileFunction(linker, pkg, 'XGFundingCouncil.BuildMission')
+    give = decompileFunction(linker, pkg, 'XGFundingCouncil.GiveCustomSoldier')
+  } catch {
+    return []
+  }
+  const MISSION: Record<string, number> = { Portent: 25, Deluge: 26, Furies: 27 }
+  const CLASS: Record<string, number> = { Sniper: 1, HeavyWeapons: 2, Support: 3, Assault: 4 }
+  const RANK: Record<string, number> = { Rookie: 0, Squaddie: 1, Corporal: 2, Sergeant: 3, Lieutenant: 4, Captain: 5, Major: 6, Colonel: 7 }
+  // GiveCustomSoldier's additions, by the head or the nickname they key on (the innermost condition holds them).
+  type Extra = { mobility: number; perks: number[]; alt: number[]; psiRank: number }
+  const byHead = new Map<number, Extra>()
+  const byNick = new Map<string, Extra>()
+  const stack: { depth: number; extra: Extra }[] = []
+  let depth = 0
+  let pending: Extra | undefined
+  for (const line of give.split('\n')) {
+    // (As the decompiler writes the comparisons: a native's call, or the operator when it knows it.)
+    const head = /Appearance\.iHead(?:, | == )(\d+)\)\)?\s*$/.exec(line)
+    const nick = /^\s*if \((?:__native\d+\()?Soldier\.m_kSoldier\.strNickName(?:, | == )"([^"]+)"\)\)?\s*$/.exec(line)
+    if (head || nick) {
+      pending = { mobility: 0, perks: [], alt: [], psiRank: 0 }
+      if (head) byHead.set(Number(head[1]), pending)
+      if (nick) byNick.set(nick[1]!, pending)
+    }
+    if (/^\s*\{\s*$/.test(line)) {
+      depth++
+      if (pending) stack.push({ depth, extra: pending })
+      pending = undefined
+      continue
+    }
+    if (/^\s*\}\s*$/.test(line)) {
+      if (stack.length && stack[stack.length - 1]!.depth === depth) stack.pop()
+      depth--
+      continue
+    }
+    const extra = stack[stack.length - 1]?.extra
+    if (!extra) continue
+    const mob = /aStats\[3\] = (\d+);/.exec(line)
+    if (mob) extra.mobility = Number(mob[1])
+    const rank = /iPsiRank = (0x[0-9a-f]+|\d+);/i.exec(line)
+    if (rank) extra.psiRank = Number(rank[1])
+    const either = /GivePerk\(.*\? (\d+) : (\d+)\);/.exec(line)
+    const one = /GivePerk\((\d+)\);/.exec(line)
+    if (either) {
+      extra.perks.push(Number(either[1]))
+      extra.alt.push(Number(either[2]))
+    } else if (one) {
+      extra.perks.push(Number(one[1]))
+      extra.alt.push(0)
+    }
+  }
+  const out: CustomSoldier[] = []
+  for (const [name, mission] of Object.entries(MISSION)) {
+    const at = build.indexOf(`case eFCM_Progeny_${name}:`)
+    if (at < 0) continue
+    const end = build.slice(at + 1).search(/\n\s*(case |default:)/)
+    const block = build.slice(at, end < 0 ? undefined : at + 1 + end)
+    const cur: Record<string, string> = {}
+    for (const line of block.split('\n')) {
+      const set = /CustomSoldier\.(?:Appearance\.)?(\w+) = (.+);/.exec(line)
+      if (set) cur[set[1]!] = set[2]!.trim()
+      if (!/arrRewardSoldiers\.AddItem\(CustomSoldier\)/.test(line)) continue
+      const str = (k: string) => (cur[k] ?? '').replace(/^"|"$/g, '')
+      const int = (k: string) => Number(cur[k] ?? 0)
+      const extra = byNick.get(str('NickName')) ?? byHead.get(int('iHead')) ?? { mobility: 0, perks: [], alt: [], psiRank: 0 }
+      out.push({
+        mission,
+        first: str('firstName'),
+        last: str('lastName'),
+        nick: str('NickName'),
+        country: (cur.Country ?? '').replace(/^eCountry_/, ''),
+        female: int('iGender') === 2,
+        baseClass: CLASS[(cur.soldierClass ?? '').replace(/^eSC_/, '')] ?? 0,
+        rank: RANK[(cur.SoldierRank ?? '').replace(/^eRank_/, '')] ?? 0,
+        hp: int('HP'),
+        aim: int('Aim'),
+        will: int('Will'),
+        ...extra,
+      })
+    }
+  }
+  return out
+}
+
 /** Every bomb disposal, VIP mission, covert extraction, data recovery and the hive this install has, written into the mod's
  *  config; returns how many. */
 export function writeObjectives(cooked: string, mod: string): number {
@@ -651,7 +771,7 @@ export function writeObjectives(cooked: string, mod: string): number {
   // The VIP missions (LWX2CouncilVIP): EW's own words in them, as this install has them.
   const q = (t: string) => `"${t.replace(/"/g, "'")}"`
   lines.push('', '[LongWarX2.LWX2CouncilVIP]')
-  for (const m of missions.filter((x) => x.kind === 3 || x.kind === 4)) {
+  for (const m of missions.filter((x) => x.kind === 3 || x.kind === 4 || x.id === 25)) {
     const file = levelFile(cooked, m.level)
     if (!file) continue
     const p = readVIP(file, m.map, m.level)
@@ -696,6 +816,12 @@ export function writeObjectives(cooked: string, mod: string): number {
     for (const v of h.volumes) lines.push(`+Volumes=(Level="${h.level}", Center=${vec(v.center)}, Extent=${vec(v.extent)})`)
     for (const s of h.spawns) lines.push(`+Spawns=(Level="${h.level}", Char=${s.char}, At=${vec(s.at)}, When=${s.when}, Volume=${s.volume}, Turn=${s.turn}, EnemyLevel=${s.level})`)
     n++
+  }
+  // Long War's named soldiers its council missions reward (LWX2CustomSoldiers, the council's reward 9: Progeny's).
+  lines.push('', '[LongWarX2.LWX2CustomSoldiers]')
+  for (const c of readCustomSoldiers(cooked)) {
+    lines.push(`+Soldiers=(Mission=${c.mission}, First=${q(c.first)}, Last=${q(c.last)}, Nick=${q(c.nick)}, Country=${c.country}, Female=${c.female}, BaseClass=${c.baseClass}, ` +
+      `Rank=${c.rank}, HP=${c.hp}, Aim=${c.aim}, Will=${c.will}, Mobility=${c.mobility}, PsiRank=${c.psiRank}, Perks=(${c.perks.join(', ')}), Alt=(${c.alt.join(', ')}))`)
   }
   writeFileSync(join(mod, 'Config', 'XComLWX2EWObjectives.ini'), lines.join('\r\n') + '\r\n')
   return n

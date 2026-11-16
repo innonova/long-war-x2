@@ -337,3 +337,42 @@ the transponder reactivated from beside it ("Reach the EVAC zone… Turns until 
 EVAC volume; the count 8, then 7 (the first turn end not counted); the squad in the volume brought the air strike,
 the mission summary, and back on the Geoscape the council paid (§225, Canada −20). In a second campaign the hive was
 not offered on day 0 and was on day 36 with a Chryssalid corpse held (§337).
+
+## Report (2026-11-16, step 4: Progeny's chain, its named soldiers, Portent)
+
+**When Long War offers Progeny** (`DetermineNewFCMission`, `IsProgenyActive`, `PostCombat`, `OnMissionExpired`): a chain
+of three council missions, each in place of the month's mission and before the hive: Portent from the second month
+(`m_eNextProgenyMission == eFCM_Progeny_Portent && AI().GetMonth() > 0`), then Deluge and Furies from the eighth month
+once the Psi Labs are built (`PSILABS() != none && GetMonth() > 6`). Won, the chain moves on; lost or let go, it is over.
+All three are in France. `LWCouncil.ProgenyDue`, `XComGameState_LWStrategy.NextProgeny` (0 not begun, 28 over).
+
+**Rewards** (`BuildMission`, `GrantFCRewards`, `GiveCustomSoldier`): Portent 4 scientists, 4 engineers and §150; Deluge
+a named soldier and §330; Furies three named soldiers and §250 (all scaled by the campaign's age, as every council
+reward). The named soldiers are Long War's own: class, rank, country, gender, HP, aim and will as `BuildMission` sets
+them, no defence, and what `GiveCustomSoldier` adds by head or nickname (a mobility, psi powers, one of each pair at
+random as `Rand(2)`). Their names are Long War's text, so `ew-objectives.ts readCustomSoldiers` reads them on the
+player's machine from their own `XComStrategyGame.upk` with upkit's decompiler (into `XComLWX2EWObjectives.ini`,
+`LWX2CustomSoldiers`). The council's reward 9 gives the mission's n-th of them.
+- The Tree's data had one more named soldier for Furies, and EXALT intel: those are `BuildMission`'s common tail (an
+  EXALT intel roll for every council mission, `FCM_INTEL_CHANCE`, while EXALT is active) and code after its `return`
+  (Slingshot's soldier, never reached). `council-config.mjs` leaves them out.
+- **Fixed on the way:** the council's reward 4 pays scientists and 5 engineers (`GrantFCRewards`); the port had them the
+  other way round for every council mission (01474bc).
+
+**Portent** plays as EW plays it, with the extraction's handler: the port's VIP rule (`LWX2CouncilVIP`) on its variant
+plot, with EW's Portent words (`m_strDLC2_1Obj1..5`) and its survivor where its Kismet spawns them.
+
+**Decisions:**
+- **Progeny is on** (`ProgenyEnabled=true`): EW asks at a new campaign (`EnableProgeny`); the port has no such
+  option.
+- **Not ported:** the named soldiers' psi rank (`iPsiRank`; the port has no psi ranks) and psi gift (the port's psi
+  training has no gift); Annette's musings between missions (narrative); EW's appearances (heads, hair: XCOM 2 makes
+  their faces).
+- Until their own objectives are in, **Deluge and Furies** play on their variant plots by clearing the map.
+
+**Checked on wingpu:** in a test campaign, the three missions offered and won without playing (`council now`,
+`resolve`): Portent paid 2 scientists, 2 engineers and §75 (day 1: ×0.5); Deluge brought Annette Durand (a medic,
+squaddie); Furies brought Matthew Hawkins (a sniper, rank 4, one psi power) and Said and Fatima Tariq (engineers, two
+psi powers each). Then Portent played: the survivor waited where EW puts them, joined XCOM when a soldier came near
+("Escort the survivor to the EVAC Zone."), evacuated ("Kill any remaining aliens. All soldiers report to the EVAC
+zone."), the aliens killed, and the council paid.

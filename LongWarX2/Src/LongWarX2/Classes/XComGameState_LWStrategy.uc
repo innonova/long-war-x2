@@ -90,6 +90,9 @@ var int StartChoice;
 /** The council's missions (LWCouncil): the hours to the month's mission, whether that clock was started, those played. */
 var int CouncilCountdown;
 var bool bCouncilSetUp;
+/** Progeny's next mission (XGFundingCouncil.m_eNextProgenyMission: 25 Portent, 26 Deluge, 27 Furies, 28 the chain over);
+ *  0 not begun (Portent next). */
+var int NextProgeny;
 var array<int> CouncilPlayed;
 
 /** Hours since the campaign began; its first hour is the first of a month. */

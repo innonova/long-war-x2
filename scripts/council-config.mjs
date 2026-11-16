@@ -16,11 +16,14 @@ const c = data.constants
 // in EW's tutorial (XGSetupPhaseManager forces it), which the port has not, so it is left out.
 // EW's ECountry, for a special mission's country (BuildMission's kMission.ECountry).
 const COUNTRY = ['USA', 'Russia', 'China', 'UK', 'Germany', 'France', 'Japan', 'India', 'Australia', 'Italy', 'SouthKorea', 'Turkey', 'Indonesia', 'Spain', 'Pakistan', 'Canada', 'Iran', 'Israel', 'Egypt', 'Brazil', 'Argentina', 'Mexico', 'SouthAfrica', 'Poland', 'Ukraine', 'Nigeria', 'Venezuela']
-const SPECIAL = [29]
+// Progeny (25 Portent, 26 Deluge, 27 Furies) comes as a chain, by its own rule, in France; its named soldiers (reward 9,
+// the n-th of the mission's) are read on the player's machine (tools/convert/ew-objectives.ts readCustomSoldiers).
+const SPECIAL = [25, 26, 27, 29]
 const maps = readFileSync(process.argv[2] ?? '', 'latin1').split(/\r?\n/).filter((l) => /^\s*Maps=/.test(l))
 /** The map entry for a mission's variant (DisplayName "<map> (<variant>)"): its map and its variant level. */
 const entry = (m) => {
-  const l = maps.find((x) => x.includes(`(${m.variant})`))
+  // (Progeny's: the special entry named as its map alone, DisplayName="DLC2_1_Portent".)
+  const l = m.variant ? maps.find((x) => x.includes(`(${m.variant})`)) : maps.find((x) => x.includes(`DisplayName="${m.map}"`))
   if (!l) return undefined
   const level = [...l.matchAll(/MapName="?(\w+)/g)].map((x) => x[1]).find((x) => !/^(CIN_|patch)/i.test(x))
   return { map: /\bName="?(\w+)/.exec(l)[1], level }
@@ -29,6 +32,15 @@ const entry = (m) => {
 const all = data.missions.filter((m) => (m.kind >= 1 && m.kind <= 4 && m.id < 18) || SPECIAL.includes(m.id))
 const missions = all.filter((m) => entry(m))
 const unmapped = all.filter((m) => !entry(m))
+// A Progeny mission's named soldiers, numbered within it (Type=9, Amount=n). What the Tree lists from the EXALT intel on is
+// not the mission's own: BuildMission's common tail (a roll on FCM_INTEL_CHANCE while EXALT is active) and, after its
+// return, code never reached (Slingshot's soldier).
+const progeny = (m) => m.id >= 25 && m.id <= 27
+const rewardsOf = (m) => {
+  let n = 0
+  const own = progeny(m) && m.rewards.some((r) => r.type === 10) ? m.rewards.slice(0, m.rewards.findIndex((r) => r.type === 10)) : m.rewards
+  return own.map((r) => (progeny(m) && r.type === 3 && r.amount === 'named' ? { type: 9, amount: n++ } : r))
+}
 const reward = (r) => {
   if (typeof r.amount === 'number') return `(Type=${r.type}, Amount=${r.amount})`
   if (r.amount === 'named') return `(Type=${r.type}, SoldierLevel=-1)`
@@ -53,13 +65,16 @@ const out = [
   `SoldierLevels[0]=${c.MISSION_REWARD_SOLDIER_LOW_LEVEL}`,
   `SoldierLevels[1]=${c.MISSION_REWARD_SOLDIER_MED_LEVEL}`,
   `SoldierLevels[2]=${c.MISSION_REWARD_SOLDIER_HIGH_LEVEL}`,
+  "; Progeny (EW's new-game option EnableProgeny; the port has no such option, so it is on as EW's box comes ticked).",
+  'ProgenyEnabled=true',
   "; Missions (BuildMission): Id (EFCMission), Kind (1 assault, 2 bomb, 3 extraction, 4 rescue), its EW Map, PanicOnFailure",
   '; (on its continent); Rewards: Type 1 cash (Money: x the rolled amount), 3 a soldier (SoldierClass, SoldierLevel; -1 rolled),',
-  "; 4 scientists, 5 engineers, 6 the country's panic, 8 elerium (Amount). Special: offered by its own rule, not the kinds'",
-  "; rotation (29 the Chryssalid hive: after day 35 once a Chryssalid corpse was ever held, once); Country: its own country.",
+  "; 4 scientists, 5 engineers, 6 the country's panic, 8 elerium (Amount), 9 a named soldier of Soldiers= (the n-th of the",
+  "; mission's: Amount). Special: offered by its own rule, not the kinds' rotation (25 to 27 Progeny: a chain; 29 the",
+  "; Chryssalid hive: after day 35 once a Chryssalid corpse was ever held, once); Country: its own country.",
   '; Map: its EW map, Level: the streamed level with its variant (DefaultMaps.ini).',
   ...(unmapped.length ? [`; Not in DefaultMaps.ini, so never offered: ${unmapped.map((m) => `${m.id} (${m.variant})`).join(', ')}.`] : []),
   ...missions.map((m) => `+Missions=(Id=${m.id}, Kind=${m.kind}, Map="${entry(m).map}", Level="${entry(m).level ?? ''}", PanicOnFailure=${m.panicOnFailure ?? 0}, ` +
-    `${SPECIAL.includes(m.id) ? `Special=true, Country=${COUNTRY[m.country]}, ` : ''}Rewards=(${m.rewards.map(reward).join(', ')}))`),
+    `${SPECIAL.includes(m.id) ? `Special=true, Country=${COUNTRY[m.country]}, ` : ''}Rewards=(${rewardsOf(m).map(reward).join(', ')}))`),
 ]
 console.log(out.join('\r\n'))

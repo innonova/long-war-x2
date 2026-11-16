@@ -156,7 +156,7 @@ static function AdjustFoundry(out LWGearRules.LWFoundryDef F)
  * base class (EW's ESoldierClass: 1 sniper, 2 heavy weapons, 3 support, 4 assault) and rank: one of its two Long War
  * classes, at that rank, with the experience it needs (so no promotion waits); with a country, a name of that country.
  */
-static function XComGameState_Unit NewSoldier(XComGameState NewGameState, XComGameState_HeadquartersXCom XComHQ, int BaseClass, int Rank, optional name Country)
+static function XComGameState_Unit NewSoldier(XComGameState NewGameState, XComGameState_HeadquartersXCom XComHQ, int BaseClass, int Rank, optional name Country, optional int Gender)
 {
 	local XComGameState_Unit Unit;
 	local XGCharacterGenerator Generator;
@@ -165,8 +165,13 @@ static function XComGameState_Unit NewSoldier(XComGameState NewGameState, XComGa
 	local int i;
 
 	Unit = `CHARACTERPOOLMGR.CreateCharacter(NewGameState, `XPROFILESETTINGS.Data.m_eCharPoolUsage);
-	if (Country != '')
+	// (A given gender, 1 male or 2 female: a named soldier's.)
+	if (Gender > 0)
+		Unit.kAppearance.iGender = Gender;
+	if (Country != '' || Gender > 0)
 	{
+		if (Country == '')
+			Country = Unit.GetCountry();
 		Generator = `XCOMGRI.Spawn(Unit.GetMyTemplate().CharacterGeneratorClass);
 		Made = Generator.CreateTSoldier('Soldier', EGender(Unit.kAppearance.iGender), Country);
 		Unit.SetTAppearance(Made.kAppearance);

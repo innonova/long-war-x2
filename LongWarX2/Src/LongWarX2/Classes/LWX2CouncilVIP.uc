@@ -34,7 +34,8 @@ static function bool Active(out LWX2VIPDef P)
 	local XComGameState_BattleData Battle;
 	local int k;
 
-	if (!class'LWCouncil'.static.Current(M) || (M.Kind != 3 && M.Kind != 4) || M.Level == "")
+	// (Progeny's Portent is an extraction too: EW plays it with the extraction's handler, its VIP a survivor.)
+	if (!class'LWCouncil'.static.Current(M) || (M.Kind != 3 && M.Kind != 4 && M.Id != 25) || M.Level == "")
 		return false;
 	// (Only on the map with its variant level: the VIP's way is that level's.)
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
