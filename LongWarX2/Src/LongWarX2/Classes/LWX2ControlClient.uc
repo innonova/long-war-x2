@@ -249,6 +249,10 @@ function Handle(string Line, out array<string> Out)
 		else
 			Out.AddItem(Args.Length > 1 ? (Args[1] @ "->" @ PathName(DynamicLoadObject(Args[1], class'Object', true)) @ DynamicLoadObject(Args[1], class'Object', true).Class) : "ERR img <path>");
 		return;
+	case "council":
+		// council: the council's clock and missions; 'council now': the month's council mission made at once (a test aid).
+		Council(Args, Out);
+		return;
 	case "hit":
 		// hit <attacker #id> <target #id> [ability, default StandardShot]: the shot's chance, crit and what made them.
 		if (Args.Length < 3)
@@ -581,7 +585,11 @@ function Handle(string Line, out array<string> Out)
 		if (Geo == none)
 			Out.AddItem("ERR not on the Avenger");
 		else
+		{
+			// (Its decisions as they are now: a change made through the control port does not refresh the screen.)
+			Geo.Refresh();
 			Out.AddItem(Geo.Act(Args.Length > 1 ? int(Args[1]) : 0) ? "ok" : "ERR no such decision");
+		}
 		return;
 	case "officers":
 		// officers: the officer projects and posts, and the soldiers' officer ranks; officers buy <0-4>: an officer project
@@ -2624,6 +2632,34 @@ static function bool TileTaken(TTile T)
 }
 
 /** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
+/** The council's missions (LWCouncil): its clock, the missions offered; 'council now' one made at once. */
+function Council(array<string> Args, out array<string> Out)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local int i;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none)
+	{
+		Out.AddItem("ERR the campaign has not begun");
+		return;
+	}
+	if (Args.Length > 1 && Args[1] == "now")
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: a council mission");
+		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+		class'LWCouncil'.static.NewMission(S);
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		S = class'XComGameState_LWStrategy'.static.Get();
+	}
+	Out.AddItem("council: next in" @ S.CouncilCountdown @ "hours; played" @ S.CouncilPlayed.Length);
+	for (i = 0; i < S.Sites.Length; i++)
+		if (S.Sites[i].bCouncil)
+			Out.AddItem(i @ "mission" @ S.Sites[i].CouncilMission @ class'LWCouncil'.static.KindName(S.Sites[i].CouncilKind) @ "in" @ S.CountryName(S.Sites[i].Country)
+				@ "status" @ S.Sites[i].Status @ "until" @ S.Sites[i].Until @ "|" @ class'LWCouncil'.static.RewardsText(S.Sites[i].Rewards));
+}
+
 /** A shot's chance (its ability's to-hit calculation, as the targeting shows it), its crit and the modifiers' reasons. */
 function HitChance(out array<string> Out, int AttackerID, int TargetID, name AbilityName)
 {

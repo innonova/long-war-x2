@@ -40,6 +40,14 @@ struct LWUfo
 };
 
 /** An abduction or a terror site, or the aliens at XCOM's headquarters (bHQ). Status: 1 on the map, 2 over. */
+/** A council mission's reward, as rolled when it was offered (LWCouncil): Type, its Amount (a soldier's: their level). */
+struct LWCouncilReward
+{
+	var int Type;
+	var int Amount;
+	var int SoldierClass;
+};
+
 struct LWSite
 {
 	var bool bTerror;
@@ -48,6 +56,11 @@ struct LWSite
 	var int Hour;
 	var int Status;
 	var int Until;
+	/** A council mission (LWCouncil): Long War's EFCMission, its kind (1 assault, 2 bomb, 3 extraction, 4 rescue), rewards. */
+	var bool bCouncil;
+	var int CouncilMission;
+	var int CouncilKind;
+	var array<LWCouncilReward> Rewards;
 };
 
 /** An engineering project (LWEngineering): Quantity of Long War's item Item, the work left in engineer hours, the engineers on it. */
@@ -74,6 +87,11 @@ var array<LWCountry> Countries;
  * start screen (UILWStartSelect); a campaign begun before it was offered: the United States and none. */
 var int HomeIndex;
 var int StartChoice;
+/** The council's missions (LWCouncil): the hours to the month's mission, whether that clock was started, those played. */
+var int CouncilCountdown;
+var bool bCouncilSetUp;
+var array<int> CouncilPlayed;
+
 /** Hours since the campaign began; its first hour is the first of a month. */
 var int Hours;
 var int Month;
@@ -157,7 +175,8 @@ var array<string> Events;
 var int EventCount;
 /** Set when something wants the player's decision: the clock stops. */
 var bool bStop;
-/** A mission sent from here and not yet come back: 1 crash site, 2 landed UFO, 3 abduction, 4 terror. */
+/** A mission sent from here and not yet come back: 1 crash site, 2 landed UFO, 3 abduction, 4 terror, 5 an alien base, 6 the
+ *  Temple Ship, 7 the HQ assault, 8 a covert operation, 9 EXALT's base, 10 a council mission (LWCouncil). */
 var int PendingKind;
 var int PendingIndex;
 /** XCOM 2's mission site launched for it: its battle's result is the mission's. */
@@ -555,6 +574,7 @@ function Tick(XComGameState NewGameState)
 	for (i = 0; i < Sites.Length; i++)
 		TickSite(i);
 	class'LWExalt'.static.Hour(NewGameState, self);
+	class'LWCouncil'.static.Hour(self);
 	if (Hours % HoursPerMonth() == 0)
 		EndMonth();
 }
@@ -1148,6 +1168,25 @@ function AddHQSite()
 	bStop = true;
 }
 
+/** A council mission offered (LWCouncil.NewMission): it waits as an abduction does (Long War's ABDUCTION_TIMER). */
+function AddCouncilSite(int Mission, int Country, array<LWCouncilReward> Rewards)
+{
+	local LWSite Site;
+
+	Site.bCouncil = true;
+	Site.CouncilMission = Mission;
+	Site.CouncilKind = class'LWCouncil'.static.KindOf(Mission);
+	Site.Rewards = Rewards;
+	Site.Country = Country;
+	Site.Hour = Hours;
+	Site.Status = 1;
+	Site.Until = Hours + class'LWStrategyRules'.default.AbductionHours;
+	Sites.AddItem(Site);
+	CouncilPlayed.AddItem(Mission);
+	Note("The council asks for XCOM's help in" @ CountryName(Country) $ ":" @ class'LWCouncil'.static.KindName(Site.CouncilKind) $ " (" $ class'LWCouncil'.static.RewardsText(Rewards) $ "). XCOM has" @ (Site.Until - Hours) @ "hours.");
+	bStop = true;
+}
+
 function TickSite(int i)
 {
 	if (Sites[i].Status == 1 && Hours >= Sites[i].Until)
@@ -1200,6 +1239,11 @@ function SiteIgnored(int i)
 		Note("XCOM's headquarters has fallen. The war is lost.");
 		return;
 	}
+	if (Sites[i].bCouncil)
+	{
+		class'LWCouncil'.static.Failed(self, i);
+		return;
+	}
 	if (NotHelped.Find(Sites[i].Country) == INDEX_NONE)
 		NotHelped.AddItem(Sites[i].Country);
 	if (Sites[i].bTerror)
@@ -1238,6 +1282,10 @@ function array<int> MissionSquad()
 		return class'LWExalt'.static.CovertSquad(ExaltMissionsFought, Days());
 	if (PendingKind == 9)
 		return class'LWExalt'.static.RaidSquad(Days());
+	// A council mission: an abduction's squad in its country (APPROXIMATION: Long War's DetermineSpecialMissionSquad builds its own,
+	// 7 to 15 aliens by the month).
+	if (PendingKind == 10)
+		return class'LWAlienSquads'.static.SquadFor(3, 0, Days(), AlienAggression, AlienResources, AbductionDifficulty(Sites[PendingIndex].Country), TerrorsTaken);
 	if (PendingKind == 5)
 		return class'LWAlienSquads'.static.SquadFor(2, 8, Days(), AlienAggression, AlienResources, 0, TerrorsTaken);
 	if (PendingKind >= 6)
@@ -1286,7 +1334,7 @@ static function MissionCommitted()
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	if (S.PendingKind <= 2)
 		S.Ufos[S.PendingIndex].Status = 5;
-	else if (S.PendingKind <= 4 || S.PendingKind == 7)
+	else if (S.PendingKind <= 4 || S.PendingKind == 7 || S.PendingKind == 10)
 		S.Sites[S.PendingIndex].Status = 2;
 	// (The covert operation answered: it no longer expires.)
 	else if (S.PendingKind == 8)
@@ -1381,6 +1429,25 @@ static function MissionBack(bool bWon)
 		S.PendingKind = 0;
 		S.PendingMission = 0;
 		S.bPendingCapture = false;
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		return;
+	}
+	if (S.PendingKind == 10)
+	{
+		// A council mission (LWCouncil): what the aliens killed leave, and the council's rewards; or the failure's panic.
+		if (bWon)
+		{
+			Squad = S.PendingSquad.Length > 0 ? S.PendingSquad : S.MissionSquad();
+			S.BringCaptivesHome(NewGameState, Squad);
+			S.GiveKillLoot(NewGameState, Squad);
+			class'LWCouncil'.static.Grant(NewGameState, S, S.PendingIndex);
+		}
+		else
+			class'LWCouncil'.static.Failed(S, S.PendingIndex);
+		S.PendingKind = 0;
+		S.PendingMission = 0;
+		S.bPendingCapture = false;
+		S.PendingCaptives.Length = 0;
 		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 		return;
 	}
@@ -1835,6 +1902,7 @@ function EndMonth()
 	local string Report;
 
 	class'LWExalt'.static.MonthEnded(self);
+	class'LWCouncil'.static.MonthEnded(self);
 
 	d = class'LWStrategyRules'.static.Difficulty();
 	for (i = 0; i < Countries.Length; i++)
@@ -1994,6 +2062,8 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 	for (i = 0; i < Sites.Length; i++)
 		if (Sites[i].Status == 1 && Sites[i].bHQ)
 			AddDecision(Kinds, Indexes, Labels, 8, i, "DEFEND: XCOM's headquarters (" $ (Sites[i].Until - Hours) $ "h)");
+		else if (Sites[i].Status == 1 && Sites[i].bCouncil)
+			AddDecision(Kinds, Indexes, Labels, 11, i, "COUNCIL:" @ class'LWCouncil'.static.KindName(Sites[i].CouncilKind) @ "in" @ CountryName(Sites[i].Country) @ "(" $ (Sites[i].Until - Hours) $ "h;" @ class'LWCouncil'.static.RewardsText(Sites[i].Rewards) $ ")");
 		else if (Sites[i].Status == 1)
 			AddDecision(Kinds, Indexes, Labels, Sites[i].bTerror ? 5 : 4, i, (Sites[i].bTerror ? "RESPOND: terror in" : "RESPOND: abductions in") @ CountryName(Sites[i].Country) @ "(" $ (Sites[i].Until - Hours) $ "h)");
 	// EXALT: the covert operative ready for extraction (features/lw-exalt.md).
@@ -2041,6 +2111,10 @@ function PendingWords(out string Title, out string Reward)
 	case 7:
 		Title = "XCOM's headquarters under attack";
 		Reward = "XCOM's survival";
+		break;
+	case 10:
+		Title = "Council" @ class'LWCouncil'.static.KindName(Sites[PendingIndex].CouncilKind) @ "in" @ CountryName(Sites[PendingIndex].Country);
+		Reward = class'LWCouncil'.static.RewardsText(Sites[PendingIndex].Rewards);
 		break;
 	default:
 		Title = "";

@@ -174,6 +174,8 @@ function int PrepareMission()
 	local int Attempt, i;
 	local Vector2D Where;
 	local XComGameState_LWStrategy LW;
+	local LWCouncil.LWCouncilMission Council;
+	local array<string> Converted;
 	local string EWMap;
 
 	Soldiers = ReadySoldiers(SquadSize());
@@ -192,7 +194,12 @@ function int PrepareMission()
 	if (class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole && Kind != 0)
 	{
 		LW = class'XComGameState_LWStrategy'.static.Get();
-		EWMap = class'LWX2EWMapPieces'.static.ChooseMap(class'LWX2EWMapPieces'.static.KindFor(Kind), (Kind <= 2 && LW.PendingIndex < LW.Ufos.Length) ? LW.Ufos[LW.PendingIndex].Ufo : 0);
+		// (A council mission: its own map, when converted.)
+		Converted = class'LWX2EWMapPieces'.static.ConvertedMaps();
+		if (Kind == 10 && class'LWCouncil'.static.MissionById(LW.Sites[LW.PendingIndex].CouncilMission, Council) && Converted.Find(Council.Map) != INDEX_NONE)
+			EWMap = Council.Map;
+		else if (Kind != 10)
+			EWMap = class'LWX2EWMapPieces'.static.ChooseMap(class'LWX2EWMapPieces'.static.KindFor(Kind), (Kind <= 2 && LW.PendingIndex < LW.Ufos.Length) ? LW.Ufos[LW.PendingIndex].Ufo : 0);
 		`log("LongWarX2: Long War HQ: EW map for kind" @ Kind $ ":" @ (EWMap != "" ? EWMap : "none converted, XCOM 2's plot"), , 'LongWarX2');
 	}
 	if (EWMap != "")
