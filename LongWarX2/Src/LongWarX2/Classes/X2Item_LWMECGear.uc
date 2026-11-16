@@ -14,7 +14,39 @@ static function array<X2DataTemplate> CreateTemplates()
 		Templates.AddItem(SuitTemplate(S));
 	foreach class'LWMECs'.default.Weapons(W)
 		Templates.AddItem(WeaponTemplate(W));
+	if (class'LWMECs'.default.KineticStrike.Item != 0)
+		Templates.AddItem(KineticTemplate(class'LWMECs'.default.KineticStrike));
 	return Templates;
+}
+
+/** The Kinetic Strike Module: a subsystem (a utility slot, MEC classes only: lw_mec_kinetic) whose strike is XCOM 2's
+ *  sword slice (move and strike an adjacent enemy) with Long War's damage (12). */
+static function X2WeaponTemplate KineticTemplate(LWMECs.LWMECWeapon W)
+{
+	local X2WeaponTemplate Template;
+	local WeaponDamageValue Damage;
+
+	`CREATE_X2TEMPLATE(class'X2WeaponTemplate', Template, 'LWMEC_KineticStrike');
+	Template.ItemCat = 'weapon';
+	Template.WeaponCat = 'lw_mec_kinetic';
+	Template.WeaponTech = 'conventional';
+	Template.InventorySlot = eInvSlot_Utility;
+	Template.StowedLocation = eSlot_None;
+	Template.strImage = "img:///UILibrary_Common.AlienWeapons.AdventMecGun";
+	Damage.Damage = W.Damage;
+	Damage.Spread = 1;
+	Damage.Crit = (W.Damage + 1) / 2;
+	Template.BaseDamage = Damage;
+	Template.iRange = 0;
+	Template.iRadius = 1;
+	Template.InfiniteAmmo = true;
+	Template.iPhysicsImpulse = 5;
+	Template.iEnvironmentDamage = W.Environment;
+	Template.NumUpgradeSlots = 0;
+	Template.Abilities.AddItem('SwordSlice');
+	Template.DamageTypeTemplateName = 'Melee';
+	Template.CanBeBuilt = false;
+	return Template;
 }
 
 static function X2ArmorTemplate SuitTemplate(LWMECs.LWMECSuit S)

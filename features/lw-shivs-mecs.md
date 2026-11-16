@@ -278,3 +278,11 @@ mission and threw it at a Sectoid.
 - **Kinetic Strike** (12 damage, melee): no XCOM 2 counterpart without a melee weapon; not in yet.
 - The subsystems' charges by Long War's perks and Foundry projects (one each for now).
 - EW's MEC bodies (above).
+
+## Report (2026-11-16, Kinetic Strike)
+
+The **Kinetic Strike Module** is a MEC subsystem now (`LWMEC_KineticStrike`, a utility slot, MEC
+classes only): XCOM 2's sword slice (move and strike an adjacent enemy) with Long War's 12 damage,
+built in engineering at Long War's cost. Checked on wingpu: a MEC beside a Drone struck it ("SwordSlice
+on AdvMEC_M1 hit"). The grey market sells the robots' gear under its own templates now (it had
+named items that do not exist for the MEC suits and weapons, the Sentry Gun and the module).

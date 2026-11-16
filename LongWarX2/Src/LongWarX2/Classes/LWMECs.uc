@@ -25,6 +25,8 @@ struct LWMECWeapon
 };
 
 var config int AugmentCash, AugmentMeld, AugmentDays;
+/** The Kinetic Strike Module (a melee strike, X2Item_LWMECGear). */
+var config LWMECWeapon KineticStrike;
 var config LWMECStats Base;
 var config array<LWMECSuit> Suits;
 var config array<LWMECWeapon> Weapons;

@@ -375,6 +375,7 @@ for (const c of MEC_CLASSES) {
     'bNoSecondaryWeapon=true',
     '+AcceptedCharacterTemplates="LWMEC"',
     '+AllowedWeapons=(SlotType=eInvSlot_PrimaryWeapon, WeaponType="lw_mec")',
+    '+AllowedWeapons=(SlotType=eInvSlot_Utility, WeaponType="lw_mec_kinetic")',
     '+AllowedArmors="lw_mec"',
     'bAllowAWCAbilities=0',
     'bHasClassMovie=false',

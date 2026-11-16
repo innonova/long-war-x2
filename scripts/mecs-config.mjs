@@ -48,4 +48,8 @@ for (const [id, w] of readWeapons(core, ITEMS)) {
   if (!w.props.includes('Mec') || !(Number(w.iDamage) > 0) || /MEC_|Mec(Flame|Kinetic|Proximity|Electro|Grenade|Restorative)/i.test(ITEMS[id] ?? '')) continue
   out.push(`+Weapons=(Item=${id}, Damage=${w.iDamage}, Crit=${w.iCritical}, Aim=${w.iOffenseBonus}, Environment=${w.iEnvironmentDamage}, Ammo=${Number(w.iSuppression) % 100}${build(id)})`)
 }
+// The Kinetic Strike Module (Weapons= eItem_MecKineticArm): its damage; a melee strike (X2Item_LWMECGear).
+const kinetic = ITEMS.indexOf('eItem_MecKineticArm')
+const k = readWeapons(core, ITEMS).get(kinetic)
+out.push("; The Kinetic Strike Module: a melee strike's Damage.", `KineticStrike=(Item=${kinetic}, Damage=${k.iDamage}, Environment=${Math.max(0, Number(k.iEnvironmentDamage))}${build(kinetic)})`)
 console.log(out.join('\r\n'))

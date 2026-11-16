@@ -104,6 +104,7 @@ const SHIVS = { 100: 'LWSHIV', 101: 'LWSHIV_Alloy', 102: 'LWSHIV_Hover', 109: 'L
 // civvies), Weapons= with eWP_Mec and a damage (not the subsystems).
 for (const [id, a] of readArmours(core, ITEMS)) if (a.props.includes('MEC') && ITEMS[id] !== 'eItem_MecCivvies') SHIVS[id] = `LWMEC_Suit_${id}`
 for (const [id, w] of weapons) if (w.props.includes('Mec') && Number(w.iDamage) > 0 && !/Mec(Flame|Kinetic|Proximity|Electro|Grenade|Restorative)/.test(ITEMS[id] ?? '')) SHIVS[id] = `LWMEC_Weapon_${id}`
+SHIVS[ITEMS.indexOf('eItem_MecKineticArm')] = 'LWMEC_KineticStrike'
 for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number), CRAFT, SMALL.map((x) => x.item), Object.keys(SHIVS).map(Number)]) {
   for (const item of items) {
     if (item === null) continue
@@ -163,6 +164,6 @@ out.push(
     .filter(([item, b]) => item > 0 && b.cash > 0 && !UNSELLABLE.has(item) && ITEMS[item] && !/^eItem_(BEGIN|END)_/.test(ITEMS[item]))
     .sort((a, b) => a[0] - b[0])
     // Alloys and elerium are XCOM 2's own resources in the port (X2Item_LWArtifacts.ItemFor).
-    .map(([item, b]) => `+Sales=(Item=${item}, Template=${{ 161: 'EleriumDust', 162: 'AlienAlloy' }[item] ?? itemTemplate(item, ITEMS)}, Cash=${b.days !== -1 ? Math.trunc(b.cash * 0.4) : b.cash}${isCorpse(item) ? ', Corpse=true' : ''})`),
+    .map(([item, b]) => `+Sales=(Item=${item}, Template=${{ 161: 'EleriumDust', 162: 'AlienAlloy' }[item] ?? SHIVS[item] ?? itemTemplate(item, ITEMS)}, Cash=${b.days !== -1 ? Math.trunc(b.cash * 0.4) : b.cash}${isCorpse(item) ? ', Corpse=true' : ''})`),
 )
 console.log(out.join('\r\n'))
