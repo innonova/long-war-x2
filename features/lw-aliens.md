@@ -282,7 +282,9 @@ document the encodings):
   Mind Control (`NotLongWarWeapons`); they have Long War's Rift, Mind Control, Psi Drain, Mindfray.
 - **Their AI** (`XComAI.ini`, in place of the Avatar's red-alert tree): Long War's Mind Control on
   a soldier, Psi Drain on an ally when hurt, Mindfray on a soldier, else move and shoot as the
-  Avatar did. (Rift, an area power, is not in the AI yet.)
+  Avatar did. The Rift is in the AI too, aimed as XCOM 2 aims its own Dimensional Rift (where it
+  catches three of XCOM's and none of the aliens: `LWRiftProfile`), but **not seen used yet**: in
+  the one test the mind-controlled soldier stood among the squad, so no aim was clear of an ally.
 
 **Checked on wingpu** (an Ethereal and a Sectoid spawned beside the squad, the Ethereal hurt):
 its first turn, Long War's Mind Control took a soldier; unhurt after its regeneration (Long War's
