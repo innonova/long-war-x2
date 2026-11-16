@@ -236,3 +236,17 @@ Control port: `mec` (the lab and the MECs), `mec can` (who may be augmented and 
 next squad).
 
 **Next:** EW's MEC bodies (step c); subsystems (phase 4).
+
+## Report (2026-11-16, EW's MEC bodies tried, left out)
+
+The converter learnt what EW's MECs need: a body chosen by the suit worn (`LWX2EWBodies` `Armor`;
+Mark I for MEC-1, Mark II for MEC-2 and -3, Mark III from MEC-4) and an AnimSet in another package
+(EW keeps the MECs' animations with the MEC Minigun: `setsPkg`). On wingpu the first try turned the
+whole picture black once the MEC moved; with its animations re-encoded per track (as the
+Cyberdisc's) the picture stayed, but the MEC's mesh came out torn into a disc of spikes on the
+ADVENT MEC's pawn (`logs/wingpu_mec_ew_body_broken.png`): EW's MEC skeleton is not the ADVENT
+MEC's, and the animations named for it do not drive it whole.
+
+**So the MECs keep XCOM 2's ADVENT MEC body for now**; EW's suits are listed apart in the converter
+(`EW_MEC_SUITS`, not converted) for that work. The armour-chosen body and the AnimSet from another
+package stay in the converter and `LWX2EWBodies` (a SHIV or alien could use them).

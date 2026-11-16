@@ -51,15 +51,21 @@ export const EW_UNITS: EWUnit[] = [
   // Long War's SHIVs (features/lw-shivs-mecs.md): the mod's own templates, on the ADVENT MEC's pawn.
   { template: 'LWSHIV', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank_SF', mesh: 'SM_Shiv_L1', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv1Shiv_DIF$/, normal: /^Lv1Shiv_NRM$/, weapon: SHIV_MINIGUN },
   { template: 'LWSHIV_Alloy', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank2_SF', mesh: 'SM_Shiv_L2', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv2Shiv_DIF$/, normal: /^Lv2Shiv_NRM$/, weapon: SHIV_MINIGUN },
-  // Long War's MEC troopers (the mod's LWMEC, on the ADVENT MEC's pawn): EW's Mark I, II and III suits by the Long War suit
-  // worn (MEC-1; MEC-2 and -3; MEC-4 on), their animations in the MEC Minigun's package, the Minigun in their hands.
+  { template: 'LWSHIV_Hover', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank3_SF', mesh: 'SM_Lv3Shiv', sets: ['Default', 'Mini'], diffuse: /^VEH_Lv3Shiv_DIF$/, normal: /^VEH_Lv3Shiv_NRM$/, weapon: SHIV_MINIGUN },
+]
+
+/**
+ * EW's MEC suits for Long War's MEC troopers (features/lw-shivs-mecs.md), not converted yet: on the ADVENT MEC's pawn their
+ * mesh came out torn into spikes (its skeleton is not the ADVENT MEC's), and before the animations were re-encoded the whole
+ * picture went black once one moved. Kept here for that work; the MECs keep XCOM 2's ADVENT MEC body meanwhile.
+ */
+export const EW_MEC_SUITS: EWUnit[] = [
   ...[[1, ['LWMEC_Suit_193']], [2, ['LWMEC_Suit_194', 'LWMEC_Suit_145']], [3, ['LWMEC_Suit_195', 'LWMEC_Suit_148', 'LWMEC_Suit_191', 'LWMEC_Suit_210']]].flatMap(([mark, suits]) =>
     (suits as string[]).map((armor) => ({
       template: 'LWMEC', animsAs: 'AdvMEC_M2', armor, pkg: `Unit_MecMark${mark}_SF`, mesh: mark === 1 ? 'SM_MEC_MarkI' : mark === 2 ? 'SM_Mec_MarkII' : 'SM_Mec_MarkIII',
       sets: ['AS_MEC'], setsPkg: 'Weapon_MEC_Chaingun_SF', reencode: true, diffuse: new RegExp(`^MEC_Mark${mark}_DIF$`), normal: new RegExp(`^MEC_Mark${mark}_NRM$`),
       weapon: { pkg: 'Weapon_MEC_Chaingun_SF', mesh: 'SM_MECChainGun', diffuse: /^MEC_Chaingun_DIF$/, normal: /^MEC_Chaingun_NRM$/ },
     }))),
-  { template: 'LWSHIV_Hover', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank3_SF', mesh: 'SM_Lv3Shiv', sets: ['Default', 'Mini'], diffuse: /^VEH_Lv3Shiv_DIF$/, normal: /^VEH_Lv3Shiv_NRM$/, weapon: SHIV_MINIGUN },
 ]
 
 /** An EW unit package's objects by name: its mesh's, its sets' and its textures' full paths (forced exports). */
