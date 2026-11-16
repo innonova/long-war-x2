@@ -330,3 +330,16 @@ visible streamed levels).
 - The armory in EW's rooms (its loadout and soldier screens still stand the soldier in the
   Avenger's armory).
 - EW's glowing light strips; EW's own submenu clip.
+
+### EW's own room submenu: tried (2026-11-16), not solved
+
+The strategy HUD's `subMenuMC` takes `AddOption`, `SetHelpText`, `Show` and `setFocus` but
+creates no option clips. Its `AddOption` comes from a class of EW's shared components movie
+(only the movie's sample code names it), so that class isn't there. Ruled out:
+- the components movie not loaded: it is in the converted package (`ewxComponents.Components`,
+  `ewxStrategyComponents.StrategyComponents`), and loading both before the HUD changed nothing;
+- the import paths: some are written with backslashes (`..\gfxComponents\components.swf`);
+  all 472 rewritten with forward slashes changed nothing (reverted).
+Next to try: whether EW's component classes clash with XCOM 2's of the same names (as `Colors`
+did, which the converter renames), by dumping which classes the components movie defines.
+XCOM 2's list stands in meanwhile.
