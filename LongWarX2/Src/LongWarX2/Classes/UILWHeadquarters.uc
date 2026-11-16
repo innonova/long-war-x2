@@ -230,7 +230,7 @@ function int PrepareMission()
 		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate(Source)), Where, Region.GetReference(), Rewards, true, false);
 		Mission.GeneratedMission.SitReps.Length = 0;
 		Mission.TacticalGameplayTags.Length = 0;
-		if (EWMap == "" || UseEWPlot(Mission, true, EWMap, Kind == 10 && Council.Kind == 2) || PreferOutdoorPlot(Mission) || Attempt == 7)
+		if (EWMap == "" || UseEWPlot(Mission, true, EWMap, Kind == 10 && Council.Kind >= 2) || PreferOutdoorPlot(Mission) || Attempt == 7)
 			break;
 		History.CleanupPendingGameState(NewGameState);
 	}

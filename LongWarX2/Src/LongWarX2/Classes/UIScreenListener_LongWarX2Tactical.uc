@@ -241,6 +241,9 @@ function CheckSwept()
 	// A council bomb disposal (LWX2CouncilBomb): its timer, and no victory until the bomb is disarmed.
 	if (!class'LWX2CouncilBomb'.static.Update())
 		return;
+	// A council extraction or rescue (LWX2CouncilVIP): the VIP, and no victory until they got away.
+	if (!class'LWX2CouncilVIP'.static.Update())
+		return;
 	// Units that came after the pods (a Chryssalid's zombie, a spawn of XCOM 2's) given their EW body too.
 	class'LWX2EWBodies'.static.ApplyAll();
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
@@ -277,6 +280,8 @@ static function LongWarObjectives()
 	if (!class'LWX2EWMapPieces'.static.HasMap())
 		return;
 	Label = class'LWX2CouncilBomb'.static.ObjectiveText() != "" ? class'LWX2CouncilBomb'.static.ObjectiveText() : "Kill or capture every alien";
+	if (class'LWX2CouncilVIP'.static.ObjectiveText() != "")
+		Label = class'LWX2CouncilVIP'.static.ObjectiveText();
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 	if (Battle == none || Battle.MapData.ActiveMission.sType == "Terror")
 		return;

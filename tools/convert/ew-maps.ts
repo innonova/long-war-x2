@@ -71,6 +71,8 @@ export function writePlots(mod: string, content: string, work: string, template:
     if (!existsSync(mapIni) || !existsSync(levelIni) || !sectionCurrent(mapIni) || !sectionCurrent(levelIni)) continue
     const map = readSection(readFileSync(mapIni, 'latin1'))
     const variant = readSection(readFileSync(levelIni, 'latin1'))
+    // (A variant with its own drop zone lands the squad there: the Pier's rescue starts by the VIP.)
+    if (variant.dropZones.length) map.dropZones = variant.dropZones
     map.pieces.push(...variant.pieces)
     map.doors.push(...variant.doors)
     map.lights.push(...variant.lights)

@@ -1,6 +1,6 @@
 // For development: one connection to the control port (LWX2Control): a command a line, the
 // answer's lines, then ".". "help" lists the commands. Text mode, lines split here.
-class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy, LWBaseRules, XComGameState_LWAirWar, LWX2CouncilBomb);
+class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy, LWBaseRules, XComGameState_LWAirWar, LWX2CouncilBomb, LWX2CouncilVIP);
 
 /** What came in and is not yet a whole line. */
 var string Pending;
@@ -2639,6 +2639,8 @@ function Council(array<string> Args, out array<string> Out)
 	local XComGameState NewGameState;
 	local XComGameState_LWStrategy S;
 	local LWX2CouncilBomb.LWX2BombDef Bomb;
+	local LWX2CouncilVIP.LWX2VIPDef VIPDef;
+	local XComGameState_Unit VIP;
 	local TTile Tile;
 	local vector At;
 	local int i;
@@ -2676,6 +2678,31 @@ function Council(array<string> Args, out array<string> Out)
 			Tile = `XWORLD.GetTileCoordinatesFromPosition(At);
 			Out.AddItem("node" @ i @ "at" @ Tile.X @ Tile.Y @ Tile.Z @ ((class'LWX2CouncilBomb'.static.State() != none && class'LWX2CouncilBomb'.static.State().NodeOff[i]) ? "off" : "on"));
 		}
+	}
+	// (In an extraction or rescue: the VIP's, the place they are reached and the Skyranger's tiles; 'council vipto <x> <y> <z>'
+	// the VIP put on that tile at once, a test aid.)
+	if (class'LWX2CouncilVIP'.static.Active(VIPDef) && `XWORLD != none)
+	{
+		VIP = class'LWX2CouncilVIP'.static.VIPUnit();
+		if (VIP != none && Args.Length > 4 && Args[1] == "vipto")
+		{
+			Tile.X = int(Args[2]);
+			Tile.Y = int(Args[3]);
+			Tile.Z = int(Args[4]);
+			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: the VIP moved");
+			VIP = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', VIP.ObjectID));
+			VIP.SetVisibilityLocation(Tile);
+			`TACTICALRULES.SubmitGameState(NewGameState);
+			if (XGUnit(VIP.GetVisualizer()) != none)
+				XGUnit(VIP.GetVisualizer()).GetPawn().SetLocation(`XWORLD.GetPositionFromTileCoordinates(Tile));
+		}
+		if (VIP != none)
+			Out.AddItem("vip" @ VIP.GetFullName() @ "#" $ VIP.ObjectID @ "at" @ VIP.TileLocation.X @ VIP.TileLocation.Y @ VIP.TileLocation.Z @ "team" @ VIP.GetTeam()
+				@ "joined" @ class'LWX2CouncilVIP'.static.State().bJoined @ "away" @ class'LWX2CouncilVIP'.static.State().bExtracted @ "dead" @ VIP.IsDead());
+		Tile = `XWORLD.GetTileCoordinatesFromPosition(VIPDef.Approach);
+		Out.AddItem("reached at" @ (VIPDef.bApproach ? (Tile.X @ Tile.Y @ Tile.Z) : "(a rescue: from the start)"));
+		Tile = `XWORLD.GetTileCoordinatesFromPosition(VIPDef.Extract);
+		Out.AddItem("skyranger at" @ Tile.X @ Tile.Y @ Tile.Z @ "| objective:" @ class'LWX2CouncilVIP'.static.ObjectiveText());
 	}
 	Out.AddItem("council: next in" @ S.CouncilCountdown @ "hours; played" @ S.CouncilPlayed.Length);
 	for (i = 0; i < S.Sites.Length; i++)
