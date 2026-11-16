@@ -99,7 +99,7 @@ static function bool Update()
 		V.VIP = Ref;
 		V.bJoined = !P.bApproach;
 		VIP = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Ref.ObjectID));
-		if (VIP != none && P.First $ P.Last != "")
+		if (VIP != none && (P.First != "" || P.Last != ""))
 			VIP.SetCharacterName(P.First, P.Last, "");
 		// The Skyranger: XCOM 2's evac zone where EW's arrow pointed.
 		class'XComGameState_EvacZone'.static.PlaceEvacZone(NewGameState, Floor(P.Extract), eTeam_XCom);
