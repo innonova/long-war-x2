@@ -284,3 +284,56 @@ EW's VIP missions are streamed levels too (`URB_PierA_Stream`, `URB_StreetHurric
 
 **Checked on wingpu:** the Street Hurricane extraction on `LWX2V_URB_StreetHurricane_Stream`: the squad
 at the Skyranger in the evac zone, Thomas Hutch reached, evacuated, the aliens killed, won.
+
+## Report (2026-11-16, step 4: the Chryssalid hive)
+
+**When Long War offers it** (`XGFundingCouncil.DetermineNewFCMission`, read from stock Long War): in place of the
+month's council mission, once the campaign is past day 35 (`IsChryssalidHiveValid`: `STAT_GetStat(eRecap_Days) > 35`),
+XCOM has ever held a Chryssalid corpse (`EverHadItem(eItem_CryssalidCorpse)`), and it was never played
+(`HasPlayedChryssalidHive`). It is always in Canada (`BuildMission`: `ECountry` 15, Newfoundland), pays §450
+(scaled by the campaign's age like every council reward: §337 on day 36) and Canada's panic −20; failing it
+costs 40 panic on North America. Won with Canada gone from the council, the United States or Mexico (the more
+panicked) loses 20 panic instead (`ApplyChryssalidHivePanicBonus`).
+- `council-config.mjs` writes it as `Special=true, Country=Canada`; `LWCouncil.HiveDue` checks the rule
+  (XCOM 2's `EverAcquiredInventoryTypes` for "ever held"); special missions are left out of the kinds' rotation.
+- Money rewards that are a fixed sum (the hive's §450) were read as zero: `RollRewards` now keeps the sum when
+  a reward has no multiple.
+
+**The mission** (EW's `XComSpecialMissionHandler_ChrysHive` and the `EWI_ChryssalidHive_Stream` level's Kismet,
+read by `ew-objectives.ts readHive` into `[LongWarX2.LWX2ChryssalidHive]`), played on its own variant plot
+(`LWX2V_EWI_ChryssalidHive_Stream`) by `LWX2ChryssalidHive`:
+- **Objectives in EW's order and words:** investigate the response team's disappearance; on seeing a zombie, a
+  Chryssalid or the ship (EW's `XComSquadVisiblePoint`s raising `ShipSpotted`: in line of sight within the
+  sight radius × √0.75, its `fMinSightPercent`), find the source of the infestation; on seeing the whale, reactivate
+  the ship's transponder.
+- **The transponder:** `LWX2_ActivateTransponder`, any soldier beside it, one action (EW's interactive actor raising
+  `EngineActivated`). From then the mission is won (EW marks it so).
+- **The run:** the EVAC volume (the level's trigger volume tagged EVAC; XCOM 2's evac zone placed in it, so it can
+  be seen), "Turns until Air Strike" from 8 (`AirStrikeRemainingTime`), counting down at XCOM's turn ends, the
+  first one not counted (EW's `FirstCountdownCheck`). When every soldier still standing is in the volume (or
+  evacuated), or the count is out, the air strike kills every alien (`KillSquad` on the aliens) and the battle is won.
+- **The level's scripted spawns** (27 on this map): each `SeqAct_SpawnAlien`'s alien and point, and what sets it off,
+  found by walking its Kismet back: zombies at the start and as soldiers first enter its volumes (before the whale
+  is seen), by EW's `EnemyLevel`; the hive's Chryssalids on its turns 1 to 8 after the whale is seen; on the run,
+  one Chryssalid from each of the ship's three exits whose volume a soldier enters. Spawned Chryssalids are set
+  on the nearest soldier (EW's `bRevealSpawn`, `bTriggerOverwatch`).
+
+**Decisions:**
+- **EnemyLevel** is EW's from the number of roaming aliens (`KismetRoamingNumber(iNumDynamicAliens)`: more than 4 → 2,
+  4 → 1, fewer → 0). The port takes the size of the mission's Long War squad for that number.
+- **XCOM 2's evac zone is placed in the EVAC volume** when the run begins. EW has no evac action there (soldiers
+  stand in the volume); the zone makes the place visible, and evacuating counts as being there.
+- **The Meld tutorial is left out:** Long War only forces it in EW's tutorial (`XGSetupPhaseManager`,
+  `DetermineNewFCMission(eFCM_MeldTutorial)`); `FilterSpecialMissionMaps` never picks it otherwise. The port has no
+  tutorial.
+- **Not ported:** a zombie seen gets a Chryssalid egg implanted (the handler's `OnEnemySeen`); XCOM 2's psi zombie
+  has no such egg. The level's own cap on spawning aliens (`SpawningAliens` against `AlienCap`) is not read.
+- The mission is labelled with its kind as Long War has it (assault).
+
+**Checked on wingpu** (a test campaign; `council now 29`): the hive loads on its plot; five zombies at the start
+(EnemyLevel 2); a zombie in sight moved the objective to "Find the source…"; a soldier on the ship's deck saw the
+whale ("Reactivate the ship's transponder…"); the aliens' next turn sent the hive's first Chryssalid at the squad;
+the transponder reactivated from beside it ("Reach the EVAC zone… Turns until Air Strike: 8"), the evac zone at the
+EVAC volume; the count 8, then 7 (the first turn end not counted); the squad in the volume brought the air strike,
+the mission summary, and back on the Geoscape the council paid (§225, Canada −20). In a second campaign the hive was
+not offered on day 0 and was on day 36 with a Chryssalid corpse held (§337).

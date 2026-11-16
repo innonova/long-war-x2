@@ -11,8 +11,12 @@ import { fileURLToPath } from 'node:url'
 
 const data = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'xcom-ew-lw-tree', 'data', 'council.json'), 'utf8'))
 const c = data.constants
-// The four kinds Long War rotates (ChooseNextMissionByType): 1 assault, 2 bomb, 3 extraction, 4 rescue; the special
-// ones (the Chryssalid hive, the Meld tutorial, Progeny) are left for later.
+// The four kinds Long War rotates (ChooseNextMissionByType): 1 assault, 2 bomb, 3 extraction, 4 rescue. Of the special ones
+// (DetermineNewFCMission), the Chryssalid hive (29) comes by its own rule, in its own country; the Meld tutorial (30) only
+// in EW's tutorial (XGSetupPhaseManager forces it), which the port has not, so it is left out.
+// EW's ECountry, for a special mission's country (BuildMission's kMission.ECountry).
+const COUNTRY = ['USA', 'Russia', 'China', 'UK', 'Germany', 'France', 'Japan', 'India', 'Australia', 'Italy', 'SouthKorea', 'Turkey', 'Indonesia', 'Spain', 'Pakistan', 'Canada', 'Iran', 'Israel', 'Egypt', 'Brazil', 'Argentina', 'Mexico', 'SouthAfrica', 'Poland', 'Ukraine', 'Nigeria', 'Venezuela']
+const SPECIAL = [29]
 const maps = readFileSync(process.argv[2] ?? '', 'latin1').split(/\r?\n/).filter((l) => /^\s*Maps=/.test(l))
 /** The map entry for a mission's variant (DisplayName "<map> (<variant>)"): its map and its variant level. */
 const entry = (m) => {
@@ -22,7 +26,7 @@ const entry = (m) => {
   return { map: /\bName="?(\w+)/.exec(l)[1], level }
 }
 // (A mission no map entry carries, as the Boulevard's extraction: Long War never offers it.)
-const all = data.missions.filter((m) => m.kind >= 1 && m.kind <= 4 && m.id < 18)
+const all = data.missions.filter((m) => (m.kind >= 1 && m.kind <= 4 && m.id < 18) || SPECIAL.includes(m.id))
 const missions = all.filter((m) => entry(m))
 const unmapped = all.filter((m) => !entry(m))
 const reward = (r) => {
@@ -51,9 +55,11 @@ const out = [
   `SoldierLevels[2]=${c.MISSION_REWARD_SOLDIER_HIGH_LEVEL}`,
   "; Missions (BuildMission): Id (EFCMission), Kind (1 assault, 2 bomb, 3 extraction, 4 rescue), its EW Map, PanicOnFailure",
   '; (on its continent); Rewards: Type 1 cash (Money: x the rolled amount), 3 a soldier (SoldierClass, SoldierLevel; -1 rolled),',
-  "; 4 engineers, 5 scientists, 6 the country's panic, 8 elerium (Amount).",
+  "; 4 engineers, 5 scientists, 6 the country's panic, 8 elerium (Amount). Special: offered by its own rule, not the kinds'",
+  "; rotation (29 the Chryssalid hive: after day 35 once a Chryssalid corpse was ever held, once); Country: its own country.",
   '; Map: its EW map, Level: the streamed level with its variant (DefaultMaps.ini).',
   ...(unmapped.length ? [`; Not in DefaultMaps.ini, so never offered: ${unmapped.map((m) => `${m.id} (${m.variant})`).join(', ')}.`] : []),
-  ...missions.map((m) => `+Missions=(Id=${m.id}, Kind=${m.kind}, Map="${entry(m).map}", Level="${entry(m).level ?? ''}", PanicOnFailure=${m.panicOnFailure ?? 0}, Rewards=(${m.rewards.map(reward).join(', ')}))`),
+  ...missions.map((m) => `+Missions=(Id=${m.id}, Kind=${m.kind}, Map="${entry(m).map}", Level="${entry(m).level ?? ''}", PanicOnFailure=${m.panicOnFailure ?? 0}, ` +
+    `${SPECIAL.includes(m.id) ? `Special=true, Country=${COUNTRY[m.country]}, ` : ''}Rewards=(${m.rewards.map(reward).join(', ')}))`),
 ]
 console.log(out.join('\r\n'))

@@ -582,6 +582,19 @@ export function makeBombWords({ loc }) {
   return { modText, text: abilities.join('\r\n'), named }
 }
 
+/** The Chryssalid hive's transponder action (LWX2ChryssalidHive): its help EW's own objective, from [EWIMissions]
+ *  ("Reactivate the ship's transponder to initiate airstrike then report to EVAC"); its name the mod's. */
+export function makeHiveWords({ loc }) {
+  const text = loc.replace(/\r/g, '')
+  const at = text.indexOf('\n[EWIMissions]\n')
+  if (at < 0) return { text: '', named: 0 }
+  const end = text.indexOf('\n[', at + 2)
+  const help = text.slice(at, end < 0 ? undefined : end).match(/^m_strChrysObj3="(.*)"\s*$/m)?.[1]
+  if (!help) return { text: '', named: 0 }
+  const title = 'Reactivate Transponder'
+  return { text: ['', '[LWX2_ActivateTransponder X2AbilityTemplate]', `LocFriendlyName="${title}"`, `LocHelpText="${help}"`, `LocLongDescription="${help}"`, `LocFlyOverText="${title}"`, ''].join('\r\n'), named: 1 }
+}
+
 /** The MECs' words (features/lw-shivs-mecs.md): Long War's item names and summaries for the MEC suits (LWMEC_Suit_<id>) and
  *  weapons (LWMEC_Weapon_<id>, and the Kinetic Strike Module, LWMEC_KineticStrike), from XComLWMECs.ini's Enum= names. */
 export function makeMECWords({ loc, strategyLoc, mecsIni }) {

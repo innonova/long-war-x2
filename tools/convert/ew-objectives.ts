@@ -111,7 +111,7 @@ export function readBomb(file: string, map: string, level: string): Bomb | undef
 }
 
 /** A Kismet op or variable: its class, properties, output links and variable links (export indices, 0-based). */
-interface KOp { k: number; type: string; props: Map<string, Tag>; out: number[]; vars: Map<string, number[]> }
+interface KOp { k: number; type: string; props: Map<string, Tag>; out: number[]; links: { desc: string; to: number }[]; vars: Map<string, number[]> }
 
 /** A level's whole Kismet (every sequence's ops and variables), with what is needed to follow it. */
 function readKismet(bytes: Uint8Array) {
@@ -134,14 +134,18 @@ function readKismet(bytes: Uint8Array) {
     } catch {
       return
     }
-    const op: KOp = { k, type: e.type, props: new Map(), out: [], vars: new Map() }
+    const op: KOp = { k, type: e.type, props: new Map(), out: [], links: [], vars: new Map() }
     for (const t of tags) {
       if (t.name === 'OutputLinks' && t.type === 'ArrayProperty') {
         for (const ol of structs(t.value)) {
+          const desc = str(ol.find((x) => x.name === 'LinkDesc'))
           const links = ol.find((x) => x.name === 'Links')
           if (links) for (const l of structs(links.value)) {
             const to = l.find((x) => x.name === 'LinkedOp')
-            if (to) op.out.push(dv(to.value).getInt32(0, true) - 1)
+            if (to) {
+              op.out.push(dv(to.value).getInt32(0, true) - 1)
+              op.links.push({ desc, to: dv(to.value).getInt32(0, true) - 1 })
+            }
           }
         }
       } else if (t.name === 'VariableLinks' && t.type === 'ArrayProperty') {
@@ -436,7 +440,198 @@ export function readRecovery(file: string, map: string, level: string): Recovery
   }
 }
 
-/** Every bomb disposal, VIP mission and covert extraction this install has, written into the mod's config; returns how many. */
+export interface HiveSpawn {
+  /** Long War's character: 13 a Chryssalid, 14 a zombie. */
+  char: number
+  at: number[]
+  /** 0 at the start; 1 as a soldier enters a volume; 2 on a turn of the hive's (the aliens' turns after the whale is seen);
+   *  3 from a ship's exit, the aliens' turn after a soldier enters its volume on the run to the EVAC; 4 as the run starts. */
+  when: number
+  volume: number
+  turn: number
+  /** Only at this enemy level (EW's EnemyLevel: 2 with more than 4 roaming aliens, 1 with 4, 0 fewer); -1 at any. */
+  level: number
+}
+
+export interface Hive {
+  map: string
+  level: string
+  /** XCOM's turns from the transponder's activation to the air strike (AirStrikeRemainingTime). */
+  countdown: number
+  /** The ship's transponder (the interactive actor the beacon state enables; its InteractRemoteEvent starts the run). */
+  transponder: number[]
+  /** The EVAC volume (the trigger volume tagged EVAC). */
+  evac: { center: number[]; extent: number[] }
+  /** Where the squad sees the infestation's source (the ship: find the source) and the whale (the hive: reactivate the
+   *  transponder): EW's XComSquadVisiblePoints that raise ShipSpotted and WhaleSpotted. */
+  ship: number[][]
+  whale: number[][]
+  spawns: HiveSpawn[]
+  volumes: { center: number[]; extent: number[] }[]
+  /** EW's objectives in order (investigate, find the source, the transponder, reach the EVAC) and the count's label. */
+  texts: string[]
+  strike: string
+}
+
+/** The Chryssalid hive's level read (XComSpecialMissionHandler_ChrysHive's states and the level's Kismet): the transponder,
+ *  the EVAC volume, the points that move the objectives on, and every scripted spawn of a zombie or a Chryssalid with what
+ *  sets it off; undefined when it is not as expected. */
+export function readHive(file: string, map: string, level: string): Hive | undefined {
+  const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
+  const meta: any = new Package(bytes)
+  const pkg: any = openPackage(bytes)
+  const K = readKismet(bytes)
+  const dv = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
+  const nameOf = (t: Tag | undefined) => (t ? String(pkg.names[dv(t.value).getInt32(0, true)]?.name) : '')
+  const actorTags = (k: number): Tag[] => {
+    const data = pkg.data(k + 1)
+    for (const start of [26, ...Array.from({ length: 81 }, (_, j) => j)]) {
+      try {
+        const t = readTags(new Reader(data.subarray(start)), pkg)
+        if (t.some((x: Tag) => x.name === 'Location' || x.name === 'Tag')) return t
+      } catch {
+        // not here
+      }
+    }
+    return []
+  }
+  const loc = (k: number) => {
+    const l = k >= 0 ? actorTags(k).find((x) => x.name === 'Location') : undefined
+    return l ? [0, 4, 8].map((o) => Math.round(dv(l.value).getFloat32(o, true))) : undefined
+  }
+  // A brush actor's box, as readRecovery reads it.
+  const box = (k: number) => {
+    const t = actorTags(k)
+    const l = loc(k)
+    const brush = t.find((x) => x.name === 'Brush')
+    if (!l || !brush) return undefined
+    const v = dv(pkg.data(dv(brush.value).getInt32(0, true)))
+    const none = meta.names.indexOf('None')
+    let o = 4
+    while (v.getInt32(o, true) !== none) o += 24 + v.getInt32(o + 16, true)
+    o += 8
+    const b = Array.from({ length: 6 }, (_, j) => v.getFloat32(o + 4 * j, true))
+    return { center: [0, 1, 2].map((j) => Math.round(l[j]! + b[j]!)), extent: [3, 4, 5].map((j) => Math.round(b[j]!)) }
+  }
+  const actors = (type: string) => meta.exports.map((e: any, k: number) => ({ e, k })).filter((x: any) => x.e.type === type && /^TheWorld\.PersistentLevel\.[^.]+$/.test(x.e.fullName))
+  const evacK = actors('TriggerVolume').find((x: any) => nameOf(actorTags(x.k).find((t) => t.name === 'Tag')) === 'EVAC')?.k ?? -1
+  const evac = evacK >= 0 ? box(evacK) : undefined
+  const seen = (event: string) => actors('XComSquadVisiblePoint').filter((x: any) => nameOf(actorTags(x.k).find((t) => t.name === 'nmRemoteEventToTrigger')) === event).map((x: any) => loc(x.k)!).filter(Boolean)
+  const remote = (name: string) => K.ops.filter((o) => o.type === 'SeqEvent_RemoteEvent' && K.name(o, 'EventName') === name)
+  const beacon = remote('ActivateBeacon_Begin').flatMap((o) => K.reach(o, 1)).find((o) => o.type === 'SeqAct_EnableInteractiveActor')
+  const held = (k: number | undefined) => (k !== undefined && K.op(k) ? K.obj(K.op(k)!, 'ObjValue') : -1)
+  const transponder = beacon ? loc(held(beacon.vars.get('XComInteractiveLevelActor')?.[0])) : undefined
+  const ints = (o: KOp | undefined) => {
+    const t = o?.props.get('IntValue')
+    return t ? dv(t.value).getInt32(0, true) : 0
+  }
+  const countdown = ints(K.ops.find((o) => o.type === 'SeqVar_Int' && K.name(o, 'VarName') === 'AirStrikeRemainingTime'))
+  if (!evac || !transponder || countdown <= 0) return undefined
+
+  // A variable as what it stands for: a named one by the variable of that name; an external one (a subsequence's) by what
+  // its sequence links there.
+  const byName = (n: string) => K.ops.find((o) => /^SeqVar_/.test(o.type) && o.type !== 'SeqVar_Named' && K.name(o, 'VarName') === n)
+  const seqOf = (k: number) => meta.exports.findIndex((e: any) => e.fullName === meta.exports[k].fullName.split('.').slice(0, -1).join('.'))
+  const resolve = (k: number, depth = 0): KOp | undefined => {
+    const o = K.op(k)
+    if (!o || depth > 4) return o
+    if (o.type === 'SeqVar_Named') {
+      const to = byName(K.name(o, 'FindVarName'))
+      return to ? resolve(to.k, depth + 1) : undefined
+    }
+    if (o.type === 'SeqVar_External') {
+      const outer = K.op(seqOf(k))
+      const linked = outer?.vars.get(K.str(o, 'VariableLabel'))?.[0]
+      return linked !== undefined ? resolve(linked, depth + 1) : undefined
+    }
+    return o
+  }
+  const varName = (o: KOp, link: string) => {
+    const k = o.vars.get(link)?.[0]
+    const v = k !== undefined ? K.op(k) : undefined
+    return v?.type === 'SeqVar_Named' ? K.name(v, 'FindVarName') : v ? K.name(v, 'VarName') : ''
+  }
+  // Who links into an op (with the link's label); a subsequence's start, from what starts the subsequence.
+  const into = new Map<number, { desc: string; from: number }[]>()
+  for (const o of K.ops) for (const l of o.links) into.set(l.to, [...(into.get(l.to) ?? []), { desc: l.desc, from: o.k }])
+  const callers = (k: number) => {
+    const o = K.op(k)
+    if (o?.type === 'SeqEvent_SequenceActivated') return into.get(seqOf(k)) ?? []
+    return into.get(k) ?? []
+  }
+  type Found = { when: number; volume: number; turn: number; level: number; exitVar: string }
+  const volumes: Hive['volumes'] = []
+  const volumeIndex = (k: number) => {
+    const b = box(k)
+    if (!b) return -1
+    const i = volumes.findIndex((v) => v.center.join() === b.center.join())
+    if (i >= 0) return i
+    volumes.push(b)
+    return volumes.length - 1
+  }
+  // The nearest thing upstream that sets a spawn off, with the conditions on the way (a breadth-first walk back).
+  const trigger = (start: KOp): Found | undefined => {
+    let front = [{ k: start.k, turn: 0, level: -1, exitVar: '' }]
+    const done = new Set<number>([start.k])
+    for (let depth = 0; depth < 24 && front.length; depth++) {
+      const next: typeof front = []
+      for (const f of front) {
+        for (const c of callers(f.k)) {
+          if (done.has(c.from)) continue
+          done.add(c.from)
+          const o = K.op(c.from)
+          if (!o) continue
+          let { turn, level, exitVar } = f
+          if (o.type === 'SeqCond_CompareInt' && c.desc === 'A == B') {
+            const b = resolve(o.vars.get('B')?.[0] ?? -1)
+            if (varName(o, 'A') === 'TurnCounter' && !turn) turn = ints(b)
+            if (varName(o, 'A') === 'EnemyLevel' && level < 0) level = ints(b)
+          }
+          if (o.type === 'SeqCond_CompareBool' && /^Exit\w*Active$/.test(varName(o, 'Bool')) && c.desc === 'True') exitVar = varName(o, 'Bool')
+          if (turn) return { when: 2, volume: -1, turn, level, exitVar }
+          if (exitVar && o.type === 'SeqEvent_OnAlienEndingTurn') return { when: 3, volume: -1, turn: 0, level, exitVar }
+          if (o.type === 'SeqEvent_Touch') return { when: 1, volume: volumeIndex(K.obj(o, 'Originator')), turn: 0, level, exitVar: '' }
+          if (o.type === 'SeqEvent_RemoteEvent' && K.name(o, 'EventName') === 'EngineActivated') return { when: 4, volume: -1, turn: 0, level, exitVar: '' }
+          if (o.type === 'SeqEvent_RemoteEvent' && K.name(o, 'EventName') === 'XGBattle_Running_BeginBlockFinished') return { when: 0, volume: -1, turn: 0, level, exitVar: '' }
+          next.push({ k: c.from, turn, level, exitVar })
+        }
+      }
+      front = next
+    }
+    return undefined
+  }
+  // A ship's exit: the volume whose touch arms it (the SetBool of its Active variable, after a touch).
+  const exitVolume = (exitVar: string) => {
+    const set = K.ops.find((o) => o.type === 'SeqAct_SetBool' && (o.vars.get('Target') ?? []).some((k) => {
+      const v = K.op(k)
+      return v && (K.name(v, 'FindVarName') === exitVar || K.name(v, 'VarName') === exitVar)
+    }))
+    const t = set ? trigger(set) : undefined
+    return t?.when === 1 ? t.volume : -1
+  }
+  const spawns: HiveSpawn[] = []
+  for (const o of K.ops.filter((x) => x.type === 'SeqAct_SpawnAlien')) {
+    const type = K.name(o, 'ForceAlienType')
+    const char = type === 'ePawnType_Zombie' ? 14 : type === 'ePawnType_Chryssalid' ? 13 : 0
+    const point = resolve(o.vars.get('SpawnPoints')?.[0] ?? -1)
+    const at = point ? loc(K.obj(point, 'ObjValue')) : undefined
+    const t = trigger(o)
+    if (!char || !at || !t) continue
+    const volume = t.when === 3 ? exitVolume(t.exitVar) : t.volume
+    if ((t.when === 1 || t.when === 3) && volume < 0) continue
+    spawns.push({ char, at, when: t.when, volume, turn: t.turn, level: t.level })
+  }
+  const strings = new Map(K.ops.filter((o) => o.type === 'SeqVar_LocalizedString').map((o) => [K.str(o, 'strLookup').split('.').pop() ?? '', K.str(o, 'StrValue')]))
+  return {
+    map, level, countdown, transponder, evac,
+    ship: seen('ShipSpotted'), whale: seen('WhaleSpotted'), spawns, volumes,
+    texts: [1, 2, 3, 4].map((i) => strings.get(`m_strChrysObj${i}`) ?? ''),
+    strike: (strings.get('m_strAirStrikeCount') ?? '').trim(),
+  }
+}
+
+/** Every bomb disposal, VIP mission, covert extraction, data recovery and the hive this install has, written into the mod's
+ *  config; returns how many. */
 export function writeObjectives(cooked: string, mod: string): number {
   const vec = (p: number[]) => `(X=${p[0]}, Y=${p[1]}, Z=${p[2]})`
   const lines = [
@@ -486,6 +681,20 @@ export function writeObjectives(cooked: string, mod: string): number {
     lines.push(`+Recoveries=(Map="${r.map}", Level="${r.level}", Protect=${q(r.protect)}, Backup=${q(r.backup)}, Kill=${q(r.kill)}, Hint=${q(r.hint)})`)
     for (const p of r.points) lines.push(`+Points=(Level="${r.level}", Center=${vec(p.center)}, Extent=${vec(p.extent)}, Turns=${p.turns}, Seq=${p.seq})`)
     for (const g of r.groups) lines.push(`+Groups=(Level="${r.level}", Set=${g.set}, Turn=${g.turn}, Count=${g.count}, At=(${g.at.map(vec).join(', ')}))`)
+    n++
+  }
+  // The Chryssalid hive (LWX2ChryssalidHive): its points, its volumes and its scripted spawns, by level.
+  lines.push('', '[LongWarX2.LWX2ChryssalidHive]', 'ReachTiles=1.5', 'SightShare=0.75')
+  for (const m of missions.filter((x) => x.id === 29)) {
+    const file = levelFile(cooked, m.level)
+    if (!file) continue
+    const h = readHive(file, m.map, m.level)
+    if (!h) continue
+    const vecs = (ps: number[][]) => `(${ps.map(vec).join(', ')})`
+    lines.push(`+Hives=(Map="${h.map}", Level="${h.level}", Countdown=${h.countdown}, Transponder=${vec(h.transponder)}, EvacCenter=${vec(h.evac.center)}, EvacExtent=${vec(h.evac.extent)}, ` +
+      `Ship=${vecs(h.ship)}, Whale=${vecs(h.whale)}, Texts=(${h.texts.map(q).join(', ')}), Strike=${q(h.strike)})`)
+    for (const v of h.volumes) lines.push(`+Volumes=(Level="${h.level}", Center=${vec(v.center)}, Extent=${vec(v.extent)})`)
+    for (const s of h.spawns) lines.push(`+Spawns=(Level="${h.level}", Char=${s.char}, At=${vec(s.at)}, When=${s.when}, Volume=${s.volume}, Turn=${s.turn}, EnemyLevel=${s.level})`)
     n++
   }
   writeFileSync(join(mod, 'Config', 'XComLWX2EWObjectives.ini'), lines.join('\r\n') + '\r\n')

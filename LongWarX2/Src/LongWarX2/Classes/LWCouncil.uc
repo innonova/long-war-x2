@@ -29,6 +29,10 @@ struct LWCouncilMission
 	var string Level;
 	/** The panic on its continent when it fails (Long War's iPanicOnFailure). */
 	var int PanicOnFailure;
+	/** Offered by its own rule (DetermineNewFCMission), never by the kinds' rotation: 29 the Chryssalid hive. */
+	var bool Special;
+	/** Its own country (BuildMission's), for a special mission. */
+	var name Country;
 	var array<LWCouncilRewardDef> Rewards;
 };
 
@@ -153,7 +157,7 @@ static function bool ChooseMission(XComGameState_LWStrategy S, out LWCouncilMiss
 		return false;
 	k = Kinds[Rand(Kinds.Length)];
 	foreach default.Missions(M)
-		if (M.Kind == k && Playable(M))
+		if (M.Kind == k && !M.Special && Playable(M))
 			Of.AddItem(M);
 	Chosen = Of[Rand(Of.Length)];
 	return true;
@@ -175,9 +179,22 @@ static function bool HasPlayable(int Kind)
 	local LWCouncilMission M;
 
 	foreach default.Missions(M)
-		if (M.Kind == Kind && Playable(M))
+		if (M.Kind == Kind && !M.Special && Playable(M))
 			return true;
 	return false;
+}
+
+/** The Chryssalid hive, when Long War would offer it instead of the month's mission (DetermineNewFCMission): after day 35
+ *  (IsChryssalidHiveValid: STAT_GetStat(eRecap_Days) > 35), once XCOM has ever held a Chryssalid corpse
+ *  (STORAGE().EverHadItem(eItem_CryssalidCorpse)), and never before played (HasPlayedChryssalidHive). */
+static function bool HiveDue(XComGameState_LWStrategy S, out LWCouncilMission Hive)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+
+	if (!MissionById(29, Hive) || !Playable(Hive) || S.CouncilPlayed.Find(29) != INDEX_NONE || S.Days() <= 35)
+		return false;
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	return XComHQ != none && XComHQ.EverAcquiredInventoryTypes.Find(class'X2Item_LWArtifacts'.static.ItemFor('CryssalidCorpse')) != INDEX_NONE;
 }
 
 /** A council country under a satellite (GetAvailableMissionCountries), else any still in the council; -1 for none. */
@@ -205,10 +222,10 @@ static function NewMission(XComGameState_LWStrategy S, optional int Id)
 	local LWCouncilMission M;
 	local int Country;
 
-	// (Id: that mission, a test aid.)
-	if (Id > 0 ? !MissionById(Id, M) : !ChooseMission(S, M))
+	// (Id: that mission, a test aid.) The hive before the kinds' rotation, when it is due.
+	if (Id > 0 ? !MissionById(Id, M) : (!HiveDue(S, M) && !ChooseMission(S, M)))
 		return;
-	Country = ChooseCountry(S);
+	Country = M.Country != '' ? S.CountryIndex(M.Country) : ChooseCountry(S);
 	if (Country < 0)
 		return;
 	S.AddCouncilSite(M.Id, Country, RollRewards(S, M));
@@ -231,7 +248,8 @@ static function array<XComGameState_LWStrategy.LWCouncilReward> RollRewards(XCom
 		R.Type = D.Type;
 		R.Amount = D.Amount;
 		R.SoldierClass = D.SoldierClass;
-		if (D.Type == 1)
+		// (A mission's own sum, as the hive's §450, else the rolled amount times its multiple.)
+		if (D.Type == 1 && D.Money > 0)
 			R.Amount = int(D.Money * (default.MinMoney + 5 * Rand((default.MaxMoney - default.MinMoney) / 5 + 1)));
 		// Cash, engineers and scientists by the campaign's age, at least 1 (CreateMission).
 		if (Scale != 1.0 && (D.Type == 1 || D.Type == 4 || D.Type == 5))
@@ -307,7 +325,35 @@ static function Grant(XComGameState NewGameState, XComGameState_LWStrategy S, in
 			break;
 		}
 	}
+	if (S.Sites[SiteIndex].CouncilMission == 29)
+		HivePanicBonus(S);
 	S.Note("The council paid for the" @ KindName(S.Sites[SiteIndex].CouncilKind) @ "in" @ S.CountryName(Country) $ ":" @ RewardsText(S.Sites[SiteIndex].Rewards) $ ".");
+}
+
+/** The hive won with Canada gone from the council (ApplyChryssalidHivePanicBonus): the United States or Mexico loses 20 panic,
+ *  as Long War picks: Mexico if the States are gone or less panicked, else the States if Mexico is gone or less panicked,
+ *  else either; neither when both are gone. */
+static function HivePanicBonus(XComGameState_LWStrategy S)
+{
+	local int Canada, USA, Mexico;
+
+	Canada = S.CountryIndex('Canada');
+	USA = S.CountryIndex('USA');
+	Mexico = S.CountryIndex('Mexico');
+	if (Canada < 0 || USA < 0 || Mexico < 0 || !S.Countries[Canada].bLeft || (S.Countries[USA].bLeft && S.Countries[Mexico].bLeft))
+		return;
+	if (S.Countries[USA].bLeft || PanicBlocks(S, USA) < PanicBlocks(S, Mexico))
+		S.AddPanic(Mexico, -20);
+	else if (S.Countries[Mexico].bLeft || PanicBlocks(S, USA) > PanicBlocks(S, Mexico))
+		S.AddPanic(USA, -20);
+	else
+		S.AddPanic(Rand(2) == 0 ? Mexico : USA, -20);
+}
+
+/** XGCountry.GetPanicBlocks: panic + 1, 1 to 100. */
+static function int PanicBlocks(XComGameState_LWStrategy S, int Country)
+{
+	return Clamp(S.Countries[Country].Panic + 1, 1, 100);
 }
 
 /** Lost or let go (CausePanicOnFailure): its continent panics. */

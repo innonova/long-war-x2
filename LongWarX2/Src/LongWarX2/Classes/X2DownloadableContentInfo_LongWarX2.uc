@@ -138,6 +138,7 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 {
 	local LWX2CouncilBomb.LWX2BombDef Bomb;
 	local LWX2CovertExtraction.LWX2CovertDef Covert;
+	local LWX2ChryssalidHive.LWX2HiveDef Hive;
 
 	class'LWSHIVs'.static.AddFoundryAbilities(UnitState, SetupData);
 	// Neural Feedback's answer to psionic attacks (X2Ability_LWNeuralFeedback).
@@ -162,5 +163,8 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	if (class'LWX2CovertExtraction'.static.Operative() != none && UnitState.ObjectID == class'LWX2CovertExtraction'.static.Operative().ObjectID
 		&& class'LWX2CovertExtraction'.static.Active(Covert))
 		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_HackRelay', eInvSlot_Unknown, SetupData);
+	// The council's Chryssalid hive: any soldier can reactivate the ship's transponder (LWX2ChryssalidHive).
+	if (UnitState.GetTeam() == eTeam_XCom && UnitState.IsSoldier() && class'LWX2ChryssalidHive'.static.Active(Hive))
+		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_ActivateTransponder', eInvSlot_Unknown, SetupData);
 }
 

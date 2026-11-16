@@ -288,6 +288,11 @@ function Handle(string Line, out array<string> Out)
 		// (Long War's EFCMission; a test aid).
 		Council(Args, Out);
 		return;
+	case "hive":
+		// hive: the Chryssalid hive's state (LWX2ChryssalidHive): its objective, turns, spawns made; 'hive stage <n>': the
+		// objectives moved to that one (a test aid: 3 the transponder, as on seeing the whale).
+		Hive(Args, Out);
+		return;
 	case "hit":
 		// hit <attacker #id> <target #id> [ability, default StandardShot]: the shot's chance, crit and what made them.
 		if (Args.Length < 3)
@@ -2686,6 +2691,43 @@ static function bool TileTaken(TTile T)
 }
 
 /** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
+/** The Chryssalid hive (LWX2ChryssalidHive): its config, its state; 'hive stage <n>' (a test aid). */
+function Hive(array<string> Args, out array<string> Out)
+{
+	local LWX2ChryssalidHive.LWX2HiveDef H;
+	local XComGameState_LWX2Hive Hive;
+	local XComGameState NewGameState;
+	local int i, n;
+
+	Out.AddItem("config:" @ class'LWX2ChryssalidHive'.default.Hives.Length @ "hives," @ class'LWX2ChryssalidHive'.default.Volumes.Length @ "volumes,"
+		@ class'LWX2ChryssalidHive'.default.Spawns.Length @ "spawns" $ (class'LWX2ChryssalidHive'.default.Spawns.Length > 0 ? " (first: level" @ class'LWX2ChryssalidHive'.default.Spawns[0].Level
+		@ "char" @ class'LWX2ChryssalidHive'.default.Spawns[0].Char @ "when" @ class'LWX2ChryssalidHive'.default.Spawns[0].When $ ")" : ""));
+	if (!class'LWX2ChryssalidHive'.static.Active(H))
+	{
+		Out.AddItem("not on the hive");
+		return;
+	}
+	Hive = class'LWX2ChryssalidHive'.static.State();
+	if (Hive == none)
+	{
+		Out.AddItem("no state yet");
+		return;
+	}
+	if (Args.Length > 2 && Args[1] ~= "stage")
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: the hive's stage");
+		XComGameState_LWX2Hive(NewGameState.ModifyStateObject(class'XComGameState_LWX2Hive', Hive.ObjectID)).Stage = int(Args[2]);
+		`TACTICALRULES.SubmitGameState(NewGameState);
+		Hive = class'LWX2ChryssalidHive'.static.State();
+	}
+	for (i = 0; i < Hive.Spawned.Length; i++)
+		if (Hive.Spawned[i] != 0)
+			n++;
+	Out.AddItem("stage" @ Hive.Stage @ "enemy level" @ Hive.EnemyLevel @ "hive turn" @ Hive.HiveTurn @ "strike in" @ Hive.StrikeLeft @ "spawned" @ n @ "of" @ Hive.Spawned.Length
+		@ "| transponder" @ H.Transponder @ "evac" @ H.EvacCenter);
+	Out.AddItem("objective:" @ class'LWX2ChryssalidHive'.static.ObjectiveText());
+}
+
 /** The council's missions (LWCouncil): its clock, the missions offered; 'council now' one made at once. */
 function string AbilityRange(string Who, name AbilityName)
 {
