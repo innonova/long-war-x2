@@ -257,3 +257,16 @@ each, and wrote both words files (50 bonus names and descriptions). The game cam
 the main menu with the mod loaded. The behaviour itself was seen in the development build
 of the same commit (the feature files' reports), since the player's build has no control
 port.
+
+## Release (2026-11-16 midday)
+
+`LongWarX2-20261116-bf19894.zip` replaces `35646a2` as the only file on the draft
+v0.1.0-preview.1. New since 35646a2: the armory's menu drawn again (it was not, on every
+path: `lw-squad-select.md`), the Psi Labs on XCOM 2's soldier list, the Genetics Lab on EW's
+own Gene Mods screen, the Ethereals' Rift cast, SHIVs (built in engineering, in squad select
+and missions in EW's bodies, rest and repair, their weapons in the armory).
+
+Checked on wingpu from the zip: its setup (`--no-maps`) wrote the words (with 7 SHIV words) and
+drew 18 units as Enemy Within's (the aliens and the three SHIVs); with the control port switched
+on in the installed config for the check (and back off after), a new campaign, the hub's
+Barracks → a soldier: the armory's menu was there.
