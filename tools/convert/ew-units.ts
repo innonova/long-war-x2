@@ -56,7 +56,7 @@ export const EW_UNITS: EWUnit[] = [
   ...[[1, ['LWMEC_Suit_193']], [2, ['LWMEC_Suit_194', 'LWMEC_Suit_145']], [3, ['LWMEC_Suit_195', 'LWMEC_Suit_148', 'LWMEC_Suit_191', 'LWMEC_Suit_210']]].flatMap(([mark, suits]) =>
     (suits as string[]).map((armor) => ({
       template: 'LWMEC', animsAs: 'AdvMEC_M2', armor, pkg: `Unit_MecMark${mark}_SF`, mesh: mark === 1 ? 'SM_MEC_MarkI' : mark === 2 ? 'SM_Mec_MarkII' : 'SM_Mec_MarkIII',
-      sets: ['AS_MEC'], setsPkg: 'Weapon_MEC_Chaingun_SF', diffuse: new RegExp(`^MEC_Mark${mark}_DIF$`), normal: new RegExp(`^MEC_Mark${mark}_NRM$`),
+      sets: ['AS_MEC'], setsPkg: 'Weapon_MEC_Chaingun_SF', reencode: true, diffuse: new RegExp(`^MEC_Mark${mark}_DIF$`), normal: new RegExp(`^MEC_Mark${mark}_NRM$`),
       weapon: { pkg: 'Weapon_MEC_Chaingun_SF', mesh: 'SM_MECChainGun', diffuse: /^MEC_Chaingun_DIF$/, normal: /^MEC_Chaingun_NRM$/ },
     }))),
   { template: 'LWSHIV_Hover', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank3_SF', mesh: 'SM_Lv3Shiv', sets: ['Default', 'Mini'], diffuse: /^VEH_Lv3Shiv_DIF$/, normal: /^VEH_Lv3Shiv_NRM$/, weapon: SHIV_MINIGUN },
