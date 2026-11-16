@@ -246,7 +246,7 @@ out.push(
     ['Muton', 7], ['Archon', 10], ['Berserker', 15], ['Andromedon', 11], ['Codex', 9], ['AdventPsiWitch', 12]].map(([g, c]) => `+CaptureAs=(Group=${g}, Char=${c})`),
   ...[28, 29, 30, 31].map((id) => `+Species=(Char=${id}, Name=ExaltElite${id}, Elerium=0, Alloys=0, Meld=${one('CB_FUNDING_BONUS')})`),
 )
-if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk), ...mapPlaces(strategyUpk), ...exaltRules(strategyUpk), ...covertSquads(strategyUpk), ...raidSquad(strategyUpk))
+if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk), ...mapPlaces(strategyUpk), ...exaltRules(strategyUpk), ...covertCash(join(dirname(strategyUpk), 'XComGame.upk')), ...covertSquads(strategyUpk), ...raidSquad(strategyUpk))
 // Long War's wound recovery (XGFacility_Barracks.DetermineTimeOut; LWWounds).
 out.push(
   '',
@@ -496,6 +496,26 @@ function exaltRules(upk) {
   }
   if (k < 10) throw new Error(`XGExaltSimulation: ${k} clues read`)
   return out
+}
+
+/**
+ * What EXALT's covert missions pay (Long War's XComGame.upk: CollectLoot adds it to the mission's credits): the extraction
+ * won, XGBattle_SPCovertOpsExtraction.m_iCovertOpsCashRewardAmount; the data recovery with its first capture point never
+ * taken, XGBattle_SPCaptureAndHold.m_iAllPointsSafeCashRewardAmount.
+ */
+function covertCash(upk) {
+  const upkit = process.env.UPKIT ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', '@innonova', 'upkit', 'dist', 'upkit.mjs')
+  const value = (cls, name) => {
+    const src = execFileSync(process.execPath, [upkit, 'class', upk, cls], { encoding: 'utf8', maxBuffer: 64 << 20 })
+    const m = new RegExp(`\\b${name}=(\\d+)`).exec(src.slice(src.lastIndexOf('defaultproperties')))
+    if (!m) throw new Error(`${cls}: no ${name}`)
+    return Number(m[1])
+  }
+  return [
+    "; What EXALT's covert missions pay (XComGame's CollectLoot): the extraction won; the data recovery with its first capture point safe.",
+    `CovertCash=${value('XGBattle_SPCovertOpsExtraction', 'm_iCovertOpsCashRewardAmount')}`,
+    `DataRecoveryCash=${value('XGBattle_SPCaptureAndHold', 'm_iAllPointsSafeCashRewardAmount')}`,
+  ]
 }
 
 /**

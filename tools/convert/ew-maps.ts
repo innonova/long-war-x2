@@ -16,7 +16,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readSection, writePlot, type PlotSettings } from './ew-plot.ts'
 import { openImages } from './ew-images.ts'
-import { councilMissions, variantLevels } from './ew-objectives.ts'
+import { councilMissions, variantLevels, variantPairs } from './ew-objectives.ts'
 
 /** The converter version ew-map.ts writes into its sections (kept in step with its CONVERTER_VERSION; read from the
  *  section, so this file need not load the converter). */
@@ -52,8 +52,8 @@ export function writePlots(mod: string, content: string, work: string, template:
   const settings = plotSettings(mod)
   const bytes = new Uint8Array(readFileSync(template))
   const plots: string[] = []
-  const missions = councilMissions(mod)
-  const base = new Set([...baseLevels(mod), ...missions.map((m) => m.level)].map((l) => `${l}.ini`))
+  const pairs = variantPairs(mod)
+  const base = new Set([...baseLevels(mod), ...pairs.map(([, level]) => level)].map((l) => `${l}.ini`))
   let old = 0
   for (const f of readdirSync(work).filter((f) => f.endsWith('.ini') && !base.has(f)).sort()) {
     const ini = join(work, f)
@@ -66,8 +66,9 @@ export function writePlots(mod: string, content: string, work: string, template:
     writeFileSync(join(content, `LWX2_${map.name}.umap`), plot)
     plots.push(`LWX2_${map.name}`)
   }
-  // Each council mission whose map and variant level are converted: a plot of the two (LWX2V_<level>), for that mission.
-  for (const [level, name] of new Map(missions.map((m) => [m.level, m.map]))) {
+  // Each mission whose map and variant level are converted (the council's, EXALT's covert ones): a plot of the two
+  // (LWX2V_<level>), for that mission.
+  for (const [name, level] of pairs) {
     const [mapIni, levelIni] = [join(work, `${name}.ini`), join(work, `${level}.ini`)]
     if (!existsSync(mapIni) || !existsSync(levelIni) || !sectionCurrent(mapIni) || !sectionCurrent(levelIni)) continue
     const map = readSection(readFileSync(mapIni, 'latin1'))
@@ -94,7 +95,7 @@ export function baseLevels(mod: string): string[] {
 export function missionSections(mod: string): number {
   const ini = join(mod, 'Config', 'XComLWX2EWMap.ini')
   if (!existsSync(ini)) return 0
-  const base = new Set([...baseLevels(mod), ...councilMissions(mod).map((m) => m.level)])
+  const base = new Set([...baseLevels(mod), ...variantPairs(mod).map(([, level]) => level)])
   return [...readFileSync(ini, 'latin1').matchAll(/^\[(\S+) LWX2EWMapData\]/gm)].filter((m) => !base.has(m[1]!)).length
 }
 

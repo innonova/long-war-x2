@@ -308,7 +308,7 @@ async function convertEW(ew, target) {
   }
   // The council missions' objectives on EW's maps (ew-objectives.ts): the bomb disposals' bombs, nodes and timers.
   try {
-    say(`Enemy Within's council missions: ${writeObjectives(cooked, target)} bomb disposals read.`)
+    say(`Enemy Within's council and EXALT missions: ${writeObjectives(cooked, target)} objectives read.`)
   } catch (e) {
     say(`Enemy Within's council missions' objectives could not be read (${e?.message ?? e}); they play as assaults.`)
   }

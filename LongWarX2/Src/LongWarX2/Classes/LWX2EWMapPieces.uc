@@ -151,6 +151,8 @@ struct LWX2MapChoice
 	var name Kind;
 	var int Ship;
 	var bool Night;
+	/** EXALT's covert missions: the streamed level with the mission (the map plays on LWX2V_<Level>). */
+	var string Level;
 };
 var config array<LWX2MapChoice> Maps;
 /** The converted map a quick launch places (no campaign to choose one). */
@@ -174,8 +176,8 @@ static function string MapName()
 		if (Battle != none && Left(Battle.MapData.PlotMapName, 5) ~= "LWX2_" && !(Battle.MapData.PlotMapName ~= "LWX2_EWPlotTemplate"))
 			return Mid(Battle.MapData.PlotMapName, 5);
 		// (LWX2V_<level>: a map with its council mission's variant level, ew-maps.ts writePlots.)
-		if (Battle != none && Left(Battle.MapData.PlotMapName, 6) ~= "LWX2V_" && class'LWCouncil'.static.MapOfLevel(Mid(Battle.MapData.PlotMapName, 6)) != "")
-			return class'LWCouncil'.static.MapOfLevel(Mid(Battle.MapData.PlotMapName, 6));
+		if (Battle != none && Left(Battle.MapData.PlotMapName, 6) ~= "LWX2V_" && MapOfLevel(Mid(Battle.MapData.PlotMapName, 6)) != "")
+			return MapOfLevel(Mid(Battle.MapData.PlotMapName, 6));
 	}
 	S = class'XComGameState_LWStrategy'.static.Get();
 	return (S != none && S.PendingKind != 0) ? S.PendingEWMap : default.DefaultMap;
@@ -202,10 +204,35 @@ static function bool HasMap()
 }
 
 /** Long War's map kind for the port's mission kind (1 crash site, 2 landed UFO, 3 abduction, 4 terror). */
+/** The EW map of a variant level's plot (LWX2V_<level>): a council mission's, or an EXALT covert mission's. */
+static function string MapOfLevel(string Level)
+{
+	local LWX2MapChoice M;
+
+	if (class'LWCouncil'.static.MapOfLevel(Level) != "")
+		return class'LWCouncil'.static.MapOfLevel(Level);
+	foreach default.Maps(M)
+		if (M.Level ~= Level)
+			return M.Name;
+	return "";
+}
+
+/** A map's variant level for a mission kind (EXALT's covert missions), "" for none. */
+static function string LevelOf(string Map, name Kind)
+{
+	local LWX2MapChoice M;
+
+	foreach default.Maps(M)
+		if (M.Name ~= Map && M.Kind == Kind)
+			return M.Level;
+	return "";
+}
+
 static function name KindFor(int Kind)
 {
 	switch (Kind)
 	{
+		case 8: return 'CovertExtraction';
 		case 1: return 'Crash';
 		case 2: return 'Landed';
 		case 3: return 'Abduction';
@@ -240,7 +267,7 @@ static function bool OnOwnPlot()
 
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 	return Battle != none && MapName() != "" && (Battle.MapData.PlotMapName ~= ("LWX2_" $ MapName())
-		|| (Left(Battle.MapData.PlotMapName, 6) ~= "LWX2V_" && class'LWCouncil'.static.MapOfLevel(Mid(Battle.MapData.PlotMapName, 6)) ~= MapName()));
+		|| (Left(Battle.MapData.PlotMapName, 6) ~= "LWX2V_" && MapOfLevel(Mid(Battle.MapData.PlotMapName, 6)) ~= MapName()));
 }
 
 static function string ChooseMap(name Kind, int Ship)

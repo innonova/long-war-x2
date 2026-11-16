@@ -38,6 +38,8 @@ var config array<LWExaltClue> Clues;
 var config array<LWCovertPod> CovertPods;
 /** EXALT's squad at its base (DetermineExaltRaidSquad; Missions unused). */
 var config array<LWCovertPod> RaidPods;
+/** What a covert mission pays (Long War's CollectLoot): the extraction won; the data recovery with its first point safe. */
+var config int CovertCash, DataRecoveryCash;
 /** Long War's clue texts (XGExaltSimulation.m_arrClueText), written from the player's install (lw-words.mjs). */
 var localized string ClueTexts[40];
 
@@ -751,6 +753,7 @@ static function ClearCell(XComGameState_LWStrategy S, int Country)
  *  (a clue); lost, the cell moves. The operative comes back either way. */
 static function CovertMissionBack(XComGameState NewGameState, XComGameState_LWStrategy S, bool bWon)
 {
+	local XComGameState_HeadquartersXCom XComHQ;
 	local int Country;
 
 	Country = S.ExaltOperativeCountry;
@@ -761,6 +764,15 @@ static function CovertMissionBack(XComGameState NewGameState, XComGameState_LWSt
 		S.AddPanic(Country, -20);
 		S.ExaltIntel++;
 		S.Note("The covert operation in" @ S.CountryName(Country) @ "succeeded: the EXALT cell is gone, and the operative brought intel home.");
+		// (XGBattle_SPCovertOpsExtraction.CollectLoot: the extraction's cash, on EW's map where the extraction is played.)
+		if (S.PendingEWMap != "" && default.CovertCash > 0)
+		{
+			XComHQ = XComGameState_HeadquartersXCom(NewGameState.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+			if (XComHQ == none)
+				XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+			XComHQ.AddResource(NewGameState, 'Supplies', default.CovertCash);
+			S.Note("The extraction brought" @ class'LWStrategyRules'.static.Money(default.CovertCash) @ "home.");
+		}
 	}
 	else
 	{

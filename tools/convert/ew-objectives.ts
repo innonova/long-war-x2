@@ -23,11 +23,27 @@ export function councilMissions(mod: string): CouncilMission[] {
     .filter((m) => m.level)
 }
 
-/** The variant levels of these maps' council missions: converted with them, each joined with its map into a plot of its own,
+/** EXALT's covert missions' maps (the mod's Config/XComLWEWMaps.ini, from Long War's DefaultMaps.ini: scripts/maps-config.mjs),
+ *  each with its kind (CovertExtraction, DataRecovery) and the streamed level that carries it. */
+export interface CovertMap { map: string; kind: string; level: string }
+export function covertMaps(mod: string): CovertMap[] {
+  const ini = join(mod, 'Config', 'XComLWEWMaps.ini')
+  if (!existsSync(ini)) return []
+  return [...readFileSync(ini, 'latin1').matchAll(/^\+Maps=\(Name="(\w+)".*Kind=(\w+),.*Level="(\w+)"/gm)].map((m) => ({ map: m[1]!, kind: m[2]!, level: m[3]! }))
+}
+
+/** Every map with a variant level (the council's missions, EXALT's covert ones): [map, level], each pair once. */
+export function variantPairs(mod: string): [string, string][] {
+  const pairs = new Map<string, string>()
+  for (const m of [...councilMissions(mod), ...covertMaps(mod)]) pairs.set(m.level, m.map)
+  return [...pairs].map(([level, map]) => [map, level])
+}
+
+/** The variant levels of these maps' missions: converted with them, each joined with its map into a plot of its own,
  *  LWX2V_<level> (ew-maps.ts writePlots), on which that mission plays. */
 export function variantLevels(mod: string, maps: Iterable<string>): string[] {
   const want = new Set(maps)
-  return [...new Set(councilMissions(mod).filter((m) => want.has(m.map)).map((m) => m.level))]
+  return [...new Set(variantPairs(mod).filter(([map]) => want.has(map)).map(([, level]) => level))]
 }
 
 /** A level's package in the install, whatever the case of its name (Long War writes URB_HighwayBomb_Stream, EW ships
@@ -247,7 +263,71 @@ export function readVIP(file: string, map: string, level: string): VIP | undefin
   }
 }
 
-/** Every bomb disposal and VIP mission this install has, written into the mod's config; returns how many. */
+export interface Covert {
+  map: string
+  level: string
+  /** EW's comm relays (its radar arrays), of which the battle activates two; the operative's own spawn point. */
+  relays: number[][]
+  operative?: number[]
+  /** EW's texts: hack the relays, the count's label, escort the operative, eliminate or evacuate, retreat. */
+  hack: string
+  left: string
+  escort: string
+  cleanup: string
+  retreat: string
+}
+
+/** A covert extraction's level read (XGBattle_SPCovertOpsExtraction's: its XComRadarArrayActors and the covert operative's
+ *  spawn point; the Kismet's texts); undefined when it has no relays. */
+export function readCovert(file: string, map: string, level: string): Covert | undefined {
+  const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
+  const meta: any = new Package(bytes)
+  const pkg: any = openPackage(bytes)
+  const K = readKismet(bytes)
+  const dv = (t: Tag) => new DataView(t.value.buffer, t.value.byteOffset, t.value.byteLength)
+  const actorTags = (k: number): Tag[] => {
+    const data = pkg.data(k + 1)
+    for (const start of [26, ...Array.from({ length: 81 }, (_, j) => j)]) {
+      try {
+        const t = readTags(new Reader(data.subarray(start)), pkg)
+        if (t.some((x: Tag) => x.name === 'Location')) return t
+      } catch {
+        // not here
+      }
+    }
+    return []
+  }
+  const at = (t: Tag[]) => {
+    const loc = t.find((x) => x.name === 'Location')
+    return loc ? [0, 4, 8].map((o) => Math.round(dv(loc).getFloat32(o, true))) : undefined
+  }
+  const relays: number[][] = []
+  let operative: number[] | undefined
+  meta.exports.forEach((e: any, k: number) => {
+    if (!/^TheWorld\.PersistentLevel\.[^.]+$/.test(e.fullName)) return
+    if (e.type === 'XComRadarArrayActor') {
+      const p = at(actorTags(k))
+      if (p) relays.push(p)
+    }
+    if (e.type === 'XComSpawnPoint') {
+      const t = actorTags(k)
+      const type = t.find((x) => x.name === 'UnitType')
+      if (type && /CovertOperative/.test(String(pkg.names[dv(type).getInt32(0, true)]?.name))) operative = at(t)
+    }
+  })
+  if (relays.length < 2) return undefined
+  const strings = new Map(K.ops.filter((o) => o.type === 'SeqVar_LocalizedString').map((o) => [K.str(o, 'strLookup').split('.').pop() ?? '', K.str(o, 'StrValue')]))
+  return {
+    map, level, relays, operative,
+    hack: strings.get('m_strCovExObj1') ?? '',
+    left: (strings.get('m_strCovExArrayCount') ?? '').trim(),
+    escort: strings.get('m_strCovExObj2') ?? '',
+    cleanup: strings.get('m_strCovExObj3') ?? '',
+    retreat: strings.get('m_strCovExObj4') ?? '',
+  }
+}
+
+/** Every bomb disposal, VIP mission and covert extraction this install has, written into the mod's config; returns how many. */
 export function writeObjectives(cooked: string, mod: string): number {
   const vec = (p: number[]) => `(X=${p[0]}, Y=${p[1]}, Z=${p[2]})`
   const lines = [
@@ -276,6 +356,17 @@ export function writeObjectives(cooked: string, mod: string): number {
       `Texts=(${p.texts.map(q).join(', ')}), KillRest=${q(p.killRest)}, Report=${q(p.report)})`)
     n++
   }
+  // EXALT's covert extractions (LWX2CovertExtraction).
+  lines.push('', '[LongWarX2.LWX2CovertExtraction]')
+  for (const m of covertMaps(mod).filter((x) => x.kind === 'CovertExtraction')) {
+    const file = levelFile(cooked, m.level)
+    if (!file) continue
+    const c = readCovert(file, m.map, m.level)
+    if (!c) continue
+    lines.push(`+Extractions=(Map="${c.map}", Level="${c.level}", Relays=(${c.relays.map(vec).join(', ')}), ${c.operative ? `bOperativeSpawn=true, OperativeAt=${vec(c.operative)}, ` : ''}` +
+      `Hack=${q(c.hack)}, Left=${q(c.left)}, Escort=${q(c.escort)}, Cleanup=${q(c.cleanup)}, Retreat=${q(c.retreat)})`)
+    n++
+  }
   writeFileSync(join(mod, 'Config', 'XComLWX2EWObjectives.ini'), lines.join('\r\n') + '\r\n')
   return n
 }
@@ -286,5 +377,5 @@ if (/ew-objectives\.ts$/.test(process.argv[1] ?? '')) {
     console.error('usage: ew-objectives.ts <EW CookedPCConsole> <mod folder>')
     process.exit(2)
   }
-  console.log(`${writeObjectives(cooked!, mod!)} council missions' objectives written`)
+  console.log(`${writeObjectives(cooked!, mod!)} missions' objectives written (the council's, EXALT's)`)
 }

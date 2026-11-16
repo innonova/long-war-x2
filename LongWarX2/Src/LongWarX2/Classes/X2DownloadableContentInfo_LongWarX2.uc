@@ -136,6 +136,7 @@ static event OnPostTemplatesCreated()
 static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out array<AbilitySetupData> SetupData, optional XComGameState StartState, optional XComGameState_Player PlayerState, optional bool bMultiplayerDisplay)
 {
 	local LWX2CouncilBomb.LWX2BombDef Bomb;
+	local LWX2CovertExtraction.LWX2CovertDef Covert;
 
 	class'LWSHIVs'.static.AddFoundryAbilities(UnitState, SetupData);
 	// A council bomb disposal: XCOM's soldiers can switch its power nodes off and disarm it (LWX2CouncilBomb).
@@ -144,5 +145,9 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_DeactivateNode', eInvSlot_Unknown, SetupData);
 		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_DisarmBomb', eInvSlot_Unknown, SetupData);
 	}
+	// EXALT's covert extraction: the operative can hack its comm relays (LWX2CovertExtraction).
+	if (class'LWX2CovertExtraction'.static.Operative() != none && UnitState.ObjectID == class'LWX2CovertExtraction'.static.Operative().ObjectID
+		&& class'LWX2CovertExtraction'.static.Active(Covert))
+		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_HackRelay', eInvSlot_Unknown, SetupData);
 }
 
