@@ -551,3 +551,15 @@ the Ghost Grenade and the Psi Grenade (psionic soldiers only, which the armory d
   `units` column), the one 2.8 tiles away not.
 
 **Still missing:** the Respirator Implant (see above).
+
+## Report (2026-11-16, the Respirator Implant)
+
+- **The Respirator Implant** (item 76, `LWSmall_76`): its line's +1 HP; the first time its wearer's health would run out
+  in a mission they bleed out instead (XCOM 2's bleed-out forced, whatever its roll: `X2Effect_LWRespirator.ForcesBleedout`),
+  and the bleed-out lasts two turns more (its text; `ExtraTurns`); after that it is spent. The Seeker's Strangle cannot
+  take its wearer ("immunity to strangle"). Its partial acid immunity is not done.
+- **Checked on wingpu:** a wearer at 1 health hit by a frag grenade bled out ("bleeds out instead of dying, 2 turns
+  more"). A first run showed 0 turns: a config variable's `defaultproperties` is not read; the value is in
+  `XComLWGear.ini` now.
+
+All four of the items left open above are in.
