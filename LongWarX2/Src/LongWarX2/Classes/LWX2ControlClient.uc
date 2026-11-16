@@ -2742,7 +2742,8 @@ function Council(array<string> Args, out array<string> Out)
 				@ "joined" @ class'LWX2CouncilVIP'.static.State().bJoined @ "away" @ class'LWX2CouncilVIP'.static.State().bExtracted @ "dead" @ VIP.IsDead());
 		Tile = `XWORLD.GetTileCoordinatesFromPosition(VIPDef.Approach);
 		Out.AddItem("reached at" @ (VIPDef.bApproach ? (Tile.X @ Tile.Y @ Tile.Z) : "(a rescue: from the start)"));
-		Tile = `XWORLD.GetTileCoordinatesFromPosition(class'LWX2CouncilVIP'.static.Skyranger(VIPDef));
+		At = class'LWX2CouncilVIP'.static.Skyranger(VIPDef);
+		Tile = `XWORLD.GetTileCoordinatesFromPosition(At);
 		Out.AddItem("skyranger at" @ Tile.X @ Tile.Y @ Tile.Z @ "| objective:" @ class'LWX2CouncilVIP'.static.ObjectiveText());
 	}
 	Out.AddItem("council: next in" @ S.CouncilCountdown @ "hours; played" @ S.CouncilPlayed.Length);
