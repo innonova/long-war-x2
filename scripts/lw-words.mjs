@@ -35,7 +35,7 @@ export function readConsts(upkBytes) {
 const ALIEN_PERKS = {
   LW_BloodCall: 'ePerk_BloodCall', LW_Repair: 'ePerk_Repair', LW_DeathBlossom: 'ePerk_DeathBlossom', LW_Launch: 'ePerk_Launch',
   LW_Strangle: 'ePerk_SeekerStrangle', LW_StrangleSustained: 'ePerk_SeekerStrangle', LW_SeekerCloak: 'ePerk_SeekerStealth',
-  LW_Intimidate: 'ePerk_Intimidate', LW_IntimidateBerserker: 'ePerk_Intimidate',
+  LW_Intimidate: 'ePerk_Intimidate', LW_IntimidateBerserker: 'ePerk_Intimidate', LW_PsiDrain: 'ePerk_PsiDrain',
 }
 
 /** The words file, from Long War's DefaultGameCore.ini and XComGame.int texts and EW's constants. */

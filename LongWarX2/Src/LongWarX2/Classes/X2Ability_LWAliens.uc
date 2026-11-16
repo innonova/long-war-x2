@@ -29,6 +29,7 @@ static function array<X2DataTemplate> CreateTemplates()
 	Templates.AddItem(Intimidate('LW_Intimidate', default.IntimidateChance));
 	Templates.AddItem(Intimidate('LW_IntimidateBerserker', default.IntimidateChanceBerserker));
 	Templates.AddItem(Bloodlust());
+	Templates.AddItem(PsiDrain());
 	return Templates;
 }
 
@@ -144,6 +145,49 @@ static function X2AbilityTemplate Repair()
 	Heal = new class'X2Effect_ApplyMedikitHeal';
 	Heal.PerUseHP = default.RepairHP;
 	Template.AddTargetEffect(Heal);
+	Template.bShowActivation = true;
+	Template.bSkipFireAction = true;
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
+	return Template;
+}
+
+/** The Ethereals' Psi Drain (Long War's XGUnit.PsiDrain; eAbility_PsiDrain: a single ally, not robotic, in sight; its fire
+ *  ends the turn; no cooldown): health drained from the ally for the Ethereal's healing (X2Effect_LWPsiDrain). Only
+ *  when the Ethereal is hurt (Long War's drain is at most half what it is missing: at full health it would only hurt). */
+static function X2AbilityTemplate PsiDrain()
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityCost_ActionPoints Cost;
+	local X2Condition_UnitProperty Ally;
+	local X2Condition_UnitStatCheck Hurt;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'LW_PsiDrain');
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_soulsteal";
+	Template.AbilitySourceName = 'eAbilitySource_Psionic';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
+	Template.Hostility = eHostility_Neutral;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SimpleSingleTarget;
+	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Template.AddShooterEffectExclusions();
+	Hurt = new class'X2Condition_UnitStatCheck';
+	Hurt.AddCheckStat(eStat_HP, 100, eCheck_LessThan, , , true);
+	Template.AbilityShooterConditions.AddItem(Hurt);
+	Cost = new class'X2AbilityCost_ActionPoints';
+	Cost.iNumPoints = 1;
+	Cost.bConsumeAllPoints = true;
+	Template.AbilityCosts.AddItem(Cost);
+	Ally = new class'X2Condition_UnitProperty';
+	Ally.ExcludeHostileToSource = true;
+	Ally.ExcludeFriendlyToSource = false;
+	Ally.ExcludeDead = true;
+	Ally.ExcludeRobotic = true;
+	Ally.FailOnNonUnits = true;
+	Template.AbilityTargetConditions.AddItem(Ally);
+	Template.AbilityTargetConditions.AddItem(default.GameplayVisibilityCondition);
+	Template.AddTargetEffect(new class'X2Effect_LWPsiDrain');
 	Template.bShowActivation = true;
 	Template.bSkipFireAction = true;
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;

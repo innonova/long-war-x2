@@ -175,7 +175,11 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem(GiveTo(int(Args[1]), name(Args[2])));
 		return;
 	case "abilities":
-		Abilities(Out);
+		// 'abilities' the soldiers'; 'abilities #<id>' any unit's, with why each is not available now.
+		if (Args.Length > 1 && Left(Args[1], 1) == "#")
+			UnitAbilities(int(Mid(Args[1], 1)), Out);
+		else
+			Abilities(Out);
 		return;
 	case "enemies":
 		// enemies all: XCOM's units too.
@@ -1039,6 +1043,31 @@ function Abilities(out array<string> Out)
 				Line @= Ability.GetMyTemplateName() $ (Ability.GetSourceWeapon() != none ? "[" $ Ability.GetSourceWeapon().GetMyTemplateName() $ " " $ Ability.GetSourceWeapon().Ammo $ "]" : "");
 		}
 		Out.AddItem(Line);
+	}
+}
+
+function UnitAbilities(int UnitID, out array<string> Out)
+{
+	local XComGameState_Unit Unit;
+	local XComGameState_Ability Ability;
+	local StateObjectReference Ref;
+	local AvailableAction Action;
+
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
+	if (Unit == none)
+	{
+		Out.AddItem("ERR no unit #" $ UnitID);
+		return;
+	}
+	Out.AddItem(Unit.GetMyTemplateName() @ "behavior" @ Unit.GetMyTemplate().strBehaviorTree @ "ap" @ Unit.ActionPoints.Length);
+	foreach Unit.Abilities(Ref)
+	{
+		Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Ability == none)
+			continue;
+		Action.AbilityObjectRef = Ref;
+		Ability.UpdateAbilityAvailability(Action);
+		Out.AddItem("  " $ Ability.GetMyTemplateName() @ Action.AvailableCode @ "targets" @ Action.AvailableTargets.Length);
 	}
 }
 

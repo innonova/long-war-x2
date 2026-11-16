@@ -270,3 +270,23 @@ document the encodings):
   encounters by template only). They are now matched to the squad in order at the battle's start
   and given their species and Long War's stats (`LWMissionSquads.SpeciesForEncounters`); the
   top-up pods pass theirs too. Checked: 11 aliens on an abduction, Sectoids at 3 HP (were 8).
+
+## Report (2026-11-16, the Ethereals: Psi Drain and their psi powers in the AI)
+
+- **Psi Drain** (`LW_PsiDrain`, Long War's `XGUnit.PsiDrain`, `eAbility_PsiDrain`): a single ally
+  in sight, not robotic (a mind-controlled soldier counts), ending the turn, no cooldown; the ally
+  loses the least of its health, 10 and half what the Ethereal is missing (at least 1), the
+  Ethereal heals twice that (`X2Effect_LWPsiDrain`). Only while the Ethereal is hurt. EW's name
+  and text from the player's install.
+- **XCOM 2's Avatar powers off the Ethereals**: their psi amps' Dimensional Rift, Null Lance and
+  Mind Control (`NotLongWarWeapons`); they have Long War's Rift, Mind Control, Psi Drain, Mindfray.
+- **Their AI** (`XComAI.ini`, in place of the Avatar's red-alert tree): Long War's Mind Control on
+  a soldier, Psi Drain on an ally when hurt, Mindfray on a soldier, else move and shoot as the
+  Avatar did. (Rift, an area power, is not in the AI yet.)
+
+**Checked on wingpu** (an Ethereal and a Sectoid spawned beside the squad, the Ethereal hurt):
+its first turn, Long War's Mind Control took a soldier; unhurt after its regeneration (Long War's
+research upgrade), no drain; hurt by 10, it drained the controlled soldier ("Psi Drain: Soldier
+-1, AdvPsiWitchM2 +2").
+
+Control port: `abilities #<id>` lists any unit's abilities and why each is not available.

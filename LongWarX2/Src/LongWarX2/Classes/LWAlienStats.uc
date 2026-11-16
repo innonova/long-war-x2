@@ -281,6 +281,14 @@ defaultproperties
 	NotLongWarWeapons(6)="AdvMEC_M1_Shoulder_WPN:MicroMissileFuse"
 	NotLongWarWeapons(7)="AdvMEC_M2_Shoulder_WPN:MicroMissiles"
 	NotLongWarWeapons(8)="AdvMEC_M2_Shoulder_WPN:MicroMissileFuse"
+	// The Avatar's psi amps (Long War's Ethereals): XCOM 2's Dimensional Rift, Null Lance and Mind Control; the Ethereals
+	// have Long War's Rift, Mind Control, Psi Drain and Mindfray (XComLWAliens.ini).
+	NotLongWarWeapons(9)="AdvPsiWitchM2_PsiAmp:PsiDimensionalRiftStage1"
+	NotLongWarWeapons(10)="AdvPsiWitchM2_PsiAmp:NullLance"
+	NotLongWarWeapons(11)="AdvPsiWitchM2_PsiAmp:PsiMindControl"
+	NotLongWarWeapons(12)="AdvPsiWitchM3_PsiAmp:PsiDimensionalRiftStage1"
+	NotLongWarWeapons(13)="AdvPsiWitchM3_PsiAmp:NullLance"
+	NotLongWarWeapons(14)="AdvPsiWitchM3_PsiAmp:PsiMindControl"
 }
 
 static function SetStat(XComGameState_Unit Unit, ECharStatType Stat, float Value)

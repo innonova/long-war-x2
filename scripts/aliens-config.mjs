@@ -75,7 +75,7 @@ for (const [name, item] of Object.entries(WEAPONS)) {
 const ABILITIES = {
   eAbility_BloodCall: 'LW_BloodCall', eAbility_Launch: 'LW_Launch', eAbility_Intimidate: 'LW_Intimidate', eAbility_Bloodlust: 'LW_IntimidateBerserker',
   eAbility_MindMerge: 'LW_MindMerge', eAbility_GreaterMindMerge: 'LW_MindMerge', eAbility_PsiPanic: 'LW_PsiPanic',
-  eAbility_MindFray: 'LW_Mindfray', eAbility_Mindfray: 'LW_Mindfray', eAbility_PsiControl: 'LW_MindControl', eAbility_Rift: 'LW_Rift',
+  eAbility_MindFray: 'LW_Mindfray', eAbility_Mindfray: 'LW_Mindfray', eAbility_PsiControl: 'LW_MindControl', eAbility_Rift: 'LW_Rift', eAbility_PsiDrain: 'LW_PsiDrain',
 }
 out.push("; Each species' own abilities (Long War's ABILITIES[]), where the mod has them.")
 for (const m of text.matchAll(/^Characters=\(.*?iType=(eChar_\w+),(.*)$/gm)) {
