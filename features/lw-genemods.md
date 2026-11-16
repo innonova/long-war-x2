@@ -335,11 +335,13 @@ loads or finds a texture by its path.
 
 ### Left open
 
-- **The other screens' pictures** (research, engineering, the Foundry, facilities, craft). Long
-  War gives items, techs and projects image numbers (`BuildItem`'s `iImage` …). It turns them
-  into paths through a table that its script reads from `XComOnlineProfileSettings`'
-  `MultiplayerLoadoutSlots`, repurposed by Long War: "variable used to configure new
-  imagedata". That table is in none of stock Long War's config files, so it must be set at run
-  time; I have not found where. `UIUtilities.GetStrategyImagePath` holds only 69 of the paths.
-  Until that table is found, the screens keep XCOM 2's pictures.
+- **The other screens' pictures** (research, engineering, the Foundry, facilities, craft): in
+  stock Long War these are empty too. Long War gives items, techs and projects image numbers
+  (`BuildItem`'s `iImage` …) and turns them into paths through `XComOnlineProfileSettings`'
+  `MultiplayerLoadoutSlots`, repurposed by Long War ("variable used to configure new imagedata").
+  That table is in no config of stock Long War: its entries in `DefaultGame.ini` are commented
+  out, and no package sets it. So its research, Foundry and officer-power screens show none,
+  as the officers' report found for the powers. Only the gene mods (by perk), the medals and
+  `GetStrategyImagePath`'s 69 paths name EW's pictures in its code. I'm leaving these screens
+  as they are.
 - The soldier on the lab's plinth.
