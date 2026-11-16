@@ -16,7 +16,11 @@
   in the chat (`am say --question`) and carry on with something else.
   Before a final message, name the next item and whether it needs the
   person. Closing the game, clearing scratch and writing a summary are
-  what stopping looks like, not reasons to stop (2026-11-15).
+  what stopping looks like, not reasons to stop (2026-11-15). A time the
+  person mentions (when they are back) is not an ending: when they come
+  back they write in the chat and can steer. Nor is a list of large items
+  a reason to wait for their priorities: pick the next one, say so with
+  `am say --decision`, and start (2026-11-16).
 - **Log decisions as they are made**, in the feature file being worked on:
   a `### Decisions` list in the day's report, each one line with its reason
   ("Floater shown as a plain actor first, not a unit: proves the content in
