@@ -108,3 +108,17 @@ to the nearest tile with cover); `officers mark` (the squad's leader marked agai
 - Psi Screen ("1 DR to Psi") is left out: its text says against psi only.
 - The number beside the shield icon Long War shows after a hit (the reduction resisted) is not
   shown; XCOM 2 shows its own armour's.
+
+## Report (2026-11-16, SHIV decks and MEC suits)
+
+A SHIV's deck and a MEC's suit now reduce damage by their items' amounts in Long War's
+`BalanceMods_Classic` (`iHP`, in tenths), as the soldiers' armours already did:
+- SHIV decks: SHIV 1.5, Alloy SHIV 2.5, Hover SHIV 2.0;
+- MEC suits: 1.0 to 2.5.
+
+`shivs-config.mjs` and `mecs-config.mjs` write them as `DR=`; `OwnReduction` adds them.
+
+**Checked on wingpu:** a Sectoid's 6 left 3.5 on an Alloy SHIV and 5 on a MEC in its first suit.
+
+Still left open from the MEC and SHIV list: Damage Control, Absorption Fields and Shock-Absorbent
+Armor. These are MEC perks; they act as stand-ins today. One For All is no Long War MEC's.

@@ -16,6 +16,8 @@ const itemId = (e) => {
   return i
 }
 const fields = (line) => Object.fromEntries(line.split(',').filter((p) => p.includes('=')).map((p) => p.split('=').map((s) => s.trim())))
+// An item's damage reduction: BalanceMods_Classic's iHP, in tenths (as gear-config.mjs reads it for armours).
+const itemDR = (id) => Number(core.match(new RegExp(`^BalanceMods_Classic=\\(eType=${id},.*?iHP=(-?\\d+)`, 'm'))?.[1] ?? 0) / 10
 const one = (k) => Number(core.match(new RegExp(`^${k}\\s*=\\s*(-?[\\d.]+)`, 'm'))[1])
 const tank = fields(core.match(/^Characters=\((.*iType=eChar_Tank\b.*)\)/m)[1])
 const deck = (e) => fields(core.match(new RegExp(`^Armors=\\((.*iType=${e}\\b.*)\\)`, 'm'))[1])
@@ -50,12 +52,13 @@ const out = [
   'RepairFoundry=5',
   'RepairFoundryScale=0.67',
   '; Bodies: Item, the character Template, its Deck (item) and the deck\'s HP, Defense, Mobility, SmallItems, Fly and Fuel;',
-  '; RepairHP: hit points beyond the deck\'s that repair restores (Long War\'s "base hp bonuses that require repair").',
+  '; RepairHP: hit points beyond the deck\'s that repair restores (Long War\'s "base hp bonuses that require repair");',
+  '; DR: the deck\'s damage reduction (BalanceMods_Classic\'s iHP, in tenths).',
   ...BODIES.map((b) => {
     const d = deck(b.enum)
     const fly = /eAbility_Fly/.test(d.ABILITIES ?? '') || Object.values(d).includes('eAbility_Fly')
     return `+Bodies=(Item=${b.item}, Template=${b.template}, Deck=${b.deck}, HP=${d.iHPBonus}, Defense=${d.iDefenseBonus}, Mobility=${d.iMobilityBonus}, ` +
-      `SmallItems=${d.iSmallItems}, Fly=${fly}, Fuel=${d.iFlightFuel}, RepairHP=${b.repair})`
+      `SmallItems=${d.iSmallItems}, Fly=${fly}, Fuel=${d.iFlightFuel}, RepairHP=${b.repair}, DR=${itemDR(b.deck)})`
   }),
   '; Weapons: Damage, Crit, Aim, Environment; Ammo: shots between reloads (iSuppression\'s last two digits).',
   ...WEAPONS.map((w) => {

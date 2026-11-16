@@ -3,7 +3,7 @@
 // for what the port has: the unit's own (Long War's aliens, LWAlienStats; armour, LWGearRules), the target's shield,
 // acid, cover as the attacker sees it, hunkering, Will to Survive, Fortiores Una; the attacker's Combined Arms and
 // Gauss weapons; shotguns' extra penalty. The numbers are Long War's (scripts/classes-config.mjs).
-class X2Ability_LWDamageReduction extends X2Ability config(LWClasses);
+class X2Ability_LWDamageReduction extends X2Ability config(LWClasses) dependson(LWSHIVs, LWMECs);
 
 /** Cover's reduction, low and high (AbsorbDamage: 0.667, 1); hunkered down, as much again; Fortiores Una, as much again. */
 var config float LowCover, HighCover;
@@ -82,6 +82,8 @@ static function float OwnReduction(XComGameState_Unit Unit)
 	local UnitValue V;
 	local XComGameState_Item Armor;
 	local LWGearRules.LWArmorDef A;
+	local LWSHIVs.LWSHIVBody Body;
+	local LWMECs.LWMECSuit Suit;
 	local float DR;
 
 	if (Unit.GetUnitValue('LWX2DR', V))
@@ -91,6 +93,13 @@ static function float OwnReduction(XComGameState_Unit Unit)
 		foreach class'LWGearRules'.default.Armors(A)
 			if (class'LWGearRules'.static.ArmorTemplateFor(A.Item) == Armor.GetMyTemplateName())
 				DR += A.DR;
+	// A SHIV's deck, a MEC's suit (their items' reductions in Long War).
+	if (class'LWSHIVs'.static.BodyForTemplate(Unit.GetMyTemplateName(), Body))
+		DR += Body.DR;
+	if (Armor != none)
+		foreach class'LWMECs'.default.Suits(Suit)
+			if (class'LWMECs'.static.SuitTemplate(Suit.Item) == Armor.GetMyTemplateName())
+				DR += Suit.DR;
 	return DR;
 }
 

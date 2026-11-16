@@ -14,6 +14,8 @@ struct LWMECSuit
 	/** Its EItemType name (for its words: scripts/lw-words.mjs). */
 	var name Enum;
 	var int HP, Defense, Mobility, Will, LargeItems, SmallItems;
+	/** Its damage reduction (Long War's BalanceMods_Classic iHP, in tenths). */
+	var float DR;
 	var bool Built;
 	var int Cash, Elerium, Alloys, Meld, Days, Engineers, Tech, ItemReq;
 };

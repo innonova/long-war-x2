@@ -18,6 +18,8 @@ struct LWSHIVBody
 	var int Fuel;
 	/** Hit points beyond the deck's that repair restores. */
 	var int RepairHP;
+	/** The deck's damage reduction (Long War's BalanceMods_Classic iHP, in tenths). */
+	var float DR;
 };
 
 struct LWSHIVWeapon

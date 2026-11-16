@@ -19,6 +19,8 @@ const lab = (k) => Number(data.match(new RegExp(`^${k}\\s*=\\s*(-?[\\d.]+)`, 'm'
 const soldier = /^Characters=\(\s*strName="",\s*iType=eChar_Soldier,\s*HP=(\d+),\s*Offense=(\d+),\s*Defense=(-?\d+),\s*Mobility=(\d+),.*?Will=(\d+)/m.exec(core)
 if (!soldier) throw new Error('no soldier Characters= line')
 
+// An item's damage reduction: BalanceMods_Classic's iHP, in tenths (as gear-config.mjs reads it for armours).
+const itemDR = (id) => Number(core.match(new RegExp(`^BalanceMods_Classic=\\(eType=${id},.*?iHP=(-?\\d+)`, 'm'))?.[1] ?? 0) / 10
 const build = (item) => {
   const b = balance.get(item)
   const t = itemTree.get(item)
@@ -36,12 +38,12 @@ const out = [
   `AugmentDays=${lab('m_iModDays')}`,
   "; A MEC's base stats (SetSoldierClass: the soldier's character, eChar_Soldier, and +4 HP), before its rank's gains.",
   `Base=(HP=${Number(soldier[1]) + 4}, Aim=${soldier[2]}, Defense=${soldier[3]}, Mobility=${soldier[4]}, Will=${soldier[5]})`,
-  '; Suits (Armors= with eAP_MEC): HP, Defense, Mobility, Will; LargeItems, SmallItems: its subsystem and item slots; Built: whether',
+  '; Suits (Armors= with eAP_MEC): HP, Defense, Mobility, Will; LargeItems, SmallItems: its subsystem and item slots; DR: its damage reduction; Built: whether',
   '; engineering builds it, and its costs (Cash, Elerium, Alloys, Meld, Days, Engineers; Tech, ItemReq: what it needs first).',
 ]
 for (const [id, a] of readArmours(core, ITEMS)) {
   if (!a.props.includes('MEC') || id === ITEMS.indexOf('eItem_MecCivvies')) continue
-  out.push(`+Suits=(Item=${id}, Enum=${ITEMS[id]}, HP=${a.iHPBonus}, Defense=${a.iDefenseBonus}, Mobility=${a.iMobilityBonus}, Will=${a.iWillBonus}, LargeItems=${a.iLargeItems}, SmallItems=${a.iSmallItems}${build(id)})`)
+  out.push(`+Suits=(Item=${id}, Enum=${ITEMS[id]}, HP=${a.iHPBonus}, Defense=${a.iDefenseBonus}, Mobility=${a.iMobilityBonus}, Will=${a.iWillBonus}, LargeItems=${a.iLargeItems}, SmallItems=${a.iSmallItems}, DR=${itemDR(id)}${build(id)})`)
 }
 out.push("; Weapons (Weapons= with eWP_Mec and a damage): Damage, Crit, Aim, Environment, Ammo (iSuppression's last two digits).")
 for (const [id, w] of readWeapons(core, ITEMS)) {
