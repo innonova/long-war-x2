@@ -180,7 +180,7 @@ Control port: `officers` (posts, ranks, who is promotable and why), `officers bu
 - ~~The promotion screen (EW's officer screen) for the player; until then the control port.~~
   Done: the report below.
 - Fortiores Una, waiting on Long War's damage reduction (STATUS).
-- Officer rank shown on the soldier (EW put the rank's insignia beside the class).
+- ~~Officer rank shown on the soldier (EW put the rank's insignia beside the class).~~ In the soldier lists: the report below.
 
 ## Report (2026-11-16, the promotion screen)
 
@@ -221,7 +221,7 @@ requirement and counts its missions in grade done (a test aid).
 ### Left open
 
 - ~~Fortiores Una, waiting on Long War's damage reduction (STATUS).~~ Done (below).
-- Officer rank shown on the soldier (EW put the rank's insignia beside the class).
+- ~~Officer rank shown on the soldier (EW put the rank's insignia beside the class).~~ In the soldier lists: the report below.
 
 ## Report (2026-11-16, Fortiores Una)
 
@@ -251,3 +251,23 @@ filled 1", the soldier officer rank 1 with the second power. Screenshots
 `logs/wingpu_ew_officer_billets.png`, `logs/wingpu_ew_officer_assign.png`.
 
 `UILWOfficers` (XCOM 2's widgets) stays for a player whose EW screens are not converted.
+
+## Report (2026-11-16, officer rank in the soldier lists)
+
+An officer's rank now shows in XCOM 2's soldier lists: the barracks, squad select's picker and
+the labs' lists. Long War's short name for it (LT, CAPT, MAJ, COL, CMDR; `RankShort`, from
+`m_arrMedalNames[6…10]`) **stands in place of the soldier's rank**. That is how Long War names an
+officer: `XGStrategySoldier.GetName` gives the officer rank instead of the soldier rank once the
+soldier has one.
+
+It is done by `UIPersonnel_LWSoldierListItem`, an override of XCOM 2's row
+(`+ModClassOverrides` in `XComEngine.ini`; the mod's first). Only the rank text changes; the
+rank icon and the rest of the row are XCOM 2's.
+
+**Checked on wingpu** (officer ranks set with `officers set`): rows read LT, MAJ and CMDR for
+officer ranks 1, 3 and 5; everyone else LCPL.
+
+**Not done:**
+- EW's insignia picture. XCOM 2's row has no place for one beside the class, and the medal frames
+  live in EW's Medals movie, not as images.
+- The armory's soldier header still shows the soldier rank.
