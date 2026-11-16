@@ -88,6 +88,8 @@ for (const x of SMALL) {
 }
 // Engineering's pace (XGFacility_Engineering.GetWorkPerHour, XGItemTree.GetItemBuildTime, ScaleCost).
 const ini = (k) => Number(core.match(new RegExp(`^${k}=([\\d.]+)`, 'm'))[1])
+// The Respirator Implant's longer bleed-out (its text: "The bleed-out timer is extended by 2 turns").
+out.push('', '[LongWarX2.X2Effect_LWRespirator]', 'ExtraTurns=2', '', '[LongWarX2.LWGearRules]')
 out.push(`EngineerRate=${ini('ABDUCTION_REWARD_ENG')}`, `TimeBalance=${ini('ITEM_TIME_BALANCE')}`, `WorkshopBonus=${ini('WORKSHOP_ENG_BONUS')}`)
 // The arc thrower: Long War's multiplier on Enemy Within's stun chance (UFO_PSI_LINK_SURVIVE, the name notwithstanding),
 // and its range in tiles (APPROXIMATION: Enemy Within's is not in its config).
