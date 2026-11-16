@@ -30,12 +30,13 @@ struct LWSHIVWeapon
 
 var config LWSHIVStats Base;
 var config int RepairHours;
+var config int RestHours, RestRollHours, RepairRollMin, RepairFoundry;
+var config float RepairFoundryScale;
 var config array<LWSHIVBody> Bodies;
 var config array<LWSHIVWeapon> Weapons;
 
 /** The XCOM 2 soldier class every SHIV has (no ranks: Long War's SHIVs gain none). */
 var name SoldierClass;
-var localized string SHIVName;
 
 static function bool BodyForItem(int Item, out LWSHIVBody B)
 {
@@ -84,7 +85,8 @@ static function XComGameState_Unit AddSHIV(XComGameState NewGameState, name Temp
 		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
 	Unit = CharTemplate.CreateInstanceFromTemplate(NewGameState);
 	n = Count() + 1;
-	Unit.SetCharacterName(CharTemplate.strCharacterName != "" ? CharTemplate.strCharacterName : (default.SHIVName != "" ? default.SHIVName : "SHIV"), "#" $ n, "");
+	// (Named in one part, "SHIV #2": XCOM 2's lists show a soldier's last name.)
+	Unit.SetCharacterName("", (CharTemplate.strCharacterName != "" ? CharTemplate.strCharacterName : "SHIV") @ "#" $ n, "");
 	Unit.SetCountry('Country_USA');
 	Unit.SetSoldierClassTemplate(default.SoldierClass);
 	Unit.SetXPForRank(1);
@@ -102,6 +104,28 @@ static function XComGameState_Unit AddSHIV(XComGameState NewGameState, name Temp
 	Unit.MentalState = eMentalState_Ready;
 	`log("LongWarX2: SHIVs:" @ Template @ Unit.GetFullName() @ "joins the crew, hp" @ int(Unit.GetMaxStat(eStat_HP)), , 'LongWarX2');
 	return Unit;
+}
+
+/** A damaged SHIV's hours in repair (XGFacility_Barracks.DetermineTimeOut's tank part): RepairHours per hit point lost,
+ *  twice that per point below a quarter of its health, plus up to half of that (at least RepairRollMin); two thirds of it once
+ *  the Foundry's Vehicle Repair is done. */
+static function int RepairHoursFor(XComGameState_Unit Unit, XComGameState_LWStrategy S)
+{
+	local int HP, MaxHP, H;
+
+	HP = int(Unit.GetCurrentStat(eStat_HP));
+	MaxHP = int(Unit.GetBaseStat(eStat_HP));
+	H = default.RepairHours * (MaxHP - HP) + Max(2 * default.RepairHours * (MaxHP / 4 - HP), 0);
+	H += Rand(Max(H / 2, default.RepairRollMin));
+	if (S != none && S.FoundryDone.Find(default.RepairFoundry) != INDEX_NONE)
+		H *= default.RepairFoundryScale;
+	return Max(1, H);
+}
+
+/** A SHIV's hours out after a mission (the same: its own, whatever it did; no going all in). */
+static function int RestHoursFor()
+{
+	return default.RestHours + Rand(default.RestRollHours);
 }
 
 /** The SHIVs XCOM has. */

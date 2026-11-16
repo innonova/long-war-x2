@@ -37,7 +37,7 @@ static function Apply()
 	local XComGameState_Unit Unit;
 	local XComGameState NewGameState;
 	local StateObjectReference Ref;
-	local bool bAllIn, bHurt;
+	local bool bAllIn, bHurt, bSHIV;
 	local int Mission, H, Wound;
 
 	History = `XCOMHISTORY;
@@ -57,12 +57,19 @@ static function Apply()
 		if (NewGameState == none)
 			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: fatigue");
 		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
-		bAllIn = ValueOf(Unit, 'LWX2AllIn') > 0;
+		bSHIV = class'LWSHIVs'.static.IsSHIV(Unit);
+		// (A SHIV never goes all in: it is out its own hours, whatever it did.)
+		bAllIn = !bSHIV && ValueOf(Unit, 'LWX2AllIn') > 0;
 		bHurt = Unit.GetCurrentStat(eStat_HP) < Unit.GetMaxStat(eStat_HP);
-		H = (bAllIn || bHurt) ? default.HardHours : default.BaseHours + Rand(default.RollHours);
-		H += PowersHours(Unit);
-		// An officer's hours, per officer rank (SPECIES_POINT_LIMIT).
-		H += class'LWOfficers'.static.FatigueHours(Unit);
+		if (bSHIV)
+			H = class'LWSHIVs'.static.RestHoursFor();
+		else
+		{
+			H = (bAllIn || bHurt) ? default.HardHours : default.BaseHours + Rand(default.RollHours);
+			H += PowersHours(Unit);
+			// An officer's hours, per officer rank (SPECIES_POINT_LIMIT).
+			H += class'LWOfficers'.static.FatigueHours(Unit);
+		}
 		H = H * default.ScalePct / 100;
 		// Stay Frosty, the squad's leader's: a day less.
 		if (class'LWOfficers'.static.SquadHad(Unit, class'LWOfficers'.const.STAY_FROSTY))
@@ -76,8 +83,7 @@ static function Apply()
 		Unit.SetUnitFloatValue('LWX2AllIn', 0, eCleanup_Never);
 		Unit.SetUnitFloatValue('LWX2FatigueMission', Mission, eCleanup_Never);
 		Unit.SetUnitFloatValue('LWX2RestedAt', S.Hours + Wound + H, eCleanup_Never);
-		Unit.SetCurrentStat(eStat_Will, Unit.GetMaxWillForMentalState(eMentalState_Tired));
-		Unit.UpdateMentalState();
+		SetTired(Unit, true);
 		XComHQ = NoWillProject(NewGameState, XComHQ, Unit);
 		ShowRest(NewGameState, Unit, Wound + H);
 		`log("LongWarX2: fatigue:" @ Unit.GetFullName() @ "rests" @ H @ "hours" $ (Wound > 0 ? " after" @ Wound @ "of healing" : "") $ (bAllIn ? ", went all in (maximum health now" @ int(Unit.GetBaseStat(eStat_HP)) $ ")" : "") $ (bHurt ? ", hurt" : "") $ "; Tired until hour" @ S.Hours + Wound + H, , 'LongWarX2');
@@ -119,11 +125,25 @@ static function Tick(XComGameState NewGameState, XComGameState_LWStrategy S)
 		if (At > S.Hours)
 			continue;
 		Unit.SetUnitFloatValue('LWX2RestedAt', 0, eCleanup_Never);
-		Unit.SetCurrentStat(eStat_Will, Unit.GetMaxStat(eStat_Will));
-		Unit.UpdateMentalState();
+		SetTired(Unit, false);
 		ShowRest(NewGameState, Unit, 0);
 		`log("LongWarX2: fatigue:" @ Unit.GetFullName() @ "rested, ready again at hour" @ S.Hours, , 'LongWarX2');
 	}
+}
+
+/** Tired while resting, ready after: through the will (XCOM 2's mental state follows it); a SHIV, with no will, set so. */
+static function SetTired(XComGameState_Unit Unit, bool bTired)
+{
+	if (class'LWSHIVs'.static.IsSHIV(Unit))
+	{
+		Unit.MentalState = bTired ? eMentalState_Tired : eMentalState_Ready;
+		return;
+	}
+	if (bTired)
+		Unit.SetCurrentStat(eStat_Will, Unit.GetMaxWillForMentalState(eMentalState_Tired));
+	else
+		Unit.SetCurrentStat(eStat_Will, Unit.GetMaxStat(eStat_Will));
+	Unit.UpdateMentalState();
 }
 
 /** A test aid (control aid tire): the squad as if back from a mission, resting the hours given. */
@@ -151,8 +171,7 @@ static function string Tire(int H)
 		if (Unit == none || !Unit.IsSoldier())
 			continue;
 		Unit.SetUnitFloatValue('LWX2RestedAt', S.Hours + H, eCleanup_Never);
-		Unit.SetCurrentStat(eStat_Will, Unit.GetMaxWillForMentalState(eMentalState_Tired));
-		Unit.UpdateMentalState();
+		SetTired(Unit, true);
 		n++;
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);

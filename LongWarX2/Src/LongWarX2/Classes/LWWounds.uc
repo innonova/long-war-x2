@@ -18,6 +18,9 @@ static function int HoursFor(XComGameState_Unit Unit, XComGameState_LWStrategy S
 {
 	local int Base, H, HP, MaxHP;
 
+	// A SHIV is repaired as Long War repairs one (features/lw-shivs-mecs.md).
+	if (class'LWSHIVs'.static.IsSHIV(Unit))
+		return class'LWSHIVs'.static.RepairHoursFor(Unit, S);
 	HP = int(Unit.GetCurrentStat(eStat_HP));
 	MaxHP = Max(1, int(Unit.GetBaseStat(eStat_HP)));
 	Base = default.WoundHours - default.WoundHours * (default.WoundDays / 100) / (S.Days() + default.WoundDays % 100);

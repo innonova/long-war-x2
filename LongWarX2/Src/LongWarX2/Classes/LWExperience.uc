@@ -88,6 +88,13 @@ static function MissionOver()
 	{
 		if (Unit.IsDead())
 			continue;
+		// A SHIV gains none (Long War's tanks never rank up): only the mission marked on it, which its rest follows.
+		if (Unit.IsRobotic())
+		{
+			Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+			Unit.SetUnitFloatValue('LWX2XPMission', Battle.ObjectID, eCleanup_Never);
+			continue;
+		}
 		XP = XPOf(Unit);
 		Rank = Unit.GetRank();
 		Gained = 0;

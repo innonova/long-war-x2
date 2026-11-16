@@ -113,3 +113,32 @@ round Hover SHIV), at full health. Screenshot (gitignored): `logs/wingpu_shivs_e
 
 **Not looked at yet:** the treads' material (the stand-in takes the body's texture for every
 material of the mesh), the gun's place on the body, the animations in motion.
+
+## Report (2026-11-16, SHIVs in the campaign: names, rest, repair)
+
+- **Long War's words:** the bodies' names (SHIV, Alloy SHIV, Hover SHIV), the weapons' (the
+  Autocannon, Sentry Gun, Superheavy Pulser, Superheavy Plasma) with Long War's summaries, the
+  class and rank "SHIV" (`lw-words.mjs`, `makeSHIVWords`; the setup passes `XComLWSHIVs.ini`).
+  A SHIV is named in one part, "SHIV #1", "Hover SHIV #2", since XCOM 2's lists show a last name.
+- **Rest after a mission** (`XGFacility_Barracks.DetermineTimeOut`'s tank part): 24 hours plus up
+  to 24, whatever it did; never all in. Shown as War of the Chosen's Tired, set directly (a SHIV
+  has no will to set it by).
+- **Repair** (the same function): 24 hours per hit point lost, twice that per point below a
+  quarter of its health, plus up to half of that (at least 96); two thirds of it with the
+  Foundry's Vehicle Repair. The numbers are in `XComLWSHIVs.ini` (code numbers marked so).
+- **No experience** for SHIVs (Long War's tanks never rank up).
+
+**Checked on wingpu:**
+- squad select in EW's hangar with two SHIVs: "SHIV #1" and "HOVER SHIV #2", rank and class
+  SHIV, the Autocannon as primary weapon;
+- a mission won with an Alloy SHIV down 6 of 22: "out 234 hours" (6 × 24 + 90), resting 26 hours
+  after; the unhurt SHIV rested 45 hours and was ready again when they were over;
+- engineering: a SHIV begun on the first day ("done in 15 days" with the starting engineers),
+  built on day 16, in the crew ready for duty.
+
+### Decisions
+
+- **No cover for SHIVs for now**: they play on the ADVENT MEC's pawn, which has no cover
+  animations; EW's SHIVs took cover. To revisit with the cover animations of EW's SHIV.
+- **Squad select shows the ADVENT MEC's body**: EW's bodies are put on units in missions only;
+  the strategy pawns are XCOM 2's.

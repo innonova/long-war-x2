@@ -552,3 +552,30 @@ export function makeGeneWords({ strategyLoc }) {
   ].filter(([, v]) => v)
   return { text: ['[UILWEWGeneMods]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
+
+/** The SHIVs' words (features/lw-shivs-mecs.md): Long War's item names for the bodies (the mod's characters), their weapons
+ *  (with Long War's summaries) and the SHIVs' class. */
+export function makeSHIVWords({ loc, strategyLoc, shivsIni }) {
+  const one = (text, key, k) => text.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1]
+  const name = (e) => one(loc, 'm_aItemNames', e)
+  const out = []
+  let named = 0
+  const bodies = [...shivsIni.matchAll(/^\+Bodies=\(Item=(\d+), Template=(\w+)/gm)].map((m) => ({ item: Number(m[1]), template: m[2] }))
+  const enums = { 100: 'eItem_SHIV', 101: 'eItem_SHIV_Alloy', 102: 'eItem_SHIV_Hover' }
+  for (const b of bodies) {
+    const n = name(enums[b.item] ?? b.item) ?? name(b.item)
+    if (!n) continue
+    named++
+    out.push(`[${b.template} X2CharacterTemplate]`, `strCharacterName="${n}"`, '')
+  }
+  for (const m of shivsIni.matchAll(/^\+Weapons=\(Item=(\d+), Enum=(\w+), Template=(\w+), Damage=(\d+)/gm)) {
+    const n = name(m[2]) ?? name(m[1])
+    if (!n) continue
+    named++
+    const summary = strategyLoc ? one(strategyLoc, 'ItemTypeSummary', m[2]) ?? one(strategyLoc, 'ItemTypeSummary', m[1]) : undefined
+    out.push(`[${m[3]} X2WeaponTemplate]`, `FriendlyName="${n}"`, ...(summary ? [`BriefSummary="${summary}"`] : []), `TacticalText="${summary ?? `${n}: ${m[4]} damage.`}"`, '')
+  }
+  const shiv = name('eItem_SHIV')
+  if (shiv) out.push('[LWS_SHIV X2SoldierClassTemplate]', `DisplayName="${shiv}"`, ...[0, 1].flatMap((k) => [`RankNames[${k}]="${shiv}"`, `ShortNames[${k}]="${shiv}"`]), '')
+  return { text: out.join('\r\n'), named }
+}

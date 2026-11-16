@@ -113,6 +113,10 @@ setup program's words step runs there for real, and words can be written in plac
 
     tools/test/on.sh 'node scripts\write-words.mjs "C:\Program Files (x86)\Steam\steamapps\common\XCom-Enemy-Unknown\XEW"'
 
+They are written into the checkout's `LongWarX2/Localization`; the build copies them into the
+installed mod, so write them before `sync-build.sh` (or copy them over after; a running game
+reads them when it starts).
+
 ## The window
 
 The game runs windowed at 1600x900, so a whole screenshot shows it; clicks

@@ -39,6 +39,16 @@ const out = [
   '; The SHIV (eChar_Tank); RepairHours: a wounded SHIV\'s base time in repair (BASE_DAYS_INJURED_TANK).',
   `Base=(HP=${tank.HP}, Aim=${tank.Offense}, Defense=${tank.Defense}, Mobility=${tank.Mobility}, Sight=${tank.SightRadius})`,
   `RepairHours=${one('BASE_DAYS_INJURED_TANK')}`,
+  // Numbers of Long War's code (XGFacility_Barracks.DetermineTimeOut), not its config: a SHIV back from a mission is out
+  // RestHours plus up to RestRollHours; a damaged one, RepairHours per hit point lost, twice that per point below a quarter,
+  // plus up to half of that (at least RepairRollMin); two thirds of it once the Foundry's RepairFoundry is done.
+  '; Rest and repair (Long War\'s code): RestHours + Rand(RestRollHours); RepairHours per HP lost, twice that per HP below a',
+  '; quarter, + Rand(max(half, RepairRollMin)); x RepairFoundryScale with the Foundry\'s RepairFoundry (Vehicle Repair).',
+  'RestHours=24',
+  'RestRollHours=24',
+  'RepairRollMin=96',
+  'RepairFoundry=5',
+  'RepairFoundryScale=0.67',
   '; Bodies: Item, the character Template, its Deck (item) and the deck\'s HP, Defense, Mobility, SmallItems, Fly and Fuel;',
   '; RepairHP: hit points beyond the deck\'s that repair restores (Long War\'s "base hp bonuses that require repair").',
   ...BODIES.map((b) => {
