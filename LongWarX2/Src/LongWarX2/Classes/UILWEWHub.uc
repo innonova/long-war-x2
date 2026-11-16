@@ -7,8 +7,9 @@
 // (XCOM 2's soldier list and armory), the hangar, the Situation Room (its overview, the grey market). Mission Control is
 // the Long War Geoscape (time, decisions, the council). The resources, clock and events stay on UILWEWStrategyHUD.
 //
-// The room's menu is XCOM 2's list at EW's submenu place: EW's own submenu clip (subMenuMC) takes its options but creates
-// none, its option symbol coming from EW's shared components movie, which does not resolve here.
+// The room's menu is EW's own submenu (subMenuMC), as EW's UIStrategyHUD_FacilitySubMenu drives it: attached to the room's
+// tab (facilityMenu.setFocus), its options (clear, AddOption, Show), the selected one's help (setFocus, SetHelpText). Its
+// calls go at once (Movie.Invoke): queued through MC, setFocus found no tab.
 class UILWEWHub extends UILWEWScreen config(LWEWMaps);
 
 /** The hub in place of the Geoscape as the strategy layer's root (off while it is being made: features/lw-base-view.md). */
@@ -26,11 +27,10 @@ var array<name> RoomCameras;
 /** Words when the setup has not written EW's (each in the order of RoomNames, then the options' keys). */
 var array<string> FallbackRooms;
 
-/** The room entered (-1: the base's view), its options (OPT_ consts) and the list showing them. */
+/** The room entered (-1: the base's view), its options (OPT_ consts) and the one selected in EW's submenu. */
 var int Room;
 var array<int> RoomOptions;
-var UIList RoomList;
-var UIText RoomHelp;
+var int RoomSelected;
 
 const OPT_RESEARCH = 0;
 const OPT_ITEMS = 1;
@@ -65,16 +65,79 @@ static function Open(XComHQPresentationLayer HQPres)
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
 	super.InitScreen(InitController, InitMovie, InitName);
-	// The room's menu where EW's submenu stands (below the top menu, at the left).
-	RoomList = Spawn(class'UIList', self);
-	RoomList.InitList('LWHubRoomMenu', 60, 120, 420, 300);
-	RoomList.OnItemClicked = OnRoomOptionClicked;
-	RoomList.Hide();
-	RoomHelp = Spawn(class'UIText', self);
-	RoomHelp.InitText('LWHubRoomHelp', "", false);
-	RoomHelp.SetPosition(60, 430);
-	RoomHelp.SetWidth(420);
-	RoomHelp.Hide();
+}
+
+/** A function of the movie called at once (below the screen's clip), with these arguments. */
+function CallNow(string Func, optional array<ASValue> Params)
+{
+	Movie.Invoke(MCPath $ "." $ Func, Params);
+}
+
+static function ASValue Str(string Text)
+{
+	local ASValue V;
+
+	V.Type = AS_String;
+	V.s = Text;
+	return V;
+}
+
+static function ASValue Num(float N)
+{
+	local ASValue V;
+
+	V.Type = AS_Number;
+	V.n = N;
+	return V;
+}
+
+/** The room's options in EW's submenu under its tab, the first selected. */
+function ShowRoomMenu()
+{
+	local array<ASValue> Params;
+	local int k;
+
+	CallNow("subMenuMC.clear");
+	for (k = 0; k < RoomOptions.Length; k++)
+	{
+		Params.Length = 0;
+		Params.AddItem(Num(k));
+		Params.AddItem(Str(Caps(OptionName(RoomOptions[k]))));
+		Params.AddItem(Num(0));
+		CallNow("subMenuMC.AddOption", Params);
+	}
+	CallNow("subMenuMC.Show");
+	// (Show waits for a frame on the hidden clip, which XCOM 2's Flash does not advance: shown at once.)
+	CallNow("subMenuMC.onInvalidate");
+	CallNow("subMenuMC.UpdateLocation");
+	SelectOption(0);
+	SetTimer(0.15, true, nameof(HoverOption));
+}
+
+/** The option under the mouse selected, its help shown, as in EW (the submenu's own mouse events do not reach XCOM 2:
+ *  they name no panel of its). */
+function HoverOption()
+{
+	local int k;
+
+	k = OptionUnderMouse();
+	if (k >= 0 && k != RoomSelected)
+		SelectOption(k);
+}
+
+/** An option of the room's menu selected: EW's highlight and its help. */
+function SelectOption(int k)
+{
+	local array<ASValue> Params;
+
+	if (RoomOptions.Length == 0)
+		return;
+	RoomSelected = Clamp(k, 0, RoomOptions.Length - 1);
+	Params.AddItem(Str(string(RoomSelected)));
+	CallNow("subMenuMC.setFocus", Params);
+	Params.Length = 0;
+	Params.AddItem(Str(OptionHelp(RoomOptions[RoomSelected])));
+	CallNow("subMenuMC.SetHelpText", Params);
 }
 
 simulated function OnInit()
@@ -105,10 +168,7 @@ simulated function OnInit()
 	MC.QueueBoolean(false);
 	MC.EndOp();
 	class'LWX2EWBase'.static.Get(self).Show();
-	// The movie lays its menu out once its items have loaded, which it does not do here (each stays at 0): laid out in a
-	// row, centred, once they have their sizes; and the parts the HUD beside this one shows hidden (the movie shows them
-	// again as it lays itself out).
-	// (EW's own framework lays its room row out: features/lw-base-view.md.)
+	// The parts the HUD beside this one shows, hidden (the movie shows them again as it lays itself out).
 	SetTimer(0.5, true, nameof(HideHUDParts));
 	// The view asked for again a moment later: a screen closed just before (the start screen) sends XCOM 2's camera back
 	// to the Avenger after this. And the HUD with the resources and clock over this.
@@ -150,26 +210,6 @@ simulated function ShowAvengerButton(bool bShow)
 		Button.SetVisible(bShow);
 }
 
-function LayOutMenu()
-{
-	local float X, Width, Gap;
-	local array<float> Widths;
-	local int i;
-
-	Gap = 8;
-	for (i = 0; i < RoomCameras.Length; i++)
-	{
-		Widths.AddItem(Movie.GetVariableNumber(MCPath $ ".theMenu.facilityMenu." $ i $ "._width"));
-		Width += Widths[i] + (i > 0 ? Gap : 0.0);
-	}
-	X = -Width / 2 - Movie.GetVariableNumber(MCPath $ ".theMenu.facilityMenu._x");
-	for (i = 0; i < RoomCameras.Length; i++)
-	{
-		Movie.SetVariableNumber(MCPath $ ".theMenu.facilityMenu." $ i $ "._x", X);
-		X += Widths[i] + Gap;
-	}
-}
-
 function HideHUDParts()
 {
 	Movie.SetVariableBool(MCPath $ ".theClock._visible", false);
@@ -183,6 +223,8 @@ simulated function OnReceiveFocus()
 	if (!bIsInited)
 		return;
 	MC.ChildFunctionVoid("theMenu.facilityMenu", "onReceiveFocus");
+	if (Room >= 0)
+		SetTimer(0.15, true, nameof(HoverOption));
 	ShowBase();
 	SetTimer(0.6, false, nameof(ShowBase));
 	ShowAvengerButton(false);
@@ -196,6 +238,7 @@ simulated function OnLoseFocus()
 
 	super.OnLoseFocus();
 	ClearTimer(nameof(ShowBase));
+	ClearTimer(nameof(HoverOption));
 	// (A screen that shows the base itself, building in it, keeps it.)
 	Next = UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen());
 	if ((Next == none || !Next.bShowsBase) && UILWOfficers(Movie.Pres.ScreenStack.GetCurrentScreen()) == none)
@@ -213,7 +256,7 @@ simulated function OnRemoved()
 function EnterRoom(int i)
 {
 	local XComGameState_LWStrategy S;
-	local int k;
+	local array<ASValue> Params;
 
 	if (i == Room)
 	{
@@ -222,8 +265,9 @@ function EnterRoom(int i)
 	}
 	`log("LongWarX2: Long War hub: room" @ RoomName(i), , 'LongWarX2');
 	Room = i;
-	MC.ChildFunctionString("theMenu.facilityMenu", "setFocus", string(i));
-	MC.ChildFunctionVoid("theMenu.facilityMenu", "DimAllUnselectedMenuOptions");
+	Params.AddItem(Str(string(i)));
+	CallNow("theMenu.facilityMenu.setFocus", Params);
+	CallNow("theMenu.facilityMenu.DimAllUnselectedMenuOptions");
 	class'LWX2EWBase'.static.Get(self).LookAt(RoomCameras[i], 1.0);
 	RoomOptions.Length = 0;
 	switch (i)
@@ -261,22 +305,16 @@ function EnterRoom(int i)
 		RoomOptions.AddItem(OPT_GREYMARKET);
 		break;
 	}
-	RoomList.ClearItems();
-	for (k = 0; k < RoomOptions.Length; k++)
-		Spawn(class'UIListItemString', RoomList.itemContainer).InitListItem(Caps(OptionName(RoomOptions[k])));
-	RoomList.Show();
-	RoomList.SetSelectedIndex(0);
-	RoomHelp.SetText(OptionHelp(RoomOptions[0]));
-	RoomHelp.Show();
+	ShowRoomMenu();
 }
 
 /** Back to the base's view. */
 function LeaveRoom()
 {
 	Room = -1;
-	RoomList.Hide();
-	RoomHelp.Hide();
-	MC.ChildFunctionVoid("theMenu.facilityMenu", "RestoreOpacityToAllMenuOptions");
+	ClearTimer(nameof(HoverOption));
+	CallNow("subMenuMC.Hide");
+	CallNow("theMenu.facilityMenu.RestoreOpacityToAllMenuOptions");
 	class'LWX2EWBase'.static.Get(self).LookAt('Base', 1.0);
 }
 
@@ -317,11 +355,6 @@ function string OptionHelp(int Option)
 	return "";
 }
 
-function OnRoomOptionClicked(UIList ContainerList, int ItemIndex)
-{
-	if (ItemIndex >= 0 && ItemIndex < RoomOptions.Length)
-		ChooseOption(RoomOptions[ItemIndex]);
-}
 
 /** A room's option: its screen opened over the hub. */
 function ChooseOption(int Option)
@@ -412,6 +445,19 @@ function bool MouseOver(string Path, optional float Nudge)
 	return W > 0 && MouseX >= 0 && MouseY >= -H * Nudge && MouseX <= W && MouseY <= H;
 }
 
+/** The room menu's option under the mouse (EW's submenu: its options are theItems.<k>), or -1. */
+function int OptionUnderMouse()
+{
+	local int k;
+
+	if (Room < 0)
+		return -1;
+	for (k = 0; k < RoomOptions.Length; k++)
+		if (MouseOver(MCPath $ ".subMenuMC.theItems." $ k))
+			return k;
+	return -1;
+}
+
 /** The top menu's room under the mouse, or -1. */
 function int RoomUnderMouse()
 {
@@ -432,6 +478,13 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		return super.OnUnrealCommand(cmd, arg);
 	if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED || cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP)
 	{
+		i = OptionUnderMouse();
+		if (i >= 0)
+		{
+			SelectOption(i);
+			ChooseOption(RoomOptions[i]);
+			return true;
+		}
 		i = RoomUnderMouse();
 		if (i >= 0)
 		{
@@ -445,6 +498,24 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 			return true;
 		}
 	}
+	// In a room: its menu by the arrows, an option chosen by Enter.
+	if (Room >= 0)
+		switch (cmd)
+		{
+		case class'UIUtilities_Input'.const.FXS_ARROW_UP:
+		case class'UIUtilities_Input'.const.FXS_DPAD_UP:
+			SelectOption(RoomSelected - 1);
+			return true;
+		case class'UIUtilities_Input'.const.FXS_ARROW_DOWN:
+		case class'UIUtilities_Input'.const.FXS_DPAD_DOWN:
+			SelectOption(RoomSelected + 1);
+			return true;
+		case class'UIUtilities_Input'.const.FXS_KEY_ENTER:
+		case class'UIUtilities_Input'.const.FXS_BUTTON_A:
+			if (RoomSelected < RoomOptions.Length)
+				ChooseOption(RoomOptions[RoomSelected]);
+			return true;
+		}
 	// Escape: out of the room, back to the base's view; at the base's view, the hub closed, back to XCOM 2's Avenger.
 	if (cmd == class'UIUtilities_Input'.const.FXS_KEY_ESCAPE || cmd == class'UIUtilities_Input'.const.FXS_BUTTON_B)
 	{

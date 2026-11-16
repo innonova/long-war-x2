@@ -253,6 +253,10 @@ function Handle(string Line, out array<string> Out)
 		// A variable inside the open EW movie set: ewset <path below the screen's clip> <true|false|number>.
 		Out.AddItem(class'UILWEWScreen'.static.SetVar(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? Args[2] : ""));
 		return;
+	case "ewinvoke":
+		// A function of the open EW movie called at once, its result printed: ewinvoke <function> [arguments; s:<text> a string].
+		Out.AddItem(class'UILWEWScreen'.static.InvokeMovie(Args));
+		return;
 	case "ewcall":
 		// A function of the open EW movie: ewcall <function> [arguments; _ for a space].
 		Out.AddItem(class'UILWEWScreen'.static.CallMovie(Args));

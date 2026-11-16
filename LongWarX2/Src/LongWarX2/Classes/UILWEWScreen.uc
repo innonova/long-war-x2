@@ -50,13 +50,50 @@ static function string CallMovie(array<string> Args)
 	EWScreen.MC.BeginFunctionOp(Args[1]);
 	for (i = 2; i < Args.Length; i++)
 	{
-		if (string(int(Args[i])) == Args[i])
+		// (s:<text>: a string even when it reads as a number.)
+		if (Left(Args[i], 2) == "s:")
+			EWScreen.MC.QueueString(Mid(Args[i], 2));
+		else if (string(int(Args[i])) == Args[i])
 			EWScreen.MC.QueueNumber(int(Args[i]));
 		else
 			EWScreen.MC.QueueString(Repl(Args[i], "_", " "));
 	}
 	EWScreen.MC.EndOp();
 	return "ok" @ EWScreen.MCPath $ "." $ Args[1] @ "with" @ (Args.Length - 2) @ "arguments";
+}
+
+/** A function of the top EW screen's movie called at once (Movie.Invoke), its result (a test aid: ewinvoke). */
+static function string InvokeMovie(array<string> Args)
+{
+	local UILWEWScreen EWScreen;
+	local array<ASValue> Params;
+	local ASValue V, Result;
+	local int i;
+
+	EWScreen = UILWEWScreen(`HQPRES.ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
+	if (EWScreen == none || Args.Length < 2)
+		return "ERR no EW screen open, or no function given";
+	for (i = 2; i < Args.Length; i++)
+	{
+		if (Left(Args[i], 2) == "s:")
+		{
+			V.Type = AS_String;
+			V.s = Mid(Args[i], 2);
+		}
+		else if (Args[i] ~= "true" || Args[i] ~= "false")
+		{
+			V.Type = AS_Boolean;
+			V.b = Args[i] ~= "true";
+		}
+		else
+		{
+			V.Type = AS_Number;
+			V.n = float(Args[i]);
+		}
+		Params.AddItem(V);
+	}
+	Result = EWScreen.Movie.Invoke(EWScreen.MCPath $ "." $ Args[1], Params);
+	return "ok" @ Args[1] @ "returned" @ Result.Type @ Result.s @ Result.n @ Result.b;
 }
 
 /** A variable of the top EW screen's movie set, below its clip (a test aid: ewset): true, false or a number. */
