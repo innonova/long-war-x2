@@ -133,7 +133,7 @@ static function bool Update()
 		}
 		return false;
 	}
-	Reach = (default.ApproachTiles > 0 ? default.ApproachTiles : 4) * class'XComWorldData'.const.WORLD_StepSize;
+	Reach = (default.ApproachTiles > 0 ? default.ApproachTiles : 4.0) * class'XComWorldData'.const.WORLD_StepSize;
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 	{
 		if (Unit.ObjectID == VIP.ObjectID || Unit.GetTeam() != eTeam_XCom || !Unit.IsSoldier() || !Unit.IsAlive())
