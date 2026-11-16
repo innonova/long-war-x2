@@ -237,3 +237,39 @@ the rest come beside them at the battle's start, as those whose pods found no ro
 - The covert missions' and the raid's own objectives and maps (EW's EXALT HQ is a skyscraper):
   XCOM 2's guerrilla ops stand in.
 - EXALT's soldiers stand in as ADVENT's (their bodies are not EW's EXALT yet).
+
+## Report (2026-11-16, step 3 of the council missions' plan: EXALT's covert extraction)
+
+Long War's covert extraction, read from its `XComGame.upk` (`XGBattle_SPCovertOpsExtraction`,
+`XComRadarArrayActor`) and the `_CovExt` levels' Kismet:
+- **Its maps**: Long War's `DefaultMaps.ini` lists 8 in rotation (`eMission_CovertOpsExtraction`), each with
+  its streamed `_CovExt` level. `maps-config.mjs` now writes them (`Kind=CovertExtraction`, `Level=`), and the
+  10 data recovery maps (`Kind=DataRecovery`, the `_CNH` levels) for the next step. The converter and the setup
+  convert each level with its map into a `LWX2V_<level>` plot, as the council's.
+- **The operative** starts at the level's own covert-operative spawn point, apart from the squad
+  (`SpawnCovertOperative`).
+- **The comm relays**: each level has four (its `XComRadarArrayActor`s); the battle activates two at random
+  (`InitRadarArrays`). Only the operative can hack one, from beside it, one a turn (`CanInteract`:
+  `m_bCovertHackerThisTurn`): `LWX2_HackRelay`, one action.
+- **Then** "Escort the operative to the EVAC zone." (XCOM 2's evac zone at the Skyranger, from the start, as EW's
+  dropship volume is), and "Eliminate remaining EXALT forces, or get to the EVAC zone.". The operative killed
+  loses the mission; the squad leaving without both relays hacked and the operative out loses it too.
+- **Paid**: Long War's §200 (`m_iCovertOpsCashRewardAmount`, read by `strategy-config.mjs` from Long War's
+  XComGame.upk as `CovertCash`), on top of the cell cleared, the panic and the intel.
+- EW's texts from the level's Kismet ("The covert operative must hack the EXALT comm relays.", "EXALT Comm Relays
+  left to hack: 2", …).
+
+**Checked on wingpu** (`exalt begin`, `exalt sweep`, `exalt send`, `run 24` to the extraction, then `put`, `use`,
+and the new `evac` and `crew list` aids): on the Convenience Store, relays 3 and 0 active; the operative at
+their spawn, the squad at the Skyranger in the evac zone; relay 3 hacked, relay 0 then out of reach the same
+turn; hacked the next turn: "Escort the operative to the EVAC zone."; the operative and the squad evacuated:
+won, "The covert operation in China succeeded …", "The extraction brought §200 home.". An earlier run on the
+Trainyard placed the operative and took both relays the same way.
+
+**Not done:**
+- **The relays are not drawn.** Their mesh is XCOM's hot button column (`HotButton.Meshes.HotButtonColumnLow`, a
+  class default of `XComRadarArrayActor`), which is not in the level's package; where the player's EW keeps it is
+  not found yet. The objective text and the action are the way to them for now.
+- A hack's effect on EXALT: EW blinds and disables the EXALT soldiers already fighting for a turn and holds the
+  pods still (`OnExaltHackingArrayInteraction`). Not yet.
+- The Kismet's reinforcements as the operative nears each relay, and the wave spawner.
