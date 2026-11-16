@@ -319,7 +319,7 @@ and XCOM 2's soldier list over it (`UIPersonnel_LWPsi`):
   its EW screen is in.
 
 **Checked on wingpu** (a new campaign, Psionics given, a Psi Labs placed):
-the list of all 18 ready soldiers; one chosen: Neural Feedback and Mindfray
+the list of the ready soldiers; one chosen: Neural Feedback and Mindfray
 open, the rest greyed with "its research", the Rift with "Mind Control first";
 Mindfray confirmed by mouse, the list back without that soldier, the
 Geoscape's "PSI TESTING: <name>" with its 9 days; time run 220 hours: "finished
