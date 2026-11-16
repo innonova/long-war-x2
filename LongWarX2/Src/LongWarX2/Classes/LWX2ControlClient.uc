@@ -2443,7 +2443,8 @@ function XComUnits(out array<string> Out)
 		Out.AddItem("ERR no units of XCOM on the field (not in a mission?)");
 	for (i = 0; i < Units.Length; i++)
 		Out.AddItem(i @ Units[i].GetFullName() @ "(" $ Units[i].GetMyTemplateName() $ "," @ Units[i].GetSoldierClassTemplateName() $ ") at" @ Units[i].TileLocation.X @ Units[i].TileLocation.Y @ Units[i].TileLocation.Z
-			@ "ap" @ Units[i].ActionPoints.Length @ "sight" @ int(Units[i].GetCurrentStat(eStat_SightRadius)) @ "hp" @ int(Units[i].GetCurrentStat(eStat_HP)) $ "/" $ int(Units[i].GetMaxStat(eStat_HP)));
+			@ "ap" @ Units[i].ActionPoints.Length @ "sight" @ int(Units[i].GetCurrentStat(eStat_SightRadius)) @ "hp" @ int(Units[i].GetCurrentStat(eStat_HP)) $ "/" $ int(Units[i].GetMaxStat(eStat_HP))
+			$ (Units[i].IsConcealed() ? " concealed" : "") $ (Units[i].IsUnitAffectedByEffectName('RangerStealth') ? " stealth" : ""));
 }
 
 /**
