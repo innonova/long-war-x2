@@ -510,3 +510,17 @@ export function makeExaltWords({ strategyLoc }) {
   const words = [...sit, ...inf, ...clues].filter(([, v]) => v)
   return { text: ['[UILWEWSituationRoom]', ...[...sit, ...inf].filter(([, v]) => v).map(([k, v]) => `${k}="${v}"`), '', '[LWExalt]', ...clues.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
+
+/** The Psi Labs' words (UILWPsiLabs, in the mod's LongWarX2.int): EW's (XGPsiLabsUI), from Long War's strategy text. */
+export function makePsiWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const at = text.indexOf('\n[XGPsiLabsUI]\n')
+  const end = at < 0 ? -1 : text.indexOf('\n[', at + 2)
+  const section = at < 0 ? '' : text.slice(at, end < 0 ? undefined : end)
+  const one = (key) => section.match(new RegExp(`^${key}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const words = [
+    ['Title', one('m_strPsiLabsPostHelpTitle')], ['Current', one('m_strLabelCurrentTestSubjects')],
+    ['Days', one('m_strLabelDays')], ['Empty', one('m_strItemEmpty')],
+  ].filter(([, v]) => v)
+  return { text: ['[UILWPsiLabs]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}

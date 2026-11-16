@@ -2044,20 +2044,34 @@ function bool InPsiTraining(int UnitID)
 	return PsiTrainees.Find('Unit', UnitID) != INDEX_NONE || GeneTrainees.Find('Unit', UnitID) != INDEX_NONE;
 }
 
+/** Whether the Psi Labs have a place free (Long War's places per labs built). */
+static function bool PsiPlaceFree(XComGameState_LWStrategy S)
+{
+	return S != none && S.PsiTrainees.Length < class'LWBaseRules'.default.PsiSlots * class'LWBase'.static.Count(S, 17);
+}
+
+/** What keeps a soldier out of the Psi Labs now, whatever the power ("" if nothing): the labs, a free place, ready for duty. */
+static function string PsiSoldierWhy(XComGameState_LWStrategy S, XComGameState_Unit Unit)
+{
+	if (class'LWBase'.static.Count(S, 17) == 0)
+		return "the Psi Labs";
+	if (!PsiPlaceFree(S))
+		return "a free place in the Psi Labs";
+	if (Unit == none || !Unit.IsSoldier() || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
+		return "a soldier ready for duty";
+	return "";
+}
+
 /** Whether a soldier may begin training a power now; Why says what is missing. */
 static function bool CanTrainPsi(XComGameState_LWStrategy S, XComGameState_Unit Unit, LWBaseRules.LWPsiPower P, out string Why)
 {
 	local name Tech, Ability;
 
-	Why = "";
 	Ability = class'X2Ability_LWStandins'.static.PsiAbilityFor(P.Perk);
-	if (class'LWBase'.static.Count(S, 17) == 0)
-		Why = "the Psi Labs";
-	else if (S.PsiTrainees.Length >= class'LWBaseRules'.default.PsiSlots * class'LWBase'.static.Count(S, 17))
-		Why = "a free place in the Psi Labs";
-	else if (Unit == none || !Unit.IsSoldier() || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
-		Why = "a soldier ready for duty";
-	else if (Ability != '' && Unit.HasSoldierAbility(Ability))
+	Why = PsiSoldierWhy(S, Unit);
+	if (Why != "")
+		return false;
+	if (Ability != '' && Unit.HasSoldierAbility(Ability))
 		Why = "a soldier without the power";
 	else if (P.Tech != 0)
 	{

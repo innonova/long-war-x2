@@ -220,7 +220,7 @@ simulated function OnLoseFocus()
 	ClearTimer(nameof(HoverOption));
 	// (A screen that shows the base itself, building in it, keeps it.)
 	Next = UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen());
-	if ((Next == none || !Next.bShowsBase) && UILWOfficers(Movie.Pres.ScreenStack.GetCurrentScreen()) == none)
+	if ((Next == none || !Next.bShowsBase) && UILWOfficers(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWPsiLabs(Movie.Pres.ScreenStack.GetCurrentScreen()) == none)
 		class'LWX2EWBase'.static.Get(self).Hide();
 }
 
@@ -384,7 +384,10 @@ function ChooseOption(int Option)
 			class'UILWEWOTS'.static.Open(HQPres);
 			break;
 		}
+	// The Psi Labs on XCOM 2's widgets (soldier screens are XCOM 2's, agreed 2026-11-16).
 	case OPT_PSI:
+		class'UILWPsiLabs'.static.Open(HQPres);
+		break;
 	case OPT_GENE:
 		HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres));
 		break;

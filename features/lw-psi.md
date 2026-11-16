@@ -293,3 +293,36 @@ is in EW's constants: `DISTORTIONFIELD_DEFENSE` 10, `DISTORTIONFIELD_RADIUS`
 
 - Distortion Field: **the psion and the allies around them are covered;
   fields do not stack** (as built).
+
+## Report (2026-11-16, the Psi Labs on XCOM 2's soldier list)
+
+The person's answer (2026-11-16): psi testing on XCOM 2's soldier list, as the
+barracks are; gene mods on EW's own screen (`lw-genemods.md`).
+
+**The hub's Barracks → Psi Labs** (once built) now opens the Labs' own screen
+(`UILWPsiLabs`) over the base, through the camera on the first Psi Labs tile,
+and XCOM 2's soldier list over it (`UIPersonnel_LWPsi`):
+
+- **The list** holds the soldiers who could go in now: ready for duty, not
+  training already, with a place free (Long War's 3 per labs). With the labs
+  full, the list is not offered; the screen shows who is training.
+- **A soldier chosen**: the Labs' screen in EW's words ("PSIONIC TRAINING",
+  "Current Psionic Training:", the trainees with days left and chance) and
+  Long War's powers, each with its target will, the soldier's chance and the
+  days. Those the soldier may not train yet are greyed with the reason ("its
+  research", "Mind Control first"); powers the soldier has are left out.
+- **A power chosen**: XCOM 2's confirmation, then training begins
+  (`StartPsi`), and the list comes back while a place is free, as EW's labs go
+  back to theirs. Esc from the powers goes back to the list; from the list,
+  out of the Labs.
+- The plain panel (`UILWBase`'s Psi Labs line) stays for the Genetics Lab until
+  its EW screen is in.
+
+**Checked on wingpu** (a new campaign, Psionics given, a Psi Labs placed):
+the list of all 18 ready soldiers; one chosen: Neural Feedback and Mindfray
+open, the rest greyed with "its research", the Rift with "Mind Control first";
+Mindfray confirmed by mouse, the list back without that soldier, the
+Geoscape's "PSI TESTING: <name>" with its 9 days; time run 220 hours: "finished
+psi training without gaining Mindfray" (41 %).
+
+The Labs' words come from Long War's `XGPsiLabsUI` text (`makePsiWords`).
