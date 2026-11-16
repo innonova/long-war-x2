@@ -173,6 +173,9 @@ static function string MapName()
 		Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 		if (Battle != none && Left(Battle.MapData.PlotMapName, 5) ~= "LWX2_" && !(Battle.MapData.PlotMapName ~= "LWX2_EWPlotTemplate"))
 			return Mid(Battle.MapData.PlotMapName, 5);
+		// (LWX2V_<map>: the map with its council mission's variant level, ew-maps.ts writePlots.)
+		if (Battle != none && Left(Battle.MapData.PlotMapName, 6) ~= "LWX2V_")
+			return Mid(Battle.MapData.PlotMapName, 6);
 	}
 	S = class'XComGameState_LWStrategy'.static.Get();
 	return (S != none && S.PendingKind != 0) ? S.PendingEWMap : default.DefaultMap;
@@ -236,7 +239,7 @@ static function bool OnOwnPlot()
 	local XComGameState_BattleData Battle;
 
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
-	return Battle != none && MapName() != "" && Battle.MapData.PlotMapName ~= ("LWX2_" $ MapName());
+	return Battle != none && MapName() != "" && (Battle.MapData.PlotMapName ~= ("LWX2_" $ MapName()) || Battle.MapData.PlotMapName ~= ("LWX2V_" $ MapName()));
 }
 
 static function string ChooseMap(name Kind, int Ship)

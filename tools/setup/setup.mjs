@@ -17,7 +17,7 @@ import { execFileSync } from 'node:child_process'
 import { wordsFrom } from '../../scripts/write-words.mjs'
 import { convertUI } from '../convert/ew-ui.ts'
 import { openImages } from '../convert/ew-images.ts'
-import { writeObjectives } from '../convert/ew-objectives.ts'
+import { variantLevels, writeObjectives } from '../convert/ew-objectives.ts'
 import { convertPackage } from '../convert/ew-package.ts'
 import { convertUnits } from '../convert/ew-units.ts'
 import { tealEarth } from '../convert/ew-earth.ts'
@@ -290,7 +290,8 @@ async function convertEW(ew, target) {
   {
     // The base's levels are small: converted in this process. The maps, which can need a large heap, each in a child of
     // its own. (A child converting one of the base's levels, done in a second, twice wrote its files and never exited.)
-    const base = new Set(baseLevels(target))
+    // (With them, the council missions' variant levels, small too: ew-objectives.ts.)
+    const base = new Set([...baseLevels(target), ...variantLevels(maps)])
     convertMaps(cooked, target, [...(want ? maps : []), ...base], content, join(content, 'ewmaps'), (src, out, ini) =>
       base.has(basename(src, '.upk')) ? convertHere(src, out, ini) :
       execFileSync(process.execPath, ['--convert-map', src, out, ini], {

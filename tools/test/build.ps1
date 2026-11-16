@@ -34,8 +34,9 @@ if (Test-Path $converted) {
       New-Item -ItemType HardLink -Path $link -Target $f.FullName | Out-Null
     }
   }
-  # Each EW map's own plot (tools/convert/ew-plot.ts: LWX2_<map>.umap) listed as a plot of Long War X2's type.
-  $plots = Get-ChildItem $converted -Filter 'LWX2_*.umap' | Where-Object { $_.BaseName -ne 'LWX2_EWPlotTemplate' }
+  # Each EW map's own plot (tools/convert/ew-plot.ts: LWX2_<map>.umap, and LWX2V_<map>.umap with its council mission's
+  # variant level) listed as a plot of Long War X2's type.
+  $plots = Get-ChildItem $converted -Filter 'LWX2*.umap' | Where-Object { $_.BaseName -match '^LWX2V?_' -and $_.BaseName -ne 'LWX2_EWPlotTemplate' }
   if ($plots) {
     $ini = "$game\XComGame\Mods\LongWarX2\Config\XComPlots.ini"
     Add-Content $ini ('; The plots of the Enemy Within maps converted on this machine (tools/test/build.ps1).')

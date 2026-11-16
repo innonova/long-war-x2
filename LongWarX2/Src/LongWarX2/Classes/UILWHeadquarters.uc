@@ -230,7 +230,7 @@ function int PrepareMission()
 		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate(Source)), Where, Region.GetReference(), Rewards, true, false);
 		Mission.GeneratedMission.SitReps.Length = 0;
 		Mission.TacticalGameplayTags.Length = 0;
-		if (EWMap == "" || UseEWPlot(Mission, true, EWMap) || PreferOutdoorPlot(Mission) || Attempt == 7)
+		if (EWMap == "" || UseEWPlot(Mission, true, EWMap, Kind == 10 && Council.Kind == 2) || PreferOutdoorPlot(Mission) || Attempt == 7)
 			break;
 		History.CleanupPendingGameState(NewGameState);
 	}
@@ -337,18 +337,25 @@ function LoadMapNow()
  * Long War's aliens stand at EW's pods and its rule ends the mission); not for a terror site, whose XCOM 2 mission brings
  * and counts the civilians. False when the plot is not in this install's list.
  */
-function bool UseEWPlot(XComGameState_MissionSite Mission, bool bTestMission, string EWMap)
+function bool UseEWPlot(XComGameState_MissionSite Mission, bool bTestMission, string EWMap, optional bool bVariant)
 {
 	local XComParcelManager Parcels;
 	local PlotDefinition Plot;
 	local MissionDefinition Def;
+	local string Own;
 
 	Parcels = `PARCELMGR;
 	// The EW map's own plot (LWX2_<map>: ew-plot.ts, listed by the setup program) when there is one; else the template,
-	// with the map placed at run time.
+	// with the map placed at run time. With bVariant (a council mission with its own variant level: the bomb and its
+	// nodes), the plot of the map with that level, LWX2V_<map>, when there is one.
+	Own = "LWX2_" $ EWMap;
+	if (bVariant)
+		foreach Parcels.arrPlots(Plot)
+			if (Plot.MapName ~= ("LWX2V_" $ EWMap))
+				Own = Plot.MapName;
 	foreach Parcels.arrPlots(Plot)
 	{
-		if (Plot.MapName ~= ("LWX2_" $ EWMap))
+		if (Plot.MapName ~= Own)
 		{
 			Mission.GeneratedMission.Plot = Plot;
 			Mission.GeneratedMission.Biome = Parcels.GetBiomeDefinition(EWBiome);

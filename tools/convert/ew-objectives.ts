@@ -21,6 +21,15 @@ export const BOMB_LEVELS: Record<string, string> = {
   URB_SlaughterhouseA: 'URB_Slaughterhouse_Stream',
 }
 
+/** Every map's mission variant level (the council's): converted with the map and joined into a plot of its own, LWX2V_<map>
+ *  (ew-maps.ts writePlots), on which that mission plays. */
+export const VARIANT_LEVELS: Record<string, string> = { ...BOMB_LEVELS }
+
+/** The variant levels of these maps. */
+export function variantLevels(maps: Iterable<string>): string[] {
+  return [...maps].map((m) => VARIANT_LEVELS[m]).filter((l): l is string => !!l)
+}
+
 export interface Bomb { map: string; timer: number; nodes: number; bomb: number[]; nodeAt: number[][] }
 
 /** A bomb disposal's level read: its bomb, nodes and numbers; undefined when it is not as expected. */
