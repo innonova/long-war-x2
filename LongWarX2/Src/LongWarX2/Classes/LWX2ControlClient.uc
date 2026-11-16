@@ -258,6 +258,16 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(PutUnit(Args[1], int(Args[2]), int(Args[3]), int(Args[4])));
 		return;
+	case "tile":
+		// tile <x> <y>: the column of tiles at a world point (EW's coordinates on its own plot): each floor's tile, whether it
+		// is a floor and units can enter it, and what a trace down from above hits first (a test aid).
+		if (Args.Length < 3)
+		{
+			Out.AddItem("ERR tile <x> <y>");
+			return;
+		}
+		TileColumn(float(Args[1]), float(Args[2]), Out);
+		return;
 	case "spawns":
 		// spawns: the map's soldier spawns (XComGroupSpawn) and the one XCOM 2 chose (a test aid).
 		Spawns(Out);
@@ -2674,6 +2684,35 @@ function string PutUnit(string Who, int X, int Y, int Z)
 	if (XGUnit(Unit.GetVisualizer()) != none)
 		XGUnit(Unit.GetVisualizer()).GetPawn().SetLocation(`XWORLD.GetPositionFromTileCoordinates(Tile));
 	return "ok" @ Unit.GetFullName() @ "put on" @ X @ Y @ Z;
+}
+
+function TileColumn(float X, float Y, out array<string> Out)
+{
+	local XComWorldData World;
+	local vector At, HitLocation, HitNormal, Top;
+	local TTile T;
+	local Actor Hit;
+	local int z;
+
+	World = `XWORLD;
+	At.X = X;
+	At.Y = Y;
+	At.Z = 0;
+	T = World.GetTileCoordinatesFromPosition(At);
+	Out.AddItem("tile" @ T.X @ T.Y @ "in the world:" @ !World.IsTileOutOfRange(T));
+	for (z = 0; z < 8; z++)
+	{
+		T.Z = z;
+		Out.AddItem("z" @ z @ "floor" @ World.IsFloorTile(T) @ "enter" @ World.CanUnitsEnterTile(T) @ "blocked" @ World.IsTileFullyOccupied(T));
+	}
+	Top = At;
+	Top.Z = 3000;
+	At.Z = -500;
+	Hit = Trace(HitLocation, HitNormal, At, Top, false);
+	if (Hit != none)
+		Out.AddItem("from above, first hit at z" @ int(HitLocation.Z) @ ":" @ PathName(Hit) @ (StaticMeshActor(Hit) != none ? PathName(StaticMeshActor(Hit).StaticMeshComponent.StaticMesh) : ""));
+	else
+		Out.AddItem("from above: nothing hit");
 }
 
 function Spawns(out array<string> Out)
