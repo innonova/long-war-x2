@@ -155,8 +155,8 @@ Seen:
 ### Left open
 
 - **The bonuses that wait on their system:**
-  - SHIVs and MECs: Ghost in the Machine, Robotics, NeoPanzers, Cyberware (NeoPanzers and
-    Cyberware are wired into item costs already and act once those items exist);
+  - ~~SHIVs and MECs: Ghost in the Machine, Robotics, NeoPanzers, Cyberware~~ (all four act:
+    the report below);
   - officers: the officer side of Sandhurst, and Gift of Osiris's medal hours;
   - council requests and intel: Quai d'Orsay;
   - the Illuminator Gunsight item: Ancient Artifact;
@@ -220,3 +220,23 @@ as a medic, Kate Hill as infantry, all at rank 3, with rolled stats.
   port has no base-class stage.
 
 Xenological Remedies acts now too, on the grey market's corpse prices (lw-greymarket): Sectoid corpses at §4 instead of §2 with China's.
+
+## Report (2026-11-16, Ghost in the Machine and Robotics)
+
+The two SHIV and MEC bonuses act now, as in Long War's code:
+- **Ghost in the Machine** (25):
+  - every SHIV made gets its aim (`XGFacility_Barracks.AddTank`: `aStats[1] += HasBonus(25)`);
+  - the campaign starts with two SHIVs in the barracks
+    (`XGFacility_Engineering.GrantInitialStores`: `eItem_SHIV` × 2), made at the start
+    (`LWBonusEffects.AtStart`).
+- **Robotics** (48): its aim on every new SHIV (`AddTank`) and every new MEC trooper
+  (`XGStrategySoldier.SetSoldierClass`, the MEC case), in `LWSHIVs.AddSHIV` and
+  `LWMECs.AugmentDone`.
+
+**Checked on wingpu** through the start screen:
+- **Japan, Ghost In the Machine:** the campaign began with SHIV #1 and SHIV #2 in the crew, aim 80
+  (70 + 10). A SHIV built later also had 80.
+- **Japan, Robotics:** a new SHIV had aim 75 (+5), a new MEC 74 (69 + 5).
+
+NeoPanzers and Cyberware already acted on the SHIV and MEC items' costs. With these two, the SHIV
+and MEC bonuses are all in.

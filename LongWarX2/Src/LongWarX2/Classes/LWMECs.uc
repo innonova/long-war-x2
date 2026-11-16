@@ -149,6 +149,8 @@ static function XComGameState_Unit AugmentDone(XComGameState NewGameState, XComG
 	for (i = 0; i < Rank; i++)
 		MEC.RankUpSoldier(NewGameState, MECClass);
 	// The squaddie's perk and the class's first choice at each rank (XCOM 2's ranks each give a pick; the player chooses later).
+	// Robotics' aim (SetSoldierClass, a MEC: aStats[1] += HasBonus(48)).
+	class'LWBonusEffects'.static.Raise(MEC, eStat_Offense, class'LWBonuses'.static.Has(class'LWBonuses'.const.ROBOTICS, S));
 	MEC.SetHQLocation(eSoldierLoc_Barracks);
 	ItemTemplate = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(SuitTemplate(default.Suits[0].Item));
 	if (ItemTemplate != none)

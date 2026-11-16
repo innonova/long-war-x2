@@ -67,14 +67,16 @@ static function bool IsSHIV(XComGameState_Unit Unit)
 	return Unit != none && BodyForTemplate(Unit.GetMyTemplateName(), B);
 }
 
-/** A new SHIV of a body in XCOM's crew, with the SHIV Minigun (XGFacility_Barracks.AddTank: a SHIV joins the barracks). */
-static function XComGameState_Unit AddSHIV(XComGameState NewGameState, name Template)
+/** A new SHIV of a body in XCOM's crew, with the SHIV Minigun (XGFacility_Barracks.AddTank: a SHIV joins the barracks).
+ *  S: the strategy state being made, where it is not submitted yet (the campaign's start). */
+static function XComGameState_Unit AddSHIV(XComGameState NewGameState, name Template, optional XComGameState_LWStrategy S)
 {
 	local X2CharacterTemplate CharTemplate;
 	local XComGameState_HeadquartersXCom XComHQ;
-	local XComGameState_Unit Unit;
+	local XComGameState_Unit Unit, Other;
 	local XComGameState_Item Weapon;
 	local X2ItemTemplate WeaponTemplate;
+	local StateObjectReference Ref;
 	local int n;
 
 	CharTemplate = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager().FindCharacterTemplate(Template);
@@ -83,8 +85,17 @@ static function XComGameState_Unit AddSHIV(XComGameState NewGameState, name Temp
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
 	if (XComHQ == none)
 		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	// (Counted in the crew being made: two SHIVs added in one state, Ghost in the Machine's, are #1 and #2.)
+	foreach XComHQ.Crew(Ref)
+	{
+		Other = XComGameState_Unit(NewGameState.GetGameStateForObjectID(Ref.ObjectID));
+		if (Other == none)
+			Other = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (IsSHIV(Other))
+			n++;
+	}
+	n++;
 	Unit = CharTemplate.CreateInstanceFromTemplate(NewGameState);
-	n = Count() + 1;
 	// (Named in one part, "SHIV #2": XCOM 2's lists show a soldier's last name.)
 	Unit.SetCharacterName("", (CharTemplate.strCharacterName != "" ? CharTemplate.strCharacterName : "SHIV") @ "#" $ n, "");
 	Unit.SetCountry('Country_USA');
@@ -92,6 +103,9 @@ static function XComGameState_Unit AddSHIV(XComGameState NewGameState, name Temp
 	Unit.SetXPForRank(1);
 	Unit.StartingRank = 1;
 	Unit.RankUpSoldier(NewGameState, default.SoldierClass);
+	// Ghost in the Machine's and Robotics' aim (AddTank: aStats[1] += HasBonus(25), HasBonus(48)).
+	class'LWBonusEffects'.static.Raise(Unit, eStat_Offense, class'LWBonuses'.static.Has(class'LWBonuses'.const.GHOST_IN_THE_MACHINE, S)
+		+ class'LWBonuses'.static.Has(class'LWBonuses'.const.ROBOTICS, S));
 	Unit.SetHQLocation(eSoldierLoc_Barracks);
 	WeaponTemplate = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(default.Weapons[0].Template);
 	if (WeaponTemplate != none)

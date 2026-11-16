@@ -52,6 +52,12 @@ static function AtStart(XComGameState NewGameState, XComGameState_LWStrategy S)
 	if (v > 0)
 		for (i = 1; i <= 4; i++)
 			NewSoldier(NewGameState, XComHQ, i, v);
+	// Ghost in the Machine's two SHIVs (XGFacility_Engineering.GrantInitialStores: eItem_SHIV x 2, made SHIVs in the barracks).
+	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.GHOST_IN_THE_MACHINE, S) > 0)
+	{
+		class'LWSHIVs'.static.AddSHIV(NewGameState, class'LWSHIVs'.default.Bodies[0].Template, S);
+		class'LWSHIVs'.static.AddSHIV(NewGameState, class'LWSHIVs'.default.Bodies[0].Template, S);
+	}
 	for (i = 0; i < class'LWBonuses'.default.Bonuses.Length; i++)
 		if (class'LWBonuses'.default.Bonuses[i].Kind == 0 && class'LWBonuses'.default.Bonuses[i].Choice == S.StartChoice
 			&& class'LWBonuses'.default.Bonuses[i].Country == S.Countries[S.HomeCountry()].Id)

@@ -163,10 +163,10 @@ Screenshots (gitignored): `logs/wingpu_shivs_squad_select.png`, `logs/wingpu_shi
 
 ### Left open (SHIVs)
 
-- The Alloy SHIV giving cover to soldiers beside it (Long War's `StartProvidingCover`), and a MEC with One For All.
-- The Hover SHIV's flight (its deck's `eAbility_Fly`, 6 fuel).
-- ~~The Foundry's SHIV projects~~ (below); the Arc Thrower's field repair (Field Repairs, 8), Ghost
-  in the Machine's two free SHIVs and aim, Robotics' aim.
+- ~~The Alloy SHIV giving cover to soldiers beside it~~ (report "the Alloy SHIV as cover"; One For All is no Long War MEC's).
+- ~~The Hover SHIV's flight~~ (report "the Hover SHIV flies"; its 6 fuel not modelled).
+- ~~The Foundry's SHIV projects~~ (below); the Arc Thrower's field repair (Field Repairs, 8). ~~Ghost
+  in the Machine's two free SHIVs and aim, Robotics' aim~~ (lw-startbonus).
 - Engineering's screen shows the bodies by their character names; their pictures are XCOM 2's
   default.
 
