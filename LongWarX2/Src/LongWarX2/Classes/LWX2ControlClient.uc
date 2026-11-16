@@ -251,6 +251,11 @@ function Handle(string Line, out array<string> Out)
 		else
 			Out.AddItem(Args.Length > 1 ? (Args[1] @ "->" @ PathName(DynamicLoadObject(Args[1], class'Object', true)) @ DynamicLoadObject(Args[1], class'Object', true).Class) : "ERR img <path>");
 		return;
+	case "range":
+		// range <soldier name or class part> <ability>: the reach of the soldier's aim with it, in tiles (a test aid).
+		if (Args.Length > 2)
+			Out.AddItem(AbilityRange(Args[1], name(Args[2])));
+		return;
 	case "put":
 		// put <unit index (units) | #object id> <x> <y> <z>: a unit set on that tile at once (a test aid).
 		if (Args.Length < 5)
@@ -2681,6 +2686,27 @@ static function bool TileTaken(TTile T)
 
 /** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
 /** The council's missions (LWCouncil): its clock, the missions offered; 'council now' one made at once. */
+function string AbilityRange(string Who, name AbilityName)
+{
+	local XComGameState_Unit Unit;
+	local XComGameState_Ability Ability;
+	local StateObjectReference Ref;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_XCom && !Unit.bRemovedFromPlay && InStr(Caps(Unit.GetFullName()), Caps(Who)) != INDEX_NONE)
+			break;
+	if (Unit == none)
+		return "ERR no such soldier";
+	foreach Unit.Abilities(Ref)
+	{
+		Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Ability != none && Ability.GetMyTemplateName() == AbilityName && X2AbilityTarget_Cursor(Ability.GetMyTemplate().AbilityTargetStyle) != none)
+			return Unit.GetFullName() @ AbilityName @ "reach" @ X2AbilityTarget_Cursor(Ability.GetMyTemplate().AbilityTargetStyle).GetCursorRangeMeters(Ability) / 1.5 @ "tiles ("
+				$ Ability.GetMyTemplate().AbilityTargetStyle.Class.Name $ ")";
+	}
+	return "ERR" @ Unit.GetFullName() @ "has no aimed" @ AbilityName;
+}
+
 function string PutUnit(string Who, int X, int Y, int Z)
 {
 	local array<XComGameState_Unit> Units;
