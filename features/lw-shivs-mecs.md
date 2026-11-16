@@ -142,3 +142,28 @@ material of the mesh), the gun's place on the body, the animations in motion.
   animations; EW's SHIVs took cover. To revisit with the cover animations of EW's SHIV.
 - **Squad select shows the ADVENT MEC's body**: EW's bodies are put on units in missions only;
   the strategy pawns are XCOM 2's.
+
+## Report (2026-11-16, SHIVs in squad select and the armory)
+
+- **EW's bodies off the battlefield too:** squad select's line-up in EW's hangar and the armory's
+  platform show a SHIV in Enemy Within's body (`LWX2EWBodies.ApplyToPawn`), as missions do.
+- **The armory for a SHIV:** only the loadout and dismissing; customizing, combat sims, weapon
+  upgrades, promotion, the photo booth and bonds are greyed (`UIScreenListener_LWX2SHIVArmory`).
+  Framed as XCOM 2's large units (`bIsTooBigForArmory`). The loadout offers the SHIV weapons
+  built (the Sentry Gun equipped in place of the Autocannon, checked).
+- The armory's platform was empty when opened from squad select (the pawn was made at the world's
+  origin while the armory's room was hidden): it is put on its platform now (`LWX2DisplayWatch`),
+  soldiers and SHIVs alike.
+- Engineering also builds the SHIV weapons (Sentry Gun, Superheavy Pulser, Superheavy Plasma) at
+  Long War's costs and with their research; NeoPanzers takes its share off them, as it already did.
+
+Screenshots (gitignored): `logs/wingpu_shivs_squad_select.png`, `logs/wingpu_shiv_armory.png`.
+
+### Left open (SHIVs)
+
+- Cover: they play on the ADVENT MEC's pawn (no cover animations); EW's SHIVs took cover.
+- The Hover SHIV's flight (its deck's `eAbility_Fly`, 6 fuel).
+- The Foundry's SHIV projects (SHIV Suppression, SHIV repair in missions) and Ghost in the
+  Machine's two free SHIVs and aim, Robotics' aim.
+- Engineering's screen shows the bodies by their character names; their pictures are XCOM 2's
+  default.

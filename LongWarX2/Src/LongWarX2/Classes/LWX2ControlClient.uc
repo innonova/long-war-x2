@@ -90,6 +90,10 @@ function Handle(string Line, out array<string> Out)
 				Out.AddItem(Streamed.PackageName @ "load" @ Streamed.bShouldBeLoaded @ "visible" @ Streamed.bShouldBeVisible
 					@ "(" $ (Streamed.LoadedLevel != none ? "loaded" : "not loaded") $ (Streamed.bHasLoadRequestPending ? ", pending" : "") $ ")");
 		return;
+	case "armorypawn":
+		// The armory's pawn: where it stands, whether drawn, where the armory wants it (a test aid).
+		ArmoryPawn(Out);
+		return;
 	case "ui3d":
 		// ui3d [tag] [show]: XCOM 2's 3D UI displays (UIDisplay_LevelActor) and blueprints with that tag, whether each is
 		// drawn; show: the 3D movie shown on it, as the armory asks (a test aid).
@@ -1519,6 +1523,29 @@ function string Standable(string Part)
 }
 
 /** The last N abilities used (their contexts in the history), oldest first. */
+function ArmoryPawn(out array<string> Out)
+{
+	local UIArmory Armory;
+	local Actor A, Place;
+	local int i;
+
+	for (i = 0; i < `SCREENSTACK.Screens.Length; i++)
+		if (UIArmory(`SCREENSTACK.Screens[i]) != none)
+		{
+			Armory = UIArmory(`SCREENSTACK.Screens[i]);
+			break;
+		}
+	if (Armory == none)
+	{
+		Out.AddItem("ERR no armory screen");
+		return;
+	}
+	A = Armory.ActorPawn;
+	Place = Armory.GetPlacementActor();
+	Out.AddItem(Armory.Class.Name @ "pawn" @ (A != none ? A.Name @ "at" @ A.Location @ "hidden" @ A.bHidden : "none")
+		@ "placement" @ Armory.PawnLocationTag @ (Place != none ? string(Place.Location) : "none"));
+}
+
 function UI3D(name Tag, bool bShow, out array<string> Out)
 {
 	local UIDisplay_LevelActor Display;

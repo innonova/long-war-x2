@@ -66,8 +66,6 @@ static function AddAnimSets()
 static function bool Apply(XComGameState_Unit Unit)
 {
 	local XComUnitPawn Pawn;
-	local SkeletalMesh Mesh;
-	local MaterialInterface Material;
 	local LWX2Body B;
 	local UnitValue Species;
 	local int i, Mine, Pick;
@@ -86,6 +84,30 @@ static function bool Apply(XComGameState_Unit Unit)
 	if (Pawn == none || Pawn.Mesh == none)
 		return false;
 	B = default.Bodies[Pick];
+	if (!ApplyBody(Pawn, B))
+		return false;
+	Weapon(Unit, B);
+	return true;
+}
+
+/** A strategy pawn (squad select's line-up, the armory) given its template's body (the mod's SHIVs). Returns whether. */
+static function bool ApplyToPawn(XComUnitPawn Pawn, name Template)
+{
+	local int k;
+
+	k = default.Bodies.Find('Template', Template);
+	if (k == INDEX_NONE || Pawn == none || Pawn.Mesh == none)
+		return false;
+	return ApplyBody(Pawn, default.Bodies[k]);
+}
+
+/** The body on a pawn: EW's mesh, its stand-in material, the animations again. */
+static function bool ApplyBody(XComUnitPawn Pawn, LWX2Body B)
+{
+	local SkeletalMesh Mesh;
+	local MaterialInterface Material;
+	local int i;
+
 	// Given already (asked every two seconds in a mission: a load each time would read the package again).
 	if (Pawn.Mesh.SkeletalMesh != none && string(Pawn.Mesh.SkeletalMesh.Name) == Mid(B.Mesh, InStr(B.Mesh, ".") + 1))
 	{
@@ -104,7 +126,6 @@ static function bool Apply(XComGameState_Unit Unit)
 	Pawn.UpdateAnimations();
 	QuietControls(Pawn);
 	FixMasks(Pawn);
-	Weapon(Unit, B);
 	return true;
 }
 
