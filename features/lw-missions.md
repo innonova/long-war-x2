@@ -1529,3 +1529,14 @@ from the evening, one from the morning) give two exception addresses:
 - **Fix** (`ew-map.ts`, converter 18): the transform is inherited from the archetypes as the cover flags,
   meshes and materials already were. Every map is converted again by the setup (an older section is).
 - Street Hurricane's boxed-in drop zone (2026-11-05) is the likely result; to be checked once converted again.
+
+## Report (2026-11-16, roofs and decks to stand on: converter 19)
+
+- **Found** testing a data recovery on Commercial Restaurant: its first capture area is the roof terrace, and the
+  tile data had no floor there (`tile` aid: a trace from above hits the deck at 390, no floor tile at that height).
+- **Why:** EW builds roofs, decks, balconies and some floor slabs as fracturable pieces (`XComFracLevelActor`), whose
+  class default is not to be climbed onto: meant for walls. Carried over to XCOM 2, `bCanClimbOnto=false` means no
+  floor on top. On this map: `URBComRestRoof384Deck`, `Roof384Corner`, both balconies and a core's floor.
+- **Fix** (`ew-map.ts`, converter 19): a fracturable piece at least two tiles wide each way, whose own data does not
+  say otherwise, can be stood on. Walls (thin one way) keep EW's default; vehicles and sandbags stay off.
+- Every map is converted again by the setup (an older section is).
