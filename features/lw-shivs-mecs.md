@@ -343,3 +343,38 @@ plays.
 the control port (`'open hub' 'hub 2' 'hub option 0'` in one call) leaves the hub's start-up
 timer to show the base again over the soldier list. The armory then opens behind the Avenger's
 overview, with no menu. With a moment between the steps, and by mouse, the armory opens right.
+
+## Report (2026-11-16, the Alloy SHIV as cover)
+
+The **Alloy SHIV is high cover** for the soldiers beside it, as in Long War. Long War's
+`XGUnit.StartProvidingCover` counts the SHIV's pawn as cover and rebuilds the tiles around it.
+XCOM 2 builds cover from the level's geometry only, so here it is **a rule on the shot**
+(`X2Ability_LWMobileCover`, `X2Effect_LWMobileCover`, a hidden passive on the soldiers). It applies
+to a soldier on a tile beside the SHIV, north, south, east or west on the same floor (not
+diagonally), when the shot comes from the SHIV's side (the half-plane cover faces):
+- the attacker's aim is lowered by XCOM 2's high cover bonus, less any cover the soldier already
+  has from that side;
+- a flanked soldier is no longer flanked: the attacker's flanking aim and crit are taken off again;
+- Long War's damage reduction counts it as high cover (`CoverReduction`).
+
+Melee and shots that fall from above are not affected, as with cover. The modifier carries Long
+War's name, "Armored Shell" (`m_strShivCoverName`, `makeMobileCoverWords`).
+
+**Checked on wingpu** with a Sectoid six tiles east of an Alloy SHIV, on open ground (control
+port `hit`):
+- the soldier west of the SHIV, and the one south of it, had 38% and 34% to be hit, no crit:
+  Armored Shell -40 aim, -33 crit;
+- the soldiers diagonal to it or away from it had 73–77%, 33% crit, flanked;
+- a 6-damage hit left 5 on the two beside it (cover's 1), 6 on the others.
+
+**Not done:**
+- The soldier's cover shields in the HUD still show what the map gives; the rule acts on the
+  shot only.
+- The AI does not move to the SHIV's side for cover; Long War's aliens never had a SHIV.
+
+**One For All:** it shares Long War's code with the Alloy SHIV's cover, but no Long War MEC tree
+has the perk. It is EW's MEC perk, which Long War's trees replaced. My earlier note that a MEC
+with One For All gives cover was about a code path no Long War MEC reaches, so there is nothing
+of it to port.
+
+Test aid: `hit <attacker #id> <target #id> [ability]` shows a shot's chance, crit and reasons.

@@ -241,6 +241,13 @@ function Handle(string Line, out array<string> Out)
 		// 'exalt intel <n>' (test aids but the sweep).
 		Exalt(Args, Out);
 		return;
+	case "hit":
+		// hit <attacker #id> <target #id> [ability, default StandardShot]: the shot's chance, crit and what made them.
+		if (Args.Length < 3)
+			Out.AddItem("ERR hit <attacker #id> <target #id> [ability]");
+		else
+			HitChance(Out, int(Mid(Args[1], InStr(Args[1], "#") == 0 ? 1 : 0)), int(Mid(Args[2], InStr(Args[2], "#") == 0 ? 1 : 0)), Args.Length > 3 ? name(Args[3]) : 'StandardShot');
+		return;
 	case "dr":
 		// Long War's damage reduction: 'dr' each unit's own; 'dr <attacker #id> <target #id> <damage>' what a hit leaves, and why.
 		DamageReduction(Args, Out);
@@ -2602,6 +2609,36 @@ static function bool TileTaken(TTile T)
 }
 
 /** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
+/** A shot's chance (its ability's to-hit calculation, as the targeting shows it), its crit and the modifiers' reasons. */
+function HitChance(out array<string> Out, int AttackerID, int TargetID, name AbilityName)
+{
+	local XComGameState_Unit Attacker, Target;
+	local XComGameState_Ability Ability;
+	local AvailableTarget Pick;
+	local ShotBreakdown Breakdown;
+	local string Why;
+	local int i;
+
+	Attacker = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(AttackerID));
+	Target = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(TargetID));
+	if (Attacker == none || Target == none)
+	{
+		Out.AddItem("ERR no such units");
+		return;
+	}
+	Ability = XComGameState_Ability(`XCOMHISTORY.GetGameStateForObjectID(Attacker.FindAbility(AbilityName).ObjectID));
+	if (Ability == none || Ability.GetMyTemplate().AbilityToHitCalc == none)
+	{
+		Out.AddItem("ERR" @ Attacker.GetMyTemplateName() @ "has no" @ AbilityName);
+		return;
+	}
+	Pick.PrimaryTarget = Target.GetReference();
+	Ability.GetMyTemplate().AbilityToHitCalc.GetShotBreakdown(Ability, Pick, Breakdown);
+	for (i = 0; i < Breakdown.Modifiers.Length; i++)
+		Why @= Breakdown.Modifiers[i].Reason $ "=" $ Breakdown.Modifiers[i].Value $ (Breakdown.Modifiers[i].ModType == eHit_Crit ? "(crit)" : "");
+	Out.AddItem(Attacker.GetMyTemplateName() @ AbilityName @ "->" @ Target.GetFullName() @ "(" $ Attacker.TileDistanceBetween(Target) @ "tiles):" @ Breakdown.FinalHitChance $ "% crit" @ Breakdown.ResultTable[eHit_Crit] $ "% |" $ Why);
+}
+
 /**
  * In a mission: the aliens' psi abilities' chances against each soldier (Long War's will against psi counted); with an
  * ability's name, that ability's chances instead, with what made them.

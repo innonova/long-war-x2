@@ -96,6 +96,7 @@ And around it:
     tools/test/lw.sh 'baselook Expansion'      # EW's base shown through one of its cameras (Base, Expansion, AwayTeam, AddonCam_R1_C1 …)
     tools/test/lw.sh 'hub 1' 'hub option 0'    # the hub: a room entered (0-4), one of its options; 'hub back', 'hub mc'
                                                # (separate calls a moment apart: in one call the hub's start-up timer shows the base again over the screen opened)
+    tools/test/lw.sh 'hit #1505 #552'          # a shot's chance from one unit at another (ids from 'dr'), its crit and the reasons
     tools/test/lw.sh 'anims -10'               # squad select's first line-up pawn: its AnimSets and what plays ('anims [n]': the n-th enemy in a mission)
     tools/test/lw.sh lights                    # the world's lights besides EW's base's own, and lighting actors by class
     tools/test/lw.sh ambient                   # the ambient light's colour as the engine has it, and the visible streamed levels

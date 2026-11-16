@@ -100,6 +100,9 @@ static function float CoverReduction(XComGameState_Unit Target, XComGameState_Un
 	local GameRulesCache_VisibilityInfo VisInfo;
 	local ECoverType Cover;
 
+	// Beside the Alloy SHIV on the attacker's side: high cover (X2Ability_LWMobileCover).
+	if (Attacker != none && class'X2Ability_LWMobileCover'.static.CoverFor(Target, `XWORLD.GetPositionFromTileCoordinates(Attacker.TileLocation)) != none)
+		return default.HighCover;
 	// In cover at all (Long War's IsInCover; XCOM 2's own test, as for hunkering down).
 	if (!Target.CanTakeCover() || Target.GetCoverTypeFromLocation() == CT_None)
 		return 0;

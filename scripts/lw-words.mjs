@@ -555,6 +555,12 @@ export function makeGeneWords({ strategyLoc }) {
   return { text: ['[UILWEWGeneMods]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
 
+/** Mobile cover's name on a shot's breakdown (X2Effect_LWMobileCover): Long War's for the Alloy SHIV's (m_strShivCoverName). */
+export function makeMobileCoverWords({ strategyLoc }) {
+  const name = strategyLoc.match(/^m_strShivCoverName="(.*)"\s*$/m)?.[1]
+  return name ? { text: ['[X2Effect_LWMobileCover]', `MobileCoverReason="${name}"`, ''].join('\r\n'), named: 1 } : { text: '', named: 0 }
+}
+
 /** The MECs' words (features/lw-shivs-mecs.md): Long War's item names and summaries for the MEC suits (LWMEC_Suit_<id>) and
  *  weapons (LWMEC_Weapon_<id>, and the Kinetic Strike Module, LWMEC_KineticStrike), from XComLWMECs.ini's Enum= names. */
 export function makeMECWords({ loc, strategyLoc, mecsIni }) {

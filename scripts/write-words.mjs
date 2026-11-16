@@ -7,7 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { decodeInt, makeArmourWords, makeBonusWords, makeBuildWords, makeHubWords, makeExaltWords, makeOfficerWords, makePsiWords, makeGeneWords, makeSHIVWords, makeMECWords, makeOTSWords, makeFacilityWords, makeFoundryWords, makeItemWords, makeSmallWords, makeTechWords, makeWeaponWords, makeWords, readConsts } from './lw-words.mjs'
+import { decodeInt, makeArmourWords, makeBonusWords, makeBuildWords, makeHubWords, makeExaltWords, makeOfficerWords, makePsiWords, makeGeneWords, makeSHIVWords, makeMECWords, makeMobileCoverWords, makeOTSWords, makeFacilityWords, makeFoundryWords, makeItemWords, makeSmallWords, makeTechWords, makeWeaponWords, makeWords, readConsts } from './lw-words.mjs'
 import plan from './words-plan.json' with { type: 'json' }
 
 /** The words for an XEW folder, as { text, report }; undefined (with the reason) if Long War is not there. */
@@ -76,11 +76,12 @@ export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '', baseI
   const psi = strategyText ? makePsiWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
   const gene = strategyText ? makeGeneWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
   const shivs = makeSHIVWords({ loc: decodeInt(readFileSync(loc)), strategyLoc: strategyText, shivsIni })
+  const cover = strategyText ? makeMobileCoverWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
   const mecs = makeMECWords({ loc: decodeInt(readFileSync(loc)), strategyLoc: strategyText, mecsIni })
   return {
-    modText: bonus.text + '\r\n' + hub.text + '\r\n' + build.text + '\r\n' + ots.text + '\r\n' + officers.text + '\r\n' + exalt.text + '\r\n' + psi.text + '\r\n' + gene.text,
+    modText: bonus.text + '\r\n' + hub.text + '\r\n' + build.text + '\r\n' + ots.text + '\r\n' + officers.text + '\r\n' + exalt.text + '\r\n' + psi.text + '\r\n' + gene.text + '\r\n' + cover.text,
     text: words.text + '\r\n' + shivs.text + '\r\n' + mecs.text + '\r\n' + tech.text + '\r\n' + items.text + '\r\n' + gear.text + '\r\n' + armour.text + '\r\n' + foundry.text + '\r\n' + facilities.text + '\r\n' + small.text,
-    report: `${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}, ${tech.named} techs, ${items.named} artifacts and corpses, ${gear.named} weapons, ${armour.named} armours, ${foundry.named} Foundry projects, ${facilities.named} facilities, ${small.named} small items, ${bonus.named} bonuses, ${hub.named} hub words, ${build.named} base building words, ${ots.named} Officer Training School words, ${officers.named} officer words, ${exalt.named} EXALT words, ${psi.named} Psi Labs words, ${gene.named} Gene Mods words, ${shivs.named} SHIV words, ${mecs.named} MEC words`,
+    report: `${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}, ${tech.named} techs, ${items.named} artifacts and corpses, ${gear.named} weapons, ${armour.named} armours, ${foundry.named} Foundry projects, ${facilities.named} facilities, ${small.named} small items, ${bonus.named} bonuses, ${hub.named} hub words, ${build.named} base building words, ${ots.named} Officer Training School words, ${officers.named} officer words, ${exalt.named} EXALT words, ${psi.named} Psi Labs words, ${gene.named} Gene Mods words, ${shivs.named} SHIV words, ${mecs.named} MEC words, ${cover.named} mobile cover word`,
   }
 }
 
