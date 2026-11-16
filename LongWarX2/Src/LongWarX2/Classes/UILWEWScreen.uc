@@ -59,6 +59,21 @@ static function string CallMovie(array<string> Args)
 	return "ok" @ EWScreen.MCPath $ "." $ Args[1] @ "with" @ (Args.Length - 2) @ "arguments";
 }
 
+/** A variable of the top EW screen's movie set, below its clip (a test aid: ewset): true, false or a number. */
+static function string SetVar(string SubPath, string Value)
+{
+	local UILWEWScreen EWScreen;
+
+	EWScreen = UILWEWScreen(`HQPRES.ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
+	if (EWScreen == none || SubPath == "")
+		return "ERR no EW screen open, or no path";
+	if (Value ~= "true" || Value ~= "false")
+		EWScreen.Movie.SetVariableBool(EWScreen.MCPath $ "." $ SubPath, Value ~= "true");
+	else
+		EWScreen.Movie.SetVariableNumber(EWScreen.MCPath $ "." $ SubPath, float(Value));
+	return "ok" @ EWScreen.MCPath $ "." $ SubPath @ "=" @ Value;
+}
+
 /** A variable of the top EW screen's movie, below its clip (a test aid: ewvar). */
 static function string ReadVar(string SubPath)
 {
@@ -72,12 +87,93 @@ static function string ReadVar(string SubPath)
 	return EWScreen.MCPath $ "." $ SubPath @ "=" @ EWScreen.Movie.GetVariableString(EWScreen.MCPath $ "." $ SubPath);
 }
 
+simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
+{
+	super.InitScreen(InitController, InitMovie, InitName);
+	LendXCom2Spawning(Movie);
+}
+
 simulated function OnInit()
 {
 	super.OnInit();
 	if (bScaleToStage)
 		SetPanelScale(1920.0 / 1280.0);
+	SetEWView(Movie);
 	`log("LongWarX2: EW screen" @ Package @ "inited", , 'LongWarX2');
+}
+
+/**
+ * XCOM 2's widgets spawned inside EW's clips (the hub's room list, the Situation Room's earth): XCOM 2 makes a widget's clip
+ * by calling spawnChildPanel on its parent clip, which EW's clips had only while they ran on XCOM 2's framework (the class
+ * names clashed). Now that they run on EW's own (tools/convert/ew-ui.ts), XCOM 2's spawnChildPanel is lent to every movie
+ * clip without one (MovieClip's prototype; XCOM 2's own panels keep theirs). Once a session; the class that has it is found
+ * among XCOM 2's (LendFrom).
+ */
+static function LendXCom2Spawning(UIMovie TheMovie)
+{
+	local GFxObject From, Fn, ClipProto;
+	local string C;
+	local array<string> Classes;
+
+	ClipProto = TheMovie.GetVariableObject("_global.MovieClip.prototype");
+	if (ClipProto == none || TheMovie.GetVariableString("_global.MovieClip.prototype.spawnChildPanel") != "")
+		return;
+	Classes.AddItem("Panel");
+	Classes.AddItem("UIPanel");
+	Classes.AddItem("XComPanel");
+	Classes.AddItem("Control");
+	Classes.AddItem("Screen");
+	foreach Classes(C)
+	{
+		if (TheMovie.GetVariableString("_global." $ C $ ".prototype.spawnChildPanel") == "")
+			continue;
+		From = TheMovie.GetVariableObject("_global." $ C $ ".prototype");
+		Fn = From != none ? From.GetObject("spawnChildPanel") : none;
+		if (Fn == none)
+			continue;
+		ClipProto.SetObject("spawnChildPanel", Fn);
+		`log("LongWarX2: EW screens: XCOM 2's spawnChildPanel (" $ C $ ") lent to movie clips", , 'LongWarX2');
+		return;
+	}
+	`log("LongWarX2: EW screens: XCOM 2's spawnChildPanel not found", , 'LongWarX2');
+}
+
+/**
+ * EW's Flash framework told the stage, as XCOM 2 tells its own (UIMovie.SetResolutionAndSafeArea: SetUIView). EW's movies
+ * run on their own framework (tools/convert/ew-ui.ts renames its classes: Environment is Qnvironment), whose singleton
+ * anchors EW's screens to the stage edges by what SetView last said (EW's game said it); and the mouse made active, as on
+ * the PC.
+ */
+static function SetEWView(UIMovie TheMovie)
+{
+	local GFxObject Env;
+	local array<ASValue> Args;
+	local ASValue V;
+
+	Env = TheMovie.GetVariableObject("_global.Qnvironment._instance");
+	if (Env == none)
+		return;
+	V.Type = AS_Number;
+	V.n = TheMovie.m_v2ScaledDimension.X;
+	Args.AddItem(V);
+	V.n = TheMovie.m_v2ScaledDimension.Y;
+	Args.AddItem(V);
+	V.n = 0;
+	Args.AddItem(V);
+	V.n = TheMovie.m_v2ScaledOrigin.X;
+	Args.AddItem(V);
+	V.n = TheMovie.m_v2ScaledOrigin.Y;
+	Args.AddItem(V);
+	V.n = 0;
+	Args.AddItem(V);
+	V.Type = AS_Boolean;
+	V.b = false;
+	Args.AddItem(V);
+	Env.Invoke("SetView", Args);
+	Args.Length = 0;
+	V.b = true;
+	Args.AddItem(V);
+	Env.Invoke("setMouseActive", Args);
 }
 
 /** What EW's movie reports when it is clicked (EW's movies call back as XCOM 2's do: FlashRaiseMouseEvent). */

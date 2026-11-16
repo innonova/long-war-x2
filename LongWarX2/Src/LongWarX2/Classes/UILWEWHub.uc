@@ -108,7 +108,7 @@ simulated function OnInit()
 	// The movie lays its menu out once its items have loaded, which it does not do here (each stays at 0): laid out in a
 	// row, centred, once they have their sizes; and the parts the HUD beside this one shows hidden (the movie shows them
 	// again as it lays itself out).
-	SetTimer(0.5, false, nameof(LayOutMenu));
+	// (EW's own framework lays its room row out: features/lw-base-view.md.)
 	SetTimer(0.5, true, nameof(HideHUDParts));
 	// The view asked for again a moment later: a screen closed just before (the start screen) sends XCOM 2's camera back
 	// to the Avenger after this. And the HUD with the resources and clock over this.
