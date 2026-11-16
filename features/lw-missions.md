@@ -1540,3 +1540,9 @@ from the evening, one from the morning) give two exception addresses:
 - **Fix** (`ew-map.ts`, converter 19): a fracturable piece at least two tiles wide each way, whose own data does not
   say otherwise, can be stood on. Walls (thin one way) keep EW's default; vehicles and sandbags stay off.
 - Every map is converted again by the setup (an older section is).
+- **Converter 20:** XCOM 2's `XComFracLevelActor` default is not to be climbed onto, and the plot wrote only what
+  differed from a plain level actor, so converter 19's change never reached the plot. Such a wide breakable piece
+  is now written `ClimbOnto=true, Floor=true` (`bIsFloor`, which XCOM 2's breakable pieces use for floors; EW's
+  never set it). **Still not a floor on Commercial Restaurant's roof** (`tile 192 96`: nothing at the deck's
+  height, though the plot carries `bIsFloor` and a trace hits the deck at 390). What XCOM 2's tile builder wants
+  from a breakable floor beyond that is open.
