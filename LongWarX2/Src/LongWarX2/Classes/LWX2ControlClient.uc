@@ -2337,6 +2337,9 @@ function Exalt(array<string> Args, out array<string> Out)
 			class'LWExalt'.static.PerformRandomOperation(NewGameState, S, int(Args[2]));
 		else if (Args[1] ~= "intel" && Args.Length > 2)
 			S.ExaltIntel = int(Args[2]);
+		// ('exalt kind <1|2>': the covert mission an extraction or a data recovery, a test aid.)
+		else if (Args[1] ~= "kind" && Args.Length > 2)
+			S.ExaltMissionKind = int(Args[2]);
 		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 		class'XComGameState_LWStrategy'.static.SyncResearch();
 		S = class'XComGameState_LWStrategy'.static.Get();
