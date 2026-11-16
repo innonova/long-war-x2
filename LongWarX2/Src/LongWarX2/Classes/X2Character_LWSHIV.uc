@@ -54,7 +54,7 @@ static function X2CharacterTemplate SHIVTemplate(LWSHIVs.LWSHIVBody B)
 	T.bDiesWhenCaptured = true;
 	T.bIsAfraidOfFire = false;
 	T.bUsePoolSoldiers = false;
-	T.bIsTooBigForArmory = false;
+	T.bIsTooBigForArmory = true;
 	T.bStaffingAllowed = false;
 	T.bAppearInBase = false;
 	T.bIgnoreEndTacticalHealthMod = true;

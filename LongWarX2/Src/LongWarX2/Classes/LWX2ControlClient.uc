@@ -486,9 +486,9 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "open":
 		// The armory's loadout of the first soldier (arm's order), or of a unit ('open loadout #<id>'), as the armory opens it.
-		if (Args.Length > 1 && Args[1] ~= "loadout")
+		if (Args.Length > 1 && (Args[1] ~= "loadout" || Args[1] ~= "armory"))
 		{
-			Out.AddItem(OpenLoadout(Args.Length > 2 ? int(Mid(Args[2], 1)) : 0));
+			Out.AddItem(OpenLoadout(Args.Length > 2 ? int(Mid(Args[2], 1)) : 0, Args[1] ~= "armory"));
 			return;
 		}
 		// The Long War hub (EW's base and room menu), whether or not it is the strategy layer's root yet.
@@ -973,7 +973,7 @@ function FoundryDone(int Id)
 }
 
 /** The armory's loadout screen for the first soldier (a test aid: the small-item slots seen as the player sees them). */
-function string OpenLoadout(optional int UnitID)
+function string OpenLoadout(optional int UnitID, optional bool bMenu)
 {
 	local XComHQPresentationLayer HQPres;
 	local XComGameState_Unit Unit;
@@ -987,8 +987,11 @@ function string OpenLoadout(optional int UnitID)
 		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
 		if (Unit == none || !Unit.IsSoldier() || (UnitID != 0 && Unit.ObjectID != UnitID))
 			continue;
-		HQPres.UIArmory_Loadout(Ref);
-		return "ok" @ Unit.GetFullName() $ "'s loadout";
+		if (bMenu)
+			HQPres.UIArmory_MainMenu(Ref);
+		else
+			HQPres.UIArmory_Loadout(Ref);
+		return "ok" @ Unit.GetFullName() $ (bMenu ? "'s armory" : "'s loadout");
 	}
 	return "ERR no soldier";
 }
