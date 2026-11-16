@@ -532,3 +532,22 @@ They are abilities rather than stats.
 **Still missing:** the Respirator Implant (bleeding out instead of dying the first time: XCOM 2's bleed-out is a roll
 in `XComGameState_Unit.ShouldBleedOut`, which a mod cannot change; an effect's `PreDeathCheck` is the way to try),
 the Ghost Grenade and the Psi Grenade (psionic soldiers only, which the armory does not check yet).
+
+## Report (2026-11-16, the Psi and Ghost Grenades; grenades' radii in metres)
+
+- **The Psi Grenade** (item 96, `LWSmall_96`): Long War's line is a flashbang (`eAbility_Flashbang`) with a 384-unit
+  blast (four tiles) and −2 will; XCOM 2's flashbang with that blast.
+- **The Ghost Grenade** (item 85, `LWSmall_85`): no smoke; the allies in its blast who are not panicking are hidden
+  (XCOM 2's concealment of one unit, `X2Effect_RangerStealth`) until their next turn begins. Its "substantial bonus to
+  critical chance" from stealth is not done (the number is not in Long War's script).
+- **Psionic soldiers only** (both: Long War's `eWP_Psionic`): a soldier with any of Long War's psi powers
+  (`LWGearRules.IsPsionic`); others have the items taken off with the other forbidden small items.
+- **Found on the way: every small item's blast was too small.** XCOM 2 reads a weapon's radius in metres
+  (`X2WeaponTemplate.iRadius`, "radius in METERS"); the port gave it Long War's tiles, so a frag grenade's 3 tiles
+  (288 units) came out as 3 metres, two tiles. Now Long War's units / 96 × 1.5: the frag 5 m, the flashbang 4,
+  the Psi Grenade 6, the Ghost Grenade 4.
+- **Checked on wingpu** (a soldier given Mindfray and a Ghost Grenade, thrown at their own feet): before the fix only
+  the two soldiers a tile away were hidden; after it, the four within 2.5 tiles were ("concealed stealth" in the new
+  `units` column), the one 2.8 tiles away not.
+
+**Still missing:** the Respirator Implant (see above).
