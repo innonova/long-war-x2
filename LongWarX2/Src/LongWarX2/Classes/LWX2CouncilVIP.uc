@@ -86,6 +86,8 @@ static function bool Update()
 	local StateObjectReference Ref;
 	local bool bNear, bStanding, bAway;
 	local float Reach;
+	local ETeam Team;
+	local name Template;
 
 	if (!Active(P))
 		return true;
@@ -93,7 +95,13 @@ static function bool Update()
 	if (V == none)
 	{
 		// The VIP where EW's Kismet spawned them: XCOM's in a rescue, waiting (neutral) in an extraction.
-		Ref = `SPAWNMGR.CreateUnit(Floor(P.At), default.VIPTemplate != '' ? default.VIPTemplate : 'FriendlyVIPCivilian', P.bApproach ? eTeam_Neutral : eTeam_XCom, false);
+		Team = eTeam_XCom;
+		if (P.bApproach)
+			Team = eTeam_Neutral;
+		Template = default.VIPTemplate;
+		if (Template == '')
+			Template = 'FriendlyVIPCivilian';
+		Ref = `SPAWNMGR.CreateUnit(Floor(P.At), Template, Team, false);
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: the council's VIP");
 		V = XComGameState_LWX2VIP(NewGameState.CreateNewStateObject(class'XComGameState_LWX2VIP'));
 		V.VIP = Ref;
