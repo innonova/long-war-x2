@@ -479,6 +479,11 @@ writeFileSync(
     '',
     "; Long War's reach for explosives (its repurposed XGUnit.GetMoveModifierCost, numbers in its code): grenades x1.4 with",
     '; Bombard, else x1.2 with Grenadier; rockets x1.25 with Javelin Rockets, after moving x0.4, or x0.6 with Snap Shot.',
+    "; Extra Conditioning's hit points by armour (XGTacticalGameCore.GetExtraArmorStatBonus, numbers in Long War's code).",
+    '[LongWarX2.X2Effect_LWExtraConditioning]',
+    ...[[1, [57, 59, 66, 182]], [2, [60, 68, 113, 159, 193]], [3, [58, 64, 65, 67, 115, 160, 194, 145]], [4, [61, 62, 63, 114, 195, 148, 191, 210]]]
+      .flatMap(([hp, armors]) => armors.map((a) => `+ExtraConditioning=(Armor=${a}, HP=${hp})`)),
+    '',
     '[LongWarX2.X2AbilityTarget_LWRangeCursor]',
     'BombardRange=1.4',
     'GrenadierRange=1.2',

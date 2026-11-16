@@ -143,6 +143,9 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	// Neural Feedback's answer to psionic attacks (X2Ability_LWNeuralFeedback).
 	if (UnitState.GetTeam() == eTeam_XCom && UnitState.HasSoldierAbility('LW_NeuralFeedback'))
 		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_NeuralFeedback', eInvSlot_Unknown, SetupData);
+	// Extra Conditioning's hit points by armour (X2Effect_LWExtraConditioning).
+	if (UnitState.GetTeam() == eTeam_XCom && UnitState.HasSoldierAbility('LW_ExtraConditioning'))
+		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_ExtraConditioning', eInvSlot_Unknown, SetupData);
 	// Long War's ammo, every source added up (X2Effect_LWAmmoOdds).
 	if (UnitState.GetTeam() == eTeam_XCom && UnitState.IsSoldier())
 		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_AmmoOdds', eInvSlot_Unknown, SetupData);
