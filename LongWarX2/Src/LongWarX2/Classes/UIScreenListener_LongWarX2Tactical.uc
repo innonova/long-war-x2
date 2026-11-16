@@ -319,6 +319,9 @@ static function TestWin()
 {
 	local XComGameState NewGameState;
 	local XComGameState_BattleData Battle;
+	local XComGameState_LWStrategy S;
+	local XComGameState_Unit Unit;
+	local UnitValue V;
 	local int i;
 
 	// XCOM 2 counts a mission won by its objectives (the mission source's WasMissionSuccessful): all done first.
@@ -327,6 +330,16 @@ static function TestWin()
 	Battle = XComGameState_BattleData(NewGameState.ModifyStateObject(class'XComGameState_BattleData', Battle.ObjectID));
 	for (i = 0; i < Battle.MapData.ActiveMission.MissionObjectives.Length; i++)
 		Battle.MapData.ActiveMission.MissionObjectives[i].bCompleted = true;
+	// The aliens still standing (a council VIP's squad evacuated): no loot from them.
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S != none)
+	{
+		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+		S.PendingSurvivors.Length = 0;
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+			if (Unit.GetTeam() == eTeam_Alien && Unit.IsAlive() && !Unit.bRemovedFromPlay && Unit.GetUnitValue('LWX2Species', V))
+				S.PendingSurvivors.AddItem(int(V.fValue));
+	}
 	`TACTICALRULES.SubmitGameState(NewGameState);
 	`log("LongWarX2: test: mission ended as won", , 'LongWarX2');
 	`TACTICALRULES.EndBattle(XGBattle_SP(`BATTLE).GetHumanPlayer());

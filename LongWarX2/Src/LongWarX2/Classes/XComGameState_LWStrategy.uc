@@ -187,6 +187,9 @@ var bool bPendingCapture;
 var array<int> PendingSquad;
 /** The aliens stunned with the arc thrower in the mission under way (their XCOM 2 character groups; X2Effect_LWCapture). */
 var array<name> PendingCaptives;
+/** The aliens still standing when the mission was won (their Long War species: a council VIP's squad evacuated, for one):
+ *  no loot from them (UIScreenListener_LongWarX2Tactical.TestWin). */
+var array<int> PendingSurvivors;
 /** The converted Enemy Within map the mission sent is played on (LWX2EWMapPieces.ChooseMap; "": XCOM 2's plot). */
 var string PendingEWMap;
 /** Foundry projects whose one-time change to the soldiers' gear has been made (LWX2Gear.ApplyFoundryGear). */
@@ -1317,6 +1320,7 @@ static function MissionChosen(int Kind, int Index, optional bool bCapture)
 	S.PendingIndex = Index;
 	S.bPendingCapture = bCapture;
 	S.PendingCaptives.Length = 0;
+	S.PendingSurvivors.Length = 0;
 	S.PendingSquad.Length = 0;
 	S.PendingCivilians = -1;
 	S.PendingCiviliansSaved = -1;
@@ -1439,6 +1443,7 @@ static function MissionBack(bool bWon)
 		{
 			Squad = S.PendingSquad.Length > 0 ? S.PendingSquad : S.MissionSquad();
 			S.BringCaptivesHome(NewGameState, Squad);
+			S.LeaveSurvivors(Squad);
 			S.GiveKillLoot(NewGameState, Squad);
 			class'LWCouncil'.static.Grant(NewGameState, S, S.PendingIndex);
 		}
@@ -1469,6 +1474,7 @@ static function MissionBack(bool bWon)
 		if (S.bPendingCapture)
 			S.TakeCaptive(NewGameState, Squad);
 		S.BringCaptivesHome(NewGameState, Squad);
+		S.LeaveSurvivors(Squad);
 		S.GiveKillLoot(NewGameState, Squad);
 	}
 	S.bPendingCapture = false;
@@ -1762,6 +1768,20 @@ function bool GiveCaptive(XComGameState NewGameState, int Char)
  * (LWStrategyRules.CaptureAs: XCOM 2's kind of alien as Long War's species, until Enemy Within's aliens
  * are the missions'); one of that species is then not among the dead.
  */
+/** The aliens left standing taken out of the squad whose loot is brought home (XGSummaryUI collects from the dead only). */
+function LeaveSurvivors(out array<int> Squad)
+{
+	local int a, j;
+
+	foreach PendingSurvivors(a)
+	{
+		j = Squad.Find(a);
+		if (j != INDEX_NONE)
+			Squad.Remove(j, 1);
+	}
+	PendingSurvivors.Length = 0;
+}
+
 function BringCaptivesHome(XComGameState NewGameState, out array<int> Squad)
 {
 	local name Group;
