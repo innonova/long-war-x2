@@ -17,7 +17,7 @@ import { execFileSync } from 'node:child_process'
 import { wordsFrom } from '../../scripts/write-words.mjs'
 import { convertUI } from '../convert/ew-ui.ts'
 import { openImages } from '../convert/ew-images.ts'
-import { variantLevels, writeObjectives } from '../convert/ew-objectives.ts'
+import { councilMissions, variantLevels, writeObjectives } from '../convert/ew-objectives.ts'
 import { convertPackage } from '../convert/ew-package.ts'
 import { convertUnits } from '../convert/ew-units.ts'
 import { tealEarth } from '../convert/ew-earth.ts'
@@ -275,7 +275,8 @@ async function convertEW(ew, target) {
   } catch (e) {
     say(`Enemy Within's aliens could not be converted (${e?.message ?? e}); XCOM 2's will show instead.`)
   }
-  const maps = listedMaps(target).map((m) => m.name)
+  // (Long War's maps for its missions, and the council's: two of those are in no other list.)
+  const maps = [...new Set([...listedMaps(target).map((m) => m.name), ...councilMissions(target).map((m) => m.map)])]
   let want = flag('--maps') ? true : flag('--no-maps') ? false : undefined
   if (want === undefined && process.stdin.isTTY) {
     const rl = createInterface({ input: process.stdin, output: process.stdout })

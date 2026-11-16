@@ -168,7 +168,7 @@ if (/ew-maps\.ts$/.test(process.argv[1] ?? '')) {
   const listed = listedMaps(mod)
   const at = (flag: string) => args.indexOf(flag)
   let maps: string[]
-  if (args.includes('--all')) maps = listed.map((m) => m.name)
+  if (args.includes('--all')) maps = [...new Set([...listed.map((m) => m.name), ...councilMissions(mod).map((m) => m.map)])]
   else if (at('--kind') >= 0) maps = listed.filter((m) => m.kind === args[at('--kind') + 1]).map((m) => m.name)
   else {
     // The names: what is neither a flag nor a flag's value.
