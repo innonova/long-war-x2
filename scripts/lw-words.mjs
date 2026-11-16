@@ -479,3 +479,34 @@ export function makeOfficerWords({ strategyLoc, loc }) {
     named: words.length + screen.length,
   }
 }
+
+/** EXALT's words (features/lw-exalt.md; UILWEWSituationRoom's covert operations and LWExalt's clues, in the mod's
+ *  LongWarX2.int): EW's Situation Room's scan and its labels (UISituationRoom, XGInfiltratorSitRoomUI), and Long War's
+ *  clue texts (XGExaltSimulation.m_arrClueText), from its strategy text. */
+export function makeExaltWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const inSection = (section, key) => {
+    const at = text.indexOf(`\n[${section}]\n`)
+    if (at < 0) return undefined
+    const end = text.indexOf('\n[', at + 2)
+    const m = text.slice(at, end < 0 ? undefined : end).match(new RegExp(`^${key.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))
+    return m ? m[1].trim().replace(/^"(.*)"$/, '$1') : undefined
+  }
+  const sit = ['SweepButton', 'SweepDesc', 'SweepDisabled', 'SweepCantAfford', 'SweepFailed'].map((k) => [k, inSection('UISituationRoom', `m_str${k}`)])
+  const inf = [
+    ['RuledOut', 'm_strLabelIsRuledOut'], ['AccuseLabel', 'm_strLabelAccuseCountry'], ['RaidLabel', 'm_strLabelBeginRaid'],
+    ['SweepTitle', 'm_strLabelSweepTitle'], ['SweepBody', 'm_strLabelSweepBody'], ['SweepConfirm', 'm_strLabelSweepConfirm'],
+    ['SweepDecline', 'm_strLabelSweepDecline'], ['CluesTitle', 'm_strCluesTitle'], ['CluesNone', 'm_strCluesNoneHelp'],
+    ['CluesFew', 'm_strCluesOneOrTwo'], ['CluesEnough', 'm_strCluesThreeOrMore'], ['StatusNoCell', 'm_strStatusNoCell'],
+    ['StatusUnknown', 'm_strStatusUnknownStatus'], ['StatusExposed', 'm_strStatusExposedCell'], ['NotScanned', 'm_strHelpWhileNotYetScanned'],
+    ['FailTitle', 'm_strResultsFailSubtitle'], ['FailBody', 'm_strResultsFailBody'], ['FailLeftTitle', 'm_strResultsFailAlreadyLeftSubtitle'],
+    ['FailLeftBody', 'm_strResultsFailAlreadyLeftBody'], ['SuccessTitle', 'm_strResultsSuccessSubtitle'], ['SuccessBody', 'm_strResultsSuccessBody'],
+  ].map(([k, key]) => [k, inSection('XGInfiltratorSitRoomUI', key)])
+  const clues = []
+  for (let i = 0; i < 40; i++) {
+    const v = inSection('XGExaltSimulation', `m_arrClueText[${i}]`)
+    if (v) clues.push([`ClueTexts[${i}]`, v])
+  }
+  const words = [...sit, ...inf, ...clues].filter(([, v]) => v)
+  return { text: ['[UILWEWSituationRoom]', ...[...sit, ...inf].filter(([, v]) => v).map(([k, v]) => `${k}="${v}"`), '', '[LWExalt]', ...clues.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}

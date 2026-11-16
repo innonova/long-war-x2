@@ -130,3 +130,39 @@ Control port: `exalt` (state, cells, clues, last events), `exalt begin|place|act
 
 - Phase 2 (the Situation Room's EXALT on EW's screen), phase 3 (covert operatives and their
   missions; until then no intelligence and no clues held), phase 4 (the raid).
+
+## Report (2026-11-16, phase 2: EXALT in the Situation Room)
+
+The hub's Situation Room has an **EXALT** option once EXALT is active: EW's Situation Room in its
+covert operations mode (`UILWEWSituationRoom`, `bCovert`), filled as Long War's
+`InfiltratorState` fills it (`SetDisplayMode` 1, `SetCountryInfoInfiltrator`):
+- each council country: its exposed cell (EW's EXALT emblem), "cleared by intel" where the clues
+  held rule it out (or it was accused), EXALT's base marker once accused rightly; the countries
+  gone in EW's red;
+- the exposed cells on the map (EW's `_cell` markers) beside XCOM's headquarters;
+- **Intel Scan**: EW's words and Long War's cost on a button under the map ("INTEL SCAN - Cost:
+  §50"; "Global intel up to date" once today's is spent, "Insufficient cash to sweep"), then EW's
+  confirmation ("CONFIRM INTEL SCAN … INITIATE SCAN");
+- a country clicked: **the accusation** where Long War allows it (three clues held, not ruled out,
+  not accused before), after EW's warning ("ATTEMPT RAID ON EXALT HQ"). Wrong: the country
+  withdraws (gone already: its continent +40 panic); right: the base is marked, the raid next.
+
+The words are Long War's from the player's install (`lw-words.mjs`, `makeExaltWords`: 26 for the
+screen, the 28 clue texts for `LWExalt`).
+
+**Checked on wingpu** by mouse (EXALT begun and three clues given by the aids): a scan for §50
+exposing a hidden cell in Nigeria (`logs/wingpu_exalt_scan.png`); Canada accused wrongly and
+withdrawn; Nigeria, the base, accused and marked (`logs/wingpu_exalt_accused.png`).
+
+### Decisions
+
+- **The Intel Scan is an XCOM 2 button in EW's words**, under the map: EW's own scan panel stands
+  where this port's right-hand country list is, and its intro tween never runs in XCOM 2's Flash
+  (it stays at a third of its width). The cost text EW draws is hidden with it.
+- **The accusation asks through XCOM 2's dialog** (EW's accuse button is on its Situation Room
+  HUD movie, not used here); the rows are hit-tested, as EW's rows raise no clicks here.
+
+### Found on the way
+
+- On EW screens the map area (with the earth) sits above the timeline's own panels: anything EW
+  draws under it must be raised (the scan panel was).

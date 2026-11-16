@@ -44,6 +44,7 @@ const OPT_OTS = 8;
 const OPT_PSI = 9;
 const OPT_GENE = 10;
 const OPT_OFFICERS = 11;
+const OPT_EXALT = 12;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
 const FACILITY_FOUNDRY = 11;
@@ -278,6 +279,10 @@ function EnterRoom(int i)
 		break;
 	case 4:
 		RoomOptions.AddItem(OPT_SITROOM);
+		// (EXALT's view once EXALT is active, features/lw-exalt.md.)
+		S = class'XComGameState_LWStrategy'.static.Get();
+		if (S != none && S.ExaltState >= class'LWExalt'.const.ACTIVE)
+			RoomOptions.AddItem(OPT_EXALT);
 		RoomOptions.AddItem(OPT_GREYMARKET);
 		break;
 	}
@@ -310,6 +315,7 @@ function string OptionName(int Option)
 	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
 	case OPT_GENE: return class'LWBase'.static.FacilityName(23);
 	case OPT_OFFICERS: return Word(class'UILWOfficers'.default.Promotions, "Officer Promotions");
+	case OPT_EXALT: return "EXALT";
 	}
 	return "";
 }
@@ -327,6 +333,7 @@ function string OptionHelp(int Option)
 	case OPT_OTS: return OTSHelp;
 	case OPT_PSI: return PsiLabsHelp;
 	case OPT_OFFICERS: return class'UILWOfficers'.default.PromotionsHelp;
+	case OPT_EXALT: return class'UILWEWSituationRoom'.default.NotScanned;
 	}
 	return "";
 }
@@ -358,6 +365,7 @@ function ChooseOption(int Option)
 		break;
 	case OPT_AIRCRAFT: class'UILWEWHangar'.static.Open(HQPres); break;
 	case OPT_SITROOM: class'UILWEWSituationRoom'.static.Open(); break;
+	case OPT_EXALT: class'UILWEWSituationRoom'.static.Open(true); break;
 	case OPT_GREYMARKET: class'UILWEWGreyMarket'.static.Open(HQPres); break;
 	// (The plain base screen holds the Officer Training School's, the Psi Labs' and the Genetics Lab's panels, until each
 	// has EW's own screen.)

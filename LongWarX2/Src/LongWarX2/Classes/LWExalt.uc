@@ -28,6 +28,11 @@ struct LWExaltClue
 
 var config array<LWExaltTuning> Tuning;
 var config array<LWExaltClue> Clues;
+/** Long War's clue texts (XGExaltSimulation.m_arrClueText), written from the player's install (lw-words.mjs). */
+var localized string ClueTexts[40];
+
+/** Clues XCOM needs before it may accuse a country (Long War's XGInfiltratorSitRoomUI: three). */
+const CLUES_TO_ACCUSE = 3;
 
 /** Simulation states (Long War's EExaltSimulationState). */
 const NOT_BEGUN = 0;
@@ -527,4 +532,43 @@ static function bool RuledOutByHeldClues(XComGameState_LWStrategy S, int Country
 		if (RuledOut(S, Country, default.Clues[S.ExaltClues[i]]))
 			return true;
 	return false;
+}
+
+/** Long War's accusation rules (XGInfiltratorSitRoomUI.UpdateCursor): EXALT active, three clues held, the country neither
+ *  accused before nor ruled out by them. */
+static function bool CanAccuse(XComGameState_LWStrategy S, int Country)
+{
+	return IsActive(S) && CluesHeld(S) >= CLUES_TO_ACCUSE && S.ExaltAccused.Find(Country) == INDEX_NONE && !RuledOutByHeldClues(S, Country);
+}
+
+/** Long War's AccuseCountry: right, the raid on EXALT's base is next (phase 4, features/lw-exalt.md); wrong, the country
+ *  leaves XCOM (already gone: its continent's council countries +40 panic). */
+static function bool Accuse(int Country)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local int i;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || !CanAccuse(S, Country))
+		return false;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: EXALT accusation");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	S.ExaltAccused.AddItem(Country);
+	if (Country == S.ExaltCountry)
+		S.Note("EXALT's base is in" @ S.CountryName(Country) $ ". The raid can be launched.");
+	else if (S.Countries[Country].bLeft)
+	{
+		for (i = 0; i < S.Countries.Length; i++)
+			if (S.CountryContinent(i) == S.CountryContinent(Country))
+				S.AddPanic(i, 40);
+		S.Note("EXALT's base is not in" @ S.CountryName(Country) $ ". Panic rises on its continent.");
+	}
+	else
+	{
+		S.Note("EXALT's base is not in" @ S.CountryName(Country) $ "; accused, it has withdrawn from XCOM.");
+		S.Leave(Country);
+	}
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	return true;
 }
