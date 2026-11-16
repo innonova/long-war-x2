@@ -759,3 +759,12 @@ Smoke's wider cloud. (Field Surgeon and Fire in the Hole were done earlier: the 
 - **Checked on wingpu** (the new `range` aid): a Rocketeer's grenade 10 tiles, rocket 20; after moving 3 tiles, the
   rocket 8 (×0.4). The perks' factors not seen in a mission (the `perk` aid gives a crew member a perk, not a soldier
   already in the mission).
+
+## Report (2026-11-16, Extra Conditioning)
+
+- **Read** (Long War's `XGTacticalGameCore.GetInventoryStatModifiers` → `GetExtraArmorStatBonus`): +1 to +4 HP by
+  the armour worn, heavier armour more (a table of Long War's armour items in its code: 1 for the lightest four,
+  4 for the heaviest eight).
+- **Done:** `LWX2_ExtraConditioning` (given with the perk): `X2Effect_LWExtraConditioning` adds that HP at the
+  mission's start, its table in `XComLWClasses.ini` (`+ExtraConditioning=`).
+- **Checked on wingpu:** a Sniper with the perk in her starting armour: "Extra Conditioning: … in LWArmor_59 +1 HP".
