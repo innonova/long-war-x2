@@ -11,6 +11,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
 import { inlineTextures } from './inline-textures.ts'
+import { importsExports, swfOf, tagsOf } from './swf-as2.ts'
 
 /** An EW UI package converted to out; returns its report. */
 export function convertUI(src: string, out: string): string {
@@ -46,22 +47,93 @@ for (const e of pkg.exports as { type: string; offset: number; size: number }[])
   })
 }
 // ActionScript 2 classes are global and the first definition of a name wins. XCOM 2's Flash framework grew from EW's and
-// has classes of the same names, loaded first; where they differ, EW's movies get XCOM 2's. EW's Colors (its panic and
-// state colours) is renamed in EW's movies, as a whole name in their string tables, to EWClrs (the same length).
-const CLASSES: [string, string][] = [['Colors', 'EWClrs']]
-let classNames = 0
+// has classes of the same names, loaded first; EW's movies then ran on XCOM 2's (its Container, XComList, Navigator …),
+// which take other calls: EW's lists and submenus made no rows. So every class EW's movies compile in (their
+// __Packages.<name> exports) gets a name of its own, the same length (first letter Q; Colors → EWClrs), in every movie
+// alike: in the export and import tables (its symbol and registration) and in the ActionScript's strings (constant pools
+// and pushed strings), each dotted segment that is such a name. EW's movies then run on EW's framework, whole.
+const BUILTINS = new Set(['Object', 'Function', 'Array', 'String', 'Number', 'Boolean', 'Math', 'Date', 'MovieClip', 'TextField',
+  'TextFormat', 'Sound', 'Color', 'Key', 'Mouse', 'Stage', 'System', 'Selection', 'XML', 'XMLNode', 'LoadVars', 'LocalConnection',
+  'SharedObject', 'Camera', 'Microphone', 'NetConnection', 'NetStream', 'Video', 'ContextMenu', 'ContextMenuItem', 'Error',
+  'MovieClipLoader', 'PrintJob', 'TextSnapshot', 'Button', 'AsBroadcaster', 'ExternalInterface', 'BitmapData', 'Rectangle',
+  'Point', 'Matrix', 'ColorTransform', 'Transform', 'Accessibility', 'CustomActions'])
+const swfs: Uint8Array[] = []
 for (const e of pkg.exports as { type: string; offset: number; size: number }[]) {
   if (e.type !== 'SwfMovie') continue
-  const body = bytes.subarray(e.offset, e.offset + e.size)
-  for (const [from, to] of CLASSES) {
-    for (const before of [0x00, 0x2e]) {
-      const needle = Buffer.from([before, ...Buffer.from(from, 'latin1'), 0x00])
-      let i = 0
-      const view = Buffer.from(body.buffer, body.byteOffset, body.byteLength)
-      while ((i = view.indexOf(needle, i)) >= 0) {
-        body.set(Buffer.from(to, 'latin1'), i + 1)
-        classNames++
-        i += needle.length - 1
+  const swf = swfOf(bytes.subarray(e.offset, e.offset + e.size))
+  if (!swf || swf[0] !== 0x47) throw new Error('an EW movie not stored uncompressed')
+  swfs.push(swf)
+}
+const classNames = new Set<string>()
+for (const swf of swfs)
+  for (const name of importsExports(tagsOf(swf)).exports)
+    if (name.startsWith('__Packages.')) {
+      const last = name.split('.').pop()!
+      if (!BUILTINS.has(last)) classNames.add(last)
+    }
+const renamed = new Map<string, string>()
+for (const c of classNames) {
+  const to = c === 'Colors' ? 'EWClrs' : (c[0] === 'Q' ? 'Z' : 'Q') + c.slice(1)
+  if (classNames.has(to)) throw new Error(`renaming ${c} to ${to}: already a class`)
+  renamed.set(c, to)
+}
+let classRefs = 0
+/** A string in place (bytes [at, at + length)): each dotted segment that is a renamed class, renamed. */
+const renameAt = (b: Uint8Array, at: number, length: number) => {
+  let segStart = at
+  for (let i = at; i <= at + length; i++) {
+    if (i < at + length && b[i] !== 0x2e) continue
+    const seg = Buffer.from(b.subarray(segStart, i)).toString('latin1')
+    const to = renamed.get(seg)
+    if (to) {
+      b.set(Buffer.from(to, 'latin1'), segStart)
+      classRefs++
+    }
+    segStart = i + 1
+  }
+}
+const cstrEnd = (b: Uint8Array, o: number) => { let e = o; while (e < b.length && b[e] !== 0) e++; return e }
+for (const swf of swfs) {
+  for (const t of tagsOf(swf)) {
+    const b = t.body
+    if (t.code === 56 || t.code === 57 || t.code === 71) {
+      let o = 0
+      if (t.code !== 56) { o = cstrEnd(b, 0) + 1; if (t.code === 71) o += 2 }
+      const n = b[o]! | (b[o + 1]! << 8)
+      o += 2
+      for (let i = 0; i < n; i++) {
+        o += 2
+        const e = cstrEnd(b, o)
+        renameAt(b, o, e - o)
+        o = e + 1
+      }
+    } else if (t.code === 12 || t.code === 59) {
+      // The actions, walked in order (functions' bodies are inline): constant pools' strings and pushed strings.
+      let o = t.code === 59 ? 2 : 0
+      while (o < b.length) {
+        const op = b[o++]!
+        if (op === 0) break
+        if (op < 0x80) continue
+        const len = b[o]! | (b[o + 1]! << 8)
+        o += 2
+        const end = o + len
+        if (op === 0x88) {
+          const n = b[o]! | (b[o + 1]! << 8)
+          let p = o + 2
+          for (let i = 0; i < n; i++) { const e = cstrEnd(b, p); renameAt(b, p, e - p); p = e + 1 }
+        } else if (op === 0x96) {
+          let p = o
+          while (p < end) {
+            const ty = b[p++]!
+            if (ty === 0) { const e = cstrEnd(b, p); renameAt(b, p, e - p); p = e + 1 }
+            else p += ({ 1: 4, 2: 0, 3: 0, 4: 1, 5: 1, 6: 8, 7: 4, 8: 1, 9: 2 } as Record<number, number>)[ty] ?? end - p
+          }
+        } else if (op === 0x8e || op === 0x9b) {
+          // A function's header; its body follows as ordinary actions.
+          o = end
+          continue
+        }
+        o = end
       }
     }
   }
@@ -71,7 +143,7 @@ const outBytes = new Uint8Array(bytes.length + tex.appended.length)
 outBytes.set(bytes)
 outBytes.set(tex.appended, bytes.length)
 writeFileSync(out, outBytes)
-return `${out}: ${outBytes.length} bytes; ${groups.length} groups renamed gfx → ewx, ${replaced} names in the movies, ${classNames} class names; ${tex.textures} textures rewritten (${tex.mips} mips)`
+return `${out}: ${outBytes.length} bytes; ${groups.length} groups renamed gfx → ewx, ${replaced} names in the movies, ${renamed.size} classes renamed (${classRefs} references); ${tex.textures} textures rewritten (${tex.mips} mips)`
 }
 
 if (/ew-ui\.ts$/.test(process.argv[1] ?? '')) {
