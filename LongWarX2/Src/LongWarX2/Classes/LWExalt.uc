@@ -624,7 +624,7 @@ static function bool CanBeOperative(XComGameState_LWStrategy S, XComGameState_Un
 	local UnitValue RestedAt;
 
 	Why = "";
-	if (Unit == none || !Unit.IsSoldier())
+	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic())
 		Why = "not a soldier";
 	else if (S.ExaltOperative > 0)
 		Why = "an operative is in the field";

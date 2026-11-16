@@ -97,7 +97,9 @@ out.push(
   '; Builds: Cash (\u00a7), Elerium, Alloys, Meld; Days and Engineers: a unit is Days x Engineers x 24 hours of work;',
   '; Tech: the Long War tech id researched first; ItemReq: one consumed per item built; Foundry: the project done first.',
 )
-for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number), CRAFT, SMALL.map((x) => x.item)]) {
+// The SHIVs (features/lw-shivs-mecs.md): engineering builds the robot itself, a unit of XCOM's crew (its character template).
+const SHIVS = { 100: 'LWSHIV', 101: 'LWSHIV_Alloy', 102: 'LWSHIV_Hover' }
+for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number), CRAFT, SMALL.map((x) => x.item), Object.keys(SHIVS).map(Number)]) {
   for (const item of items) {
     if (item === null) continue
     const b = balance.get(item)
@@ -105,7 +107,7 @@ for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number
     if (!t) throw new Error(`item ${item} is not in data/itemtree.json`)
     if (!b || b.cash < 0 || b.days < 0) continue
     out.push(
-      `+Builds=(Item=${item}, Template=${itemTemplate(item, ITEMS)}, Cash=${b.cash}, Elerium=${b.elerium}, Alloys=${b.alloys}, Meld=${b.meld}, ` +
+      `+Builds=(Item=${item}, Template=${SHIVS[item] ?? itemTemplate(item, ITEMS)}, Cash=${b.cash}, Elerium=${b.elerium}, Alloys=${b.alloys}, Meld=${b.meld}, ` +
         `Days=${b.days}, Engineers=${Math.abs(b.engineers)}, Category=${t.category ?? 0}` +
         (t.tech ? `, Tech=${t.tech.id}` : '') +
         (SPECIAL[item]

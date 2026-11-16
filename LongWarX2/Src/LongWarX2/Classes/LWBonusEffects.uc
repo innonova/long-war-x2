@@ -211,6 +211,9 @@ static function bool SoldierDue(XComGameState_Unit Unit)
 	local UnitValue Done;
 	local int Stage;
 
+	// (Not SHIVs: Long War rolls and raises only recruits.)
+	if (Unit.IsRobotic())
+		return false;
 	Stage = Unit.GetUnitValue('LWX2Bonus', Done) ? int(Done.fValue) : 0;
 	return class'XComGameState_LWStrategy'.static.Get() != none && (Stage == 0 || (Stage == 1 && BaseClass(Unit) != ""));
 }
@@ -222,7 +225,7 @@ static function bool GiveSoldier(XComGameState_Unit Unit)
 	local string Base;
 
 	Stage = Unit.GetUnitValue('LWX2Bonus', Done) ? int(Done.fValue) : 0;
-	if (Stage >= 2 || class'XComGameState_LWStrategy'.static.Get() == none)
+	if (Stage >= 2 || class'XComGameState_LWStrategy'.static.Get() == none || Unit.IsRobotic())
 		return false;
 	if (Stage == 0)
 	{

@@ -181,7 +181,7 @@ static function bool CanPromote(XComGameState_LWStrategy S, XComGameState_Unit U
 
 	Why = "";
 	Next = Rank(Unit) + 1;
-	if (Unit == none || !Unit.IsSoldier() || !Unit.IsAlive())
+	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic() || !Unit.IsAlive())
 		Why = "a soldier";
 	else if (Next > 5)
 		Why = "nothing: the highest rank";

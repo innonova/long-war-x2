@@ -2068,7 +2068,7 @@ static function string PsiSoldierWhy(XComGameState_LWStrategy S, XComGameState_U
 		return "the Psi Labs";
 	if (!PsiPlaceFree(S))
 		return "a free place in the Psi Labs";
-	if (Unit == none || !Unit.IsSoldier() || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
+	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic() || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
 		return "a soldier ready for duty";
 	return "";
 }
@@ -2170,7 +2170,7 @@ static function string GeneSoldierWhy(XComGameState_LWStrategy S, XComGameState_
 		return "the Genetics Lab";
 	if (!GeneTankFree(S))
 		return "a free tank in the Genetics Lab";
-	if (Unit == none || !Unit.IsSoldier() || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
+	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic() || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
 		return "a soldier ready for duty";
 	return "";
 }

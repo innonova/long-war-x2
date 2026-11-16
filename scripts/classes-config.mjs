@@ -262,6 +262,7 @@ const out = [
   '',
   '[XComGame.X2SoldierClass_DefaultClasses]',
   ...CLASSES.map((c) => `+SoldierClasses=${q('LWS_' + c.name)}`),
+  '+SoldierClasses="LWS_SHIV"',
   '',
   "; Recruits become Long War's classes, not XCOM 2's.",
   ...['Ranger', 'Sharpshooter', 'Grenadier', 'Specialist'].flatMap((n) => [`[${n} X2SoldierClassTemplate]`, 'NumInForcedDeck=0', 'NumInDeck=0']),
@@ -342,6 +343,29 @@ for (const c of CLASSES) {
     )
   })
 }
+// Long War's SHIVs' class (features/lw-shivs-mecs.md): none of Long War's ranks, never dealt to a recruit, only SHIV weapons,
+// its armour its body's (no armour XCOM 2 has is a SHIV's), nothing else to carry.
+out.push(
+  '',
+  '[LWS_SHIV X2SoldierClassTemplate]',
+  'bMultiplayerOnly=0',
+  'IconImage="img:///UILibrary_Common.TargetIcons.Hack_robot_icon"',
+  'NumInForcedDeck=0',
+  'NumInDeck=0',
+  'bHideInCharacterPool=true',
+  'bBlockRankingUp=true',
+  'bNoSecondaryWeapon=true',
+  'bAllowAWCAbilities=0',
+  'bHasClassMovie=false',
+  'bCanHaveBonds=false',
+  '+AcceptedCharacterTemplates="LWSHIV"',
+  '+AcceptedCharacterTemplates="LWSHIV_Alloy"',
+  '+AcceptedCharacterTemplates="LWSHIV_Hover"',
+  '+AllowedWeapons=(SlotType=eInvSlot_PrimaryWeapon, WeaponType="lw_shiv")',
+  '+AllowedArmors="lw_shiv"',
+  '+CannotEditSlots=eInvSlot_Armor',
+  '+SoldierRanks=(AbilitySlots=(), aStatProgression=())',
+)
 writeFileSync(join(mod, 'Config', 'XComClassData.ini'), out.join('\r\n') + '\r\n')
 
 // --- Long War's stat bonuses for perk choices ---------------------------------------------

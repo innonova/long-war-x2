@@ -126,6 +126,14 @@ function array<XComGameState_Unit> ReadySoldiers(int Max)
 		Out.InsertItem(i, Unit);
 		Rests.InsertItem(i, Resting);
 	}
+	// (Units the control port asked for first: 'shiv add … front', a test aid.)
+	for (i = 0; i < Out.Length; i++)
+		if (Out[i].GetUnitValue('LWX2TestFirst', RestedAt))
+		{
+			Unit = Out[i];
+			Out.Remove(i, 1);
+			Out.InsertItem(0, Unit);
+		}
 	if (Out.Length > Max)
 		Out.Length = Max;
 	return Out;

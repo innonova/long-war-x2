@@ -445,6 +445,11 @@ function Handle(string Line, out array<string> Out)
 		// <ability>:<item template>: the ability of that item (a soldier's grenades each have their ThrowGrenade).
 		Out.AddItem(UseAbility(Args[1], name(InStr(Args[2], ":") == INDEX_NONE ? Args[2] : Left(Args[2], InStr(Args[2], ":"))), Args.Length > 3 ? int(Args[3]) : -1, InStr(Args[2], ":") == INDEX_NONE ? '' : name(Mid(Args[2], InStr(Args[2], ":") + 1))));
 		return;
+	case "shiv":
+		// shiv: XCOM's SHIVs; 'shiv add [LWSHIV|LWSHIV_Alloy|LWSHIV_Hover] [front]' one built at once (a test aid; front: first
+		// in the crew, so the next mission's squad takes it).
+		SHIVs(Args, Out);
+		return;
 	case "give":
 		if (Args.Length < 3)
 		{
@@ -1493,6 +1498,43 @@ function string Standable(string Part)
 }
 
 /** The last N abilities used (their contexts in the history), oldest first. */
+function SHIVs(array<string> Args, out array<string> Out)
+{
+	local XComGameState NewGameState;
+	local XComGameState_Unit Unit;
+	local StateObjectReference Ref;
+	local XComGameState_Item Weapon;
+
+	if (Args.Length > 1 && Args[1] == "add")
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: a SHIV built");
+		Unit = class'LWSHIVs'.static.AddSHIV(NewGameState, (Args.Length > 2 && Args[2] != "front") ? name(Args[2]) : 'LWSHIV');
+		if (Unit == none)
+		{
+			`XCOMHISTORY.CleanupPendingGameState(NewGameState);
+			Out.AddItem("ERR no SHIV template" @ (Args.Length > 2 ? Args[2] : "LWSHIV"));
+			return;
+		}
+		// ('front': first in the crew, so a mission's squad, filled from the first ready, takes it.)
+		if (Args.Find("front") != INDEX_NONE)
+			Unit.SetUnitFloatValue('LWX2TestFirst', 1, eCleanup_Never);
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		Out.AddItem("ok" @ Unit.GetFullName() @ "#" $ Unit.ObjectID);
+	}
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (!class'LWSHIVs'.static.IsSHIV(Unit))
+			continue;
+		Weapon = Unit.GetItemInSlot(eInvSlot_PrimaryWeapon);
+		Out.AddItem("#" $ Unit.ObjectID @ Unit.GetFullName() @ Unit.GetMyTemplateName() @ Unit.GetSoldierClassTemplateName() @ "rank" @ Unit.GetRank()
+			@ "hp" @ int(Unit.GetCurrentStat(eStat_HP)) $ "/" $ int(Unit.GetMaxStat(eStat_HP)) @ "aim" @ int(Unit.GetMaxStat(eStat_Offense))
+			@ "def" @ int(Unit.GetMaxStat(eStat_Defense)) @ "mob" @ int(Unit.GetMaxStat(eStat_Mobility)) @ "will" @ int(Unit.GetMaxStat(eStat_Will))
+			@ "weapon" @ (Weapon != none ? string(Weapon.GetMyTemplateName()) : "none") @ "ready" @ Unit.CanGoOnMission()
+			@ "(soldier" @ Unit.IsSoldier() @ "status" @ Unit.GetStatus() @ "mental" @ Unit.GetMentalState() @ "injured" @ Unit.IsInjured() $ ")");
+	}
+}
+
 function AoETest(int UnitID, name Profile, out array<string> Out)
 {
 	local XGUnit Visualizer;

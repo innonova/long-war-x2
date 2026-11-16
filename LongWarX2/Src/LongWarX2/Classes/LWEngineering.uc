@@ -9,7 +9,7 @@
 // when one item's work is (UpdateItemProject); its work is Days x Engineers x 24 hours (GetItemBuildTime)
 // and the engineers make GetWorkPerHour of it an hour: about all of XCOM's engineers when the project
 // has that many, less and less the more it is short of them.
-class LWEngineering extends Object dependson(LWGearRules, XComGameState_LWStrategy);
+class LWEngineering extends Object dependson(LWGearRules, XComGameState_LWStrategy, LWSHIVs);
 
 /** Has research (and the Foundry) unlocked the item? */
 static function bool Unlocked(LWGearRules.LWBuildDef B)
@@ -86,9 +86,14 @@ static function string JoinStrings(array<string> Parts)
 static function string ItemName(name ItemName)
 {
 	local X2ItemTemplate Template;
+	local X2CharacterTemplate CharTemplate;
 
 	Template = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(ItemName);
-	return (Template != none && Template.GetItemFriendlyName() != "") ? Template.GetItemFriendlyName() : string(ItemName);
+	if (Template != none && Template.GetItemFriendlyName() != "")
+		return Template.GetItemFriendlyName();
+	// (A SHIV is built as the unit itself: its character's name.)
+	CharTemplate = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager().FindCharacterTemplate(ItemName);
+	return (CharTemplate != none && CharTemplate.strCharacterName != "") ? CharTemplate.strCharacterName : string(ItemName);
 }
 
 /** An item's cost as the Geoscape shows it. */
@@ -234,12 +239,17 @@ static function Take(XComGameState NewGameState, name ItemName, int Count)
 static function Deliver(XComGameState NewGameState, XComGameState_LWStrategy S, XComGameState_LWStrategy.LWBuild P)
 {
 	local LWGearRules.LWBuildDef B;
-	local int Alloys, Elerium;
+	local LWSHIVs.LWSHIVBody Body;
+	local int Alloys, Elerium, i;
 
 	class'LWGearRules'.static.BuildFor(P.Item, B);
 	// A Firestorm is a craft: it joins the hangar at home (LWHangar).
 	if (B.Template == 'LWItem_Firestorm')
 		class'LWHangar'.static.AddCraft(NewGameState, 3, P.Quantity);
+	// A SHIV joins the barracks (features/lw-shivs-mecs.md).
+	else if (class'LWSHIVs'.static.BodyForItem(P.Item, Body))
+		for (i = 0; i < P.Quantity; i++)
+			class'LWSHIVs'.static.AddSHIV(NewGameState, Body.Template);
 	else
 		class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, B.Template, P.Quantity);
 	// The workshops give back some of the alloys and elerium (OnItemCompleted, CalcWorkshopRebate).
