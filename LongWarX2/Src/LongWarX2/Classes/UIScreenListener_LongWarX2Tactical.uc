@@ -238,6 +238,9 @@ function CheckSwept()
 		return;
 	NoReinforcements();
 	LongWarObjectives();
+	// A council bomb disposal (LWX2CouncilBomb): its timer, and no victory until the bomb is disarmed.
+	if (!class'LWX2CouncilBomb'.static.Update())
+		return;
 	// Units that came after the pods (a Chryssalid's zombie, a spawn of XCOM 2's) given their EW body too.
 	class'LWX2EWBodies'.static.ApplyAll();
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
@@ -269,9 +272,11 @@ static function LongWarObjectives()
 	local ObjectiveDisplayInfo Info;
 	local XComGameState NewGameState;
 	local bool bOurs, bOthers;
+	local string Label;
 
 	if (!class'LWX2EWMapPieces'.static.HasMap())
 		return;
+	Label = class'LWX2CouncilBomb'.static.ObjectiveText() != "" ? class'LWX2CouncilBomb'.static.ObjectiveText() : "Kill or capture every alien";
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 	if (Battle == none || Battle.MapData.ActiveMission.sType == "Terror")
 		return;
@@ -281,7 +286,7 @@ static function LongWarObjectives()
 	{
 		foreach List.ObjectiveDisplayInfos(Info)
 		{
-			if (Info.MissionType == "LongWarX2")
+			if (Info.MissionType == "LongWarX2" && Info.DisplayLabel == Label)
 				bOurs = true;
 			else if (!Info.GPObjective)
 				bOthers = true;
@@ -298,7 +303,7 @@ static function LongWarObjectives()
 	List.ClearTacticalObjectives();
 	Info = default.ObjectiveTemplate;
 	Info.MissionType = "LongWarX2";
-	Info.DisplayLabel = "Kill or capture every alien";
+	Info.DisplayLabel = Label;
 	Info.ShowCheckBox = true;
 	List.SetObjectiveDisplay(Info);
 	`TACTICALRULES.SubmitGameState(NewGameState);

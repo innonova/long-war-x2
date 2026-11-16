@@ -1,6 +1,6 @@
 // For development: one connection to the control port (LWX2Control): a command a line, the
 // answer's lines, then ".". "help" lists the commands. Text mode, lines split here.
-class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy, LWBaseRules, XComGameState_LWAirWar);
+class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy, LWBaseRules, XComGameState_LWAirWar, LWX2CouncilBomb);
 
 /** What came in and is not yet a whole line. */
 var string Pending;
@@ -250,7 +250,8 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem(Args.Length > 1 ? (Args[1] @ "->" @ PathName(DynamicLoadObject(Args[1], class'Object', true)) @ DynamicLoadObject(Args[1], class'Object', true).Class) : "ERR img <path>");
 		return;
 	case "council":
-		// council: the council's clock and missions; 'council now': the month's council mission made at once (a test aid).
+		// council: the council's clock and missions; 'council now [id]': the month's council mission made at once, or that one
+		// (Long War's EFCMission; a test aid).
 		Council(Args, Out);
 		return;
 	case "hit":
@@ -2637,6 +2638,9 @@ function Council(array<string> Args, out array<string> Out)
 {
 	local XComGameState NewGameState;
 	local XComGameState_LWStrategy S;
+	local LWX2CouncilBomb.LWX2BombDef Bomb;
+	local TTile Tile;
+	local vector At;
 	local int i;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
@@ -2649,9 +2653,29 @@ function Council(array<string> Args, out array<string> Out)
 	{
 		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: a council mission");
 		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
-		class'LWCouncil'.static.NewMission(S);
+		class'LWCouncil'.static.NewMission(S, Args.Length > 2 ? int(Args[2]) : 0);
 		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 		S = class'XComGameState_LWStrategy'.static.Get();
+	}
+	// ('council disarm': the bomb disarmed at once, a test aid.)
+	if (Args.Length > 1 && Args[1] == "disarm" && class'LWX2CouncilBomb'.static.State() != none)
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: the bomb disarmed");
+		XComGameState_LWX2Bomb(NewGameState.ModifyStateObject(class'XComGameState_LWX2Bomb', class'LWX2CouncilBomb'.static.State().ObjectID)).bDisarmed = true;
+		`TACTICALRULES.SubmitGameState(NewGameState);
+	}
+	// (In a bomb disposal: the bomb's and the nodes' tiles, and the turns left.)
+	if (class'LWX2CouncilBomb'.static.Active(Bomb) && `XWORLD != none)
+	{
+		At = Bomb.Bomb;
+		Tile = `XWORLD.GetTileCoordinatesFromPosition(At);
+		Out.AddItem("bomb at" @ Tile.X @ Tile.Y @ Tile.Z @ "turns left" @ class'LWX2CouncilBomb'.static.TurnsLeft(Bomb, class'LWX2CouncilBomb'.static.State()));
+		for (i = 0; i < Bomb.NodeAt.Length; i++)
+		{
+			At = Bomb.NodeAt[i];
+			Tile = `XWORLD.GetTileCoordinatesFromPosition(At);
+			Out.AddItem("node" @ i @ "at" @ Tile.X @ Tile.Y @ Tile.Z @ ((class'LWX2CouncilBomb'.static.State() != none && class'LWX2CouncilBomb'.static.State().NodeOff[i]) ? "off" : "on"));
+		}
 	}
 	Out.AddItem("council: next in" @ S.CouncilCountdown @ "hours; played" @ S.CouncilPlayed.Length);
 	for (i = 0; i < S.Sites.Length; i++)

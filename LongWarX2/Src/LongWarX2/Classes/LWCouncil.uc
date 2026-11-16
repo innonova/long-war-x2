@@ -176,12 +176,13 @@ static function int ChooseCountry(XComGameState_LWStrategy S)
 }
 
 /** The month's council mission made (DetermineNewFCMission, BuildMission, CreateMission). */
-static function NewMission(XComGameState_LWStrategy S)
+static function NewMission(XComGameState_LWStrategy S, optional int Id)
 {
 	local LWCouncilMission M;
 	local int Country;
 
-	if (!ChooseMission(S, M))
+	// (Id: that mission, a test aid.)
+	if (Id > 0 ? !MissionById(Id, M) : !ChooseMission(S, M))
 		return;
 	Country = ChooseCountry(S);
 	if (Country < 0)

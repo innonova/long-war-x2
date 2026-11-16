@@ -156,3 +156,32 @@ download). For each:
 - **Seen in the mission:** the bomb and nodes as EW drew them. The variant level is converted
   like a map, its pieces placed with the map's when the mission is a bomb disposal. Until then, a
   plain marker.
+
+## Report (2026-11-16, step 2: the bomb disposal plays)
+
+A council bomb disposal on its EW map now plays by EW's rule (`LWX2CouncilBomb`,
+`XComGameState_LWX2Bomb`, `X2Ability_LWX2Bomb`):
+- **The timer** is on XCOM 2's mission timer, "BOMB — turns remaining": the level's Timer, plus 1
+  for each node switched off, less XCOM's turns ended. At 0 the mission is lost.
+- **Two actions** for every soldier on the mission, one action each: "Deactivate node" and "Disarm
+  bomb", usable from a tile beside an active node or the bomb (1.5 tiles, within two floors).
+- **The objective list:** "Disarm the bomb (power nodes off: k of N, each a turn more)", then "Kill
+  or capture every alien (the bomb is disarmed)".
+- **Won** when the bomb is disarmed and every alien is dead or taken. Clearing the aliens alone
+  does not win.
+
+**Checked on wingpu** (EW maps on; the control port's `council now <id>`, the new `council` listing
+of the bomb's and nodes' tiles, and `council disarm`):
+- **Train Station** (8 nodes): the timer went 3 → 2 → 1 over XCOM's turn ends. A gunner beside
+  node 0 used "Deactivate node": "1 of 8", timer 2. Left to run out: "the timer ran out, the
+  mission is lost", and on the Geoscape "The council's bomb disposal in United States failed".
+- **Trainyard** (10 nodes): every alien killed with the bomb not disarmed, and the mission went
+  on. Disarmed, it was won, and "The council paid for the bomb disposal in United States: §208,
+  panic −30".
+
+**Not done yet:**
+- **The bomb and nodes are not drawn.** EW's meshes are in the variant level, which is not
+  converted, so a player finds them only through the control port or the objective text.
+  Converting the variant level and placing its pieces is next.
+- **The action's icons are XCOM 2's hack icons.** The actions have no names or texts of their own
+  in the HUD yet.

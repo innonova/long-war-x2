@@ -135,6 +135,14 @@ static event OnPostTemplatesCreated()
  *  projects (LWSHIVs.AddFoundryAbilities). */
 static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out array<AbilitySetupData> SetupData, optional XComGameState StartState, optional XComGameState_Player PlayerState, optional bool bMultiplayerDisplay)
 {
+	local LWX2CouncilBomb.LWX2BombDef Bomb;
+
 	class'LWSHIVs'.static.AddFoundryAbilities(UnitState, SetupData);
+	// A council bomb disposal: XCOM's soldiers can switch its power nodes off and disarm it (LWX2CouncilBomb).
+	if (UnitState.GetTeam() == eTeam_XCom && UnitState.IsSoldier() && class'LWX2CouncilBomb'.static.Active(Bomb))
+	{
+		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_DeactivateNode', eInvSlot_Unknown, SetupData);
+		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_DisarmBomb', eInvSlot_Unknown, SetupData);
+	}
 }
 
