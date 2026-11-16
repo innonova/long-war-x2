@@ -85,3 +85,41 @@ cost cleared and "Bought."); the officer projects listed in red with their reaso
 - The five officer projects show but can't be bought until officers are in ("Officers are
   not in the port yet."): the school reads as Long War's, and nothing is sold that does
   nothing.
+
+## Plan (2026-11-16, read from Long War's code)
+
+**Strategy** (`XGFacility_Barracks`: `BuildMedals`, `UnlockMedal`, `CanAwardMedalToSoldier`, `AwardMedalToSoldier`;
+`XGDebriefUI`; `DetermineTimeOut`):
+- Five officer ranks, Long War's medals: lieutenant, captain, major, colonel, field commander. Each
+  officer project bought unlocks its rank, with `ContBalance_Classic[0]`'s count of officers (3, 2,
+  2, 2, 1) added to that rank and to every rank below it (`UnlockMedal`).
+- A soldier can be made an officer of a rank when one is available, they hold the rank below
+  (lieutenant: none), their class rank is at least the officer rank + 2 (lieutenant: sergeant),
+  they have done 5 missions since their last officer promotion (`NUM_MEDALOFHONOR_MISSIONS`; half
+  with Marathon), and they are not psionic, a MEC, augmented, or away (gene mods, psi testing).
+- Each rank gives one of two powers, the player's choice (lieutenant: Legio Patria Nostra or Stay
+  Frosty; captain: Semper Vigilans or Fortiores Una; major: Into the Breach or So Shall You Fight;
+  colonel: Band of Warriors or Esprit de Corps; field commander: So Others May Live or Combined
+  Arms), and one Command charge. A lieutenant also gets Lead By Example.
+- Kept on the unit (unit values: rank, the powers chosen, missions at the last promotion).
+- A screen to promote them: EW's officer screen (its medals screen), from the Barracks room.
+- An officer's fatigue: `SPECIES_POINT_LIMIT` hours more per officer rank.
+
+**Tactical** (`XGFacility_Barracks` before launch; `XGSquad.AddPermanentUnit`; `XGUnit`):
+- The squad's leader is the officer with the most ranks (ties: the higher will). Their powers
+  apply to the whole squad.
+- The leader gets Command (EW's War Cry: a move for a soldier in sight whose turn is done, not on
+  overwatch or hunkered; four-turn cooldown; one charge per officer rank) and Lead By Example
+  (soldiers near the leader, 8 tiles, with lower will use the leader's).
+- The powers' numbers from stock Long War: Semper Vigilans +5 defence in cover; Legio Patria
+  Nostra +1 will per nationality; Band of Warriors +2 aim per continent bonus held; Esprit de
+  Corps +5 will (not robots) and +5 defence; Into the Breach +¼ mission XP up to sergeant; So
+  Shall You Fight +25% kill XP; So Others May Live +1 aim and will after a mission with no
+  deaths, up to +8; Combined Arms ignores a point of damage reduction; Stay Frosty a day less
+  of fatigue.
+
+### Found on the way
+
+- **Long War's damage reduction is not in the port**: every unit in cover takes 0.667 (low) or 1
+  (high) less damage, more when hunkered down (`XGUnit`, the damage taken), and aliens have their
+  own. Fortiores Una doubles the cover part, so it waits on that; noted in STATUS.

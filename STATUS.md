@@ -44,6 +44,7 @@ buttons and text, no art).
 
 | System | Status | Looks | What is in | What is missing | Feature |
 |---|---|---|---|---|---|
+| Damage reduction | none | | | Long War's damage reduction: in cover 0.667 (low) or 1 (high) less damage, more when hunkered down; the aliens' own; Fortiores Una doubles the cover part | `lw-officers` (found there) |
 | Classes and perk trees | done | X2 | the eight subclasses, their trees and stat gains | | `lw-classes` |
 | Perks | most | X2 | most of the 78 Long War perks act; approximations marked in Decisions | Lock N' Load, Concealment, Extra Conditioning, Javelin, Neural Feedback, Pyrokinesis; Bioelectric Skin's reveal; Muscle Fiber Density as a passive jump (a grapple for now) | `lw-classes`, `lw-psi`, `lw-genemods` |
 | Psi powers in missions | most | X2 | ten of twelve | Neural Feedback, Pyrokinesis | `lw-psi` |
