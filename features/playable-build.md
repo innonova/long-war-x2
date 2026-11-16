@@ -302,3 +302,21 @@ New since 1c5b0cb:
 - With the control port on for the check (off again after), in a new campaign an officer showed
   CAPT in the Barracks list, through the release's own class override.
 - The mod came up through squad select.
+
+## Release (2026-11-16, late afternoon)
+
+`LongWarX2-20261116-e911ed6.zip` replaces `7b367a9` on the draft v0.1.0-preview.1.
+
+New since 7b367a9:
+- **Start bonuses:** Ghost in the Machine (two SHIVs at the start, SHIV aim) and Robotics (aim for
+  new SHIVs and MECs).
+- **EW's own gene mod pictures** on the Gene Mods screen. The setup now makes EW's strategy
+  pictures in the converted base loadable (`ew-images.ts`).
+- **Damage reduction:** SHIV decks and MEC suits reduce damage by Long War's amounts.
+- **MEC perks:** Shock-Absorbent Armor, Absorption Fields and Repair Servos act.
+
+**Checked on wingpu from the zip:**
+- Its setup (`--no-maps`) converted the base with its pictures opened (the gene mod textures'
+  forced-export flag cleared in the installed `Command1.upk`) and drew 25 units as EW's.
+- With the control port on for the check (off again after), in a new campaign the Adrenal mod's
+  picture loaded by its path.
