@@ -320,3 +320,29 @@ New since 7b367a9:
   forced-export flag cleared in the installed `Command1.upk`) and drew 25 units as EW's.
 - With the control port on for the check (off again after), in a new campaign the Adrenal mod's
   picture loaded by its path.
+
+## Release (2026-11-16, night)
+
+`LongWarX2-20261116-50a07ae.zip` replaces `e911ed6` on the draft v0.1.0-preview.1.
+
+New since e911ed6:
+- **The council's missions** (`lw-council-missions.md`): offered monthly as Long War does, each on its EW map with its
+  mission variant level (Long War's DefaultMaps.ini): bomb disposals (EW's bomb and power nodes drawn, the timer, the
+  nodes), VIP extractions and rescues (the VIP reached, escorted to the evac zone at the Skyranger), assaults.
+- **EXALT's covert missions** on EW's covert maps (`lw-exalt.md`): the extraction (the operative hacks two comm relays,
+  then evacuates) and the data recovery (EXALT's waves after the capture areas), Long War's cash for each.
+- **Map converter 20**: pieces standing where their archetype stands were at the map's origin (547 over 81 maps;
+  Street Hurricane's squad was boxed in by one), and wide breakable pieces get floors. **Every map is converted
+  again** by the setup.
+- **Grenades' blasts** were too small (XCOM 2 reads metres): now Long War's.
+- **Aliens:** the Drone's Overload; the Berserker's blow named Bull Rush.
+- **Perks:** Lock N' Load (Long War's ammo rule), Javelin Rockets, Bombard and Grenadier's reach, a rocket's shorter
+  reach after moving (Snap Shot's).
+- **Items:** Reaper Rounds, the Psi and Ghost Grenades (psionic soldiers only), the Respirator Implant.
+
+**Checked on wingpu from the zip:** its setup (`--maps`) re-converted the maps (150 sections at converter 20), wrote
+34 mission-variant plots and the council's and EXALT's objectives; with the control port on for the check (off again
+after), a new campaign's council bomb disposal played on `LWX2V_URB_TrainStation_Stream` with its bomb and nodes, the
+squad free to move.
+
+Open: the Commercial Restaurant data recovery's first capture area (a roof deck XCOM 2 makes no floor on).
