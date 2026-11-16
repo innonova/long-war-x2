@@ -1515,3 +1515,17 @@ from the evening, one from the morning) give two exception addresses:
   release `35646a2` installed from its zip, a new campaign flown to its first abduction, checked
   25 s into the battle. **All 14 load and run, no crash, no squad boxed in.** With the 66 of
   that sweep and the 3 played the same night, every one of the 83 maps has been through.
+
+## Report (2026-11-16, pieces at the origin: converter 18)
+
+- **Found** while looking at why Street Hurricane's squad is boxed in (the council extraction's evac zone stood
+  there too): a `tile` test aid traced down from above the drop zone and hit `StoreFront_Periph_B3` at height
+  960, a periphery storefront row whose collision filled every tile of the column. In EW that row stands at
+  (-960, 1200), on the map's north edge; the converted map had it at (0, 0, 0).
+- **Why:** a placed actor stores only the properties that differ from its archetype's. One that stands where its
+  archetype stands has no `Location` (nor `Rotation`, `DrawScale`) of its own, and the converter read none as
+  the origin. Over the converted maps, **547 pieces in 81 maps** were at the origin, most of them big
+  periphery and building pieces, stacked in the middle of the map.
+- **Fix** (`ew-map.ts`, converter 18): the transform is inherited from the archetypes as the cover flags,
+  meshes and materials already were. Every map is converted again by the setup (an older section is).
+- Street Hurricane's boxed-in drop zone (2026-11-05) is the likely result; to be checked once converted again.
