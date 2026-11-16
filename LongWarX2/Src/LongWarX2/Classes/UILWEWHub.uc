@@ -20,7 +20,7 @@ var localized string RoomNames[5];
 var localized string MissionControlName;
 var localized string NewResearch, BuildItems, BuildItemsHelp, BuildFacilities, BuildFacilitiesHelp, Foundry, FoundryHelp;
 var localized string ViewSoldiers, ViewSoldiersHelp, AircraftList, AircraftListHelp, SituationRoom, GreyMarket, GreyMarketHelp;
-var localized string PsiLabs, PsiLabsHelp, OTS, OTSHelp;
+var localized string PsiLabs, PsiLabsHelp, OTS, OTSHelp, Augment, AugmentHelp;
 
 /** Each room's camera in EW's base (Command1's, by tag), in the order of the top menu. */
 var array<name> RoomCameras;
@@ -43,6 +43,7 @@ const OPT_GREYMARKET = 7;
 const OPT_OTS = 8;
 const OPT_PSI = 9;
 const OPT_GENE = 10;
+const OPT_AUGMENT = 13;
 const OPT_OFFICERS = 11;
 const OPT_EXALT = 12;
 
@@ -262,6 +263,9 @@ function EnterRoom(int i)
 		S = class'XComGameState_LWStrategy'.static.Get();
 		if (S != none && class'LWBase'.static.Count(S, FACILITY_FOUNDRY) > 0)
 			RoomOptions.AddItem(OPT_FOUNDRY);
+		// (As EW: Augment Soldiers once the Cybernetics Lab is built.)
+		if (S != none && class'LWBase'.static.Count(S, 22) > 0)
+			RoomOptions.AddItem(OPT_AUGMENT);
 		break;
 	case 2:
 		RoomOptions.AddItem(OPT_SOLDIERS);
@@ -316,6 +320,7 @@ function string OptionName(int Option)
 	case OPT_GREYMARKET: return Word(GreyMarket, "Grey market");
 	case OPT_OTS: return Word(OTS, "Officer Training School");
 	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
+	case OPT_AUGMENT: return Word(Augment, "Augment Soldiers");
 	case OPT_GENE: return class'LWBase'.static.FacilityName(23);
 	case OPT_OFFICERS: return Word(class'UILWOfficers'.default.Promotions, "Officer Promotions");
 	case OPT_EXALT: return "EXALT";
@@ -335,6 +340,7 @@ function string OptionHelp(int Option)
 	case OPT_GREYMARKET: return GreyMarketHelp;
 	case OPT_OTS: return OTSHelp;
 	case OPT_PSI: return PsiLabsHelp;
+	case OPT_AUGMENT: return AugmentHelp;
 	case OPT_OFFICERS: return class'UILWOfficers'.default.PromotionsHelp;
 	case OPT_EXALT: return class'UILWEWSituationRoom'.default.NotScanned;
 	}
@@ -388,6 +394,10 @@ function ChooseOption(int Option)
 	// The Psi Labs on XCOM 2's widgets (soldier screens are XCOM 2's, agreed 2026-11-16).
 	case OPT_PSI:
 		class'UILWPsiLabs'.static.Open(HQPres);
+		break;
+	// The Cybernetics Lab: XCOM 2's soldier list of those who may be augmented (features/lw-shivs-mecs.md).
+	case OPT_AUGMENT:
+		class'UIPersonnel_LWAugment'.static.Open(HQPres);
 		break;
 	// The Genetics Lab on EW's own Gene Mods screen (agreed 2026-11-16).
 	case OPT_GENE:

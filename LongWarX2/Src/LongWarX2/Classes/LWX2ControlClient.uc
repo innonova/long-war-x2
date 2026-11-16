@@ -467,6 +467,11 @@ function Handle(string Line, out array<string> Out)
 		// <ability>:<item template>: the ability of that item (a soldier's grenades each have their ThrowGrenade).
 		Out.AddItem(UseAbility(Args[1], name(InStr(Args[2], ":") == INDEX_NONE ? Args[2] : Left(Args[2], InStr(Args[2], ":"))), Args.Length > 3 ? int(Args[3]) : -1, InStr(Args[2], ":") == INDEX_NONE ? '' : name(Mid(Args[2], InStr(Args[2], ":") + 1))));
 		return;
+	case "mec":
+		// mec: the Cybernetics Lab and XCOM's MECs; 'mec augment <unit id>' a soldier in (Long War's rules); 'mec done' the lab's
+		// work finished at once (a test aid).
+		MECs(Args, Out);
+		return;
 	case "shiv":
 		// shiv: XCOM's SHIVs; 'shiv add [LWSHIV|LWSHIV_Alloy|LWSHIV_Hover] [front]' one built at once (a test aid; front: first
 		// in the crew, so the next mission's squad takes it).
@@ -1579,6 +1584,82 @@ function UI3D(name Tag, bool bShow, out array<string> Out)
 		`HQPRES.Get3DMovie().Show();
 		`HQPRES.Get3DMovie().ShowDisplay(Tag);
 		Out.AddItem("shown" @ Tag);
+	}
+}
+
+function MECs(array<string> Args, out array<string> Out)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local XComGameState_Unit Unit;
+	local StateObjectReference Ref;
+	local XComGameState_Item Weapon, Suit;
+	local string Why;
+	local int i;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	// 'mec make': the first soldier who may be augmented made a MEC at once, first in the next squad (a test aid).
+	if (Args.Length > 1 && Args[1] == "make")
+	{
+		foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+		{
+			Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+			if (class'LWMECs'.static.CanAugment(S, Unit, Why))
+				break;
+			Unit = none;
+		}
+		if (Unit == none)
+		{
+			Out.AddItem("ERR nobody can be augmented (" $ Why $ ")");
+			return;
+		}
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: a MEC made");
+		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+		Unit = class'LWMECs'.static.AugmentDone(NewGameState, S, Unit.ObjectID);
+		if (Unit != none)
+			Unit.SetUnitFloatValue('LWX2TestFirst', 1, eCleanup_Never);
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		S = class'XComGameState_LWStrategy'.static.Get();
+	}
+	if (Args.Length > 2 && Args[1] == "augment")
+	{
+		Out.AddItem(class'LWMECs'.static.StartAugment(int(Mid(Args[2], InStr(Args[2], "#") == 0 ? 1 : 0)), Why) ? "ok" : "ERR needs" @ Why);
+		S = class'XComGameState_LWStrategy'.static.Get();
+	}
+	if (Args.Length > 1 && Args[1] == "done")
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: augmentation done");
+		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+		for (i = S.MECPatients.Length - 1; i >= 0; i--)
+		{
+			class'LWMECs'.static.AugmentDone(NewGameState, S, S.MECPatients[i].Unit);
+			S.MECPatients.Remove(i, 1);
+		}
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	}
+	Out.AddItem("Cybernetics Lab:" @ class'LWBase'.static.Count(S, 22) @ "built," @ S.MECPatients.Length @ "in it");
+	for (i = 0; i < S.MECPatients.Length; i++)
+		Out.AddItem("  lab: #" $ S.MECPatients[i].Unit @ XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(S.MECPatients[i].Unit)).GetFullName() @ S.MECPatients[i].HoursLeft @ "hours left");
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier())
+			continue;
+		if (class'LWMECs'.static.IsMEC(Unit))
+		{
+			Weapon = Unit.GetItemInSlot(eInvSlot_PrimaryWeapon);
+			Suit = Unit.GetItemInSlot(eInvSlot_Armor);
+			Out.AddItem("MEC #" $ Unit.ObjectID @ Unit.GetFullName() @ Unit.GetSoldierClassTemplateName() @ "rank" @ Unit.GetRank() @ "hp" @ int(Unit.GetMaxStat(eStat_HP))
+				@ "aim" @ int(Unit.GetMaxStat(eStat_Offense)) @ "mob" @ int(Unit.GetMaxStat(eStat_Mobility)) @ "will" @ int(Unit.GetMaxStat(eStat_Will))
+				@ "kills" @ Unit.GetNumKills() @ "missions" @ Unit.GetNumMissions() @ "suit" @ (Suit != none ? string(Suit.GetMyTemplateName()) : "none")
+				@ "weapon" @ (Weapon != none ? string(Weapon.GetMyTemplateName()) : "none") @ "ready" @ Unit.CanGoOnMission());
+		}
+		else if (Args.Length < 2 || Args[1] == "can")
+		{
+			class'LWMECs'.static.CanAugment(S, Unit, Why);
+			if (Args.Length > 1)
+				Out.AddItem("#" $ Unit.ObjectID @ Unit.GetFullName() @ Unit.GetSoldierClassTemplateName() @ "rank" @ Unit.GetRank() @ (Why == "" ? "can be augmented" : "needs" @ Why));
+		}
 	}
 }
 

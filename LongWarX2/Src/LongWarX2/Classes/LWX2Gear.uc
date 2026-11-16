@@ -188,7 +188,8 @@ static function int ArmAll()
 	foreach XComHQ.Crew(Ref)
 	{
 		Unit = XComGameState_Unit(History.GetGameStateForObjectID(Ref.ObjectID));
-		if (Unit == none || !Unit.IsSoldier() || Unit.GetSoldierClassTemplate() == none || Left(string(Unit.GetSoldierClassTemplateName()), 4) != "LWS_")
+		// (Soldiers only: SHIVs and MECs carry their own gear, LWSHIVs and LWMECs.)
+		if (Unit == none || !Unit.IsSoldier() || Unit.GetMyTemplateName() != 'Soldier' || Unit.GetSoldierClassTemplate() == none || Left(string(Unit.GetSoldierClassTemplateName()), 4) != "LWS_")
 			continue;
 		if (NeedsArming(Unit))
 		{

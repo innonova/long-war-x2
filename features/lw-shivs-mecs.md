@@ -203,3 +203,36 @@ player may not have.
 Steps: (a) the eight MEC classes in `XComClassData.ini` (`classes-config.mjs`), the suits and
 weapons as config and templates; (b) the Cybernetics Lab's augmentation and the MEC unit; (c) EW's
 MEC bodies; (d) the subsystems (phase 4).
+
+## Report (2026-11-16, MEC troopers: steps a and b)
+
+- **The eight MEC classes** (`classes-config.mjs`): Jaeger, Pathfinder, Archer, Goliath, Guardian,
+  Shogun, Marauder, Valkyrie with Long War's perk trees (`SoldierPerkTrees` 31-34, 41-44) and stat
+  gains; never dealt to recruits; MEC weapons and suits only. Their new perks (Automated Threat
+  Assessment, Advanced Fire Control, Damage Control …) are named stand-ins for now.
+- **Suits and weapons** (`scripts/mecs-config.mjs` → `XComLWMECs.ini`; `X2Item_LWMECGear`,
+  `X2Ability_LWMECSuit`): Long War's seven MEC suits (HP, defence, mobility, will; immune to fire
+  and poison) and five MEC weapons (Minigun 7 to Particle Beam 11). Engineering builds them at
+  Long War's costs, with their research and the suit each upgrades from; the first suit and the
+  Minigun come with every MEC.
+- **The Cybernetics Lab:** Engineering → **Augment Soldiers** (EW's words, once the lab is built)
+  opens XCOM 2's soldier list of those Long War lets be augmented (ready, a Long War class, not an
+  officer, not psionic, no gene mods), then a confirmation with the MEC class, §40, 60 meld and 10
+  days (`UIPersonnel_LWAugment`, `LWMECs.StartAugment`); three places a lab.
+- **The MEC trooper** (`X2Character_LWMEC`, `LWMECs.AugmentDone`): when the days are over, a unit
+  of its own in the soldier's place, the soldier's name, nickname, country, kills and missions,
+  one rank lower, the MEC class of their own, Long War's soldier base stats with 4 more HP, the
+  first suit and the Minigun; the soldier leaves the crew. On the ADVENT MEC's pawn for now.
+- Kept out of the recruit stats and bonuses, gear arming (the SHIVs too: they had been given a
+  medikit and soldier armour), the Psi Labs, the Genetics Lab and officer promotion.
+
+**Checked on wingpu:** Engineering showed AUGMENT SOLDIERS; the list, the confirmation ("LCPL Ella
+Goosens -> Pathfinder, §40, 60 Meld, 10 Days"; `logs/wingpu_mec_augment.png`); confirmed, the lab
+held the soldier 240 hours; ten days on: "César Moreno came out of the Cybernetics Lab a Jaeger",
+rank 1, his 2 kills and 1 mission kept, suit and Minigun; in a mission, 17 HP (9 and the suit's 8).
+
+Control port: `mec` (the lab and the MECs), `mec can` (who may be augmented and why not),
+`mec augment #<id>`, `mec done` (the lab's work finished), `mec make` (a MEC at once, first in the
+next squad).
+
+**Next:** EW's MEC bodies (step c); subsystems (phase 4).

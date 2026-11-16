@@ -140,6 +140,13 @@ struct LWGenePatient
 	var array<int> HoursLeft;
 };
 var array<LWGenePatient> GenePatients;
+/** A soldier in the Cybernetics Lab (features/lw-shivs-mecs.md): the unit, the hours left (LWMECs). */
+struct LWMECPatient
+{
+	var int Unit;
+	var int HoursLeft;
+};
+var array<LWMECPatient> MECPatients;
 /** Engineering's projects (LWEngineering). */
 var array<LWBuild> Builds;
 /** The Foundry's projects under way (Item: the project's id) and those done. */
@@ -508,6 +515,15 @@ function Tick(XComGameState NewGameState)
 			continue;
 		PsiTrainingDone(NewGameState, PsiTrainees[i]);
 		PsiTrainees.Remove(i, 1);
+		bStop = true;
+	}
+	// Augmentation done: a MEC trooper in the soldier's place (LWMECs.AugmentDone).
+	for (i = MECPatients.Length - 1; i >= 0; i--)
+	{
+		if (--MECPatients[i].HoursLeft > 0)
+			continue;
+		class'LWMECs'.static.AugmentDone(NewGameState, self, MECPatients[i].Unit);
+		MECPatients.Remove(i, 1);
 		bStop = true;
 	}
 	// Gene mods: the first of each soldier's made in turn (XGFacility_GeneLabs.Update); done, the mod is the soldier's, and
@@ -2052,7 +2068,7 @@ function Note(string Text)
 
 function bool InPsiTraining(int UnitID)
 {
-	return PsiTrainees.Find('Unit', UnitID) != INDEX_NONE || GenePatients.Find('Unit', UnitID) != INDEX_NONE;
+	return PsiTrainees.Find('Unit', UnitID) != INDEX_NONE || GenePatients.Find('Unit', UnitID) != INDEX_NONE || MECPatients.Find('Unit', UnitID) != INDEX_NONE;
 }
 
 /** Whether the Psi Labs have a place free (Long War's places per labs built). */
@@ -2068,7 +2084,7 @@ static function string PsiSoldierWhy(XComGameState_LWStrategy S, XComGameState_U
 		return "the Psi Labs";
 	if (!PsiPlaceFree(S))
 		return "a free place in the Psi Labs";
-	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic() || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
+	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic() || class'LWMECs'.static.IsMEC(Unit) || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
 		return "a soldier ready for duty";
 	return "";
 }
@@ -2170,7 +2186,7 @@ static function string GeneSoldierWhy(XComGameState_LWStrategy S, XComGameState_
 		return "the Genetics Lab";
 	if (!GeneTankFree(S))
 		return "a free tank in the Genetics Lab";
-	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic() || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
+	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic() || class'LWMECs'.static.IsMEC(Unit) || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
 		return "a soldier ready for duty";
 	return "";
 }

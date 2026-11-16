@@ -362,6 +362,8 @@ export function makeHubWords({ strategyLoc }) {
     ['BuildFacilities', inSection('XGEngineeringUI', 'm_strOptBuildFacilities')],
     ['BuildFacilitiesHelp', inSection('XGEngineeringUI', 'm_strHelpBuildFacilities')],
     ['Foundry', inSection('XGEngineeringUI', 'm_strOptFoundry')],
+    ['Augment', inSection('XGEngineeringUI', 'm_strOptCyberneticsLab')],
+    ['AugmentHelp', inSection('XGEngineeringUI', 'm_strHelpCyberneticsLab')],
     ['FoundryHelp', inSection('XGEngineeringUI', 'm_strHelpFoundry')],
     ['ViewSoldiers', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_SoldierList]')],
     ['ViewSoldiersHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_SoldierList]')],

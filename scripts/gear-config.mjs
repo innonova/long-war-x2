@@ -100,6 +100,10 @@ out.push(
 // The SHIVs (features/lw-shivs-mecs.md): engineering builds the robot itself, a unit of XCOM's crew (its character template),
 // and the SHIVs' weapons (X2Item_LWSHIVWeapons; the Minigun comes with every SHIV and is never built).
 const SHIVS = { 100: 'LWSHIV', 101: 'LWSHIV_Alloy', 102: 'LWSHIV_Hover', 109: 'LWSHIV_Minigun', 110: 'LWSHIV_Sentry', 111: 'LWSHIV_Laser', 112: 'LWSHIV_Plasma' }
+// The MEC suits and MEC weapons (features/lw-shivs-mecs.md; their templates X2Item_LWMECGear): Armors= with eAP_MEC (not the
+// civvies), Weapons= with eWP_Mec and a damage (not the subsystems).
+for (const [id, a] of readArmours(core, ITEMS)) if (a.props.includes('MEC') && ITEMS[id] !== 'eItem_MecCivvies') SHIVS[id] = `LWMEC_Suit_${id}`
+for (const [id, w] of weapons) if (w.props.includes('Mec') && Number(w.iDamage) > 0 && !/Mec(Flame|Kinetic|Proximity|Electro|Grenade|Restorative)/.test(ITEMS[id] ?? '')) SHIVS[id] = `LWMEC_Weapon_${id}`
 for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number), CRAFT, SMALL.map((x) => x.item), Object.keys(SHIVS).map(Number)]) {
   for (const item of items) {
     if (item === null) continue
@@ -115,7 +119,7 @@ for (const items of [...Object.values(FAMILIES), Object.keys(ARMOURS).map(Number
           ? `, ItemReq=${itemTemplate(SPECIAL[item][0][0], ITEMS)}, ItemReqCount=${SPECIAL[item][0][1]}` +
             (SPECIAL[item][1] ? `, ItemReq2=${itemTemplate(SPECIAL[item][1][0], ITEMS)}, ItemReq2Count=${SPECIAL[item][1][1]}` : '')
           : t.item
-            ? `, ItemReq=${itemTemplate(t.item.id, ITEMS)}`
+            ? `, ItemReq=${SHIVS[t.item.id] ?? itemTemplate(t.item.id, ITEMS)}`
             : '') +
         (t.foundry ? `, Foundry=${t.foundry}` : '') +
         ')',

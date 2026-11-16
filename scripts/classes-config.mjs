@@ -50,6 +50,18 @@ const CLASSES = [
   { id: 14, name: 'Assault', squaddie: 'ePerk_RunAndGun', icon: 'class_ranger' },
   { id: 24, name: 'Infantry', squaddie: 'ePerk_PlasmaBarrage', icon: 'class_ranger' },
 ]
+/** Long War's MEC classes (features/lw-shivs-mecs.md): a soldier's class + 20 once augmented. Their squaddie perk is the one
+ *  their tree gives at squaddie (the middle row's). */
+const MEC_CLASSES = [
+  { id: 31, name: 'Jaeger', from: 'Sniper' },
+  { id: 41, name: 'Pathfinder', from: 'Scout' },
+  { id: 32, name: 'Archer', from: 'Rocketeer' },
+  { id: 42, name: 'Goliath', from: 'Gunner' },
+  { id: 33, name: 'Guardian', from: 'Medic' },
+  { id: 43, name: 'Shogun', from: 'Engineer' },
+  { id: 34, name: 'Marauder', from: 'Assault' },
+  { id: 44, name: 'Valkyrie', from: 'Infantry' },
+]
 /** Each class's starting kit: Long War's (GetInfinitePrimary; a pistol where the class may carry one). */
 const LOADOUTS = Object.fromEntries(CLASSES.map((c) => [c.name, startingKit(c.name).map(weaponTemplate)]))
 /**
@@ -263,6 +275,7 @@ const out = [
   '[XComGame.X2SoldierClass_DefaultClasses]',
   ...CLASSES.map((c) => `+SoldierClasses=${q('LWS_' + c.name)}`),
   '+SoldierClasses="LWS_SHIV"',
+  ...MEC_CLASSES.map((c) => `+SoldierClasses=${q('LWS_' + c.name)}`),
   '',
   "; Recruits become Long War's classes, not XCOM 2's.",
   ...['Ranger', 'Sharpshooter', 'Grenadier', 'Specialist'].flatMap((n) => [`[${n} X2SoldierClassTemplate]`, 'NumInForcedDeck=0', 'NumInDeck=0']),
@@ -334,6 +347,41 @@ for (const c of CLASSES) {
     `; squaddie: ${titleOf(c.squaddie)}`,
     `+SoldierRanks=(AbilitySlots=(${slot(abilityForClass(c.squaddie, c), WEAPON_SLOT[abilityForClass(c.squaddie, c)])}` +
       `${startingKit(c.name).includes(2) ? `, ${slot('PistolStandardShot', 'eInvSlot_SecondaryWeapon')}` : ''}), ${stats(c.id, RANK_NAMES[0])})`,
+  )
+  RANKS.forEach((rank, k) => {
+    const perks = rows.map((r) => r[rank]).filter((p) => p && p !== '0')
+    out.push(
+      `; ${RANK_NAMES[k + 1].replace('eRank_', '').toLowerCase()}: ${perks.map(titleOf).join(' / ')}`,
+      `+SoldierRanks=(AbilitySlots=(${perks.map((p) => slot(abilityForClass(p, c), WEAPON_SLOT[abilityForClass(p, c)])).join(', ')}), ${stats(c.id, RANK_NAMES[k + 1])})`,
+    )
+  })
+}
+// Long War's MEC classes (features/lw-shivs-mecs.md): never dealt to a recruit (an augmented soldier becomes one), only MEC
+// weapons and suits, their perk trees and stat gains Long War's.
+for (const c of MEC_CLASSES) {
+  const rows = trees.get(c.id) ?? []
+  if (rows.length !== 3) throw new Error(`${c.name}: ${rows.length} perk rows in the tree, expected 3`)
+  const squaddie = rows.map((r) => r.Squaddie).find((p) => p && p !== '0')
+  out.push(
+    '',
+    `[LWS_${c.name} X2SoldierClassTemplate]`,
+    'bMultiplayerOnly=0',
+    'ClassPoints=4',
+    'IconImage="img:///UILibrary_Common.TargetIcons.Hack_robot_icon"',
+    'NumInForcedDeck=0',
+    'NumInDeck=0',
+    'bHideInCharacterPool=true',
+    'KillAssistsPerKill=5',
+    'bNoSecondaryWeapon=true',
+    '+AcceptedCharacterTemplates="LWMEC"',
+    '+AllowedWeapons=(SlotType=eInvSlot_PrimaryWeapon, WeaponType="lw_mec")',
+    '+AllowedArmors="lw_mec"',
+    'bAllowAWCAbilities=0',
+    'bHasClassMovie=false',
+    'bCanHaveBonds=true',
+    'BaseAbilityPointsPerPromotion=3',
+    `; squaddie: ${squaddie ? titleOf(squaddie) : 'none'}`,
+    `+SoldierRanks=(AbilitySlots=(${squaddie ? slot(abilityForClass(squaddie, c), WEAPON_SLOT[abilityForClass(squaddie, c)]) : ''}), ${stats(c.id, RANK_NAMES[0])})`,
   )
   RANKS.forEach((rank, k) => {
     const perks = rows.map((r) => r[rank]).filter((p) => p && p !== '0')
@@ -474,7 +522,7 @@ writeFileSync(
 
 // --- The words (the player's machine only) ---------------------------------------------
 // Which classes and perks get words: committed, for the setup program to write the same words on a player's machine.
-const plan = { classes: CLASSES.map((c) => c.name), standins: [...standins].map(([name, s]) => ({ name, perk: s.perk })) }
+const plan = { classes: [...CLASSES, ...MEC_CLASSES].map((c) => c.name), standins: [...standins].map(([name, s]) => ({ name, perk: s.perk })) }
 writeFileSync(join(here, 'words-plan.json'), JSON.stringify(plan, null, 1) + '\n')
 const words = makeWords({ plan, core, loc, consts })
 writeFileSync(join(mod, 'Localization', 'XComGame.int'), words.text)

@@ -7,7 +7,15 @@
   "Medic",
   "Engineer",
   "Assault",
-  "Infantry"
+  "Infantry",
+  "Jaeger",
+  "Pathfinder",
+  "Archer",
+  "Goliath",
+  "Guardian",
+  "Shogun",
+  "Marauder",
+  "Valkyrie"
  ],
  "standins": [
   {
@@ -235,6 +243,46 @@
    "perk": "ePerk_PlasmaBarrage"
   },
   {
+   "name": "LW_AutomatedThreatAssessment",
+   "perk": "ePerk_AutoThreatAssessment"
+  },
+  {
+   "name": "LW_AdvancedFireControl",
+   "perk": "ePerk_AdvancedFireControl"
+  },
+  {
+   "name": "LW_Squadsight",
+   "perk": "ePerk_Squadsight"
+  },
+  {
+   "name": "LW_DamageControl",
+   "perk": "ePerk_DamageControl"
+  },
+  {
+   "name": "LW_RepairServos",
+   "perk": "ePerk_RepairServos"
+  },
+  {
+   "name": "LW_AbsorptionFields",
+   "perk": "ePerk_AbsorptionFields"
+  },
+  {
+   "name": "LW_ReactiveTargetingSensors",
+   "perk": "ePerk_ReactiveTargetingSensors"
+  },
+  {
+   "name": "LW_CollateralDamage",
+   "perk": "ePerk_Barrage"
+  },
+  {
+   "name": "LW_ShockAbsorbentArmor",
+   "perk": "ePerk_ShockAbsorbentArmor"
+  },
+  {
+   "name": "LW_CloseandPersonal",
+   "perk": "ePerk_CloseandPersonal"
+  },
+  {
    "name": "LW_NeuralFeedback",
    "perk": "ePerk_GeneMod_BrainFeedback"
   },
@@ -335,36 +383,12 @@
    "perk": "ePerk_Foundry_EleriumFuel"
   },
   {
-   "name": "LW_AdvancedFireControl",
-   "perk": "ePerk_AdvancedFireControl"
-  },
-  {
-   "name": "LW_DamageControl",
-   "perk": "ePerk_DamageControl"
-  },
-  {
    "name": "LW_CombinedArms",
    "perk": "ePerk_ExpandedStorage"
   },
   {
-   "name": "LW_RepairServos",
-   "perk": "ePerk_RepairServos"
-  },
-  {
    "name": "LW_FortioresUna",
    "perk": "ePerk_Overdrive"
-  },
-  {
-   "name": "LW_AbsorptionFields",
-   "perk": "ePerk_AbsorptionFields"
-  },
-  {
-   "name": "LW_ShockAbsorbentArmor",
-   "perk": "ePerk_ShockAbsorbentArmor"
-  },
-  {
-   "name": "LW_ReactiveTargetingSensors",
-   "perk": "ePerk_ReactiveTargetingSensors"
   }
  ]
 }
