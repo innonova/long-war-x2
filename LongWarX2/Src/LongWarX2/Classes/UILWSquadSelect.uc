@@ -113,9 +113,9 @@ simulated function XComUnitPawn CreatePawn(StateObjectReference UnitRef, int ind
 	UnitPawn.CreateVisualInventoryAttachments(m_kPawnMgr, UnitState, , , true);
 	// (Cinematic pawns are made hidden: the launch bay's cinematic shows them.)
 	UnitPawn.SetVisible(true);
-	// A SHIV in EW's body, as in missions (features/lw-shivs-mecs.md).
-	if (class'LWSHIVs'.static.IsSHIV(UnitState))
-		class'LWX2EWBodies'.static.ApplyToPawn(UnitPawn, UnitState.GetMyTemplateName());
+	// A SHIV or a MEC in EW's body, as in missions (features/lw-shivs-mecs.md).
+	if (class'LWSHIVs'.static.IsSHIV(UnitState) || class'LWMECs'.static.IsMEC(UnitState))
+		class'LWX2EWBodies'.static.ApplyToPawn(UnitPawn, UnitState.GetMyTemplateName(), class'LWX2EWBodies'.static.ArmorOf(UnitState));
 	GremlinPawn = m_kPawnMgr.GetCosmeticPawn(eInvSlot_SecondaryWeapon, UnitRef.ObjectID);
 	if (GremlinPawn != none)
 	{

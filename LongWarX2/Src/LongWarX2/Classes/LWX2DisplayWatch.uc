@@ -40,6 +40,8 @@ static function SHIVOnPlatform()
 		`log("LongWarX2: 3D screens: the armory's pawn put on its platform", , 'LongWarX2');
 	}
 	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Armory.UnitReference.ObjectID));
+	if (class'LWMECs'.static.IsMEC(Unit))
+		class'LWX2EWBodies'.static.ApplyToPawn(XComUnitPawn(Armory.ActorPawn), Unit.GetMyTemplateName(), class'LWX2EWBodies'.static.ArmorOf(Unit));
 	if (class'LWSHIVs'.static.IsSHIV(Unit))
 	{
 		class'LWX2EWBodies'.static.ApplyToPawn(XComUnitPawn(Armory.ActorPawn), Unit.GetMyTemplateName());

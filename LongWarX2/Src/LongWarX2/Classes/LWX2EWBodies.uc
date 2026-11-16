@@ -18,6 +18,8 @@ struct LWX2Body
 	var string WeaponMesh;
 	var string WeaponDiffuse;
 	var string WeaponNormal;
+	/** The armour that brings this body (a MEC's suit: Mark I, II or III), for a template with several (none: any). */
+	var name Armor;
 };
 
 var config array<LWX2Body> Bodies;
@@ -68,16 +70,13 @@ static function bool Apply(XComGameState_Unit Unit)
 	local XComUnitPawn Pawn;
 	local LWX2Body B;
 	local UnitValue Species;
-	local int i, Mine, Pick;
+	local int Mine, Pick;
 
 	if (Unit == none || XGUnit(Unit.GetVisualizer()) == none)
 		return false;
 	// The species' own body before its template's (the pods' aliens carry their species, LWMissionSquads.SpawnPod).
 	Mine = Unit.GetUnitValue('LWX2Species', Species) ? int(Species.fValue) : 0;
-	Pick = INDEX_NONE;
-	for (i = 0; i < default.Bodies.Length; i++)
-		if (default.Bodies[i].Template == Unit.GetMyTemplateName() && (default.Bodies[i].Species == Mine || (default.Bodies[i].Species == 0 && Pick == INDEX_NONE)))
-			Pick = i;
+	Pick = PickFor(Unit.GetMyTemplateName(), Mine, ArmorOf(Unit));
 	if (Pick == INDEX_NONE)
 		return false;
 	Pawn = XGUnit(Unit.GetVisualizer()).GetPawn();
@@ -90,15 +89,48 @@ static function bool Apply(XComGameState_Unit Unit)
 	return true;
 }
 
-/** A strategy pawn (squad select's line-up, the armory) given its template's body (the mod's SHIVs). Returns whether. */
-static function bool ApplyToPawn(XComUnitPawn Pawn, name Template)
+/** A strategy pawn (squad select's line-up, the armory) given its template's body (the mod's SHIVs and MECs). */
+static function bool ApplyToPawn(XComUnitPawn Pawn, name Template, optional name Armor)
 {
 	local int k;
 
-	k = default.Bodies.Find('Template', Template);
+	k = PickFor(Template, 0, Armor);
 	if (k == INDEX_NONE || Pawn == none || Pawn.Mesh == none)
 		return false;
 	return ApplyBody(Pawn, default.Bodies[k]);
+}
+
+/** The body for a template: its species' own before the template's, the one its armour brings before one for any armour. */
+static function int PickFor(name Template, int Species, name Armor)
+{
+	local int i, Pick, Best, Score;
+
+	Pick = INDEX_NONE;
+	Best = -1;
+	for (i = 0; i < default.Bodies.Length; i++)
+	{
+		if (default.Bodies[i].Template != Template)
+			continue;
+		if (default.Bodies[i].Species != 0 && default.Bodies[i].Species != Species)
+			continue;
+		if (default.Bodies[i].Armor != '' && default.Bodies[i].Armor != Armor)
+			continue;
+		Score = (default.Bodies[i].Species != 0 ? 2 : 0) + (default.Bodies[i].Armor != '' ? 1 : 0);
+		if (Score > Best)
+		{
+			Best = Score;
+			Pick = i;
+		}
+	}
+	return Pick;
+}
+
+static function name ArmorOf(XComGameState_Unit Unit)
+{
+	local XComGameState_Item Item;
+
+	Item = Unit != none ? Unit.GetItemInSlot(eInvSlot_Armor) : none;
+	return Item != none ? Item.GetMyTemplateName() : '';
 }
 
 /** The body on a pawn: EW's mesh, its stand-in material, the animations again. */

@@ -20,7 +20,9 @@ export interface EWWeapon { pkg: string; mesh: string; diffuse: RegExp; normal: 
  *  blades move by translation, which it did not play from EW's compression). */
 /** animsAs: the XCOM 2 template whose animation names its animations answer to, where the template is the mod's own (the
  *  SHIVs play on the ADVENT MEC's pawn). */
-export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean; animsAs?: string }
+/** setsPkg: the package holding its AnimSet, where it is not the unit's (EW's MECs keep theirs with the MEC Minigun); armor:
+ *  the armour that brings this body (a MEC's suit), for a template with several. */
+export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean; animsAs?: string; setsPkg?: string; armor?: string }
 const SHIV_MINIGUN: EWWeapon = { pkg: 'Weapon_ShivMinigun_SF', mesh: 'SM_ShivGatGun', diffuse: /^ShivGatlingGun_DIF$/, normal: /^ShivGatlingGun_NRM$/ }
 const PLASMA_LIGHT: EWWeapon = { pkg: 'Weapon_PlasmaRifle_ThinMan_SF', mesh: 'SM_LightPlasmaRifle', diffuse: /^LightAssaultRiflePlasma_DIF$/, normal: /^LightAssaultRiflePlasma_NRM$/ }
 export const EW_UNITS: EWUnit[] = [
@@ -49,6 +51,14 @@ export const EW_UNITS: EWUnit[] = [
   // Long War's SHIVs (features/lw-shivs-mecs.md): the mod's own templates, on the ADVENT MEC's pawn.
   { template: 'LWSHIV', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank_SF', mesh: 'SM_Shiv_L1', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv1Shiv_DIF$/, normal: /^Lv1Shiv_NRM$/, weapon: SHIV_MINIGUN },
   { template: 'LWSHIV_Alloy', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank2_SF', mesh: 'SM_Shiv_L2', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv2Shiv_DIF$/, normal: /^Lv2Shiv_NRM$/, weapon: SHIV_MINIGUN },
+  // Long War's MEC troopers (the mod's LWMEC, on the ADVENT MEC's pawn): EW's Mark I, II and III suits by the Long War suit
+  // worn (MEC-1; MEC-2 and -3; MEC-4 on), their animations in the MEC Minigun's package, the Minigun in their hands.
+  ...[[1, ['LWMEC_Suit_193']], [2, ['LWMEC_Suit_194', 'LWMEC_Suit_145']], [3, ['LWMEC_Suit_195', 'LWMEC_Suit_148', 'LWMEC_Suit_191', 'LWMEC_Suit_210']]].flatMap(([mark, suits]) =>
+    (suits as string[]).map((armor) => ({
+      template: 'LWMEC', animsAs: 'AdvMEC_M2', armor, pkg: `Unit_MecMark${mark}_SF`, mesh: mark === 1 ? 'SM_MEC_MarkI' : mark === 2 ? 'SM_Mec_MarkII' : 'SM_Mec_MarkIII',
+      sets: ['AS_MEC'], setsPkg: 'Weapon_MEC_Chaingun_SF', diffuse: new RegExp(`^MEC_Mark${mark}_DIF$`), normal: new RegExp(`^MEC_Mark${mark}_NRM$`),
+      weapon: { pkg: 'Weapon_MEC_Chaingun_SF', mesh: 'SM_MECChainGun', diffuse: /^MEC_Chaingun_DIF$/, normal: /^MEC_Chaingun_NRM$/ },
+    }))),
   { template: 'LWSHIV_Hover', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank3_SF', mesh: 'SM_Lv3Shiv', sets: ['Default', 'Mini'], diffuse: /^VEH_Lv3Shiv_DIF$/, normal: /^VEH_Lv3Shiv_NRM$/, weapon: SHIV_MINIGUN },
 ]
 
@@ -91,13 +101,28 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
     'MaterialParent="Materials.Approved.AlienUnit_TC"',
   ]
   let n = 0
+  const done = new Set<string>()
   for (const u of EW_UNITS) {
     const src = join(cooked, `${u.pkg}.upk`)
     if (!existsSync(src)) { say(`${u.pkg}: not in this Enemy Within install, XCOM 2's ${u.template} kept`); continue }
     try {
+      // Its AnimSet: in its own package, or (EW's MECs) in another, converted with it.
+      const setsPkg = u.setsPkg ?? u.pkg
+      const setsSrc = join(cooked, `${setsPkg}.upk`)
+      if (!existsSync(setsSrc)) { say(`${setsPkg}: not in this Enemy Within install, XCOM 2's ${u.template} kept`); continue }
       let found = find(decompressPackage(new Uint8Array(readFileSync(src))), u)
+      if (u.setsPkg) found = { ...found, sets: find(decompressPackage(new Uint8Array(readFileSync(setsSrc))), u).sets }
       if (!found.mesh || !found.sets.length) { say(`${u.pkg}: no ${u.mesh} or ${u.sets.join('/')}, XCOM 2's ${u.template} kept`); continue }
-      const report = convertPackage(src, join(content, `${u.pkg}.upk`), (bytes) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.animsAs ?? u.template] ?? []), ...(ABILITY_ANIMS[u.animsAs ?? u.template] ?? [])], u.reencode))
+      const rename = (bytes: Uint8Array) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.animsAs ?? u.template] ?? []), ...(ABILITY_ANIMS[u.animsAs ?? u.template] ?? [])], u.reencode)
+      // (Where the AnimSet's package is its weapon's too, the weapon's left-hand socket goes in the same pass.)
+      const setsTransform = u.weapon?.pkg === setsPkg
+        ? (bytes: Uint8Array) => { const r = rename(bytes); const w2 = noLeftHandIK(r.bytes); return { bytes: w2.bytes, report: `${r.report}; ${w2.report}` } }
+        : rename
+      // (A package another body shares, the MECs' AnimSet's, converted once.)
+      const once = (from: string, pkg: string, t?: typeof rename) => (done.has(pkg) ? `${pkg} converted already` : (done.add(pkg), convertPackage(from, join(content, `${pkg}.upk`), t)))
+      const report = u.setsPkg
+        ? (once(src, u.pkg), once(setsSrc, setsPkg, setsTransform))
+        : once(src, u.pkg, rename)
       const leaf = (p: string, pkg = u.pkg) => (p ? `${pkg}.${p.split('.').pop()}` : '')
       // Its weapon: EW's, converted as it is (textures inlined), in place of the XCOM 2 weapon's mesh; a species with none in
       // its hands (the Drone, the Seeker, the Cyberdisc …) has the XCOM 2 weapon hidden (WeaponMesh="none").
@@ -107,11 +132,11 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
         const wb = decompressPackage(new Uint8Array(readFileSync(join(cooked, `${w.pkg}.upk`))))
         const wf = find(wb, { ...u, mesh: w.mesh, sets: [], diffuse: w.diffuse, normal: w.normal })
         if (wf.mesh) {
-          convertPackage(join(cooked, `${w.pkg}.upk`), join(content, `${w.pkg}.upk`), noLeftHandIK)
+          if (w.pkg !== setsPkg) once(join(cooked, `${w.pkg}.upk`), w.pkg, noLeftHandIK)
           weapon = `, WeaponMesh="${leaf(wf.mesh, w.pkg)}", WeaponDiffuse="${leaf(wf.diffuse, w.pkg)}", WeaponNormal="${leaf(wf.normal, w.pkg)}"`
         }
       }
-      lines.push(`+Bodies=(Template=${u.template},${u.species ? ` Species=${u.species},` : ''} Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon})`)
+      lines.push(`+Bodies=(Template=${u.template},${u.species ? ` Species=${u.species},` : ''}${u.armor ? ` Armor=${u.armor},` : ''} Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!, setsPkg)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon})`)
       say(`${u.template} as Enemy Within's (${u.pkg}): ${report.split('; ').slice(-1)[0]}`)
       n++
     } catch (e: any) {
