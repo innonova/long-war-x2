@@ -77,6 +77,8 @@ And around it:
     tools/test/lw.sh 'exalt sweep' 'exalt send #551 5' 'exalt accuse 13' 'exalt act 3' 'exalt place'  # a scan; an operative; an accusation; a cell acts; a cell placed
     tools/test/on.sh 'tools\test\click.ps1 1322 125 -Move'  # the pointer moved there only (hover)
     tools/test/lw.sh killaliens                # in a mission: every alien killed, civilians spared (KillAllAIs kills them)
+    tools/test/lw.sh 'remove #551'             # in a mission: a unit taken off the field (a mind-controlled soldier, an alien)
+    tools/test/lw.sh 'aoe #2242 LWRiftProfile' # in a mission: where that alien's AI would aim the profile's area ability now, and why not
     tools/test/lw.sh 'unbox 500'                 # soldiers reaching fewer than 500 tiles moved beside the best placed (-1: paths unknown)
     tools/test/lw.sh 'near Sniper 8'           # a soldier put 8 tiles from the nearest alien (a target in view)
     tools/test/lw.sh 'next Quinn Price'        # a soldier put on a free tile beside another (a medikit's reach)

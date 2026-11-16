@@ -71,6 +71,8 @@ var config array<LWPsiAbility> PsiAbilities;
 var config array<LWPsiAbility> GeneAbilities;
 /** Long War's aliens' perks (pod leaders' and navigators', by EW's perk number): the ability each gives (features/lw-aliens.md). */
 var config array<LWPsiAbility> AlienAbilities;
+/** How far the Rift can be aimed: a unit's sight (XCOM 2's sight radius, 27 tiles; squadsight still decides where). */
+var int RiftReachTiles;
 
 static function name AlienAbilityFor(int Perk)
 {
@@ -413,6 +415,11 @@ static function X2AbilityTemplate PsiPower(LWStandin S)
 		Template.Hostility = eHostility_Offensive;
 		Template.AbilityToHitCalc = default.DeadEye;
 		Cursor = new class'X2AbilityTarget_Cursor';
+		// Aimed anywhere the squad sees (EW's free aim), within sight's reach: a cursor without a reach is taken by XCOM 2's
+		// AI to reach only its radius around the psion (XComGameState_Ability.GetValidWeaponRange), so it cast the Rift only
+		// on a squad within 6 tiles of itself.
+		Cursor.bRestrictToSquadsightRange = true;
+		Cursor.FixedAbilityRange = default.RiftReachTiles * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
 		Template.AbilityTargetStyle = Cursor;
 		Radius = new class'X2AbilityMultiTarget_Radius';
 		Radius.fTargetRadius = S.Radius * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
@@ -1067,4 +1074,9 @@ static function AddBonusRadii()
 	foreach default.Standins(S)
 		if (S.BonusRadius != 0)
 			Radius.AddAbilityBonusRadius(S.Name, S.BonusRadius);
+}
+
+defaultproperties
+{
+	RiftReachTiles = 27
 }

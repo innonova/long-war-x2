@@ -283,8 +283,7 @@ document the encodings):
 - **Their AI** (`XComAI.ini`, in place of the Avatar's red-alert tree): Long War's Mind Control on
   a soldier, Psi Drain on an ally when hurt, Mindfray on a soldier, else move and shoot as the
   Avatar did. The Rift is in the AI too, aimed as XCOM 2 aims its own Dimensional Rift (where it
-  catches three of XCOM's and none of the aliens: `LWRiftProfile`), but **not seen used yet**: in
-  the one test the mind-controlled soldier stood among the squad, so no aim was clear of an ally.
+  catches three of XCOM's and none of the aliens: `LWRiftProfile`), (seen used on 2026-11-16, below).
 
 **Checked on wingpu** (an Ethereal and a Sectoid spawned beside the squad, the Ethereal hurt):
 its first turn, Long War's Mind Control took a soldier; unhurt after its regeneration (Long War's
@@ -292,3 +291,28 @@ research upgrade), no drain; hurt by 10, it drained the controlled soldier ("Psi
 -1, AdvPsiWitchM2 +2").
 
 Control port: `abilities #<id>` lists any unit's abilities and why each is not available.
+
+## Report (2026-11-16, the Ethereals' Rift seen used)
+
+**The Rift was never cast because XCOM 2's AI took its reach to be its radius.** A cursor
+without a range (`X2AbilityTarget_Cursor`, `FixedAbilityRange` -1) is read by
+`XComGameState_Ability.GetValidWeaponRange` as reaching only as far as the area's own radius
+(6 tiles) around the caster; the AI then found a place catching three soldiers and threw it
+away as out of reach (`CanHitAoETarget`). The Rift (the Ethereals' and the soldiers' psi power,
+`X2Ability_LWStandins`) is now aimed anywhere the squad sees, within sight's reach (27 tiles,
+XCOM 2's sight radius).
+
+**Checked on wingpu** (a first abduction, an Ethereal spawned, the other aliens taken off the
+field, the squad standing together 8 tiles from it): its first turn, Mind Control on a soldier
+(the soldier then taken off the field, so the Rift would not catch an ally); the next, with Mind
+Control cooling down, **the Rift on the squad**: five soldiers took its 8 and fell (Long War's
+number; the squad were rookies of 5 to 8 health).
+
+Control port: `aoe #<alien> <profile>` (where its AI would aim that area ability now, and whether
+the tree's next steps take it), `remove #<unit>` (a unit taken off the field).
+
+### Decisions
+
+- **The Rift's reach is sight (27 tiles) and only where the squad sees** (`bRestrictToSquadsightRange`):
+  EW aims it freely (`eProp_FreeAim`); its reach is not in Long War's ability table. The
+  soldiers' Rift (a psi power) gets the same; before, a soldier could aim it anywhere on the map.

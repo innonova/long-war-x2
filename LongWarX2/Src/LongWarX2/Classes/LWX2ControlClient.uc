@@ -318,6 +318,10 @@ function Handle(string Line, out array<string> Out)
 	case "hurt":
 		Out.AddItem(Hurt(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? int(Args[2]) : 1));
 		return;
+	case "remove":
+		// remove #<unit>: a unit taken off the field (a test aid: a mind-controlled soldier out of the aliens' aim).
+		Out.AddItem(RemoveUnit(Args.Length > 1 ? int(Mid(Args[1], 1)) : 0));
+		return;
 	case "killaliens":
 		Out.AddItem(KillAliens());
 		return;
@@ -394,6 +398,16 @@ function Handle(string Line, out array<string> Out)
 	case "pod":
 		// pod [tiles]: a pod of two Sectoids spawned as the missions spawn Long War's pods (LWMissionSquads.SpawnPod), near the squad.
 		Out.AddItem(TestPod(Args.Length > 1 ? int(Args[1]) : 4));
+		return;
+	case "aoe":
+		// aoe #<unit> <profile>: where that alien's AI would aim the profile's area ability now (XGAIBehavior.FindAoETarget),
+		// and each place it tried (targets hit, allies hit).
+		if (Args.Length < 3 || Left(Args[1], 1) != "#")
+		{
+			Out.AddItem("ERR aoe #<unit> <AoE profile>");
+			return;
+		}
+		AoETest(int(Mid(Args[1], 1)), name(Args[2]), Out);
 		return;
 	case "history":
 		// history [n]: the last n abilities used in the mission (default 20), newest last: who, what, on whom.
@@ -1479,6 +1493,39 @@ function string Standable(string Part)
 }
 
 /** The last N abilities used (their contexts in the history), oldest first. */
+function AoETest(int UnitID, name Profile, out array<string> Out)
+{
+	local XGUnit Visualizer;
+	local XGAIBehavior Behavior;
+	local AvailableAction Ability;
+	local XComGameState_Ability AbilityState;
+	local XGAIBehavior.AoETargetingInfo Info;
+	local bool bFound;
+	local int i, AbilityID;
+
+	Visualizer = XGUnit(`XCOMHISTORY.GetVisualizer(UnitID));
+	Behavior = Visualizer != none ? Visualizer.m_kBehavior : none;
+	if (Behavior == none)
+	{
+		Out.AddItem("ERR no AI for #" $ UnitID);
+		return;
+	}
+	Behavior.UnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
+	Behavior.DebugAoEList.Length = 0;
+	bFound = Behavior.FindAoETarget(Profile);
+	Out.AddItem((bFound ? "found" : "none") @ Profile $ (bFound ? " at " $ Behavior.TopAoETarget.Location : ""));
+	// The behavior tree's next steps (SelectAoETarget-<profile>): the ability among the unit's AoE abilities, the place in
+	// its reach (CanHitAoETarget, validity ignored as the tree does), the reach.
+	Ability = Behavior.FindAbilityByName(Behavior.GetAbilityFromTargetingProfile(Profile, Info), AbilityState);
+	Out.AddItem("  ability #" $ Ability.AbilityObjectRef.ObjectID @ "code" @ Ability.AvailableCode @ "AoE" @ Behavior.HasAoEAbility(AbilityID, Info.Ability)
+		@ "reach" @ (AbilityState != none ? string(Behavior.GetAoEHitRange(AbilityState)) : "?")
+		@ "from" @ Behavior.m_kUnit.GetGameStateLocation()
+		@ "in reach" @ (AbilityID > 0 && Behavior.CanHitAoETarget(AbilityID, Behavior.TopAoETarget, Info, true))
+		@ "selected" @ Behavior.BT_SelectAoETarget(Profile));
+	for (i = 0; i < Behavior.DebugAoEList.Length && i < 20; i++)
+		Out.AddItem("  " $ Behavior.DebugAoEList[i].Label @ "good" @ Behavior.DebugAoEList[i].nGoodHits @ "bad" @ Behavior.DebugAoEList[i].nBadHits @ "at" @ Behavior.DebugAoEList[i].TestLoc);
+}
+
 function History(out array<string> Out, int N)
 {
 	local XComGameStateHistory H;
@@ -2402,6 +2449,21 @@ function string Hurt(string Who, int Amount)
 		return "ok" @ Unit.GetFullName() @ "hp" @ int(Unit.GetCurrentStat(eStat_HP)) $ "/" $ Unit.HighestHP @ "lowest" @ Unit.LowestHP;
 	}
 	return "ERR no such soldier in a mission";
+}
+
+function string RemoveUnit(int UnitID)
+{
+	local XComGameState NewGameState;
+	local XComGameState_Unit Unit;
+
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
+	if (Unit == none || `TACTICALRULES == none)
+		return "ERR no unit #" $ UnitID $ " in a mission";
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: a unit removed");
+	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', UnitID));
+	Unit.RemoveUnitFromPlay();
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	return "ok" @ Unit.GetFullName() @ "removed";
 }
 
 /** In a mission: every alien killed, the civilians left alone (XCOM 2's KillAllAIs kills them too: they are the AI's). */
