@@ -1,8 +1,8 @@
 // Long War's damage reduction (features/lw-damage-reduction.md): a passive on every character (AddAbilities) whose
 // effect (X2Effect_LWDamageReduction) takes Long War's reduction off each hit. Absorb is Long War's XGUnit.AbsorbDamage
 // for what the port has: the unit's own (Long War's aliens, LWAlienStats; armour, LWGearRules), the target's shield,
-// acid, cover as the attacker sees it, hunkering, Will to Survive, Fortiores Una; the attacker's Combined Arms and
-// Gauss weapons; shotguns' extra penalty. The numbers are Long War's (scripts/classes-config.mjs).
+// acid, Shock-Absorbent Armor, Absorption Fields, cover as the attacker sees it, hunkering, Will to Survive, Fortiores
+// Una; the attacker's Combined Arms and Gauss weapons; shotguns' extra penalty. The numbers are Long War's (scripts/classes-config.mjs).
 class X2Ability_LWDamageReduction extends X2Ability config(LWClasses) dependson(LWSHIVs, LWMECs);
 
 /** Cover's reduction, low and high (AbsorbDamage: 0.667, 1); hunkered down, as much again; Fortiores Una, as much again. */
@@ -21,6 +21,9 @@ var config float ShieldFactor;
 var config float AcidMin, AcidShare;
 /** Shotguns: the reduction taken off once more times this (0.5; Breaching Ammo would cancel it). */
 var config float ShotgunExtra;
+/** Shock-Absorbent Armor: the damage times ShockFactor from an attacker within ShockTiles (0.67, 4). */
+var config float ShockFactor;
+var config int ShockTiles;
 
 static function array<X2DataTemplate> CreateTemplates()
 {
@@ -174,6 +177,19 @@ static function float Absorb(XComGameState_Unit Target, XComGameState_Unit Attac
 	{
 		F *= default.ShieldFactor;
 		Parts @= "shield x" $ default.ShieldFactor;
+	}
+	// Shock-Absorbent Armor (a MEC perk, Long War's upgrade 143): x ShockFactor from an attacker within ShockTiles.
+	if (Attacker != none && Target.HasSoldierAbility('LW_ShockAbsorbentArmor') && Target.TileDistanceBetween(Attacker) <= default.ShockTiles)
+	{
+		F *= default.ShockFactor;
+		Parts @= "shock-absorbent x" $ default.ShockFactor;
+	}
+	// Absorption Fields (upgrade 142): over 1 damage, x (0.6 + 0.4 x min(2 / damage, 1)), at most 40% off.
+	if (Target.HasSoldierAbility('LW_AbsorptionFields') && F > 1)
+	{
+		X = 0.6 + 0.4 * FMin(2.0 / F, 1.0);
+		F *= X;
+		Parts @= "absorption-fields x" $ X;
 	}
 	if (Target.IsPoisoned() || Target.IsAcidBurning())
 	{

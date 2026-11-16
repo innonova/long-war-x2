@@ -122,3 +122,24 @@ A SHIV's deck and a MEC's suit now reduce damage by their items' amounts in Long
 
 Still left open from the MEC and SHIV list: Damage Control, Absorption Fields and Shock-Absorbent
 Armor. These are MEC perks; they act as stand-ins today. One For All is no Long War MEC's.
+
+## Report (2026-11-16, Shock-Absorbent Armor and Absorption Fields)
+
+Two of the MEC classes' perks now act as Long War's `AbsorbDamage` has them, after a shield:
+- **Shock-Absorbent Armor** (upgrade 143): damage ×0.67 from an attacker within 4 tiles
+  (`ShockFactor`, `ShockTiles`).
+- **Absorption Fields** (142): over 1 damage, ×(0.6 + 0.4 × min(2 / damage, 1)), so at most 40%
+  off.
+
+**Checked on wingpu** with the control port's `perk` and `dr` on a soldier given both perks. A
+Sectoid's 6:
+- from 5 tiles or more left 4.4 (Absorption Fields ×0.733);
+- from 3 tiles left 3.21 (×0.67, then ×0.799).
+
+**Damage Control is left out.** Long War's rule takes 1.5 off while `m_iDamageControlTurns` is
+above 0. The only places in Long War's code that set that number are `XGAction_Strangle` (2) and
+`XGUnit.UpdateItemCharges`, which uses it as a loop counter and leaves it at 0. Nothing gives a
+MEC its turns when it is hit, so the perk does next to nothing in stock Long War, and the port
+leaves it as a stand-in.
+
+Repair Servos (repairs half the damage taken, at most 2 a turn) is still a stand-in.

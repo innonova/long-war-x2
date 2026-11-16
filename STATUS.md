@@ -44,7 +44,7 @@ buttons and text, no art).
 
 | System | Status | Looks | What is in | What is missing | Feature |
 |---|---|---|---|---|---|
-| Damage reduction | most | LW | Long War's rule on every unit: the aliens' own and armour's, shields, acid, cover as the attacker sees it (0.667 low, 1 high), hunkering, Will to Survive, Fortiores Una; Combined Arms, Gauss weapons, shotguns' extra; the fraction rolled up by chance | the MEC perks' reductions (Damage Control, Absorption Fields, Shock-Absorbent Armor), Combat Stims, Chitin Plating, the special ammo, Reinforced Armor; the reduction's number after a hit | `lw-damage-reduction` |
+| Damage reduction | most | LW | Long War's rule on every unit: the aliens' own and armour's, shields, acid, cover as the attacker sees it (0.667 low, 1 high), hunkering, Will to Survive, Fortiores Una; Combined Arms, Gauss weapons, shotguns' extra; the fraction rolled up by chance | Combat Stims, Chitin Plating, the special ammo, Reinforced Armor; the reduction's number after a hit | `lw-damage-reduction` |
 | Classes and perk trees | done | X2 | the eight subclasses, their trees and stat gains | | `lw-classes` |
 | Perks | most | X2 | most of the 78 Long War perks act; approximations marked in Decisions | Lock N' Load, Concealment, Extra Conditioning, Javelin, Neural Feedback, Pyrokinesis; Bioelectric Skin's reveal; Muscle Fiber Density as a passive jump (a grapple for now) | `lw-classes`, `lw-psi`, `lw-genemods` |
 | Psi powers in missions | most | X2 | ten of twelve | Neural Feedback, Pyrokinesis | `lw-psi` |
