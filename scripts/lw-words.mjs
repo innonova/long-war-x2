@@ -435,3 +435,26 @@ export function makeOTSWords({ strategyLoc }) {
   ].filter(([, v]) => v)
   return { text: ['[UILWEWOTS]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
+
+/** The officers' words (LWOfficers, in the mod's LongWarX2.int): Long War's officer ranks (XGFacility_Barracks.
+ *  m_arrMedalNames) from its strategy text, and its officer powers' names and descriptions (their perks' passive title and
+ *  text, XComPerkManager) from its game text, the powers in LWOfficers' order. */
+export function makeOfficerWords({ strategyLoc, loc }) {
+  const strat = strategyLoc.replace(/\r/g, '')
+  const game = loc.replace(/\r/g, '')
+  const one = (text, key) => text.match(new RegExp(`^${key.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const medals = ['eMedal_UrbanCombat', 'eMedal_Defender', 'eMedal_InternationalService', 'eMedal_Council', 'eMedal_Terra']
+  const perks = ['Medal_InternationalA', 'Foundry_AdvancedServomotors', 'Overdrive', 'Medal_UrbanA', 'Medal_TerraB', 'OTS_XP', 'Medal_InternationalB', 'Medal_TerraA', 'ExpandedStorage', 'Medal_CouncilA']
+  // (The powers' descriptions keep EW's live numbers as tags, <XGAbility:UrbanDefense/>: LWOfficers fills them.)
+  const words = [
+    ...medals.map((m, i) => [`RankNames[${i}]`, one(strat, `m_arrMedalNames[${m}]`)]),
+    ...medals.map((m, i) => [`RankShort[${i}]`, one(strat, `m_arrMedalNames[${6 + i}]`)]),
+    ...perks.map((p, i) => [`PowerNames[${i}]`, one(game, `m_strPassiveTitle[ePerk_${p}]`)]),
+    ...perks.map((p, i) => [`PowerDescs[${i}]`, one(game, `m_strPassiveTxt[ePerk_${p}]`)]),
+    ['LeadByExample', one(game, 'm_strPassiveTitle[ePerk_OTS_Leader_TheLeader]')],
+    ['LeadByExampleDesc', one(game, 'm_strPassiveTxt[ePerk_OTS_Leader_TheLeader]')],
+    ['Command', one(game, 'AbilityNames[eAbility_WarCry]')],
+    ['CommandDesc', one(game, 'HelpMessages[eAbility_WarCry]')],
+  ].filter(([, v]) => v)
+  return { text: ['[LWOfficers]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}

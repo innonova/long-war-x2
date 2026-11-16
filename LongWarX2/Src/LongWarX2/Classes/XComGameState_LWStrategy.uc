@@ -118,6 +118,10 @@ struct LWPsiTrainee
 var array<LWPsiTrainee> PsiTrainees;
 /** The Officer Training School's squad sizes bought (lw-missions.md). */
 var int SquadSizesBought;
+/** The Officer Training School's officer projects bought, and the officers each rank (lieutenant first) holds, open and
+ *  filled (LWOfficers: EW's medals, UnlockMedal's arithmetic). */
+var int OfficerProjectsBought;
+var array<int> OfficersAvailable, OfficersUsed;
 /** A soldier in the Genetics Lab's tank (features/lw-genemods.md): the unit, the mod (Long War's perk id), the hours left. */
 var array<LWPsiTrainee> GeneTrainees;
 /** Engineering's projects (LWEngineering). */

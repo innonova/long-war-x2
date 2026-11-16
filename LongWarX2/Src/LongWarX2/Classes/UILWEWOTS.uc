@@ -1,8 +1,8 @@
 // Enemy Within's own Officer Training School screen (features/lw-officers.md): its OfficerTrainingSchool movie, driven as
 // EW's UIOTS drives it (SetTitles: title, ranks, cost; Clear; AddOption per project: index, name, cost, disabled;
 // SetListSelection; SetHelp; UpdateInfo: image, description; SetPurchaseButtonText: text, disabled). Long War's seven
-// projects in its order: Squad Size I and II, bought as before (XComGameState_LWStrategy.BuySquadSize, after a
-// confirmation as EW asks it), then the five officer projects, greyed until the officers are in (features/lw-officers.md).
+// projects in its order: Squad Size I and II (XComGameState_LWStrategy.BuySquadSize), then the five officer projects
+// (LWOfficers.Buy: each opens its rank), each bought after a confirmation as EW asks it.
 // Over the hub's Barracks, EW's base staying in view behind it.
 class UILWEWOTS extends UILWEWScreen;
 
@@ -58,8 +58,17 @@ function bool Able(XComGameState_LWStrategy S, int i, out string Why)
 	Why = "";
 	if (i >= 2)
 	{
-		Why = "Officers are not in the port yet.";
-		return false;
+		if (i - 2 < S.OfficerProjectsBought)
+		{
+			Why = "Bought.";
+			return false;
+		}
+		if (!class'LWOfficers'.static.CanBuy(S, i - 2, Why))
+		{
+			Why = "Needs" @ Why $ ".";
+			return false;
+		}
+		return true;
 	}
 	if (i < S.SquadSizesBought)
 	{
@@ -83,14 +92,14 @@ function int ProjectCash(XComGameState_LWStrategy S, int i)
 {
 	if (i < 2)
 		return i == S.SquadSizesBought ? class'XComGameState_LWStrategy'.static.SquadSizeNext(S).Cash : class'LWStrategyRules'.default.SquadSizes[i].Cash;
-	return class'LWStrategyRules'.default.OfficerProjects[i - 2].Cash;
+	return i - 2 == S.OfficerProjectsBought ? class'LWOfficers'.static.ProjectNext(i - 2, S).Cash : class'LWStrategyRules'.default.OfficerProjects[i - 2].Cash;
 }
 
 function int ProjectRanks(XComGameState_LWStrategy S, int i)
 {
 	if (i < 2)
 		return i == S.SquadSizesBought ? class'XComGameState_LWStrategy'.static.SquadSizeNext(S).Ranks : class'LWStrategyRules'.default.SquadSizes[i].Ranks;
-	return class'LWStrategyRules'.default.OfficerProjects[i - 2].Ranks;
+	return i - 2 == S.OfficerProjectsBought ? class'LWOfficers'.static.ProjectNext(i - 2, S).Ranks : class'LWStrategyRules'.default.OfficerProjects[i - 2].Ranks;
 }
 
 function int Count()
@@ -122,7 +131,7 @@ function Fill()
 		MC.QueueNumber(i);
 		// (The name field is plain text: the cost column carries the colour.)
 		MC.QueueString(ProjectName(i));
-		MC.QueueString((i < 2 && i < S.SquadSizesBought) ? "" : class'UIUtilities_Text'.static.GetColoredText(class'LWStrategyRules'.static.Money(ProjectCash(S, i)), bAble ? eUIState_Normal : eUIState_Bad));
+		MC.QueueString(((i < 2 && i < S.SquadSizesBought) || (i >= 2 && i - 2 < S.OfficerProjectsBought)) ? "" : class'UIUtilities_Text'.static.GetColoredText(class'LWStrategyRules'.static.Money(ProjectCash(S, i)), bAble ? eUIState_Normal : eUIState_Bad));
 		MC.QueueBoolean(!bAble);
 		MC.EndOp();
 	}
@@ -142,7 +151,7 @@ function Select(int i)
 	Desc = "";
 	if (!bAble)
 		Desc $= class'UIUtilities_Text'.static.GetColoredText(Why, eUIState_Bad) $ "\n";
-	if (Selected >= S.SquadSizesBought || Selected >= 2)
+	if ((Selected < 2 && Selected >= S.SquadSizesBought) || (Selected >= 2 && Selected - 2 >= S.OfficerProjectsBought))
 		Desc $= class'UILWEWHub'.static.Word(TotalRanks, "TOTAL RANKS") $ ":" @ ProjectRanks(S, Selected) $ "\n";
 	Desc $= Summaries[Selected];
 	MC.FunctionString("SetListSelection", string(Selected));
@@ -189,7 +198,7 @@ simulated function OnConfirm(Name Action)
 
 	if (Action != 'eUIAction_Accept')
 		return;
-	if (class'XComGameState_LWStrategy'.static.BuySquadSize(Why))
+	if (Selected >= 2 ? class'LWOfficers'.static.Buy(Selected - 2, Why) : class'XComGameState_LWStrategy'.static.BuySquadSize(Why))
 	{
 		Movie.Pres.PlayUISound(eSUISound_MenuSelect);
 		if (XComHQPresentationLayer(Movie.Pres) != none && XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD != none)

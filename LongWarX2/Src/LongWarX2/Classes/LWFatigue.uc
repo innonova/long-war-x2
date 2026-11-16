@@ -6,7 +6,7 @@
 // lets a fatigued one go all in): the will set to the top of the Tired band as the Geoscape opens after the mission, XCOM
 // 2's own will recovery taken off, the will full again when Long War's hours are over (each hour of Long War's clock).
 // Each psi power and gene mod the soldier has adds its own hours (config PerkHours).
-// Not yet: officers' hours, the critical wounds' hours, the psi armour, the country bonuses that lessen the powers' hours.
+// Officers rest more per officer rank, and Stay Frosty (the squad's leader's) takes a day off. Not yet: the critical wounds' hours, the psi armour, the country bonuses that lessen the powers' hours.
 class LWFatigue extends Object config(LWStrategy);
 
 /** A psi power's or a gene mod's own hours (Long War's ItemBalance_Easy: the perk, its iEng). */
@@ -61,7 +61,12 @@ static function Apply()
 		bHurt = Unit.GetCurrentStat(eStat_HP) < Unit.GetMaxStat(eStat_HP);
 		H = (bAllIn || bHurt) ? default.HardHours : default.BaseHours + Rand(default.RollHours);
 		H += PowersHours(Unit);
+		// An officer's hours, per officer rank (SPECIES_POINT_LIMIT).
+		H += class'LWOfficers'.static.FatigueHours(Unit);
 		H = H * default.ScalePct / 100;
+		// Stay Frosty, the squad's leader's: a day less.
+		if (class'LWOfficers'.static.SquadHad(Unit, class'LWOfficers'.const.STAY_FROSTY))
+			H = Max(0, H - 24);
 		Wound = WoundHours(Unit);
 		if (bAllIn)
 		{

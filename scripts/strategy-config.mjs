@@ -309,6 +309,41 @@ out.push(
   ...bonuses.map((b) => `+Bonuses=(Kind=${b.kind}, Choice=${b.choice}, ${b.kind === 2 ? `Continent=${b.continent}` : `Country=${COUNTRY[b.country]}`}, Type=${b.type}, Value=${b.value})`),
   ...arr('Scale', values('FundingBalance').slice(8, 12)),
 )
+// Long War's officers (features/lw-officers.md): EW's medals, repurposed (XGFacility_Barracks.BuildMedals, UnlockMedal,
+// CanAwardMedalToSoldier; XGUnit). Their counts per rank from ContBalance_Classic[0] (its comment names the columns), the
+// missions in each grade from DefaultGameData.ini, the powers' numbers from DefaultGameCore.ini.
+{
+  const data = readFileSync(join(dirname(process.argv[2]), 'DefaultGameData.ini'), 'latin1')
+  const counts = /^ContBalance_Classic\[0\]=\(iEngineers1=(\d+),\s*iScientists1=(\d+),\s*iEngineers2=(\d+),\s*iScientists2=(\d+),\s*iEngineers3=(\d+)\)/m.exec(core)
+  const missions = /^NUM_MEDALOFHONOR_MISSIONS=(\d+)/m.exec(data)
+  if (!counts || !missions) throw new Error('the officers: ContBalance_Classic[0] or NUM_MEDALOFHONOR_MISSIONS not found')
+  out.push(
+    '',
+    "; Long War's officers (features/lw-officers.md): officers per rank (lieutenant to field commander) an officer project",
+    '; adds to its rank and every rank below; missions in a grade before the next promotion; fatigue hours per officer',
+    "; rank (SPECIES_POINT_LIMIT); the powers' numbers (Semper Vigilans, Legio Patria Nostra, Band of Warriors, Esprit de",
+    "; Corps, Into the Breach's divisor of the mission XP, So Others May Live's limit).",
+    '[LongWarX2.LWOfficers]',
+    ...counts.slice(1).map((c, i) => `OfficersPerRank[${i}]=${c}`),
+    `MissionsPerGrade=${missions[1]}`,
+    `FatigueHoursPerRank=${one('SPECIES_POINT_LIMIT')}`,
+    `UrbanDefense=${one('URBAN_DEFENSE')}`,
+    `InternationalWill=${one('INTERNATIONAL_WILL')}`,
+    `InternationalAim=${one('INTERNATIONAL_AIM')}`,
+    `TerraWill=${one('TERRA_WILL')}`,
+    `TerraDefense=${one('TERRA_DEFENSE')}`,
+    `TerraXPDivisor=${one('TERRA_XP')}`,
+    `CouncilStatMax=${one('COUNCIL_STAT_MAX')}`,
+    '',
+    "; The officers in a mission: Lead By Example's reach in tiles (Long War's \"nearby\" is EW's native officer radius;",
+    "; Fortiores Una's text gives it, 8 tiles); Command's reach (EW's War Cry: 27, sight range) and cooldown in XCOM 2's",
+    "; turns (EW's 10 half-turns: Long War's \"four-turn cooldown\" between uses).",
+    '[LongWarX2.X2Ability_LWOfficers]',
+    'LeadRadiusTiles=8',
+    'CommandRangeTiles=27',
+    'CommandCooldown=5',
+  )
+}
 console.log(out.join('\r\n'))
 
 /**

@@ -251,6 +251,8 @@ function LaunchMission(int MissionID)
 	`log("LongWarX2: Long War HQ: launching mission" @ MissionID @ "with" @ class'UIUtilities_Strategy'.static.GetXComHQ().Squad.Length @ "soldiers", , 'LongWarX2');
 	if (class'XComGameState_LWStrategy'.static.Get() != none && class'XComGameState_LWStrategy'.static.Get().PendingKind != 0)
 		class'XComGameState_LWStrategy'.static.MissionLaunched(MissionID);
+	// The squad's leader and their officer powers marked on every soldier going (Long War does it before launch).
+	class'LWOfficers'.static.MarkSquad();
 	Game = `GAME;
 	Game.PrepareTacticalBattle(MissionID);
 	// The map is loaded a moment later, not in this frame (lw-missions.md, the load crash): XCOM 2 died now and then in

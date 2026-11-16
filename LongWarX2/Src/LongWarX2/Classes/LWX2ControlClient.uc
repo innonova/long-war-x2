@@ -500,6 +500,12 @@ function Handle(string Line, out array<string> Out)
 		else
 			Out.AddItem(Geo.Act(Args.Length > 1 ? int(Args[1]) : 0) ? "ok" : "ERR no such decision");
 		return;
+	case "officers":
+		// officers: the officer projects and posts, and the soldiers' officer ranks; officers buy <0-4>: an officer project
+		// bought; officers promote <soldier> [second]: made an officer by Long War's rules; officers set <soldier> <rank>
+		// <powers bits>: a test aid, set directly (soldier: an index in XCOM's crew of soldiers).
+		Officers(Args, Out);
+		return;
 	case "squad":
 		Squad(S, Args.Length > 1 ? int(Args[1]) : 1, Args.Length > 2 ? int(Args[2]) : 4, Args.Length > 3 ? int(Args[3]) : S.Days(), Out);
 		return;
@@ -1117,9 +1123,10 @@ function string WhyNoTargets(XComGameState_Unit Source, XComGameState_Ability Ab
 
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Enemy)
 	{
-		if (Enemy.GetTeam() == eTeam_XCom || Enemy.bRemovedFromPlay)
+		// (Allies too for an ability aimed at them, as Command.)
+		if (Enemy.bRemovedFromPlay || Enemy.ObjectID == Source.ObjectID || (Enemy.GetTeam() == eTeam_XCom && Ability.GetMyTemplate().Hostility == eHostility_Offensive))
 			continue;
-		Out @= string(Enemy.GetMyTemplateName()) $ ":";
+		Out @= (Enemy.GetTeam() == eTeam_XCom ? Enemy.GetFullName() : string(Enemy.GetMyTemplateName())) $ ":";
 		foreach Ability.GetMyTemplate().AbilityTargetConditions(Condition)
 		{
 			Code = Condition.MeetsCondition(Enemy);
@@ -2661,6 +2668,51 @@ function string HubCommand(array<string> Args)
 	else
 		Hub.EnterRoom(int(Args[1]));
 	return "ok room" @ Hub.Room @ "options" @ Hub.RoomOptions.Length;
+}
+
+/** The officers command. */
+function Officers(array<string> Args, out array<string> Out)
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_Unit Unit;
+	local XComGameState NewGameState;
+	local array<XComGameState_Unit> Soldiers;
+	local StateObjectReference Ref;
+	local string Why;
+	local int i, r;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit != none && Unit.IsSoldier() && Unit.IsAlive())
+			Soldiers.AddItem(Unit);
+	}
+	if (Args.Length > 2 && Args[1] ~= "buy")
+		Out.AddItem(class'LWOfficers'.static.Buy(int(Args[2]), Why) ? "ok" : "ERR" @ Why);
+	else if (Args.Length > 2 && Args[1] ~= "promote" && int(Args[2]) < Soldiers.Length)
+		Out.AddItem(class'LWOfficers'.static.Promote(Soldiers[int(Args[2])].ObjectID, Args.Length > 3 && Args[3] ~= "second", Why) ? "ok" : "ERR" @ Why);
+	else if (Args.Length > 4 && Args[1] ~= "set" && (Left(Args[2], 1) == "#" || int(Args[2]) < Soldiers.Length))
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: officer set (control port)");
+		// (#<ObjectID>: the unit by its ID, as the squad lists it.)
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Left(Args[2], 1) == "#" ? int(Mid(Args[2], 1)) : Soldiers[int(Args[2])].ObjectID));
+		Unit.SetUnitFloatValue('LWX2OfficerRank', int(Args[3]), eCleanup_Never);
+		Unit.SetUnitFloatValue('LWX2OfficerPowers', int(Args[4]), eCleanup_Never);
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		Out.AddItem("ok" @ Unit.GetFullName() @ class'LWOfficers'.static.RankName(int(Args[3])));
+	}
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Out.AddItem("officer projects bought" @ S.OfficerProjectsBought);
+	for (r = 0; r < 5; r++)
+		Out.AddItem(class'LWOfficers'.static.RankName(r + 1) $ ": open" @ (S.OfficersAvailable.Length > r ? S.OfficersAvailable[r] : 0) @ "filled" @ (S.OfficersUsed.Length > r ? S.OfficersUsed[r] : 0));
+	for (i = 0; i < Soldiers.Length; i++)
+	{
+		Unit = Soldiers[i];
+		if (class'LWOfficers'.static.Rank(Unit) > 0 || (Args.Length > 1 && Args[1] ~= "all"))
+			Out.AddItem(i @ "#" $ Unit.ObjectID @ Unit.GetFullName() @ "rank" @ Unit.GetRank() @ "missions" @ Unit.GetNumMissions() @ "officer" @ class'LWOfficers'.static.Rank(Unit)
+				@ "powers" @ class'LWOfficers'.static.ValueOf(Unit, 'LWX2OfficerPowers') @ (class'LWOfficers'.static.CanPromote(S, Unit, Why) ? "promotable" : "not:" @ Why));
+	}
 }
 
 /** The lightoff command: actors of the class switched off (or on again). */

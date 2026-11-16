@@ -104,15 +104,22 @@ static function MissionOver()
 			Level = ValueOf(Victim, 'LWX2Leader');
 			if (Level > 0)
 				Earned = int(Earned * (1.0 + float(Level) / 10.0));
+			// So Shall You Fight, the squad's leader's: a quarter more for each kill.
+			if (class'LWOfficers'.static.SquadHad(Unit, class'LWOfficers'.const.SO_SHALL_YOU_FIGHT))
+				Earned = Earned * 5 / 4;
 			Gained += Earned;
 			Killed++;
 		}
 		if (bWon && !Unit.bCaptured)
 		{
 			if (bSpecial)
-				Gained += (bSawBetter && Rank <= default.BetterWinUpToRank) ? default.BetterSpecialWinXP : default.SpecialWinXP;
+				Earned = (bSawBetter && Rank <= default.BetterWinUpToRank) ? default.BetterSpecialWinXP : default.SpecialWinXP;
 			else
-				Gained += (bSawBetter && Rank <= default.BetterWinUpToRank) ? default.BetterWinXP : default.WinXP;
+				Earned = (bSawBetter && Rank <= default.BetterWinUpToRank) ? default.BetterWinXP : default.WinXP;
+			// Into the Breach, the squad's leader's: up to sergeant, the mission's XP and a TERRA_XP-th more.
+			if (Rank <= 3 && class'LWOfficers'.static.SquadHad(Unit, class'LWOfficers'.const.INTO_THE_BREACH))
+				Earned += Earned / class'LWOfficers'.default.TerraXPDivisor;
+			Gained += Earned;
 			if (bNoDeaths)
 				Gained += default.NoDeathsXP;
 		}
@@ -123,6 +130,15 @@ static function MissionOver()
 		else if (bWon && Rank == 6)
 			XP = Min(XP, class'X2ExperienceConfig'.static.GetRequiredKills(7));
 		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		// So Others May Live, the squad's leader's: a mission won with nobody lost, +1 aim and will for good, up to
+		// COUNCIL_STAT_MAX each.
+		if (bWon && bNoDeaths && !Unit.bCaptured && class'LWOfficers'.static.SquadHad(Unit, class'LWOfficers'.const.SO_OTHERS_MAY_LIVE)
+			&& ValueOf(Unit, 'LWX2CouncilAccrued') < class'LWOfficers'.default.CouncilStatMax)
+		{
+			Unit.SetBaseMaxStat(eStat_Offense, Unit.GetBaseStat(eStat_Offense) + 1);
+			Unit.SetBaseMaxStat(eStat_Will, Unit.GetBaseStat(eStat_Will) + 1);
+			Unit.SetUnitFloatValue('LWX2CouncilAccrued', ValueOf(Unit, 'LWX2CouncilAccrued') + 1, eCleanup_Never);
+		}
 		Unit.SetUnitFloatValue('LWX2XP', XP, eCleanup_Never);
 		Unit.SetUnitFloatValue('LWX2KillsCounted', Kills.Length, eCleanup_Never);
 		Unit.SetUnitFloatValue('LWX2XPMission', Battle.ObjectID, eCleanup_Never);
