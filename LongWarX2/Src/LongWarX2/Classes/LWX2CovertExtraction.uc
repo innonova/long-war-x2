@@ -56,7 +56,9 @@ static function XComGameState_Unit Operative()
 	local XComGameState_LWStrategy S;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
-	return S != none && S.ExaltOperative > 0 ? XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(S.ExaltOperative)) : none;
+	if (S == none || S.ExaltOperative <= 0)
+		return none;
+	return XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(S.ExaltOperative));
 }
 
 static function int TurnNow()
