@@ -102,6 +102,8 @@ struct LWSmallDef
 	var int CritAgainstReaction;
 	/** Crit while carried once the Foundry's S.C.O.P.E. project is done (not with a pistol). */
 	var int ScopeCrit;
+	/** Crit for its carrier's shots with any weapon but a pistol (Reaper Rounds). */
+	var int WeaponCrit;
 	/** Will while carried (the Mind Shield). */
 	var int Will;
 	/** Defense and mobility while carried, and damage reduction (Reinforced Armor: Long War's BalanceMods_Classic line). */

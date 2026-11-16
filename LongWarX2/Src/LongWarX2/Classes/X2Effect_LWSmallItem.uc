@@ -9,6 +9,8 @@ var int ExtraRockets;
 var int CritAgainstReaction;
 /** Crit for its carrier's shots once the Foundry's S.C.O.P.E. (project 18) is done, not a pistol's (LWGearRules.LWSmallDef). */
 var int ScopeCrit;
+/** Crit for its carrier's shots with any weapon but a pistol (Reaper Rounds: XGAbility_Targeted.GetCriticalChance). */
+var int WeaponCrit;
 
 simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffectParameters, XComGameState_BaseObject kNewTargetState, XComGameState NewGameState, XComGameState_Effect NewEffectState)
 {
@@ -53,6 +55,13 @@ function GetToHitModifiers(XComGameState_Effect EffectState, XComGameState_Unit 
 {
 	local ShotModifierInfo Info;
 
+	if (WeaponCrit != 0 && AbilityState != none && !bMelee && AbilityState.GetSourceWeapon() != none && !class'X2Effect_LWFoundry'.static.IsPistol(AbilityState.GetSourceWeapon()))
+	{
+		Info.ModType = eHit_Crit;
+		Info.Value = WeaponCrit;
+		Info.Reason = "Reaper Rounds";
+		ShotModifiers.AddItem(Info);
+	}
 	if (ScopeCrit == 0 || AbilityState == none || bMelee || !class'X2Effect_LWFoundry'.static.Done(18))
 		return;
 	if (AbilityState.GetSourceWeapon() == none || class'X2Effect_LWFoundry'.static.IsPistol(AbilityState.GetSourceWeapon()))

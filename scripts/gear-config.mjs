@@ -79,6 +79,7 @@ for (const x of SMALL) {
       // The Foundry's S.C.O.P.E. project: crit for a carrier of the targeting module, half for the laser sight (item 79), not
       // with a pistol (XGAbility_Targeted.CalcCriticalChance; FOUNDRY_SCOPE_CRIT_BONUS).
       (x.item === 74 || x.item === 79 ? `, ScopeCrit=${Math.trunc(scopeCrit / (x.item === 79 ? 2 : 1))}` : '') +
+      (x.weaponCrit ? `, WeaponCrit=${x.weaponCrit}` : '') +
       (x.balance ? `, Defense=${balanceOf(x.item, 'iDefense')}, Mobility=${balanceOf(x.item, 'iMobility')}, DR=${itemDR.get(x.item) ?? 0}` : '') +
       (anyone ? '' : `, Classes=(${classes.map((c) => `LWS_${c}`).join(',')})`) +
       ')',

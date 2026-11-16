@@ -216,6 +216,9 @@ export const SMALL = [
   // Reinforced Armor: its BalanceMods_Classic line's defense, mobility and damage reduction (its text: "extra protection, but
   // inhibits agility"). (balance: those three read; other items' lines are not read as stats.)
   { item: 220, kind: 'Passive', look: 'CommonPCSConditioning', balance: true },
+  // Reaper Rounds: +16 crit with any weapon but a pistol (XGAbility_Targeted.GetCriticalChance; WeaponCrit). Its text's
+  // doubled range penalty for shotguns and sniper rifles is not in Long War's script (native): not done.
+  { item: 78, kind: 'Passive', look: 'CommonPCSPerception', weaponCrit: 16 },
   // Armor Piercing Ammo: its carrier's shots ignore 2 of the target's reduction (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction).
   { item: 198, kind: 'Passive', look: 'CommonPCSPerception' },
   // Combat Stims: XCOM 2's stims (a used item), and damage x0.6 while they last (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction).

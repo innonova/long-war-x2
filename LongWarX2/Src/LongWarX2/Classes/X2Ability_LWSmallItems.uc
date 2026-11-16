@@ -72,7 +72,7 @@ static function X2AbilityTemplate Stats(LWGearRules.LWSmallDef D)
 			Effect.AddPersistentStatChange(eStat_Will, D.Will);
 		Template.AddTargetEffect(Effect);
 	}
-	if (D.Ammo > 1 || D.Kind == 'Rocket' || D.CritAgainstReaction != 0 || D.ScopeCrit != 0)
+	if (D.Ammo > 1 || D.Kind == 'Rocket' || D.CritAgainstReaction != 0 || D.ScopeCrit != 0 || D.WeaponCrit != 0)
 	{
 		Extra = new class'X2Effect_LWSmallItem';
 		Extra.BuildPersistentEffect(1, true, false, false);
@@ -81,6 +81,7 @@ static function X2AbilityTemplate Stats(LWGearRules.LWSmallDef D)
 		Extra.ExtraRockets = D.Kind == 'Rocket' ? 1 : 0;
 		Extra.CritAgainstReaction = D.CritAgainstReaction;
 		Extra.ScopeCrit = D.ScopeCrit;
+		Extra.WeaponCrit = D.WeaponCrit;
 		Template.AddTargetEffect(Extra);
 	}
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
