@@ -23,8 +23,10 @@ struct LWCouncilMission
 	var int Id;
 	/** 1 assault, 2 bomb, 3 extraction, 4 rescue. */
 	var int Kind;
-	/** Its EW map (XComLWEWMaps.ini's name). */
+	/** Its EW map (XComLWEWMaps.ini's name), and the streamed level with its variant (Long War's DefaultMaps.ini): the mission
+	 *  plays on the plot of the two, LWX2V_<Level>, when the setup has made it. */
 	var string Map;
+	var string Level;
 	/** The panic on its continent when it fails (Long War's iPanicOnFailure). */
 	var int PanicOnFailure;
 	var array<LWCouncilRewardDef> Rewards;
@@ -49,6 +51,28 @@ static function bool MissionById(int Id, out LWCouncilMission M)
 		return false;
 	M = default.Missions[k];
 	return true;
+}
+
+/** The council mission under way, if the mission is one. */
+static function bool Current(out LWCouncilMission M)
+{
+	local XComGameState_LWStrategy S;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || S.PendingKind != 10 || S.PendingIndex >= S.Sites.Length)
+		return false;
+	return MissionById(S.Sites[S.PendingIndex].CouncilMission, M);
+}
+
+/** The EW map of a variant level's plot (LWX2V_<level>), "" when no council mission has that level. */
+static function string MapOfLevel(string Level)
+{
+	local LWCouncilMission M;
+
+	foreach default.Missions(M)
+		if (M.Level ~= Level)
+			return M.Map;
+	return "";
 }
 
 static function int KindOf(int Id)

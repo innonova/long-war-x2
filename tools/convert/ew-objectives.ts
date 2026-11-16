@@ -1,48 +1,48 @@
 // Enemy Within's council missions' objectives (features/lw-council-missions.md, step 2), read from the player's own install:
-// a mission variant is a streamed level beside its map (URB_CemeteryGrand_Bomb.upk …) whose Kismet holds its rules and whose
-// actors mark its objects. For the bomb disposals: the bomb (the high hot button, HotButton.ARC_IA_HotButtonColumnHigh, where
+// a mission variant is a streamed level beside its map (URB_CemeteryGrand_Bomb.upk …, the mod's XComLWCouncil.ini names each
+// mission's, from Long War's DefaultMaps.ini) whose Kismet holds its rules and whose actors mark its objects. For the bomb disposals: the bomb (the high hot button, HotButton.ARC_IA_HotButtonColumnHigh, where
 // EW's bomb stands) and the power nodes (the low hot buttons), at EW's coordinates (the map's plot keeps them); the bomb's
 // Timer at the start and the number of nodes (#Nodes), the Kismet variables of those names. Written as the mod's config,
 // Config/XComLWX2EWObjectives.ini (+Bombs=), which LWX2CouncilBomb reads. Numbers only.
 //   node tools/convert/ew-objectives.ts <EW CookedPCConsole> <mod folder>
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
 import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 
-/** Each bomb disposal's map (XComLWCouncil.ini's) and the streamed level that carries its variant. */
-export const BOMB_LEVELS: Record<string, string> = {
-  URB_CemeteryGrand: 'URB_CemeteryGrand_Bomb',
-  URB_HighwayBridge: 'URB_HIghwayBomb_Stream',
-  URB_TrainStation: 'URB_TrainStation_Stream',
-  URB_Trainyard: 'URB_Trainyard_Stream',
-  URB_SlaughterhouseA: 'URB_Slaughterhouse_Stream',
+/** The council's missions (the mod's Config/XComLWCouncil.ini, from Long War's own data: scripts/council-config.mjs): each
+ *  its kind (1 assault, 2 bomb, 3 extraction, 4 rescue), its EW map and the streamed level that carries its variant. */
+export interface CouncilMission { id: number; kind: number; map: string; level: string }
+export function councilMissions(mod: string): CouncilMission[] {
+  const ini = join(mod, 'Config', 'XComLWCouncil.ini')
+  if (!existsSync(ini)) return []
+  return [...readFileSync(ini, 'latin1').matchAll(/^\+Missions=\(Id=(\d+), Kind=(\d+), Map="(\w+)", Level="(\w*)"/gm)]
+    .map((m) => ({ id: Number(m[1]), kind: Number(m[2]), map: m[3]!, level: m[4]! }))
+    .filter((m) => m.level)
 }
 
-/** Each VIP mission's map (an extraction or a rescue, XComLWCouncil.ini's) and the streamed level that carries its variant. */
-export const VIP_LEVELS: Record<string, string> = {
-  URB_PierA: 'URB_PierA_Stream',
-  URB_StreetHurricane: 'URB_StreetHurricane_Stream',
-  URB_HighwayFallen: 'URB_HighwayFallen_Stream',
-  URB_CommercialAlley: 'URB_CommercialAlley_Stream',
-  URB_ResearchOutpost: 'URB_ResearchOutpost_Rescue',
+/** The variant levels of these maps' council missions: converted with them, each joined with its map into a plot of its own,
+ *  LWX2V_<level> (ew-maps.ts writePlots), on which that mission plays. */
+export function variantLevels(mod: string, maps: Iterable<string>): string[] {
+  const want = new Set(maps)
+  return [...new Set(councilMissions(mod).filter((m) => want.has(m.map)).map((m) => m.level))]
 }
 
-/** Every map's mission variant level (the council's): converted with the map and joined into a plot of its own, LWX2V_<map>
- *  (ew-maps.ts writePlots), on which that mission plays. */
-export const VARIANT_LEVELS: Record<string, string> = { ...BOMB_LEVELS, ...VIP_LEVELS }
-
-/** The variant levels of these maps. */
-export function variantLevels(maps: Iterable<string>): string[] {
-  return [...maps].map((m) => VARIANT_LEVELS[m]).filter((l): l is string => !!l)
+/** A level's package in the install, whatever the case of its name (Long War writes URB_HighwayBomb_Stream, EW ships
+ *  URB_HIghwayBomb_Stream.upk). */
+function levelFile(cooked: string, level: string): string | undefined {
+  const exact = join(cooked, `${level}.upk`)
+  if (existsSync(exact)) return exact
+  const found = readdirSync(cooked).find((f) => f.toLowerCase() === `${level}.upk`.toLowerCase())
+  return found ? join(cooked, found) : undefined
 }
 
-export interface Bomb { map: string; timer: number; nodes: number; bomb: number[]; nodeAt: number[][] }
+export interface Bomb { map: string; level: string; timer: number; nodes: number; bomb: number[]; nodeAt: number[][] }
 
 /** A bomb disposal's level read: its bomb, nodes and numbers; undefined when it is not as expected. */
-export function readBomb(file: string, map: string): Bomb | undefined {
+export function readBomb(file: string, map: string, level: string): Bomb | undefined {
   const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
   const meta: any = new Package(bytes)
   const pkg: any = openPackage(bytes)
@@ -91,7 +91,7 @@ export function readBomb(file: string, map: string): Bomb | undefined {
     }
   })
   if (!bomb || nodeAt.length === 0 || timer <= 0) return undefined
-  return { map, timer, nodes: nodes || nodeAt.length, bomb, nodeAt }
+  return { map, level, timer, nodes: nodes || nodeAt.length, bomb, nodeAt }
 }
 
 /** A Kismet op or variable: its class, properties, output links and variable links (export indices, 0-based). */
@@ -168,6 +168,7 @@ function readKismet(bytes: Uint8Array) {
 
 export interface VIP {
   map: string
+  level: string
   /** Where the VIP stands (the spawn point of EW's SpawnCivilian), and its name. */
   at: number[]
   first: string
@@ -183,7 +184,7 @@ export interface VIP {
 }
 
 /** A VIP mission's level read: the VIP, where it is found and where it goes; undefined when it is not as expected. */
-export function readVIP(file: string, map: string): VIP | undefined {
+export function readVIP(file: string, map: string, level: string): VIP | undefined {
   const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
   const meta: any = new Package(bytes)
   const pkg: any = openPackage(bytes)
@@ -238,7 +239,7 @@ export function readVIP(file: string, map: string): VIP | undefined {
   const texts = strings.filter((s) => /(Extract|Rescue)\d$/.test(s.key)).sort((a, b) => a.key.localeCompare(b.key)).map((s) => s.value)
   const shared = (key: string) => strings.find((s) => s.key === key)?.value ?? ''
   return {
-    map, at, approach, extract, texts,
+    map, level, at, approach, extract, texts,
     first: text(naming.vars.get('First Name')?.[0]),
     last: text(naming.vars.get('Last Name')?.[0]),
     killRest: shared('m_strBombObj3'),
@@ -254,23 +255,24 @@ export function writeObjectives(cooked: string, mod: string): number {
     '[LongWarX2.LWX2CouncilBomb]',
   ]
   let n = 0
-  for (const [map, level] of Object.entries(BOMB_LEVELS)) {
-    const file = join(cooked, `${level}.upk`)
-    if (!existsSync(file)) continue
-    const b = readBomb(file, map)
+  const missions = councilMissions(mod)
+  for (const m of missions.filter((x) => x.kind === 2)) {
+    const file = levelFile(cooked, m.level)
+    if (!file) continue
+    const b = readBomb(file, m.map, m.level)
     if (!b) continue
-    lines.push(`+Bombs=(Map="${b.map}", Timer=${b.timer}, Nodes=${b.nodes}, Bomb=${vec(b.bomb)}, NodeAt=(${b.nodeAt.map(vec).join(', ')}))`)
+    lines.push(`+Bombs=(Map="${b.map}", Level="${b.level}", Timer=${b.timer}, Nodes=${b.nodes}, Bomb=${vec(b.bomb)}, NodeAt=(${b.nodeAt.map(vec).join(', ')}))`)
     n++
   }
   // The VIP missions (LWX2CouncilVIP): EW's own words in them, as this install has them.
   const q = (t: string) => `"${t.replace(/"/g, "'")}"`
   lines.push('', '[LongWarX2.LWX2CouncilVIP]')
-  for (const [map, level] of Object.entries(VIP_LEVELS)) {
-    const file = join(cooked, `${level}.upk`)
-    if (!existsSync(file)) continue
-    const p = readVIP(file, map)
+  for (const m of missions.filter((x) => x.kind === 3 || x.kind === 4)) {
+    const file = levelFile(cooked, m.level)
+    if (!file) continue
+    const p = readVIP(file, m.map, m.level)
     if (!p) continue
-    lines.push(`+VIPs=(Map="${p.map}", At=${vec(p.at)}, First=${q(p.first)}, Last=${q(p.last)}, ${p.approach ? `bApproach=true, Approach=${vec(p.approach)}, ` : ''}Extract=${vec(p.extract)}, ` +
+    lines.push(`+VIPs=(Map="${p.map}", Level="${p.level}", At=${vec(p.at)}, First=${q(p.first)}, Last=${q(p.last)}, ${p.approach ? `bApproach=true, Approach=${vec(p.approach)}, ` : ''}Extract=${vec(p.extract)}, ` +
       `Texts=(${p.texts.map(q).join(', ')}), KillRest=${q(p.killRest)}, Report=${q(p.report)})`)
     n++
   }

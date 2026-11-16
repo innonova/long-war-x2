@@ -25,7 +25,7 @@ node scripts/aliens-config.mjs "$core" > $cfg/XComLWAliens.ini
 node scripts/maps-config.mjs "$lw/Config/DefaultMaps.ini" > $cfg/XComLWEWMaps.ini
 node scripts/airwar-config.mjs "$tree/data/airwar.json" > $cfg/XComLWAirWar.ini
 node scripts/shivs-config.mjs "$core" > $cfg/XComLWSHIVs.ini
-node scripts/council-config.mjs > $cfg/XComLWCouncil.ini
+node scripts/council-config.mjs "$lw/Config/DefaultMaps.ini" > $cfg/XComLWCouncil.ini
 node scripts/mecs-config.mjs "$core" "$lw/Config/DefaultGameData.ini" > $cfg/XComLWMECs.ini
 # Writes XComLWClasses.ini, XComClassData.ini, XComGameData.ini, XComGameCore.ini, XComGameData_XpData.ini and the words (gitignored) itself.
 node scripts/classes-config.mjs "$core" "$words" "$cooked/XComGame.upk" > /dev/null

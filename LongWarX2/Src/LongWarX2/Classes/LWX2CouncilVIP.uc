@@ -4,11 +4,12 @@
 // swaps them to XCOM: "Locate …", "Approach …"); in a rescue they are XCOM's from the start. Then they are to be escorted to
 // the Skyranger (XCOM 2's evac zone, placed where EW's arrow pointed) and evacuated. The VIP killed, the mission is lost. Got
 // away, the mission is won once every alien is dead or taken, or every soldier still standing has evacuated too.
-class LWX2CouncilVIP extends Object config(LWX2EWObjectives);
+class LWX2CouncilVIP extends Object config(LWX2EWObjectives) dependson(LWCouncil);
 
 struct LWX2VIPDef
 {
 	var string Map;
+	var string Level;
 	var vector At;
 	var string First, Last;
 	/** An extraction: the VIP waits at Approach until a soldier comes within ApproachTiles. */
@@ -29,18 +30,17 @@ var config name VIPTemplate;
 /** The VIP mission being played, if this mission is one: a council extraction or rescue on its EW map's variant plot. */
 static function bool Active(out LWX2VIPDef P)
 {
-	local XComGameState_LWStrategy S;
+	local LWCouncil.LWCouncilMission M;
 	local XComGameState_BattleData Battle;
 	local int k;
 
-	S = class'XComGameState_LWStrategy'.static.Get();
-	if (S == none || S.PendingKind != 10 || S.PendingIndex >= S.Sites.Length || (S.Sites[S.PendingIndex].CouncilKind != 3 && S.Sites[S.PendingIndex].CouncilKind != 4))
+	if (!class'LWCouncil'.static.Current(M) || (M.Kind != 3 && M.Kind != 4) || M.Level == "")
 		return false;
 	// (Only on the map with its variant level: the VIP's way is that level's.)
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
-	if (Battle == none || !(Battle.MapData.PlotMapName ~= ("LWX2V_" $ S.PendingEWMap)))
+	if (Battle == none || !(Battle.MapData.PlotMapName ~= ("LWX2V_" $ M.Level)))
 		return false;
-	k = default.VIPs.Find('Map', S.PendingEWMap);
+	k = default.VIPs.Find('Level', M.Level);
 	if (k == INDEX_NONE)
 		return false;
 	P = default.VIPs[k];

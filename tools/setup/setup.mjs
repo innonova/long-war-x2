@@ -291,7 +291,7 @@ async function convertEW(ew, target) {
     // The base's levels are small: converted in this process. The maps, which can need a large heap, each in a child of
     // its own. (A child converting one of the base's levels, done in a second, twice wrote its files and never exited.)
     // (With them, the council missions' variant levels, small too: ew-objectives.ts.)
-    const base = new Set([...baseLevels(target), ...variantLevels(maps)])
+    const base = new Set([...baseLevels(target), ...variantLevels(target, maps)])
     convertMaps(cooked, target, [...(want ? maps : []), ...base], content, join(content, 'ewmaps'), (src, out, ini) =>
       base.has(basename(src, '.upk')) ? convertHere(src, out, ini) :
       execFileSync(process.execPath, ['--convert-map', src, out, ini], {

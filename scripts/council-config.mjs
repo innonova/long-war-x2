@@ -1,8 +1,10 @@
 // Long War's council missions as the mod's config (features/lw-council-missions.md): LongWarX2/Config/XComLWCouncil.ini, from
 // the Tree's data/council.json (read from Long War's XGFundingCouncil.BuildMission and its DefaultGameData.ini by
-// scripts/upk_council.py there). Numbers and EW's map names only.
+// scripts/upk_council.py there), each mission's map and variant level from Long War's DefaultMaps.ini (the entry whose
+// DisplayName names the mission's variant, as Long War finds it: its map, and the streamed level that carries the
+// variant). Numbers and EW's map names only.
 //
-//   node scripts/council-config.mjs > LongWarX2/Config/XComLWCouncil.ini
+//   node scripts/council-config.mjs <Long War's DefaultMaps.ini> > LongWarX2/Config/XComLWCouncil.ini
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -11,8 +13,18 @@ const data = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)
 const c = data.constants
 // The four kinds Long War rotates (ChooseNextMissionByType): 1 assault, 2 bomb, 3 extraction, 4 rescue; the special
 // ones (the Chryssalid hive, the Meld tutorial, Progeny) are left for later.
-const missions = data.missions.filter((m) => m.kind >= 1 && m.kind <= 4 && m.id < 18)
-const base = (map) => map.replace(/_(Assault|Bomb|Rescue|Extraction)$/, '')
+const maps = readFileSync(process.argv[2] ?? '', 'latin1').split(/\r?\n/).filter((l) => /^\s*Maps=/.test(l))
+/** The map entry for a mission's variant (DisplayName "<map> (<variant>)"): its map and its variant level. */
+const entry = (m) => {
+  const l = maps.find((x) => x.includes(`(${m.variant})`))
+  if (!l) return undefined
+  const level = [...l.matchAll(/MapName="?(\w+)/g)].map((x) => x[1]).find((x) => !/^(CIN_|patch)/i.test(x))
+  return { map: /\bName="?(\w+)/.exec(l)[1], level }
+}
+// (A mission no map entry carries, as the Boulevard's extraction: Long War never offers it.)
+const all = data.missions.filter((m) => m.kind >= 1 && m.kind <= 4 && m.id < 18)
+const missions = all.filter((m) => entry(m))
+const unmapped = all.filter((m) => !entry(m))
 const reward = (r) => {
   if (typeof r.amount === 'number') return `(Type=${r.type}, Amount=${r.amount})`
   if (r.amount === 'named') return `(Type=${r.type}, SoldierLevel=-1)`
@@ -40,6 +52,8 @@ const out = [
   "; Missions (BuildMission): Id (EFCMission), Kind (1 assault, 2 bomb, 3 extraction, 4 rescue), its EW Map, PanicOnFailure",
   '; (on its continent); Rewards: Type 1 cash (Money: x the rolled amount), 3 a soldier (SoldierClass, SoldierLevel; -1 rolled),',
   "; 4 engineers, 5 scientists, 6 the country's panic, 8 elerium (Amount).",
-  ...missions.map((m) => `+Missions=(Id=${m.id}, Kind=${m.kind}, Map="${base(m.map)}", PanicOnFailure=${m.panicOnFailure ?? 0}, Rewards=(${m.rewards.map(reward).join(', ')}))`),
+  '; Map: its EW map, Level: the streamed level with its variant (DefaultMaps.ini).',
+  ...(unmapped.length ? [`; Not in DefaultMaps.ini, so never offered: ${unmapped.map((m) => `${m.id} (${m.variant})`).join(', ')}.`] : []),
+  ...missions.map((m) => `+Missions=(Id=${m.id}, Kind=${m.kind}, Map="${entry(m).map}", Level="${entry(m).level ?? ''}", PanicOnFailure=${m.panicOnFailure ?? 0}, Rewards=(${m.rewards.map(reward).join(', ')}))`),
 ]
 console.log(out.join('\r\n'))

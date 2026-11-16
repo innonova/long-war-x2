@@ -3,11 +3,12 @@
 // Timer and loses one at each of XCOM's turn ends; each power node switched off gives a turn back; at 0 the bomb goes off and
 // the mission is lost. Disarmed, the mission is won once every alien is dead or taken. XCOM's soldiers switch a node off or
 // disarm the bomb from a tile beside it (X2Ability_LWX2Bomb); the state is XComGameState_LWX2Bomb.
-class LWX2CouncilBomb extends Object config(LWX2EWObjectives);
+class LWX2CouncilBomb extends Object config(LWX2EWObjectives) dependson(LWCouncil);
 
 struct LWX2BombDef
 {
 	var string Map;
+	var string Level;
 	var int Timer;
 	var int Nodes;
 	var vector Bomb;
@@ -30,17 +31,15 @@ static function string Word(string EW, string Own)
 /** The bomb disposal being played, if this mission is one: a council bomb disposal on its EW map with its objects read. */
 static function bool Active(out LWX2BombDef B)
 {
-	local XComGameState_LWStrategy S;
-	local string Map;
+	local LWCouncil.LWCouncilMission M;
 	local int k;
 
-	S = class'XComGameState_LWStrategy'.static.Get();
-	if (S == none || S.PendingKind != 10 || S.PendingIndex >= S.Sites.Length || S.Sites[S.PendingIndex].CouncilKind != 2)
+	if (!class'LWCouncil'.static.Current(M) || M.Kind != 2 || M.Level == "")
 		return false;
-	Map = S.PendingEWMap;
-	if (Map == "")
+	// (Played on its EW map: XCOM 2's plots have no bomb.)
+	if (!(class'XComGameState_LWStrategy'.static.Get().PendingEWMap ~= M.Map))
 		return false;
-	k = default.Bombs.Find('Map', Map);
+	k = default.Bombs.Find('Level', M.Level);
 	if (k == INDEX_NONE)
 		return false;
 	B = default.Bombs[k];

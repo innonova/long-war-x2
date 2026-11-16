@@ -6,7 +6,7 @@
 // the built mod's Content: in Content itself they would be processed by every build); in a player's installed mod
 // (the setup program), the mod's Content.
 // Then each converted map's own plot (writePlots: ew-plot.ts, LWX2_<map>.umap beside the packages), and for a map with a
-// council mission's variant level (ew-objectives.ts VARIANT_LEVELS, converted with it) a plot of the two, LWX2V_<map>.umap.
+// council mission's variant level (the mod's XComLWCouncil.ini, converted with it) a plot of the two, LWX2V_<level>.umap.
 // --all: every map Long War lists for its missions (Config/XComLWEWMaps.ini); --kind Abduction|Crash|Landed|Terror:
 // those of a kind; --base: EW's base's levels (BaseLevels, for LWX2EWBase; no plots), with any of the others. A map
 // already converted is skipped unless --force.
@@ -16,7 +16,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readSection, writePlot, type PlotSettings } from './ew-plot.ts'
 import { openImages } from './ew-images.ts'
-import { VARIANT_LEVELS, variantLevels } from './ew-objectives.ts'
+import { councilMissions, variantLevels } from './ew-objectives.ts'
 
 /** The converter version ew-map.ts writes into its sections (kept in step with its CONVERTER_VERSION; read from the
  *  section, so this file need not load the converter). */
@@ -52,7 +52,8 @@ export function writePlots(mod: string, content: string, work: string, template:
   const settings = plotSettings(mod)
   const bytes = new Uint8Array(readFileSync(template))
   const plots: string[] = []
-  const base = new Set([...baseLevels(mod), ...Object.values(VARIANT_LEVELS)].map((l) => `${l}.ini`))
+  const missions = councilMissions(mod)
+  const base = new Set([...baseLevels(mod), ...missions.map((m) => m.level)].map((l) => `${l}.ini`))
   let old = 0
   for (const f of readdirSync(work).filter((f) => f.endsWith('.ini') && !base.has(f)).sort()) {
     const ini = join(work, f)
@@ -65,8 +66,8 @@ export function writePlots(mod: string, content: string, work: string, template:
     writeFileSync(join(content, `LWX2_${map.name}.umap`), plot)
     plots.push(`LWX2_${map.name}`)
   }
-  // Each map with its council mission's variant level converted: a plot of the two (LWX2V_<map>), for that mission.
-  for (const [name, level] of Object.entries(VARIANT_LEVELS)) {
+  // Each council mission whose map and variant level are converted: a plot of the two (LWX2V_<level>), for that mission.
+  for (const [level, name] of new Map(missions.map((m) => [m.level, m.map]))) {
     const [mapIni, levelIni] = [join(work, `${name}.ini`), join(work, `${level}.ini`)]
     if (!existsSync(mapIni) || !existsSync(levelIni) || !sectionCurrent(mapIni) || !sectionCurrent(levelIni)) continue
     const map = readSection(readFileSync(mapIni, 'latin1'))
@@ -77,8 +78,8 @@ export function writePlots(mod: string, content: string, work: string, template:
     map.doors.push(...variant.doors)
     map.lights.push(...variant.lights)
     for (const [k, look] of variant.looks) map.looks.set(k, look)
-    writeFileSync(join(content, `LWX2V_${name}.umap`), writePlot(bytes, map, settings).bytes)
-    plots.push(`LWX2V_${name}`)
+    writeFileSync(join(content, `LWX2V_${level}.umap`), writePlot(bytes, map, settings).bytes)
+    plots.push(`LWX2V_${level}`)
   }
   say(`${plots.length} maps written as plots of their own${old ? `; ${old} converted by an older version, placed at run time until converted again` : ''}`)
   return plots
@@ -93,7 +94,7 @@ export function baseLevels(mod: string): string[] {
 export function missionSections(mod: string): number {
   const ini = join(mod, 'Config', 'XComLWX2EWMap.ini')
   if (!existsSync(ini)) return 0
-  const base = new Set([...baseLevels(mod), ...Object.values(VARIANT_LEVELS)])
+  const base = new Set([...baseLevels(mod), ...councilMissions(mod).map((m) => m.level)])
   return [...readFileSync(ini, 'latin1').matchAll(/^\[(\S+) LWX2EWMapData\]/gm)].filter((m) => !base.has(m[1]!)).length
 }
 
@@ -174,7 +175,7 @@ if (/ew-maps\.ts$/.test(process.argv[1] ?? '')) {
     const values = new Set([at('--kind'), at('--out')].filter((i) => i >= 0).map((i) => i + 1))
     maps = args.slice(2).filter((a, i) => !a.startsWith('--') && !values.has(i + 2))
   }
-  maps = [...maps, ...variantLevels(maps)]
+  maps = [...maps, ...variantLevels(mod, maps)]
   if (args.includes('--base')) maps = [...maps, ...baseLevels(mod)]
   const content = at('--out') >= 0 ? args[at('--out') + 1]! : join(mod, '..', 'BuildCache', 'ewcontent')
   const converter = join(dirname(fileURLToPath(import.meta.url)), 'ew-map.ts')
