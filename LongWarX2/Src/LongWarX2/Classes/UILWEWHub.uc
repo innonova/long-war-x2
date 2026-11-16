@@ -347,6 +347,11 @@ function ChooseOption(int Option)
 	// (The plain base screen holds the Officer Training School's, the Psi Labs' and the Genetics Lab's panels, until each
 	// has EW's own screen.)
 	case OPT_OTS:
+		if (class'UILWEWScreen'.static.HasEWScreens())
+		{
+			class'UILWEWOTS'.static.Open(HQPres);
+			break;
+		}
 	case OPT_PSI:
 	case OPT_GENE:
 		HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres));

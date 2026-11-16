@@ -92,9 +92,13 @@ const out = [
   // The squad a mission takes at the campaign's start (the Officer Training School's Squad Size I and II add to it).
   `SkyrangerCapacity=${one('SKYRANGER_CAPACITY')}`,
   // The Officer Training School's squad sizes (OTSBalance): a soldier more each, at a price, once the barracks' ranks
-  // add up to Ranks (rookie 0, squaddie 1 …). Its officer projects are not here yet.
+  // add up to Ranks (rookie 0, squaddie 1 …).
   ...[...core.matchAll(/^OTSBalance=\(eTech=eOTS_SquadSize_(I+),\s*iCash=(\d+),\s*eRank=(\d+)\)/gm)].map(
     (m) => `+SquadSizes=(Cash=${m[2]}, Ranks=${m[3]})`,
+  ),
+  // And its officer projects (OTSBalance eTech 3 to 7: lieutenant to field commander), in that order: price and ranks.
+  ...[...core.matchAll(/^OTSBalance=\(eTech=([3-7]),\s*iCash=(\d+),\s*eRank=(\d+)\)/gm)].map(
+    (m) => `+OfficerProjects=(Cash=${m[2]}, Ranks=${m[3]})`,
   ),
   `PanicSatAddedCountry=${one('PANIC_SAT_ADDED_COUNTRY')}`,
   `PanicSatAddedContinent=${one('PANIC_SAT_ADDED_CONTINENT')}`,

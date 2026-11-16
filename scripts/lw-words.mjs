@@ -408,3 +408,30 @@ export function makeBuildWords({ strategyLoc }) {
   ].filter(([, v]) => v)
   return { text: ['[UILWEWBuildFacilities]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
+
+/** The Officer Training School screen's words (UILWEWOTS, in the mod's LongWarX2.int): EW's (XGOTSUI, UIOTS) and Long War's
+ *  projects' names and summaries (XGLocalizedData's OTSTechNames, OTSTechSummary), in the order squad sizes I and II, then
+ *  the officer projects. */
+export function makeOTSWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const inSection = (section, key) => {
+    const at = text.indexOf(`\n[${section}]\n`)
+    if (at < 0) return undefined
+    const end = text.indexOf('\n[', at + 2)
+    const m = text.slice(at, end < 0 ? undefined : end).match(new RegExp(`^${key.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))
+    return m ? m[1].trim().replace(/^"(.*)"$/, '$1') : undefined
+  }
+  const anywhere = (key) => text.match(new RegExp(`^${key.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const techs = ['eOTS_SquadSize_I', 'eOTS_SquadSize_II', 'eOTS_XP_II', 'eOTS_HP_I', 'eOTS_Leader', 'eOTS_XP_I', 'eOTS_Will_I']
+  const words = [
+    ['Title', inSection('XGOTSUI', 'm_strLabelOTS')],
+    ['TotalRanks', inSection('UIOTS', 'm_strTactic')],
+    ['Cost', inSection('UIOTS', 'm_strCost')],
+    ['Purchase', inSection('UIOTS', 'm_strPurchaseButtonText_PC')],
+    ['ConfirmTitle', inSection('UIOTS', 'm_strConfirmUpgradeTitle')],
+    ['ConfirmBody', inSection('UIOTS', 'm_strConfirmUpgradeBody')],
+    ...techs.map((t, i) => [`Names[${i}]`, anywhere(`OTSTechNames[${t}]`)]),
+    ...techs.map((t, i) => [`Summaries[${i}]`, anywhere(`OTSTechSummary[${t}]`)]),
+  ].filter(([, v]) => v)
+  return { text: ['[UILWEWOTS]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}

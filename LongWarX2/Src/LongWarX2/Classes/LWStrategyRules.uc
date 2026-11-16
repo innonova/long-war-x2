@@ -107,6 +107,8 @@ struct LWSquadSize
 	var int Ranks;
 };
 var config array<LWSquadSize> SquadSizes;
+/** The Officer Training School's officer projects (lieutenant to field commander): price and ranks (features/lw-officers.md). */
+var config array<LWSquadSize> OfficerProjects;
 var config int UfoFindStealthSatPct;
 var config int UfoSecondPassFindStealthSatPct;
 /** The chance (%) a terror target is the most panicked candidate rather than one of the top three. */

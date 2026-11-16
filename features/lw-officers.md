@@ -57,3 +57,31 @@ So building this means porting the medal screen, each officer ability as a tacti
 and the medal count's place in fatigue. The person (2026-11-15) wants Long War's code
 followed, so nothing here waits on him. Left for after the strategy screens (playability
 first).
+
+## Report (2026-11-16, the Officer Training School on EW's own screen)
+
+The school's screen is Enemy Within's own (`UILWEWOTS`, its `OfficerTrainingSchool` movie,
+driven as EW's `UIOTS` drives it), from the hub's Barracks room once the school is built,
+with EW's base behind it through the barracks' camera.
+- Long War's seven projects in its order, with Long War's names and summaries from the
+  player's install (`makeOTSWords`, 20 words): Squad Size I and II, Tactical, Company,
+  Field and Regimental Officers, Commanding Officer.
+- The barracks' total ranks in the header (EW's "TOTAL RANKS"), each project's cost, in red
+  where it can't be bought; the selected one's reason, the ranks it needs and its summary in
+  the info panel.
+- Squad Size I and II are bought there, in order, after EW's own confirmation ("Acquire the
+  Squad Size I upgrade for §200?"), on the rules that were already in (cost, ranks, Special
+  Warfare School, Sandhurst).
+- The officer projects' prices and ranks come from stock Long War's `OTSBalance` (eTech 3 to
+  7: §100/20 ranks, §200/45, §300/75, §400/110, §500/150), now in `XComLWStrategy.ini` as
+  `OfficerProjects`.
+
+Checked on wingpu: Squad Size I bought from the screen (§500 → §300, squad size 7, the row's
+cost cleared and "Bought."); the officer projects listed in red with their reason
+(`logs/wingpu_ew_ots.png`, not committed).
+
+### Decisions
+
+- The five officer projects show but can't be bought until officers are in ("Officers are
+  not in the port yet."): the school reads as Long War's, and nothing is sold that does
+  nothing.
