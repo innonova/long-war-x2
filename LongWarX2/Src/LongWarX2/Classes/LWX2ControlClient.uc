@@ -249,6 +249,10 @@ function Handle(string Line, out array<string> Out)
 		else
 			Out.AddItem(Args.Length > 1 ? (Args[1] @ "->" @ PathName(DynamicLoadObject(Args[1], class'Object', true)) @ DynamicLoadObject(Args[1], class'Object', true).Class) : "ERR img <path>");
 		return;
+	case "spawns":
+		// spawns: the map's soldier spawns (XComGroupSpawn) and the one XCOM 2 chose (a test aid).
+		Spawns(Out);
+		return;
 	case "council":
 		// council: the council's clock and missions; 'council now [id]': the month's council mission made at once, or that one
 		// (Long War's EFCMission; a test aid).
@@ -2634,6 +2638,18 @@ static function bool TileTaken(TTile T)
 
 /** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
 /** The council's missions (LWCouncil): its clock, the missions offered; 'council now' one made at once. */
+function Spawns(out array<string> Out)
+{
+	local XComGroupSpawn Spawn;
+	local XComGameState_BattleData Battle;
+
+	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
+	foreach WorldInfo.AllActors(class'XComGroupSpawn', Spawn)
+		Out.AddItem(PathName(Spawn) @ "at" @ Spawn.Location @ ((`PARCELMGR != none && `PARCELMGR.SoldierSpawn == Spawn) ? "CHOSEN" : ""));
+	if (Battle != none)
+		Out.AddItem("the battle's soldier spawn" @ Battle.MapData.SoldierSpawnLocation @ "plot" @ Battle.MapData.PlotMapName);
+}
+
 function Council(array<string> Args, out array<string> Out)
 {
 	local XComGameState NewGameState;

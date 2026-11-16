@@ -74,6 +74,26 @@ static function vector Floor(vector At)
 	return At;
 }
 
+/** The Skyranger's ground: EW's arrow pointed above it (at its roof, where the map has EW's Skyranger); the map's drop zone
+ *  nearest the arrow, within ten tiles, else under the arrow. */
+static function vector Skyranger(LWX2VIPDef P)
+{
+	local vector Zone, Best;
+	local float Near;
+
+	Best = P.Extract;
+	Near = 10 * class'XComWorldData'.const.WORLD_StepSize;
+	foreach class'LWX2EWMapPieces'.static.Map().DropZones(Zone)
+	{
+		if (VSize2D(Zone - P.Extract) < Near)
+		{
+			Near = VSize2D(Zone - P.Extract);
+			Best = Zone;
+		}
+	}
+	return Best;
+}
+
 /** Asked twice a second in the mission (UIScreenListener_LongWarX2Tactical): the VIP made, reached, got away or killed.
  *  False while the VIP holds the mission back from being won (not yet away). */
 static function bool Update()
@@ -110,7 +130,7 @@ static function bool Update()
 		if (VIP != none && (P.First != "" || P.Last != ""))
 			VIP.SetCharacterName(P.First, P.Last, "");
 		// The Skyranger: XCOM 2's evac zone where EW's arrow pointed.
-		class'XComGameState_EvacZone'.static.PlaceEvacZone(NewGameState, Floor(P.Extract), eTeam_XCom);
+		class'XComGameState_EvacZone'.static.PlaceEvacZone(NewGameState, Floor(Skyranger(P)), eTeam_XCom);
 		`TACTICALRULES.SubmitGameState(NewGameState);
 		Zone = class'XComGameState_EvacZone'.static.GetEvacZone(eTeam_XCom);
 		if (Zone != none)
@@ -118,7 +138,7 @@ static function bool Update()
 			Zone.FindOrCreateVisualizer();
 			Zone.SyncVisualizer();
 		}
-		`log("LongWarX2: council VIP on" @ P.Map $ ":" @ P.First @ P.Last @ (P.bApproach ? "waiting to be reached" : "with XCOM") $ "; the Skyranger at" @ P.Extract, , 'LongWarX2');
+		`log("LongWarX2: council VIP on" @ P.Map $ ":" @ P.First @ P.Last @ (P.bApproach ? "waiting to be reached" : "with XCOM") $ "; the Skyranger at" @ Skyranger(P), , 'LongWarX2');
 		return false;
 	}
 	VIP = VIPUnit();
