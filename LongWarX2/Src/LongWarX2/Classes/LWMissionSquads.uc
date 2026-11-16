@@ -12,6 +12,9 @@ const TERROR_CIVILIANS = 18;
 /** The patrol zone of a pod spawned at Enemy Within's pod (tiles a side). */
 const ZoneTiles = 16;
 
+/** The most aliens one of XCOM 2's encounters is given (its spawner crashed on 9 and more: EXALT's raid, 33 in 4). */
+const MaxEncounterPod = 5;
+
 static function name TemplateFor(int Char)
 {
 	local int k;
@@ -42,8 +45,9 @@ static function ApplyTo(XComGameState_MissionSite Mission, array<int> Squad)
 	{
 		i = Pods[p];
 		Mission.SelectedMissionData.SelectedEncounters[i].EncounterSpawnInfo.SelectedCharacterTemplateNames.Length = 0;
-		// An even share, the first pods taking the remainder.
-		Size = Squad.Length / Pods.Length + (p < Squad.Length % Pods.Length ? 1 : 0);
+		// An even share, the first pods taking the remainder; no more than XCOM 2's pods hold (MaxEncounterPod): the rest
+		// come at the battle's start beside them (TopUp), as those whose pods found no room do.
+		Size = Min(MaxEncounterPod, Squad.Length / Pods.Length + (p < Squad.Length % Pods.Length ? 1 : 0));
 		for (n = 0; n < Size && k < Squad.Length; n++)
 			Mission.SelectedMissionData.SelectedEncounters[i].EncounterSpawnInfo.SelectedCharacterTemplateNames.AddItem(TemplateFor(Squad[k++]));
 		Mission.SelectedMissionData.SelectedEncounters[i].EncounterSpawnInfo.MaxGroupSize = Max(1, Size);

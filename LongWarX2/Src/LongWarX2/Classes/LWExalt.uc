@@ -36,6 +36,8 @@ struct LWCovertPod
 var config array<LWExaltTuning> Tuning;
 var config array<LWExaltClue> Clues;
 var config array<LWCovertPod> CovertPods;
+/** EXALT's squad at its base (DetermineExaltRaidSquad; Missions unused). */
+var config array<LWCovertPod> RaidPods;
 /** Long War's clue texts (XGExaltSimulation.m_arrClueText), written from the player's install (lw-words.mjs). */
 var localized string ClueTexts[40];
 
@@ -576,7 +578,11 @@ static function bool Accuse(int Country)
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
 	S.ExaltAccused.AddItem(Country);
 	if (Country == S.ExaltCountry)
+	{
+		S.bExaltRaidReady = true;
+		S.bStop = true;
 		S.Note("EXALT's base is in" @ S.CountryName(Country) $ ". The raid can be launched.");
+	}
 	else if (S.Countries[Country].bLeft)
 	{
 		for (i = 0; i < S.Countries.Length; i++)
@@ -761,4 +767,44 @@ static function CovertMissionBack(XComGameState NewGameState, XComGameState_LWSt
 		S.Note("The covert operation in" @ S.CountryName(Country) @ "failed.");
 	}
 	ClearOperative(NewGameState, S);
+}
+
+/** EXALT's squad at its base (Long War's DetermineExaltRaidSquad). */
+static function array<int> RaidSquad(int Days)
+{
+	local array<int> Out;
+	local LWCovertPod P;
+
+	foreach default.RaidPods(P)
+		class'LWAlienSquads'.static.AddPod(Out, 0, P.Main + Rand(Max(1, P.Spread)), P.Size, Days);
+	return Out;
+}
+
+/** Long War's PostCombat for the raid: won, EXALT is finished (EndSimulation); lost, EXALT's country leaves XCOM (gone
+ *  already: its continent +40 panic), and the raid can be tried again (the base stays exposed). */
+static function RaidBack(XComGameState NewGameState, XComGameState_LWStrategy S, bool bWon)
+{
+	local int i;
+
+	if (bWon)
+	{
+		S.ExaltState = ENDED;
+		S.bExaltRaidReady = false;
+		S.ExaltCells.Length = 0;
+		ClearOperative(NewGameState, S);
+		S.Note("The raid on EXALT's base in" @ S.CountryName(S.ExaltCountry) @ "succeeded: EXALT is finished.");
+		return;
+	}
+	if (S.Countries[S.ExaltCountry].bLeft)
+	{
+		for (i = 0; i < S.Countries.Length; i++)
+			if (S.CountryContinent(i) == S.CountryContinent(S.ExaltCountry))
+				S.AddPanic(i, 40);
+		S.Note("The raid on EXALT's base failed: panic rises on its continent.");
+	}
+	else
+	{
+		S.Note("The raid on EXALT's base failed:" @ S.CountryName(S.ExaltCountry) @ "has withdrawn from XCOM.");
+		S.Leave(S.ExaltCountry);
+	}
 }

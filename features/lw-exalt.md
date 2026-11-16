@@ -1,6 +1,6 @@
 ---
 title: "EXALT: the cells, their operations, scans, covert operatives, clues and the raid on EXALT's base"
-status: in-progress
+status: review
 priority: 35
 dependsOn:
   - lw-geoscape
@@ -208,3 +208,27 @@ call `XComGameState_LWStrategy.Arrived`.
 
 - Phase 4 (the raid on EXALT's base, after the right accusation).
 - The extraction's own objectives (rendezvous, hack two comm relays) and the data recovery's.
+
+## Report (2026-11-16, phase 4: the raid on EXALT's base)
+
+- The right accusation marks the base and stops the clock; the Geoscape then offers "ASSAULT:
+  EXALT's base in <country>" (decision 10, mission kind 9) until the raid is won.
+- **The squad** is Long War's `DetermineExaltRaidSquad`, generated like the covert one: four pods of
+  EXALT's elites (each kind six strong), two pods of its soldiers, a Muton Elite and a Sectoid
+  Commander's pod (about 33; Long War's pod builder rolls).
+- **Back**: won, EXALT is finished (no more cells, scans or decisions); lost, EXALT's country
+  withdraws from XCOM (gone already: its continent +40 panic), and the raid stays open.
+
+**Checked on wingpu** (the accusation by the aid): the raid in Mexico, 30 of EXALT's soldiers on
+the field (15 through XCOM 2's encounters, 15 beside them), won; back through the hub, EXALT
+finished.
+
+**Fixed on the way:** XCOM 2's spawner crashed when an encounter was given 9 or more aliens (the
+raid's 33 shared over four): each encounter now gets at most 5 (`LWMissionSquads.MaxEncounterPod`),
+the rest come beside them at the battle's start, as those whose pods found no room already did.
+
+### Left open
+
+- The covert missions' and the raid's own objectives and maps (EW's EXALT HQ is a skyscraper):
+  XCOM 2's guerrilla ops stand in.
+- EXALT's soldiers stand in as ADVENT's (their bodies are not EW's EXALT yet).

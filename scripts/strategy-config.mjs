@@ -246,7 +246,7 @@ out.push(
     ['Muton', 7], ['Archon', 10], ['Berserker', 15], ['Andromedon', 11], ['Codex', 9], ['AdventPsiWitch', 12]].map(([g, c]) => `+CaptureAs=(Group=${g}, Char=${c})`),
   ...[28, 29, 30, 31].map((id) => `+Species=(Char=${id}, Name=ExaltElite${id}, Elerium=0, Alloys=0, Meld=${one('CB_FUNDING_BONUS')})`),
 )
-if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk), ...mapPlaces(strategyUpk), ...exaltRules(strategyUpk), ...covertSquads(strategyUpk))
+if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk), ...mapPlaces(strategyUpk), ...exaltRules(strategyUpk), ...covertSquads(strategyUpk), ...raidSquad(strategyUpk))
 // Long War's wound recovery (XGFacility_Barracks.DetermineTimeOut; LWWounds).
 out.push(
   '',
@@ -531,6 +531,22 @@ function covertSquads(upk) {
     if (l === '}' && labels.length && last >= 16 && /^default/.test(String(labels))) break
   }
   if (out.length < 20) throw new Error(`DetermineCovertOpsSquad: ${out.length - 2} pods read`)
+  return out
+}
+
+/** EXALT's squad at its base (XGStrategyAI.DetermineExaltRaidSquad): each pod's main soldier and size, as covertSquads. */
+function raidSquad(upk) {
+  const names = { ExaltOperative: 24, ExaltSniper: 25, ExaltHeavy: 26, ExaltMedic: 27, ExaltEliteOperative: 28, ExaltEliteSniper: 29, ExaltEliteHeavy: 30, ExaltEliteMedic: 31, SectoidCommander: 9, MutonElite: 11 }
+  const out = ["; EXALT's squad at its base (XGStrategyAI.DetermineExaltRaidSquad): pods, as CovertPods."]
+  for (const l of decompile(upk, 'XGStrategyAI.DetermineExaltRaidSquad')) {
+    let m
+    if ((m = /BuildPod\(ePodType_\w+, (?:byte\((\d+) \+ Rand\((\d+)\)\)|eChar_(\w+)), (\d+)/.exec(l))) {
+      const main = m[1] ? Number(m[1]) : names[m[3]]
+      if (main === undefined) throw new Error(`DetermineExaltRaidSquad: ${m[3]}`)
+      out.push(`+RaidPods=(Main=${main}, Spread=${m[2] ? Number(m[2]) : 1}, Size=${Number(m[4])})`)
+    } else if ((m = /'BuildPod', byte\(\d+\), byte\((\d+)\), (\d+)\)/.exec(l))) out.push(`+RaidPods=(Main=${Number(m[1])}, Spread=1, Size=${Number(m[2])})`)
+  }
+  if (out.length < 6) throw new Error(`DetermineExaltRaidSquad: ${out.length - 1} pods read`)
   return out
 }
 

@@ -185,6 +185,8 @@ var int ExaltOperative, ExaltOperativeCountry, ExaltOperativeDays;
 /** The covert operation's mission: the hour it expires (0: none), and the missions of the kind fought so far (EXALT's
  *  squads grow with them; Long War counts its extraction and capture-and-hold missions). */
 var int ExaltMissionUntil, ExaltMissionsFought;
+/** EXALT's base found (the right country accused): the raid on it can be launched until it is won. */
+var bool bExaltRaidReady;
 
 // --- Making it ------------------------------------------------------------------------------
 
@@ -1207,6 +1209,8 @@ function array<int> MissionSquad()
 
 	if (PendingKind == 8)
 		return class'LWExalt'.static.CovertSquad(ExaltMissionsFought, Days());
+	if (PendingKind == 9)
+		return class'LWExalt'.static.RaidSquad(Days());
 	if (PendingKind == 5)
 		return class'LWAlienSquads'.static.SquadFor(2, 8, Days(), AlienAggression, AlienResources, 0, TerrorsTaken);
 	if (PendingKind >= 6)
@@ -1334,6 +1338,16 @@ static function MissionBack(bool bWon)
 	{
 		// EXALT's covert operation (Long War's PostCombat): its cell cleared or moved; the operative back.
 		class'LWExalt'.static.CovertMissionBack(NewGameState, S, bWon);
+		S.PendingKind = 0;
+		S.PendingMission = 0;
+		S.bPendingCapture = false;
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		return;
+	}
+	if (S.PendingKind == 9)
+	{
+		// The raid on EXALT's base.
+		class'LWExalt'.static.RaidBack(NewGameState, S, bWon);
 		S.PendingKind = 0;
 		S.PendingMission = 0;
 		S.bPendingCapture = false;
@@ -1955,6 +1969,8 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 	// EXALT: the covert operative ready for extraction (features/lw-exalt.md).
 	if (ExaltOperative > 0 && ExaltMissionUntil > Hours)
 		AddDecision(Kinds, Indexes, Labels, 9, 0, "COVERT OPERATION: extraction in" @ CountryName(ExaltOperativeCountry) @ "(" $ (ExaltMissionUntil - Hours) $ "h)");
+	if (bExaltRaidReady && ExaltState == class'LWExalt'.const.ACTIVE)
+		AddDecision(Kinds, Indexes, Labels, 10, 0, "ASSAULT: EXALT's base in" @ CountryName(ExaltCountry));
 	// The story: an alien base, with a Skeleton Key to open it; the Temple Ship, once the Gollop Chamber stands.
 	if (class'LWEngineering'.static.Held('LWItem_Skeleton_Key') > 0)
 		for (i = 0; i < AlienBases.Length; i++)
