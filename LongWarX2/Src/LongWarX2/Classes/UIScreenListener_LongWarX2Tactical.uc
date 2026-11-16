@@ -247,6 +247,9 @@ function CheckSwept()
 	// EXALT's covert extraction (LWX2CovertExtraction): the operative, the relays, and no victory until they are out.
 	if (!class'LWX2CovertExtraction'.static.Update())
 		return;
+	// EXALT's data recovery (LWX2DataRecovery): the areas, the waves, and no victory before the last has come.
+	if (!class'LWX2DataRecovery'.static.Update())
+		return;
 	// Units that came after the pods (a Chryssalid's zombie, a spawn of XCOM 2's) given their EW body too.
 	class'LWX2EWBodies'.static.ApplyAll();
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
@@ -287,6 +290,8 @@ static function LongWarObjectives()
 		Label = class'LWX2CouncilVIP'.static.ObjectiveText();
 	if (class'LWX2CovertExtraction'.static.ObjectiveText() != "")
 		Label = class'LWX2CovertExtraction'.static.ObjectiveText();
+	if (class'LWX2DataRecovery'.static.ObjectiveText() != "")
+		Label = class'LWX2DataRecovery'.static.ObjectiveText();
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 	if (Battle == none || Battle.MapData.ActiveMission.sType == "Terror")
 		return;

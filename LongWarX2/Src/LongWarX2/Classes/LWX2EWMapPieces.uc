@@ -228,11 +228,22 @@ static function string LevelOf(string Map, name Kind)
 	return "";
 }
 
+/** EXALT's covert mission under way: an extraction or a data recovery (XComGameState_LWStrategy.ExaltMissionKind). */
+static function name CovertKind()
+{
+	local XComGameState_LWStrategy S;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S != none && S.ExaltMissionKind == 2)
+		return 'DataRecovery';
+	return 'CovertExtraction';
+}
+
 static function name KindFor(int Kind)
 {
 	switch (Kind)
 	{
-		case 8: return 'CovertExtraction';
+		case 8: return CovertKind();
 		case 1: return 'Crash';
 		case 2: return 'Landed';
 		case 3: return 'Abduction';

@@ -109,6 +109,17 @@ static function DayForOperative(XComGameState_LWStrategy S)
 		return;
 	if (S.ExaltOperativeDays == 1)
 	{
+		// Which mission (CreateNextMission): the kind not offered yet, else either at even odds.
+		if (S.bExaltOfferedRecovery && !S.bExaltOfferedExtraction)
+			S.ExaltMissionKind = 1;
+		else if (!S.bExaltOfferedRecovery && S.bExaltOfferedExtraction)
+			S.ExaltMissionKind = 2;
+		else
+			S.ExaltMissionKind = 1 + Rand(2);
+		if (S.ExaltMissionKind == 2)
+			S.bExaltOfferedRecovery = true;
+		else
+			S.bExaltOfferedExtraction = true;
 		S.ExaltMissionUntil = S.Hours + 96;
 		S.Note("Our covert operative in" @ S.CountryName(S.ExaltOperativeCountry) @ "is ready for extraction.");
 		S.bStop = true;
@@ -754,7 +765,7 @@ static function ClearCell(XComGameState_LWStrategy S, int Country)
 static function CovertMissionBack(XComGameState NewGameState, XComGameState_LWStrategy S, bool bWon)
 {
 	local XComGameState_HeadquartersXCom XComHQ;
-	local int Country;
+	local int Country, Cash;
 
 	Country = S.ExaltOperativeCountry;
 	S.ExaltMissionsFought++;
@@ -764,14 +775,15 @@ static function CovertMissionBack(XComGameState NewGameState, XComGameState_LWSt
 		S.AddPanic(Country, -20);
 		S.ExaltIntel++;
 		S.Note("The covert operation in" @ S.CountryName(Country) @ "succeeded: the EXALT cell is gone, and the operative brought intel home.");
-		// (XGBattle_SPCovertOpsExtraction.CollectLoot: the extraction's cash, on EW's map where the extraction is played.)
-		if (S.PendingEWMap != "" && default.CovertCash > 0)
+		// (CollectLoot: the extraction's cash, or the data recovery's with its first area held, on EW's map where they are played.)
+		Cash = S.ExaltMissionKind == 2 ? (S.bPendingAreaLost ? 0 : default.DataRecoveryCash) : default.CovertCash;
+		if (S.PendingEWMap != "" && Cash > 0)
 		{
 			XComHQ = XComGameState_HeadquartersXCom(NewGameState.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
 			if (XComHQ == none)
 				XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
-			XComHQ.AddResource(NewGameState, 'Supplies', default.CovertCash);
-			S.Note("The extraction brought" @ class'LWStrategyRules'.static.Money(default.CovertCash) @ "home.");
+			XComHQ.AddResource(NewGameState, 'Supplies', Cash);
+			S.Note("The" @ (S.ExaltMissionKind == 2 ? "data recovery" : "extraction") @ "brought" @ class'LWStrategyRules'.static.Money(Cash) @ "home.");
 		}
 	}
 	else

@@ -218,6 +218,12 @@ var bool bExaltSweepAllowed;
 var array<int> ExaltAccused;
 var int ExaltIntel;
 var int ExaltOperative, ExaltOperativeCountry, ExaltOperativeDays;
+/** The covert operative's mission (Long War's CreateNextMission): 1 an extraction, 2 a data recovery; and which kinds have
+ *  been offered (the first of each comes before chance decides). */
+var int ExaltMissionKind;
+var bool bExaltOfferedExtraction, bExaltOfferedRecovery;
+/** A data recovery's first capture area fell in the mission under way (LWX2DataRecovery): no extra cash. */
+var bool bPendingAreaLost;
 /** The covert operation's mission: the hour it expires (0: none), and the missions of the kind fought so far (EXALT's
  *  squads grow with them; Long War counts its extraction and capture-and-hold missions). */
 var int ExaltMissionUntil, ExaltMissionsFought;
@@ -1321,6 +1327,7 @@ static function MissionChosen(int Kind, int Index, optional bool bCapture)
 	S.bPendingCapture = bCapture;
 	S.PendingCaptives.Length = 0;
 	S.PendingSurvivors.Length = 0;
+	S.bPendingAreaLost = false;
 	S.PendingSquad.Length = 0;
 	S.PendingCivilians = -1;
 	S.PendingCiviliansSaved = -1;
@@ -2088,7 +2095,7 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 			AddDecision(Kinds, Indexes, Labels, Sites[i].bTerror ? 5 : 4, i, (Sites[i].bTerror ? "RESPOND: terror in" : "RESPOND: abductions in") @ CountryName(Sites[i].Country) @ "(" $ (Sites[i].Until - Hours) $ "h)");
 	// EXALT: the covert operative ready for extraction (features/lw-exalt.md).
 	if (ExaltOperative > 0 && ExaltMissionUntil > Hours)
-		AddDecision(Kinds, Indexes, Labels, 9, 0, "COVERT OPERATION: extraction in" @ CountryName(ExaltOperativeCountry) @ "(" $ (ExaltMissionUntil - Hours) $ "h)");
+		AddDecision(Kinds, Indexes, Labels, 9, 0, "COVERT OPERATION:" @ (ExaltMissionKind == 2 ? "data recovery" : "extraction") @ "in" @ CountryName(ExaltOperativeCountry) @ "(" $ (ExaltMissionUntil - Hours) $ "h)");
 	if (bExaltRaidReady && ExaltState == class'LWExalt'.const.ACTIVE)
 		AddDecision(Kinds, Indexes, Labels, 10, 0, "ASSAULT: EXALT's base in" @ CountryName(ExaltCountry));
 	// The story: an alien base, with a Skeleton Key to open it; the Temple Ship, once the Gollop Chamber stands.

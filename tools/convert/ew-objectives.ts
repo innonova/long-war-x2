@@ -327,6 +327,115 @@ export function readCovert(file: string, map: string, level: string): Covert | u
   }
 }
 
+export interface Recovery {
+  map: string
+  level: string
+  /** EW's capture areas (XComCapturePointVolume): the box, the turns EXALT needs alone in it, its order (0 first). */
+  points: { center: number[]; extent: number[]; turns: number; seq: number }[]
+  /** EW's wave system (XComWaveSystem): each group of each wave, its set (0 from the start, 1 once the first area
+   *  falls), its turn after the set starts, how many and where. */
+  groups: { set: number; turn: number; count: number; at: number[][] }[]
+  /** EW's texts: protect the area, protect the backup, eliminate all EXALT, the hint. */
+  protect: string
+  backup: string
+  kill: string
+  hint: string
+}
+
+/** A data recovery's level read (XGBattle_SPCaptureAndHold's capture areas and the level's wave system; the Kismet's
+ *  texts); undefined when it has no capture area. */
+export function readRecovery(file: string, map: string, level: string): Recovery | undefined {
+  const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
+  const meta: any = new Package(bytes)
+  const pkg: any = openPackage(bytes)
+  const K = readKismet(bytes)
+  const dv = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
+  const nameOf = (t: Tag | undefined) => (t ? String(pkg.names[dv(t.value).getInt32(0, true)]?.name) : '')
+  const int = (t: Tag | undefined, d: number) => (t ? dv(t.value).getInt32(0, true) : d)
+  const actorTags = (k: number): Tag[] => {
+    const data = pkg.data(k + 1)
+    for (const start of [26, ...Array.from({ length: 81 }, (_, j) => j)]) {
+      try {
+        const t = readTags(new Reader(data.subarray(start)), pkg)
+        if (t.some((x: Tag) => x.name === 'Location' || x.name === 'Tag')) return t
+      } catch {
+        // not here
+      }
+    }
+    return []
+  }
+  const loc = (t: Tag[]) => {
+    const l = t.find((x) => x.name === 'Location')
+    return l ? [0, 4, 8].map((o) => Math.round(dv(l.value).getFloat32(o, true))) : undefined
+  }
+  const structs = (t: Tag | undefined): Tag[][] => {
+    if (!t) return []
+    const n = dv(t.value).getInt32(0, true)
+    const r = new Reader(t.value.subarray(4))
+    return Array.from({ length: n }, () => readTags(r, pkg) as Tag[])
+  }
+  // A brush actor's box: its location plus its brush's bounds (a Model's data starts with them), as ew-map.ts reads them.
+  const box = (t: Tag[]) => {
+    const l = loc(t)
+    const brush = t.find((x) => x.name === 'Brush')
+    if (!l || !brush) return undefined
+    const d = pkg.data(dv(brush.value).getInt32(0, true))
+    const v = dv(d)
+    const none = meta.names.indexOf('None')
+    let o = 4
+    while (v.getInt32(o, true) !== none) o += 24 + v.getInt32(o + 16, true)
+    o += 8
+    const b = Array.from({ length: 6 }, (_, k) => v.getFloat32(o + 4 * k, true))
+    return { center: [0, 1, 2].map((k) => Math.round(l[k]! + b[k]!)), extent: [3, 4, 5].map((k) => Math.round(b[k]!)) }
+  }
+  const points: Recovery['points'] = []
+  let firstCaptured = ''
+  const spawnAt = new Map<number, number[]>()
+  let waves: Tag[] | undefined
+  meta.exports.forEach((e: any, k: number) => {
+    if (!/^TheWorld\.PersistentLevel\.[^.]+$/.test(e.fullName)) return
+    if (e.type === 'XComCapturePointVolume') {
+      const t = actorTags(k)
+      const b = box(t)
+      if (!b) return
+      const seq = int(t.find((x) => x.name === 'm_iCaptureSequenceIndex'), 0)
+      points.push({ ...b, turns: int(t.find((x) => x.name === 'm_iTurnsToCapture'), 2), seq })
+      // (The first area's capture event starts the second set of waves.)
+      if (seq === 0)
+        firstCaptured = structs(t.find((x) => x.name === 'm_arrCaptureEvents')).map((c) => ({ name: nameOf(c.find((x) => x.name === 'm_nEventName')), left: int(c.find((x) => x.name === 'm_iTurnsRemaining'), 0) })).find((c) => c.left === 0)?.name ?? ''
+    }
+    if (e.type === 'XComSpawnPoint_Alien') {
+      const p = loc(actorTags(k))
+      if (p) spawnAt.set(k, p)
+    }
+    if (e.type === 'XComWaveSystem') waves = actorTags(k)
+  })
+  if (points.length === 0) return undefined
+  const groups: Recovery['groups'] = []
+  structs(waves?.find((x) => x.name === 'm_arrAlienSets')).forEach((set) => {
+    const start = nameOf(set.find((x) => x.name === 'EventName'))
+    const which = !start || start === 'None' ? 0 : start === firstCaptured ? 1 : -1
+    if (which < 0) return
+    for (const w of structs(set.find((x) => x.name === 'Waves'))) {
+      const turn = int(w.find((x) => x.name === 'TurnAppearance'), 0)
+      for (const g of structs(w.find((x) => x.name === 'Groups'))) {
+        const sp = g.find((x) => x.name === 'SpawnPoints')
+        const n = sp ? dv(sp.value).getInt32(0, true) : 0
+        const at = Array.from({ length: n }, (_, i) => spawnAt.get(dv(sp!.value).getInt32(4 + 4 * i, true) - 1)).filter((p): p is number[] => !!p)
+        groups.push({ set: which, turn, count: int(g.find((x) => x.name === 'NumAliens'), 1), at })
+      }
+    }
+  })
+  const strings = new Map(K.ops.filter((o) => o.type === 'SeqVar_LocalizedString').map((o) => [K.str(o, 'strLookup').split('.').pop() ?? '', K.str(o, 'StrValue')]))
+  return {
+    map, level, points: points.sort((a, b) => a.seq - b.seq), groups,
+    protect: strings.get('m_strCnHObj1') ?? '',
+    backup: strings.get('m_strCnHObj2') ?? '',
+    kill: strings.get('m_strCnHObj4') ?? '',
+    hint: strings.get('m_strCnHHint1') ?? '',
+  }
+}
+
 /** Every bomb disposal, VIP mission and covert extraction this install has, written into the mod's config; returns how many. */
 export function writeObjectives(cooked: string, mod: string): number {
   const vec = (p: number[]) => `(X=${p[0]}, Y=${p[1]}, Z=${p[2]})`
@@ -365,6 +474,18 @@ export function writeObjectives(cooked: string, mod: string): number {
     if (!c) continue
     lines.push(`+Extractions=(Map="${c.map}", Level="${c.level}", Relays=(${c.relays.map(vec).join(', ')}), ${c.operative ? `bOperativeSpawn=true, OperativeAt=${vec(c.operative)}, ` : ''}` +
       `Hack=${q(c.hack)}, Left=${q(c.left)}, Escort=${q(c.escort)}, Cleanup=${q(c.cleanup)}, Retreat=${q(c.retreat)})`)
+    n++
+  }
+  // EXALT's data recoveries (LWX2DataRecovery): the areas and the waves, an entry each, by level.
+  lines.push('', '[LongWarX2.LWX2DataRecovery]')
+  for (const m of covertMaps(mod).filter((x) => x.kind === 'DataRecovery')) {
+    const file = levelFile(cooked, m.level)
+    if (!file) continue
+    const r = readRecovery(file, m.map, m.level)
+    if (!r) continue
+    lines.push(`+Recoveries=(Map="${r.map}", Level="${r.level}", Protect=${q(r.protect)}, Backup=${q(r.backup)}, Kill=${q(r.kill)}, Hint=${q(r.hint)})`)
+    for (const p of r.points) lines.push(`+Points=(Level="${r.level}", Center=${vec(p.center)}, Extent=${vec(p.extent)}, Turns=${p.turns}, Seq=${p.seq})`)
+    for (const g of r.groups) lines.push(`+Groups=(Level="${r.level}", Set=${g.set}, Turn=${g.turn}, Count=${g.count}, At=(${g.at.map(vec).join(', ')}))`)
     n++
   }
   writeFileSync(join(mod, 'Config', 'XComLWX2EWObjectives.ini'), lines.join('\r\n') + '\r\n')
