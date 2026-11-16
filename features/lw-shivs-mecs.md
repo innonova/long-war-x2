@@ -98,3 +98,18 @@ engineering on the screen; repair after a mission.
 
 Control port: `shiv` (XCOM's SHIVs and their stats), `shiv add [body] [front]` (one built at
 once; front: first in the next mission's squad).
+
+## Report (2026-11-16, EW's SHIV bodies)
+
+The three SHIVs are drawn as Enemy Within's: `ew-units.ts` converts EW's `Unit_XComTank_SF`
+(the SHIV), `Unit_XComTank2_SF` (the Alloy SHIV) and `Unit_XComTank3_SF` (the Hover SHIV) from
+the player's install, with EW's SHIV Minigun (`Weapon_ShivMinigun_SF`), as it does the aliens'.
+Their animations answer to the ADVENT MEC's names (a new `animsAs`: the mod's templates play on
+the ADVENT MEC's pawn): 79 of its 81 names from EW's 42 SHIV animations. The setup does this
+with the other units, so a player's next setup brings them.
+
+**Seen on wingpu:** the three in a mission's squad in EW's bodies (the two tracked SHIVs and the
+round Hover SHIV), at full health. Screenshot (gitignored): `logs/wingpu_shivs_ew_bodies.png`.
+
+**Not looked at yet:** the treads' material (the stand-in takes the body's texture for every
+material of the mesh), the gun's place on the body, the animations in motion.

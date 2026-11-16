@@ -18,7 +18,10 @@ export interface EWWeapon { pkg: string; mesh: string; diffuse: RegExp; normal: 
 /** species: Long War's species (EW's ECharacter) when it shares its template with another (its own body before the template's). */
 /** reencode: its animations written again per track (ew-unit-anims.ts: XCOM 2 plays those in full; the Cyberdisc's
  *  blades move by translation, which it did not play from EW's compression). */
-export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean }
+/** animsAs: the XCOM 2 template whose animation names its animations answer to, where the template is the mod's own (the
+ *  SHIVs play on the ADVENT MEC's pawn). */
+export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean; animsAs?: string }
+const SHIV_MINIGUN: EWWeapon = { pkg: 'Weapon_ShivMinigun_SF', mesh: 'SM_ShivGatGun', diffuse: /^ShivGatlingGun_DIF$/, normal: /^ShivGatlingGun_NRM$/ }
 const PLASMA_LIGHT: EWWeapon = { pkg: 'Weapon_PlasmaRifle_ThinMan_SF', mesh: 'SM_LightPlasmaRifle', diffuse: /^LightAssaultRiflePlasma_DIF$/, normal: /^LightAssaultRiflePlasma_NRM$/ }
 export const EW_UNITS: EWUnit[] = [
   { template: 'Sectoid', pkg: 'GameUnit_XComSectoid_SF', mesh: 'SM_SectoidSoldier', sets: ['AS_SectoidPistol'], diffuse: /^SectoidSoldier_DIF$/, normal: /^SectoidSoldier_NRM$/,
@@ -43,6 +46,10 @@ export const EW_UNITS: EWUnit[] = [
   { template: 'Berserker', pkg: 'GameUnit_XComMutonCom_SF', mesh: 'SM_MutonBerserker', sets: ['AS_MutonRifle', 'AS_MutonBlade'], diffuse: /^MutonBerserker_DIF/, normal: /^MutonBerserker_NRM/ },
   { template: 'AdvMEC_M1', pkg: 'GameUnit_XComSectopodDrone_SF', mesh: 'SM_Drone', sets: ['AS_DroneDefault'], diffuse: /^Drone_DIF1$/, normal: /^Drone_NRM1$/ },
   { template: 'AdvMEC_M2', pkg: 'GameUnit_XComMechtoid_SF', mesh: 'SM_Mechtoid', sets: ['AS_Mechtoid'], diffuse: /^Mechtoid_DIF/, normal: /^Mechtoid_NRM/ },
+  // Long War's SHIVs (features/lw-shivs-mecs.md): the mod's own templates, on the ADVENT MEC's pawn.
+  { template: 'LWSHIV', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank_SF', mesh: 'SM_Shiv_L1', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv1Shiv_DIF$/, normal: /^Lv1Shiv_NRM$/, weapon: SHIV_MINIGUN },
+  { template: 'LWSHIV_Alloy', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank2_SF', mesh: 'SM_Shiv_L2', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv2Shiv_DIF$/, normal: /^Lv2Shiv_NRM$/, weapon: SHIV_MINIGUN },
+  { template: 'LWSHIV_Hover', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank3_SF', mesh: 'SM_Lv3Shiv', sets: ['Default', 'Mini'], diffuse: /^VEH_Lv3Shiv_DIF$/, normal: /^VEH_Lv3Shiv_NRM$/, weapon: SHIV_MINIGUN },
 ]
 
 /** An EW unit package's objects by name: its mesh's, its sets' and its textures' full paths (forced exports). */
@@ -90,7 +97,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
     try {
       let found = find(decompressPackage(new Uint8Array(readFileSync(src))), u)
       if (!found.mesh || !found.sets.length) { say(`${u.pkg}: no ${u.mesh} or ${u.sets.join('/')}, XCOM 2's ${u.template} kept`); continue }
-      const report = convertPackage(src, join(content, `${u.pkg}.upk`), (bytes) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.template] ?? []), ...(ABILITY_ANIMS[u.template] ?? [])], u.reencode))
+      const report = convertPackage(src, join(content, `${u.pkg}.upk`), (bytes) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.animsAs ?? u.template] ?? []), ...(ABILITY_ANIMS[u.animsAs ?? u.template] ?? [])], u.reencode))
       const leaf = (p: string, pkg = u.pkg) => (p ? `${pkg}.${p.split('.').pop()}` : '')
       // Its weapon: EW's, converted as it is (textures inlined), in place of the XCOM 2 weapon's mesh; a species with none in
       // its hands (the Drone, the Seeker, the Cyberdisc …) has the XCOM 2 weapon hidden (WeaponMesh="none").
