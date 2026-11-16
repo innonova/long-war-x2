@@ -402,3 +402,17 @@ afloat.
 
 - How the body looks while climbing. The camera did not follow the move, and EW's hover SHIV
   has no flight animations of its own to play.
+
+## Report (2026-11-16, Repair Servos)
+
+**Repair Servos** acts now. In Long War it is a MEC perk (the Goliath's and Guardian's
+lieutenant), and a SHIV gets it from the Foundry's Sentinel Drone. Long War's text: "repairs up
+to 50% of damage taken (max 2 per turn)". Here it is XCOM 2's regeneration at each of the unit's
+turns, 2 at a time (`X2Effect_LWRepairServos`). Its total is held to half the damage the unit
+has taken in the mission (its highest HP less its lowest).
+
+**Checked on wingpu** with a soldier given the perk: hurt from 6 to 1, it was back to 3 the next
+turn and stayed at 3 (half of 5, rounded down).
+
+**Not done:** Long War's last clause, "additional damage taken before repairs are complete
+reduces how much can be repaired".

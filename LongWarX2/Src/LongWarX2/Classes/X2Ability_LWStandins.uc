@@ -693,7 +693,11 @@ static function X2AbilityTemplate Passive(LWStandin S)
 
 	if (S.Regen > 0)
 	{
-		Regen = new class'X2Effect_Regeneration';
+		// (Repair Servos: at most half the damage taken, X2Effect_LWRepairServos.)
+		if (S.Kind == 'RepairServos')
+			Regen = new class'X2Effect_LWRepairServos';
+		else
+			Regen = new class'X2Effect_Regeneration';
 		Regen.BuildPersistentEffect(1, true, false, false, eGameRule_PlayerTurnBegin);
 		Regen.HealAmount = S.Regen;
 		Regen.MaxHealAmount = 1000;

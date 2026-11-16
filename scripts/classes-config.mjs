@@ -253,6 +253,8 @@ const REAL = {
   LW_SmartMacrophages: () => ({ ImmuneTo: ['Poison', 'Acid'], HealTaken: 2 }),
   // "unit regenerates 2 hp every turn up to the HP max"
   LW_AdaptiveBoneMarrow: () => ({ Regen: c('GENEMOD_BONEMARROW_HP_REGEN') }),
+  // "Repairs up to 50% of damage taken (max 2 per turn)" (X2Effect_LWRepairServos: the half held by the unit's damage).
+  LW_RepairServos: () => ({ Kind: 'RepairServos', Regen: 2 }),
   // In the cloud of the soldier's smoke grenades (X2Effect_LWSmoke, added to them: AddSmokeBonuses). Combat Drugs'
   // text says +20 critical chance; its constant (used here) is 10.
   LW_DenseSmoke: () => ({ SmokeDefense: c('DENSE_SMOKE_DEFENSE_BONUS') }),
