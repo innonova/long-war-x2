@@ -35,7 +35,7 @@ import { addMaskTextures, maskMip } from './mask-textures.ts'
  *  none, not as the map's name and a dot; 15: EW's materials made inert, XCOM 2 compiling each as the map loaded;
  *  16: the meld canisters' places, MeldPoints; 17: what units see through (EW's VisibilityBlockingData on every piece:
  *  windows, foliage, cars), written onto the plot's pieces). */
-export const CONVERTER_VERSION = 17
+export const CONVERTER_VERSION = 18
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -299,10 +299,12 @@ exports.forEach((e, i) => {
   if (!mesh) return
   const hidden = tags.find((t) => t.name === 'bHidden')
   if (hidden?.boolValue) return
-  const loc = tags.find((t) => t.name === 'Location')
-  const rot = tags.find((t) => t.name === 'Rotation')
-  const ds = tags.find((t) => t.name === 'DrawScale')
-  const ds3 = tags.find((t) => t.name === 'DrawScale3D')
+  // (A placed actor stores only what differs from its archetype: one standing where its archetype stands has no Location
+  // of its own, and was put at the origin until converter 18: Street Hurricane's storefront row then covered its drop zone.)
+  const loc = inherited(i, tags, 'Location', 26)
+  const rot = inherited(i, tags, 'Rotation', 26)
+  const ds = inherited(i, tags, 'DrawScale', 26)
+  const ds3 = inherited(i, tags, 'DrawScale3D', 26)
   const s = ds ? f32(ds, 0) : 1
   pieces.push({
     mesh,
