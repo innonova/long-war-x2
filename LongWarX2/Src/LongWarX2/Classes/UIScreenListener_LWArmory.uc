@@ -53,28 +53,30 @@ static function Place(UIArmory Armory)
 	local Actor Placement;
 	local UIDisplay_LevelActor Display;
 
-	if (Armory.ActorPawn == none)
+	Placement = Armory.GetPlacementActor();
+	if (Placement == none)
 		return;
 	class'LWX2EWBase'.static.Get(Armory).ArmorySpot(CameraFor(Armory), Loc, Rot);
-	// (XCOM 2's armory pawn faces away from where its placement points: turned about.)
-	Rot.Yaw += 32768;
-	// The screen's 3D display (its menu), where XCOM 2 has it beside its own pawn, the same beside ours.
-	Placement = Armory.GetPlacementActor();
-	Display = DisplayOf(Armory);
-	if (Placement != none && Display != none)
-	{
-		Turn.Yaw = Rot.Yaw - Placement.Rotation.Yaw;
-		Offset = Display.Location - Placement.Location;
-		if (VSize(Display.Location - (Loc + (Offset >> Turn))) > 4)
-		{
-			Display.SetLocation(Loc + (Offset >> Turn));
-			Display.SetRotation(Display.Rotation + Turn);
-		}
-	}
-	if (VSize(Armory.ActorPawn.Location - Loc) < 4)
+	if (VSize(Placement.Location - Loc) < 4 && Placement.Rotation.Yaw == Rot.Yaw)
 		return;
-	Armory.ActorPawn.SetLocation(Loc);
-	Armory.ActorPawn.SetRotation(Rot);
+	// XCOM 2 stands and turns its pawn by its placement (a point in the Avenger's armory): the placement moved to EW's
+	// armory, and the screen's 3D display (its menu) where XCOM 2 has it beside the placement, the same beside ours.
+	Turn.Yaw = Rot.Yaw - Placement.Rotation.Yaw;
+	Display = DisplayOf(Armory);
+	if (Display != none)
+	{
+		Offset = Display.Location - Placement.Location;
+		Display.SetLocation(Loc + (Offset >> Turn));
+		Display.SetRotation(Display.Rotation + Turn);
+	}
+	Placement.SetLocation(Loc);
+	Placement.SetRotation(Rot);
+	if (Armory.ActorPawn != none)
+	{
+		Armory.ActorPawn.SetLocation(Loc);
+		Armory.ActorPawn.SetRotation(Rot);
+	}
+	`log("LongWarX2: armory in EW's: placement at" @ Placement.Location @ "yaw" @ Placement.Rotation.Yaw @ "; display" @ (Display != none ? string(Display.Location) : "not found"), , 'LongWarX2');
 }
 
 /** The screen's 3D display (in its blueprint's level, which the world's actor lists do not reach: LWX2DisplayWatch). */
