@@ -230,3 +230,24 @@ the leader and the squad within 8 tiles of the leader take the cover part of the
 twice. Checked on wingpu with a captain holding it: a Sectoid's 4 on a soldier in high cover 2
 (3 without), in low cover 2.666. Combined Arms moved there too: a point of Long War's
 reduction ignored, no longer a point of XCOM 2 armour piercing. All ten powers act.
+
+## Report (2026-11-16, EW's own Officer Billets screen)
+
+With EW's screens running on EW's own Flash framework (`features/lw-base-view.md`), EW's Medals
+movie draws its rows, and the promotions now use it (`UILWEWOfficers`), driven as Long War's
+`UIMedals` drives it:
+- **Officer Billets** (display mode 0): the five ranks with their insignia (EW's medal frames:
+  `urbancombat`, `defender`, `international`, `honor`, `starofterra`, Long War's
+  `UIUtilities.GetMedalLabel`), "Open Billets: N" or LOCKED with EW's lock.
+- A rank with an open billet chosen: XCOM 2's soldier list of those Long War lets be promoted
+  (`UIPersonnel_LWOfficer`, unchanged).
+- **ASSIGN ABILITY - <rank>** (display mode 2): the two powers' texts and EW's buttons with their
+  names; no pictures (stock Long War's picture table is empty, so its screen shows none either).
+- EW's confirmation; promoted. Mouse as Long War reads it (`option<n>`, `highlightMC<n>`: the
+  movie's own mouse events reach the screen), arrows, Enter, Escape (powers → ranks → closed).
+
+Checked on wingpu by mouse: Lieutenant chosen, a soldier, STAY FROSTY, Yes: "Lieutenant: open 2
+filled 1", the soldier officer rank 1 with the second power. Screenshots
+`logs/wingpu_ew_officer_billets.png`, `logs/wingpu_ew_officer_assign.png`.
+
+`UILWOfficers` (XCOM 2's widgets) stays for a player whose EW screens are not converted.

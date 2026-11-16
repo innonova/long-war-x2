@@ -67,30 +67,6 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	super.InitScreen(InitController, InitMovie, InitName);
 }
 
-/** A function of the movie called at once (below the screen's clip), with these arguments. */
-function CallNow(string Func, optional array<ASValue> Params)
-{
-	Movie.Invoke(MCPath $ "." $ Func, Params);
-}
-
-static function ASValue Str(string Text)
-{
-	local ASValue V;
-
-	V.Type = AS_String;
-	V.s = Text;
-	return V;
-}
-
-static function ASValue Num(float N)
-{
-	local ASValue V;
-
-	V.Type = AS_Number;
-	V.n = N;
-	return V;
-}
-
 /** The room's options in EW's submenu under its tab, the first selected. */
 function ShowRoomMenu()
 {
@@ -386,7 +362,11 @@ function ChooseOption(int Option)
 	// (The plain base screen holds the Officer Training School's, the Psi Labs' and the Genetics Lab's panels, until each
 	// has EW's own screen.)
 	case OPT_OFFICERS:
-		HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWOfficers', HQPres));
+		// EW's own Officer Billets screen; XCOM 2's widgets where EW's screens are not converted.
+		if (class'UILWEWScreen'.static.HasEWScreens())
+			class'UILWEWOfficers'.static.Open(HQPres);
+		else
+			HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWOfficers', HQPres));
 		break;
 	case OPT_OTS:
 		if (class'UILWEWScreen'.static.HasEWScreens())

@@ -62,6 +62,30 @@ static function string CallMovie(array<string> Args)
 	return "ok" @ EWScreen.MCPath $ "." $ Args[1] @ "with" @ (Args.Length - 2) @ "arguments";
 }
 
+/** A function of the movie called at once (below the screen's clip), with these arguments. */
+function CallNow(string Func, optional array<ASValue> Params)
+{
+	Movie.Invoke(MCPath $ "." $ Func, Params);
+}
+
+static function ASValue Str(string Text)
+{
+	local ASValue V;
+
+	V.Type = AS_String;
+	V.s = Text;
+	return V;
+}
+
+static function ASValue Num(float N)
+{
+	local ASValue V;
+
+	V.Type = AS_Number;
+	V.n = N;
+	return V;
+}
+
 /** A function of the top EW screen's movie called at once (Movie.Invoke), its result (a test aid: ewinvoke). */
 static function string InvokeMovie(array<string> Args)
 {
