@@ -467,6 +467,8 @@ static function X2AbilityTemplate Strangle(name AbilityName)
 		// Chitin Plating: not strangled (Long War's item text: "a strangulation countermeasure").
 		NoChitin = new class'X2Condition_LWNoItem';
 		NoChitin.Item = class'X2Ability_LWDamageReduction'.default.ChitinPlating;
+		// (And the Respirator Implant: "confers immunity to strangle".)
+		NoChitin.OrItem = 'LWSmall_76';
 		Template.AbilityTargetConditions.AddItem(NoChitin);
 	}
 	// A soldier in high cover can be seized too (XCOM 2's Viper cannot bind one; EW's Seeker strangles anyone it reaches).

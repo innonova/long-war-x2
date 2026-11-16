@@ -41,6 +41,7 @@ static function name StatsFor(int Item)
 
 static function X2AbilityTemplate Stats(LWGearRules.LWSmallDef D)
 {
+	local X2Effect_LWRespirator Respirator;
 	local X2AbilityTemplate Template;
 	local X2Effect_PersistentStatChange Effect;
 	local X2Effect_LWSmallItem Extra;
@@ -71,6 +72,12 @@ static function X2AbilityTemplate Stats(LWGearRules.LWSmallDef D)
 		if (D.Will != 0)
 			Effect.AddPersistentStatChange(eStat_Will, D.Will);
 		Template.AddTargetEffect(Effect);
+	}
+	if (D.Respirator)
+	{
+		Respirator = new class'X2Effect_LWRespirator';
+		Respirator.BuildPersistentEffect(1, true, false, false);
+		Template.AddTargetEffect(Respirator);
 	}
 	if (D.Ammo > 1 || D.Kind == 'Rocket' || D.CritAgainstReaction != 0 || D.ScopeCrit != 0 || D.WeaponCrit != 0)
 	{

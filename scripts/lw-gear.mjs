@@ -228,6 +228,9 @@ export const SMALL = [
   { item: 198, kind: 'Passive', look: 'CommonPCSPerception' },
   // Combat Stims: XCOM 2's stims (a used item), and damage x0.6 while they last (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction).
   { item: 70, kind: 'Stims', look: 'CombatStims' },
+  // The Respirator Implant: its line's +1 HP; the first time its wearer's health would run out in a mission they bleed out
+  // instead, for two turns more (XGAction_CriticallyWounded); not strangled (its text). Its partial acid immunity is not done.
+  { item: 76, kind: 'Passive', look: 'CommonPCSConditioning', respirator: true },
   // Chitin Plating: melee damage x0.6 on its wearer (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction), its stat line's HP.
   { item: 72, kind: 'Passive', look: 'CommonPCSConditioning' },
   // Long War's MEC subsystems (features/lw-shivs-mecs.md, phase 4), MEC classes only, each an XCOM 2 item standing in for

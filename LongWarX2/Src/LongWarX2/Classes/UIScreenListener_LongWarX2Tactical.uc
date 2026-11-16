@@ -238,6 +238,7 @@ function CheckSwept()
 		return;
 	NoReinforcements();
 	LongWarObjectives();
+	class'X2Effect_LWRespirator'.static.Update();
 	// A council bomb disposal (LWX2CouncilBomb): its timer, and no victory until the bomb is disarmed.
 	if (!class'LWX2CouncilBomb'.static.Update())
 		return;

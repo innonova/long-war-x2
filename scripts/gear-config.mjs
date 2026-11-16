@@ -80,7 +80,7 @@ for (const x of SMALL) {
       // with a pistol (XGAbility_Targeted.CalcCriticalChance; FOUNDRY_SCOPE_CRIT_BONUS).
       (x.item === 74 || x.item === 79 ? `, ScopeCrit=${Math.trunc(scopeCrit / (x.item === 79 ? 2 : 1))}` : '') +
       (x.weaponCrit ? `, WeaponCrit=${x.weaponCrit}` : '') +
-      (x.psi ? ', Psionic=true' : '') + (x.stealth ? ', Stealth=true' : '') +
+      (x.psi ? ', Psionic=true' : '') + (x.stealth ? ', Stealth=true' : '') + (x.respirator ? ', Respirator=true' : '') +
       (x.balance ? `, Defense=${balanceOf(x.item, 'iDefense')}, Mobility=${balanceOf(x.item, 'iMobility')}, DR=${itemDR.get(x.item) ?? 0}` : '') +
       (anyone ? '' : `, Classes=(${classes.map((c) => `LWS_${c}`).join(',')})`) +
       ')',

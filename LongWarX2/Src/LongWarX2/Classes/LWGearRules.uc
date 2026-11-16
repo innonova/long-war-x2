@@ -108,6 +108,8 @@ struct LWSmallDef
 	var bool Psionic;
 	/** Its blast hides the allies in it until their next turn (the Ghost Grenade). */
 	var bool Stealth;
+	/** Its wearer bleeds out the first time their health would run out (the Respirator Implant: X2Effect_LWRespirator). */
+	var bool Respirator;
 	/** Will while carried (the Mind Shield). */
 	var int Will;
 	/** Defense and mobility while carried, and damage reduction (Reinforced Armor: Long War's BalanceMods_Classic line). */
