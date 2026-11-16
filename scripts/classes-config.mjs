@@ -152,7 +152,9 @@ const REAL = {
   // Its words: +2 for explosive grenades and rockets, +2 for SAWs' and LMGs' standard and Rapid Fire shots (suppression and Flush not yet).
   LW_Mayhem: () => ({ Damage: 2, DamageIf: 'Explosive', Damage2: 2, Damage2If: 'GunnerShot' }),
   // EW's constants: damage taken less in cover and not flanked; crit damage more on a Run and Gun turn; rockets' radius more (tiles).
-  LW_WilltoSurvive: () => ({ DamageTaken: c('WILLTOSURVIVE_DMG_REDUCTION'), DamageTakenIf: 'InCover' }),
+  // Will to Survive: Long War's damage reduction (X2Ability_LWDamageReduction: 1.5 in cover and not flanked, AbsorbDamage's
+  // number, not EW's constant).
+  LW_WilltoSurvive: () => ({}),
   LW_KillerInstinct: () => ({ CritDamagePct: c('KILLERINSTINCT_CRIT_DMG_MULT', 100), CritDamageIf: 'AfterRunAndGun' }),
   LW_DangerZone: () => ({ BonusRadius: c('DANGER_ZONE_RADIUS_BONUS') / 96 }),
   // Free standard shots, once a turn (X2Effect_LWFreeShot).
@@ -401,6 +403,13 @@ writeFileSync(
     ...geneLines,
     "; Long War's aliens' perks (pod leaders and navigators): the ability each gives (features/lw-aliens.md).",
     ...alienLines,
+    '',
+    "; Long War's damage reduction (features/lw-damage-reduction.md; X2Ability_LWDamageReduction): the numbers of its",
+    '; XGUnit.AbsorbDamage, and the Gauss weapons\' share from its ini (COUNCIL_FUNDING_MULTIPLIER_EASY), twice with Foundry project 44.',
+    '[LongWarX2.X2Ability_LWDamageReduction]',
+    'LowCover=0.667', 'HighCover=1.0', 'WillToSurvive=1.5', 'CombinedArms=1.0',
+    `Gauss=${parseFloat(ini('COUNCIL_FUNDING_MULTIPLIER_EASY'))}`, 'GaussFoundry=44',
+    'ShieldFactor=0.5', 'AcidMin=3', 'AcidShare=0.5', 'ShotgunExtra=0.5',
     '',
     "; War of the Chosen's Skirmish Mode: Long War's classes armed like these XCOM 2 classes (LWX2SkirmishWeapons).",
     '[LongWarX2.LWX2SkirmishWeapons]',

@@ -1,8 +1,8 @@
 // The squad's officer powers on each of its soldiers (features/lw-officers.md): the powers of the squad's leader, marked on
 // every soldier at launch (LWOfficers.MarkSquad: LWX2SquadPowers), as Long War copies the leader's medal perks to the squad.
 // Stats for the mission: Legio Patria Nostra (will per nationality in the squad), Band of Warriors (aim per continent bonus
-// held), Esprit de Corps (will, not for robots, and defence). When shot at: Semper Vigilans (defence in cover). When
-// shooting: Combined Arms (a point of armour ignored, Long War's point of damage reduction).
+// held), Esprit de Corps (will, not for robots, and defence). When shot at: Semper Vigilans (defence in cover).
+// Combined Arms and Fortiores Una act through Long War's damage reduction (X2Ability_LWDamageReduction).
 class X2Effect_LWOfficerPowers extends X2Effect_ModifyStats;
 
 simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffectParameters, XComGameState_BaseObject kNewTargetState, XComGameState NewGameState, XComGameState_Effect NewEffectState)
@@ -83,11 +83,6 @@ function GetToHitAsTargetModifiers(XComGameState_Effect EffectState, XComGameSta
 	Mod.Value = -class'LWOfficers'.default.UrbanDefense;
 	Mod.Reason = class'LWOfficers'.static.PowerName(class'LWOfficers'.const.SEMPER_VIGILANS);
 	ShotModifiers.AddItem(Mod);
-}
-
-function int GetExtraArmorPiercing(XComGameState_Effect EffectState, XComGameState_Unit Attacker, Damageable TargetDamageable, XComGameState_Ability AbilityState, const out EffectAppliedData AppliedData)
-{
-	return (Attacker != none && class'LWOfficers'.static.SquadHad(Attacker, class'LWOfficers'.const.COMBINED_ARMS)) ? 1 : 0;
 }
 
 defaultproperties

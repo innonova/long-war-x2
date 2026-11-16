@@ -30,7 +30,7 @@ buttons and text, no art).
 | Loot | most | plain | kill loot, corpses, fragments, captives (arc thrower), salvage, the first mission's, meld canisters at EW's places; the grey market buys it (`lw-greymarket`) | explosions destroying loot | `lw-loot` |
 | Psi Labs | most | plain | training at Long War's hours and chance (0.45) | psi ranks and XP; fatigue | `lw-psi` |
 | Genetics Lab | most | plain | the ten mods, slots, cost and time | the mods' fatigue | `lw-genemods` |
-| Officer Training School and officers | most | LW | the school on EW's screen: squad sizes and the five officer projects; officer ranks, Long War's promotion rules, the squad's leader, Command, Lead By Example, nine of the ten powers, the officers' fatigue; promotions in the hub's Barracks (ranks and billets, the soldiers Long War allows, the two powers, EW's confirmation) | the promotion screen on XCOM 2's widgets (EW's movie waits on its shared components); Fortiores Una (waits on damage reduction) | `lw-officers` |
+| Officer Training School and officers | most | LW | the school on EW's screen: squad sizes and the five officer projects; officer ranks, Long War's promotion rules, the squad's leader, Command, Lead By Example, all ten powers, the officers' fatigue; promotions in the hub's Barracks (ranks and billets, the soldiers Long War allows, the two powers, EW's confirmation) | the promotion screen on XCOM 2's widgets (EW's movie waits on its shared components) | `lw-officers` |
 | Start and country bonuses | most | LW | the start screen (EW's own ContinentSelect: home country and starting bonus together), all 62 bonuses as config with Long War's `HasBonus`; what acts at the start (money, Foundry projects, jets, steam vents, starting facilities, soldiers) and on soldiers (stats at creation, by base class); the bonuses on costs, funding, abductions, research, labs, psi, gene mods, fatigue and the Officer Training School; words from the player's Long War | those waiting on SHIVs, MECs, officers, council requests | `lw-startbonus` |
 | The story | most | plain | alien bases, Overseers, the Temple Ship | the HQ assault from month 4; Act 3; EXALT | `lw-story` |
 | EXALT | none | | | all of it | |
@@ -44,7 +44,7 @@ buttons and text, no art).
 
 | System | Status | Looks | What is in | What is missing | Feature |
 |---|---|---|---|---|---|
-| Damage reduction | none | | | Long War's damage reduction: in cover 0.667 (low) or 1 (high) less damage, more when hunkered down; the aliens' own; Fortiores Una doubles the cover part | `lw-officers` (found there) |
+| Damage reduction | most | LW | Long War's rule on every unit: the aliens' own and armour's, shields, acid, cover as the attacker sees it (0.667 low, 1 high), hunkering, Will to Survive, Fortiores Una; Combined Arms, Gauss weapons, shotguns' extra; the fraction rolled up by chance | MEC and SHIV reductions, Combat Stims, Chitin Plating, the special ammo, Reinforced Armor; the reduction's number after a hit | `lw-damage-reduction` |
 | Classes and perk trees | done | X2 | the eight subclasses, their trees and stat gains | | `lw-classes` |
 | Perks | most | X2 | most of the 78 Long War perks act; approximations marked in Decisions | Lock N' Load, Concealment, Extra Conditioning, Javelin, Neural Feedback, Pyrokinesis; Bioelectric Skin's reveal; Muscle Fiber Density as a passive jump (a grapple for now) | `lw-classes`, `lw-psi`, `lw-genemods` |
 | Psi powers in missions | most | X2 | ten of twelve | Neural Feedback, Pyrokinesis | `lw-psi` |

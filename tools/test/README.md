@@ -78,7 +78,8 @@ And around it:
     tools/test/lw.sh psi 'psi 0 68'           # psi training: the powers, chances, hours; soldier 0 trains Mindfray
     tools/test/lw.sh gene 'gene 2 148'        # gene mods: costs, what is missing; soldier 2 into the tank for Iron Skin
     tools/test/lw.sh ots 'ots buy'            # the Officer Training School's next squad size: what it needs; bought
-    tools/test/lw.sh officers 'officers buy 0' 'officers promote 3' 'officers set 3 2 0' 'officers ready 0'  # officers: posts and ranks; a project; a promotion; test aids (rank and powers set; ready for the next rank)
+    tools/test/lw.sh officers 'officers buy 0' 'officers promote 3' 'officers set 3 2 0' 'officers ready 0' 'officers mark'  # officers: posts and ranks; a project; a promotion; test aids (rank and powers set; ready for the next rank; the squad marked again, as at launch)
+    tools/test/lw.sh dr 'dr #550 #1511 4'      # in a mission: each unit's own damage reduction; what a 4-damage hit by #550 on #1511 leaves, and why
     tools/test/lw.sh 'open base'               # the Geoscape's base screen (hangar, engineering)
     tools/test/lw.sh 'open hub'                # the Long War hub: EW's base and its room menu
     tools/test/lw.sh 'baselook Expansion'      # EW's base shown through one of its cameras (Base, Expansion, AwayTeam, AddonCam_R1_C1 …)

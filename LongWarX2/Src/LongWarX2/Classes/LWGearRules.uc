@@ -46,6 +46,8 @@ struct LWArmorDef
 	var bool FireImmune;
 	var bool PoisonImmune;
 	var bool Infinite;
+	/** Its damage reduction (Long War's BalanceMods_Classic iHP, in tenths: Titan 0.5; X2Ability_LWDamageReduction). */
+	var float DR;
 };
 
 /** An item engineering builds (Long War's ItemBalance_Normal and XGItemTree.BuildItems). */

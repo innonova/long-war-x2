@@ -259,3 +259,14 @@ document the encodings):
   from the player's Long War install (`scripts/lw-words.mjs`, `ALIEN_PERKS`; Long War's text, never in the repository).
   Checked: the test machine's installed words have the eight sections, by the same route as the soldiers' perks, whose
   names show in the game; these new ones not looked at on screen yet.
+
+## Report (2026-11-16, with the damage reduction)
+
+- **The aliens' damage reduction is Long War's now** (`features/lw-damage-reduction.md`): kept as
+  a fraction on the alien (`LWX2DR`) and taken off each hit by Long War's rule, no longer rounded
+  into XCOM 2's armour. Long War's aliens carry no XCOM 2 armour (an ADVENT MEC standing in for
+  a Drone had XCOM 2's 2).
+- **On XCOM 2's own plots** the aliens had XCOM 2's stats (Long War's squad was written into the
+  encounters by template only). They are now matched to the squad in order at the battle's start
+  and given their species and Long War's stats (`LWMissionSquads.SpeciesForEncounters`); the
+  top-up pods pass theirs too. Checked: 11 aliens on an abduction, Sectoids at 3 HP (were 8).

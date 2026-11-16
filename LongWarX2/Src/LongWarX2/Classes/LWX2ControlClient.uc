@@ -210,6 +210,10 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem("squad size" @ class'UILWHeadquarters'.static.SquadSize() $ "; ranks in the barracks" @ class'XComGameState_LWStrategy'.static.RanksInBarracks() $ (Why != "" ? "; the next needs" @ Why : "; the next can be bought"));
 		}
 		return;
+	case "dr":
+		// Long War's damage reduction: 'dr' each unit's own; 'dr <attacker #id> <target #id> <damage>' what a hit leaves, and why.
+		DamageReduction(Args, Out);
+		return;
 	case "effects":
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', EffUnit)
 			if (EffUnit.GetTeam() == eTeam_XCom && EffUnit.IsSoldier() && !EffUnit.bRemovedFromPlay)
@@ -1901,6 +1905,73 @@ function array<XComGameState_Unit> FieldXCom()
 	return Units;
 }
 
+function DamageReduction(array<string> Args, out array<string> Out)
+{
+	local XComGameState_Unit Unit, Attacker, Target;
+	local string Parts;
+	local float Left;
+
+	if (Args.Length > 2 && Args[1] ~= "tocover")
+	{
+		// 'dr tocover <unit index>': the soldier walked to the nearest tile with cover it can reach (a test aid).
+		Out.AddItem(ToCover(int(Args[2]), Args.Length > 3 && Args[3] ~= "high"));
+		return;
+	}
+	if (Args.Length > 3)
+	{
+		Attacker = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(int(Mid(Args[1], 1))));
+		Target = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(int(Mid(Args[2], 1))));
+		if (Attacker == none || Target == none)
+		{
+			Out.AddItem("ERR dr <attacker #id> <target #id> <damage>");
+			return;
+		}
+		Left = class'X2Ability_LWDamageReduction'.static.Absorb(Target, Attacker, Attacker.GetPrimaryWeapon(), int(Args[3]), Parts);
+		Out.AddItem(Attacker.GetFullName() @ "(" $ (Attacker.GetPrimaryWeapon() != none ? string(Attacker.GetPrimaryWeapon().GetMyTemplateName()) : "no weapon") $ ") on"
+			@ Target.GetFullName() @ "for" @ Args[3] $ ": left" @ Left $ ";" $ (Parts != "" ? Parts : " nothing taken off"));
+		return;
+	}
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (!Unit.bRemovedFromPlay && Unit.IsAlive() && (Unit.GetTeam() == eTeam_XCom || Unit.GetTeam() == eTeam_Alien))
+			Out.AddItem("#" $ Unit.ObjectID @ Unit.GetFullName() @ Unit.GetMyTemplateName() @ "own" @ class'X2Ability_LWDamageReduction'.static.OwnReduction(Unit)
+				@ "armour" @ int(Unit.GetCurrentStat(eStat_ArmorMitigation)) @ "cover" @ Unit.GetCoverTypeFromLocation() @ "passive" @ (Unit.FindAbility('LWX2_DamageReduction').ObjectID > 0));
+}
+
+/** A soldier of XCOM's (by index) walked to the nearest reachable tile with cover (high cover only, bHigh). */
+function string ToCover(int Index, bool bHigh)
+{
+	local array<XComGameState_Unit> Units;
+	local array<TTile> Tiles;
+	local TTile T, Best;
+	local vector At;
+	local XGUnit Visualizer;
+	local int D, BestD;
+
+	Units = FieldXCom();
+	if (Index < 0 || Index >= Units.Length)
+		return "ERR no unit" @ Index;
+	Visualizer = XGUnit(Units[Index].GetVisualizer());
+	if (Visualizer == none)
+		return "ERR not in a mission";
+	Visualizer.m_kReachableTilesCache.GetAllPathableTiles(Tiles);
+	BestD = 1000;
+	foreach Tiles(T)
+	{
+		At = `XWORLD.GetPositionFromTileCoordinates(T);
+		if (!(`XWORLD.IsLocationHighCover(At) || (!bHigh && `XWORLD.IsLocationLowCover(At))))
+			continue;
+		D = Abs(T.X - Units[Index].TileLocation.X) + Abs(T.Y - Units[Index].TileLocation.Y);
+		if (D > 0 && D < BestD)
+		{
+			BestD = D;
+			Best = T;
+		}
+	}
+	if (BestD == 1000)
+		return "ERR no tile with cover in reach";
+	return MoveUnit(Index, Best.X, Best.Y, Best.Z);
+}
+
 function XComUnits(out array<string> Out)
 {
 	local array<XComGameState_Unit> Units;
@@ -2692,6 +2763,12 @@ function Officers(array<string> Args, out array<string> Out)
 		Out.AddItem(class'LWOfficers'.static.Buy(int(Args[2]), Why) ? "ok" : "ERR" @ Why);
 	else if (Args.Length > 2 && Args[1] ~= "promote" && int(Args[2]) < Soldiers.Length)
 		Out.AddItem(class'LWOfficers'.static.Promote(Soldiers[int(Args[2])].ObjectID, Args.Length > 3 && Args[3] ~= "second", Why) ? "ok" : "ERR" @ Why);
+	else if (Args.Length > 1 && Args[1] ~= "mark")
+	{
+		// A test aid: the squad's leader and powers marked again, as at launch (after 'officers set' in a mission).
+		class'LWOfficers'.static.MarkSquad();
+		Out.AddItem("ok squad marked");
+	}
 	else if (Args.Length > 2 && Args[1] ~= "ready" && (Left(Args[2], 1) == "#" || int(Args[2]) < Soldiers.Length))
 	{
 		// A test aid: the soldier ranked up to the next officer rank's requirement and its missions in grade counted done.

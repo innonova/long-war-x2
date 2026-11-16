@@ -220,5 +220,13 @@ requirement and counts its missions in grade done (a test aid).
 
 ### Left open
 
-- Fortiores Una, waiting on Long War's damage reduction (STATUS).
+- ~~Fortiores Una, waiting on Long War's damage reduction (STATUS).~~ Done (below).
 - Officer rank shown on the soldier (EW put the rank's insignia beside the class).
+
+## Report (2026-11-16, Fortiores Una)
+
+Fortiores Una acts now, through Long War's damage reduction (`features/lw-damage-reduction.md`):
+the leader and the squad within 8 tiles of the leader take the cover part of the reduction
+twice. Checked on wingpu with a captain holding it: a Sectoid's 4 on a soldier in high cover 2
+(3 without), in low cover 2.666. Combined Arms moved there too: a point of Long War's
+reduction ignored, no longer a point of XCOM 2 armour piercing. All ten powers act.

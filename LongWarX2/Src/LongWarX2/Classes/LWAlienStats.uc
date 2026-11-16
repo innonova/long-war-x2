@@ -156,8 +156,10 @@ static function bool ApplyTo(XComGameState_Unit Unit, int Species, optional int 
 	SetStat(Unit, eStat_CritChance, Crit);
 	if (Shield > 0)
 		SetStat(Unit, eStat_ShieldHP, Shield);
-	if (DR > 0)
-		SetStat(Unit, eStat_ArmorMitigation, Round(DR));
+	// Long War's damage reduction, a fraction (X2Ability_LWDamageReduction), in place of XCOM 2's armour, which Long War's
+	// aliens do not have.
+	SetStat(Unit, eStat_ArmorMitigation, 0);
+	Unit.SetUnitFloatValue('LWX2DR', DR, eCleanup_Never);
 	Unit.SetUnitFloatValue('LWX2DamageBonus', Damage, eCleanup_Never);
 	k = default.Weapon.Find('Species', Species);
 	if (k != INDEX_NONE)

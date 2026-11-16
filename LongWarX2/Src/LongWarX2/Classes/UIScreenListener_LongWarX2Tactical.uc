@@ -45,7 +45,8 @@ event OnInit(UIScreen Screen)
 		bSwept = false;
 		Screen.SetTimer(2.0, true, nameof(CheckSwept), self);
 		NoTimer();
-		// On XCOM 2's maps: the squad's aliens whose pods found no room.
+		// On XCOM 2's maps: the aliens that came given Long War's species and stats; the squad's aliens whose pods found no room.
+		class'LWMissionSquads'.static.SpeciesForEncounters();
 		class'LWMissionSquads'.static.TopUp();
 		class'LWMeld'.static.Place();
 		class'LWFatigue'.static.MarkAllIn();

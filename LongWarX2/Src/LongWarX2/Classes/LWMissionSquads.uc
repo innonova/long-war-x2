@@ -190,6 +190,59 @@ static function array<int> SquadNow()
 }
 
 /**
+ * On XCOM 2's maps: the aliens that came by XCOM 2's encounters (Long War's squad written into them, ApplyTo) given their
+ * Long War species and stats (LWAlienStats.ApplyTo), as SpawnPod gives its own: matched to the squad in order by the
+ * template each species fights as, the first (the commander, in the first pod) its leader. Once: those with a species
+ * are passed by.
+ */
+static function SpeciesForEncounters()
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState NewGameState;
+	local XComGameState_Unit Unit;
+	local UnitValue V;
+	local array<int> Pool;
+	local int k, Given;
+	local bool bLeaderGiven;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || S.PendingSquad.Length == 0 || class'LWX2PartPlacer'.default.bEWPlaced)
+		return;
+	Pool = S.PendingSquad;
+	// Species already given (a game loaded mid-mission) out of the pool first.
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_Alien && Unit.GetUnitValue('LWX2Species', V))
+		{
+			bLeaderGiven = true;
+			k = Pool.Find(int(V.fValue));
+			if (k != INDEX_NONE)
+				Pool.Remove(k, 1);
+		}
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: Long War's species for XCOM 2's encounters");
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Unit.GetTeam() != eTeam_Alien || Unit.GetMyTemplate().bIsCosmetic || Unit.GetUnitValue('LWX2Species', V))
+			continue;
+		for (k = 0; k < Pool.Length; k++)
+			if (TemplateFor(Pool[k]) == Unit.GetMyTemplateName())
+				break;
+		if (k == Pool.Length)
+			continue;
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		Unit.SetUnitFloatValue('LWX2Species', Pool[k], eCleanup_Never);
+		class'LWAlienStats'.static.ApplyTo(Unit, Pool[k], bLeaderGiven ? 0 : class'LWAlienStats'.static.LeaderLevel(), NewGameState);
+		bLeaderGiven = true;
+		Pool.Remove(k, 1);
+		Given++;
+	}
+	if (Given > 0)
+		`TACTICALRULES.SubmitGameState(NewGameState);
+	else
+		`XCOMHISTORY.CleanupPendingGameState(NewGameState);
+	`log("LongWarX2: missions:" @ Given @ "aliens of XCOM 2's encounters given Long War's species and stats", , 'LongWarX2');
+}
+
+/**
  * On XCOM 2's maps: those of Long War's squad that did not come (XCOM 2 places a pod whole or not at all, and its pods
  * are made for fewer aliens than Long War's squads share into them) spawned as pods of up to 4 beside aliens already
  * on the field. Once a mission: every alien that came stays in the history, dead or taken.
@@ -200,6 +253,7 @@ static function TopUp()
 	local XComGameState_Unit Unit;
 	local array<XComGameState_Unit> Field;
 	local array<name> Names;
+	local array<int> Species;
 	local vector At;
 	local int Came, Missing, k, n, Pod;
 
@@ -221,12 +275,16 @@ static function TopUp()
 	for (k = S.PendingSquad.Length - Missing; k < S.PendingSquad.Length; k += n)
 	{
 		Names.Length = 0;
+		Species.Length = 0;
 		for (n = 0; n < 4 && k + n < S.PendingSquad.Length; n++)
+		{
 			Names.AddItem(TemplateFor(S.PendingSquad[k + n]));
+			Species.AddItem(S.PendingSquad[k + n]);
+		}
 		At = `XWORLD.GetPositionFromTileCoordinates(Field[Pod % Field.Length].TileLocation);
 		At.X += (Pod % 2 == 0 ? 3 : -3) * class'XComWorldData'.const.WORLD_StepSize;
 		At.Y += (Pod % 3 == 0 ? 3 : -3) * class'XComWorldData'.const.WORLD_StepSize;
-		SpawnPod(name("LWX2_TopUp" $ Pod), At, Names);
+		SpawnPod(name("LWX2_TopUp" $ Pod), At, Names, Species);
 		Pod++;
 	}
 }

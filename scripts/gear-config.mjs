@@ -45,14 +45,16 @@ for (const items of Object.values(FAMILIES)) {
 // The armours: HP, defence, will and mobility; grapple and immunities (the rest of their properties, flight and
 // ghost, not yet); the XCOM 2 armour each looks like; those never built (cost -1) unlimited.
 const armours = readArmours(core, ITEMS)
-out.push('; Armors: HP, Defense, Will, Mobility; Look: the XCOM 2 armour whose body parts and images it takes.')
+// Each item's damage reduction: BalanceMods_Classic's iHP, in tenths ("iHP -- damage reduction, works for weapons/armor/items").
+const itemDR = new Map([...core.matchAll(/^BalanceMods_Classic=\(eType=(\d+),.*?iHP=(-?\d+)/gm)].map((m) => [Number(m[1]), Number(m[2]) / 10]))
+out.push('; Armors: HP, Defense, Will, Mobility, DR (damage reduction); Look: the XCOM 2 armour whose body parts and images it takes.')
 for (const [id, look] of Object.entries(ARMOURS)) {
   const a = armours.get(Number(id))
   if (!a) throw new Error(`no Armors= line for item ${id}`)
   out.push(
     `+Armors=(Item=${id}, Enum=${ITEMS[id]}, HP=${a.iHPBonus}, Defense=${a.iDefenseBonus}, Will=${a.iWillBonus}, Mobility=${a.iMobilityBonus}, ` +
       `SmallItems=${a.iSmallItems}, Look=${look}, Grapple=${a.props.includes('Grapple')}, FireImmune=${a.props.includes('FireImmunity')}, ` +
-      `PoisonImmune=${a.props.includes('PoisonImmunity')}, Infinite=${(balance.get(Number(id))?.cash ?? -1) < 0})`,
+      `PoisonImmune=${a.props.includes('PoisonImmunity')}, Infinite=${(balance.get(Number(id))?.cash ?? -1) < 0}, DR=${itemDR.get(Number(id)) ?? 0})`,
   )
 }
 out.push(`StartingArmor=${STARTING_ARMOUR}`)
