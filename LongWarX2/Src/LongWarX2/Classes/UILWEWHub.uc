@@ -19,6 +19,7 @@ var localized string RoomNames[5];
 var localized string MissionControlName;
 var localized string NewResearch, BuildItems, BuildItemsHelp, BuildFacilities, BuildFacilitiesHelp, Foundry, FoundryHelp;
 var localized string ViewSoldiers, ViewSoldiersHelp, AircraftList, AircraftListHelp, SituationRoom, GreyMarket, GreyMarketHelp;
+var localized string PsiLabs, PsiLabsHelp, OTS, OTSHelp;
 
 /** Each room's camera in EW's base (Command1's, by tag), in the order of the top menu. */
 var array<name> RoomCameras;
@@ -39,6 +40,9 @@ const OPT_SOLDIERS = 4;
 const OPT_AIRCRAFT = 5;
 const OPT_SITROOM = 6;
 const OPT_GREYMARKET = 7;
+const OPT_OTS = 8;
+const OPT_PSI = 9;
+const OPT_GENE = 10;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
 const FACILITY_FOUNDRY = 11;
@@ -187,9 +191,14 @@ simulated function OnReceiveFocus()
  *  screens put their own backdrop over it); the base again when the hub has focus back. */
 simulated function OnLoseFocus()
 {
+	local UILWEWScreen Next;
+
 	super.OnLoseFocus();
 	ClearTimer(nameof(ShowBase));
-	class'LWX2EWBase'.static.Get(self).Hide();
+	// (A screen that shows the base itself, building in it, keeps it.)
+	Next = UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen());
+	if (Next == none || !Next.bShowsBase)
+		class'LWX2EWBase'.static.Get(self).Hide();
 }
 
 simulated function OnRemoved()
@@ -231,6 +240,14 @@ function EnterRoom(int i)
 		break;
 	case 2:
 		RoomOptions.AddItem(OPT_SOLDIERS);
+		// (As EW: each once its facility is built: the Officer Training School, the Psi Labs, the Genetics Lab.)
+		S = class'XComGameState_LWStrategy'.static.Get();
+		if (S != none && class'LWBase'.static.Count(S, 12) > 0)
+			RoomOptions.AddItem(OPT_OTS);
+		if (S != none && class'LWBase'.static.Count(S, 17) > 0)
+			RoomOptions.AddItem(OPT_PSI);
+		if (S != none && class'LWBase'.static.Count(S, 23) > 0)
+			RoomOptions.AddItem(OPT_GENE);
 		break;
 	case 3:
 		RoomOptions.AddItem(OPT_AIRCRAFT);
@@ -271,6 +288,9 @@ function string OptionName(int Option)
 	case OPT_AIRCRAFT: return Word(AircraftList, "Aircraft");
 	case OPT_SITROOM: return Word(SituationRoom, "Situation Room");
 	case OPT_GREYMARKET: return Word(GreyMarket, "Grey market");
+	case OPT_OTS: return Word(OTS, "Officer Training School");
+	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
+	case OPT_GENE: return class'LWBase'.static.FacilityName(23);
 	}
 	return "";
 }
@@ -285,6 +305,8 @@ function string OptionHelp(int Option)
 	case OPT_SOLDIERS: return ViewSoldiersHelp;
 	case OPT_AIRCRAFT: return AircraftListHelp;
 	case OPT_GREYMARKET: return GreyMarketHelp;
+	case OPT_OTS: return OTSHelp;
+	case OPT_PSI: return PsiLabsHelp;
 	}
 	return "";
 }
@@ -306,7 +328,13 @@ function ChooseOption(int Option)
 	{
 	case OPT_RESEARCH: class'UILWEWResearch'.static.Open(); break;
 	case OPT_ITEMS: class'UILWEWEngineering'.static.Open(HQPres); break;
-	case OPT_FACILITIES: HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres)); break;
+	case OPT_FACILITIES:
+		// EW's own building over its base; the plain base screen where EW's screens are not converted.
+		if (class'UILWEWBuildFacilities'.static.Available())
+			class'UILWEWBuildFacilities'.static.Open(HQPres);
+		else
+			HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres));
+		break;
 	case OPT_FOUNDRY: class'UILWEWEngineering'.static.Open(HQPres, true); break;
 	case OPT_SOLDIERS:
 		// (The Avenger back first: the armory stands the soldier in its room as it opens.)
@@ -316,6 +344,13 @@ function ChooseOption(int Option)
 	case OPT_AIRCRAFT: class'UILWEWHangar'.static.Open(HQPres); break;
 	case OPT_SITROOM: class'UILWEWSituationRoom'.static.Open(); break;
 	case OPT_GREYMARKET: class'UILWEWGreyMarket'.static.Open(HQPres); break;
+	// (The plain base screen holds the Officer Training School's, the Psi Labs' and the Genetics Lab's panels, until each
+	// has EW's own screen.)
+	case OPT_OTS:
+	case OPT_PSI:
+	case OPT_GENE:
+		HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres));
+		break;
 	}
 }
 

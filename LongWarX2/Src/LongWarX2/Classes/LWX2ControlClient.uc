@@ -105,6 +105,12 @@ function Handle(string Line, out array<string> Out)
 		else
 			LightsReport(Out);
 		return;
+	case "baselook":
+		// A test aid: EW's base shown through one of its cameras (by tag: Base, Expansion, AwayTeam, AddonCam_R1_C1 …).
+		class'LWX2EWBase'.static.Get(Pres()).Show();
+		class'LWX2EWBase'.static.Get(Pres()).LookAt(name(Args.Length > 1 ? Args[1] : "Base"), 0);
+		Out.AddItem("ok");
+		return;
 	case "peek":
 		// A test aid: the Geoscape hidden (or shown again) to look at what is behind it (EW's base, features/lw-base-view.md).
 		Geo = UILWGeoscape(Pres().ScreenStack.GetFirstInstanceOf(class'UILWGeoscape'));

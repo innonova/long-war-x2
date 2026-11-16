@@ -7,6 +7,8 @@ var string UIPackage;
 /** EW's movies are laid out for a 1280 x 720 stage, XCOM 2's is 1920 x 1080: a screen that does not place itself by the
  *  stage's edges (as EW's HUD does) is scaled up to fill it. */
 var bool bScaleToStage;
+/** Whether the screen shows EW's base itself (the build screens): the screen under it does not hide the base for it. */
+var bool bShowsBase;
 
 /** Whether the converted EW UI package is in the mod's Content (loading one of its objects loads it whole). */
 static function bool HasEWScreens()

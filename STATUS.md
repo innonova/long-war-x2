@@ -23,7 +23,7 @@ buttons and text, no art).
 | Satellites | done | plain | launching, coverage, detection | | `lw-geoscape` |
 | The aliens' plan | most | plain | resources, research, the monthly plan, UFOs, abductions, terror targets | scout hunts after scouting; UFOs seen as they cross watched countries | `lw-geoscape` |
 | The air war | most | plain | jets per continent, interception, damage, repair, refits, orders, transfers | consumables, Friendly Skies, fuel, the Firestorm's refits | `lw-hangar` |
-| The base | most | plain | the grid, digging, facilities, power, upkeep, steam | facilities' effects (containment, Hyperwave, Gollop chamber); removing a facility | `lw-base` |
+| The base | most | LW | the grid, digging, facilities, power, upkeep, steam; built on EW's own Build Facilities and ChooseFacility screens over EW's base | facilities' effects (containment, Hyperwave, Gollop chamber); removing a facility; the OTS, Psi Labs and Genetics Lab panels are still plain | `lw-base`, `lw-base-view` |
 | Research | most | X2 + plain | Long War's techs, costs, times, prerequisites, credits; labs and their adjacency (`lw-base`) | XCOM 2's research room still shows its own staff | `lw-research` |
 | Engineering | most | plain | building items and armour at Long War's costs and requirements; workshops' discount and rebate (`lw-base`) | | `lw-gear`, `lw-research` |
 | Foundry | part | plain | projects run; done: the air and salvage projects, pistols, Improved Medikit, Ammo Conservation, Tactical Rigging, Alien Grenades, S.C.O.P.E. (the laser sight's half; the targeting module is not an item yet) | SHIV and MEC projects, Improved Arc Thrower, Shaped Armor, Elerium fuel, the Alien Grenades perk | `lw-research` |

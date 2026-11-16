@@ -343,3 +343,44 @@ creates no option clips. Its `AddOption` comes from a class of EW's shared compo
 Next to try: whether EW's component classes clash with XCOM 2's of the same names (as `Colors`
 did, which the converter renames), by dumping which classes the components movie defines.
 XCOM 2's list stands in meanwhile.
+
+## Report (2026-11-16, building the base on EW's own screens)
+
+**Build Facilities** (the hub's Engineering room) is now Enemy Within's own screen over its
+base, in place of the plain grid (`UILWEWBuildFacilities`, its `BuildFacilities` movie, driven
+as EW's `UIBuildFacilities` drives it):
+- seen through EW's camera for building (`Expansion`: the whole base);
+- a card per tile below the top row (`UpdateFacilityCard`): EW's icon for each facility
+  (`UIUtilities.GetFacilityLabel`'s frames by Long War's facility numbers), rock, steam,
+  dug, and work under way with EW's "Days remaining: N";
+- EW's cursor (`SetCursor`) with what choosing the tile does, in EW's words (EXCAVATE and its
+  cost, BUILD FACILITY, BUILD ACCESS LIFT) or why it can't (EW's "You must first build an
+  access lift …", "You cannot reach this area without excavating.");
+- choosing (Enter, or a click: the cards are clips `card_<column>_<row>`, found under the
+  mouse as EW's clicks don't reach XCOM 2) excavates rock, begins an access lift in the
+  shaft, or on an empty tile opens EW's **ChooseFacility** (`UILWEWChooseFacility`): the
+  facilities Long War can build there, those it can't greyed with what they need, the cost,
+  power, upkeep and days in the info panel, while the camera looks into the tile through EW's
+  camera for it (`AddonCam_R<row>_C<column>`). Chosen, it is begun and the screen closes
+  back to the base.
+- The rules are Long War's base (`LWBase.Work`, `CanBuild`), as the plain screen's were.
+- EW's words for both screens from the player's install (`makeBuildWords`, 15 words).
+- Screens that show the base themselves (`UILWEWScreen.bShowsBase`) keep it in view: the hub
+  and the Geoscape don't hide it under them.
+
+The Officer Training School, the Psi Labs and the Genetics Lab are options of the hub's
+Barracks room once built, as in EW (EW's words for the first two). They open the plain base
+screen's panels until each has EW's own screen.
+
+Checked on wingpu: rock excavated (cash 500 → 490, "EXCAVATING, Days remaining: 5", the
+event list's EXCAVATION 5); a Laboratory chosen on an empty tile and begun (21 days); an
+access lift begun by a click on the shaft's card; the Barracks room listing the Officer
+Training School once one was placed. Screenshots `logs/wingpu_ew_build_facilities.png`,
+`logs/wingpu_ew_choose_facility.png` (not committed).
+
+### Left open
+
+- Removing a facility and cancelling work (EW's REMOVE and CANCEL on the cursor).
+- The facilities' descriptions in ChooseFacility (EW's text carries live numbers,
+  `<XGStrategyActor:…/>`, to fill from Long War's).
+- The adjacency markers on the cards (EW's `bAdjacencyBonusLeft/Top`).

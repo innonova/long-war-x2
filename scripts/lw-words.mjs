@@ -365,6 +365,10 @@ export function makeHubWords({ strategyLoc }) {
     ['FoundryHelp', inSection('XGEngineeringUI', 'm_strHelpFoundry')],
     ['ViewSoldiers', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_SoldierList]')],
     ['ViewSoldiersHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_SoldierList]')],
+    ['PsiLabs', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_PsiLabs]')],
+    ['PsiLabsHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_PsiLabs]')],
+    ['OTS', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_OTS]')],
+    ['OTSHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_OTS]')],
     ['AircraftList', inSection('XGHangarUI', 'm_strHeaderNames[eHangarView_ShipList]')],
     ['AircraftListHelp', inSection('XGHangarUI', 'm_strHeaderHelp[eHangarView_ShipList]')],
     ['SituationRoom', anywhere('m_aFacilityNames[eFacility_SitRoom]')],
@@ -372,4 +376,35 @@ export function makeHubWords({ strategyLoc }) {
     ['GreyMarketHelp', inSection('XGSituationRoomUI', 'm_stdLabelVisitGreyMarketHelp')],
   ].filter(([, v]) => v)
   return { text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}
+
+/** The base building screens' words (UILWEWBuildFacilities, UILWEWChooseFacility, in the mod's LongWarX2.int): EW's, from
+ *  its strategy text (sections XGBuildUI, UIBuildFacilities, UIChooseFacility). */
+export function makeBuildWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const inSection = (section, key) => {
+    const at = text.indexOf(`\n[${section}]\n`)
+    if (at < 0) return undefined
+    const end = text.indexOf('\n[', at + 2)
+    const m = text.slice(at, end < 0 ? undefined : end).match(new RegExp(`^${key}=(.*)$`, 'm'))
+    return m ? m[1].trim().replace(/^"(.*)"$/, '$1') : undefined
+  }
+  const words = [
+    ['Title', inSection('UIBuildFacilities', 'm_strBuildFacilityTitle')],
+    ['Excavate', inSection('XGBuildUI', 'm_strLabelExcavate')],
+    ['Excavating', inSection('XGBuildUI', 'm_strLabelExcavating')],
+    ['BuildLift', inSection('XGBuildUI', 'm_strLabelBuildLift')],
+    ['BuildFacility', inSection('XGBuildUI', 'm_strLabelBuildFacility')],
+    ['Steam', inSection('XGBuildUI', 'm_strLabelSteam')],
+    ['Days', inSection('XGBuildUI', 'm_strLabelDays')],
+    ['Cost', inSection('XGBuildUI', 'm_strLabelCost')],
+    ['RequiredBuild', inSection('XGBuildUI', 'm_strLabelRequiredBuild')],
+    ['ErrNeedLift', inSection('XGBuildUI', 'm_strErrNeedLift')],
+    ['ErrNeedExcavating', inSection('XGBuildUI', 'm_strErrNeedExcavating')],
+    ['ErrNeedFunds', inSection('XGBuildUI', 'm_strErrNeedFunds')],
+    ['ErrNeedPower', inSection('XGBuildUI', 'm_strErrNeedPower')],
+    ['ErrNeedSteam', inSection('XGBuildUI', 'm_strErrNeedSteam')],
+    ['NoRequirements', inSection('UIChooseFacility', 'm_strNoReqLabel')],
+  ].filter(([, v]) => v)
+  return { text: ['[UILWEWBuildFacilities]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }

@@ -480,7 +480,8 @@ simulated function OnLoseFocus()
 {
 	super.OnLoseFocus();
 	// (Squad select in EW's hangar keeps the base: hidden and shown again at once, the base took the Avenger's light.)
-	if (!(class'LWX2EWBase'.static.SquadHere() && UILWSquadSelect(Movie.Pres.ScreenStack.GetCurrentScreen()) != none))
+	if (!(class'LWX2EWBase'.static.SquadHere() && UILWSquadSelect(Movie.Pres.ScreenStack.GetCurrentScreen()) != none)
+		&& !(UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen()) != none && UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen()).bShowsBase))
 		class'LWX2EWBase'.static.Get(self).Hide();
 }
 
