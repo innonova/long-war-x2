@@ -222,7 +222,8 @@ simulated function OnLoseFocus()
 	// (A screen that shows the base itself, building in it, keeps it.)
 	Next = UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen());
 	if ((Next == none || !Next.bShowsBase) && UILWOfficers(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWPsiLabs(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
-		&& UIPersonnel_LWGene(Movie.Pres.ScreenStack.GetCurrentScreen()) == none)
+		&& UIPersonnel_LWGene(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
+		&& !(class'LWX2EWBase'.static.ArmoryHere() && (UIPersonnel(Movie.Pres.ScreenStack.GetCurrentScreen()) != none || UIArmory(Movie.Pres.ScreenStack.GetCurrentScreen()) != none)))
 		class'LWX2EWBase'.static.Get(self).Hide();
 }
 
@@ -368,8 +369,10 @@ function ChooseOption(int Option)
 		break;
 	case OPT_FOUNDRY: class'UILWEWEngineering'.static.Open(HQPres, true); break;
 	case OPT_SOLDIERS:
-		// (The Avenger back first: the armory stands the soldier in its room as it opens.)
-		class'LWX2EWBase'.static.Get(self).Hide();
+		// (The Avenger back first, the armory standing the soldier in its room as it opens; unless the armory is EW's
+		// own, UIScreenListener_LWArmory.)
+		if (!class'LWX2EWBase'.static.ArmoryHere())
+			class'LWX2EWBase'.static.Get(self).Hide();
 		HQPres.UIPersonnel_Armory(OnSoldierChosen);
 		break;
 	case OPT_AIRCRAFT: class'UILWEWHangar'.static.Open(HQPres); break;

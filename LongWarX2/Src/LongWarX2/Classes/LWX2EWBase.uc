@@ -39,6 +39,11 @@ var config bool SquadInHangar;
 var config float BaseLightScale;
 var config name SquadCamera;
 var config float SquadDistance, SquadSpacing, SquadFloorZ;
+/** XCOM 2's armory screens over EW's armory (UIScreenListener_LWArmory): through EW's own armory cameras (ArmoryCameras: the
+ *  main menu's, the loadout's, the promotion's), the soldier standing ArmoryDistance in front of the camera on EW's floor
+ *  there, facing it. Off: the Avenger's armory. */
+var config bool ArmoryInBase;
+var config float ArmoryDistance;
 var LevelStreaming LightingLevel;
 /** The streamed levels hidden while the base is in view (HideWorld), to show again. */
 var array<name> HiddenLevels;
@@ -252,6 +257,38 @@ function RefreshAmbient()
 static function bool SquadHere()
 {
 	return default.SquadInHangar && Converted() && Data("Command1").Cameras.Find('Tag', default.SquadCamera) != INDEX_NONE;
+}
+
+/** Whether XCOM 2's armory screens show the soldier in EW's armory (converted here, its cameras there, and asked for). */
+static function bool ArmoryHere()
+{
+	return default.ArmoryInBase && Converted() && Data("Command1").Cameras.Find('Tag', 'Armory_UIDisplayCam_Loadout') != INDEX_NONE;
+}
+
+/** Where the soldier stands in EW's armory for one of its cameras: ArmoryDistance in front of it, on the floor under that
+ *  spot (EW's pieces placed with collision), facing it. */
+function ArmorySpot(name CameraTag, out vector Loc, out rotator Rot)
+{
+	local LWX2EWMapPieces.LWX2Camera C;
+	local LWX2EWMapData Command;
+	local vector Forward, HitLocation, HitNormal, Top, Bottom;
+	local int k;
+
+	Command = Data("Command1");
+	k = Command.Cameras.Find('Tag', CameraTag);
+	if (k == INDEX_NONE)
+		return;
+	C = Command.Cameras[k];
+	Forward = vector(C.Rot);
+	Forward.Z = 0;
+	Forward = Normal(Forward);
+	Loc = C.Loc + Forward * default.ArmoryDistance + default.BaseOffset;
+	Top = Loc;
+	Bottom = Loc;
+	Bottom.Z -= 1000;
+	if (Trace(HitLocation, HitNormal, Bottom, Top, false) != none)
+		Loc.Z = HitLocation.Z;
+	Rot = rotator(-Forward);
 }
 
 /** Where a soldier of the squad stands in EW's hangar: Column of Columns, left to right as the camera sees them. */
