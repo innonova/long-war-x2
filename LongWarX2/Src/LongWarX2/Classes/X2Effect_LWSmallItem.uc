@@ -31,6 +31,8 @@ function bool PostAbilityCostPaid(XComGameState_Effect EffectState, XComGameStat
 	local UnitValue Shots;
 	local XComGameState_Unit Unit;
 
+	// (The ammo is X2Effect_LWAmmoOdds's now, every source added up; kept here for an old save's effect.)
+	return false;
 	if (AmmoMultiplier <= 1 || AffectWeapon == none || AffectWeapon.InventorySlot != eInvSlot_PrimaryWeapon)
 		return false;
 	if (AbilityContext.InputContext.SourceObject.ObjectID != EffectState.ApplyEffectParameters.TargetStateObjectRef.ObjectID)

@@ -930,12 +930,25 @@ static function AddScatter()
 {
 	local array<X2AbilityTemplate> Templates;
 	local X2AbilityTemplate Template;
+	local X2AbilityTarget_LWRocketCursor Cursor;
 
 	if (default.MinScatter <= 0)
 		return;
 	class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplateAllDifficulties('RocketLauncher', Templates);
 	foreach Templates(Template)
+	{
 		Template.ModifyNewContextFn = ScatterRocket;
+		// (Javelin Rockets: the aim's reach a quarter farther, X2AbilityTarget_LWRocketCursor.)
+		if (X2AbilityTarget_Cursor(Template.AbilityTargetStyle) != none && X2AbilityTarget_LWRocketCursor(Template.AbilityTargetStyle) == none)
+		{
+			Cursor = new class'X2AbilityTarget_LWRocketCursor';
+			Cursor.bRestrictToWeaponRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).bRestrictToWeaponRange;
+			Cursor.IncreaseWeaponRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).IncreaseWeaponRange;
+			Cursor.bRestrictToSquadsightRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).bRestrictToSquadsightRange;
+			Cursor.FixedAbilityRange = X2AbilityTarget_Cursor(Template.AbilityTargetStyle).FixedAbilityRange;
+			Template.AbilityTargetStyle = Cursor;
+		}
+	}
 }
 
 /**

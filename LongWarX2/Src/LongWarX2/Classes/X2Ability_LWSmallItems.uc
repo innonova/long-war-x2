@@ -10,7 +10,28 @@ static function array<X2DataTemplate> CreateTemplates()
 	foreach class'LWGearRules'.default.SmallItems(D)
 		if (D.Kind == 'Passive' || D.Kind == 'Rocket')
 			Templates.AddItem(Stats(D));
+	Templates.AddItem(AmmoOdds());
 	return Templates;
+}
+
+/** Long War's ammo for every soldier (X2Effect_LWAmmoOdds): Lock N' Load and the magazines added up. */
+static function X2AbilityTemplate AmmoOdds()
+{
+	local X2AbilityTemplate Template;
+	local X2Effect_LWAmmoOdds Effect;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'LWX2_AmmoOdds');
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
+	Template.Hostility = eHostility_Neutral;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SelfTarget;
+	Template.AbilityTriggers.AddItem(default.UnitPostBeginPlayTrigger);
+	Effect = new class'X2Effect_LWAmmoOdds';
+	Effect.BuildPersistentEffect(1, true, false, false);
+	Template.AddTargetEffect(Effect);
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	return Template;
 }
 
 static function name StatsFor(int Item)
