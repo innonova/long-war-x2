@@ -486,3 +486,16 @@ with an Assault or Pistol weapon (shotguns, pistols; `APAmmoItem`, `APAmmo`).
 A shotgunner without it left 4.5 (its own 1, then the shotgun's extra).
 
 **Not done:** the item text's "hardening against critical hits" part.
+
+## Report (2026-11-16, Reinforced Armor)
+
+**Reinforced Armor** (Long War's item 220) is a small item now (`LWSmall_220`). It gives its
+`BalanceMods_Classic` line's 1.0 damage reduction, −6 defense and −2 mobility (its text: "extra
+protection for a soldier, but inhibits agility"), plus its stat line's +1 HP. It is built and sold
+at Long War's prices.
+
+Only this item's balance line is read as stats (`balance: true` in `lw-gear.mjs`). Other items'
+lines also carry mobility and will numbers, but what Long War does with those is not read yet.
+
+**Checked on wingpu:** carriers had own reduction 1.0 (`dr`). A Sectoid's shot showed the
+carrier's defense 6 lower than without.

@@ -33,7 +33,7 @@ static function X2AbilityTemplate Stats(LWGearRules.LWSmallDef D)
 	Template.AbilityTargetStyle = default.SelfTarget;
 	Template.AbilityTriggers.AddItem(default.UnitPostBeginPlayTrigger);
 
-	if (D.Aim != 0 || D.Crit != 0 || D.HP != 0)
+	if (D.Aim != 0 || D.Crit != 0 || D.HP != 0 || D.Defense != 0 || D.Mobility != 0)
 	{
 		Effect = new class'X2Effect_PersistentStatChange';
 		Effect.BuildPersistentEffect(1, true, false, false);
@@ -43,6 +43,10 @@ static function X2AbilityTemplate Stats(LWGearRules.LWSmallDef D)
 			Effect.AddPersistentStatChange(eStat_CritChance, D.Crit);
 		if (D.HP != 0)
 			Effect.AddPersistentStatChange(eStat_HP, D.HP);
+		if (D.Defense != 0)
+			Effect.AddPersistentStatChange(eStat_Defense, D.Defense);
+		if (D.Mobility != 0)
+			Effect.AddPersistentStatChange(eStat_Mobility, D.Mobility);
 		Template.AddTargetEffect(Effect);
 	}
 	if (D.Ammo > 1 || D.Kind == 'Rocket' || D.CritAgainstReaction != 0 || D.ScopeCrit != 0)

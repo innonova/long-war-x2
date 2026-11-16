@@ -206,6 +206,9 @@ export const SMALL = [
   { item: 123, kind: 'Passive', look: 'CommonPCSFocus', ammo: 3 },
   { item: 95, kind: 'Passive', look: 'CommonPCSConditioning' },
   { item: 94, kind: 'Passive', look: 'CommonPCSAgility', critAgainstReaction: 100 },
+  // Reinforced Armor: its BalanceMods_Classic line's defense, mobility and damage reduction (its text: "extra protection, but
+  // inhibits agility"). (balance: those three read; other items' lines are not read as stats.)
+  { item: 220, kind: 'Passive', look: 'CommonPCSConditioning', balance: true },
   // Armor Piercing Ammo: its carrier's shots ignore 2 of the target's reduction (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction).
   { item: 198, kind: 'Passive', look: 'CommonPCSPerception' },
   // Combat Stims: XCOM 2's stims (a used item), and damage x0.6 while they last (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction).

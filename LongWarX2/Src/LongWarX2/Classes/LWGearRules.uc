@@ -102,6 +102,9 @@ struct LWSmallDef
 	var int CritAgainstReaction;
 	/** Crit while carried once the Foundry's S.C.O.P.E. project is done (not with a pistol). */
 	var int ScopeCrit;
+	/** Defense and mobility while carried, and damage reduction (Reinforced Armor: Long War's BalanceMods_Classic line). */
+	var int Defense, Mobility;
+	var float DR;
 	var bool Infinite;
 	/** The classes that may carry it; empty: any. */
 	var array<name> Classes;

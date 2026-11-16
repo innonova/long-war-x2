@@ -64,6 +64,8 @@ out.push(
   '; takes; Damage, Environment; Radius and Range in tiles; Aim, Crit, HP while carried; Ammo: shots x this; Classes: who may carry it.',
 )
 const scopeCrit = Number(core.match(/^FOUNDRY_SCOPE_CRIT_BONUS=(\d+)/m)[1])
+/** A field of an item's BalanceMods_Classic line. */
+const balanceOf = (id, k) => Number(core.match(new RegExp(`^BalanceMods_Classic=\\(eType=${id},.*?${k}=(-?\\d+)`, 'm'))?.[1] ?? 0)
 for (const x of SMALL) {
   const w = weapons.get(x.item)
   if (!w) throw new Error(`no Weapons= line for small item ${x.item}`)
@@ -77,6 +79,7 @@ for (const x of SMALL) {
       // The Foundry's S.C.O.P.E. project: crit for a carrier of the targeting module, half for the laser sight (item 79), not
       // with a pistol (XGAbility_Targeted.CalcCriticalChance; FOUNDRY_SCOPE_CRIT_BONUS).
       (x.item === 74 || x.item === 79 ? `, ScopeCrit=${Math.trunc(scopeCrit / (x.item === 79 ? 2 : 1))}` : '') +
+      (x.balance ? `, Defense=${balanceOf(x.item, 'iDefense')}, Mobility=${balanceOf(x.item, 'iMobility')}, DR=${itemDR.get(x.item) ?? 0}` : '') +
       (anyone ? '' : `, Classes=(${classes.map((c) => `LWS_${c}`).join(',')})`) +
       ')',
   )

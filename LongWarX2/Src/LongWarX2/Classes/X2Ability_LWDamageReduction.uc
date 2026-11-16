@@ -95,6 +95,7 @@ static function float OwnReduction(XComGameState_Unit Unit)
 	local XComGameState_Item Armor;
 	local LWGearRules.LWArmorDef A;
 	local LWSHIVs.LWSHIVBody Body;
+	local LWGearRules.LWSmallDef Small;
 	local LWMECs.LWMECSuit Suit;
 	local float DR;
 
@@ -105,6 +106,10 @@ static function float OwnReduction(XComGameState_Unit Unit)
 		foreach class'LWGearRules'.default.Armors(A)
 			if (class'LWGearRules'.static.ArmorTemplateFor(A.Item) == Armor.GetMyTemplateName())
 				DR += A.DR;
+	// Small items with a reduction of their own (Reinforced Armor).
+	foreach class'LWGearRules'.default.SmallItems(Small)
+		if (Small.DR != 0 && HasItem(Unit, Small.Template))
+			DR += Small.DR;
 	// A SHIV's deck, a MEC's suit (their items' reductions in Long War).
 	if (class'LWSHIVs'.static.BodyForTemplate(Unit.GetMyTemplateName(), Body))
 		DR += Body.DR;
