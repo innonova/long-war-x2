@@ -133,3 +133,26 @@ properties, output links and variable links, with the variables' names and value
 - The node and bomb placements, read by the map converter.
 - The rule as the mod's own: a node ability for a soldier beside one, the timer on XCOM 2's
   mission timer UI, defeat when it runs out.
+
+## Step 2, the bomb disposal: done so far and the plan (2026-11-16)
+
+**Done:** `tools/convert/ew-objectives.ts`, run by the setup, reads the five bomb disposals from the
+player's EW into `Config/XComLWX2EWObjectives.ini` (generated, not in the repository or the
+download). For each:
+- its map;
+- the Kismet `Timer` (3 on all five) and `#Nodes` (Grand Cemetery 10, Highway Bridge 9, Train
+  Station 8, Trainyard 10, Slaughterhouse 8);
+- the bomb's place (the high hot button) and each node's (the low ones), at EW's coordinates.
+
+**Plan for the rule** (`LWX2CouncilBomb`, on a council bomb disposal on its EW map):
+- **State:** a game state object with the nodes switched off and whether the bomb is disarmed.
+- **Two abilities** for XCOM's soldiers on that mission: "Deactivate node" and "Disarm bomb",
+  each one action, usable on a tile beside an active node or the bomb.
+- **The timer:** Timer + nodes off − XCOM's turns ended, shown on XCOM 2's mission timer
+  (`XComGameState_UITimer`, as `SeqAct_DisplayUISpecialMissionTimer` sets it). At 0 the bomb goes
+  off and the mission is lost.
+- **Victory:** the bomb disarmed and every alien dead or taken.
+- **The objective list:** "Disarm the bomb (n turns); power nodes off: k of N".
+- **Seen in the mission:** the bomb and nodes as EW drew them. The variant level is converted
+  like a map, its pieces placed with the map's when the mission is a bomb disposal. Until then, a
+  plain marker.
