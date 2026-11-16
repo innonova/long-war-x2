@@ -768,3 +768,17 @@ Smoke's wider cloud. (Field Surgeon and Fire in the Hole were done earlier: the 
 - **Done:** `LWX2_ExtraConditioning` (given with the perk): `X2Effect_LWExtraConditioning` adds that HP at the
   mission's start, its table in `XComLWClasses.ini` (`+ExtraConditioning=`).
 - **Checked on wingpu:** a Sniper with the perk in her starting armour: "Extra Conditioning: … in LWArmor_59 +1 HP".
+
+## Report (2026-11-16, Concealment)
+
+- **Long War's Concealment** is EW's Mimetic Skin text in a perk slot (`ePerk_GeneMod_MimeticSkin`): "When the soldier
+  moves to high cover, enemies … will not target the soldier. Does not work if any enemies have line of sight to the
+  soldier's starting position. Leaving cover, being flanked, firing, hacking arrays, and capturing meld will break
+  this concealment."
+- **Done** (`LWX2_Concealment`, given with the perk; `X2Effect_LWConcealment`): a move that ends in high cover, with
+  no enemy seeing the soldier where the move began nor where it ends, hides the soldier with XCOM 2's concealment of
+  one unit; a move that ends out of high cover breaks it. Firing breaks it as XCOM 2's concealment does; being
+  flanked is played as XCOM 2's (an enemy close enough to see the soldier finds it). APPROXIMATION: XCOM 2's
+  concealment also makes the soldier invisible to the aliens' sight in the open, where EW only stopped them targeting.
+- **Checked on wingpu:** a squad all with the perk, each moved a few tiles: the one who ended beside a wall was
+  hidden ("Concealment: … hidden in high cover", "concealed" in `units`); moved again into the open, it was not.
