@@ -85,7 +85,7 @@ export function readSection(text: string): EWMap {
           return f ? { indices: Number(f[1]), minZ: Number(f[2]), maxZ: Number(f[3]), toughness: f[4]! } : undefined
         })(),
         // Its cover flags where they differ from an XComLevelActor's (ew-map.ts: ClimbOnto=false, CoverForce=…).
-        cover: [...line.matchAll(/,(ClimbOnto|ClimbOver|Destination|IgnoreForCover|CoverForce|BlocksSight|Window)=(\w+)/g)].map((m) => `${m[1]}=${m[2]}`),
+        cover: [...line.matchAll(/,(ClimbOnto|ClimbOver|Destination|IgnoreForCover|CoverForce|BlocksSight|Window|Floor)=(\w+)/g)].map((m) => `${m[1]}=${m[2]}`),
       })
     } else if (line.startsWith('+Lights=')) {
       const c = sub(line, 'Color')
@@ -430,6 +430,10 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       const [k, val] = c.split('=') as [string, string]
       if (k === 'BlocksSight' || k === 'Window') continue
       if (k === 'CoverForce') set(atags, tEnum('CoverForceFlag', 'ECoverForceFlag', val))
+      // (Floor: a breakable piece that is a floor, XComFracLevelActor's bIsFloor; a plain level actor has no such flag.)
+      else if (k === 'Floor') {
+        if (frac) set(atags, tBool('bIsFloor', val === 'true'))
+      }
       else set(atags, tBool({ ClimbOnto: 'bCanClimbOnto', ClimbOver: 'bCanClimbOver', Destination: 'bIsValidDestination', IgnoreForCover: 'bIgnoreForCover' }[k]!, val === 'true'))
     }
     addExport(sampleActor, actorName, level, serialize({ head: actorHead(actorSample.head), tags: atags, tail: actorSample.tail }),

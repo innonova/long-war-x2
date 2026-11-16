@@ -35,7 +35,7 @@ import { addMaskTextures, maskMip } from './mask-textures.ts'
  *  none, not as the map's name and a dot; 15: EW's materials made inert, XCOM 2 compiling each as the map loaded;
  *  16: the meld canisters' places, MeldPoints; 17: what units see through (EW's VisibilityBlockingData on every piece:
  *  windows, foliage, cars), written onto the plot's pieces). */
-export const CONVERTER_VERSION = 19
+export const CONVERTER_VERSION = 20
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -129,7 +129,7 @@ const archetypeOf = (index: number) => v.getInt32(exports[index].entryOffset + 2
  * from the placed actor, then its archetypes; what none sets is its class's default (a destructible's, a car's or
  * sandbags', is not to be stood on; XCOM 2 places every piece as an XComLevelActor, whose default is).
  */
-interface Cover { onto: boolean; over: boolean; destination: boolean; ignore: boolean; force: string; sight: boolean; window: boolean; ontoSet?: boolean }
+interface Cover { onto: boolean; over: boolean; destination: boolean; ignore: boolean; force: string; sight: boolean; window: boolean; ontoSet?: boolean; floor?: boolean }
 const COVER_DEFAULTS: Record<string, Partial<Cover>> = {
   XComDestructibleActor: { onto: false },
   XComFracLevelActor: { onto: false },
@@ -329,8 +329,13 @@ for (const p of pieces) {
   p.extent = extents.get(p.mesh)!.map((x, k) => Math.abs(x * p.scale[k]!))
   // (A fracturable piece two tiles wide each way is a building's core or a slab, its top a roof or a floor: EW's class
   // default, not to be climbed onto, is for walls, and XCOM 2 then makes no floor on top: Commercial Restaurant's roof
-  // terrace, a data recovery's capture area, had none. Converter 19.)
-  if (p.fractured && !p.cover.ontoSet && p.extent[0]! >= 96 && p.extent[1]! >= 96 && !/^(VEH_|SandBag\.)/.test(p.mesh)) p.cover.onto = true
+  // terrace, a data recovery's capture area, had none.)
+  if (p.fractured && !p.cover.ontoSet && p.extent[0]! >= 96 && p.extent[1]! >= 96 && !/^(VEH_|SandBag\.)/.test(p.mesh)) {
+    p.cover.onto = true
+    // (XCOM 2 makes a floor of a breakable piece only when it says so, bIsFloor: EW's floor tiles did not ask. The plot
+    // writes it, and to be stood on, over XCOM 2's wall default. Converter 20.)
+    p.cover.floor = true
+  }
 }
 if (process.env.LWX2_EXTENTS) for (const [m, e] of [...extents].sort((a, b) => Math.max(...b[1]) - Math.max(...a[1])).slice(0, 12)) console.log('extent', m, e.map((x) => x.toFixed(0)).join(','))
 
@@ -853,7 +858,7 @@ const rename = (path: string) => {
 const n = (x: number) => (Math.abs(x) < 1e-4 ? '0' : String(Math.round(x * 1000) / 1000))
 /** A piece's cover flags where they differ from an XComLevelActor's defaults (what the plot places). */
 const coverText = (c: Cover) =>
-  (c.onto ? '' : ',ClimbOnto=false') + (c.over ? ',ClimbOver=true' : '') + (c.destination ? '' : ',Destination=false') +
+  (c.onto ? '' : ',ClimbOnto=false') + (c.floor ? ',ClimbOnto=true,Floor=true' : '') + (c.over ? ',ClimbOver=true' : '') + (c.destination ? '' : ',Destination=false') +
   (c.sight ? '' : ',BlocksSight=false') + (c.window ? ',Window=true' : '')
   + (c.ignore ? ',IgnoreForCover=true' : '') + (c.force !== 'CoverForce_Default' ? `,CoverForce=${c.force}` : '')
 const lines = [
