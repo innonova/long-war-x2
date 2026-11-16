@@ -809,3 +809,18 @@ static function RaidBack(XComGameState NewGameState, XComGameState_LWStrategy S,
 		S.Leave(S.ExaltCountry);
 	}
 }
+
+/** The extraction not sent after all (squad select backed out of): the operative away again, their gear released. */
+static function OperativeBackInField(XComGameState NewGameState, XComGameState_LWStrategy S)
+{
+	local XComGameState_Unit Unit;
+
+	if (S.ExaltOperative <= 0)
+		return;
+	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', S.ExaltOperative));
+	if (Unit != none && Unit.IsAlive() && Unit.GetStatus() == eStatus_Active)
+	{
+		Unit.SetStatus(eStatus_CovertAction);
+		Unit.MakeItemsAvailable(NewGameState, true);
+	}
+}

@@ -225,6 +225,9 @@ call `XComGameState_LWStrategy.Arrived`.
 the field (15 through XCOM 2's encounters, 15 beside them), won; back through the hub, EXALT
 finished.
 
+**Also:** backing out of the extraction's squad select puts the operative back in the field (away,
+gear released) with the extraction still offered (checked).
+
 **Fixed on the way:** XCOM 2's spawner crashed when an encounter was given 9 or more aliens (the
 raid's 33 shared over four): each encounter now gets at most 5 (`LWMissionSquads.MaxEncounterPod`),
 the rest come beside them at the battle's start, as those whose pods found no room already did.

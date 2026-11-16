@@ -1278,6 +1278,9 @@ static function MissionCancelled()
 
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission not sent");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
+	// A covert operation not sent: the operative back in the field (PrepareMission put them on duty for it).
+	if (S.PendingKind == 8)
+		class'LWExalt'.static.OperativeBackInField(NewGameState, S);
 	S.PendingKind = 0;
 	S.PendingIndex = 0;
 	S.bPendingCapture = false;

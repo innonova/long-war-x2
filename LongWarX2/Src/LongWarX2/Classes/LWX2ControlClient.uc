@@ -1973,7 +1973,8 @@ function Exalt(array<string> Args, out array<string> Out)
 	Out.AddItem("state" @ S.ExaltState @ "base" @ (S.ExaltState > 0 ? S.CountryName(S.ExaltCountry) : "-") @ "cooldown" @ S.ExaltCooldown @ "days since an operation" @ S.ExaltDaysSinceOperation
 		@ "scans" @ S.ExaltSweeps @ "(next" @ class'LWStrategyRules'.static.Money(class'LWExalt'.static.SweepCost(S)) $ (class'LWExalt'.static.CanSweep(S, Why) ? ")" : "; not now:" @ Why $ ")") @ "intel" @ S.ExaltIntel);
 	if (S.ExaltOperative > 0)
-		Out.AddItem("operative #" $ S.ExaltOperative @ "in" @ S.CountryName(S.ExaltOperativeCountry) @ "days" @ S.ExaltOperativeDays @ (S.ExaltMissionUntil > 0 ? "extraction for" @ (S.ExaltMissionUntil - S.Hours) $ "h" : ""));
+		Out.AddItem("operative #" $ S.ExaltOperative @ "in" @ S.CountryName(S.ExaltOperativeCountry) @ "days" @ S.ExaltOperativeDays @ (S.ExaltMissionUntil > 0 ? "extraction for" @ (S.ExaltMissionUntil - S.Hours) $ "h" : "")
+			@ "status" @ XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(S.ExaltOperative)).GetStatus());
 	Out.AddItem("covert missions fought" @ S.ExaltMissionsFought @ "raid ready" @ S.bExaltRaidReady);
 	for (i = 0; i < S.ExaltCells.Length; i++)
 		Out.AddItem("cell" @ S.ExaltCells[i].Country @ S.CountryName(S.ExaltCells[i].Country) @ (S.ExaltCells[i].DaysUntilHidden > 0 ? "EXPOSED for" @ S.ExaltCells[i].DaysUntilHidden : "hidden") @ "acts in" @ S.ExaltCells[i].DaysUntilNextActivity);
