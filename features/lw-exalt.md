@@ -21,7 +21,7 @@ missions and squads (read with the Tree's `upk_script.py` and upkit's `class`; t
 code stays out of the repository). Numbers by difficulty (Long War's Normal, Classic, Brutal,
 Impossible).
 
-**When.** The simulation begins in the second month (`AI().GetMonth() > 1`): EXALT's country is
+**When.** The simulation begins in the third month (`AI().GetMonth() > 1`; Long War counts the months passed, 0 in the first): EXALT's country is
 a random council country, its clues are chosen, and after 18 + 0..6 days (Brutal and
 Impossible 15 + 0..9) two cells are placed and the first acts at once. Then a day passes every
 48 half-hours of Geoscape time (not while the Geoscape is busy or on pay day).
@@ -93,7 +93,7 @@ neighbours +40 panic).
 
 `LWExalt` runs Long War's `XGExaltSimulation` on the Long War Geoscape, its state on
 `XComGameState_LWStrategy` (`Exalt*`), each hour from the strategy clock (a day every 24 hours):
-- begun in the second month: EXALT's base in a council country, its clues chosen
+- begun in the third month: EXALT's base in a council country, its clues chosen
   (`SelectClues`, weighted as Long War weighs them), its first two cells after the start delay,
   the first acting at once;
 - cells placed by Long War's score and dice (panic, cells and departures on the continent,

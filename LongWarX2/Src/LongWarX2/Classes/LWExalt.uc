@@ -1,4 +1,4 @@
-// EXALT (features/lw-exalt.md), Long War's XGExaltSimulation on the Long War Geoscape: from the second month EXALT has a
+// EXALT (features/lw-exalt.md), Long War's XGExaltSimulation on the Long War Geoscape: from the third month EXALT has a
 // base in a council country and places cells in others, which steal money, raise panic and set research back, exposing
 // themselves for a few days when they act; XCOM scans to expose them all, and gathers clues to accuse the right country.
 // Its state is on XComGameState_LWStrategy (Exalt*); Long War's numbers by difficulty and its clues are generated from the
@@ -65,7 +65,8 @@ static function bool IsActive(XComGameState_LWStrategy S)
 	return S.ExaltState == ACTIVE;
 }
 
-/** Each hour (XComGameState_LWStrategy.Tick): begun in the second month; a day passed every 24 hours. */
+/** Each hour (XComGameState_LWStrategy.Tick): begun in the third month (Long War's GetMonth() > 1: months passed); a day
+ *  passed every 24 hours. */
 static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 {
 	if (default.Tuning.Length == 0)
