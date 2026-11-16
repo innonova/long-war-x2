@@ -251,7 +251,8 @@ static function Hunt(vector Where)
 	local AlertAbilityInfo Info;
 
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: EXALT makes for the capture area");
-	Info.AlertTileLocation = `XWORLD.GetTileCoordinatesFromPosition(Where);
+	// (The area's own floor, under its centre: a rooftop's, not the street's below.)
+	Info.AlertTileLocation = `XWORLD.GetTileCoordinatesFromPosition(class'LWX2CouncilVIP'.static.Floor(Where));
 	Info.AlertRadius = 1000;
 	Info.AnalyzingHistoryIndex = `XCOMHISTORY.GetCurrentHistoryIndex();
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_AIUnitData', Data)

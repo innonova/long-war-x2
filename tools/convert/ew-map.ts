@@ -35,7 +35,7 @@ import { addMaskTextures, maskMip } from './mask-textures.ts'
  *  none, not as the map's name and a dot; 15: EW's materials made inert, XCOM 2 compiling each as the map loaded;
  *  16: the meld canisters' places, MeldPoints; 17: what units see through (EW's VisibilityBlockingData on every piece:
  *  windows, foliage, cars), written onto the plot's pieces). */
-export const CONVERTER_VERSION = 18
+export const CONVERTER_VERSION = 19
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -129,7 +129,7 @@ const archetypeOf = (index: number) => v.getInt32(exports[index].entryOffset + 2
  * from the placed actor, then its archetypes; what none sets is its class's default (a destructible's, a car's or
  * sandbags', is not to be stood on; XCOM 2 places every piece as an XComLevelActor, whose default is).
  */
-interface Cover { onto: boolean; over: boolean; destination: boolean; ignore: boolean; force: string; sight: boolean; window: boolean }
+interface Cover { onto: boolean; over: boolean; destination: boolean; ignore: boolean; force: string; sight: boolean; window: boolean; ontoSet?: boolean }
 const COVER_DEFAULTS: Record<string, Partial<Cover>> = {
   XComDestructibleActor: { onto: false },
   XComFracLevelActor: { onto: false },
@@ -175,6 +175,7 @@ function coverOf(index: number, own: Tag[]): Cover {
   const d = COVER_DEFAULTS[exports[index].type] ?? {}
   return {
     onto: found.onto ?? d.onto ?? true,
+    ontoSet: found.onto !== undefined,
     over: found.over ?? d.over ?? false,
     destination: found.destination ?? d.destination ?? true,
     ignore: found.ignore ?? d.ignore ?? false,
@@ -326,6 +327,10 @@ const extents = new Map<string, number[]>()
 for (const p of pieces) {
   if (!extents.has(p.mesh)) extents.set(p.mesh, meshExtent(p.mesh))
   p.extent = extents.get(p.mesh)!.map((x, k) => Math.abs(x * p.scale[k]!))
+  // (A fracturable piece two tiles wide each way is a building's core or a slab, its top a roof or a floor: EW's class
+  // default, not to be climbed onto, is for walls, and XCOM 2 then makes no floor on top: Commercial Restaurant's roof
+  // terrace, a data recovery's capture area, had none. Converter 19.)
+  if (p.fractured && !p.cover.ontoSet && p.extent[0]! >= 96 && p.extent[1]! >= 96 && !/^(VEH_|SandBag\.)/.test(p.mesh)) p.cover.onto = true
 }
 if (process.env.LWX2_EXTENTS) for (const [m, e] of [...extents].sort((a, b) => Math.max(...b[1]) - Math.max(...a[1])).slice(0, 12)) console.log('extent', m, e.map((x) => x.toFixed(0)).join(','))
 
