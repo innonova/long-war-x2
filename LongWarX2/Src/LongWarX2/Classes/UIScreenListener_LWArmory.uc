@@ -48,16 +48,52 @@ function Keep()
 
 static function Place(UIArmory Armory)
 {
-	local vector Loc;
-	local rotator Rot;
+	local vector Loc, Offset;
+	local rotator Rot, Turn;
+	local Actor Placement;
+	local UIDisplay_LevelActor Display;
 
 	if (Armory.ActorPawn == none)
 		return;
 	class'LWX2EWBase'.static.Get(Armory).ArmorySpot(CameraFor(Armory), Loc, Rot);
+	// (XCOM 2's armory pawn faces away from where its placement points: turned about.)
+	Rot.Yaw += 32768;
+	// The screen's 3D display (its menu), where XCOM 2 has it beside its own pawn, the same beside ours.
+	Placement = Armory.GetPlacementActor();
+	Display = DisplayOf(Armory);
+	if (Placement != none && Display != none)
+	{
+		Turn.Yaw = Rot.Yaw - Placement.Rotation.Yaw;
+		Offset = Display.Location - Placement.Location;
+		if (VSize(Display.Location - (Loc + (Offset >> Turn))) > 4)
+		{
+			Display.SetLocation(Loc + (Offset >> Turn));
+			Display.SetRotation(Display.Rotation + Turn);
+		}
+	}
 	if (VSize(Armory.ActorPawn.Location - Loc) < 4)
 		return;
 	Armory.ActorPawn.SetLocation(Loc);
 	Armory.ActorPawn.SetRotation(Rot);
+}
+
+/** The screen's 3D display (in its blueprint's level, which the world's actor lists do not reach: LWX2DisplayWatch). */
+static function UIDisplay_LevelActor DisplayOf(UIArmory Armory)
+{
+	local XComBlueprint Blueprint;
+	local array<Actor> Actors;
+	local Actor A;
+
+	foreach Armory.WorldInfo.AllActors(class'XComBlueprint', Blueprint)
+	{
+		if (Blueprint.Tag != Armory.DisplayTag)
+			continue;
+		Blueprint.GetLoadedLevelActors(Actors);
+		foreach Actors(A)
+			if (UIDisplay_LevelActor(A) != none)
+				return UIDisplay_LevelActor(A);
+	}
+	return none;
 }
 
 defaultproperties
