@@ -30,6 +30,7 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
 		NewEffectState.StatChanges.AddItem(Change);
 	}
 	super.OnEffectAdded(ApplyEffectParameters, kNewTargetState, NewGameState, NewEffectState);
+	`log("LongWarX2: Extra Conditioning:" @ (Unit != none ? Unit.GetFullName() : "?") @ "in" @ Name @ "+" $ (k != INDEX_NONE ? default.ExtraConditioning[k].HP : 0) @ "HP", , 'LongWarX2');
 }
 
 defaultproperties
