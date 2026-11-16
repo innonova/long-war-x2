@@ -326,3 +326,18 @@ Geoscape's "PSI TESTING: <name>" with its 9 days; time run 220 hours: "finished
 psi training without gaining Mindfray" (41 %).
 
 The Labs' words come from Long War's `XGPsiLabsUI` text (`makePsiWords`).
+
+## Report (2026-11-16, Neural Feedback)
+
+- **Read** (Long War's `XGUnit.ApplyNeuralFeedback`; the power sits in EW's `ePerk_GeneMod_BrainFeedback` slot, 29):
+  when an enemy's psionic power hits a soldier with Neural Feedback, the enemy's psionic powers go on cooldown and it
+  takes (the soldier's will ×1.3 − its will) / 10, at least 1. (Long War also lets another soldier with the power
+  within 8 tiles, passing a will test, take the feedback for a teammate, the highest will first: not done.)
+- **Done:** `LWX2_NeuralFeedback` (given to a soldier with `LW_NeuralFeedback`): its effect listens for psionic
+  abilities (`eAbilitySource_Psionic`) aimed at its soldier, sets the attacker's psionic powers' cooldowns (their own,
+  at least a turn) and hurts it.
+- **Checked on wingpu:** an Ethereal beside a squad with the power: its Mindfray on a soldier was answered, "Neural
+  Feedback: … hurt AdvPsiWitchM2 by 1, its psionic powers cooling down" (the soldier's will was not much above the
+  Ethereal's).
+
+Regen Biofield was done on 2026-11-02 (above); with this, none of Long War's psi powers is a plain stand-in.
