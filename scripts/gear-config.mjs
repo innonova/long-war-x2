@@ -10,7 +10,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { ARMOURS, CLASS_PROPERTY, FAMILIES, INFINITE, RANGE, SMALL, STARTING_ARMOUR, TECH, TIERS, equippable, smallTemplate, categoryFor, familyOf, itemTemplate, readArmours, readBalance, readWeapons, startingKit } from './lw-gear.mjs'
+import { ARMOURS, CLASS_PROPERTY, FAMILIES, INFINITE, MEC_CLASSES, RANGE, SMALL, STARTING_ARMOUR, TECH, TIERS, equippable, smallTemplate, categoryFor, familyOf, itemTemplate, readArmours, readBalance, readWeapons, startingKit } from './lw-gear.mjs'
 
 const core = readFileSync(process.argv[2], 'latin1')
 const treeData = (f) => JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'xcom-ew-lw-tree', 'data', f), 'utf8'))
@@ -68,8 +68,8 @@ for (const x of SMALL) {
   const w = weapons.get(x.item)
   if (!w) throw new Error(`no Weapons= line for small item ${x.item}`)
   const n = (k) => Number(w[k] ?? 0)
-  const classes = Object.entries(CLASS_PROPERTY).filter(([, p]) => equippable(p, w.props.includes('AnyClass') || w.props.length === 0 ? ['AnyClass'] : w.props, x.item)).map(([c]) => c)
-  const anyone = classes.length === Object.keys(CLASS_PROPERTY).length
+  const classes = x.mec ? MEC_CLASSES : Object.entries(CLASS_PROPERTY).filter(([, p]) => equippable(p, w.props.includes('AnyClass') || w.props.length === 0 ? ['AnyClass'] : w.props, x.item)).map(([c]) => c)
+  const anyone = !x.mec && classes.length === Object.keys(CLASS_PROPERTY).length
   out.push(
     `+SmallItems=(Item=${x.item}, Template=${smallTemplate(x.item)}, Enum=${ITEMS[x.item]}, Kind=${x.kind}, Look=${x.look}, Damage=${Math.max(0, n('iDamage'))}, Environment=${n('iEnvironmentDamage')}, ` +
       `Radius=${Math.round(n('iRadius') / 96 - 0.01)}, Range=${Math.round(n('iRange') / 1.5)}, Aim=${n('iOffenseBonus')}, Crit=${x.crit ?? n('iCritical')}, HP=${n('iHPBonus')}, ` +

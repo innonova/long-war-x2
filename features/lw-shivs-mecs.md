@@ -250,3 +250,31 @@ MEC's, and the animations named for it do not drive it whole.
 **So the MECs keep XCOM 2's ADVENT MEC body for now**; EW's suits are listed apart in the converter
 (`EW_MEC_SUITS`, not converted) for that work. The armour-chosen body and the AnimSet from another
 package stay in the converter and `LWX2EWBodies` (a SHIV or alien could use them).
+
+## Report (2026-11-16, phase 4 begun: MEC subsystems)
+
+Five of Long War's six MEC subsystems are small items only the MEC classes carry
+(`lw-gear.mjs` `SMALL`, `mec`), with Long War's numbers from their `Weapons=` lines (damage, range
+11 tiles, radius) and built in engineering at its costs, each acting as an XCOM 2 item does:
+- **Grenade Launcher**: a frag grenade's throw (4 damage, radius 4);
+- **Proximity Mine Launcher**: XCOM 2's proximity mine (10 damage);
+- **Flamethrower**: a firebomb (5 damage);
+- **Electro Pulse**: an EMP grenade (6 damage);
+- **Restorative Mist**: a medikit's heal.
+
+A MEC suit gives a second utility slot (a subsystem and an item, or two subsystems).
+
+**Checked on wingpu:** a MEC with the Grenade Launcher had ThrowGrenade and GrenadeFuse in a
+mission and threw it at a Sectoid.
+
+### Decisions
+
+- **XCOM 2 items stand in for EW's abilities** (approximations): EW's flamethrower is a cone from
+  the MEC, its electro pulse a burst around the MEC that hits robots, its mist heals allies around
+  the MEC each turn; here they are thrown or used on one ally. The numbers are Long War's.
+
+### Left open
+
+- **Kinetic Strike** (12 damage, melee): no XCOM 2 counterpart without a melee weapon; not in yet.
+- The subsystems' charges by Long War's perks and Foundry projects (one each for now).
+- EW's MEC bodies (above).

@@ -1617,7 +1617,12 @@ function MECs(array<string> Args, out array<string> Out)
 		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
 		Unit = class'LWMECs'.static.AugmentDone(NewGameState, S, Unit.ObjectID);
 		if (Unit != none)
+		{
 			Unit.SetUnitFloatValue('LWX2TestFirst', 1, eCleanup_Never);
+			// ('mec make <item>': that item, a subsystem, in its utility slot.)
+			if (Args.Length > 2 && class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(name(Args[2])) != none)
+				Unit.AddItemToInventory(class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(name(Args[2])).CreateInstanceFromTemplate(NewGameState), eInvSlot_Utility, NewGameState);
+		}
 		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 		S = class'XComGameState_LWStrategy'.static.Get();
 	}

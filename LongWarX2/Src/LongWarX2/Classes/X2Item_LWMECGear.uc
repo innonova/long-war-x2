@@ -28,6 +28,8 @@ static function X2ArmorTemplate SuitTemplate(LWMECs.LWMECSuit S)
 	Template.strImage = "img:///UILibrary_StrategyImages.X2InventoryIcons.Inv_Kevlar_Armor";
 	Template.Tier = class'LWMECs'.default.Suits.Find('Item', S.Item);
 	Template.Abilities.AddItem(class'X2Ability_LWMECSuit'.static.StatsFor(S.Item));
+	// (A second utility slot for a subsystem, as Long War's suits all carry more than one item.)
+	Template.bAddsUtilitySlot = S.LargeItems + S.SmallItems >= 2;
 	Template.StartingItem = S.Item == class'LWMECs'.default.Suits[0].Item;
 	Template.bInfiniteItem = Template.StartingItem;
 	Template.CanBeBuilt = false;
