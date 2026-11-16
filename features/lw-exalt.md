@@ -123,8 +123,10 @@ Control port: `exalt` (state, cells, clues, last events), `exalt begin|place|act
 
 ### Found on the way
 
-- Long War's `XGCountry.AddPanic` also halves a rise with a chance by the country (its `iScience`
-  column); the port's `AddPanic` does not. Left for the Geoscape's feature.
+- Long War's `XGCountry.AddPanic` also halves a rise with a chance by the country (its `iScience`);
+  the port's `AddPanic` does not. No script writes `iScience` (it is only read: here, by the funding
+  council's rewards and the hunts), so its values are set natively and are not known; left out
+  until they can be read.
 
 ### Left open
 
