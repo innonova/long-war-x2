@@ -249,6 +249,15 @@ function Handle(string Line, out array<string> Out)
 		else
 			Out.AddItem(Args.Length > 1 ? (Args[1] @ "->" @ PathName(DynamicLoadObject(Args[1], class'Object', true)) @ DynamicLoadObject(Args[1], class'Object', true).Class) : "ERR img <path>");
 		return;
+	case "put":
+		// put <unit index (units) | #object id> <x> <y> <z>: a unit set on that tile at once (a test aid).
+		if (Args.Length < 5)
+		{
+			Out.AddItem("ERR put <unit index | #id> <tile x> <tile y> <tile z>");
+			return;
+		}
+		Out.AddItem(PutUnit(Args[1], int(Args[2]), int(Args[3]), int(Args[4])));
+		return;
 	case "spawns":
 		// spawns: the map's soldier spawns (XComGroupSpawn) and the one XCOM 2 chose (a test aid).
 		Spawns(Out);
@@ -2638,6 +2647,35 @@ static function bool TileTaken(TTile T)
 
 /** A soldier moved to a free floor tile beside another (a test aid: a medikit's reach). */
 /** The council's missions (LWCouncil): its clock, the missions offered; 'council now' one made at once. */
+function string PutUnit(string Who, int X, int Y, int Z)
+{
+	local array<XComGameState_Unit> Units;
+	local XComGameState_Unit Unit;
+	local XComGameState NewGameState;
+	local TTile Tile;
+
+	if (Left(Who, 1) == "#")
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(int(Mid(Who, 1))));
+	else
+	{
+		Units = FieldXCom();
+		if (int(Who) >= 0 && int(Who) < Units.Length)
+			Unit = Units[int(Who)];
+	}
+	if (Unit == none)
+		return "ERR no unit" @ Who;
+	Tile.X = X;
+	Tile.Y = Y;
+	Tile.Z = Z;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: a unit put on a tile");
+	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+	Unit.SetVisibilityLocation(Tile);
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	if (XGUnit(Unit.GetVisualizer()) != none)
+		XGUnit(Unit.GetVisualizer()).GetPawn().SetLocation(`XWORLD.GetPositionFromTileCoordinates(Tile));
+	return "ok" @ Unit.GetFullName() @ "put on" @ X @ Y @ Z;
+}
+
 function Spawns(out array<string> Out)
 {
 	local XComGroupSpawn Spawn;
@@ -2695,29 +2733,16 @@ function Council(array<string> Args, out array<string> Out)
 			Out.AddItem("node" @ i @ "at" @ Tile.X @ Tile.Y @ Tile.Z @ ((class'LWX2CouncilBomb'.static.State() != none && class'LWX2CouncilBomb'.static.State().NodeOff[i]) ? "off" : "on"));
 		}
 	}
-	// (In an extraction or rescue: the VIP's, the place they are reached and the Skyranger's tiles; 'council vipto <x> <y> <z>'
-	// the VIP put on that tile at once, a test aid.)
+	// (In an extraction or rescue: the VIP's, the place they are reached and the Skyranger's tiles.)
 	if (class'LWX2CouncilVIP'.static.Active(VIPDef) && `XWORLD != none)
 	{
 		VIP = class'LWX2CouncilVIP'.static.VIPUnit();
-		if (VIP != none && Args.Length > 4 && Args[1] == "vipto")
-		{
-			Tile.X = int(Args[2]);
-			Tile.Y = int(Args[3]);
-			Tile.Z = int(Args[4]);
-			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: the VIP moved");
-			VIP = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', VIP.ObjectID));
-			VIP.SetVisibilityLocation(Tile);
-			`TACTICALRULES.SubmitGameState(NewGameState);
-			if (XGUnit(VIP.GetVisualizer()) != none)
-				XGUnit(VIP.GetVisualizer()).GetPawn().SetLocation(`XWORLD.GetPositionFromTileCoordinates(Tile));
-		}
 		if (VIP != none)
 			Out.AddItem("vip" @ VIP.GetFullName() @ "#" $ VIP.ObjectID @ "at" @ VIP.TileLocation.X @ VIP.TileLocation.Y @ VIP.TileLocation.Z @ "team" @ VIP.GetTeam()
 				@ "joined" @ class'LWX2CouncilVIP'.static.State().bJoined @ "away" @ class'LWX2CouncilVIP'.static.State().bExtracted @ "dead" @ VIP.IsDead());
 		Tile = `XWORLD.GetTileCoordinatesFromPosition(VIPDef.Approach);
 		Out.AddItem("reached at" @ (VIPDef.bApproach ? (Tile.X @ Tile.Y @ Tile.Z) : "(a rescue: from the start)"));
-		Tile = `XWORLD.GetTileCoordinatesFromPosition(VIPDef.Extract);
+		Tile = `XWORLD.GetTileCoordinatesFromPosition(class'LWX2CouncilVIP'.static.Skyranger(VIPDef));
 		Out.AddItem("skyranger at" @ Tile.X @ Tile.Y @ Tile.Z @ "| objective:" @ class'LWX2CouncilVIP'.static.ObjectiveText());
 	}
 	Out.AddItem("council: next in" @ S.CouncilCountdown @ "hours; played" @ S.CouncilPlayed.Length);
