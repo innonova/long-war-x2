@@ -36,6 +36,8 @@ const ALIEN_PERKS = {
   LW_BloodCall: 'ePerk_BloodCall', LW_Repair: 'ePerk_Repair', LW_DeathBlossom: 'ePerk_DeathBlossom', LW_Launch: 'ePerk_Launch',
   LW_Strangle: 'ePerk_SeekerStrangle', LW_StrangleSustained: 'ePerk_SeekerStrangle', LW_SeekerCloak: 'ePerk_SeekerStealth',
   LW_Intimidate: 'ePerk_Intimidate', LW_IntimidateBerserker: 'ePerk_Intimidate', LW_PsiDrain: 'ePerk_PsiDrain',
+  // The Drone's Overload; the Berserker's charge and blow, XCOM 2's Berserker's own, as EW's Bull Rush.
+  LW_Overload: 'ePerk_Overload', DevastatingPunch: 'ePerk_BullRush',
 }
 
 /** The words file, from Long War's DefaultGameCore.ini and XComGame.int texts and EW's constants. */

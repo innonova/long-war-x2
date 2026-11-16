@@ -3,16 +3,22 @@
 class X2Condition_LWEnemyNear extends X2Condition;
 
 var int Tiles;
+/** At least this many enemies within Tiles (0: one); and at least SeenEnemies enemies in sight (0: no matter). */
+var int MinCount, SeenEnemies;
 
 event name CallMeetsCondition(XComGameState_BaseObject kTarget)
 {
 	local XComGameState_Unit Me, Other;
+	local int n;
 
 	Me = XComGameState_Unit(kTarget);
 	if (Me == none)
 		return 'AA_NotAUnit';
+	if (SeenEnemies > 0 && class'X2TacticalVisibilityHelpers'.static.GetNumVisibleEnemyTargetsToSource(Me.ObjectID) < SeenEnemies)
+		return 'AA_NoTargets';
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Other)
 		if (Other.IsAlive() && !Other.bRemovedFromPlay && Other.IsEnemyUnit(Me) && Me.TileDistanceBetween(Other) <= Tiles)
-			return 'AA_Success';
+			if (++n >= Max(1, MinCount))
+				return 'AA_Success';
 	return 'AA_NoTargets';
 }

@@ -13,6 +13,9 @@ var config int RepairHP, RepairTiles;
 var config int DeathBlossomTiles, DeathBlossomMin, DeathBlossomMax, DeathBlossomCooldown;
 /** Intimidate (EW's INTIMIDATE_CHANCE_MUTON, _BERSERKER; the morale event's will and the panic test's chance at even will). */
 var config int IntimidateChance, IntimidateChanceBerserker, IntimidateMorale, IntimidateEvenFail;
+/** The Drone's Overload (XGAIBehavior_SectopodDrone: with more than OverloadSeen-1 enemies in sight and more than one within
+ *  OverloadNearTiles; its death explosion's OverloadTiles and half its health, OverloadMin to OverloadMax). */
+var config int OverloadSeen, OverloadNearTiles, OverloadTiles, OverloadMin, OverloadMax;
 
 static function array<X2DataTemplate> CreateTemplates()
 {
@@ -30,6 +33,7 @@ static function array<X2DataTemplate> CreateTemplates()
 	Templates.AddItem(Intimidate('LW_IntimidateBerserker', default.IntimidateChanceBerserker));
 	Templates.AddItem(Bloodlust());
 	Templates.AddItem(PsiDrain());
+	Templates.AddItem(Overload());
 	return Templates;
 }
 
@@ -196,6 +200,58 @@ static function X2AbilityTemplate PsiDrain()
 }
 
 /** The Cyberdisc's Death Blossom: everyone around it within DeathBlossomTiles hit, friend or foe, the scenery too. */
+/** The Drone's Overload (EW's eAbility_ShotOverload): it destroys itself, its blast hurting everyone near (EW's death
+ *  explosion for the Drone). Only with many enemies in sight and two near (its AI's suicide mode). */
+static function X2AbilityTemplate Overload()
+{
+	local X2AbilityTemplate Template;
+	local X2AbilityCost_ActionPoints Cost;
+	local X2AbilityMultiTarget_Radius Radius;
+	local X2Condition_UnitProperty Living;
+	local X2Condition_LWEnemyNear Near;
+	local X2Effect_ApplyWeaponDamage Destroyed;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'LW_Overload');
+	Template.IconImage = "img:///UILibrary_PerkIcons.UIPerk_deathexplosion";
+	Template.AbilitySourceName = 'eAbilitySource_Standard';
+	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_AlwaysShow;
+	Template.Hostility = eHostility_Offensive;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SelfTarget;
+	Template.AbilityTriggers.AddItem(default.PlayerInputTrigger);
+	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
+	Template.AddShooterEffectExclusions();
+	Near = new class'X2Condition_LWEnemyNear';
+	Near.Tiles = default.OverloadNearTiles;
+	Near.MinCount = 2;
+	Near.SeenEnemies = default.OverloadSeen;
+	Template.AbilityShooterConditions.AddItem(Near);
+	Cost = new class'X2AbilityCost_ActionPoints';
+	Cost.iNumPoints = 1;
+	Cost.bConsumeAllPoints = true;
+	Template.AbilityCosts.AddItem(Cost);
+	Radius = new class'X2AbilityMultiTarget_Radius';
+	Radius.fTargetRadius = default.OverloadTiles * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
+	Radius.bExcludeSelfAsTargetIfWithinRadius = true;
+	Template.AbilityMultiTargetStyle = Radius;
+	Living = new class'X2Condition_UnitProperty';
+	Living.ExcludeDead = true;
+	Living.ExcludeFriendlyToSource = false;
+	Template.AbilityMultiTargetConditions.AddItem(Living);
+	Template.AddMultiTargetEffect(new class'X2Effect_LWOverload');
+	// (Itself destroyed.)
+	Destroyed = new class'X2Effect_ApplyWeaponDamage';
+	Destroyed.bIgnoreBaseDamage = true;
+	Destroyed.bIgnoreArmor = true;
+	Destroyed.EffectDamageValue.Damage = 999;
+	Template.AddShooterEffect(Destroyed);
+	Template.bShowActivation = true;
+	Template.bSkipFireAction = true;
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
+	return Template;
+}
+
 static function X2AbilityTemplate DeathBlossom()
 {
 	local X2AbilityTemplate Template;

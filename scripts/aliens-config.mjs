@@ -76,6 +76,7 @@ const ABILITIES = {
   eAbility_BloodCall: 'LW_BloodCall', eAbility_Launch: 'LW_Launch', eAbility_Intimidate: 'LW_Intimidate', eAbility_Bloodlust: 'LW_IntimidateBerserker',
   eAbility_MindMerge: 'LW_MindMerge', eAbility_GreaterMindMerge: 'LW_MindMerge', eAbility_PsiPanic: 'LW_PsiPanic',
   eAbility_MindFray: 'LW_Mindfray', eAbility_Mindfray: 'LW_Mindfray', eAbility_PsiControl: 'LW_MindControl', eAbility_Rift: 'LW_Rift', eAbility_PsiDrain: 'LW_PsiDrain',
+  eAbility_ShotOverload: 'LW_Overload',
 }
 out.push("; Each species' own abilities (Long War's ABILITIES[]), where the mod has them.")
 for (const m of text.matchAll(/^Characters=\(.*?iType=(eChar_\w+),(.*)$/gm)) {
@@ -99,4 +100,8 @@ out.push('DeathBlossomTiles=4', 'DeathBlossomMin=4', 'DeathBlossomMax=6', 'Death
 // INTIMIDATE_CHANCE_MUTON 33, _BERSERKER 66; the morale event's will (CalcWillValue, eMoraleEvent_MutonIntimidate) 40; the
 // panic test's chance to fail at even will (PerformPanicTest's PassesWillTest) 30.
 out.push('IntimidateChance=33', 'IntimidateChanceBerserker=66', 'IntimidateMorale=40', 'IntimidateEvenFail=30')
+// The Drone's Overload (XGAIBehavior_SectopodDrone: its suicide mode with more than 7 enemies in sight, used with more than
+// one within 384, four tiles; XComAlienPawn's death explosion for the Drone: radius 192, two tiles, damage half its
+// maximum health clamped to 3..8).
+out.push('OverloadSeen=8', 'OverloadNearTiles=4', 'OverloadTiles=2', 'OverloadMin=3', 'OverloadMax=8')
 console.log(out.join('\r\n'))
