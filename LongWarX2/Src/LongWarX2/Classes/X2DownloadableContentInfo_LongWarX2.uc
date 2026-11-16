@@ -140,6 +140,9 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	local LWX2CovertExtraction.LWX2CovertDef Covert;
 
 	class'LWSHIVs'.static.AddFoundryAbilities(UnitState, SetupData);
+	// Neural Feedback's answer to psionic attacks (X2Ability_LWNeuralFeedback).
+	if (UnitState.GetTeam() == eTeam_XCom && UnitState.HasSoldierAbility('LW_NeuralFeedback'))
+		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_NeuralFeedback', eInvSlot_Unknown, SetupData);
 	// Long War's ammo, every source added up (X2Effect_LWAmmoOdds).
 	if (UnitState.GetTeam() == eTeam_XCom && UnitState.IsSoldier())
 		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_AmmoOdds', eInvSlot_Unknown, SetupData);
