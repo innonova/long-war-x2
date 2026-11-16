@@ -74,7 +74,7 @@ for (const x of SMALL) {
   const anyone = !x.mec && classes.length === Object.keys(CLASS_PROPERTY).length
   out.push(
     `+SmallItems=(Item=${x.item}, Template=${smallTemplate(x.item)}, Enum=${ITEMS[x.item]}, Kind=${x.kind}, Look=${x.look}, Damage=${Math.max(0, n('iDamage'))}, Environment=${n('iEnvironmentDamage')}, ` +
-      `Radius=${Math.round(n('iRadius') / 96 - 0.01)}, Range=${Math.round(n('iRange') / 1.5)}, Aim=${n('iOffenseBonus')}, Crit=${x.crit ?? n('iCritical')}, HP=${n('iHPBonus')}, ` +
+      `Radius=${Math.round(n('iRadius') / 96 - 0.01)}, Range=${Math.round(n('iRange') / 1.5)}, Aim=${n('iOffenseBonus')}, Crit=${x.crit ?? n('iCritical')}, HP=${n('iHPBonus')}, Will=${n('iWillBonus')}, ` +
       `Ammo=${x.ammo ?? 1}, Pierce=${x.pierce ?? 0}, CritAgainstReaction=${x.critAgainstReaction ?? 0}, Infinite=${INFINITE.includes(x.item)}` +
       // The Foundry's S.C.O.P.E. project: crit for a carrier of the targeting module, half for the laser sight (item 79), not
       // with a pistol (XGAbility_Targeted.CalcCriticalChance; FOUNDRY_SCOPE_CRIT_BONUS).

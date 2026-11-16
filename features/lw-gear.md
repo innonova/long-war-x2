@@ -499,3 +499,23 @@ lines also carry mobility and will numbers, but what Long War does with those is
 
 **Checked on wingpu:** carriers had own reduction 1.0 (`dr`). A Sectoid's shot showed the
 carrier's defense 6 lower than without.
+
+## Report (2026-11-16, the Targeting Module, the Mind Shield, the Battle Computer)
+
+Three more of Long War's small items, each with its stat line, Long War's costs and words:
+- **Targeting Module** (74): +8 aim, and the Foundry's S.C.O.P.E. crit (already configured). The
+  S.C.O.P.E. project now needs one in stores, as in Long War, where it had named a placeholder.
+- **Mind Shield** (71): +25 will. Its text's low-level field is not modelled.
+- **Battle Computer** (Long War's item 90, "a Sectopod-derived combat computer ... for our
+  mechanized units"): MEC classes only; +8 aim, +8 crit, and its balance line's +8 defense and −1
+  mobility.
+
+Small items can now carry will (`Will=`).
+
+**Checked on wingpu:**
+- a soldier with the Mind Shield had will 58 (33 + 25);
+- a MEC with the Battle Computer shot with aim 69 + 8 and crit 8;
+- a Sectoid's shot showed that MEC's defense 16 (its suit's 8 and the computer's 8).
+
+**Still missing:** the Respirator Implant, Reaper Rounds, the Ghost Grenade and the Psi Grenade.
+They are abilities rather than stats.

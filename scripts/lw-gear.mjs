@@ -206,6 +206,13 @@ export const SMALL = [
   { item: 123, kind: 'Passive', look: 'CommonPCSFocus', ammo: 3 },
   { item: 95, kind: 'Passive', look: 'CommonPCSConditioning' },
   { item: 94, kind: 'Passive', look: 'CommonPCSAgility', critAgainstReaction: 100 },
+  // The Targeting Module: its line's +8 aim, and S.C.O.P.E.'s crit once that Foundry project is done (ScopeCrit).
+  { item: 74, kind: 'Passive', look: 'CommonPCSPerception' },
+  // The Mind Shield: its line's +25 will.
+  { item: 71, kind: 'Passive', look: 'CommonPCSFocus' },
+  // The Battle Computer (Long War's item 90, "a Sectopod-derived combat computer ... for our mechanized units"): MEC classes
+  // only; its line's +8 aim and +8 crit, its balance line's +8 defense.
+  { item: 90, kind: 'Passive', look: 'CommonPCSPerception', mec: true, balance: true },
   // Reinforced Armor: its BalanceMods_Classic line's defense, mobility and damage reduction (its text: "extra protection, but
   // inhibits agility"). (balance: those three read; other items' lines are not read as stats.)
   { item: 220, kind: 'Passive', look: 'CommonPCSConditioning', balance: true },
