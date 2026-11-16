@@ -7,6 +7,8 @@ var string UIPackage;
 /** EW's movies are laid out for a 1280 x 720 stage, XCOM 2's is 1920 x 1080: a screen that does not place itself by the
  *  stage's edges (as EW's HUD does) is scaled up to fill it. */
 var bool bScaleToStage;
+/** Where EW placed the screen's clip on its stage (ScaleToStage): a point of EW's stage is this far from the clip. */
+var float StageX, StageY;
 /** Whether the screen shows EW's base itself (the build screens): the screen under it does not hide the base for it. */
 var bool bShowsBase;
 
@@ -158,9 +160,29 @@ simulated function OnInit()
 {
 	super.OnInit();
 	if (bScaleToStage)
-		SetPanelScale(1920.0 / 1280.0);
+		ScaleToStage();
 	SetEWView(Movie);
 	`log("LongWarX2: EW screen" @ Package @ "inited", , 'LongWarX2');
+}
+
+/**
+ * EW's 1280x720 stage onto XCOM 2's 1920x1080: the screen's clip scaled, and moved as the stage is (XCOM 2's SetPanelScale
+ * scales a clip about its own origin; a screen EW placed away from the stage's corner, the Gene Mods' at (582, 397), would
+ * otherwise reach past the top and left edges).
+ */
+function ScaleToStage()
+{
+	local float Scale;
+
+	Scale = 1920.0 / 1280.0;
+	StageX = Movie.GetVariableNumber(MCPath $ "._x");
+	StageY = Movie.GetVariableNumber(MCPath $ "._y");
+	SetPanelScale(Scale);
+	if (StageX != 0 || StageY != 0)
+	{
+		Movie.SetVariableNumber(MCPath $ "._x", StageX * Scale);
+		Movie.SetVariableNumber(MCPath $ "._y", StageY * Scale);
+	}
 }
 
 /**

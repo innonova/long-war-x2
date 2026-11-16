@@ -193,7 +193,7 @@ static function bool CanPromote(XComGameState_LWStrategy S, XComGameState_Unit U
 		Why = default.MissionsPerGrade @ "missions in grade (now" @ (Unit.GetNumMissions() - ValueOf(Unit, 'LWX2OfficerMissionsAt')) $ ")";
 	else if (IsPsion(Unit))
 		Why = "a soldier who is not psionic";
-	else if (S.InPsiTraining(Unit.ObjectID) || S.GeneTrainees.Find('Unit', Unit.ObjectID) != INDEX_NONE)
+	else if (S.InPsiTraining(Unit.ObjectID) || S.GenePatients.Find('Unit', Unit.ObjectID) != INDEX_NONE)
 		Why = "a soldier not in the labs";
 	return Why == "";
 }

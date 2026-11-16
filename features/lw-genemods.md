@@ -211,3 +211,101 @@ strangler is the Seeker; XCOM 2's is the Viper's Bind.
   gives a traversal to any unit. **Next**: the grapple replaced by a
   passive JumpUp traversal; to check that soldiers have an animation for
   it.
+
+## Report (2026-11-16, the Genetics Lab on EW's own Gene Mods screen)
+
+The person's answer (2026-11-16): gene mods on EW's own screen; the soldier
+chosen on XCOM 2's list, as for the barracks.
+
+**The hub's Barracks → Genetics Lab** (once built) opens XCOM 2's list of the
+soldiers who could go into a tank now (`UIPersonnel_LWGene`: ready for duty,
+not in a lab, a tank free), over the base with the camera in the Genetics Lab.
+A soldier chosen, **EW's own Gene Mods screen** (`UILWEWGeneMods`, EW's
+SoldierGeneMods movie, driven as Long War's `UISoldierGeneMods` drives it):
+
+- the five body parts with their two mods each, in EW's places and with EW's
+  pictures for them (Long War's perk images): grey with a question mark until
+  researched, yellow the soldier's, cyan open; a body part greyed when neither
+  of its mods is researched;
+- hovering a mod: its name and Long War's words, what a click does, and its
+  meld and cash, in red where there is not enough; "LOCKED" and Long War's
+  words for one not researched;
+- clicking chooses or unchooses a mod, as EW's tick; choosing one of a body
+  part unchooses the other;
+- the soldier's header and stats on EW's panels: name, flag, rank, class (the
+  EW class Long War's grew from), missions, kills, status; health, mobility,
+  will, aim, defence, damage reduction;
+- **CONFIRM GENE IMPLANTS** (an XCOM 2 button in Long War's words under the
+  tree) raises EW's confirmation with the mods, those they replace, the days
+  and the price; confirmed, into the tank, and the list again while a tank is
+  free. Esc goes back to the list, and from the list out of the lab. With every
+  tank full, the lab says so in Long War's words and names who is in them.
+
+**Changed with it, as Long War's gene lab does it:**
+- **Several mods in one stay** (`AddSoldierToGeneLabs`): a soldier goes in for
+  all the chosen mods at once, paid at once, made one after the other
+  (`XComGameState_LWStrategy.GenePatients`: Long War's `TGeneLabsPatient`,
+  where there was one mod a stay). A tank holds a soldier, not a mod.
+- **A mod replaces the other of its body part** (`Update`: the opposite perk
+  set to 0): the soldier with Hyper-Reactive Pupils can go in for Depth
+  Perception and comes out with Depth Perception only. Before, a soldier with
+  a mod in a body part could not have the other.
+- `XComLWBase.ini`'s gene mods carry their **column** in EW's tree
+  (`GeneModPerkTree`'s Chest1/Chest2 …), read by `base-config.mjs`.
+- Control port: `gene <soldier> <perk> [<perk>…]` puts a soldier in for
+  several; `gene` lists each tank's mods with their hours.
+
+**On the way:**
+- **EW screens placed away from the corner of EW's stage** now scale with the
+  stage (`UILWEWScreen.ScaleToStage`): XCOM 2's panel scale grows a clip about
+  its own origin, so the Gene Mods screen (EW placed it at (582, 397)) reached
+  past the top and left edges. The screens already in use are placed at the
+  corner and are unchanged.
+- `tools/convert/swf-as2.ts labels <movie>` lists a movie's frame labels (how
+  the flags and class icons were found in EW's icon movie).
+- The hub's Officer Training School fell through to the Psi Labs where EW's
+  screens are not converted (my change this morning); it opens the plain
+  base screen again there.
+
+**Checked on wingpu** (new campaigns; Xenogenetics and the Sectoid autopsy
+given, meld added, a Genetics Lab placed), all by mouse:
+- Hyper-Reactive Pupils and Smart Macrophages chosen for one soldier: EW's
+  confirmation read "You are about to implant: Hyper-Reactive Pupils, Smart
+  Macrophages. This will take 7 days and will cost §25, 18 Meld."; confirmed:
+  §500 → §475, meld 62 → 44, the Geoscape's "GENE MOD: <name>" with 7 days,
+  the list back without that soldier;
+- time run: Pupils made on the fourth day, Macrophages on the eighth, the
+  soldier out; the screen showed both in yellow;
+- Depth Perception chosen for the same soldier: "Doing so will remove:
+  Hyper-Reactive Pupils"; three days later "gained LW_DepthPerception, lost
+  LW_HyperReactivePupils".
+
+Screenshots (gitignored): `logs/wingpu_ew_gene_mods.png`,
+`logs/wingpu_ew_gene_confirm.png`.
+
+### Decisions
+
+- **EW's tick and the confirmation, not one mod a click**: EW's screen lets
+  several mods be chosen and confirmed together; Long War's lab takes them in
+  one stay, so the port's tank does too.
+- **The confirm button is XCOM 2's**, in Long War's words, under the tree: EW
+  confirmed through its strategy HUD's help bar, which this port does not
+  have.
+- **The class icon is the EW class's** (sniper, heavy, support, assault, and
+  their gene-modded pictures): Long War's own class icons come from its
+  config's image paths, which are not in XCOM 2.
+
+### Left open
+
+- **The soldier is not stood in the lab**: EW puts the soldier on the lab's
+  plinth between the tree and the picture, with the X-ray view of the chosen
+  mod. Here the camera looks into the lab with no one in it.
+- **The mod's picture** (the large panel on the right): EW's pictures are in
+  its strategy images package, which the setup does not convert; the panel
+  shows its empty, red state.
+- EW's words for a mod's description are set on the words' clip directly:
+  EW's `SetDescription` casts the clip to its class first, and the cast finds
+  nothing in XCOM 2's Flash player (`CastOp`). Whether other EW screens' casts
+  fail the same way is not known.
+- The plain base screen's Genetics Lab line remains for where EW's screens are
+  not converted.

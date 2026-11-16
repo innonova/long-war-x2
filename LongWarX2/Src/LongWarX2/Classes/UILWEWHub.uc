@@ -220,7 +220,8 @@ simulated function OnLoseFocus()
 	ClearTimer(nameof(HoverOption));
 	// (A screen that shows the base itself, building in it, keeps it.)
 	Next = UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen());
-	if ((Next == none || !Next.bShowsBase) && UILWOfficers(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWPsiLabs(Movie.Pres.ScreenStack.GetCurrentScreen()) == none)
+	if ((Next == none || !Next.bShowsBase) && UILWOfficers(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWPsiLabs(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
+		&& UIPersonnel_LWGene(Movie.Pres.ScreenStack.GetCurrentScreen()) == none)
 		class'LWX2EWBase'.static.Get(self).Hide();
 }
 
@@ -369,8 +370,6 @@ function ChooseOption(int Option)
 	case OPT_SITROOM: class'UILWEWSituationRoom'.static.Open(); break;
 	case OPT_EXALT: class'UILWEWSituationRoom'.static.Open(true); break;
 	case OPT_GREYMARKET: class'UILWEWGreyMarket'.static.Open(HQPres); break;
-	// (The plain base screen holds the Officer Training School's, the Psi Labs' and the Genetics Lab's panels, until each
-	// has EW's own screen.)
 	case OPT_OFFICERS:
 		// EW's own Officer Billets screen; XCOM 2's widgets where EW's screens are not converted.
 		if (class'UILWEWScreen'.static.HasEWScreens())
@@ -378,18 +377,24 @@ function ChooseOption(int Option)
 		else
 			HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWOfficers', HQPres));
 		break;
+	// (Where EW's screens are not converted, the plain base screen holds the Officer Training School's and the Genetics
+	// Lab's panels.)
 	case OPT_OTS:
 		if (class'UILWEWScreen'.static.HasEWScreens())
-		{
 			class'UILWEWOTS'.static.Open(HQPres);
-			break;
-		}
+		else
+			HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres));
+		break;
 	// The Psi Labs on XCOM 2's widgets (soldier screens are XCOM 2's, agreed 2026-11-16).
 	case OPT_PSI:
 		class'UILWPsiLabs'.static.Open(HQPres);
 		break;
+	// The Genetics Lab on EW's own Gene Mods screen (agreed 2026-11-16).
 	case OPT_GENE:
-		HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres));
+		if (class'UILWEWScreen'.static.HasEWScreens())
+			class'UILWEWGeneMods'.static.Open(HQPres);
+		else
+			HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres));
 		break;
 	}
 }

@@ -1,6 +1,7 @@
 // A reader for the Scaleform movies in a UE3 package (EW's and XCOM 2's SwfMovie objects: Flash 8/9 with ActionScript 2),
 // for finding out what an EW screen needs in XCOM 2: each movie's imports and exports, the classes its init actions
 // define (AS2 classes are global: the first definition of a name wins), and its ActionScript as a readable listing.
+//   node tools/convert/swf-as2.ts <package .upk> labels <movie> [filter]    each sprite's frame labels (gotoAndStop's names)
 // A development aid; what it prints is the games' own code and stays out of the repository (read it in the terminal).
 //   node tools/convert/swf-as2.ts <package .upk> list                       the movies, their imports, exports, classes
 //   node tools/convert/swf-as2.ts <package .upk> classes [movie]            the classes each movie defines
@@ -224,7 +225,7 @@ export function movies(path: string) {
 if (/swf-as2\.ts$/.test(process.argv[1] ?? '')) {
   const [path, what = 'list', movie, filter] = process.argv.slice(2).filter((a) => a !== '--')
   if (!path) {
-    console.error('usage: swf-as2.ts <package .upk> list | classes [movie] | code <movie> [filter]')
+    console.error('usage: swf-as2.ts <package .upk> list | classes [movie] | code <movie> [filter] | labels <movie> [filter]')
     process.exit(2)
   }
   for (const m of movies(path)) {
@@ -239,6 +240,21 @@ if (/swf-as2\.ts$/.test(process.argv[1] ?? '')) {
         if (exports.length) console.log(`  export ${exports.join(', ')}`)
       }
       if (classes.length) console.log(`  classes ${classes.join(', ')}`)
+    } else if (what === 'labels') {
+      // FrameLabel (43) tags, by the sprite (DefineSprite 39) they are in; frames counted by ShowFrame (1).
+      const bySprite = new Map<number | undefined, string[]>()
+      const frame = new Map<number | undefined, number>()
+      for (const t of tags) {
+        if (t.code === 1) frame.set(t.sprite, (frame.get(t.sprite) ?? 0) + 1)
+        if (t.code !== 43) continue
+        const label = new R(t.body).str()
+        bySprite.set(t.sprite, [...(bySprite.get(t.sprite) ?? []), `${(frame.get(t.sprite) ?? 0) + 1}:${label}`])
+      }
+      console.log(`== ${m.name}`)
+      for (const [sprite, labels] of bySprite) {
+        if (filter && !labels.some((l) => l.toLowerCase().includes(filter.toLowerCase()))) continue
+        console.log(`sprite ${sprite ?? 'root'} (${labels.length}): ${labels.join(' ')}`)
+      }
     } else if (what === 'code') {
       console.log(`== ${m.name}`)
       for (const b of actionBlocks(tags)) {

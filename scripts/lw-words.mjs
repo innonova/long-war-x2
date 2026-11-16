@@ -524,3 +524,31 @@ export function makePsiWords({ strategyLoc }) {
   ].filter(([, v]) => v)
   return { text: ['[UILWPsiLabs]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
+
+/** The Gene Mods screen's words (UILWEWGeneMods, in the mod's LongWarX2.int): Long War's (UISoldierGeneMods, XGSoldierUI,
+ *  UIStrategyComponent_SoldierInfo),
+ *  from its strategy text. */
+export function makeGeneWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const section = (name) => {
+    const at = text.indexOf(`\n[${name}]\n`)
+    const end = at < 0 ? -1 : text.indexOf('\n[', at + 2)
+    return at < 0 ? '' : text.slice(at, end < 0 ? undefined : end)
+  }
+  const gene = section('UISoldierGeneMods')
+  const soldier = section('XGSoldierUI')
+  const info = section('UIStrategyComponent_SoldierInfo')
+  const one = (sec, key) => sec.match(new RegExp(`^${key.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const words = [
+    ['Title', one(gene, 'm_strScreenTitle')], ['ImplantLabel', one(gene, 'm_strImplantActionLabelPC')],
+    ['RemoveLabel', one(gene, 'm_strRemoveActionLabelPC')], ['Insufficient', one(gene, 'm_strInsufficientResourcesActionLabel')],
+    ['ConfirmTitle', one(gene, 'm_strConfirmNotificationTitle')], ['ConfirmBody', one(gene, 'm_strConfirmNotificationDescription')],
+    ['ConfirmBodyRemoved', one(gene, 'm_strConfirmNotificationDescriptionWithRemovedGenes')],
+    ['NoTanks', one(gene, 'm_strViewOnlyNotificationNoSlotsDescription')],
+    ...[0, 1, 2, 3, 4].map((i) => [`Rows[${i}]`, one(gene, `m_strCategoryTitles[${i}]`)]),
+    ['LockedLabel', one(soldier, 'm_strLockedAbilityLabel')], ['LockedDesc', one(soldier, 'm_strLockedGeneModDescription')],
+    ['ConfirmButton', one(soldier, 'm_strLabelGeneModConfirm')],
+    ['StatusLabel', one(info, 'm_strStatusLabel')], ['MissionsLabel', one(info, 'm_strMissionsLabel')], ['KillsLabel', one(info, 'm_strKillsLabel')],
+  ].filter(([, v]) => v)
+  return { text: ['[UILWEWGeneMods]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}

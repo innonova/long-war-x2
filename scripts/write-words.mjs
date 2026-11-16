@@ -7,7 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { decodeInt, makeArmourWords, makeBonusWords, makeBuildWords, makeHubWords, makeExaltWords, makeOfficerWords, makePsiWords, makeOTSWords, makeFacilityWords, makeFoundryWords, makeItemWords, makeSmallWords, makeTechWords, makeWeaponWords, makeWords, readConsts } from './lw-words.mjs'
+import { decodeInt, makeArmourWords, makeBonusWords, makeBuildWords, makeHubWords, makeExaltWords, makeOfficerWords, makePsiWords, makeGeneWords, makeOTSWords, makeFacilityWords, makeFoundryWords, makeItemWords, makeSmallWords, makeTechWords, makeWeaponWords, makeWords, readConsts } from './lw-words.mjs'
 import plan from './words-plan.json' with { type: 'json' }
 
 /** The words for an XEW folder, as { text, report }; undefined (with the reason) if Long War is not there. */
@@ -74,10 +74,11 @@ export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '', baseI
   const officers = strategyText ? makeOfficerWords({ strategyLoc: strategyText, loc: decodeInt(readFileSync(loc)) }) : { text: '', named: 0 }
   const exalt = strategyText ? makeExaltWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
   const psi = strategyText ? makePsiWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
+  const gene = strategyText ? makeGeneWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
   return {
-    modText: bonus.text + '\r\n' + hub.text + '\r\n' + build.text + '\r\n' + ots.text + '\r\n' + officers.text + '\r\n' + exalt.text + '\r\n' + psi.text,
+    modText: bonus.text + '\r\n' + hub.text + '\r\n' + build.text + '\r\n' + ots.text + '\r\n' + officers.text + '\r\n' + exalt.text + '\r\n' + psi.text + '\r\n' + gene.text,
     text: words.text + '\r\n' + tech.text + '\r\n' + items.text + '\r\n' + gear.text + '\r\n' + armour.text + '\r\n' + foundry.text + '\r\n' + facilities.text + '\r\n' + small.text,
-    report: `${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}, ${tech.named} techs, ${items.named} artifacts and corpses, ${gear.named} weapons, ${armour.named} armours, ${foundry.named} Foundry projects, ${facilities.named} facilities, ${small.named} small items, ${bonus.named} bonuses, ${hub.named} hub words, ${build.named} base building words, ${ots.named} Officer Training School words, ${officers.named} officer words, ${exalt.named} EXALT words, ${psi.named} Psi Labs words`,
+    report: `${words.perks} perks, ${words.ranks} rank names${words.unfilled.length ? ` (${words.unfilled.length} numbers unknown)` : ''}, ${tech.named} techs, ${items.named} artifacts and corpses, ${gear.named} weapons, ${armour.named} armours, ${foundry.named} Foundry projects, ${facilities.named} facilities, ${small.named} small items, ${bonus.named} bonuses, ${hub.named} hub words, ${build.named} base building words, ${ots.named} Officer Training School words, ${officers.named} officer words, ${exalt.named} EXALT words, ${psi.named} Psi Labs words, ${gene.named} Gene Mods words`,
   }
 }
 

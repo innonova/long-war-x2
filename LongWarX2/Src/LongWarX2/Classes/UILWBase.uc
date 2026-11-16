@@ -154,7 +154,7 @@ function RefreshGene(XComGameState_LWStrategy S)
 {
 	local array<XComGameState_Unit> Soldiers;
 	local LWBaseRules.LWGeneMod G;
-	local XComGameState_LWStrategy.LWPsiTrainee T;
+	local XComGameState_LWStrategy.LWGenePatient T;
 	local XComGameState_Unit Unit;
 	local string Text, Why;
 
@@ -184,10 +184,10 @@ function RefreshGene(XComGameState_LWStrategy S)
 	}
 	else
 		GeneSoldierButton.SetText("GENE: no soldier ready");
-	foreach S.GeneTrainees(T)
+	foreach S.GenePatients(T)
 	{
 		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(T.Unit));
-		Text $= " | " $ (Unit != none ? Unit.GetFullName() : "?") $ ":" @ class'X2Ability_LWStandins'.static.PsiPowerName(class'X2Ability_LWStandins'.static.GeneAbilityFor(T.Perk)) @ T.HoursLeft $ "h";
+		Text $= " | " $ (Unit != none ? Unit.GetFullName() : "?") $ ":" @ class'X2Ability_LWStandins'.static.PsiPowerName(class'X2Ability_LWStandins'.static.GeneAbilityFor(T.Perks[0])) @ class'XComGameState_LWStrategy'.static.GeneHoursLeft(T) $ "h";
 	}
 	GeneText.SetText(Text);
 }

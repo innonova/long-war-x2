@@ -116,10 +116,10 @@ function SetEvents(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(S.PsiTrainees[i].Unit));
 		PutEvent(Texts, Hours, Icons, "PSI TESTING:" @ (Unit != none ? Caps(Unit.GetFullName()) : ""), S.PsiTrainees[i].HoursLeft, "_psiTraining");
 	}
-	for (i = 0; i < S.GeneTrainees.Length; i++)
+	for (i = 0; i < S.GenePatients.Length; i++)
 	{
-		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(S.GeneTrainees[i].Unit));
-		PutEvent(Texts, Hours, Icons, "GENE MOD:" @ (Unit != none ? Caps(Unit.GetFullName()) : ""), S.GeneTrainees[i].HoursLeft, "_genemod");
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(S.GenePatients[i].Unit));
+		PutEvent(Texts, Hours, Icons, "GENE MOD:" @ (Unit != none ? Caps(Unit.GetFullName()) : ""), class'XComGameState_LWStrategy'.static.GeneHoursLeft(S.GenePatients[i]), "_genemod");
 	}
 	PutEvent(Texts, Hours, Icons, "COUNCIL REPORT", S.HoursPerMonth() - S.Hours % S.HoursPerMonth(), "_endOfMonth");
 	// The soonest only: a second row reaches the screen's bottom edge.

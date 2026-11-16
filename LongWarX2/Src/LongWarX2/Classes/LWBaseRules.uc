@@ -56,6 +56,8 @@ struct LWGeneMod
 	var int Fatigue;
 	/** Chest, Brain, Eyes, Skin or Legs: a soldier has one mod a slot (a string: as a name it shows another name's case). */
 	var string Slot;
+	/** Its place in the slot (1 or 2): the column of EW's gene mod screen (XComPerkManager.GeneModPerkTree). */
+	var int Column;
 };
 var config array<LWGeneMod> GeneMods;
 
