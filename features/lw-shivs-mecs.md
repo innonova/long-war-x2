@@ -138,8 +138,10 @@ material of the mesh), the gun's place on the body, the animations in motion.
 
 ### Decisions
 
-- **No cover for SHIVs for now**: they play on the ADVENT MEC's pawn, which has no cover
-  animations; EW's SHIVs took cover. To revisit with the cover animations of EW's SHIV.
+- **No cover for SHIVs**: they play on the ADVENT MEC's pawn, which takes none. (Corrected
+  2026-11-16: this first said EW's SHIVs took cover; they do not. Long War's `XGUnit.StartProvidingCover`
+  has the Alloy SHIV, `ePawnType_Tank2`, give cover to the soldiers beside it, and a MEC with One For
+  All; that is left open.)
 - **Squad select shows the ADVENT MEC's body**: EW's bodies are put on units in missions only;
   the strategy pawns are XCOM 2's.
 
@@ -161,7 +163,7 @@ Screenshots (gitignored): `logs/wingpu_shivs_squad_select.png`, `logs/wingpu_shi
 
 ### Left open (SHIVs)
 
-- Cover: they play on the ADVENT MEC's pawn (no cover animations); EW's SHIVs took cover.
+- The Alloy SHIV giving cover to soldiers beside it (Long War's `StartProvidingCover`), and a MEC with One For All.
 - The Hover SHIV's flight (its deck's `eAbility_Fly`, 6 fuel).
 - ~~The Foundry's SHIV projects~~ (below); the Arc Thrower's field repair (Field Repairs, 8), Ghost
   in the Machine's two free SHIVs and aim, Robotics' aim.
