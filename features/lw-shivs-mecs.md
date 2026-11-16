@@ -180,3 +180,26 @@ projects, a SHIV gets in a mission (XCOM 2's `FinalizeUnitAbilitiesForInit` hook
 
 Checked on wingpu: with 16 and 21 done (the control port's `foundry done`), a SHIV in a mission had
 Suppression, SuppressionShot and LW_Sprinter beside its shot and overwatch.
+
+## Plan for phase 3, MEC troopers (2026-11-16)
+
+Long War (read from its code, `XGFacility_CyberneticsLab`, `XGStrategySoldier.SetSoldierClass`, and
+its config): the Cybernetics Lab augments a soldier for §40 and 60 meld in 10 days
+(`m_iModCashCost`, `m_iModMeldCost`, `m_iModDays`), three at a time; the soldier comes out as the
+MEC class of their own (`MEC subclass = soldier subclass + 20`: Jaeger, Pathfinder, Archer,
+Goliath, Guardian, Shogun, Marauder, Valkyrie), one rank lower, with the soldier's base stats again
+(+4 HP), their perk tree that class's (`SoldierPerkTrees` 31-34, 41-44; stat gains
+`SoldierStatProgression` of the same ids), never psionic, in a MEC suit (`eAP_MEC`: immune to
+poison and fire; MEC-1 Paladin to MEC-6 Vanguard, built in engineering) with a MEC weapon (MEC
+Minigun 7, Laser Lance 8, Railgun 9, Pulse Lance 10, Particle Beam 11).
+
+**Decision: a MEC trooper is a unit of its own** (character template `LWMEC`, on the ADVENT MEC's
+pawn as the SHIVs are, later in EW's MEC bodies), made when augmentation ends from the soldier
+(name, nickname, country, rank less one, kills and missions carried over) in place of the soldier.
+XCOM 2 cannot change a unit's character template (`m_TemplateName` is protected), and a soldier's
+body is its appearance; the SHIVs show the way that works. XCOM 2's SPARK is in its DLC, which a
+player may not have.
+
+Steps: (a) the eight MEC classes in `XComClassData.ini` (`classes-config.mjs`), the suits and
+weapons as config and templates; (b) the Cybernetics Lab's augmentation and the MEC unit; (c) EW's
+MEC bodies; (d) the subsystems (phase 4).
