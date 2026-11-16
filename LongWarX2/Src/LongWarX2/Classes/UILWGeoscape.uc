@@ -34,11 +34,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	local UIText T;
 
 	super(UIScreen).InitScreen(InitController, InitMovie, InitName);
-	class'XComGameState_LWStrategy'.static.GetOrCreate();
-	class'LWWounds'.static.Apply();
-	class'LWFatigue'.static.Apply();
-	class'XComGameState_LWStrategy'.static.CheckMissionBack();
-	class'XComGameState_LWStrategy'.static.SyncResearch();
+	class'XComGameState_LWStrategy'.static.Arrived();
 	SelectedCountry = -1;
 
 	Spawn(class'UIBGBox', self).InitBG('LWGeoBg', 60, 60, 1800, 960);

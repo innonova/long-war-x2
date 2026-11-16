@@ -166,3 +166,45 @@ withdrawn; Nigeria, the base, accused and marked (`logs/wingpu_exalt_accused.png
 
 - On EW screens the map area (with the earth) sits above the timeline's own panels: anything EW
   draws under it must be raised (the scan panel was).
+
+## Report (2026-11-16, phase 3: covert operatives and their missions)
+
+- **Sending one** (EXALT's view in the Situation Room): a country with an exposed cell clicked,
+  nobody in the field → XCOM 2's soldier list of those Long War allows (`UIPersonnel_LWCovert`,
+  `LWExalt.CanBeOperative`: no Gunners or Rocketeers, no rookies, ready, rested, not training) →
+  EW's words ("COVERT OPERATION — <soldier> - <country>") → sent (`SendOperative`): XCOM 2's
+  covert-action status (away, out of squads), their gear released for others; EW's "operative in
+  the field" emblem on the country.
+- **Six days later** (Long War's `NextDayForOperative`): "ready for extraction", the clock stops,
+  and a decision on the Geoscape: "COVERT OPERATION: extraction in <country> (96h)"
+  (decision 9, mission kind 8). Not answered in time: the operative is lost to the memorial
+  (Long War's `OnMissionExpire`).
+- **The mission**: the operative first in the squad, on duty with their gear back; EXALT's squad
+  from Long War's covert table by the missions of the kind fought (`CovertSquad`, generated from
+  `DetermineCovertOpsSquad`: 54 pods), EXALT's soldiers standing in as ADVENT's (the elites as
+  their third tier); XCOM 2's guerrilla op as the mission.
+- **Back** (Long War's `PostCombat`): won, the cell cleared (the other exposed cells move), the
+  country 20 panic less, one EXALT intelligence (a clue held); lost, the cell moves; the operative
+  back on duty either way.
+
+**Checked on wingpu** (control port aids): an operative sent into France; the extraction after
+six days; the mission with the operative first and EXALT's first-table squad (8 soldiers in
+three pods, Long War's stats); won; back through the hub: France's cell gone, intel 1, one covert
+mission counted, the soldier back. An earlier run let the 96 hours pass: "the extraction … went
+unanswered: … is lost".
+
+**Fixed on the way:** a mission's result (and Long War's wounds and fatigue after it) was only
+applied when the Geoscape panel opened, not the hub, which is the strategy layer's root now: both
+call `XComGameState_LWStrategy.Arrived`.
+
+### Decisions
+
+- **The operative goes with their own gear**: Long War sends them with what was backed up; the
+  gear is released while they are away and put back for the mission.
+- **The mission is XCOM 2's guerrilla op** with EXALT's squad, until Long War's extraction and
+  data-recovery objectives exist (STATUS: Missions, "Long War's objectives per kind").
+
+### Left open
+
+- Phase 4 (the raid on EXALT's base, after the right accusation).
+- The extraction's own objectives (rendezvous, hack two comm relays) and the data recovery's.

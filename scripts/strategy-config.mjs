@@ -238,13 +238,15 @@ out.push(
   "; Fought in XCOM 2's missions: Long War's species (Char) as this XCOM 2 alien (its character template).",
   ...[[4, 'Sectoid'], [5, 'Archon'], [6, 'Viper'], [7, 'Muton'], [8, 'Gatekeeper'], [9, 'Sectoid'], [10, 'Archon'], [11, 'Andromedon'],
     [12, 'AdvPsiWitchM2'], [13, 'Chryssalid'], [14, 'PsiZombie'], [15, 'Berserker'], [16, 'Sectopod'], [17, 'AdvMEC_M1'], [18, 'Codex'],
-    [19, 'AdvPsiWitchM3'], [21, 'AdvMEC_M2'], [23, 'Faceless'], [24, 'AdvTrooperM1'], [25, 'AdvCaptainM1'], [26, 'AdvShieldBearerM2'], [27, 'AdvStunLancerM1']].map(([c, t]) => `+FightAs=(Char=${c}, Template=${t})`),
+    [19, 'AdvPsiWitchM3'], [21, 'AdvMEC_M2'], [23, 'Faceless'], [24, 'AdvTrooperM1'], [25, 'AdvCaptainM1'], [26, 'AdvShieldBearerM2'], [27, 'AdvStunLancerM1'],
+    // EXALT's elites (operative, sniper, heavy, medic) as the same ADVENT soldiers' third tier.
+    [28, 'AdvTrooperM3'], [29, 'AdvCaptainM3'], [30, 'AdvShieldBearerM3'], [31, 'AdvStunLancerM3']].map(([c, t]) => `+FightAs=(Char=${c}, Template=${t})`),
   '; Taken alive in a mission: XCOM 2\'s kind of alien (its character group) as Long War\'s species (Char).',
   ...[['Sectoid', 4], ['Viper', 6], ['AdventTrooper', 6], ['AdventCaptain', 6], ['AdventShieldbearer', 6], ['AdventStunLancer', 6], ['AdventPurifier', 6], ['AdventPriest', 6],
     ['Muton', 7], ['Archon', 10], ['Berserker', 15], ['Andromedon', 11], ['Codex', 9], ['AdventPsiWitch', 12]].map(([g, c]) => `+CaptureAs=(Group=${g}, Char=${c})`),
   ...[28, 29, 30, 31].map((id) => `+Species=(Char=${id}, Name=ExaltElite${id}, Elerium=0, Alloys=0, Meld=${one('CB_FUNDING_BONUS')})`),
 )
-if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk), ...mapPlaces(strategyUpk), ...exaltRules(strategyUpk))
+if (strategyUpk) out.push(...monthlyPlan(strategyUpk), ...loseCondition(strategyUpk), ...mapPlaces(strategyUpk), ...exaltRules(strategyUpk), ...covertSquads(strategyUpk))
 // Long War's wound recovery (XGFacility_Barracks.DetermineTimeOut; LWWounds).
 out.push(
   '',
@@ -493,6 +495,42 @@ function exaltRules(upk) {
     out.push(`+Clues=(Text=${n(c.m_iClueTextIndex)}${list('Invalid', c.m_arrInvalidCountries)}${list('Valid', c.m_arrValidCountries)})`)
   }
   if (k < 10) throw new Error(`XGExaltSimulation: ${k} clues read`)
+  return out
+}
+
+/**
+ * EXALT's squads for the covert operatives' missions (XGStrategyAI.DetermineCovertOpsSquad; the extraction sets the
+ * aliens' month to 5 first, so its second table): by how many such missions XCOM has fought, its pods, each a main EXALT
+ * soldier (a species, or one of a range: 24 + 0..3 the basic four, 28 + 0..3 the elites, 24 + 0..7 either) and Long War's
+ * pod size (BuildPod's number: above 8, its last digit is the size).
+ */
+function covertSquads(upk) {
+  const src = decompile(upk, 'XGStrategyAI.DetermineCovertOpsSquad')
+  const second = src.findIndex((l, i) => i > 0 && /^switch ?\(iPod\)/.test(l) && src.slice(0, i).some((x) => /^switch ?\(iPod\)/.test(x)))
+  if (second < 0) throw new Error('DetermineCovertOpsSquad: no second table')
+  const out = ["; EXALT's squads for covert operations (XGStrategyAI.DetermineCovertOpsSquad): pods by the missions fought (Missions:", '; from this many), the main soldier (Main, plus 0..Spread-1) and the pod size (BuildPod\'s number).']
+  let labels = []
+  let last = -1
+  let open = false
+  for (const l of src.slice(second + 1)) {
+    let m
+    if ((m = /^case (\d+):$/.exec(l))) {
+      if (!open) labels = []
+      labels.push(Number(m[1]))
+      last = Math.max(last, Number(m[1]))
+      open = true
+    } else if (/^default:$/.test(l)) {
+      labels = [last + 1]
+      open = true
+    } else if ((m = /BuildPod\(ePodType_\w+, (?:byte\((\d+) \+ Rand\((\d+)\)\)|(\d+)|eChar_(\w+)), (\d+)/.exec(l))) {
+      open = false
+      const main = m[1] ? Number(m[1]) : m[3] ? Number(m[3]) : { SectoidCommander: 9, ExaltOperative: 24, ExaltEliteOperative: 28 }[m[4]]
+      if (main === undefined) throw new Error(`DetermineCovertOpsSquad: ${m[4]}`)
+      out.push(`+CovertPods=(Missions=${labels[0]}, Main=${main}, Spread=${m[2] ? Number(m[2]) : 1}, Size=${Number(m[5])})`)
+    } else if (/^return kSquad;$/.test(l)) open = false
+    if (l === '}' && labels.length && last >= 16 && /^default/.test(String(labels))) break
+  }
+  if (out.length < 20) throw new Error(`DetermineCovertOpsSquad: ${out.length - 2} pods read`)
   return out
 }
 

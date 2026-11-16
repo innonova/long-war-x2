@@ -162,8 +162,8 @@ function int PrepareMission()
 	local name Source;
 	local int Kind;
 	local array<XComGameState_Unit> Soldiers;
-	local XComGameState_Unit Unit;
-	local int Attempt;
+	local XComGameState_Unit Unit, Operative;
+	local int Attempt, i;
 	local Vector2D Where;
 	local XComGameState_LWStrategy LW;
 	local string EWMap;
@@ -229,6 +229,20 @@ function int PrepareMission()
 		if (ForceKind > 0)
 			LW.PendingKind = Kind;
 		class'LWMissionSquads'.static.ApplyTo(Mission, LW.PendingSquad);
+	}
+	// A covert operation: the operative in the squad, first (features/lw-exalt.md).
+	if (LW != none && LW.PendingKind == 8)
+	{
+		Operative = class'LWExalt'.static.OperativeForMission(NewGameState);
+		if (Operative != none)
+		{
+			for (i = Soldiers.Length - 1; i >= 0; i--)
+				if (Soldiers[i].ObjectID == Operative.ObjectID)
+					Soldiers.Remove(i, 1);
+			Soldiers.InsertItem(0, Operative);
+			if (Soldiers.Length > SquadSize())
+				Soldiers.Length = SquadSize();
+		}
 	}
 	// Long War's squad size, for XCOM 2's squad select too (GetMaxSoldiersAllowedOnMission reads the mission's).
 	Mission.GeneratedMission.Mission.MaxSoldiers = SquadSize();

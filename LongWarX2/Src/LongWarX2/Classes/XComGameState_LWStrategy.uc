@@ -182,6 +182,9 @@ var bool bExaltSweepAllowed;
 var array<int> ExaltAccused;
 var int ExaltIntel;
 var int ExaltOperative, ExaltOperativeCountry, ExaltOperativeDays;
+/** The covert operation's mission: the hour it expires (0: none), and the missions of the kind fought so far (EXALT's
+ *  squads grow with them; Long War counts its extraction and capture-and-hold missions). */
+var int ExaltMissionUntil, ExaltMissionsFought;
 
 // --- Making it ------------------------------------------------------------------------------
 
@@ -1202,6 +1205,8 @@ function array<int> MissionSquad()
 {
 	local int Country;
 
+	if (PendingKind == 8)
+		return class'LWExalt'.static.CovertSquad(ExaltMissionsFought, Days());
 	if (PendingKind == 5)
 		return class'LWAlienSquads'.static.SquadFor(2, 8, Days(), AlienAggression, AlienResources, 0, TerrorsTaken);
 	if (PendingKind >= 6)
@@ -1252,6 +1257,9 @@ static function MissionCommitted()
 		S.Ufos[S.PendingIndex].Status = 5;
 	else if (S.PendingKind <= 4 || S.PendingKind == 7)
 		S.Sites[S.PendingIndex].Status = 2;
+	// (The covert operation answered: it no longer expires.)
+	else if (S.PendingKind == 8)
+		S.ExaltMissionUntil = 0;
 	// An alien base takes a Skeleton Key, whatever comes of it (XGStrategy: STORAGE().RemoveItem(184)).
 	if (S.PendingKind == 5)
 		class'LWEngineering'.static.Take(NewGameState, 'LWItem_Skeleton_Key', 1);
@@ -1287,6 +1295,17 @@ static function MissionLaunched(int MissionID)
 }
 
 /** Back on the Geoscape: if the mission sent from it has been played, its result applied. */
+/** The strategy layer opened (the hub, the Geoscape): the campaign's state there, a mission come back counted, Long War's
+ *  wounds and fatigue on those who went, the research rate. */
+static function Arrived()
+{
+	GetOrCreate();
+	class'LWWounds'.static.Apply();
+	class'LWFatigue'.static.Apply();
+	CheckMissionBack();
+	SyncResearch();
+}
+
 static function CheckMissionBack()
 {
 	local XComGameState_BattleData Battle;
@@ -1311,6 +1330,16 @@ static function MissionBack(bool bWon)
 		return;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission back");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
+	if (S.PendingKind == 8)
+	{
+		// EXALT's covert operation (Long War's PostCombat): its cell cleared or moved; the operative back.
+		class'LWExalt'.static.CovertMissionBack(NewGameState, S, bWon);
+		S.PendingKind = 0;
+		S.PendingMission = 0;
+		S.bPendingCapture = false;
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		return;
+	}
 	Country = S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Country : ((S.PendingKind <= 4 || S.PendingKind == 7) ? S.Sites[S.PendingIndex].Country : (S.PendingKind == 5 ? S.PendingIndex : S.HomeCountry()));
 	if (S.PendingKind >= 5)
 	{
@@ -1923,6 +1952,9 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 			AddDecision(Kinds, Indexes, Labels, 8, i, "DEFEND: XCOM's headquarters (" $ (Sites[i].Until - Hours) $ "h)");
 		else if (Sites[i].Status == 1)
 			AddDecision(Kinds, Indexes, Labels, Sites[i].bTerror ? 5 : 4, i, (Sites[i].bTerror ? "RESPOND: terror in" : "RESPOND: abductions in") @ CountryName(Sites[i].Country) @ "(" $ (Sites[i].Until - Hours) $ "h)");
+	// EXALT: the covert operative ready for extraction (features/lw-exalt.md).
+	if (ExaltOperative > 0 && ExaltMissionUntil > Hours)
+		AddDecision(Kinds, Indexes, Labels, 9, 0, "COVERT OPERATION: extraction in" @ CountryName(ExaltOperativeCountry) @ "(" $ (ExaltMissionUntil - Hours) $ "h)");
 	// The story: an alien base, with a Skeleton Key to open it; the Temple Ship, once the Gollop Chamber stands.
 	if (class'LWEngineering'.static.Held('LWItem_Skeleton_Key') > 0)
 		for (i = 0; i < AlienBases.Length; i++)

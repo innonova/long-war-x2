@@ -1931,7 +1931,13 @@ function Exalt(array<string> Args, out array<string> Out)
 		Out.AddItem("ERR no Long War campaign");
 		return;
 	}
-	if (Args.Length > 1 && Args[1] ~= "sweep")
+	if (Args.Length > 3 && Args[1] ~= "send")
+	{
+		// 'exalt send #<unit id> <country>': a covert operative sent (as the Situation Room sends one).
+		Out.AddItem(class'LWExalt'.static.SendOperative(int(Mid(Args[2], 1)), int(Args[3]), Why) ? "ok" : "ERR" @ Why);
+		S = class'XComGameState_LWStrategy'.static.Get();
+	}
+	else if (Args.Length > 1 && Args[1] ~= "sweep")
 	{
 		Out.AddItem(class'LWExalt'.static.Sweep(Why) ? "ok" : "ERR" @ Why);
 		S = class'XComGameState_LWStrategy'.static.Get();
@@ -1960,6 +1966,9 @@ function Exalt(array<string> Args, out array<string> Out)
 	}
 	Out.AddItem("state" @ S.ExaltState @ "base" @ (S.ExaltState > 0 ? S.CountryName(S.ExaltCountry) : "-") @ "cooldown" @ S.ExaltCooldown @ "days since an operation" @ S.ExaltDaysSinceOperation
 		@ "scans" @ S.ExaltSweeps @ "(next" @ class'LWStrategyRules'.static.Money(class'LWExalt'.static.SweepCost(S)) $ (class'LWExalt'.static.CanSweep(S, Why) ? ")" : "; not now:" @ Why $ ")") @ "intel" @ S.ExaltIntel);
+	if (S.ExaltOperative > 0)
+		Out.AddItem("operative #" $ S.ExaltOperative @ "in" @ S.CountryName(S.ExaltOperativeCountry) @ "days" @ S.ExaltOperativeDays @ (S.ExaltMissionUntil > 0 ? "extraction for" @ (S.ExaltMissionUntil - S.Hours) $ "h" : ""));
+	Out.AddItem("covert missions fought" @ S.ExaltMissionsFought);
 	for (i = 0; i < S.ExaltCells.Length; i++)
 		Out.AddItem("cell" @ S.ExaltCells[i].Country @ S.CountryName(S.ExaltCells[i].Country) @ (S.ExaltCells[i].DaysUntilHidden > 0 ? "EXPOSED for" @ S.ExaltCells[i].DaysUntilHidden : "hidden") @ "acts in" @ S.ExaltCells[i].DaysUntilNextActivity);
 	Line = "clues (of" @ class'LWExalt'.default.Clues.Length $ "):";

@@ -10,12 +10,13 @@ class UILWEWSituationRoom extends UILWEWScreen dependson(LWStrategyRules);
 /** EW's words (UISituationRoom, XGInfiltratorSitRoomUI), written from the player's install (lw-words.mjs, makeExaltWords). */
 var localized string SweepButton, SweepDesc, SweepDisabled, SweepCantAfford, SweepFailed, RuledOut, AccuseLabel, RaidLabel;
 var localized string SweepTitle, SweepBody, SweepConfirm, SweepDecline, CluesTitle, CluesNone, CluesFew, CluesEnough;
-var localized string StatusNoCell, StatusUnknown, StatusExposed, NotScanned, FailTitle, FailBody, FailLeftTitle, FailLeftBody, SuccessTitle, SuccessBody;
+var localized string LaunchLabel, StatusNoCell, StatusUnknown, StatusExposed, NotScanned, FailTitle, FailBody, FailLeftTitle, FailLeftBody, SuccessTitle, SuccessBody;
 
 /** EXALT's view (EW's covert operations mode) rather than the satellites'. */
 var bool bCovert;
-/** The country an accusation is asked about (the dialog's answer). */
-var int AccuseCountry;
+/** The country an accusation is asked about (the dialog's answer); the one a covert operative is chosen for. */
+var int AccuseCountry, OperativeCountry;
+var StateObjectReference OperativeChosen;
 /** The Intel Scan, an XCOM 2 button under the map in EW's words: EW's own scan panel stands where this port's
  *  right-hand country list is, and its intro never runs here. */
 var UIButton SweepButtonWidget;
@@ -162,7 +163,7 @@ function RefreshCovert(XComGameState_LWStrategy S)
 		k = S.CountryIndex(Order[i]);
 		if (k < 0)
 			continue;
-		bExposed = class'LWExalt'.static.IsExposed(S, k);
+		bExposed = class'LWExalt'.static.IsExposed(S, k) || (S.ExaltOperative > 0 && S.ExaltOperativeCountry == k);
 		if (S.Countries[k].bLeft)
 			Left++;
 		MC.BeginFunctionOp("SetCountryInfoInfiltrator");
@@ -171,8 +172,8 @@ function RefreshCovert(XComGameState_LWStrategy S)
 		MC.QueueNumber(Clamp(S.Countries[k].Panic / 20, 0, 5));
 		MC.QueueBoolean(!S.Countries[k].bLeft);
 		MC.QueueBoolean(bExposed);
-		// (EW's cell states: 0 a cell, 4 none known.)
-		MC.QueueNumber(bExposed ? 0 : 4);
+		// (EW's cell states: 0 a cell, 1 our operative in it, 2 ready for extraction, 4 none known.)
+		MC.QueueNumber((S.ExaltOperative > 0 && S.ExaltOperativeCountry == k) ? (S.ExaltMissionUntil > 0 ? 2 : 1) : (bExposed ? 0 : 4));
 		MC.QueueBoolean(class'LWExalt'.static.RuledOutByHeldClues(S, k) || S.ExaltAccused.Find(k) != INDEX_NONE);
 		MC.QueueBoolean(k == S.ExaltCountry && S.ExaltAccused.Find(k) != INDEX_NONE);
 		MC.EndOp();
@@ -258,10 +259,20 @@ function ChooseCountry(int Slot)
 {
 	local XComGameState_LWStrategy S;
 	local TDialogueBoxData Data;
+	local UIPersonnel_LWCovert Personnel;
 	local int k;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
 	k = (Slot >= 0 && Slot < Order.Length) ? S.CountryIndex(Order[Slot]) : INDEX_NONE;
+	// An exposed cell and nobody in the field: a covert operative chosen for it (Long War's COVERT OPERATION).
+	if (k >= 0 && class'LWExalt'.static.IsExposed(S, k) && S.ExaltOperative <= 0)
+	{
+		OperativeCountry = k;
+		Personnel = Spawn(class'UIPersonnel_LWCovert', Movie.Pres);
+		Personnel.onSelectedDelegate = OnOperativeChosen;
+		Movie.Pres.ScreenStack.Push(Personnel);
+		return;
+	}
 	if (k < 0 || !class'LWExalt'.static.CanAccuse(S, k))
 	{
 		Movie.Pres.PlayUISound(eSUISound_MenuClose);
@@ -275,6 +286,31 @@ function ChooseCountry(int Slot)
 	Data.strCancel = class'UIUtilities_Text'.default.m_strGenericNo;
 	Data.fnCallback = OnAccuseConfirm;
 	Movie.Pres.UIRaiseDialog(Data);
+}
+
+/** A soldier chosen for the covert operation: EW's words for it, then sent (LWExalt.SendOperative). */
+function OnOperativeChosen(StateObjectReference UnitRef)
+{
+	local TDialogueBoxData Data;
+
+	OperativeChosen = UnitRef;
+	Data.eType = eDialog_Normal;
+	Data.strTitle = Word(LaunchLabel, "COVERT OPERATION");
+	Data.strText = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitRef.ObjectID)).GetName(eNameType_FullNick) @ "-"
+		@ Caps(class'XComGameState_LWStrategy'.static.Get().CountryName(OperativeCountry));
+	Data.strAccept = class'UIUtilities_Text'.default.m_strGenericYes;
+	Data.strCancel = class'UIUtilities_Text'.default.m_strGenericNo;
+	Data.fnCallback = OnOperativeConfirm;
+	Movie.Pres.UIRaiseDialog(Data);
+}
+
+simulated function OnOperativeConfirm(Name Action)
+{
+	local string Why;
+
+	if (Action == 'eUIAction_Accept' && !class'LWExalt'.static.SendOperative(OperativeChosen.ObjectID, OperativeCountry, Why))
+		`log("LongWarX2: EXALT: no operative sent:" @ Why, , 'LongWarX2');
+	Refresh();
 }
 
 simulated function OnAccuseConfirm(Name Action)

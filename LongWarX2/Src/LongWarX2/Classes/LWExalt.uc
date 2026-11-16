@@ -26,8 +26,16 @@ struct LWExaltClue
 	var array<name> Invalid, Valid;
 };
 
+/** A pod of EXALT's squads for covert operations (XGStrategyAI.DetermineCovertOpsSquad): from this many such missions
+ *  fought, the main soldier (Main + 0..Spread-1) and Long War's pod size (above 8, its last digit). */
+struct LWCovertPod
+{
+	var int Missions, Main, Spread, Size;
+};
+
 var config array<LWExaltTuning> Tuning;
 var config array<LWExaltClue> Clues;
+var config array<LWCovertPod> CovertPods;
 /** Long War's clue texts (XGExaltSimulation.m_arrClueText), written from the player's install (lw-words.mjs). */
 var localized string ClueTexts[40];
 
@@ -66,7 +74,12 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 			Begin(S);
 		return;
 	}
-	if (S.ExaltState == ENDED || S.Hours % 24 != 12)
+	if (S.ExaltState == ENDED)
+		return;
+	// The extraction not answered in time: the operative is lost (Long War's OnMissionExpire).
+	if (S.ExaltMissionUntil > 0 && S.Hours >= S.ExaltMissionUntil && S.PendingKind != 8)
+		OperativeLost(NewGameState, S);
+	if (S.Hours % 24 != 12)
 		return;
 	S.bExaltSweepAllowed = true;
 	DayForOperative(S);
@@ -84,11 +97,18 @@ static function Begin(XComGameState_LWStrategy S)
 	`log("LongWarX2: EXALT: begun, its base in" @ S.CountryName(S.ExaltCountry) $ "," @ S.ExaltClues.Length @ "clues; cells in" @ S.ExaltCooldown @ "days", , 'LongWarX2');
 }
 
-/** The covert operative's day (phase 3, features/lw-exalt.md): counted down. */
+/** Long War's NextDayForOperative: on the last day, the mission to extract the operative (96 hours to answer). */
 static function DayForOperative(XComGameState_LWStrategy S)
 {
-	if (S.ExaltOperative > 0 && S.ExaltOperativeDays > 0)
-		S.ExaltOperativeDays--;
+	if (S.ExaltOperative <= 0 || S.ExaltOperativeDays <= 0)
+		return;
+	if (S.ExaltOperativeDays == 1)
+	{
+		S.ExaltMissionUntil = S.Hours + 96;
+		S.Note("Our covert operative in" @ S.CountryName(S.ExaltOperativeCountry) @ "is ready for extraction.");
+		S.bStop = true;
+	}
+	S.ExaltOperativeDays--;
 }
 
 /** Long War's NextDayForExalt. */
@@ -571,4 +591,174 @@ static function bool Accuse(int Country)
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	return true;
+}
+
+/** EXALT's squad for a covert operation, by the missions of the kind fought (Long War's second table: the extraction's). */
+static function array<int> CovertSquad(int Fought, int Days)
+{
+	local array<int> Out;
+	local LWCovertPod P;
+	local int Group;
+
+	Group = -1;
+	foreach default.CovertPods(P)
+		if (P.Missions <= Fought && P.Missions > Group)
+			Group = P.Missions;
+	foreach default.CovertPods(P)
+		if (P.Missions == Group)
+			class'LWAlienSquads'.static.AddPod(Out, 0, P.Main + Rand(Max(1, P.Spread)), P.Size, Days);
+	return Out;
+}
+
+/** Long War's IsAvailableForCovertOps: no heavy weapons class (Gunner, Rocketeer), no rookie, ready (not hurt, not
+ *  resting, not training), and nobody else in the field. */
+static function bool CanBeOperative(XComGameState_LWStrategy S, XComGameState_Unit Unit, out string Why)
+{
+	local UnitValue RestedAt;
+
+	Why = "";
+	if (Unit == none || !Unit.IsSoldier())
+		Why = "not a soldier";
+	else if (S.ExaltOperative > 0)
+		Why = "an operative is in the field";
+	else if (Unit.GetSoldierClassTemplateName() == 'LWS_Gunner' || Unit.GetSoldierClassTemplateName() == 'LWS_Rocketeer')
+		Why = "Gunners and Rocketeers are not eligible";
+	else if (Unit.GetRank() == 0)
+		Why = "rookies are not eligible";
+	else if (Unit.GetStatus() != eStatus_Active || Unit.IsInjured() || !Unit.CanGoOnMission())
+		Why = "not ready";
+	else if (Unit.GetUnitValue('LWX2RestedAt', RestedAt) && int(RestedAt.fValue) > S.Hours)
+		Why = "resting";
+	else if (S.InPsiTraining(Unit.ObjectID))
+		Why = "in psi training";
+	return Why == "";
+}
+
+/** Long War's SetCovertOperative: the soldier sent into a country with a cell, away for its days, their gear released. */
+static function bool SendOperative(int UnitID, int Country, out string Why)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local XComGameState_Unit Unit;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
+	if (S == none || !HasCell(S, Country))
+	{
+		Why = "no EXALT cell there";
+		return false;
+	}
+	if (!CanBeOperative(S, Unit, Why))
+		return false;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a covert operative sent");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', UnitID));
+	Unit.SetStatus(eStatus_CovertAction);
+	Unit.MakeItemsAvailable(NewGameState, true);
+	S.ExaltOperative = UnitID;
+	S.ExaltOperativeCountry = Country;
+	S.ExaltOperativeDays = Tune().CovertDays;
+	S.Note(Unit.GetName(eNameType_FullNick) @ "infiltrates the EXALT cell in" @ S.CountryName(Country) $ ": ready in" @ S.ExaltOperativeDays @ "days.");
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	return true;
+}
+
+/** The operative into the mission's squad: on duty again, their gear back (Long War sends them with what they had). */
+static function XComGameState_Unit OperativeForMission(XComGameState NewGameState)
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_Unit Unit;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || S.ExaltOperative <= 0)
+		return none;
+	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', S.ExaltOperative));
+	if (Unit.GetStatus() == eStatus_CovertAction)
+	{
+		Unit.SetStatus(eStatus_Active);
+		Unit.EquipOldItems(NewGameState);
+	}
+	return Unit;
+}
+
+/** Long War's ClearOperative: the operative back on duty (their gear back), the operation over. */
+static function ClearOperative(XComGameState NewGameState, XComGameState_LWStrategy S)
+{
+	local XComGameState_Unit Unit;
+
+	if (S.ExaltOperative > 0)
+	{
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', S.ExaltOperative));
+		if (Unit != none && Unit.IsAlive() && Unit.GetStatus() == eStatus_CovertAction)
+		{
+			Unit.SetStatus(eStatus_Active);
+			Unit.EquipOldItems(NewGameState);
+		}
+	}
+	S.ExaltOperative = 0;
+	S.ExaltOperativeDays = 0;
+	S.ExaltMissionUntil = 0;
+}
+
+/** Long War's OnMissionExpire: the operative abandoned, to the memorial. */
+static function OperativeLost(XComGameState NewGameState, XComGameState_LWStrategy S)
+{
+	local XComGameState_Unit Unit;
+	local XComGameState_HeadquartersXCom XComHQ;
+
+	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', S.ExaltOperative));
+	if (Unit != none)
+	{
+		Unit.SetCurrentStat(eStat_HP, 0);
+		Unit.m_strCauseOfDeath = "Covert Infiltration - Abandoned";
+		Unit.m_strKIAOp = "Covert Infiltration";
+		XComHQ = HQIn(NewGameState);
+		XComHQ.RemoveFromCrew(Unit.GetReference());
+		XComHQ.DeadCrew.AddItem(Unit.GetReference());
+		S.Note("The extraction in" @ S.CountryName(S.ExaltOperativeCountry) @ "went unanswered:" @ Unit.GetName(eNameType_FullNick) @ "is lost.");
+	}
+	S.ExaltOperative = 0;
+	S.ExaltOperativeDays = 0;
+	S.ExaltMissionUntil = 0;
+}
+
+/** Long War's ClearCell: the cell gone; every other exposed one moves (each placed anew at once). */
+static function ClearCell(XComGameState_LWStrategy S, int Country)
+{
+	local int i, Moved;
+
+	i = CellIndex(S, Country);
+	if (i != INDEX_NONE)
+		S.ExaltCells.Remove(i, 1);
+	for (i = S.ExaltCells.Length - 1; i >= 0; i--)
+		if (S.ExaltCells[i].DaysUntilHidden > 0)
+		{
+			S.ExaltCells.Remove(i, 1);
+			Moved++;
+		}
+	for (i = 0; i < Moved; i++)
+		PlaceNextCell(S, true);
+}
+
+/** Long War's PostCombat for a covert operation: won, the cell cleared, the country 20 panic less, the intel brought home
+ *  (a clue); lost, the cell moves. The operative comes back either way. */
+static function CovertMissionBack(XComGameState NewGameState, XComGameState_LWStrategy S, bool bWon)
+{
+	local int Country;
+
+	Country = S.ExaltOperativeCountry;
+	S.ExaltMissionsFought++;
+	if (bWon)
+	{
+		ClearCell(S, Country);
+		S.AddPanic(Country, -20);
+		S.ExaltIntel++;
+		S.Note("The covert operation in" @ S.CountryName(Country) @ "succeeded: the EXALT cell is gone, and the operative brought intel home.");
+	}
+	else
+	{
+		Relocate(S, Country);
+		S.Note("The covert operation in" @ S.CountryName(Country) @ "failed.");
+	}
+	ClearOperative(NewGameState, S);
 }

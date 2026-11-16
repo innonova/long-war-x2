@@ -494,7 +494,7 @@ export function makeExaltWords({ strategyLoc }) {
   }
   const sit = ['SweepButton', 'SweepDesc', 'SweepDisabled', 'SweepCantAfford', 'SweepFailed'].map((k) => [k, inSection('UISituationRoom', `m_str${k}`)])
   const inf = [
-    ['RuledOut', 'm_strLabelIsRuledOut'], ['AccuseLabel', 'm_strLabelAccuseCountry'], ['RaidLabel', 'm_strLabelBeginRaid'],
+    ['RuledOut', 'm_strLabelIsRuledOut'], ['AccuseLabel', 'm_strLabelAccuseCountry'], ['RaidLabel', 'm_strLabelBeginRaid'], ['LaunchLabel', 'm_strLabelLaunchMission'],
     ['SweepTitle', 'm_strLabelSweepTitle'], ['SweepBody', 'm_strLabelSweepBody'], ['SweepConfirm', 'm_strLabelSweepConfirm'],
     ['SweepDecline', 'm_strLabelSweepDecline'], ['CluesTitle', 'm_strCluesTitle'], ['CluesNone', 'm_strCluesNoneHelp'],
     ['CluesFew', 'm_strCluesOneOrTwo'], ['CluesEnough', 'm_strCluesThreeOrMore'], ['StatusNoCell', 'm_strStatusNoCell'],

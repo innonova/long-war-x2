@@ -66,6 +66,8 @@ static function Open(XComHQPresentationLayer HQPres)
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
 	super.InitScreen(InitController, InitMovie, InitName);
+	// (As the Geoscape does: a mission come back counted, its wounds and fatigue; the hub is the strategy layer's root.)
+	class'XComGameState_LWStrategy'.static.Arrived();
 }
 
 /** The room's options in EW's submenu under its tab, the first selected. */
