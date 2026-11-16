@@ -427,3 +427,18 @@ Room (its earth back after the spawnChildPanel loan), the grey market, the hanga
 
 Test aids: `ewset <path> <value>`, `ewinvoke <function> [args]` (at once, its result printed),
 `ewcall`'s `s:<text>` for a string; `click.ps1 -Move` hovers.
+
+## Report (2026-11-16, the armory in EW's rooms: tried, off for now)
+
+- **EW's base has its own armory cameras** (Command1: `Armory`, `Armory_UIDisplayCam_Loadout`, `_Customize`, `_Promote`,
+  `_Summary`). `UIScreenListener_LWArmory` keeps the base in view while XCOM 2's armory screens are up, looks through
+  EW's camera for the screen and moves the armory's placement point (XCOM 2 stands its pawn there) in front of it on
+  EW's floor (`LWX2EWBase.ArmorySpot`, `ArmoryDistance`).
+- **Seen on wingpu:** the armory opened in EW's armory room, the soldier standing on EW's own round pad between its
+  weapon racks and panels. Two things not solved:
+  - **The menu is not there.** XCOM 2's armory screens are 3D: their menu is drawn on a display mesh in the
+    armory's blueprint in the Avenger (`UIDisplay_LevelActor`), which does not follow when moved (its location read
+    back far below the world).
+  - **The soldier faces away from the camera**, whichever way the placement is turned.
+- So `ArmoryInBase=false` (the armory stands the soldier in the Avenger's armory, as before); the code stays for the
+  next try. A way forward: the armory screens drawn in 2D over EW's room, or a display mesh of our own in it.

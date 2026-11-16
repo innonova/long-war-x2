@@ -94,7 +94,7 @@ console.log(
     'BaseLightScale=3',
     'SquadInHangar=true',
     "; XCOM 2's armory screens over EW's armory, through its own armory cameras, the soldier ArmoryDistance in front (UIScreenListener_LWArmory).",
-    'ArmoryInBase=true',
+    'ArmoryInBase=false',
     'ArmoryDistance=250',
     'SquadCamera=AwayTeam',
     'SquadDistance=600',
