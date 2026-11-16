@@ -384,3 +384,46 @@ Training School once one was placed. Screenshots `logs/wingpu_ew_build_facilitie
 - The facilities' descriptions in ChooseFacility (EW's text carries live numbers,
   `<XGStrategyActor:…/>`, to fill from Long War's).
 - The adjacency markers on the cards (EW's `bAdjacencyBonusLeft/Top`).
+
+## Report (2026-11-16, EW's screens on EW's own Flash framework; the room submenu solved)
+
+**The cause** of the submenu that made no options (and of EW's Officer Billets rows): ActionScript 2
+classes are global, the first definition of a name wins, and XCOM 2's Flash framework, which grew
+from EW's, loads its own classes of the same names first (`Container`, `XComList`, `Navigator`,
+`XComButton`, `Environment` …). EW's movies each compile the framework in (their
+`__Packages.<name>` exports), but ran on XCOM 2's, which takes other calls. The earlier attempt
+renamed ten of them, which left EW's classes building on XCOM 2's others (and matched names by
+the byte before them, which misses export names whose symbol id is 256 or more).
+
+**The fix** (`tools/convert/ew-ui.ts`): every class EW's movies compile in (260) gets a name of
+its own, the same length (first letter Q; `Colors` stays `EWClrs`), in all 57 movies alike, by
+the SWF's structure: the export and import tables and the ActionScript's strings (constant pools,
+pushed strings, each dotted segment). Read with `tools/convert/swf-as2.ts`, a reader for a
+package's movies (imports, exports, classes, ActionScript listing; its output is the games'
+code and stays in the terminal).
+
+What running on EW's framework needed besides:
+- **The stage**: EW's `Environment` anchors screens by what `SetView` last said, which EW's game
+  sent; XCOM 2 tells only its own. Each EW screen now tells EW's the same numbers XCOM 2 tells
+  its own (`UILWEWScreen.SetEWView`), and makes the mouse active.
+- **XCOM 2 widgets inside EW clips** (the Situation Room's earth, test lists): XCOM 2 makes a
+  widget's clip by calling `spawnChildPanel` on the parent clip, which EW's clips had only
+  through the clash. XCOM 2's own `spawnChildPanel` is lent to every movie clip without one
+  (`MovieClip.prototype`; once a session, `UILWEWScreen.LendXCom2Spawning`).
+- **The room row** is laid out by EW's framework, top right beside the resources as in EW; the
+  hub's hand layout is gone.
+- **The room menu is EW's own submenu** (`subMenuMC`, a clip at the HUD's root): attached to the
+  room's tab (`facilityMenu.setFocus` with the tab's id as a string), `clear`, `AddOption`,
+  `Show`, `UpdateLocation`, `setFocus`, `SetHelpText`, as EW's `UIStrategyHUD_FacilitySubMenu`
+  drives it. Its `Show` waits for a frame on a hidden clip, which XCOM 2's Flash does not
+  advance, so `onInvalidate` is called after it. The calls go at once (`Movie.Invoke`): queued
+  through `MC`, `setFocus` found no tab. Hover selects (the mouse polled while a room is open:
+  the submenu's own mouse events name no XCOM 2 panel and are dropped), arrows and Enter work, a
+  click opens. XCOM 2's list stand-in is gone.
+
+**Checked on wingpu** after the change: the hub (screenshot `logs/wingpu_ew_hub_submenu.png`),
+research, Build Items, Build Facilities, the Officer Training School, the Foundry, the Situation
+Room (its earth back after the spawnChildPanel loan), the grey market, the hangar.
+
+Test aids: `ewset <path> <value>`, `ewinvoke <function> [args]` (at once, its result printed),
+`ewcall`'s `s:<text>` for a string; `click.ps1 -Move` hovers.
