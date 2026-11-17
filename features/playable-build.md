@@ -366,3 +366,23 @@ New since 50a07ae (`lw-council-missions.md`, step 4):
 **Checked on wingpu from the zip:** its setup (`--maps`) kept the converted maps, read 32 missions' objectives and the
 four named soldiers, and wrote 123 plots; with the control port on for the check (off again after), a new campaign's
 Chryssalid hive loaded on its plot with its five starting zombies and the objective moving on as a zombie came in sight.
+
+## Release (2026-11-17, morning)
+
+`LongWarX2-20261117-7a8cec5.zip` replaces `30fb091` on the draft v0.1.0-preview.1.
+
+New since 30fb091:
+- **Perks:** Muscle Fiber Density jumps up a level with no action (XCOM 2's JumpUp; no more grapple); Pyrokinesis
+  lights fires; Neural Feedback answers for a teammate nearby and against Mind Control; explosives reach less for a
+  suppressed, poisoned or disoriented thrower.
+- **Items give the perks Long War packs into them** while carried (the Mind Shield's Steadfast, the smoke grenade's
+  Smoke Bomb, the Titan armour's Damage Control, …).
+- **Long War's acts:** abductions harder from act 2; from act 3 the aliens' commanders are Sectoid Commanders or
+  Ethereals, not Outsiders.
+- **The aliens hunt the satellite that saw their scout**, as Long War's hunts after scouting.
+- **The interceptors' consumables** are built in engineering (after their Foundry project and research), stocked, and
+  used up; the air war shows how many.
+- The armory in EW's base stays off (the soldier now faces the camera there; the menu does not draw yet).
+
+**Checked on wingpu from the zip:** the setup kept the converted maps (32 missions' objectives, 123 plots); with the
+control port on for the check (off again after), a new campaign started, the hangar showed no consumables usable yet.
