@@ -388,7 +388,30 @@ export function makeHubWords({ strategyLoc }) {
     ['LaunchSatellite', inSection('XGSituationRoomUI', 'm_strLabelLaunchSatellite')],
     ['LaunchSatelliteHelp', inSection('XGSituationRoomUI', 'm_strLabelMonitorUFO')],
   ].filter(([, v]) => v)
-  return { text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+  // EW's strategy HUD around the hub (UILWEWStrategyHUD): its resource labels, the research panel, the event list's title.
+  const hud = [
+    ['ResourceNames[0]', inSection('XGScreenMgr', 'm_aResourceTypeNames[eResource_Money]')],
+    ['ResourceNames[1]', inSection('XGScreenMgr', 'm_aResourceTypeNames[eResource_Elerium]')],
+    ['ResourceNames[2]', inSection('XGScreenMgr', 'm_aResourceTypeNames[eResource_Alloys]')],
+    ['ResourceNames[3]', inSection('XGScreenMgr', 'm_aResourceTypeNames[eResource_Engineers]')],
+    ['ResourceNames[4]', inSection('XGScreenMgr', 'm_aResourceTypeNames[eResource_Scientists]')],
+    ['ResourceNames[5]', inSection('XGScreenMgr', 'm_aResourceTypeNames[eResource_Power]')],
+    ['ResourceNames[6]', inSection('XGScreenMgr', 'm_aResourceTypeNames[eResource_MonthlyNet]')],
+    ['ResourceNames[7]', inSection('XGScreenMgr', 'm_aResourceTypeNames[eResource_Meld]')],
+    ['CurrentResearch', inSection('XGResearchUI', 'm_strCurrentResearchTitle')],
+    ['NoResearch', inSection('XGResearchUI', 'm_strNoCurrentResearchTitle')],
+    ['Speeds[0]', inSection('XGFacility_Labs', 'm_arrResearchProgress[eResearchProgress_Fast]')],
+    ['Speeds[1]', inSection('XGFacility_Labs', 'm_arrResearchProgress[eResearchProgress_Normal]')],
+    ['Speeds[2]', inSection('XGFacility_Labs', 'm_arrResearchProgress[eResearchProgress_Slow]')],
+    ['OneDay', inSection('XGFacility_Labs', 'm_strETADay')?.replace('<XGParam:IntValue0/>', '%d')],
+    ['ManyDays', inSection('XGFacility_Labs', 'm_strETADays')?.replace('<XGParam:IntValue0/>', '%d')],
+    ['NextEvent', anywhere('m_strSingleEventListTitle')],
+    ['DaysTitle', anywhere('m_strDays')],
+  ].filter(([, v]) => v)
+  return {
+    text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWStrategyHUD]', ...hud.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
+    named: words.length + hud.length,
+  }
 }
 
 /** The base building screens' words (UILWEWBuildFacilities, UILWEWChooseFacility, in the mod's LongWarX2.int): EW's, from

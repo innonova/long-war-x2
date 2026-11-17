@@ -3,6 +3,17 @@
 // EW's clock with Long War's date, refreshed every second. It takes no input.
 class UILWEWStrategyHUD extends UILWEWScreen;
 
+/** EW's words (XGScreenMgr's resource names; the research panel's, XGResearchUI, XGFacility_Labs; the event list's). */
+var localized string ResourceNames[8], CurrentResearch, NoResearch, Speeds[3], OneDay, ManyDays, NextEvent, DaysTitle;
+/** Where the player is, as EW's HUD changes with it (UIStrategyHUD and its rooms' UIStrategyHUD_FSM_*): 0 the base's view,
+ *  1 Mission Control, 2 a room of the base, 3 a screen over the base. */
+var int Context;
+/** What the room or screen is about, for its panels: 'Research', 'Engineering' or none. */
+var name Kind;
+/** The context the back arrow and panels were last set for ("": not yet). */
+var string ShownFor;
+/** Where the back arrow's clicks are addressed (UILWEWAlertTarget: XCOM 2 hands a Flash event only to a panel at its path). */
+var UILWEWAlertTarget BackTarget, BarTarget;
 /** What the event list shows: its events as last given (given again only when they change). */
 var string EventsShown;
 /** How many of them. */
@@ -55,26 +66,196 @@ function Refresh()
 {
 	local XComGameState_HeadquartersXCom XComHQ;
 	local XComGameState_LWStrategy S;
-	local int Cash, Meld;
+	local int Cash, Meld, Net;
+	local bool bWide;
 
 	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
 	S = class'XComGameState_LWStrategy'.static.Get();
 	if (XComHQ == none || S == none)
 		return;
+	FindContext();
 	Cash = XComHQ.GetSupplies();
 	Meld = XComHQ.GetResourceAmount(class'X2Item_LWArtifacts'.static.ItemFor('Meld'));
 	MC.FunctionVoid("ClearResources");
-	AddResource("CASH", class'LWStrategyRules'.static.Money(Cash), Cash > 0);
-	AddResource("ALLOYS", string(XComHQ.GetResourceAmount('AlienAlloy')), true);
-	AddResource("ELERIUM", string(XComHQ.GetResourceAmount('EleriumDust')), true);
-	AddResource("MELD", string(Meld), Meld > 0);
+	// EW's line (UIStrategyHUD.UpdateDefaultResources): credits, the month's net, meld once there is some; engineering's
+	// and its screens' (UIStrategyHUD_FSM_Engineering): credits, elerium, alloys, meld, power.
+	bWide = Kind == 'Engineering';
+	AddResource(Label(0, "CREDITS"), class'LWStrategyRules'.static.Money(Cash), Cash > 0);
+	if (bWide)
+	{
+		AddResource(Label(1, "ELERIUM"), string(XComHQ.GetResourceAmount('EleriumDust')), true);
+		AddResource(Label(2, "ALLOYS"), string(XComHQ.GetResourceAmount('AlienAlloy')), true);
+	}
+	else
+	{
+		Net = S.MonthlyNet();
+		AddResource(Label(6, "MONTHLY"), (Net > 0 ? "+" : "") $ class'LWStrategyRules'.static.Money(Net), Net > 0);
+	}
+	if (Meld > 0 || bWide)
+		AddResource(Label(7, "MELD"), string(Meld), Meld > 0);
+	if (bWide && S.TileType.Length > 0)
+		AddResource(Label(5, "POWER"), class'LWBase'.static.PowerUsed(S) $ "/" $ class'LWBase'.static.PowerCapacity(S),
+			class'LWBase'.static.PowerUsed(S) <= class'LWBase'.static.PowerCapacity(S));
 	SetClock(S);
-	// The research is in the event list (EW's HUD shows its research panel only in the labs: ClearFacilityPanels).
-	MC.FunctionString("SetCurrentResearch", "");
-	SetEvents(XComHQ, S);
+	// The clock and the event list on the base's view and in Mission Control only: EW's rooms and screens have their back
+	// arrow and their own panels there instead.
+	Movie.SetVariableBool(MCPath $ ".theClock._visible", Context <= 1);
+	Movie.SetVariableBool(MCPath $ ".theEventList._visible", Context <= 1);
+	if (Context <= 1)
+		SetEvents(XComHQ, S);
+	SetPanels(XComHQ, S);
 	// Nor the engineering queue: not fed yet (its AddProjectToQueue not read), it showed its placeholders ("LALALAL", "P",
 	// "E"). Each refresh: the movie shows it again as it lays itself out.
 	Movie.SetVariableBool(MCPath $ ".engineeringQueue._visible", false);
+}
+
+function string Label(int i, string Fallback)
+{
+	return ResourceNames[i] != "" ? ResourceNames[i] : Fallback;
+}
+
+/** Context and Kind from the screen on top (and the hub's room). */
+function FindContext()
+{
+	local UIScreen Top;
+	local UILWEWHub Hub;
+
+	Top = Movie.Pres.ScreenStack.GetCurrentScreen();
+	Hub = UILWEWHub(Top);
+	Kind = '';
+	if (Hub != none)
+	{
+		Context = Hub.Room < 0 ? 0 : 2;
+		if (Hub.Room == 0)
+			Kind = 'Research';
+		else if (Hub.Room == 1)
+			Kind = 'Engineering';
+	}
+	else if (UILWEWMissionControl(Top) != none || UILWGeoscape(Top) != none || UILWEWAlert(Top) != none)
+		Context = 1;
+	else
+	{
+		Context = 3;
+		if (UILWEWResearch(Top) != none)
+			Kind = 'Research';
+		else if (UILWEWEngineering(Top) != none || UILWEWManufacturing(Top) != none)
+			Kind = 'Engineering';
+	}
+}
+
+/**
+ * EW's panels for the room or screen: the back arrow (UIStrategyHUD.ShowBackButton: the help bar's PC icon 4) everywhere
+ * but the base's view; the scientists in the labs and the engineers in engineering (AS_SetHumanResources); the current
+ * research in the labs and on its screen (UIStrategyHUD_FSM_Science.UpdateResearchData, XGResearchUI.UpdateHeader).
+ */
+function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrategy S)
+{
+	local XComGameState_HeadquartersProjectResearch Project;
+	local XComGameState_Tech Tech;
+	local string Ctx, Eta;
+	local int HoursLeft, D;
+
+	// (Shown before its button is added: XCOM 2's Flash does not advance a hidden clip, and the button waits for a
+	// frame to load. The bar is hidden until a back arrow is in it, as EW's ShowBackButton shows it.)
+	Movie.SetVariableBool(MCPath $ ".helpBar._visible", Context > 0);
+	Ctx = Context $ Kind;
+	if (Ctx != ShownFor)
+	{
+		ShownFor = Ctx;
+		MC.ChildFunctionVoid("helpBar", "ClearButtonHelp");
+		if (Context > 0)
+		{
+			// (EW's XComButtonIconPC, renamed with the other classes EW's movies compile in: tools/convert/ew-ui.ts.)
+			MC.ChildFunctionString("helpBar", "SetButtonType", "QComButtonIconPC");
+			MC.BeginChildFunctionOp("helpBar", "AddLeftButtonHelp");
+			MC.QueueNumber(0);
+			MC.QueueString("4");
+			MC.QueueString("");
+			MC.QueueBoolean(false);
+			MC.EndOp();
+			MC.ChildFunctionString("helpBar", "SetButtonType", "");
+			// (The bar hides itself until its button reports loaded, which takes a frame of the hidden clip that XCOM 2's
+			// Flash never gives: told at once, as the hub's submenu is shown.)
+			MC.ChildFunctionVoid("helpBar", "onLeftButtonHelpLoaded");
+			// (Placed at the stage's bottom left, as the bar lays itself out on a resolution change.)
+			MC.ChildFunctionVoid("helpBar", "AnchorToBottom");
+			MC.ChildFunctionVoid("helpBar", "UpdateLocations");
+			if (BackTarget == none)
+			{
+				// (The bar reports its buttons' clicks under its own path, as EW's alerts do; the button's own too.)
+				BackTarget = class'UILWEWAlertTarget'.static.At(self, MCPath $ ".helpBarMC.leftBtnHelpContainer.buttonHelp_0");
+				BarTarget = class'UILWEWAlertTarget'.static.At(self, MCPath $ ".helpBarMC");
+			}
+		}
+	}
+	// (Room and screen alike: EW's labs show the scientists in the room, not on the research list.)
+	MC.BeginFunctionOp("SetHumanResources");
+	if (Context == 2 && Kind == 'Research')
+	{
+		MC.QueueString(Label(4, "SCIENTISTS"));
+		MC.QueueString(string(S.Scientists));
+	}
+	else if (Kind == 'Engineering')
+	{
+		MC.QueueString(Label(3, "ENGINEERS"));
+		MC.QueueString(string(S.Engineers));
+	}
+	else
+	{
+		MC.QueueString("");
+		MC.QueueString("");
+	}
+	MC.EndOp();
+	if (Kind != 'Research')
+	{
+		MC.BeginFunctionOp("SetCurrentResearch");
+		MC.QueueString("");
+		MC.QueueString("");
+		MC.QueueString("");
+		MC.QueueNumber(-1);
+		MC.QueueString("");
+		MC.EndOp();
+		return;
+	}
+	Project = XComHQ.GetCurrentResearchProject();
+	Tech = Project != none ? XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(Project.ProjectFocus.ObjectID)) : none;
+	if (Tech == none)
+	{
+		// (EW's AS_SetCurrentResearch has its defaults for the rest: "" and -1.)
+		MC.BeginFunctionOp("SetCurrentResearch");
+		MC.QueueString(NoResearch != "" ? NoResearch : "NO ACTIVE RESEARCH");
+		MC.QueueString("");
+		MC.QueueString("");
+		MC.QueueNumber(-1);
+		MC.QueueString("");
+		MC.EndOp();
+		return;
+	}
+	// EW's: the pace by the days it takes (up to 5 fast, up to 10 normal: XGFacility_Labs.GetProgress), and the days.
+	HoursLeft = Project.GetCurrentNumHoursRemaining();
+	D = Max(1, Days(HoursLeft));
+	Eta = D <= 5 ? Speeds[0] : (D <= 10 ? Speeds[1] : Speeds[2]);
+	Eta @= "(" $ Repl(D == 1 ? OneDay : ManyDays, "%d", string(D)) $ ")";
+	MC.BeginFunctionOp("SetCurrentResearch");
+	MC.QueueString(CurrentResearch != "" ? CurrentResearch : "CURRENT RESEARCH");
+	MC.QueueString(Tech.GetDisplayName());
+	MC.QueueString(Eta);
+	MC.QueueNumber(Progress(Project));
+	MC.QueueString("");
+	MC.EndOp();
+}
+
+/** How far the project is, 0 to 1. */
+function float Progress(XComGameState_HeadquartersProjectResearch Project)
+{
+	local XComGameState_Tech Tech;
+	local int Needed;
+
+	Tech = XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(Project.ProjectFocus.ObjectID));
+	Needed = Tech != none ? Tech.GetMyTemplate().PointsToComplete : 0;
+	if (Needed <= 0)
+		return 0;
+	return FClamp(1.0 - float(Project.ProjectPointsRemaining) / float(Needed), 0, 1);
 }
 
 /**
@@ -131,9 +312,6 @@ function SetEvents(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 	}
 	for (i = 0; i < Texts.Length; i++)
 		Shown $= Texts[i] $ "|" $ Days(Hours[i]) $ "|";
-	// Its title row lies level with the Geoscape window's buttons (its DAYS over CLOSE): hidden (moving the list did
-	// nothing, it lays itself out again). Each refresh, as SetTitle shows it.
-	Movie.SetVariableBool(MCPath $ ".theEventList.titleMC._visible", false);
 	if (Shown == EventsShown)
 		return;
 	EventsShown = Shown;
@@ -141,8 +319,9 @@ function SetEvents(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 	MC.ChildFunctionNum("theEventList", "OverrideMaxItemsPerColumn", 1);
 	MC.ChildFunctionBool("theEventList", "ExpandListVertically", true);
 	MC.BeginChildFunctionOp("theEventList", "SetTitle");
-	MC.QueueString("COMING UP");
-	MC.QueueString("DAYS");
+	// (EW's single-row list: NEXT EVENT, DAYS.)
+	MC.QueueString(NextEvent != "" ? NextEvent : "NEXT EVENT");
+	MC.QueueString(DaysTitle != "" ? DaysTitle : "DAYS");
 	MC.EndOp();
 	for (i = 0; i < Texts.Length; i++)
 	{
@@ -202,9 +381,24 @@ function SetClock(XComGameState_LWStrategy S)
 	Movie.Invoke(MCPath $ ".theClock.SetDateTime", Args);
 }
 
+/** The back arrow clicked: what Escape does on the screen on top (a room left, a screen closed), as EW's back button. */
+simulated function OnMouseEvent(int cmd, array<string> args)
+{
+	local UIScreen Top;
+
+	`log("LongWarX2: EW HUD mouse" @ cmd @ (args.Length > 0 ? args[args.Length - 1] : ""), , 'LongWarX2');
+	if (cmd != class'UIUtilities_Input'.const.FXS_L_MOUSE_UP)
+		return;
+	Top = Movie.Pres.ScreenStack.GetCurrentScreen();
+	if (Top != none)
+		Top.OnUnrealCommand(class'UIUtilities_Input'.const.FXS_KEY_ESCAPE, class'UIUtilities_Input'.const.FXS_ACTION_RELEASE);
+}
+
 defaultproperties
 {
 	InputState = eInputState_None
 	bConsumeMouseEvents = false
+	// (Never focused, being off the stack: its back arrow's clicks taken all the same, UIMovie.FlashRaiseMouseEvent.)
+	bProcessMouseEventsIfNotFocused = true
 	MaxEvents = 1
 }

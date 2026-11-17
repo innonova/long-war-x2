@@ -158,8 +158,16 @@ static function string SetVar(string SubPath, string Value)
 static function string ReadVar(string SubPath)
 {
 	local UILWEWScreen EWScreen;
+	local UILWEWStrategyHUD HUD;
 	local UIScreen Top;
 
+	// (hud:<path>: inside EW's strategy HUD, which is not on the screen stack.)
+	if (Left(SubPath, 4) == "hud:")
+	{
+		foreach `HQPRES.AllActors(class'UILWEWStrategyHUD', HUD)
+			return HUD.MCPath $ "." $ Mid(SubPath, 4) @ "=" @ HUD.Movie.GetVariableString(HUD.MCPath $ "." $ Mid(SubPath, 4));
+		return "ERR no EW strategy HUD up";
+	}
 	Top = `HQPRES.ScreenStack.GetCurrentScreen();
 	EWScreen = UILWEWScreen(Top) != none ? UILWEWScreen(Top) : UILWEWScreen(`HQPRES.ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
 	if (EWScreen == none)

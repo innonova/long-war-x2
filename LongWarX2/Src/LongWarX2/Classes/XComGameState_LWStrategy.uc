@@ -1158,6 +1158,17 @@ function bool IsTerrorTarget(int k)
  * FundingBalance); War Weariness (#15) 5% less each month, at most 90%; Results Driven (#10) less by its panic; without a
  * satellite, BASE_FUNDING's share. Each step rounded down, as Long War's ints are.
  */
+/** The month's funding less the base's upkeep, as EW's HUD shows it (its MONTHLY: eResource_MonthlyNet). */
+function int MonthlyNet()
+{
+	local int i, Funding;
+
+	for (i = 0; i < Countries.Length; i++)
+		if (!Countries[i].bLeft)
+			Funding += CountryFunding(i, Countries[i].bSatellite);
+	return Funding - (TileType.Length > 0 ? class'LWBase'.static.Upkeep(self) : 0);
+}
+
 function int CountryFunding(int i, bool bSat)
 {
 	local int F, d;

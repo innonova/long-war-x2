@@ -227,6 +227,8 @@ function HideHUDParts()
 	Movie.SetVariableBool(MCPath $ ".theClock._visible", false);
 	Movie.SetVariableBool(MCPath $ ".theEventList._visible", false);
 	Movie.SetVariableBool(MCPath $ ".engineeringQueue._visible", false);
+	// MISSION CONTROL on the base's view only: EW's rooms have the back arrow and their own panels there.
+	Movie.SetVariableBool(MCPath $ ".hotlinkMC._visible", Room < 0);
 }
 
 simulated function OnReceiveFocus()
