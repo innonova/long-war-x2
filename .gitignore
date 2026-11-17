@@ -1,7 +1,9 @@
 BuildCache/
 build.log
 # Converted Enemy Within content (tools/convert/) goes here on the test machine: never committed.
-LongWarX2/Content/
+LongWarX2/Content/*
+# (except our own: the lightmapped stand-ins' material, made in the SDK editor: features/ew-lightmaps.md)
+!LongWarX2/Content/LWX2Lightmap.upk
 LongWarX2/Config/XComLWX2EWMap.ini
 LongWarX2/Config/XComLWX2EWUnits.ini
 LongWarX2/Config/XComLWX2EWObjectives.ini

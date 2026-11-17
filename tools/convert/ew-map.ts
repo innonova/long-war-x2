@@ -22,6 +22,7 @@ import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, maskMip } from './mask-textures.ts'
+import { combineLightmapMip } from './lightmap-bake.ts'
 
 /** Raised when what a conversion writes changes so that maps converted before must be converted again
  *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods,
@@ -900,8 +901,24 @@ exports.forEach((e) => {
   }
 })
 // The textures with their mips uncompressed in the package (inline-textures.ts), after the stub.
+// EW's lightmaps (lightmap-bake.ts): each colour atlas's mips combined with its directional atlas's. The directional mips
+// read first, in a pass over a copy (inlining changes the entries it is given).
+const lmPairs = new Map<(typeof exports)[number], (typeof exports)[number]>()
+for (const p of pieces) if (p.lightmap) lmPairs.set(exports[p.lightmap.color - 1]!, exports[p.lightmap.dir - 1]!)
+const lmDirs = new Set(lmPairs.values())
+const dirMips = new Map<string, Uint8Array>()
+if (lmDirs.size)
+  inlineTextures(bytes.slice(), exports, meta.names, dirname(src), stubAt + stub.length, (e) => !lmDirs.has(e), (e, _format, mip) => {
+    dirMips.set(`${e.fullName}:${mip.length}`, mip.slice())
+    return undefined
+  })
 const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'),
-  (e, format, mip) => (maskExports.has(e) ? maskMip(format, mip) : undefined))
+  (e, format, mip) => {
+    if (maskExports.has(e)) return maskMip(format, mip)
+    const dir = lmPairs.get(e)
+    const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${mip.length}`) : undefined
+    return d ? combineLightmapMip(mip, d) : undefined
+  })
 const outBytes = new Uint8Array(bytes.length + stub.length + tex.appended.length)
 outBytes.set(bytes)
 outBytes.set(stub, stubAt)

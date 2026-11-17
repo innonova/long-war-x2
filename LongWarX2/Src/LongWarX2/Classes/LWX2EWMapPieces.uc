@@ -496,8 +496,9 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 {
 	local MaterialInstanceConstant MIC;
 	local Material Parent;
-	local Texture Diffuse, Col, Dir;
+	local Texture Diffuse, LM;
 	local LinearColor V;
+	local float B;
 	local int k;
 
 	if (default.LightmapParent == "" || P.LightMap.UV != 1)
@@ -507,22 +508,20 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 		return none;
 	Parent = Material(DynamicLoadObject(default.LightmapParent, class'Material', true));
 	Diffuse = Texture(DynamicLoadObject(D.Looks[k].Diffuse, class'Texture', true));
-	Col = Texture(DynamicLoadObject(P.LightMap.Color, class'Texture', true));
-	Dir = Texture(DynamicLoadObject(P.LightMap.Dir, class'Texture', true));
-	if (Parent == none || Diffuse == none || Col == none || Dir == none)
+	// (The colour atlas, combined with the directional one by the converter: tools/convert/lightmap-bake.ts.)
+	LM = Texture(DynamicLoadObject(P.LightMap.Color, class'Texture', true));
+	if (Parent == none || Diffuse == none || LM == none)
 		return none;
 	MIC = new(InOuter) class'MaterialInstanceConstant';
 	MIC.SetParent(Parent);
 	MIC.SetTextureParameterValue('Diffuse', Diffuse);
-	MIC.SetTextureParameterValue('LMColor', Col);
-	MIC.SetTextureParameterValue('LMDir', Dir);
+	MIC.SetTextureParameterValue('LightMap', LM);
 	V.R = P.LightMap.ScaleX; V.G = P.LightMap.ScaleY; V.B = P.LightMap.BiasX; V.A = P.LightMap.BiasY;
 	MIC.SetVectorParameterValue('LMScaleBias', V);
-	V.R = P.LightMap.S0.X; V.G = P.LightMap.S0.Y; V.B = P.LightMap.S0.Z; V.A = 1;
-	MIC.SetVectorParameterValue('LMScale0', V);
-	V.R = P.LightMap.S1.X; V.G = P.LightMap.S1.Y; V.B = P.LightMap.S1.Z;
-	MIC.SetVectorParameterValue('LMScale1', V);
-	MIC.SetScalarParameterValue('LMBrightness', default.LightmapBrightness > 0 ? default.LightmapBrightness : 1.0);
+	// The piece's scales as one brightness: the colour's mean × the directions' mean × 3 (the atlas holds their mean)
+	// × 1/sqrt(3) (each direction's weight for a surface facing out of its face).
+	B = (P.LightMap.S0.X + P.LightMap.S0.Y + P.LightMap.S0.Z) / 3 * (P.LightMap.S1.X + P.LightMap.S1.Y + P.LightMap.S1.Z) / 3 * 1.732;
+	MIC.SetScalarParameterValue('LMBrightness', B * (default.LightmapBrightness > 0 ? default.LightmapBrightness : 1.0));
 	return MIC;
 }
 
