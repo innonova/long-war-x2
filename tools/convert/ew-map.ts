@@ -912,13 +912,18 @@ if (lmDirs.size)
     dirMips.set(`${e.fullName}:${mip.length}`, mip.slice())
     return undefined
   })
+// The combined atlases made plain textures (Texture2D's class, the lightmap's flags at the end left off): bound to our
+// material as LightMapTexture2D, XCOM 2 crashed (heap corruption) as the base came into view.
+const tex2dClass = exports.find((e) => e.type === 'Texture2D')
+if (tex2dClass) for (const e of lmPairs.keys()) v.setInt32(e.entryOffset + 0, v.getInt32(tex2dClass.entryOffset + 0, true), true)
 const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'),
   (e, format, mip) => {
     if (maskExports.has(e)) return maskMip(format, mip)
     const dir = lmPairs.get(e)
     const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${mip.length}`) : undefined
     return d ? combineLightmapMip(mip, d) : undefined
-  })
+  },
+  (e) => (tex2dClass && lmPairs.has(e) ? 4 : 0))
 const outBytes = new Uint8Array(bytes.length + stub.length + tex.appended.length)
 outBytes.set(bytes)
 outBytes.set(stub, stubAt)

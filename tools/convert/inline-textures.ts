@@ -31,6 +31,8 @@ export function inlineTextures(
   skip: (e: Export) => boolean = () => false,
   /** A texture's mips made otherwise (by its pixel format), as they are written: the masks (mask-textures.ts). */
   transform?: (e: Export, format: string, mip: Uint8Array) => Uint8Array | undefined,
+  /** Bytes left off the end of a texture's data (a LightMapTexture2D made a Texture2D: its lightmap flags). */
+  trimEnd: (e: Export) => number = () => 0,
 ): { appended: Uint8Array; textures: number; mips: number } {
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   const caches = new Map<string, Uint8Array>()
@@ -120,7 +122,7 @@ export function inlineTextures(
       push(i32s(w, h))
       if (data) mipCount++
     }
-    push(bytes.subarray(o, e.offset + e.size)) // the rest (the cache's GUID …) as it was
+    push(bytes.subarray(o, e.offset + e.size - trimEnd(e))) // the rest (the cache's GUID …) as it was
     const blob = new Uint8Array(len)
     let p = 0
     for (const c of chunks) {
