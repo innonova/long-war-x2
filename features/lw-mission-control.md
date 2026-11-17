@@ -54,3 +54,14 @@ UFOs, council missions, EXALT, the alien base, the Temple Ship, a satellite lost
 - **Open:** clicks on the alert's buttons do not reach the screen yet (no mouse event arrives; EW's `MouseHandler` dispatches
   from the screen's root, `isMouseHit`, `getNextChildHandler`, which this movie may need set up first); Enter and Esc work.
   Behind the alert is whatever the camera shows (the Avenger); the other decisions still use the panel's buttons.
+
+### The clicks (2026-11-17, not solved)
+
+What was tried, with the alert open on wingpu: the buttons are visible and enabled and carry EW's `MouseHandler`
+(`button_0.onRelease`, `mouseHandler`); their parents carry none; no mouse event of any kind (not even the hover's
+`MOUSE_IN`) reaches the screen. Not the cause: the movie's other panels (`theEventList`, `theClock`, `theMissionList`
+hidden), the alert's frame (`bgRight` hidden), the alert container's depth (`swapDepths` to the top), the click's
+coordinates (the game's UI coordinates, hovering first), a mouse guard (XCOM 2's `bConsumeMouseEvents` is off).
+EW's `MouseHandler_onRelease` returns at once unless `isMouseHit`, which asks Scaleform's `Mouse.getTopMostEntity()` and
+wants it inside the button: something else is topmost there. Next: a way to read the topmost entity (its `_target`) from
+the control port.
