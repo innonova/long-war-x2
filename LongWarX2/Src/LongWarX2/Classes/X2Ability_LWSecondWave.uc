@@ -26,10 +26,24 @@ static function X2AbilityTemplate SecondWave()
 	Template.AbilityTriggers.AddItem(default.UnitPostBeginPlayTrigger);
 	Effect = new class'X2Effect_LWSecondWave';
 	Effect.BuildPersistentEffect(1, true, false, false);
+	// (Its one stat on a shot's breakdown is Cinematic Mode's aim: named as Long War names the option, "Cinematic Mode".)
+	Effect.FriendlyName = OptionTitle(11, "Cinematic Mode");
 	Template.AddTargetEffect(Effect);
 	Template.bSkipFireAction = true;
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	return Template;
+}
+
+/** Long War's title of option n as the new-campaign screen has it, without its number ("Cinematic Mode (#11)"). */
+static function string OptionTitle(int n, string Fallback)
+{
+	local string T;
+
+	if (n < class'UIShellDifficulty'.default.SecondWaveDescriptions.Length)
+		T = class'UIShellDifficulty'.default.SecondWaveDescriptions[n];
+	if (InStr(T, " (#") > 0)
+		T = Left(T, InStr(T, " (#"));
+	return T != "" ? T : Fallback;
 }
 
 /** On every character template; and every shooter's flanking crit Long War's (FLANKING_CRIT_BONUS, 50, for everyone:

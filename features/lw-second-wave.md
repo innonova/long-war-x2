@@ -115,3 +115,14 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   a new campaign: USA 160/64, Russia 100/40, China 130/52, the satellite §200 with one held; with Results Driven and
   Diminishing Returns: USA (panic 30) 112/44, Russia (21) 79/31, the satellite §231; New Economy then: USA 77, Russia 126,
   China 59. **Not seen:** War Weariness past the first month.
+
+## Report (2026-11-17, Strict Screening, Cinematic Mode; Total Loss)
+
+- **#2 Strict Screening** (`XGFacility_Barracks.RandomizeStats`, rolled only without it): every recruit at the midpoints of
+  Long War's rookie stats (its `Characters=` line), no roll (`LWRookieStats.Roll`). **Not seen in the game:** no recruit
+  came during the test.
+- **#11 Cinematic Mode:** XCOM's units aim 15 better (Long War's `ABDUCTION_REWARD_SCI`, added to every recruit, SHIV, MEC and
+  council soldier as they are made); here for the battle, on the second-wave carrier, named on a shot's breakdown as Long War
+  names the option. Checked on wingpu: a sniper's shot read "Aim 79, Cinematic Mode 15" (its aim 73 + 15 shown as 88).
+- **#17 Total Loss: nothing to port.** Long War loses a dead soldier's gear only when `Roll(BLUESHIRT_HP_MOD)` succeeds; that
+  config is set nowhere in Long War 1.0 and defaults to −1, so the roll never does, option or not.

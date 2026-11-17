@@ -1,10 +1,12 @@
 // Long War's tactical second-wave options on a unit (features/lw-second-wave.md; X2Ability_LWSecondWave, on every character):
 // - #7 Absolutely Critical: a flanking shot's crit bonus Long War's SW_FLANK_CRIT (100) in place of FLANKING_CRIT_BONUS (50)
 //   (XGAbility_Targeted: GetFlankingCritBonus): the shooter's flanking crit stat raised by the difference.
+// - #11 Cinematic Mode: XCOM's units' aim up by Long War's ABDUCTION_REWARD_SCI (15); Long War adds it to every recruit,
+//   SHIV and MEC as they are made (XGFacility_Barracks, XGStrategySoldier, XGFundingCouncil), here for the battle.
 class X2Effect_LWSecondWave extends X2Effect_ModifyStats config(LWGear);
 
-/** Long War's SW_FLANK_CRIT and FLANKING_CRIT_BONUS. */
-var config int AbsolutelyCriticalFlankCrit, FlankCrit;
+/** Long War's SW_FLANK_CRIT and FLANKING_CRIT_BONUS; Cinematic Mode's aim (ABDUCTION_REWARD_SCI). */
+var config int AbsolutelyCriticalFlankCrit, FlankCrit, CinematicAim;
 
 simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffectParameters, XComGameState_BaseObject kNewTargetState, XComGameState NewGameState, XComGameState_Effect NewEffectState)
 {
@@ -14,6 +16,13 @@ simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffe
 	{
 		Change.StatType = eStat_FlankingCritChance;
 		Change.StatAmount = default.AbsolutelyCriticalFlankCrit - default.FlankCrit;
+		Change.ModOp = MODOP_Addition;
+		NewEffectState.StatChanges.AddItem(Change);
+	}
+	if (class'LWX2SecondWave'.static.On(11) && XComGameState_Unit(kNewTargetState) != none && XComGameState_Unit(kNewTargetState).GetTeam() == eTeam_XCom)
+	{
+		Change.StatType = eStat_Offense;
+		Change.StatAmount = default.CinematicAim;
 		Change.ModOp = MODOP_Addition;
 		NewEffectState.StatChanges.AddItem(Change);
 	}

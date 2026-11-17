@@ -1,8 +1,9 @@
 // Long War's rookie stats (XGFacility_Barracks.RandomizeStats, features/lw-classes.md): no two recruits alike. A recruit
 // starts at each stat's minimum and spends a pool of points worth the midpoints (the soldier's Characters= line); each
 // draw picks a stat weighted by its range and buys one point of it (HP, mobility) or a few (aim, defence, will), never past
-// twice its range. Per Ardua Ad Astra adds to the pool. Long War rolls this unless its second-wave option is on; the port
-// always does. Generated from Long War's DefaultGameCore.ini by scripts/strategy-config.mjs.
+// twice its range. Per Ardua Ad Astra adds to the pool. Long War rolls this unless its second-wave option Strict Screening
+// (#2) is on; then a recruit has the midpoints (its Characters= line). Generated from Long War's DefaultGameCore.ini by
+// scripts/strategy-config.mjs.
 class LWRookieStats extends Object config(LWStrategy);
 
 struct LWStatRoll
@@ -30,6 +31,17 @@ static function Roll(XComGameState_Unit Unit)
 	S.AddItem(default.Will);
 	if (S[0].Mid == 0)
 		return;
+	// Strict Screening (second wave #2): no roll; every recruit the same, at the midpoints.
+	if (class'LWX2SecondWave'.static.On(2))
+	{
+		SetStat(Unit, eStat_HP, S[0].Mid);
+		SetStat(Unit, eStat_Offense, S[1].Mid);
+		SetStat(Unit, eStat_Defense, S[2].Mid);
+		SetStat(Unit, eStat_Mobility, S[3].Mid);
+		SetStat(Unit, eStat_Will, S[4].Mid);
+		`log("LongWarX2: rookie stats (Strict Screening):" @ Unit.GetFullName() @ "at the midpoints", , 'LongWarX2');
+		return;
+	}
 	for (i = 0; i < S.Length; i++)
 	{
 		Range.AddItem(S[i].Mid - S[i].Min);
