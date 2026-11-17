@@ -165,6 +165,7 @@ static function string StatusText(XComGameState_LWAirWar.LWJet J)
 {
 	switch (J.Status)
 	{
+	case 2: return "Refuelling (" $ class'LWEngineering'.static.HoursText(J.HoursDown) $ ")";
 	case 4: return "Repairing (" $ class'LWEngineering'.static.HoursText(J.HoursDown) $ ")";
 	case 6: return "To" @ class'LWStrategyRules'.static.ContinentName(J.TransferTo) @ "(" $ class'LWEngineering'.static.HoursText(J.HoursDown) $ ")";
 	case 7: return "Refitting (" $ class'LWEngineering'.static.HoursText(J.HoursDown) $ ")";

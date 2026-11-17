@@ -109,7 +109,8 @@ static function int BaysTaken(XComGameState_LWAirWar AirWar, int Continent)
 	return n;
 }
 
-/** After a fight (XComGameState_LWAirWar.Record): destroyed, it is gone; damaged, it goes for repair. */
+/** After a fight (XComGameState_LWAirWar.Record): destroyed, it is gone; damaged, it goes for repair; whole, it refuels for an
+ *  hour (Long War's XGFacility_Hangar.DetermineInterceptorStatus: a jet back with less than a full tank). */
 static function AfterFight(XComGameState_LWAirWar AirWar, int Index)
 {
 	local XComGameState_LWAirWar.LWJet J;
@@ -122,7 +123,11 @@ static function AfterFight(XComGameState_LWAirWar AirWar, int Index)
 		return;
 	}
 	if (J.Hp >= MaxHp(J))
+	{
+		AirWar.Jets[Index].Status = 2;
+		AirWar.Jets[Index].HoursDown = 1;
 		return;
+	}
 	Hours = class'LWBaseRules'.default.RepairHours * (1.0 - float(J.Hp) / MaxHp(J));
 	if (class'XComGameState_LWStrategy'.static.Get() != none && class'XComGameState_LWStrategy'.static.Get().FoundryDone.Find(5) != INDEX_NONE)
 		Hours *= 0.67;
@@ -365,6 +370,7 @@ static function string JetText(XComGameState_LWAirWar.LWJet J)
 
 	switch (J.Status)
 	{
+	case 2: Status = "refuelling," @ J.HoursDown $ "h"; break;
 	case 4: Status = "repairing," @ J.HoursDown $ "h"; break;
 	case 6: Status = "to" @ class'LWStrategyRules'.static.ContinentName(J.TransferTo) $ "," @ J.HoursDown $ "h"; break;
 	case 7: Status = "refitting," @ J.HoursDown $ "h"; break;

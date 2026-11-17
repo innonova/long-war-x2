@@ -13,7 +13,7 @@ struct LWJet
 	/** The continent it is based on (LWStrategyRules' numbering); where it is going while it transfers. */
 	var int Continent;
 	var int TransferTo;
-	/** 0 ready, 4 repairing, 6 transferring, 7 refitting (Long War's interceptor statuses); the hours until done. */
+	/** 0 ready, 2 refuelling, 4 repairing, 6 transferring, 7 refitting (Long War's interceptor statuses); the hours until done. */
 	var int Status;
 	var int HoursDown;
 };

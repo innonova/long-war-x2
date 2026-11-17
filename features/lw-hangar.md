@@ -157,3 +157,14 @@ both screens: "Sawed-off Shotgun: §0, 1 Shotgun; 1 days"; SEND, REFIT,
   (`UseConsumables`). The free air war (no campaign) keeps them unlimited.
 - **Checked on wingpu:** with none researched, none usable; with Foundry 26 and the research given, 2 each usable;
   in an interception of an Overseer, AIM used: the stock 2 → 1.
+
+## Report (2026-11-17, refuelling)
+
+- **Read** (`XGShip_Interceptor.Update`, `GetFuelPct`, `XGFacility_Hangar.DetermineInterceptorStatus`): a jet in flight
+  burns its 12 hours of fuel and turns home when it runs dry; back in the hangar with less than a full tank it is down
+  an hour, refuelling (status 2), unless it is damaged, when the repair takes over.
+- **Done:** after a fight a whole jet refuels for an hour (`LWHangar.AfterFight`), shown as "refuelling" in the
+  hangar and on EW's hangar screen. The port has no globe, so a flight's own length (and running dry on the way) still
+  does not exist.
+- **Checked on wingpu:** Raven-1 fought a medium UFO that got away, came back whole and was "refuelling, 1h"; an hour
+  later it was ready.
