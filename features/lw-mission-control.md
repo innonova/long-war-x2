@@ -122,3 +122,24 @@ panel: EW has no Mission Control alert for them (a cinematic, the Situation Room
 - **Checked on wingpu:** abductions in Japan: the alert, VIEW ABDUCTION SITE clicked, the selection (JAPAN, panic, Moderate,
   §90; `logs/wingpu_ew_abduction_selection.png`), Confirm clicked: squad select. **Not seen:** a selection with more than one
   site (this campaign's abductions came one at a time).
+
+## Report (2026-11-17, the UFO alerts' rows)
+
+- **As EW's `UIMissionControl_UFORadarContactAlert` and `UIMissionControl_UFOAlert` fill them:** CONTACT is EW's `UFO-<n>`
+  (here the UFO's number in the campaign's list; EW counts the UFOs it has made), LOCATION the country with the altitude by
+  the UFO's mission (`XGShip_UFO.GetAltitudeString`: NOE for research, harvest, abductions, terror, infiltration; High for a
+  hunt; Low otherwise), SIZE the class's size (the air war's: `XGItemTree.BuildShips` with Long War's changes by research
+  category), UFO CLASS the class when known. With the Hyperwave Relay the labels turn orange and EW's HYPERWAVE RELAY panel
+  shows the UFO's objective (`XGStrategyAI.m_arrObjectiveNames`). A landed UFO's title is EW's "UFO-<n> Has Landed".
+- **Words:** 22 more of EW's (`m_strLabelUFOPrefix`, `m_strLabelSize`, `m_strLabelAlienObjective`, the Hyperwave panel's
+  title, the four sizes, the three altitudes, the eleven objective names): 55 alert words.
+- **Build scripts:** XCOM 2's script compiler crashed on this round's first version (a minidump, no error) and the build
+  scripts printed only the first compile's `Success`, so the crash looked like a pass and the old script stayed installed.
+  `build.ps1` and `sync-build.sh` now print "Crash detected". The crash went away with the size read into a local struct
+  first (no `switch` over a returned struct's member) and the function renamed; which of the two caused it was not isolated.
+- **Checked on wingpu:** a small UFO (`UFO-3`, United States (Low), Small, UNIDENTIFIED); with a Hyperwave Relay placed by the
+  test aid, an Overseer (`UFO-10`, Medium, Overseer, objective Command Overwatch, orange;
+  `logs/wingpu_ew_ufo_alert_hyperwave.png`).
+- **Open:** a landed or crashed UFO's crew size and species under the Hyperwave Relay (EW shows them; the port makes the
+  alien squad only when the mission is launched, so there is nothing true to show yet); the contact alert's jet list (EW
+  picks the interceptor in the alert; the port's air war picks its own).

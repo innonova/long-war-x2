@@ -10,13 +10,19 @@
 // for those come together; "view" opens EW's site selection, AbductionSelection, where one is chosen), terror (5), an alien base
 // (6), the Temple Ship (7), the covert operative ready (9) and a council mission (11). The others (the HQ's defence, EXALT's
 // base, the council's requests) EW shows on screens of their own; they keep the panel's buttons.
-class UILWEWAlert extends UILWEWScreen;
+class UILWEWAlert extends UILWEWScreen dependson(LWAirWar);
 
 var localized string RadarContact, Contact, Location, UFOClass, Unidentified, Scramble, IgnoreContact, SendSkyranger, Ignore,
 	CrashSite, HasLanded;
 var localized string AbductionsReported, ViewAbductionSites, TerrorCity, PanicLevel, Difficulty, FCMission,
 	AssaultAlienBase, AssaultTempleShip, TempleShipText, Assault, Wait, ExaltTitle, ExaltBody, ExaltSend, ExaltNotNow,
-	AbductionSites, Reward, Confirm;
+	AbductionSites, Reward, Confirm, UFOPrefix, SizeLabel, ObjectiveLabel, HyperwaveTitle;
+/** A UFO's size (XGItemTree: m_strSizeSmall … VeryLarge), its altitude by
+ *  its mission (XGShip_UFO.GetAltitudeString: low, high, very high), and the missions' names (XGStrategyAI.m_arrObjectiveNames,
+ *  by Long War's EAlienObjective). */
+var localized string SizeNames[4];
+var localized string AltitudeNames[3];
+var localized string ObjectiveNames[11];
 /** EW's mission difficulties' names (XGLocalizedData.MissionDifficultyNames: light to swarming). */
 var localized string DifficultyNames[4];
 
@@ -144,10 +150,38 @@ function Button(int i, string Text)
 	Movie.Invoke(AlertPath $ ".SetButtonText", Params);
 }
 
-/** EW's alerts colour their title and labels (UIUtilities.GetHTMLColoredText, state 3: red). */
-static function string Red(string Text)
+/** EW's alerts colour their title and labels (UIUtilities.GetHTMLColoredText: state 3 red EE1C25, 10 orange F78000). */
+static function string Coloured(string Text, string Colour)
 {
-	return "<font color='#ee1c25'>" $ Text $ "</font>";
+	return "<font color='#" $ Colour $ "'>" $ Text $ "</font>";
+}
+
+/** A UFO's size in EW's words: the air war's (LWAirWar: XGItemTree.BuildShips' size, with Long War's changes by the aliens'
+ *  research category). */
+function string UfoSize(XComGameState_LWStrategy S, int Ufo)
+{
+	local LWAirWar.LWShip Ship;
+
+	Ship = class'LWAirWar'.static.Ufo(Ufo, S.Category());
+	if (Ship.Size == "small")
+		return SizeNames[0];
+	if (Ship.Size == "medium")
+		return SizeNames[1];
+	if (Ship.Size == "very_large")
+		return SizeNames[3];
+	return SizeNames[2];
+}
+
+/** Its altitude by its mission (XGShip_UFO.GetAltitudeString): low for research, harvest, abductions, terror and
+ *  infiltration; very high for a hunt; high otherwise. */
+function string Altitude(int Objective)
+{
+	switch (Objective)
+	{
+	case 0: case 2: case 5: case 6: case 7: return AltitudeNames[0];
+	case 4: return AltitudeNames[2];
+	default: return AltitudeNames[1];
+	}
 }
 
 function Fill()
@@ -155,6 +189,7 @@ function Fill()
 	local XComGameState_LWStrategy S;
 	local array<ASValue> Params, NoArgs;
 	local int Ufo, Country;
+	local string Colour;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
 	if (S == none || (Kind <= 3 && (Index < 0 || Index >= S.Ufos.Length)) || ((Kind == 4 || Kind == 5 || Kind == 11) && (Index < 0 || Index >= S.Sites.Length)))
@@ -168,18 +203,30 @@ function Fill()
 	case 1:
 	case 2:
 	case 3:
-		// XGMissionControlUI.UpdateAlert: eGA_UFODetected, eGA_UFOCrash, eGA_UFOLanded.
+		// XGMissionControlUI.UpdateAlert: eGA_UFODetected, eGA_UFOCrash, eGA_UFOLanded, as UIMissionControl_UFORadarContactAlert
+		// and UIMissionControl_UFOAlert show them: the labels red, orange once the Hyperwave Relay reads the UFOs (it adds the
+		// UFO's mission). The contact is EW's UFO-<n>: here the UFO's number in the campaign's list.
 		Ufo = S.Ufos[Index].Ufo;
 		Country = S.Ufos[Index].Country;
+		Colour = S.Hyperwave() ? "F78000" : "EE1C25";
 		if (Kind == 1)
-			Call("SetTitle", Red(Caps(RadarContact)));
+			Call("SetTitle", Coloured(Caps(RadarContact), Colour));
 		else if (Kind == 2)
-			Call("SetTitle", Red(Caps(CrashSite)));
+			Call("SetTitle", Coloured(Caps(CrashSite), Colour));
 		else
-			Call("SetTitle", Red(Caps(Repl(HasLanded, "<XGParam:StrValue0/>", S.UfoLabel(Ufo)))));
-		Call("SetContact", Red(Caps(Contact)), S.UfoLabel(Ufo), true);
-		Call("SetLocation", Red(Caps(Location)), S.CountryName(Country), true);
-		Call("SetClass", Red(Caps(UFOClass)), S.Identified(Ufo) ? S.UfoLabel(Ufo) : Caps(Unidentified), true);
+			Call("SetTitle", Coloured(Caps(Repl(HasLanded, "<XGParam:StrValue0/>", UFOPrefix $ (Index + 1))), Colour));
+		Call("SetContact", Coloured(Caps(Contact), Colour), UFOPrefix $ (Index + 1), true);
+		Call("SetLocation", Coloured(Caps(Location), Colour), S.CountryName(Country) $ (Kind == 1 ? Altitude(S.Ufos[Index].Objective) : ""), true);
+		if (Kind == 1)
+			Call("SetSize", Coloured(Caps(SizeLabel), Colour), UfoSize(S, Ufo), true);
+		Call("SetClass", Coloured(Caps(UFOClass), Colour), S.Identified(Ufo) ? S.ShipName(Ufo) : Caps(Unidentified), true);
+		if (S.Hyperwave())
+		{
+			Params.AddItem(Str(HyperwaveTitle));
+			Params.AddItem(Str(Caps(ObjectiveLabel)));
+			Params.AddItem(Str((S.Ufos[Index].Objective >= 0 && S.Ufos[Index].Objective < 11) ? ObjectiveNames[S.Ufos[Index].Objective] : ""));
+			Movie.Invoke(AlertPath $ ".SetHyperwaveData", Params);
+		}
 		Button(0, Caps(Kind == 1 ? Scramble : SendSkyranger));
 		Button(1, Caps(Kind == 1 ? IgnoreContact : Ignore));
 		Movie.Invoke(AlertPath $ ".UFOAlertFinishedLoading", NoArgs);

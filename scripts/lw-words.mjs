@@ -649,6 +649,12 @@ export function makeAlertWords({ strategyLoc }) {
     ...['Easy', 'Moderate', 'Hard', 'VeryHard'].map((d, i) => [`DifficultyNames[${i}]`, one(data, `MissionDifficultyNames[eMissionDiff_${d}]`)]),
     ['FCMission', mc('m_strLabelFCMission')], ['AbductionSites', mc('m_strLabelAbductionSites')], ['Reward', mc('m_strLabelReward')],
     ['Confirm', one(sections('UIMissionControl_AbductionSelection'), 'm_strConfirmLabel')],
+    ['UFOPrefix', mc('m_strLabelUFOPrefix')], ['SizeLabel', mc('m_strLabelSize')], ['ObjectiveLabel', mc('m_strLabelAlienObjective')],
+    ['HyperwaveTitle', one(sections('UIMissionControl_UFOAlert'), 'm_strHyperwavePanelTitle')],
+    ...['Small', 'Medium', 'Large', 'VeryLarge'].map((k, i) => [`SizeNames[${i}]`, one(sections('XGItemTree'), `m_strSize${k}`)]),
+    // (EW's altitudes begin with a space, " (NOE)": kept, as EW appends them to the country.)
+    ...['Low', 'High', 'VeryHigh'].map((k, i) => [`AltitudeNames[${i}]`, one(sections('XGShip_UFO'), `m_strAltitude${k}`)]),
+    ...Array.from({ length: 11 }, (_, i) => [`ObjectiveNames[${i}]`, one(sections('XGStrategyAI'), `m_arrObjectiveNames[${i}]`)]),
     ['AssaultAlienBase', mc('m_strLabelAssaultAlienBase')], ['AssaultTempleShip', mc('m_strLabelAssaultTempleShip')],
     ['TempleShipText', mc('m_strLabelTempleShip')], ['Assault', mc('m_strLabelAssault')], ['Wait', mc('m_strlabelWait')],
     ['ExaltTitle', mc('m_strLabelExaltAlertTitle')], ['ExaltBody', mc('m_strLabelExaltAlertBody')],

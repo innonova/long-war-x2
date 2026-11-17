@@ -53,5 +53,5 @@ foreach ($content in @("$game\XComGame\Mods\LongWarX2\Content", "$sdk\XComGame\M
     New-Item -ItemType HardLink -Path $link -Target $f.FullName | Out-Null
   }
 }
-Select-String -Path $log -Pattern ': Error|: Warning|SUCCESS|Failed' | ForEach-Object { $_.Line.Replace("$repo\", '') }
+Select-String -Path $log -Pattern ': Error|: Warning|SUCCESS|Failed|Crash detected' | ForEach-Object { $_.Line.Replace("$repo\", '') }
 exit $code
