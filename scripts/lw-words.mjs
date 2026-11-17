@@ -367,6 +367,8 @@ export function makeHubWords({ strategyLoc }) {
     ['Augment', inSection('XGEngineeringUI', 'm_strOptCyberneticsLab')],
     ['AugmentHelp', inSection('XGEngineeringUI', 'm_strHelpCyberneticsLab')],
     ['FoundryHelp', inSection('XGEngineeringUI', 'm_strHelpFoundry')],
+    ['RepairBay', inSection('XGEngineeringUI', 'm_strOptManufactureMec')],
+    ['RepairBayHelp', inSection('XGEngineeringUI', 'm_strHelpMecManufacture')],
     ['ViewSoldiers', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_SoldierList]')],
     ['ViewSoldiersHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_SoldierList]')],
     ['PsiLabs', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_PsiLabs]')],
@@ -790,6 +792,39 @@ export function makeDelugeWords({ strategyLoc }) {
 
 /** The MECs' words (features/lw-shivs-mecs.md): Long War's item names and summaries for the MEC suits (LWMEC_Suit_<id>) and
  *  weapons (LWMEC_Weapon_<id>, and the Kinetic Strike Module, LWMEC_KineticStrike), from XComLWMECs.ini's Enum= names. */
+/** The Repair Bay's words (UILWEWRepairBay, features/lw-gear-repair.md): Long War's, which it wrote over EW's MEC inventory
+ *  (sections UIMECInventory and XGCyberneticsUI of its strategy text). */
+export function makeRepairWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const inSection = (section, key) => {
+    const at = text.indexOf(`\n[${section}]\n`)
+    if (at < 0) return undefined
+    const end = text.indexOf('\n[', at + 2)
+    const body = text.slice(at, end < 0 ? undefined : end)
+    const m = body.match(new RegExp(`^${key}=(.*)$`, 'm'))
+    return m ? m[1].trim().replace(/^"(.*)"$/, '$1') : undefined
+  }
+  const words = [
+    ['Title', inSection('UIMECInventory', 'm_strMECInventoryTitle')],
+    ['SubTitle', inSection('UIMECInventory', 'm_strMECInventorySubTitle')],
+    ['RepairItem', inSection('UIMECInventory', 'm_strButtonRepair')],
+    ['Description', inSection('UIMECInventory', 'm_strDescBuildNewMec')],
+    ['RepairsNeeded', inSection('UIMECInventory', 'm_strMECUnequipped')],
+    ['Damaged', inSection('XGCyberneticsUI', 'm_strLabelDamaged')],
+    ['Repairing', inSection('XGCyberneticsUI', 'm_strLabelRepairing')],
+    ['RepairAll', inSection('XGCyberneticsUI', 'm_strBuildNewMEC')],
+    ['RepairTitle', inSection('XGCyberneticsUI', 'm_strRepairTitle')],
+    ['RepairCost', inSection('XGCyberneticsUI', 'm_strRepairCost')],
+    ['RepairWarning', inSection('XGCyberneticsUI', 'm_strRepairWarning')],
+    ['Confirm', inSection('XGCyberneticsUI', 'm_strRepairButtonConfirm')],
+    ['NotNow', inSection('XGCyberneticsUI', 'm_strRepairButtonWait')],
+    ['CostLabel', inSection('XGCyberneticsUI', 'm_strRepairCostLabel')],
+    ['StartedTitle', inSection('XGCyberneticsUI', 'm_strNewMecRepairingDialogTitle')],
+    ['StartedText', inSection('XGCyberneticsUI', 'm_strNewMecRepairingDialogDescription')],
+  ].filter(([, v]) => v)
+  return { text: ['[UILWEWRepairBay]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}
+
 export function makeMECWords({ loc, strategyLoc, mecsIni }) {
   const one = (text, key, k) => (text ? text.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1] : undefined)
   const out = []

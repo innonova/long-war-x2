@@ -74,3 +74,32 @@ Repair Bay. EW only damaged MEC suits. Three second-wave options change this sys
     damaged, noted, the soldiers re-armed. Opening the Geoscape again added none.
 - **Not done yet:** the screens (phase 2: EW's Cybernetics Lab and its inventory). A dead soldier's gear is not rolled
   (Long War rolls it at full chance as it goes back to storage).
+
+## Report (2026-11-17, the Repair Bay's screen)
+
+- **Engineering's REPAIR BAY** (EW's engineering menu option, once the Cybernetics Lab is built; Long War renamed EW's
+  "MEC armor" option to it) opens EW's own MEC inventory movie, as Long War rewrote it (`UILWEWRepairBay`):
+  - **The list:** "DAMAGED ITEM INVENTORY". Above it REPAIR ALL with what all the repairs cost together; below it each
+    damaged item ("DAMAGED: …", greyed when XCOM cannot pay) and each repair under way ("REPAIRING: … Days: n").
+  - **A selected item:** the info panel shows its name, Long War's description and "REPAIRS NEEDED", with the repair cost
+    below the list.
+  - **A damaged item chosen:** EW's question ("REPAIR ITEM: …", the cost, Long War's warning; REPAIR / NOT NOW), then EW's
+    word that the repair has begun.
+  - **REPAIR ALL:** repairs every damaged item XCOM can pay for, as Long War's rewritten button does.
+  - **The words** are Long War's own (its `UIMECInventory` and `XGCyberneticsUI` text), written on the player's machine
+    (`scripts/lw-words.mjs` `makeRepairWords`; the hub's "Repair Bay" and its help in `makeHubWords`).
+- **Driven as EW drives it:** the movie's `widgetHelper` (`SetListOptions`, `SetListSelection`, `SetSelected`, the
+  button's enable), `UpdateInfo`, `SetSoldier`, `SetBuildButtonHelp`. Clicks come as 391/392/398 on `option0` (the button)
+  or `option1` (the list, with the row).
+- **XCOM 2's font runs wider than EW's:** a row holds about 27 characters at the movie's size. Longer labels ("REPAIRING:
+  CARAPACE ARMOR Days:20") are set smaller in proportion.
+- **Checked on wingpu:**
+  - Engineering's menu with REPAIR BAY (`logs/wingpu_hub_engineering_repairbay.png`).
+  - The list with four Carapaces and Combat Stims (`logs/wingpu_repairbay.png`).
+  - The question for Combat Stims (`logs/wingpu_repairbay_confirm.png`) and the info panel (`logs/wingpu_repairbay_selected.png`).
+  - REPAIR ALL with 31 alloys: three Carapaces and the Stims under repair, the fourth Carapace and the button greyed
+    (`logs/wingpu_repairbay_repairall.png`, `logs/wingpu_repairbay_repairing.png`).
+- **Left as it is:**
+  - The info panel's title for a repair under way is cut before "Days" (the list shows it).
+  - The item's icon is the movie's "?" (EW had icons only for MEC gear).
+  - Pointing at a row does not select it; a click does.

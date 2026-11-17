@@ -21,6 +21,7 @@ var localized string MissionControlName;
 var localized string NewResearch, BuildItems, BuildItemsHelp, BuildFacilities, BuildFacilitiesHelp, Foundry, FoundryHelp;
 var localized string ViewSoldiers, ViewSoldiersHelp, AircraftList, AircraftListHelp, SituationRoom, GreyMarket, GreyMarketHelp;
 var localized string LaunchSatellite, LaunchSatelliteHelp;
+var localized string RepairBay, RepairBayHelp;
 var localized string PsiLabs, PsiLabsHelp, OTS, OTSHelp, Augment, AugmentHelp;
 
 /** Each room's camera in EW's base (Command1's, by tag), in the order of the top menu. */
@@ -48,6 +49,7 @@ const OPT_AUGMENT = 13;
 const OPT_OFFICERS = 11;
 const OPT_EXALT = 12;
 const OPT_SATELLITE = 14;
+const OPT_REPAIR = 15;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
 const FACILITY_FOUNDRY = 11;
@@ -269,6 +271,9 @@ function EnterRoom(int i)
 		// (As EW: Augment Soldiers once the Cybernetics Lab is built.)
 		if (S != none && class'LWBase'.static.Count(S, 22) > 0)
 			RoomOptions.AddItem(OPT_AUGMENT);
+		// (As EW: the MEC inventory, Long War's Repair Bay, once the Cybernetics Lab is built.)
+		if (S != none && class'LWBase'.static.Count(S, 22) > 0)
+			RoomOptions.AddItem(OPT_REPAIR);
 		break;
 	case 2:
 		RoomOptions.AddItem(OPT_SOLDIERS);
@@ -327,6 +332,7 @@ function string OptionName(int Option)
 	case OPT_OTS: return Word(OTS, "Officer Training School");
 	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
 	case OPT_AUGMENT: return Word(Augment, "Augment Soldiers");
+	case OPT_REPAIR: return Word(RepairBay, "Repair Bay");
 	case OPT_GENE: return class'LWBase'.static.FacilityName(23);
 	case OPT_OFFICERS: return Word(class'UILWOfficers'.default.Promotions, "Officer Promotions");
 	case OPT_EXALT: return "EXALT";
@@ -348,6 +354,7 @@ function string OptionHelp(int Option)
 	case OPT_OTS: return OTSHelp;
 	case OPT_PSI: return PsiLabsHelp;
 	case OPT_AUGMENT: return AugmentHelp;
+	case OPT_REPAIR: return RepairBayHelp;
 	case OPT_OFFICERS: return class'UILWOfficers'.default.PromotionsHelp;
 	case OPT_EXALT: return class'UILWEWSituationRoom'.default.NotScanned;
 	}
@@ -408,6 +415,11 @@ function ChooseOption(int Option)
 	// The Cybernetics Lab: XCOM 2's soldier list of those who may be augmented (features/lw-shivs-mecs.md).
 	case OPT_AUGMENT:
 		class'UIPersonnel_LWAugment'.static.Open(HQPres);
+		break;
+	// The Repair Bay on EW's MEC inventory screen (features/lw-gear-repair.md).
+	case OPT_REPAIR:
+		if (class'UILWEWScreen'.static.HasEWScreens())
+			class'UILWEWRepairBay'.static.Open(HQPres);
 		break;
 	// The Genetics Lab on EW's own Gene Mods screen (agreed 2026-11-16).
 	case OPT_GENE:
