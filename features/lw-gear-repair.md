@@ -1,6 +1,6 @@
 ---
 title: Long War's damaged gear and its repair
-status: in-progress
+status: review
 priority: 30
 dependsOn: [lw-gear, lw-shivs-mecs]
 ---

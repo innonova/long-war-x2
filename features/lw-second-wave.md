@@ -215,3 +215,14 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   - **An alien's shot:** at a soldier in low cover at 12°, +11 (15 − 10 × 0.4); in high cover at 26°, +9; at 63°, none.
   - **A soldier's shot:** at an alien in high cover at 20°, +15 with the option and nothing without it (XCOM 2's own
     would have been about +14).
+
+## Report (2026-11-17, Hidden Trees; Wear and Tear, Durability, Miracle Workers)
+
+- **#21 Hidden Trees** (`UISoldierPromotion`: the columns from the soldier's rank on locked): on the promotion screen,
+  the ranks not reached yet show XCOM 2's own locked perk ("?", its locked title), and pointing at one describes nothing
+  (`LWX2PromotionScreen.Hidden`). Perks a soldier holds stay shown.
+- **#13 Wear and Tear, #22 Durability, #26 Miracle Workers:** in Long War's damaged gear and its repair, now ported
+  (`features/lw-gear-repair.md`, with their checks).
+- **Checked on wingpu** (new test aid `open promotion`; from the hub's barracks, the soldier list, the armory): a rank-2
+  sniper sees the squaddie perks and the Lance Corporal choice, and a locked "?" for every perk from Corporal on
+  (`logs/wingpu_hidden_trees.png`).

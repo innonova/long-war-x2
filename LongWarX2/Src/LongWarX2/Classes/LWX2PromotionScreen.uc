@@ -3,6 +3,8 @@
 // a rank's three perks are equal, free, and exactly one may be chosen; a choice brings Long
 // War's stat bonus for it (LWX2PerkBonuses). The screen's look and
 // its confirmation and purchase are XCOM 2's.
+// Hidden Trees (second wave #21; UISoldierPromotion: the columns from the soldier's rank on locked): the ranks not reached
+// yet show XCOM 2's own locked perk, and their perks are not described.
 class LWX2PromotionScreen extends UIArmory_PromotionHero;
 
 /** Whether one of the rank's perks has been chosen (Squaddie's are given). */
@@ -16,6 +18,12 @@ function bool HasChosenAtRank(XComGameState_Unit Unit, int Rank)
 		if (Slot.AbilityName != '' && Unit.HasSoldierAbility(Slot.AbilityName))
 			return true;
 	return false;
+}
+
+/** Hidden Trees: a rank the soldier has not reached is not shown. */
+static function bool Hidden(XComGameState_Unit Unit, int Rank)
+{
+	return class'LWX2SecondWave'.static.On(21) && Rank >= Unit.GetRank();
 }
 
 function int GetAbilityPointCost(int Rank, int Branch)
@@ -58,6 +66,13 @@ function bool UpdateAbilityIcons(out UIArmory_PromotionHeroColumn Column)
 		if (Column.AbilityNames.Find(Template.DataName) == INDEX_NONE)
 			Column.AbilityNames.AddItem(Template.DataName);
 		bOwned = Unit.HasSoldierAbility(Template.DataName);
+		if (Hidden(Unit, Column.Rank) && !bOwned)
+		{
+			Column.AS_SetIconState(i, false, class'UIUtilities_Image'.const.UnknownAbilityIcon,
+				class'UIUtilities_Text'.static.GetColoredText(m_strAbilityLockedTitle, eUIState_Disabled), eUIPromotionState_Locked,
+				class'UIUtilities_Colors'.const.BLACK_HTML_COLOR, class'UIUtilities_Colors'.const.DISABLED_HTML_COLOR, false);
+			continue;
+		}
 		ButtonState = bOwned ? eUIPromotionState_Equipped : eUIPromotionState_Normal;
 		if (bOwned)
 		{
@@ -97,6 +112,12 @@ function PreviewAbility(int Rank, int Branch)
 	if (Template == none)
 	{
 		AS_SetDescriptionData("", "", "", "", "", "", "");
+		return;
+	}
+	if (Hidden(Unit, Rank) && !Unit.HasSoldierAbility(Template.DataName))
+	{
+		AS_SetDescriptionData(class'UIUtilities_Image'.const.UnknownAbilityIcon, class'UIUtilities_Text'.static.GetColoredText(m_strAbilityLockedTitle, eUIState_Disabled),
+			class'UIUtilities_Text'.static.GetColoredText(m_strAbilityLockedDescription, eUIState_Disabled), "", "", "", "");
 		return;
 	}
 	if (CanPurchaseAbility(Rank, Branch, Template.DataName))

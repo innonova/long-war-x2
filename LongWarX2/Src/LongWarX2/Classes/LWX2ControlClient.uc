@@ -600,6 +600,12 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem(OpenLoadout(Args.Length > 2 ? int(Mid(Args[2], 1)) : 0, Args[1] ~= "armory"));
 			return;
 		}
+		// The promotion screen of the first soldier (arm's order) or of a unit ('open promotion #<id>'), as the armory opens it.
+		if (Args.Length > 1 && Args[1] ~= "promotion")
+		{
+			Out.AddItem(OpenPromotion(Args.Length > 2 ? int(Mid(Args[2], 1)) : 0));
+			return;
+		}
 		// The Long War hub (EW's base and room menu), whether or not it is the strategy layer's root yet.
 		if (Args.Length > 1 && Args[1] ~= "hub")
 		{
@@ -3097,6 +3103,28 @@ function Council(array<string> Args, out array<string> Out)
 }
 
 /** A shot's chance (its ability's to-hit calculation, as the targeting shows it), its crit and the modifiers' reasons. */
+function string OpenPromotion(int UnitID)
+{
+	local XComGameState_Unit Unit;
+	local StateObjectReference Ref;
+
+	if (UnitID == 0)
+		foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+		{
+			Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+			if (Unit != none && Unit.IsSoldier())
+			{
+				UnitID = Unit.ObjectID;
+				break;
+			}
+		}
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
+	if (Unit == none || `HQPRES == none)
+		return "ERR no such soldier, or not at the base";
+	`HQPRES.UIArmory_Promotion(Unit.GetReference());
+	return "ok promotion of" @ Unit.GetFullName() @ "rank" @ Unit.GetRank();
+}
+
 function Repair(array<string> Args, out array<string> Out)
 {
 	local XComGameState_LWStrategy S;
