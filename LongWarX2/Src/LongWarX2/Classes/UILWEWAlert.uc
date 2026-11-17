@@ -133,8 +133,9 @@ function Fill()
 	Call("SetContact", Red(Caps(Contact)), S.UfoLabel(Ufo), true);
 	Call("SetLocation", Red(Caps(Location)), S.CountryName(Country), true);
 	Call("SetClass", Red(Caps(UFOClass)), S.Identified(Ufo) ? S.UfoLabel(Ufo) : Caps(Unidentified), true);
-	Button(0, Caps(Kind == 1 ? Scramble : SendSkyranger));
-	Button(1, Caps(Kind == 1 ? IgnoreContact : Ignore));
+	// (The keys shown: clicks on EW's alert buttons do not reach the screen yet, features/lw-mission-control.md.)
+	Button(0, Caps(Kind == 1 ? Scramble : SendSkyranger) @ "[ENTER]");
+	Button(1, Caps(Kind == 1 ? IgnoreContact : Ignore) @ "[ESC]");
 	Movie.Invoke(AlertPath $ ".UFOAlertFinishedLoading", NoArgs);
 	Movie.Invoke(AlertPath $ ".AlertFullyLoaded", NoArgs);
 }
