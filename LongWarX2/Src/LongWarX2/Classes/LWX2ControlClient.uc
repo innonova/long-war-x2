@@ -1,6 +1,6 @@
 // For development: one connection to the control port (LWX2Control): a command a line, the
 // answer's lines, then ".". "help" lists the commands. Text mode, lines split here.
-class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy, LWBaseRules, XComGameState_LWAirWar, LWX2CouncilBomb, LWX2CouncilVIP);
+class LWX2ControlClient extends TcpLink dependson(XComGameState_LWStrategy, LWBaseRules, XComGameState_LWAirWar, LWX2CouncilBomb, LWX2CouncilVIP, LWX2Furies);
 
 /** What came in and is not yet a whole line. */
 var string Pending;
@@ -327,6 +327,10 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "unbox":
 		Out.AddItem("moved" @ class'LWX2PartPlacer'.static.FreeBoxedIn(Args.Length > 1 ? int(Args[1]) : 40));
+		return;
+	case "furiesboom":
+		// furiesboom: a small explosion at Furies' command console (a test aid: the console destroyed, LWX2Furies.ConsoleHit).
+		Out.AddItem(FuriesBoom());
 		return;
 	case "globe":
 		// globe <yaw> [lonoffset] [mirrored 0|1] [scale]: Mission Control's hologlobe held at a turn, with markers at 0°/0° (red),
@@ -2491,6 +2495,28 @@ function XComUnits(out array<string> Out)
  * unit's reach this turn) and submitted by the tactical controller's move, so the game's rules all apply (what it
  * sees, the pods it reveals, reaction fire).
  */
+function string FuriesBoom()
+{
+	local LWX2Furies.LWX2FuriesDef F;
+	local XComGameState NewGameState;
+	local XComGameState_EnvironmentDamage D;
+
+	if (!class'LWX2Furies'.static.Active(F))
+		return "ERR not in Furies";
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a test explosion at Furies' console");
+	D = XComGameState_EnvironmentDamage(NewGameState.CreateNewStateObject(class'XComGameState_EnvironmentDamage'));
+	D.DEBUG_SourceCodeLocation = "LWX2ControlClient.FuriesBoom";
+	D.DamageAmount = 10;
+	D.DamageTypeTemplateName = 'Explosion';
+	D.HitLocation = F.Console;
+	D.HitLocationTile = `XWORLD.GetTileCoordinatesFromPosition(F.Console);
+	D.DamageRadius = 144;
+	D.bRadialDamage = true;
+	D.bSpawnExplosionVisuals = true;
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	return "ok an explosion at" @ F.Console;
+}
+
 function string GlobeTest(array<string> Args)
 {
 	local LWX2EWBase B;

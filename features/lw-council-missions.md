@@ -435,3 +435,14 @@ Read with the new Kismet exporter (`ew-kismet.ts`, see `lw-story.md`): the six a
 Pier, Truck Stop, Industrial Office, Grand Cemetery, Research Outpost) hold only narrative in their Kismet (lines spoken as
 squad members are counted and units killed) beside the alien drops `LWX2LevelDrops` already plays. Nothing of their play is
 missing; the gap is struck from STATUS.
+
+## Report (2026-11-17, Furies' console destroyed)
+
+- **"Destroy or disarm the command console":** the console can now be destroyed as well as disarmed (EW's
+  `ConsoleDestroyed`). The port's console is not a destructible actor, so `LWX2Furies.ConsoleHit` watches XCOM 2's record of
+  damage to the world (`XComGameState_EnvironmentDamage`: explosions, fire, stray shots) and counts any damage whose radius
+  reaches the console's place, or whose damaged tiles touch its tile, as destroying it: as disarmed, the rest of the aliens
+  are then to be killed. Each damage is looked at once (`LastDamageSeen`).
+- **Test aid:** `furiesboom`, a small explosion at the console's place.
+- **Checked on wingpu:** Furies on its EW map, `furiesboom`: "the console is destroyed", the objective "Kill any remaining
+  aliens." (`logs/wingpu_furies_console_destroyed.png`). **Not seen:** a soldier's own grenade or rocket at the console.

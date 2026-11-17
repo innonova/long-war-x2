@@ -8,3 +8,5 @@ var int TimerLeft;
 /** XCOM's last turn whose end the countdown has seen, and whether the first (not counted: DecrementFirstTime?) has been. */
 var int CountedTurn;
 var bool bFirstCounted;
+/** The last environment damage looked at (its ObjectID): damage reaching the console destroys it. */
+var int LastDamageSeen;

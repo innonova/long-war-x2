@@ -2,7 +2,9 @@
 // rescue handler, read by tools/convert/ew-objectives.ts readFuries into XComLWX2EWObjectives.ini): rescue the abductees by
 // destroying or disarming the command console. Once a soldier sounds the alarm (its volume), the execution comes in twelve
 // XCOM turns ("Turns Until Execution"; the first turn's end not counted); at 0 the captives are executed and the mission
-// is lost. The console disarmed (a soldier beside it, one action), the rest of the aliens are to be killed; then it is won.
+// is lost. The console disarmed (a soldier beside it, one action) or destroyed (EW's ConsoleDestroyed: here any damage to the
+// world reaching its place, an explosion or a stray shot, as XCOM 2 records it), the rest of the aliens are to be killed;
+// then it is won.
 class LWX2Furies extends Object config(LWX2EWObjectives) dependson(LWCouncil);
 
 struct LWX2FuriesDef
@@ -106,6 +108,10 @@ static function bool Update()
 	}
 	if (S.Stage >= 2)
 		return true;
+	// The console destroyed: damage to the world since last looked that reaches it.
+	if (ConsoleHit(F, S))
+		return true;
+	S = State();
 	Squad = class'LWX2ChryssalidHive'.static.Seeing();
 	if (!S.bAlarm)
 		foreach Squad(Unit)
@@ -138,6 +144,45 @@ static function bool Update()
 		`TACTICALRULES.EndBattle(XGBattle_SP(`BATTLE).GetAIPlayer());
 	}
 	return false;
+}
+
+/** Damage to the world (XComGameState_EnvironmentDamage) reaching the console since last looked: destroyed (EW's
+ *  ConsoleDestroyed), as disarmed. True when it was. */
+static function bool ConsoleHit(LWX2FuriesDef F, XComGameState_LWX2Furies S)
+{
+	local XComGameState_EnvironmentDamage D;
+	local XComGameState NewGameState;
+	local TTile ConsoleTile, T;
+	local int Last;
+	local bool bHit;
+
+	ConsoleTile = `XWORLD.GetTileCoordinatesFromPosition(F.Console);
+	Last = S.LastDamageSeen;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_EnvironmentDamage', D)
+	{
+		if (D.ObjectID <= S.LastDamageSeen)
+			continue;
+		Last = Max(Last, D.ObjectID);
+		if (D.DamageAmount <= 0)
+			continue;
+		if (D.DamageRadius > 0 && VSize(D.HitLocation - F.Console) <= D.DamageRadius + class'XComWorldData'.const.WORLD_HalfStepSize)
+			bHit = true;
+		foreach D.DamageTiles(T)
+			if (Abs(T.X - ConsoleTile.X) <= 1 && Abs(T.Y - ConsoleTile.Y) <= 1 && Abs(T.Z - ConsoleTile.Z) <= 1)
+				bHit = true;
+	}
+	if (Last == S.LastDamageSeen)
+		return false;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: Furies' console");
+	S = XComGameState_LWX2Furies(NewGameState.ModifyStateObject(class'XComGameState_LWX2Furies', S.ObjectID));
+	S.LastDamageSeen = Last;
+	if (bHit)
+	{
+		S.Stage = 2;
+		`log("LongWarX2: Furies: the console is destroyed; the rest of the aliens to be killed", , 'LongWarX2');
+	}
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	return bHit;
 }
 
 static function string ObjectiveText()
