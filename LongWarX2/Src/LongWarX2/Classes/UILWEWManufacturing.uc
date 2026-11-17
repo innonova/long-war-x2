@@ -93,7 +93,7 @@ function Refresh()
 	MC.QueueString("TIME:" @ class'LWEngineering'.static.HoursText(class'LWEngineering'.static.HoursFor(class'LWEngineering'.static.UnitWork(B), B.Engineers * Quantity, S != none ? S.Engineers : 0))
 		$ "\n" $ Cost $ (Short != "" ? "\n" $ class'UIUtilities_Text'.static.GetColoredText("Short of" @ Short, eUIState_Bad) : ""));
 	MC.QueueString(Template != none ? Template.GetItemBriefSummary() : "");
-	MC.QueueString(Template != none ? Template.strImage : "");
+	MC.QueueString(class'LWX2Pictures'.static.Item(Item, Template != none ? Template.strImage : ""));
 	MC.EndOp();
 }
 
@@ -124,7 +124,7 @@ function RefreshFoundry()
 	MC.QueueString("TIME:" @ class'LWEngineering'.static.HoursText(class'LWEngineering'.static.HoursFor(class'LWEngineering'.static.FoundryWork(F, S.Credits), F.Engineers, S.Engineers))
 		$ "\n" $ "COST:" @ class'LWEngineering'.static.FoundryCostText(F) $ (Short != "" ? "\n" $ class'UIUtilities_Text'.static.GetColoredText("Short of" @ Short, eUIState_Bad) : ""));
 	MC.QueueString(Template != none ? Template.Summary : "");
-	MC.QueueString(Template != none ? Template.strImage : "");
+	MC.QueueString(class'LWX2Pictures'.static.Project(Item, Template != none ? Template.strImage : ""));
 	MC.EndOp();
 }
 

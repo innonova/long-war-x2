@@ -4,7 +4,7 @@
 // too few), the days left, the country's own words (XGFundingCouncil's request intro, its <XGCountry:…/> tags in EW's forms
 // of the country's name), the rewards; DISPATCH ITEMS (only with enough in storage) gives them, NOT NOW leaves the request:
 // one that is pending (met as it came) is then ignored, as the Geoscape's refusal does. Opened from Mission Control's list
-// (EW: from its Situation Room). EW's item picture is not shown (EW's pictures are not ported).
+// (EW: from its Situation Room). The item's picture is Long War's (LWX2Pictures).
 class UILWEWCouncilRequest extends UILWEWScreen;
 
 var localized string TitleLabel, Requested, ValueRequested, InStorage, TimeLimit, TimeLimitDays, RewardsLabel, SellItems,
@@ -49,6 +49,7 @@ function Fill()
 	local XComGameState_LWStrategy S;
 	local XComGameState_LWStrategy.LWRequest R;
 	local X2ItemTemplate T;
+	local LWCouncilRequests.LWRequestDef D;
 	local array<ASValue> Params;
 	local string Items, Stored;
 	local int Held;
@@ -74,7 +75,7 @@ function Fill()
 	Params.AddItem(Str(Coloured(Repl(TimeLimitDays, "<XGParam:IntValue0/>", string(R.bPending ? 0 : R.HoursLeft / 24)), "FFD038")));
 	Params.AddItem(Str(Coloured(CountryText(S, (R.Id >= 0 && R.Id < 42) ? Intro[R.Id] : "", R.Country), "67E8ED")));
 	Params.AddItem(Str(Coloured(Caps(RewardsLabel), "5CD16C") @ Coloured(RewardsText(R), "5CD16C")));
-	Params.AddItem(Str(""));
+	Params.AddItem(Str(class'LWCouncilRequests'.static.DefOf(R.Id, D) ? class'LWX2Pictures'.static.Item(D.Item, "") : ""));
 	Params.AddItem(Num(1.0));
 	Params.AddItem(Str(""));
 	Movie.Invoke(MCPath $ ".OpenSalesRequest", Params);

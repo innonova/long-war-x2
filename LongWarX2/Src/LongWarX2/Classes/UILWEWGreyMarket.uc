@@ -115,7 +115,7 @@ function ShowSelected()
 	}
 	MC.BeginFunctionOp("UpdateInfo");
 	MC.QueueString(Info);
-	MC.QueueString(Template != none ? Template.strImage : "");
+	MC.QueueString((Highlight >= 0 && Highlight < Offered.Length) ? class'LWX2Pictures'.static.Item(class'LWGreyMarket'.default.Sales[Offered[Highlight]].Item, Template != none ? Template.strImage : "") : (Template != none ? Template.strImage : ""));
 	MC.EndOp();
 }
 

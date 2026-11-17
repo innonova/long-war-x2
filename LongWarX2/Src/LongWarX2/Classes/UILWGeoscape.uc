@@ -127,6 +127,9 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
  *  for it. Without EW's screens this panel is the Geoscape. */
 simulated function OpenEWMissionControl()
 {
+	// (Only while this is the top screen: a screen opened from here at once, as the control port's test aids do, stays up.)
+	if (Movie.Pres.ScreenStack.GetCurrentScreen() != self)
+		return;
 	if (class'UILWEWMissionControl'.static.OpenOver(self))
 		Hide();
 }

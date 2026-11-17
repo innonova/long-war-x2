@@ -157,7 +157,7 @@ function SelectFoundry(int Index)
 		@ "(" $ F.Engineers @ "engineers)"
 		$ (Short != "" ? "<br>" $ class'UIUtilities_Text'.static.GetColoredText("Short of" @ Short, eUIState_Bad) : ""));
 	MC.QueueString(Template != none ? Template.Summary : "");
-	MC.QueueString(Template != none ? Template.strImage : "");
+	MC.QueueString(class'LWX2Pictures'.static.Project(Items[Selected], Template != none ? Template.strImage : ""));
 	MC.EndOp();
 }
 
@@ -227,7 +227,7 @@ function Select(int Index)
 	MC.QueueString(Caps(class'LWEngineering'.static.ItemName(B.Template)));
 	MC.QueueString(Info);
 	MC.QueueString(Template != none ? Template.GetItemBriefSummary() : "");
-	MC.QueueString(Template != none ? Template.strImage : "");
+	MC.QueueString(class'LWX2Pictures'.static.Item(Items[Selected], Template != none ? Template.strImage : ""));
 	MC.EndOp();
 }
 

@@ -65,7 +65,7 @@ function Select(int Index)
 	MC.QueueString(Caps(Tech.GetDisplayName()));
 	MC.QueueString(class'UIUtilities_Text'.static.GetTimeRemainingString(Hours));
 	MC.QueueString(Tech.GetSummary());
-	MC.QueueString(Tech.GetImage());
+	MC.QueueString(class'LWX2Pictures'.static.Tech(class'LWResearchRules'.static.IdOfTemplate(Tech.GetMyTemplateName()), Tech.GetImage()));
 	MC.EndOp();
 }
 

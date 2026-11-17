@@ -17,6 +17,7 @@ import { execFileSync } from 'node:child_process'
 import { wordsFrom } from '../../scripts/write-words.mjs'
 import { convertUI } from '../convert/ew-ui.ts'
 import { openImages } from '../convert/ew-images.ts'
+import { writePictures } from '../convert/ew-pictures.ts'
 import { councilMissions, variantLevels, writeObjectives } from '../convert/ew-objectives.ts'
 import { writeKismet } from '../convert/ew-kismet.ts'
 import { convertPackage } from '../convert/ew-package.ts'
@@ -324,6 +325,12 @@ async function convertEW(ew, target) {
     if (existsSync(join(content, 'Command1.upk'))) openImages(join(content, 'Command1.upk'))
   } catch (e) {
     say(`Enemy Within's pictures could not be made ready (${e?.message ?? e}); the screens show none.`)
+  }
+  // Which of EW's pictures each item, tech and Foundry project has, as Long War lists them (ew-pictures.ts).
+  try {
+    say(`Long War's pictures: ${writePictures(ew, target)} listed.`)
+  } catch (e) {
+    say(`Long War's pictures could not be listed (${e?.message ?? e}); the screens keep XCOM 2's.`)
   }
   // Each converted map as a plot of its own (ew-plot.ts), listed for the game in the mod's XComPlots.ini.
   if (existsSync(join(content, 'ewmaps')) && existsSync(join(content, 'LWX2_EWPlotTemplate.umap'))) {
