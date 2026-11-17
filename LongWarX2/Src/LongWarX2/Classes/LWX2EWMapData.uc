@@ -18,3 +18,5 @@ var config array<LWX2EWMapPieces.LWX2Light> Lights;
 /** EW's base (Command1): its room locations and cameras (features/lw-base-view.md). */
 var config array<LWX2EWMapPieces.LWX2Room> Rooms;
 var config array<LWX2EWMapPieces.LWX2Camera> Cameras;
+/** EW's 3D UI panels (features/ew-3d-screens.md). */
+var config array<LWX2EWMapPieces.LWX2Display> Displays;

@@ -44,6 +44,13 @@ var array<LightComponent> WorldLights;
 /** The lighting level streamed in at the base while it is in view, for its ambient light (one of XCOM 2's environment
  *  lighting levels, as a map's plot has: its ambient cube lights the base evenly; its sun and fog are switched off with
  *  the world's). "": none, the base lit by EW's own lights alone (dark: EW baked most of its light). */
+/** EW's screens on their 3D panels in the rooms (features/ew-3d-screens.md), and the panel's mesh and material: XCOM 2's
+ *  (its material takes the 3D movie in its Movie parameter), scaled from EW's. */
+var config bool ScreensIn3D;
+var config string DisplayMesh, DisplayMaterial;
+var config float DisplayScale;
+/** The panels placed (PlaceDisplays). */
+var array<LWX2UIDisplay> Displays;
 var config string BaseLighting;
 /** XCOM 2's squad select in EW's hangar (UILWSquadSelect), where EW lined its squad up in front of the Skyranger: through
  *  EW's camera for it (SquadCamera), the soldiers in a row SquadDistance in front of it, SquadSpacing apart, standing on
@@ -231,6 +238,54 @@ function string SetLighting(string Level)
 	RefreshAmbient();
 	SetTimer(1.0, false, nameof(RefreshAmbient));
 	return "ok" @ Level @ ((Level == "" || LightingLevel != none) ? "" : "not found");
+}
+
+/** EW's 3D UI panels placed, once, hidden (XCOM 2's 3D movie shows the one a screen asks for). */
+function PlaceDisplays()
+{
+	local LWX2EWMapPieces.LWX2Display D;
+	local LWX2UIDisplay A;
+	local StaticMesh Mesh;
+	local MaterialInterface Mat;
+
+	if (!ScreensIn3D || Displays.Length > 0)
+		return;
+	Mesh = StaticMesh(DynamicLoadObject(DisplayMesh, class'StaticMesh', true));
+	Mat = MaterialInterface(DynamicLoadObject(DisplayMaterial, class'MaterialInterface', true));
+	if (Mesh == none || Mat == none)
+	{
+		`log("LongWarX2: EW base: no display mesh or material (" $ DisplayMesh $ "," @ DisplayMaterial $ ")", , 'LongWarX2');
+		return;
+	}
+	foreach Data("Command1").Displays(D)
+	{
+		A = Spawn(class'LWX2UIDisplay', self, D.Tag, D.Loc + BaseOffset, D.Rot);
+		if (A == none)
+			continue;
+		A.StaticMeshComponent.SetStaticMesh(Mesh);
+		A.StaticMeshComponent.SetMaterial(0, Mat);
+		A.SetDrawScale3D(D.Scale * (DisplayScale > 0 ? DisplayScale : 1.0));
+		A.Tag = D.Tag;
+		A.SetHidden(true);
+		Displays.AddItem(A);
+	}
+	`log("LongWarX2: EW base:" @ Displays.Length @ "3D panels placed", , 'LongWarX2');
+}
+
+/** The panel of this tag (the first). */
+static function LWX2UIDisplay DisplayFor(Actor Finder, name Tag)
+{
+	local LWX2EWBase B;
+	local LWX2UIDisplay A;
+
+	B = Get(Finder);
+	if (B == none)
+		return none;
+	B.PlaceDisplays();
+	foreach B.Displays(A)
+		if (A.Tag == Tag)
+			return A;
+	return none;
 }
 
 /** The strategy world's height fog, sky lights and sun off while EW's base is in view, back on with the Avenger's views.

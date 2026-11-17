@@ -75,3 +75,15 @@ the rooms go black: all their light is those lights.
   leave the conversion's joining step undone. Run it with the game stopped, detached (a batch file), and poll its log.
 - **Left:** the consoles' screens show EW's test pattern (`HQscreens_test`, in green) where EW's show pictures EW's
   code sets; the Situation Room's wall map; the mission maps (`LightmapMaps`).
+
+## Report (2026-11-17, the crash, and EW's cutaway)
+
+- **An intermittent crash at a campaign's start** (heap corruption, 2 of 5 starts with the lightmaps): several of EW's
+  lightmap atlases are not square (Barracks 1024 × 256, Engineering and Hangar 1024 × 512, 256 × 128), and the combined
+  mips were made as squares, a different size in bytes than their headers say, read past their end as uploaded. Now made
+  at their real width and height, and kept as they were unless the result has exactly their size. **6 of 6 starts
+  clean** afterwards.
+- **EW's cutaway:** EW's `DoNothing` material has no colour input, so EW draws those pieces opaque and black: the cut
+  surfaces between the base's rooms and floors. The port skipped them, which left the rooms' outer shells in view. In
+  the base they are now drawn black (`BaseBlackMaterials`): the barracks' view is close to EW's
+  (`logs/compare/lightmaps-cutaway.png`, not committed).

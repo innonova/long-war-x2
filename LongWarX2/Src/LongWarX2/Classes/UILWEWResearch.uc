@@ -20,7 +20,7 @@ static function string Open()
 	EWScreen = HQPres.Spawn(class'UILWEWResearch', HQPres);
 	EWScreen.Package = name("/ package/ewxChooseTech/ChooseTech");
 	EWScreen.MCName = 'theChooseResearch';
-	HQPres.ScreenStack.Push(EWScreen);
+	Push3D(HQPres, EWScreen);
 	return "ok EW research screen";
 }
 
@@ -167,4 +167,7 @@ defaultproperties
 {
 	// (Over EW's research lab, as EW shows its research choice.)
 	BaseCamera = ScienceLab
+	// (EW's: UIChooseTech on UIDisplay_ScienceLabs through ScienceLab_UIDisplayCam.)
+	EWDisplay = UIDisplay_ScienceLabs
+	EWDisplayCamera = ScienceLab_UIDisplayCam
 }

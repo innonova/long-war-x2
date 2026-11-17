@@ -22,6 +22,10 @@ var bool bShowsBase;
  *  shown and looked at through it as the screen comes up and comes back (the screen under it may have handed the view back);
  *  none: the screen makes its own background. */
 var name BaseCamera;
+/** EW's 3D panel the screen stands on in its room, and EW's camera onto it (features/ew-3d-screens.md): with
+ *  LWX2EWBase.ScreensIn3D, the screen goes into XCOM 2's 3D movie (Push3D) and shows on that panel. */
+var name EWDisplay, EWDisplayCamera;
+var LWX2UIDisplay ShownOn;
 /** The screen's movie (EW's SwfMovie in the converted package), held while the screen is up. Nothing else holds the
  *  package: a garbage collection between loading it and Flash looking the movie up (the base's levels streaming in at a
  *  campaign's start ran one) purged it, and Mission Control came up empty and stayed so ("Failed to find object 'SwfMovie
@@ -189,7 +193,37 @@ simulated function OnInit()
 		ScaleToStage();
 	SetEWView(Movie);
 	ShowRoom();
+	ShowOnPanel();
 	`log("LongWarX2: EW screen" @ Package @ "inited", , 'LongWarX2');
+}
+
+/** The screen pushed: onto its EW panel in 3D where it has one (EWDisplay, LWX2EWBase.ScreensIn3D), else flat. */
+static function Push3D(XComHQPresentationLayer HQPres, UILWEWScreen S)
+{
+	if (S.EWDisplay != '' && class'LWX2EWBase'.default.ScreensIn3D && class'LWX2EWBase'.static.DisplayFor(HQPres, S.EWDisplay) != none)
+	{
+		S.BaseCamera = S.EWDisplayCamera != '' ? S.EWDisplayCamera : S.BaseCamera;
+		HQPres.ScreenStack.Push(S, HQPres.Get3DMovie());
+		return;
+	}
+	HQPres.ScreenStack.Push(S);
+}
+
+/** In 3D: the movie shown on the screen's EW panel. */
+function ShowOnPanel()
+{
+	if (!bIsIn3D || EWDisplay == '')
+		return;
+	ShownOn = class'LWX2EWBase'.static.DisplayFor(self, EWDisplay);
+	if (ShownOn != none)
+		UIMovie_3D(Movie).ShowDisplay(EWDisplay, ShownOn);
+}
+
+simulated function OnRemoved()
+{
+	if (bIsIn3D && ShownOn != none)
+		UIMovie_3D(Movie).HideDisplay(EWDisplay, ShownOn);
+	super.OnRemoved();
 }
 
 /** The movie Package names ("/ package/ewx<Group>/<Movie>") loaded and held (MovieObject). The group is the movie's
@@ -231,7 +265,10 @@ simulated function OnReceiveFocus()
 {
 	super.OnReceiveFocus();
 	if (bIsInited)
+	{
 		ShowRoom();
+		ShowOnPanel();
+	}
 }
 
 /**

@@ -170,6 +170,15 @@ struct LWX2Room
 	var name Tag;
 	var vector Loc;
 };
+/** One of EW's 3D UI panels (UIDisplay_LevelActor): its tag (the screens drawing on it name it), place and scale. */
+struct LWX2Display
+{
+	var name Tag;
+	var vector Loc;
+	var rotator Rot;
+	var vector Scale;
+};
+
 struct LWX2Camera
 {
 	var name Tag;
