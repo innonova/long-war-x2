@@ -378,6 +378,8 @@ export function makeHubWords({ strategyLoc }) {
     ['SituationRoom', anywhere('m_aFacilityNames[eFacility_SitRoom]')],
     ['GreyMarket', inSection('XGSituationRoomUI', 'm_stdLabelVisitGreyMarket')],
     ['GreyMarketHelp', inSection('XGSituationRoomUI', 'm_stdLabelVisitGreyMarketHelp')],
+    ['LaunchSatellite', inSection('XGSituationRoomUI', 'm_strLabelLaunchSatellite')],
+    ['LaunchSatelliteHelp', inSection('XGSituationRoomUI', 'm_strLabelMonitorUFO')],
   ].filter(([, v]) => v)
   return { text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
@@ -523,6 +525,16 @@ export function makeExaltWords({ strategyLoc }) {
     ['FailTitle', 'm_strResultsFailSubtitle'], ['FailBody', 'm_strResultsFailBody'], ['FailLeftTitle', 'm_strResultsFailAlreadyLeftSubtitle'],
     ['FailLeftBody', 'm_strResultsFailAlreadyLeftBody'], ['SuccessTitle', 'm_strResultsSuccessSubtitle'], ['SuccessBody', 'm_strResultsSuccessBody'],
   ].map(([k, key]) => [k, inSection('XGInfiltratorSitRoomUI', key)])
+  // The satellites' view (UILWEWSituationRoom with bSatellite; XGSatelliteSitRoomUI, UISituationRoom's uplinks).
+  const sat = [
+    ['SatLaunch', 'm_strLabelLaunchSatellite'], ['SatHas', 'm_strLabelHasSatellite'], ['SatNone', 'm_strLabelNoSatellites'],
+    ['SatNoCapacity', 'm_strLabelNoCapacity'], ['SatLeft', 'm_strLabelLeftXCom'], ['SatPerMonth', 'm_strLabelPerMonth'],
+    ['SatStaff', 'm_strLabelBonus'], ['SatScientist', 'm_strLabelScientist'], ['SatScientists', 'm_strLabelScientists'],
+    ['SatEngineer', 'm_strLabelEngineer'], ['SatEngineers', 'm_strLabelEngineers'], ['SatConfirmTitle', 'm_strLabelConfirmLaunch'],
+    ['SatCountry', 'm_strLabelCountry'], ['SatFunding', 'm_strLabelFundingIncrease'], ['SatMonitoring', 'm_strLabelMonitoring'],
+    ['SatReward', 'm_strLabelReward'], ['SatLaunchLower', 'm_strLabelLaunchSatelliteLower'], ['SatCancelLower', 'm_strLabelCancelSatelliteLower'],
+  ].map(([k, key]) => [k, inSection('XGSatelliteSitRoomUI', key)])
+  sit.push(['SatAvailable', inSection('UISituationRoom', 'm_strAvailable')], ['SatInOrbit', inSection('UISituationRoom', 'm_strInOrbit')], ...sat)
   const clues = []
   for (let i = 0; i < 40; i++) {
     const v = inSection('XGExaltSimulation', `m_arrClueText[${i}]`)

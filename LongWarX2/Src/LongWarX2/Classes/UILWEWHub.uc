@@ -20,6 +20,7 @@ var localized string RoomNames[5];
 var localized string MissionControlName;
 var localized string NewResearch, BuildItems, BuildItemsHelp, BuildFacilities, BuildFacilitiesHelp, Foundry, FoundryHelp;
 var localized string ViewSoldiers, ViewSoldiersHelp, AircraftList, AircraftListHelp, SituationRoom, GreyMarket, GreyMarketHelp;
+var localized string LaunchSatellite, LaunchSatelliteHelp;
 var localized string PsiLabs, PsiLabsHelp, OTS, OTSHelp, Augment, AugmentHelp;
 
 /** Each room's camera in EW's base (Command1's, by tag), in the order of the top menu. */
@@ -46,6 +47,7 @@ const OPT_GENE = 10;
 const OPT_AUGMENT = 13;
 const OPT_OFFICERS = 11;
 const OPT_EXALT = 12;
+const OPT_SATELLITE = 14;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
 const FACILITY_FOUNDRY = 11;
@@ -286,6 +288,8 @@ function EnterRoom(int i)
 		RoomOptions.AddItem(OPT_AIRCRAFT);
 		break;
 	case 4:
+		// (EW's Situation Room menu: Launch Satellite first, XGSituationRoomUI.)
+		RoomOptions.AddItem(OPT_SATELLITE);
 		RoomOptions.AddItem(OPT_SITROOM);
 		// (EXALT's view once EXALT is active, features/lw-exalt.md.)
 		S = class'XComGameState_LWStrategy'.static.Get();
@@ -318,6 +322,7 @@ function string OptionName(int Option)
 	case OPT_SOLDIERS: return Word(ViewSoldiers, "Soldiers");
 	case OPT_AIRCRAFT: return Word(AircraftList, "Aircraft");
 	case OPT_SITROOM: return Word(SituationRoom, "Situation Room");
+	case OPT_SATELLITE: return Word(LaunchSatellite, "Launch Satellite");
 	case OPT_GREYMARKET: return Word(GreyMarket, "Grey market");
 	case OPT_OTS: return Word(OTS, "Officer Training School");
 	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
@@ -339,6 +344,7 @@ function string OptionHelp(int Option)
 	case OPT_SOLDIERS: return ViewSoldiersHelp;
 	case OPT_AIRCRAFT: return AircraftListHelp;
 	case OPT_GREYMARKET: return GreyMarketHelp;
+	case OPT_SATELLITE: return LaunchSatelliteHelp;
 	case OPT_OTS: return OTSHelp;
 	case OPT_PSI: return PsiLabsHelp;
 	case OPT_AUGMENT: return AugmentHelp;
@@ -378,6 +384,7 @@ function ChooseOption(int Option)
 	case OPT_AIRCRAFT: class'UILWEWHangar'.static.Open(HQPres); break;
 	case OPT_SITROOM: class'UILWEWSituationRoom'.static.Open(); break;
 	case OPT_EXALT: class'UILWEWSituationRoom'.static.Open(true); break;
+	case OPT_SATELLITE: class'UILWEWSituationRoom'.static.Open(false, true); break;
 	case OPT_GREYMARKET: class'UILWEWGreyMarket'.static.Open(HQPres); break;
 	case OPT_OFFICERS:
 		// EW's own Officer Billets screen; XCOM 2's widgets where EW's screens are not converted.

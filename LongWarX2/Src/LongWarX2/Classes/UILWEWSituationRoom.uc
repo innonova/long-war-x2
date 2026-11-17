@@ -11,6 +11,14 @@ class UILWEWSituationRoom extends UILWEWScreen dependson(LWStrategyRules);
 var localized string SweepButton, SweepDesc, SweepDisabled, SweepCantAfford, SweepFailed, RuledOut, AccuseLabel, RaidLabel;
 var localized string SweepTitle, SweepBody, SweepConfirm, SweepDecline, CluesTitle, CluesNone, CluesFew, CluesEnough;
 var localized string LaunchLabel, StatusNoCell, StatusUnknown, StatusExposed, NotScanned, FailTitle, FailBody, FailLeftTitle, FailLeftBody, SuccessTitle, SuccessBody;
+/** The satellites' view's words (XGSatelliteSitRoomUI, UISituationRoom's uplinks). */
+var localized string SatAvailable, SatInOrbit, SatLaunch, SatHas, SatNone, SatNoCapacity, SatLeft, SatPerMonth, SatStaff, SatScientist, SatScientists;
+var localized string SatEngineer, SatEngineers, SatConfirmTitle, SatCountry, SatFunding, SatMonitoring, SatReward, SatLaunchLower, SatCancelLower;
+
+/** The satellites' view (EW's SatelliteState): a country chosen, the HUD's panels, a satellite launched there. */
+var bool bSatellite;
+var int SatSlot;
+var UILWEWSituationRoomHUD SatHUD;
 
 /** EXALT's view (EW's covert operations mode) rather than the satellites'. */
 var bool bCovert;
@@ -27,7 +35,7 @@ var array<name> Order;
 /** The earth's texture, held: Flash fetches it a frame later, by its path, and found nothing once it had been collected. */
 var Texture2D EarthTexture;
 
-static function string Open(optional bool bCovertOps)
+static function string Open(optional bool bCovertOps, optional bool bSatellites)
 {
 	local XComHQPresentationLayer HQPres;
 	local UILWEWSituationRoom EWScreen;
@@ -42,12 +50,16 @@ static function string Open(optional bool bCovertOps)
 	EWScreen.Package = name("/ package/ewxSituationRoom/SituationRoom");
 	EWScreen.MCName = 'theScreen';
 	EWScreen.bCovert = bCovertOps;
+	EWScreen.bSatellite = bSatellites && !bCovertOps;
 	HQPres.ScreenStack.Push(EWScreen);
 	return "ok EW Situation Room" $ (bCovertOps ? ", EXALT" : "");
 }
 
 simulated function OnRemoved()
 {
+	if (SatHUD != none)
+		SatHUD.CloseScreen();
+	SatHUD = none;
 	class'UILWEWMapBackdrop'.static.HideAll();
 	super.OnRemoved();
 }
@@ -67,6 +79,16 @@ simulated function OnInit()
 		SweepButtonWidget = Spawn(class'UIButton', self);
 		SweepButtonWidget.InitButton('LWExaltSweep', "", OnSweepClicked);
 		SweepButtonWidget.SetPosition(560, 380);
+	}
+	if (bSatellite)
+	{
+		// (DISPLAY_MODE_SATELLITE: EW's satellites' view, its uplinks shown; the HUD over it.)
+		MC.FunctionNum("SetDisplayMode", 0);
+		MC.FunctionVoid("ShowUplinks");
+		SatSlot = FirstSlotWithout();
+		// (The HUD over it takes the focus: the room stays drawn under it.)
+		bHideOnLoseFocus = false;
+		SatHUD = class'UILWEWSituationRoomHUD'.static.Open(XComHQPresentationLayer(Movie.Pres), self);
 	}
 	Refresh();
 	SetTimer(1.0, true, nameof(Refresh));
@@ -147,6 +169,162 @@ function Refresh()
 	}
 	RealizeMap(S);
 	MC.FunctionNum("SetDoomLevel", Left);
+	if (bSatellite)
+	{
+		MC.BeginFunctionOp("SetSatellites");
+		MC.QueueNumber(S.SatellitesReady);
+		MC.QueueString(Word(SatAvailable, "Available"));
+		MC.QueueNumber(class'LWBase'.static.SatellitesUp(S));
+		MC.QueueNumber(class'LWBase'.static.SatelliteLimit(S));
+		MC.QueueString(Word(SatInOrbit, "In Orbit"));
+		MC.EndOp();
+		MC.FunctionNum("SetSelected", SatSlot);
+		UpdateSatelliteHUD();
+	}
+}
+
+/** The first council country without a satellite (EW's SatelliteState starts on its manager's country). */
+function int FirstSlotWithout()
+{
+	local XComGameState_LWStrategy S;
+	local int i, k;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	for (i = 0; i < Order.Length; i++)
+	{
+		k = S.CountryIndex(Order[i]);
+		if (k >= 0 && !S.Countries[k].bSatellite && !S.Countries[k].bLeft)
+			return i;
+	}
+	return 0;
+}
+
+/** What launching over the chosen country would say (XGSatelliteSitRoomUI.UpdateCountryHelp): "" if it can be done. */
+function string WhyNoLaunch(XComGameState_LWStrategy S, int k)
+{
+	if (S.Countries[k].bLeft)
+		return Word(SatLeft, "Withdrawn from XCOM Project");
+	if (S.Countries[k].bSatellite)
+		return Word(SatHas, "HAS SATELLITE");
+	if (S.TileType.Length > 0 && class'LWBase'.static.SatellitesUp(S) >= class'LWBase'.static.SatelliteLimit(S))
+		return Word(SatNoCapacity, "Build More Uplinks.");
+	if (S.SatellitesReady <= 0)
+		return Word(SatNone, "NO SATELLITES AVAILABLE");
+	return "";
+}
+
+/** A country's funding, with a satellite or without (EndMonth's). */
+static function int FundingOf(int k, bool bSat)
+{
+	local int d;
+
+	d = class'LWStrategyRules'.static.Difficulty();
+	return Round(class'LWStrategyRules'.default.Countries[k].Funding * class'LWStrategyRules'.default.FundingBalance[d] * (bSat ? 1.0 : class'LWStrategyRules'.default.BaseFundingPct[d] / 100.0));
+}
+
+/** The staff a country under a satellite gives, as EW words it ("+1 Scientist"; BuildBonusString). */
+function string StaffText(int k)
+{
+	local string T;
+	local int Sci, Eng;
+
+	Sci = class'LWStrategyRules'.default.Countries[k].Scientists;
+	Eng = class'LWStrategyRules'.default.Countries[k].Engineers;
+	if (Sci > 0)
+		T = "+" $ Sci @ (Sci == 1 ? Word(SatScientist, "Scientist") : Word(SatScientists, "Scientists"));
+	if (Eng > 0)
+		T $= (T != "" ? ", " : "") $ "+" $ Eng @ (Eng == 1 ? Word(SatEngineer, "Engineer") : Word(SatEngineers, "Engineers"));
+	return T;
+}
+
+/**
+ * The HUD's panels for the chosen country (XGSatelliteSitRoomUI.UpdateContinent, UpdateCountry, UpdateCountryHelp): the
+ * continent's name; the country's staff ("Staff:"), its own bonus (not the home country's; the home country's starting
+ * bonus instead) and the continent's, each lit when it holds or would with this satellite; the country's name, its funding
+ * a month (with a satellite), panic and satellite; the launch button, or why not.
+ */
+function UpdateSatelliteHUD()
+{
+	local XComGameState_LWStrategy S;
+	local LWBonuses.LWBonusDef B;
+	local string Body, Why;
+	local int k, i, c;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (SatHUD == none || S == none || SatSlot < 0 || SatSlot >= Order.Length)
+		return;
+	k = S.CountryIndex(Order[SatSlot]);
+	if (k < 0)
+		return;
+	c = S.CountryContinent(k);
+	Body = class'UIUtilities_Text'.static.GetColoredText(Word(SatStaff, "Staff: ") $ StaffText(k), S.Countries[k].bSatellite ? eUIState_Warning : eUIState_Disabled) $ "\n";
+	for (i = 0; i < class'LWBonuses'.default.Bonuses.Length; i++)
+	{
+		B = class'LWBonuses'.default.Bonuses[i];
+		if ((B.Kind == 1 && B.Country == S.Countries[k].Id && k != S.HomeCountry())
+			|| (B.Kind == 0 && k == S.HomeCountry() && B.Country == S.Countries[k].Id && B.Choice == S.StartChoice)
+			|| (B.Kind == 2 && B.Continent == c))
+			Body $= class'UIUtilities_Text'.static.GetColoredText(class'LWBonuses'.static.Text(i),
+				(B.Kind == 2 ? class'LWBonuses'.static.ContinentCovered(S, c) : (S.Countries[k].bSatellite || B.Kind == 0)) ? eUIState_Warning : eUIState_Disabled) $ "\n";
+	}
+	SatHUD.SetContinentInfo(Caps(class'LWStrategyRules'.static.ContinentName(c)), Body);
+	Why = WhyNoLaunch(S, k);
+	SatHUD.SetCountryInfo(Caps(S.CountryName(k)), class'LWStrategyRules'.static.Money(FundingOf(k, true)) @ Word(SatPerMonth, "per month") $ (Why != "" ? "\n" $ Why : ""),
+		Clamp(S.Countries[k].Panic / 20 + 1, 1, 5));
+	SatHUD.SetSatStatus(S.Countries[k].bSatellite);
+	SatHUD.SetLaunchButton(Why == "" ? Word(SatLaunch, "LAUNCH SATELLITE") : "", Why == "");
+}
+
+/** The launch asked (the HUD's button, Enter): EW's confirmation (ConfirmSatelliteDialogue): the country, the funding it
+ *  adds, the coverage of its continent it brings, the staff it sends. */
+function AskLaunch()
+{
+	local XComGameState_LWStrategy S;
+	local TDialogueBoxData Data;
+	local XGParamTag Tag;
+	local int k, i, Covered, Council;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	k = (SatSlot >= 0 && SatSlot < Order.Length) ? S.CountryIndex(Order[SatSlot]) : INDEX_NONE;
+	if (k < 0 || WhyNoLaunch(S, k) != "")
+	{
+		Movie.Pres.PlayUISound(eSUISound_MenuClose);
+		return;
+	}
+	for (i = 0; i < S.Countries.Length; i++)
+	{
+		if (S.CountryContinent(i) != S.CountryContinent(k) || S.Countries[i].bLeft)
+			continue;
+		Council++;
+		if (S.Countries[i].bSatellite || i == k)
+			Covered++;
+	}
+	Tag = XGParamTag(`XEXPANDCONTEXT.FindTag("XGParam"));
+	Tag.IntValue0 = Covered;
+	Tag.IntValue1 = Council;
+	Tag.StrValue0 = class'LWStrategyRules'.static.ContinentName(S.CountryContinent(k));
+	Data.eType = eDialog_Normal;
+	Data.strTitle = Word(SatConfirmTitle, "Confirm Satellite Launch");
+	Data.strText = Word(SatCountry, "COUNTRY") $ ":" @ S.CountryName(k)
+		$ "\n" $ Word(SatFunding, "MONTHLY FUNDING INCREASE") $ ":" @ class'UIUtilities_Text'.static.GetColoredText("+" $ class'LWStrategyRules'.static.Money(FundingOf(k, true) - FundingOf(k, false)), eUIState_Cash)
+		$ "\n" $ class'XComLocalizer'.static.ExpandString(Word(SatMonitoring, "If launched, we will have satellite coverage over <XGParam:IntValue0/>/<XGParam:IntValue1/> countries in <XGParam:StrValue0/>"))
+		$ (StaffText(k) != "" ? "\n" $ Word(SatReward, "Reward:") @ StaffText(k) : "");
+	Data.strAccept = Word(SatLaunchLower, "Launch Satellite");
+	Data.strCancel = Word(SatCancelLower, "Cancel");
+	Data.fnCallback = OnLaunchConfirm;
+	Movie.Pres.UIRaiseDialog(Data);
+}
+
+simulated function OnLaunchConfirm(Name Action)
+{
+	local XComGameState_LWStrategy S;
+
+	if (Action != 'eUIAction_Accept')
+		return;
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (class'XComGameState_LWStrategy'.static.LaunchSatellite(S.CountryIndex(Order[SatSlot])))
+		Movie.Pres.PlayUISound(eSUISound_MenuSelect);
+	Refresh();
 }
 
 /** EXALT's view: each country's cell state, the clues' verdicts, the cells on the map, the Intel Scan. */
@@ -288,6 +466,17 @@ function ChooseCountry(int Slot)
 	Movie.Pres.UIRaiseDialog(Data);
 }
 
+/** A country chosen in the satellites' view: selected, the HUD's panels for it. */
+function ChooseSatCountry(int Slot)
+{
+	if (Slot < 0 || Slot >= Order.Length)
+		return;
+	SatSlot = Slot;
+	MC.FunctionNum("SetSelected", SatSlot);
+	Movie.Pres.PlayUISound(eSUISound_MenuSelect);
+	UpdateSatelliteHUD();
+}
+
 /** A soldier chosen for the covert operation: EW's words for it, then sent (LWExalt.SendOperative). */
 function OnOperativeChosen(StateObjectReference UnitRef)
 {
@@ -325,7 +514,7 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 	local string Target, Joined;
 	local int i;
 
-	if (bCovert && cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP && args.Length > 0)
+	if ((bCovert || bSatellite) && cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP && args.Length > 0)
 	{
 		Target = args[args.Length - 1];
 		for (i = 0; i < args.Length; i++)
@@ -333,7 +522,10 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 		for (i = 0; i < args.Length; i++)
 				if (Left(args[i], 7) == "country" && string(int(Mid(args[i], 7))) == Mid(args[i], 7))
 				{
-					ChooseCountry(int(Mid(args[i], 7)));
+					if (bSatellite)
+						ChooseSatCountry(int(Mid(args[i], 7)));
+					else
+						ChooseCountry(int(Mid(args[i], 7)));
 					break;
 				}
 	}
@@ -369,13 +561,35 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 {
 	local int i;
 
-	if (bCovert && (arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0
+	if ((bCovert || bSatellite) && (arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0
 		&& (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP || cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED))
 	{
 		i = SlotUnderMouse();
 		if (i >= 0)
 		{
-			ChooseCountry(i);
+			if (bSatellite)
+				ChooseSatCountry(i);
+			else
+				ChooseCountry(i);
+			return true;
+		}
+	}
+	// The satellites' view: the arrows choose a country, Enter launches (EW's SatelliteState).
+	if (bSatellite && (arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0)
+	{
+		switch (cmd)
+		{
+		case class'UIUtilities_Input'.const.FXS_ARROW_UP:
+		case class'UIUtilities_Input'.const.FXS_DPAD_UP:
+			ChooseSatCountry((SatSlot + Order.Length - 1) % Order.Length);
+			return true;
+		case class'UIUtilities_Input'.const.FXS_ARROW_DOWN:
+		case class'UIUtilities_Input'.const.FXS_DPAD_DOWN:
+			ChooseSatCountry((SatSlot + 1) % Order.Length);
+			return true;
+		case class'UIUtilities_Input'.const.FXS_KEY_ENTER:
+		case class'UIUtilities_Input'.const.FXS_BUTTON_A:
+			AskLaunch();
 			return true;
 		}
 	}

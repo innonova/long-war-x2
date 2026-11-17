@@ -446,3 +446,22 @@ Raven-1's loadout listed Stingray and Avalanche with their numbers.
 - Base building and the grey market on their own screens.
 - The Foundry's and the craft weapons' pictures, and EW's craft icons in the ship list.
 - The strategy HUD (money, resources) is under the backdrop while these screens are up.
+
+## Report (2026-11-17, satellites launched on EW's Situation Room)
+
+- **Read** (EW's `UISituationRoom.SatelliteState`, `UISituationRoomHUD`, `XGSatelliteSitRoomUI`): EW launches satellites
+  in the Situation Room's satellites' view, its HUD movie over it: the chosen country's panel (name, funding a month,
+  panic, its satellite) with the launch button or why not ("HAS SATELLITE", "Build More Uplinks.", "NO SATELLITES
+  AVAILABLE"); the continent's panel with the country's staff ("Staff: +1 Scientist") and the bonuses there (the
+  country's own, the home country's starting bonus, the continent's), lit when they hold; the uplinks' counts; EW's
+  confirmation (country, funding increase, the continent's coverage, the reward).
+- **Done:** the hub's Situation Room menu has EW's "Launch Satellite" first (its help in EW's words). It opens
+  `UILWEWSituationRoom` in the satellites' view with `UILWEWSituationRoomHUD` (EW's SituationRoomHUD movie) over it,
+  filled from Long War's state and words (`makeExaltWords` now writes the satellite view's). A country is chosen by
+  clicking its row or the arrows; the launch button or Enter asks EW's confirmation, and `LaunchSatellite` launches.
+- **Seen on wingpu:** Canada chosen (`logs/wingpu_ew_satellite_view.png`), EW's confirmation ("MONTHLY FUNDING
+  INCREASE: +§54", coverage 1/3 in North America, "Reward: +1 Scientist"; `logs/wingpu_ew_satellite_confirm.png`), the
+  satellite launched: Canada's funding +§90, its satellite on the map, HAS SATELLITE, its staff and its bonus lit.
+- **As it looks:** the HUD's continent panel covers the lower rows of both country columns (EW's two movies scaled
+  together to XCOM 2's stage); the rows' satellite icon is EW's (lit for a country still without one). The plain
+  Geoscape panel's LAUNCH SATELLITE stays for now.

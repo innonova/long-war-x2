@@ -161,7 +161,7 @@ Seen:
   - ~~council requests: Quai d'Orsay~~ (2026-11-17, lw-council-requests: its sooner requests, cooldowns and science);
   - the Illuminator Gunsight item: Ancient Artifact;
   - small slots on early armour: Jungle Scouts.
-- **The country bonuses on the Situation Room,** as EW shows them.
+- ~~**The country bonuses on the Situation Room,** as EW shows them~~ (2026-11-17, lw-ew-screens: its satellites' view).
 
 ## Report (2026-11-15, the bonuses that change a rule as it is used)
 
