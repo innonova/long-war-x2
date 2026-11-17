@@ -258,3 +258,11 @@ named from the player's own text ("Illuminator Gunsight"). Ancient Artifact (Mex
 item) puts one in the stores at the start (`LWBonusEffects.AtStart`). Checked on wingpu: the item given and carried by a
 soldier. Not seen: the start option itself (the test campaigns start in the United States). EXALT's missions do not drop it
 yet (the port's EXALT loot has no item drops).
+
+## Correction (2026-11-17): where the gunsight comes from
+
+The report above called the Illuminator Gunsight "EXALT's loot" and said EXALT's missions do not drop it yet. Nothing in
+Long War supports that: its text names the item only as Ancient Artifact's ("Start the campaign with an Illuminator Gunsight
+small item."), and EW's own code uses the number 209 for a MEC suit, which Long War repurposed. EW's level loot
+(`XComCollectible`, counted at a mission's end if intact) is placed only on the UFO, alien base, Temple Ship and DLC maps,
+none of EXALT's. So there is no drop to port: Ancient Artifact is the gunsight's only source, as the port has it.
