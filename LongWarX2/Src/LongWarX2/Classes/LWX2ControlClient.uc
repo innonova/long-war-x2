@@ -670,7 +670,8 @@ function Handle(string Line, out array<string> Out)
 		// rankup <soldier> [times]: a test aid, the soldier ranked up as a promotion does (soldier: an index in XCOM's crew of
 		// soldiers) in one game state; each rank's gains printed as XCOM 2's class data gives them, then the stats once Long War's
 		// gains are made (LWX2StatGains).
-		RankUp(Args.Length > 1 ? int(Args[1]) : 0, Args.Length > 2 ? int(Args[2]) : 1, Out);
+		// 'rankup rookie [times]': the first rookie; 'rankup new [times]': a new recruit. The soldier's ability tree is printed after.
+		RankUp(Args.Length > 1 ? (Args[1] ~= "rookie" ? -1 : (Args[1] ~= "new" ? -2 : int(Args[1]))) : 0, Args.Length > 2 ? int(Args[2]) : 1, Out);
 		return;
 	case "squad":
 		Squad(S, Args.Length > 1 ? int(Args[1]) : 1, Args.Length > 2 ? int(Args[2]) : 4, Args.Length > 3 ? int(Args[3]) : S.Days(), Out);
@@ -3660,7 +3661,8 @@ function RankUp(int Index, int Times, out array<string> Out)
 	local XComGameState_Unit Unit;
 	local array<XComGameState_Unit> Soldiers;
 	local StateObjectReference Ref;
-	local int HP, Aim, Will;
+	local int HP, Aim, Will, r, j;
+	local string Line;
 
 	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
 	{
@@ -3668,14 +3670,22 @@ function RankUp(int Index, int Times, out array<string> Out)
 		if (Unit != none && Unit.IsSoldier() && Unit.IsAlive())
 			Soldiers.AddItem(Unit);
 	}
-	if (Index < 0 || Index >= Soldiers.Length)
+	if (Index == -1)
+		for (r = Soldiers.Length - 1; r >= 0; r--)
+			if (Soldiers[r].GetRank() == 0)
+				Index = r;
+	if (Index != -2 && (Index < 0 || Index >= Soldiers.Length))
 	{
 		Out.AddItem("ERR no such soldier");
 		return;
 	}
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: rank up (control port)");
-	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Soldiers[Index].ObjectID));
-	Out.AddItem("was: hp" @ int(Unit.GetBaseStat(eStat_HP)) @ "aim" @ int(Unit.GetBaseStat(eStat_Offense)) @ "will" @ int(Unit.GetBaseStat(eStat_Will)));
+	if (Index == -2)
+		Unit = class'LWBonusEffects'.static.NewSoldier(NewGameState, XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom',
+			class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID)), 0, 0);
+	else
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Soldiers[Index].ObjectID));
+	Out.AddItem("was: hp" @ int(Unit.GetBaseStat(eStat_HP)) @ "aim" @ int(Unit.GetBaseStat(eStat_Offense)) @ "will" @ int(Unit.GetBaseStat(eStat_Will)) @ "mob" @ int(Unit.GetBaseStat(eStat_Mobility)));
 	while (Times-- > 0)
 	{
 		HP = Unit.GetBaseStat(eStat_HP);
@@ -3688,7 +3698,14 @@ function RankUp(int Index, int Times, out array<string> Out)
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	// (Long War's gains follow in a game state of their own: the soldier's stats as they are now.)
 	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Unit.ObjectID));
-	Out.AddItem("now: hp" @ int(Unit.GetBaseStat(eStat_HP)) @ "aim" @ int(Unit.GetBaseStat(eStat_Offense)) @ "will" @ int(Unit.GetBaseStat(eStat_Will)) @ "(" $ (class'LWX2SecondWave'.static.On(3) ? "Hidden Potential" : "normal") $ ")");
+	Out.AddItem("now: hp" @ int(Unit.GetBaseStat(eStat_HP)) @ "aim" @ int(Unit.GetBaseStat(eStat_Offense)) @ "will" @ int(Unit.GetBaseStat(eStat_Will)) @ "mob" @ int(Unit.GetBaseStat(eStat_Mobility)) @ "(" $ (class'LWX2SecondWave'.static.On(3) ? "Hidden Potential" : "normal") $ ")");
+	for (r = 0; r < Unit.AbilityTree.Length; r++)
+	{
+		Line = "tree" @ r $ ":";
+		for (j = 0; j < Unit.AbilityTree[r].Abilities.Length; j++)
+			Line @= string(Unit.AbilityTree[r].Abilities[j].AbilityName);
+		Out.AddItem(Line);
+	}
 }
 
 function Officers(array<string> Args, out array<string> Out)

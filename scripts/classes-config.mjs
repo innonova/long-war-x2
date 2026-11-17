@@ -530,6 +530,15 @@ writeFileSync(
     '[LongWarX2.LWX2PerkBonuses]',
     ...bonusLines,
     '',
+    "; Training Roulette (second wave #4, XGStrategySoldier.AssignRandomPerks): in these classes' trees, each of Long War's",
+    "; RandomPerks is dealt again from them, none twice (LWX2TrainingRoulette).",
+    '[LongWarX2.LWX2TrainingRoulette]',
+    ...CLASSES.map((c) => `+Classes=LWS_${c.name}`),
+    ...[...core.matchAll(/^RandomPerks=(ePerk_\w+)/gm)].map((m) => {
+      const a = abilityFor(m[1])
+      return `+Perks=(AbilityName=${q(a)}${WEAPON_SLOT[a] ? `, ApplyToWeaponSlot=${WEAPON_SLOT[a]}` : ''}) ; ${titleOf(m[1])}`
+    }),
+    '',
     "; Long War's gains on promotion as it packs them (SoldierStatProgression: HP xxyy, aim and will xxyyzz; LWX2StatGains),",
     "; for Hidden Potential's roll (second wave #3) and the random will every level otherwise (iRandWillIncrease).",
     '[LongWarX2.LWX2StatGains]',
@@ -537,7 +546,10 @@ writeFileSync(
     ...packedGains.flatMap((g) => {
       const c = [...CLASSES, ...MEC_CLASSES].find((k) => k.id === g.id)
       const rank = ['eRank_Squaddie', 'eRank_Corporal', 'eRank_Sergeant', 'eRank_Lieutenant', 'eRank_Captain', 'eRank_Major', 'eRank_Colonel'].indexOf(g.rank) + 1
-      return c && rank > 0 ? [`+Gains=(ClassName=LWS_${c.name}, Rank=${rank}, HP=${g.hp}, Aim=${g.aim}, Will=${g.will})`] : []
+      // (At squaddie, XCOM 2's class data also holds the tree's squaddie bonus: not given with Training Roulette.)
+      const sq = rank === 1 ? decode((trees.get(g.id + 4) ?? [])[0]?.Squaddie) : undefined
+      const tree = sq ? `, TreeMobility=${sq.Mobility}, TreeAim=${sq.Aim}, TreeWill=${sq.Will}` : ''
+      return c && rank > 0 ? [`+Gains=(ClassName=LWS_${c.name}, Rank=${rank}, HP=${g.hp}, Aim=${g.aim}, Will=${g.will}${tree})`] : []
     }),
   ].join('\r\n') + '\r\n',
 )

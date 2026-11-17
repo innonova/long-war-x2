@@ -17,6 +17,9 @@ static function bool Find(name ClassName, int Rank, int Branch, out LWPerkBonus 
 {
 	local LWPerkBonus B;
 
+	// None with Training Roulette (second wave #4: XGStrategySoldier.LevelUpStats, XGSoldierUI's text).
+	if (class'LWX2SecondWave'.static.On(4))
+		return false;
 	foreach default.Bonuses(B)
 	{
 		if (B.ClassName == ClassName && B.Rank == Rank && B.Branch == Branch)

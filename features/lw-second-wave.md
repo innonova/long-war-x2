@@ -179,3 +179,21 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   - **Hidden Potential on:** every roll within Long War's ranges. A scout's rank 5: aim +6 (2+Rand(5)), will +6 (1+Rand(6)).
     A rocketeer's five ranks: aim +15 (5–25), will +25 (5–30), HP +1.
 - **Not seen:** a promotion after a real mission with the option on (the same event; the test aid ranks up as XCOM 2 does).
+
+## Report (2026-11-17, Training Roulette)
+
+- **#4 Training Roulette** (`XGStrategySoldier.AssignRandomPerks`; new `LWX2TrainingRoulette`): as a soldier of one of Long
+  War's eight classes gets the class (not a MEC), every perk in the tree that is on Long War's `RandomPerks` list is dealt
+  again at random from that list, none twice. The other perks stay where they are. The list is Long War's 26 (from Tactical
+  Sense to Platform Stability), as the abilities the port gives them, in `XComLWClasses.ini`'s
+  `[LongWarX2.LWX2TrainingRoulette]` (from `scripts/classes-config.mjs`). It runs in the promotion listener above.
+- **No perk-tree stat bonuses with it** (`LevelUpStats` and `XGSoldierUI` skip them under the option): neither the perk
+  choices' bonuses (`LWX2PerkBonuses.Find` finds none, so the promotion screen shows none either) nor the squaddie's. XCOM 2's
+  class data holds the squaddie bonus, which is now taken off again (the rank-1 rows' `TreeMobility`, `TreeAim`, `TreeWill`).
+- **The squaddie rank is not dealt:** XCOM 2 buys it as it gives the class, and no class's squaddie perk is on the list.
+- **Checked on wingpu** (test aid `rankup new [times]`: a new recruit promoted, its tree printed):
+  - **Option off:** the trees as the class data has them.
+  - **Option on:** a rocketeer's eight list perks (Holo-Targeting, Damn Good Ground, Lock N' Load, Vital Point Targeting, Low
+    Profile, Aggression, Steadfast, Ranger) were dealt in place of its own. Its rockets, Suppression, Mayhem, Shock and Awe,
+    Double Tap and Danger Zone stayed in their slots. A sniper's twelve dealt perks were all different.
+  - **The squaddie bonus:** a Scout's squaddie +1 mobility without the option (12 → 13), none for a Medic with it (12 → 12).

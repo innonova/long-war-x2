@@ -4,7 +4,8 @@
 // - normally, will also gets Rand(iRandWillIncrease) more every level;
 // - with Hidden Potential (second wave #3), each gain is rolled instead: HP +1 with a chance of its xx (of xxyy), aim and
 //   will xx + Rand(yy) (of xxyyzz), and no random will on top.
-// The perk-choice bonuses (LWX2PerkBonuses) are apart from these, as in Long War.
+// The perk-choice bonuses (LWX2PerkBonuses) are apart from these, as in Long War. Also here: Training Roulette's tree, dealt
+// as the soldier gets the class (LWX2TrainingRoulette).
 class LWX2StatGains extends Object config(LWClasses);
 
 struct LWStatGain
@@ -12,6 +13,7 @@ struct LWStatGain
 	var name ClassName;
 	var int Rank;
 	var int HP, Aim, Will;
+	var int TreeMobility, TreeAim, TreeWill; // (at squaddie: the tree's squaddie bonus, which XCOM 2's class data adds too)
 };
 
 var config int RandWill;
@@ -29,6 +31,9 @@ static function bool RankedUp(XComGameState_Unit Unit, int From)
 		return false;
 	if (Unit.GetUnitValue('LWX2GainsRank', Done))
 		From = Max(From, int(Done.fValue));
+	// Given the class now: Training Roulette's tree.
+	if (From == 0 && Unit.GetRank() > 0 && class'LWX2TrainingRoulette'.static.Deal(Unit))
+		bChanged = true;
 	for (Rank = From + 1; Rank <= Unit.GetRank(); Rank++)
 		if (Gain(Unit, Rank))
 			bChanged = true;
@@ -60,6 +65,13 @@ static function bool Gain(XComGameState_Unit Unit, int Rank)
 	}
 	else if (default.RandWill > 0)
 		Add(Unit, eStat_Will, `SYNC_RAND_STATIC(default.RandWill));
+	// No perk-tree bonuses with Training Roulette (LevelUpStats), the squaddie's included.
+	if (class'LWX2SecondWave'.static.On(4))
+	{
+		Add(Unit, eStat_Mobility, -G.TreeMobility);
+		Add(Unit, eStat_Offense, -G.TreeAim);
+		Add(Unit, eStat_Will, -G.TreeWill);
+	}
 	return true;
 }
 
