@@ -354,3 +354,18 @@ itself, the fire burns who stays in it. `X2Ability_LWStandins` (`PsiKind=Pyrokin
 
 **Checked on wingpu:** a soldier given it in a council assault cast it at the nearest alien's place: fires lit there.
 All of Long War's psi powers now act in missions.
+
+## Report (2026-11-17, Neural Feedback for a teammate)
+
+- **Read** (`XGUnit.ApplyNeuralFeedback` again): when the target lacks the power, a teammate who has it, in the
+  target's sight (`m_arrVisibleFriends`) and within 8 tiles, answers if they pass a will test against the attacker;
+  of those who pass, the one with the most will. No answer from a defender who is panicking, stunned, strangled or
+  hunkered down.
+- **Done** in `X2Effect_LWNeuralFeedback`: one listener (the power's owner with the lowest id near the target) answers
+  for the target, rolling each teammate's test (**APPROXIMATION**: 50 + their will − the attacker's, the port's will test
+  elsewhere too), the most willed passer hurting the attacker with their will.
+- **Fixed:** Mind Control was never answered: by the time the answer was heard the target was already the
+  attacker's, so not its enemy. The target is now judged as it was before the power.
+- **Checked on wingpu:** an Ethereal beside a squad of six, three with the power: its Mindfray on two of them was
+  answered by each. It never aimed at one without the power in four turns, so the teammate's answer was not seen in
+  play; the Mind Control fix was built after that run and not seen either.
