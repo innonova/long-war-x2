@@ -173,6 +173,8 @@ struct LWX2Room
 /** One of EW's 3D UI panels (UIDisplay_LevelActor): its tag (the screens drawing on it name it), place and scale. */
 struct LWX2Display
 {
+	/** EW's own panel mesh (its UVs take the screen's part of the movie); none: XCOM 2's plate (LWX2EWBase.DisplayMesh). */
+	var string Mesh;
 	var name Tag;
 	var vector Loc;
 	var rotator Rot;

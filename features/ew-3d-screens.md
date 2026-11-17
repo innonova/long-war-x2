@@ -34,3 +34,23 @@ where EW's country panels stand.
 3. **EW's screens** get EW's display tag and camera (`bIsIn3D`), drawing into XCOM 2's 3D movie, which those displays
    show.
 4. **Checked** against EW's captures (`tools/compare`): research, build items, the Situation Room.
+
+## Report (2026-11-17, research and engineering on their panels)
+
+- **The converter** writes each level's 3D panels: tag, place, rotation, scale and EW's own panel mesh
+  (`+Displays=`; Command1 has 17: `UIDisplayMesh` for most, `UI_situationroom_center/left/right/top/objectives` for the
+  Situation Room's wall, `UIInterceptionDisplayMesh`).
+- **The base** places a display actor of ours (`LWX2UIDisplay`, a spawnable `UIDisplay_LevelActor`) at each, with EW's
+  mesh and XCOM 2's display material (`Strat_Overworld.Materials.UIDisplayMaterial_Overworld`, an instance per panel:
+  XCOM 2's 3D movie sets its `Movie` texture on the panel's instance). Where no EW mesh was found, XCOM 2's plate
+  (`UI_Plate_A`), turned and scaled to EW's 141 × 84 panel (`DisplayTurn`, `DisplayScale`).
+- **EW's research and build/Foundry screens** go into XCOM 2's 3D movie (`UILWEWScreen.Push3D`) and show on
+  `UIDisplay_ScienceLabs` and `UIDisplay_Engineering`, through EW's `ScienceLab_UIDisplayCam` and
+  `Engineering_UIDisplayCam`: in place and size as in EW's captures. **Clicks reach them** (a research project chosen
+  on the panel). Switch: `ScreensIn3D` in `XComLWEWMaps.ini`.
+- **The engineering queue** (EW's CURRENT PROJECTS) beside it, from the HUD.
+- **Not yet:**
+  - **The Situation Room's wall:** pushed onto `UIDisplay_CountryPanels`, only thin strips of the movie showed on EW's
+    wall panels; left flat until it is understood how EW's wall meshes map the movie.
+  - **Vahlen and Shen** beside the panels (EW's characters in its base, not converted).
+  - The Repair Bay, the Gene Lab, the soldier screens' own panels.

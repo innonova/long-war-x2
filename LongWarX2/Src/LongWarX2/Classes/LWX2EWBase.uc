@@ -247,7 +247,7 @@ function PlaceDisplays()
 {
 	local LWX2EWMapPieces.LWX2Display D;
 	local LWX2UIDisplay A;
-	local StaticMesh Mesh;
+	local StaticMesh Mesh, EWMesh;
 	local MaterialInterface Mat;
 
 	if (!ScreensIn3D || Displays.Length > 0)
@@ -261,14 +261,17 @@ function PlaceDisplays()
 	}
 	foreach Data("Command1").Displays(D)
 	{
-		A = Spawn(class'LWX2UIDisplay', self, D.Tag, D.Loc + BaseOffset, D.Rot + DisplayTurn);
+		// EW's own panel mesh, at EW's rotation and scale, where the converter found it; else XCOM 2's plate, turned and
+		// scaled to EW's panel.
+		EWMesh = D.Mesh != "" ? StaticMesh(DynamicLoadObject(D.Mesh, class'StaticMesh', true)) : none;
+		A = Spawn(class'LWX2UIDisplay', self, D.Tag, D.Loc + BaseOffset, EWMesh != none ? D.Rot : D.Rot + DisplayTurn);
 		if (A == none)
 			continue;
-		A.StaticMeshComponent.SetStaticMesh(Mesh);
+		A.StaticMeshComponent.SetStaticMesh(EWMesh != none ? EWMesh : Mesh);
 		// (An instance: XCOM 2's 3D movie sets its Movie on the panel's instance, UIMovie_3D.ShowDisplayByInst.)
 		A.StaticMeshComponent.SetMaterial(0, Mat);
 		A.StaticMeshComponent.CreateAndSetMaterialInstanceConstant(0).SetScalarParameterValue('Visibility', 1.0);
-		A.SetDrawScale3D(D.Scale * (DisplayScale > 0 ? DisplayScale : 1.0));
+		A.SetDrawScale3D(EWMesh != none ? D.Scale : D.Scale * (DisplayScale > 0 ? DisplayScale : 1.0));
 		A.Tag = D.Tag;
 		// (The mesh hidden, not the actor: XCOM 2's 3D movie unhides the mesh, UIMovie_3D.ShowDisplayByInst.)
 		A.StaticMeshComponent.SetHidden(true);

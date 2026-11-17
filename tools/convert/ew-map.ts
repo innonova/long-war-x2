@@ -328,7 +328,7 @@ exports.forEach((e, i) => {
 })
 
 /** EW's 3D UI panels (UIDisplay_LevelActor, placed by tag: EW's screens draw on them, features/ew-3d-screens.md). */
-interface Display { tag: string; loc: number[]; rot: number[]; scale: number[] }
+interface Display { tag: string; loc: number[]; rot: number[]; scale: number[]; mesh: string }
 const displays: Display[] = []
 exports.forEach((e, i) => {
   if (e.type !== 'UIDisplay_LevelActor' || !e.fullName.startsWith('TheWorld.PersistentLevel.')) return
@@ -340,7 +340,18 @@ exports.forEach((e, i) => {
   const ds = inherited(i, tags, 'DrawScale', 26)
   const ds3 = inherited(i, tags, 'DrawScale3D', 26)
   const s1 = ds ? f32(ds, 0) : 1
+  // Its panel's mesh: EW's own, whose UVs take the screen's part of the movie (the Situation Room's wall is eight panels).
+  const comp = inherited(i, tags, 'StaticMeshComponent', 26)
+  let mesh = ''
+  if (comp && ref(comp) > 0) {
+    try {
+      mesh = meshOf(ref(comp) - 1, tagsOf(ref(comp) - 1, 8))
+    } catch {
+      // none read
+    }
+  }
   displays.push({
+    mesh,
     tag: tag ? (pkg.names[new DataView(tag.value.buffer, tag.value.byteOffset).getInt32(0, true)].name as string) : '',
     loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
     rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
@@ -1064,7 +1075,7 @@ const lines = [
       `Falloff=${n(l.falloff)},Inner=${n(l.inner)},Outer=${n(l.outer)},Lower=${n(l.lower)})`,
   ),
   "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
-  ...displays.map((d) => `+Displays=(Tag=${d.tag || 'None'},Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}))`),
+  ...displays.map((d) => `+Displays=(${d.mesh ? `Mesh="${rename(d.mesh)}",` : ''}Tag=${d.tag || 'None'},Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}))`),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
     ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''})`,

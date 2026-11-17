@@ -209,20 +209,36 @@ static function Push3D(XComHQPresentationLayer HQPres, UILWEWScreen S)
 	HQPres.ScreenStack.Push(S);
 }
 
-/** In 3D: the movie shown on the screen's EW panel. */
+/** In 3D: the movie shown on the screen's EW panels (the Situation Room's wall is several of one tag). */
 function ShowOnPanel()
 {
+	local LWX2EWBase B;
+	local LWX2UIDisplay D;
+
 	if (!bIsIn3D || EWDisplay == '')
 		return;
 	ShownOn = class'LWX2EWBase'.static.DisplayFor(self, EWDisplay);
-	if (ShownOn != none)
-		UIMovie_3D(Movie).ShowDisplay(EWDisplay, ShownOn);
+	if (ShownOn == none)
+		return;
+	UIMovie_3D(Movie).ShowDisplay(EWDisplay, ShownOn);
+	B = class'LWX2EWBase'.static.Get(self);
+	foreach B.Displays(D)
+		if (D.Tag == EWDisplay && D != ShownOn)
+			UIMovie_3D(Movie).ShowDisplayByInst(D);
 }
 
 simulated function OnRemoved()
 {
+	local LWX2EWBase B;
+	local LWX2UIDisplay D;
+
 	if (bIsIn3D && ShownOn != none)
-		UIMovie_3D(Movie).HideDisplay(EWDisplay, ShownOn);
+	{
+		B = class'LWX2EWBase'.static.Get(self);
+		foreach B.Displays(D)
+			if (D.Tag == EWDisplay)
+				UIMovie_3D(Movie).HideDisplayByInst(D);
+	}
 	super.OnRemoved();
 }
 

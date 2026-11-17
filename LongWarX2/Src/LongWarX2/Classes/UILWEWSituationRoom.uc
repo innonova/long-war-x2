@@ -44,14 +44,16 @@ static function string Open(optional bool bCovertOps, optional bool bSatellites)
 	if (HQPres == none)
 		return "ERR not on the Avenger";
 	DynamicLoadObject(default.UIPackage $ ".ewxSituationRoom", class'Object', true);
-	// A black background under it (EW's earth goes into its map area: OnInit).
-	class'UILWEWMapBackdrop'.static.ShowIfAvailable();
 	EWScreen = HQPres.Spawn(class'UILWEWSituationRoom', HQPres);
+	// A black background under it (EW's earth goes into its map area: OnInit); on EW's wall in 3D, the room itself.
+	if (!(class'LWX2EWBase'.default.ScreensIn3D && class'LWX2EWBase'.static.DisplayFor(HQPres, EWScreen.EWDisplay) != none))
+		class'UILWEWMapBackdrop'.static.ShowIfAvailable();
 	EWScreen.Package = name("/ package/ewxSituationRoom/SituationRoom");
 	EWScreen.MCName = 'theScreen';
 	EWScreen.bCovert = bCovertOps;
 	EWScreen.bSatellite = bSatellites && !bCovertOps;
-	HQPres.ScreenStack.Push(EWScreen);
+	// (EW's: UISituationRoom on the room's wall, UIDisplay_CountryPanels, through Cam_SituationRoom.)
+	Push3D(HQPres, EWScreen);
 	return "ok EW Situation Room" $ (bCovertOps ? ", EXALT" : "");
 }
 
@@ -641,6 +643,8 @@ function AddMapItem(string Label, float MapX, float MapY)
 
 defaultproperties
 {
+	// (EW's wall, UIDisplay_CountryPanels through Cam_SituationRoom, not yet: only strips of the movie showed on EW's wall
+	// panels, features/ew-3d-screens.md.)
 	Order(0) = USA
 	Order(1) = Canada
 	Order(2) = Mexico
