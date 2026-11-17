@@ -64,6 +64,17 @@ static function name TemplateForId(int Id)
 	return TechById(Id, T) ? TemplateFor(T) : '';
 }
 
+/** The Long War tech of a template (-1 for none). */
+static function int IdOfTemplate(name TemplateName)
+{
+	local LWTechDef T;
+
+	foreach default.Techs(T)
+		if (TemplateFor(T) == TemplateName)
+			return T.Id;
+	return -1;
+}
+
 /** The share (0..1) research credits take off a tech: each held credit that covers it, stacking by multiplying (XGTechTree.GetCreditAdjustedTechHours). */
 static function float CreditCut(LWTechDef T, array<int> Held, optional XComGameState_LWStrategy S)
 {

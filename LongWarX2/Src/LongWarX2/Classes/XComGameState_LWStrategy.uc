@@ -127,6 +127,8 @@ var array<int> SatellitesDue;
 /** The base (LWBase): each tile's ground (rock, open, dug, a facility) and facility, and the work under way. */
 var array<int> TileType;
 var array<int> TileFacility;
+/** Tiles built on a steam vent (a removed facility leaves the vent: XGBase.m_arrSteamTiles). */
+var array<int> SteamTiles;
 var array<LWBaseJob> BaseJobs;
 /** A soldier training a psi power in the Psi Labs (features/lw-psi.md): the unit, the power (Long War's perk id), the hours left. */
 /** An EXALT cell (features/lw-exalt.md; Long War's TExaltCellData): its country, the days it stays exposed, the days
@@ -260,6 +262,9 @@ var bool bReportMismanaged;
 var int ReportMoney;
 var array<int> ReportLeaving;
 var bool bReportDue;
+/** The UFOs XCOM has taken, by class (Long War's m_arrCraftEncounters: a crash site or a landed UFO won): a class once
+ *  taken is known when seen again (Identified). */
+var array<int> CraftEncounters;
 
 // --- Making it ------------------------------------------------------------------------------
 
@@ -999,7 +1004,7 @@ function TickUfo(int i)
 		if (Countries[Ufos[i].Country].bSatellite || Rand(100) < class'LWStrategyRules'.default.InterceptorDetectPct * (FoundryDone.Find(35) != INDEX_NONE ? 2 : 1) * Ready.Length)
 		{
 			Ufos[i].bDetected = true;
-			Note("UFO detected over" @ CountryName(Ufos[i].Country) $ ":" @ ShipName(Ufos[i].Ufo) $ "," @ class'LWStrategyRules'.static.ObjectiveName(Ufos[i].Objective) $ ".");
+			Note("UFO detected over" @ CountryName(Ufos[i].Country) $ ":" @ UfoLabel(Ufos[i].Ufo) $ (Hyperwave() ? "," @ class'LWStrategyRules'.static.ObjectiveName(Ufos[i].Objective) : "") $ ".");
 			bStop = true;
 		}
 		return;
@@ -1012,7 +1017,7 @@ function TickUfo(int i)
 			Ufos[i].Until = Hours + class'LWStrategyRules'.default.LandedUfoHours;
 			if (Ufos[i].bDetected)
 			{
-				Note("The" @ ShipName(Ufos[i].Ufo) @ "has landed in" @ CountryName(Ufos[i].Country) $ ". It leaves in" @ class'LWStrategyRules'.default.LandedUfoHours @ "hours.");
+				Note("The" @ UfoLabel(Ufos[i].Ufo) @ "has landed in" @ CountryName(Ufos[i].Country) $ ". It leaves in" @ class'LWStrategyRules'.default.LandedUfoHours @ "hours.");
 				bStop = true;
 			}
 			return;
@@ -1060,7 +1065,7 @@ function UfoDone(int i)
 	if (U.Objective == 2 && class'LWStrategyRules'.static.HarvestOf(U.Ufo) > 0)
 		AlienResources += class'LWStrategyRules'.static.HarvestOf(U.Ufo) + Rand(5);
 	if (U.bDetected && U.Objective != 5 && U.Objective != 6 && U.Objective != 7)
-		Note("The" @ ShipName(U.Ufo) @ "over" @ CountryName(U.Country) @ "finished its mission.");
+		Note("The" @ UfoLabel(U.Ufo) @ "over" @ CountryName(U.Country) @ "finished its mission.");
 	// A scout seen (detected, or attacked and away) may bring a hunt for the satellite that saw it (LogUFORecord,
 	// ShouldHunt, AddHuntTarget).
 	if (U.Objective == 1 && U.Ufo != 9 && U.bDetected && ShouldHunt(U, Intact))
@@ -1203,18 +1208,18 @@ static function Intercepted(int i, int Outcome, int UfoHp)
 		{
 			U.Status = 3;
 			U.Until = S.Hours + class'LWStrategyRules'.default.CrashSiteHours;
-			S.Note("The" @ S.ShipName(U.Ufo) @ "is down in" @ S.CountryName(U.Country) $ ": a crash site for" @ class'LWStrategyRules'.default.CrashSiteHours @ "hours.");
+			S.Note("The" @ S.UfoLabel(U.Ufo) @ "is down in" @ S.CountryName(U.Country) $ ": a crash site for" @ class'LWStrategyRules'.default.CrashSiteHours @ "hours.");
 		}
 		else
 		{
 			U.Status = 5;
-			S.Note("The" @ S.ShipName(U.Ufo) @ "broke up over" @ S.CountryName(U.Country) $ ".");
+			S.Note("The" @ S.UfoLabel(U.Ufo) @ "broke up over" @ S.CountryName(U.Country) $ ".");
 		}
 	}
 	else
 	{
 		U.Hp = Max(0, UfoHp);
-		S.Note("The" @ S.ShipName(U.Ufo) @ "got away, damaged" @ (100 - 100 * U.Hp / Max(1, U.MaxHp)) $ "%.");
+		S.Note("The" @ S.UfoLabel(U.Ufo) @ "got away, damaged" @ (100 - 100 * U.Hp / Max(1, U.MaxHp)) $ "%.");
 	}
 	S.Ufos[i] = U;
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
@@ -1591,6 +1596,7 @@ static function MissionBack(bool bWon)
 		if (bWon)
 		{
 			S.Tally(S.CountryContinent(Country), T_UFO_RAIDS);
+			S.CraftTaken(S.Ufos[S.PendingIndex].Ufo);
 			S.AddPanic(Country, class'LWStrategyRules'.default.PanicUfoAssault);
 			S.GiveSalvage(NewGameState, S.Ufos[S.PendingIndex].Ufo, true);
 		}
@@ -1603,6 +1609,7 @@ static function MissionBack(bool bWon)
 		if (bWon)
 		{
 			S.Tally(S.CountryContinent(Country), T_UFO_RAIDS);
+			S.CraftTaken(U.Ufo);
 			S.AddPanic(Country, class'LWStrategyRules'.default.PanicUfoAssault);
 			S.UfoDowned(U);
 			S.AlienResources -= class'LWStrategyRules'.static.WorthOf(U.Ufo);
@@ -2264,6 +2271,35 @@ function string ShipName(int Ufo)
 	return class'LWAirWar'.static.Ufo(Ufo, Category()).Name;
 }
 
+/** The Hyperwave Relay built (Long War's XGHeadQuarters.IsHyperwaveActive: a UFO's class and objective shown when seen). */
+function bool Hyperwave()
+{
+	return TileFacility.Length > 0 && class'LWBase'.static.Count(self, 18) > 0;
+}
+
+/** Whether a UFO's class is known when seen (XGGeoscape.CanIdentifyCraft): with the Hyperwave Relay, or once XCOM has
+ *  taken one of the class. */
+function bool Identified(int Ufo)
+{
+	return Hyperwave() || (Ufo >= 0 && Ufo < CraftEncounters.Length && CraftEncounters[Ufo] > 0);
+}
+
+/** A UFO as the Geoscape names it (XGMissionControlUI's alerts): its class when known, else unidentified, by its size. */
+function string UfoLabel(int Ufo)
+{
+	return Identified(Ufo) ? ShipName(Ufo) : "unidentified" @ class'LWAirWar'.static.Ufo(Ufo, Category()).Size @ "UFO";
+}
+
+/** A UFO of the class taken (a crash site or a landed UFO won: XGStrategy.PostCombat). */
+function CraftTaken(int Ufo)
+{
+	if (Ufo < 0)
+		return;
+	if (CraftEncounters.Length <= Ufo)
+		CraftEncounters.Length = Ufo + 1;
+	CraftEncounters[Ufo] += 1;
+}
+
 /**
  * What wants the player's decision, in the Geoscape's order: 1 intercept a detected UFO, 2 a crash
  * site, 3 a landed UFO, 4 abductions, 5 terror; with the UFO's or site's index and the words.
@@ -2279,7 +2315,7 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 	{
 		// An interception needs a ready jet over the UFO's continent (LWHangar).
 		if ((Ufos[i].Status == 1 || Ufos[i].Status == 2) && Ufos[i].bDetected && !Ufos[i].bAttacked && class'LWHangar'.static.CountReadyFor(i) > 0)
-			AddDecision(Kinds, Indexes, Labels, 1, i, "INTERCEPT:" @ ShipName(Ufos[i].Ufo) @ "over" @ CountryName(Ufos[i].Country) @ "(" $ (Ufos[i].Until - Hours) $ "h," @ class'LWHangar'.static.CountReadyFor(i) @ "jets ready)");
+			AddDecision(Kinds, Indexes, Labels, 1, i, "INTERCEPT:" @ UfoLabel(Ufos[i].Ufo) @ "over" @ CountryName(Ufos[i].Country) @ "(" $ (Ufos[i].Until - Hours) $ "h," @ class'LWHangar'.static.CountReadyFor(i) @ "jets ready)");
 		else if (Ufos[i].Status == 3)
 			AddDecision(Kinds, Indexes, Labels, 2, i, "ASSAULT: crash site in" @ CountryName(Ufos[i].Country) @ "(" $ (Ufos[i].Until - Hours) $ "h)");
 		else if (Ufos[i].Status == 4 && Ufos[i].bDetected)
@@ -2311,11 +2347,11 @@ function PendingWords(out string Title, out string Reward)
 	switch (PendingKind)
 	{
 	case 1:
-		Title = "Crash site:" @ ShipName(Ufos[PendingIndex].Ufo) @ "in" @ CountryName(Ufos[PendingIndex].Country);
+		Title = "Crash site:" @ UfoLabel(Ufos[PendingIndex].Ufo) @ "in" @ CountryName(Ufos[PendingIndex].Country);
 		Reward = "The UFO's salvage";
 		break;
 	case 2:
-		Title = "Landed UFO:" @ ShipName(Ufos[PendingIndex].Ufo) @ "in" @ CountryName(Ufos[PendingIndex].Country);
+		Title = "Landed UFO:" @ UfoLabel(Ufos[PendingIndex].Ufo) @ "in" @ CountryName(Ufos[PendingIndex].Country);
 		Reward = "The UFO's salvage";
 		break;
 	case 3:

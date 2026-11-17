@@ -77,6 +77,8 @@ var config int NexusCapacity;
 var config int UplinkAdjacencyBonus;
 var config int ExcavateCash;
 var config int ExcavateDays;
+/** A facility removed: its price (BASE_REMOVE_CASH_COST); done at once (XGFacility_Engineering.AddConstructionProject). */
+var config int RemoveCash;
 var config int SkyrangerUpkeep;
 var config int InterceptorUpkeep;
 var config int OTSRank;

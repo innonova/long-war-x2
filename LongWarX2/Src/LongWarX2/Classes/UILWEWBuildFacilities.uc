@@ -9,6 +9,11 @@ class UILWEWBuildFacilities extends UILWEWScreen;
 /** EW's words, written from the player's install (scripts/lw-words.mjs, makeBuildWords). */
 var localized string Title, Excavate, Excavating, BuildLift, BuildFacility, Steam, Days, Cost, RequiredBuild;
 var localized string ErrNeedLift, ErrNeedExcavating, ErrNeedFunds, ErrNeedPower, ErrNeedSteam, NoRequirements;
+/** Removing a facility (EW's XGBuildUI words): the reasons it cannot be, by LWBase.RemoveBlock's codes. */
+var localized string Remove, RemoveTitle, RemoveBody, RemoveOK, RemoveCancel, CantRemoveTitle, OK, CaptiveRemoveBody;
+var localized string CantRemove[10];
+/** The tile a removal was asked for (the confirmation's answer removes it). */
+var int RemoveX, RemoveY;
 
 var int CursorX, CursorY;
 
@@ -166,7 +171,13 @@ function int CursorAction(XComGameState_LWStrategy S, out string Text)
 		return 2;
 	Type = S.TileType[CursorY * class'LWBase'.const.W + CursorX];
 	if (Type == class'LWBase'.const.BUILT)
-		return 2;
+	{
+		// (XGBuildUI.UpdateCursor: a facility Long War lets go offers REMOVE, its price beside it.)
+		if (!class'LWBase'.static.Removable(class'LWBase'.static.FacilityAt(S, CursorX, CursorY)))
+			return 2;
+		Text = class'UILWEWHub'.static.Word(Remove, "REMOVE") $ "<br>" $ class'UILWEWHub'.static.Word(Cost, "Cost:") @ class'LWStrategyRules'.static.Money(class'LWBaseRules'.default.RemoveCash);
+		return 0;
+	}
 	if (!class'LWBase'.static.Reachable(S, CursorX, CursorY))
 	{
 		Text = class'UIUtilities_Text'.static.GetColoredText(class'LWBase'.static.HasAccess(S, CursorX, CursorY)
@@ -217,6 +228,11 @@ function Choose()
 		return;
 	}
 	Type = S.TileType[CursorY * class'LWBase'.const.W + CursorX];
+	if (Type == class'LWBase'.const.BUILT)
+	{
+		ConfirmRemoval(S, CursorX, CursorY);
+		return;
+	}
 	if (Type != class'LWBase'.const.ROCK && Type != class'LWBase'.const.ROCK_STEAM && CursorX != class'LWBase'.const.SHAFT)
 	{
 		class'UILWEWChooseFacility'.static.Open(XComHQPresentationLayer(Movie.Pres), CursorX, CursorY);
@@ -229,6 +245,52 @@ function Choose()
 		Movie.Pres.PlayUISound(eSUISound_MenuClose);
 		`log("LongWarX2: EW base building:" @ Why, , 'LongWarX2');
 	}
+	UpdateResources();
+	Refresh();
+}
+
+/** EW's confirmation (XGBuildUI.ConfirmRemovalDialogue): "Remove Facility?", or why it cannot be removed now; Alien
+ *  Containment warns of its captives. */
+function ConfirmRemoval(XComGameState_LWStrategy S, int X, int Y)
+{
+	local TDialogueBoxData Data;
+	local int Block;
+
+	RemoveX = X;
+	RemoveY = Y;
+	Block = class'LWBase'.static.RemoveBlock(S, X, Y);
+	Movie.Pres.PlayUISound(eSUISound_MenuOpen);
+	if (Block != 0)
+	{
+		Data.eType = eDialog_Warning;
+		Data.strTitle = class'UILWEWHub'.static.Word(CantRemoveTitle, "Facility Cannot Be Removed");
+		Data.strText = class'UILWEWHub'.static.Word(CantRemove[Block], "It is in use.");
+		Data.strAccept = class'UILWEWHub'.static.Word(OK, "Ok");
+		Data.strCancel = "";
+	}
+	else
+	{
+		Data.eType = eDialog_Normal;
+		Data.strTitle = class'UILWEWHub'.static.Word(RemoveTitle, "Remove Facility?");
+		Data.strText = class'LWBase'.static.FacilityAt(S, X, Y) == 13 ? class'UILWEWHub'.static.Word(CaptiveRemoveBody, "")
+			: class'UILWEWHub'.static.Word(RemoveBody, "Are you sure you want to permanently remove this facility?");
+		Data.strAccept = class'UILWEWHub'.static.Word(RemoveOK, "Yes");
+		Data.strCancel = class'UILWEWHub'.static.Word(RemoveCancel, "No");
+		Data.fnCallback = RemovalAnswered;
+	}
+	`HQPRES.UIRaiseDialog(Data);
+}
+
+simulated function RemovalAnswered(Name eAction)
+{
+	local string Why;
+
+	if (eAction != 'eUIAction_Accept')
+		return;
+	if (class'LWBase'.static.Remove(RemoveX, RemoveY, Why))
+		Movie.Pres.PlayUISound(eSUISound_MenuSelect);
+	else
+		`log("LongWarX2: EW base building:" @ Why, , 'LongWarX2');
 	UpdateResources();
 	Refresh();
 }

@@ -133,3 +133,30 @@ the state in the Geoscape's). Its rules, read from Long War's code:
 - **The hangar:** interceptors bought and kept per continent (the air war
   has jets on one continent for now).
 - **Removing a facility** (§5, Long War's `BASE_REMOVE_CASH_COST`).
+
+## Report (2026-11-17, removing a facility; the Hyperwave Relay; Alien Containment and the arc thrower)
+
+- **Removing a facility** (read: `XGBuildUI.UpdateCursor`, `CanRemoveFacility`, `ConfirmRemovalDialogue`,
+  `XGBase.PerformAction`, `XGFacility_Engineering.AddConstructionProject`): a built facility on EW's Build Facilities
+  screen offers REMOVE with its price (Long War's `BASE_REMOVE_CASH_COST`, §5, now `RemoveCash` in the generated base
+  config); it is done at once (the project's hours are 0), and the tile is left dug, a steam vent again if it was one
+  (`SteamTiles`, kept from now on; a thermo generator always stood on one). Not the access lift, the Hyperwave Relay,
+  the Gollop Chamber, the Foundry or the Officer Training School (`LWBase.Removable`), and nothing of the top row.
+  Refused, with EW's own reason, while in use (`LWBase.RemoveBlock`): a generator whose power is needed, Alien
+  Containment during an interrogation, a workshop whose engineers the next uplink needs, an uplink or nexus whose
+  satellites are up, the Psi Labs, Genetics Lab or Cybernetics Lab with soldiers in them, the Cybernetics Lab with a
+  MEC under repair. Alien Containment's confirmation warns that captives will be terminated, as EW's does; Long War's
+  code does not terminate them, and neither does the port.
+- **Checked on wingpu:** by the test aid (`base remove <x> <y>`), an uplink with its satellite up was refused (code 4)
+  and a workshop went for §5. On EW's screen by mouse: the workshop's card asked "Remove Facility?"
+  (`logs/wingpu_ew_remove_facility.png`), Yes removed it (cash 500 → 495, the tile empty), and the uplink's card
+  answered "Facility Cannot Be Removed" with EW's reason (`logs/wingpu_ew_remove_refused.png`). A slip of mine on the way:
+  the test aid removed the hangar of the top row; the top row is now out of reach, as on EW's screen.
+- **The Hyperwave Relay** (`XGGeoscape.CanIdentifyCraft`, `XGMissionControlUI.UpdateAlert`): a detected UFO's class is
+  shown only with the relay or once XCOM has taken one of that class (a crash site or a landed UFO won:
+  `m_arrCraftEncounters`); its objective only with the relay. The Geoscape's notes and decisions now say "unidentified
+  small UFO" until then (`Identified`, `UfoLabel`, `CraftEncounters`). Checked: a first scout "unidentified small UFO";
+  with the relay "Overseer, Flyby"; after its crash site was won, later scouts "Scout" without the relay.
+- **Alien Containment and the arc thrower** (`XGFacility_Lockers.EquipSmallItem`: no arc thrower without containment):
+  the arc thrower's stun is not offered in a mission while the base has no Alien Containment
+  (`X2Condition_LWContainment`). XCOM 2 still lets the item be equipped. Not seen in a mission yet.

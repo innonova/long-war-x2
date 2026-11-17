@@ -107,6 +107,8 @@ static function SetFacility(XComGameState_LWStrategy S, int Id, int X, int Y)
 {
 	local LWBaseRules.LWFacilityDef F;
 
+	if (S.TileType[TileIndex(X, Y)] == DUG_STEAM && S.SteamTiles.Find(TileIndex(X, Y)) == INDEX_NONE)
+		S.SteamTiles.AddItem(TileIndex(X, Y));
 	S.TileType[TileIndex(X, Y)] = BUILT;
 	S.TileFacility[TileIndex(X, Y)] = Id;
 	if (class'LWBaseRules'.static.FacilityFor(Id, F) && F.Size == 2 && IsValid(X + 1, Y))
@@ -513,6 +515,128 @@ static function bool Work(int X, int Y, int Facility, out string Why)
 	S.Note((Job.Kind == 0 ? "Digging began" : FacilityName(Facility) @ "begun") @ "at" @ TileName(X, Y) $ ", done in" @ (Job.HoursLeft / 24) @ "days.");
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	Why = "";
+	return true;
+}
+
+// --- Removing a facility (XGBuildUI: UpdateCursor, ConfirmRemovalDialogue; XGBase.PerformAction) ------------------
+
+/** Whether Long War lets the facility be removed at all (XGBuildUI.CanRemoveFacility): not an access lift, the Hyperwave
+ *  Relay, the Gollop Chamber, the Foundry or the Officer Training School; and nothing of the top row (the hangar, barracks,
+ *  Mission Control, research: the build screen's cursor never reaches it). */
+static function bool Removable(int Id)
+{
+	return Id > 0 && Id != 6 && Id != 18 && Id != 19 && Id != 11 && Id != 12;
+}
+
+/**
+ * Why the facility on the tile may not be removed now (ConfirmRemovalDialogue), 0 if it may: 1 a generator whose power is
+ * in use, 2 Alien Containment during an interrogation, 3 a workshop whose engineers the next uplink needs, 4 an uplink or
+ * nexus whose satellites are up, 6 the Psi Labs with soldiers training, 7 the Genetics Lab with soldiers in it, 8 the
+ * Cybernetics Lab with soldiers being augmented, 9 it with MECs being repaired.
+ */
+static function int RemoveBlock(XComGameState_LWStrategy S, int X, int Y)
+{
+	local LWBaseRules.LWFacilityDef F;
+	local XComGameState_Unit Unit;
+	local XComGameState_Tech Tech;
+	local StateObjectReference Ref;
+	local int Id, n;
+
+	Id = FacilityAt(S, X, Y);
+	class'LWBaseRules'.static.FacilityFor(Id, F);
+	switch (Id)
+	{
+	case 10:
+	case 15:
+	case 16:
+		if (PowerCapacity(S) - PowerUsed(S) < F.Power + AdjacencyAround(S, X, Y, ADJ_POWER) * class'LWBaseRules'.default.PowerAdjacencyBonus)
+			return 1;
+		break;
+	case 13:
+		Tech = XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().GetCurrentResearchTech().ObjectID));
+		if (Tech != none && class'LWResearchRules'.static.IsInterrogation(class'LWResearchRules'.static.IdOfTemplate(Tech.GetMyTemplateName())))
+			return 2;
+		break;
+	case 8:
+		if (StaffNeeded(S, 9) > S.Engineers)
+			return 3;
+		break;
+	case 9:
+	case 14:
+		n = (Id == 9 ? class'LWBaseRules'.default.UplinkCapacity : class'LWBaseRules'.default.NexusCapacity) + AdjacencyAround(S, X, Y, ADJ_SATELLITES) * class'LWBaseRules'.default.UplinkAdjacencyBonus;
+		if (SatelliteLimit(S) - SatellitesUp(S) < n)
+			return 4;
+		break;
+	case 17:
+		if (S.PsiTrainees.Length > 0)
+			return 6;
+		break;
+	case 23:
+		if (S.GenePatients.Length > 0)
+			return 7;
+		break;
+	case 22:
+		if (S.MECPatients.Length > 0)
+			return 8;
+		foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+		{
+			Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+			if (Unit != none && class'LWMECs'.static.IsMEC(Unit) && Unit.IsInjured())
+				return 9;
+		}
+		break;
+	}
+	return 0;
+}
+
+/** The adjacencies of a kind the facility on the tile takes part in (XGBase.GetSurroundingAdjacencies). */
+static function int AdjacencyAround(XComGameState_LWStrategy S, int X, int Y, int Which)
+{
+	local int n;
+
+	if (IsValid(X - 1, Y) && AdjacencyOf(S, X, Y, X - 1, Y) == Which)
+		n++;
+	if (IsValid(X + 1, Y) && AdjacencyOf(S, X, Y, X + 1, Y) == Which)
+		n++;
+	if (IsValid(X, Y - 1) && AdjacencyOf(S, X, Y, X, Y - 1) == Which)
+		n++;
+	if (IsValid(X, Y + 1) && AdjacencyOf(S, X, Y, X, Y + 1) == Which)
+		n++;
+	return n;
+}
+
+/** The facility on the tile removed (paid RemoveCash, at once): the tile left dug, a steam vent again if it was one. */
+static function bool Remove(int X, int Y, out string Why)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local int Id, k;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Why = "";
+	if (S == none || S.TileType.Length == 0 || !IsValid(X, Y) || S.TileType[TileIndex(X, Y)] != BUILT)
+		Why = "There is no facility there.";
+	else if (Y == 0 || !Removable(FacilityAt(S, X, Y)))
+		Why = FacilityName(FacilityAt(S, X, Y)) @ "cannot be removed.";
+	else if (RemoveBlock(S, X, Y) != 0)
+		Why = FacilityName(FacilityAt(S, X, Y)) @ "cannot be removed now.";
+	else if (class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies() < class'LWBaseRules'.default.RemoveCash)
+		Why = "Removing it costs" @ class'LWStrategyRules'.static.Money(class'LWBaseRules'.default.RemoveCash) $ ".";
+	if (Why != "")
+		return false;
+	Id = FacilityAt(S, X, Y);
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a facility removed");
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	XComHQ.AddResource(NewGameState, 'Supplies', -class'LWBaseRules'.default.RemoveCash);
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	k = TileIndex(X, Y);
+	// (A thermo generator stood on a vent; a campaign begun before the vents were kept remembers it by that.)
+	S.TileType[k] = (S.SteamTiles.Find(k) != INDEX_NONE || Id == 15) ? DUG_STEAM : DUG;
+	S.TileFacility[k] = 0;
+	S.Note(FacilityName(Id) @ "removed at" @ TileName(X, Y) $ ".");
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	`log("LongWarX2: base: facility" @ Id @ "removed at" @ X $ "," $ Y, , 'LongWarX2');
 	return true;
 }
 

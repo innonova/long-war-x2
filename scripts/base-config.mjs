@@ -66,6 +66,7 @@ out.push(
   `UplinkAdjacencyBonus=${one('UPLINK_ADJACENCY_BONUS')}`,
   `ExcavateCash=${one('BASE_EXCAVATE_CASH_COST')}`,
   `ExcavateDays=${one('BASE_EXCAVATE_DAYS')}`,
+  `RemoveCash=${one('BASE_REMOVE_CASH_COST')}`,
   `SkyrangerUpkeep=${one('BASE_SKYRANGER_MAINTENANCE')}`,
   // XGFacility_Hangar.GetCraftMaintenanceCost: an interceptor 40 a month (in its code, not the INI).
   'InterceptorUpkeep=40',

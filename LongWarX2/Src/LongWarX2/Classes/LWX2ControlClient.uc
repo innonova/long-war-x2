@@ -583,6 +583,9 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem("ERR not on the Avenger");
 		else if (Args.Length > 1 && Args[1] ~= "base")
 			Geo.OnBase(none);
+		// EW's Build Facilities screen (UILWEWBuildFacilities), as the hub's Engineering opens it.
+		else if (Args.Length > 1 && Args[1] ~= "build")
+			class'UILWEWBuildFacilities'.static.Open(`HQPRES);
 		else if (Args.Length > 1 && Args[1] ~= "hangar")
 			Geo.OnHangar(none);
 		else if (Args.Length > 1 && Args[1] ~= "engineering")
@@ -686,6 +689,13 @@ function Handle(string Line, out array<string> Out)
 		Refreshed();
 		return;
 	case "base":
+		// base remove <x> <y>: the facility there removed by Long War's rules (LWBase.Remove; columns and rows from 1).
+		if (Args.Length > 3 && Args[1] ~= "remove")
+		{
+			Out.AddItem(class'LWBase'.static.Remove(int(Args[2]) - 1, int(Args[3]) - 1, Why) ? "ok removed" : "ERR" @ Why @ "(block" @ class'LWBase'.static.RemoveBlock(S, int(Args[2]) - 1, int(Args[3]) - 1) $ ")");
+			S = class'XComGameState_LWStrategy'.static.Get();
+			Refreshed();
+		}
 		if (Args.Length > 4 && Args[1] ~= "set")
 		{
 			BaseSet(int(Args[2]) - 1, int(Args[3]) - 1, int(Args[4]));

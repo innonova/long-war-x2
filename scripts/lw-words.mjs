@@ -409,6 +409,23 @@ export function makeBuildWords({ strategyLoc }) {
     ['ErrNeedPower', inSection('XGBuildUI', 'm_strErrNeedPower')],
     ['ErrNeedSteam', inSection('XGBuildUI', 'm_strErrNeedSteam')],
     ['NoRequirements', inSection('UIChooseFacility', 'm_strNoReqLabel')],
+    // Removing a facility (XGBuildUI.UpdateCursor, ConfirmRemovalDialogue): the reasons by LWBase.RemoveBlock's codes.
+    ['Remove', inSection('XGBuildUI', 'm_strLabelRemove')],
+    ['RemoveTitle', inSection('XGBuildUI', 'm_strRemoveTitle')],
+    ['RemoveBody', inSection('XGBuildUI', 'm_strRemoveBody')],
+    ['RemoveOK', inSection('XGBuildUI', 'm_strRemoveOK')],
+    ['RemoveCancel', inSection('XGBuildUI', 'm_strRemoveCancel')],
+    ['CantRemoveTitle', inSection('XGBuildUI', 'm_strCantRemoveTitle')],
+    ['OK', inSection('XGBuildUI', 'm_strOk')],
+    ['CaptiveRemoveBody', inSection('XGBuildUI', 'm_strCaptiveRemoveBody')],
+    ['CantRemove[1]', inSection('XGBuildUI', 'm_strPowerCantRemoveBody')],
+    ['CantRemove[2]', inSection('XGBuildUI', 'm_strCaptiveCantRemoveBody')],
+    ['CantRemove[3]', inSection('XGBuildUI', 'm_strWorkshopCantRemoveBody')],
+    ['CantRemove[4]', inSection('XGBuildUI', 'm_strUplinkCantRemoveBody')],
+    ['CantRemove[6]', inSection('XGBuildUI', 'm_strPsiLabsCantRemoveBody')],
+    ['CantRemove[7]', inSection('XGBuildUI', 'm_strGeneLabsCantRemoveBody')],
+    ['CantRemove[8]', inSection('XGBuildUI', 'm_strCyberneticsLabsCantRemoveBody')],
+    ['CantRemove[9]', inSection('XGBuildUI', 'm_strCyberneticsLabsCantRemoveMecs')],
   ].filter(([, v]) => v)
   return { text: ['[UILWEWBuildFacilities]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
