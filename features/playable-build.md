@@ -386,3 +386,26 @@ New since 30fb091:
 
 **Checked on wingpu from the zip:** the setup kept the converted maps (32 missions' objectives, 123 plots); with the
 control port on for the check (off again after), a new campaign started, the hangar showed no consumables usable yet.
+
+## Release (2026-11-17, early morning)
+
+`LongWarX2-20261117-cebd922.zip` replaces `7a8cec5` on the draft v0.1.0-preview.1.
+
+New since 7a8cec5:
+- **The month's end on EW's own screens:** the transmission, who withdrew, and the End of Month Report with Long War's
+  tallies and grade (`lw-geoscape`); the defections and grade as Long War's code has them.
+- **Council requests:** Long War's 41, on its clock; given or refused on the Geoscape, satellites and jets met on
+  arrival (`lw-council-requests`).
+- **The base:** removing a facility on EW's Build Facilities screen; the Hyperwave Relay identifies UFOs (else
+  "unidentified small UFO" until one of the class is taken); no arc thrower stun without Alien Containment (`lw-base`).
+- **The Foundry:** its soldier perks only with a Foundry in the base; Shaped Armor, a MEC's Advanced Servomotors and
+  Close Combat, Alien Grenades' wider frag blast (`lw-research`).
+- **Fatigue:** critical wounds' hours, the psi armour, Gift of Osiris on officers' hours (`lw-fatigue`); jets refuel an
+  hour after a fight (`lw-hangar`).
+- **Missions:** EW's night maps at night; the damage reduction shown with a hit; explosions wreck the aliens' weapons
+  (no fragments).
+- The setup keeps converted maps and only writes the new words.
+
+**Checked on wingpu from the zip:** its setup (`--maps`) ran and wrote the words (the monthly report's among them); with
+the control port on for the check (off again after), a new campaign's first month ended on EW's transmission and End of
+Month Report (grade F after four abductions let go), and a council request (a satellite over France) was open.
