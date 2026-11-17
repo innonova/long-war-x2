@@ -44,6 +44,10 @@ var config float SquadDistance, SquadSpacing, SquadFloorZ;
  *  there, facing it. Off: the Avenger's armory. */
 var config bool ArmoryInBase;
 var config float ArmoryDistance;
+/** The armory screens' display in EW's room (UIScreenListener_LWArmory): from the soldier, toward the camera, to the
+ *  camera's right, up (units); its turn from facing the camera, its scale. */
+var config float ArmoryDisplayForward, ArmoryDisplaySide, ArmoryDisplayUp, ArmoryDisplayScale;
+var config int ArmoryDisplayYaw;
 var LevelStreaming LightingLevel;
 /** The streamed levels hidden while the base is in view (HideWorld), to show again. */
 var array<name> HiddenLevels;
@@ -267,6 +271,21 @@ static function bool ArmoryHere()
 
 /** Where the soldier stands in EW's armory for one of its cameras: ArmoryDistance in front of it, on the floor under that
  *  spot (EW's pieces placed with collision), facing it. */
+/** A camera of EW's base (Command1's, by tag): where it is and how it looks; false when there is none. */
+function bool CameraOf(name CameraTag, out vector Loc, out rotator Rot)
+{
+	local LWX2EWMapData Command;
+	local int k;
+
+	Command = Data("Command1");
+	k = Command.Cameras.Find('Tag', CameraTag);
+	if (k == INDEX_NONE)
+		return false;
+	Loc = Command.Cameras[k].Loc + default.BaseOffset;
+	Rot = Command.Cameras[k].Rot;
+	return true;
+}
+
 function ArmorySpot(name CameraTag, out vector Loc, out rotator Rot)
 {
 	local LWX2EWMapPieces.LWX2Camera C;

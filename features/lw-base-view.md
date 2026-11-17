@@ -442,3 +442,20 @@ Test aids: `ewset <path> <value>`, `ewinvoke <function> [args]` (at once, its re
   - **The soldier faces away from the camera**, whichever way the placement is turned.
 - So `ArmoryInBase=false` (the armory stands the soldier in the Avenger's armory, as before); the code stays for the
   next try. A way forward: the armory screens drawn in 2D over EW's room, or a display mesh of our own in it.
+
+## Report (2026-11-17, the armory in EW's rooms: a second try, still off)
+
+- **The soldier now faces the camera.** The cause was not the placement: XCOM 2's armory hands its pawn to a mouse guard
+  (`UIMouseGuard_RotatePawn`, the drag-to-turn), which sets the pawn to its own stored rotation every tick. The
+  listener now gives the guard our rotation. (The Avenger's placement point does not move at all: it is static; the
+  pawn is put in place directly.)
+- **A display of our own** (`OwnDisplay`): XCOM 2's 3D movie draws on every `UIDisplay_LevelActor` with the screen's
+  tag (`UIMovie_3D.ShowDisplayByTag`), so the listener spawns one with the blueprint's mesh and material beside the
+  soldier as EW's camera sees it (`ArmoryDisplayForward`, `Side`, `Up`, `Yaw`, `Scale` in `XComLWEWMaps.ini`). The
+  blueprint's display was not unreadable after all: EW's base stands at an offset far below the world (`BaseOffset`).
+  **Not seen on screen yet:** the menu did not appear where it was put; whether the shared material draws the movie
+  there, or the display stands hidden, is the next thing to find out.
+- **Two things in the way of the look,** seen on wingpu: big grey curved panels fill EW's armory behind the soldier
+  (EW's own room geometry, not our display: they stayed with our display moved far away), and EW's HUD (the clock, the
+  council report, the resources) stays over the armory.
+- `ArmoryInBase` stays `false`: the armory stands the soldier in the Avenger, as before.
