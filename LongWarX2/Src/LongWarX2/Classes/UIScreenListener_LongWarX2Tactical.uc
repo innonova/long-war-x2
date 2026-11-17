@@ -33,6 +33,8 @@ event OnInit(UIScreen Screen)
 	}
 	if (UITacticalHUD(Screen) == none)
 		return;
+	// Save Scum (second wave #5): a new random seed for a loaded game.
+	class'LWX2SecondWave'.static.SaveScum();
 	class'LWX2PerkProbe'.static.Start(Screen);
 	// Damage Roulette (second wave #0): the weapons' spread as the campaign has it (LWX2SecondWave).
 	class'LWX2SecondWave'.static.ApplyDamageRoulette();

@@ -14,6 +14,16 @@ var config int QuickAndDirtyPct, QuickAndDirtyMin, QuickAndDirtyMax;
 var config int GreenFogAimStep, GreenFogAimMax, GreenFogWillStep, GreenFogWillMax;
 
 /** Long War's option n chosen for this campaign. */
+/** Save Scum (#5): "Loading a save game will reset the random number seed, so taking an identical action may yield different
+ *  results." XCOM 2 restores the seed a save was made with (Checkpoint.PostLoadCheckpoint): with the option a new one is
+ *  drawn as the game comes up again (the Avenger's HUD in strategy, the tactical HUD in a mission; also at a mission's
+ *  start, where it changes nothing that was decided). */
+static function SaveScum()
+{
+	if (On(5))
+		class'Engine'.static.GetEngine().SetRandomSeeds(class'Engine'.static.GetEngine().GetARandomSeed());
+}
+
 static function bool On(int n)
 {
 	local XComGameState_CampaignSettings Settings;

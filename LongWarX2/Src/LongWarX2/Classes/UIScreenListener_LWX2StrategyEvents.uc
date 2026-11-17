@@ -6,8 +6,11 @@ class UIScreenListener_LWX2StrategyEvents extends UIScreenListener;
 
 event OnInit(UIScreen Screen)
 {
-	if (UIAvengerHUD(Screen) != none)
-		class'X2EventListenerTemplateManager'.static.RegisterStrategyListeners();
+	if (UIAvengerHUD(Screen) == none)
+		return;
+	class'X2EventListenerTemplateManager'.static.RegisterStrategyListeners();
+	// Save Scum (second wave #5): a new random seed for a loaded game.
+	class'LWX2SecondWave'.static.SaveScum();
 }
 
 defaultproperties

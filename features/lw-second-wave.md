@@ -292,3 +292,15 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
 - **Checked on wingpu** (new test aid `meld`: the canisters made and those still hidden, with their fog): an abduction
   without Recon held its canister back ("hidden at 10 14 1, turns 5, fog NeverSeen"). When a soldier came into view of the
   tile it was made, "turns left 5", on turn 1. **Not seen:** Recon on (the code path that made them at the start, as before).
+
+## Report (2026-11-17, Save Scum; not seen)
+
+- **#5 Save Scum** ("Loading a save game will reset the random number seed, so taking an identical action may yield different
+  results"; EW does this natively). XCOM 2 restores the random seed a save was made with (`Checkpoint.PostLoadCheckpoint`),
+  so a reload replays the same rolls. With the option a new seed is drawn (`GetARandomSeed`) as the game comes up again:
+  the Avenger's HUD in strategy, the tactical HUD in a mission (`LWX2SecondWave.SaveScum`). Both come up after the load, and
+  at a mission's start too, where a new seed changes nothing already decided.
+- **Not seen:** the check needs a quicksave and a quickload. XCOM 2's F5/F9 sent from here left the screen black and never
+  reloaded (the soldier's action points stayed spent), so neither the option's effect nor XCOM 2's own replay was observed.
+  To check by hand: in a mission, quicksave before a shot of about 50%, shoot, quickload, shoot again a few times. Without
+  the option the result repeats; with it, it varies.
