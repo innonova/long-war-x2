@@ -12,6 +12,10 @@ var config float SatelliteIncrease;
 var config int QuickAndDirtyPct, QuickAndDirtyMin, QuickAndDirtyMax;
 /** Green Fog's losses (ContBalance_Normal[1] and [2]: aim and will, one a turn when on, at most 30 and 20). */
 var config int GreenFogAimStep, GreenFogAimMax, GreenFogWillStep, GreenFogWillMax;
+/** Dynamic War (#9; features/lw-dynamic-war.md): Long War's SW_MARATHON, its master coefficient, and SW_ELERIUM_LOSS, the
+ *  passes a mission of its alien AI needs. */
+var config float Marathon;
+var config int MarathonPasses;
 
 /** Long War's option n chosen for this campaign. */
 /** Save Scum (#5): "Loading a save game will reset the random number seed, so taking an identical action may yield different

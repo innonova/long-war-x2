@@ -279,6 +279,10 @@ function Handle(string Line, out array<string> Out)
 		else
 			Out.AddItem(RunTree(int(Mid(Args[1], 1)), Args[2]));
 		return;
+	case "war":
+		// war: Dynamic War's passes (second wave #9) and the aliens' objectives so far by kind (a test aid).
+		War(Out);
+		return;
 	case "meld":
 		// meld: the mission's meld canisters, made (tile, turns left) and, without Recon, still hidden in the fog (a test aid).
 		Meld(Out);
@@ -3191,6 +3195,33 @@ function Repair(array<string> Args, out array<string> Out)
 		Out.AddItem("repairing" @ S.Repairs[i].Template @ S.Repairs[i].HoursLeft @ "hours left");
 	if (S.DamagedItems.Length == 0 && S.Repairs.Length == 0)
 		Out.AddItem("no damaged gear");
+}
+
+function War(out array<string> Out)
+{
+	local XComGameState_LWStrategy S;
+	local array<int> ByKind, Groups;
+	local string Line;
+	local int i;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Line = "passes";
+	for (i = 0; i < S.WarPasses.Length; i++)
+		Line @= i $ ":" $ S.WarPasses[i];
+	Out.AddItem(Line @ "| Dynamic War" @ class'LWX2SecondWave'.static.On(9) @ "resources" @ S.AlienResources @ "aggression" @ S.AlienAggression @ "day" @ S.Days());
+	// (Objectives counted once each: an objective's UFOs share a group.)
+	ByKind.Length = 11;
+	for (i = 0; i < S.Ufos.Length; i++)
+		if (Groups.Find(S.Ufos[i].Group) == INDEX_NONE)
+		{
+			Groups.AddItem(S.Ufos[i].Group);
+			ByKind[Clamp(S.Ufos[i].Objective, 0, 10)]++;
+		}
+	Line = "objectives";
+	for (i = 0; i < ByKind.Length; i++)
+		if (ByKind[i] > 0)
+			Line @= class'LWStrategyRules'.static.ObjectiveName(i) $ ":" $ ByKind[i];
+	Out.AddItem(Line);
 }
 
 function Meld(out array<string> Out)

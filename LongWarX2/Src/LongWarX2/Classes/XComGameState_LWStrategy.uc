@@ -128,6 +128,9 @@ var int Hours;
 var int Month;
 var int AlienResources;
 var int AlienAggression;
+/** Dynamic War's alien AI (second wave #9, XGStrategyAI.TallySquadCost; features/lw-dynamic-war.md): each mission kind's
+ *  passes so far (XGStrategy.m_arrMissionTotals[30 + kind]). */
+var array<int> WarPasses;
 /**
  * The aliens' research, as Long War keeps it (features/lw-aliens.md): each day it is the campaign's days plus this bonus
  * (XGFacility_Barracks.HealAndRest, eRecap_Score), which starts at AlienResearchStart and grows with the aliens' successes:
@@ -604,6 +607,12 @@ function Tick(XComGameState NewGameState)
 	local int i, Expired;
 
 	Hours++;
+	// Dynamic War's alien AI, Long War's two half-hour updates in the hour.
+	if (class'LWX2SecondWave'.static.On(9))
+	{
+		DynamicWar();
+		DynamicWar();
+	}
 	class'LWBase'.static.Tick(self);
 	class'LWFatigue'.static.Tick(NewGameState, self);
 	class'LWHangar'.static.Hour(NewGameState, self);
@@ -711,7 +720,20 @@ function PlanMonth()
 	`log("LongWarX2: the aliens' research" @ AlienResearch() @ "on day" @ Days() @ "(bonus" @ AlienResearchBonus $ ")", , 'LongWarX2');
 	Tier = Clamp(AlienResources / 50, 0, 4);
 	Start = Month * HoursPerMonth();
-	if (class'LWStrategyRules'.static.PlanFor(Tier, Clamp(AlienAggression, 0, 4), Cell))
+	// Dynamic War: no table; its own branch (an infiltration or the HQ assault at the top tiers), the rest of its missions
+	// from its passes (DynamicWar), and the aggression not lowered each month.
+	if (class'LWX2SecondWave'.static.On(9))
+	{
+		if ((Tier == 3 && AlienAggression >= 4) || (Tier == 4 && AlienAggression >= 4))
+		{
+			if (HQAssaultCounter % 3 == 2)
+				AddHQAssault(Start);
+			HQAssaultCounter++;
+		}
+		else if (Tier == 4)
+			AddUfos(7, Start);
+	}
+	else if (class'LWStrategyRules'.static.PlanFor(Tier, Clamp(AlienAggression, 0, 4), Cell))
 	{
 		for (i = 0; i < Cell.Ufos.Length; i++)
 			AddUfos(Cell.Ufos[i], Start);
@@ -748,7 +770,8 @@ function PlanMonth()
 		AddHQAssault(Start);
 		HQAssaultCounter = 3;
 	}
-	AlienAggression = Clamp(AlienAggression - 2, 0, 4);
+	if (!class'LWX2SecondWave'.static.On(9))
+		AlienAggression = Clamp(AlienAggression - 2, 0, 4);
 	AddOverseers(Start);
 	if (Month == 0)
 	{
@@ -828,7 +851,7 @@ function bool ShouldHunt(LWUfo U, float Intact)
  * An objective of the plan (Long War's AddUFOs): its target and start day by objective, its ship by
  * the aliens' resources and the campaign's day.
  */
-function AddUfos(int Objective, int MonthStart)
+function AddUfos(int Objective, int MonthStart, optional bool bNow)
 {
 	local array<int> Targets;
 	local int Country, Tries;
@@ -861,7 +884,87 @@ function AddUfos(int Objective, int MonthStart)
 	default: // 7, 8: the terror target
 		Country = TerrorTarget();
 	}
-	AddObjective(Objective, MonthStart, class'LWStrategyRules'.static.DayFor(Objective), Country, Objective == 7 ? -1 : class'LWStrategyRules'.static.ShipFor(Objective, AlienResources, Days()));
+	// (Dynamic War's missions start at once: Long War's start day 0.)
+	AddObjective(Objective, bNow ? Hours : MonthStart, bNow ? 0 : class'LWStrategyRules'.static.DayFor(Objective), Country, Objective == 7 ? -1 : class'LWStrategyRules'.static.ShipFor(Objective, AlienResources, Days()));
+}
+
+/**
+ * Dynamic War's alien AI (second wave #9; XGStrategyAI.TallySquadCost, run each half hour): each mission kind has a cost from
+ * the aliens' resources R (9 x month to 300) and aggression A (0 to 8), times SW_MARATHON, and gains a pass with the chance
+ * cost / (10000 / SW_ELERIUM_LOSS); on its SW_ELERIUM_LOSS-th pass it comes at once and its count starts again: a UFO of the
+ * objective (0 recon, 1 scouting, 2 harvest, 4 hunt, 8 air raid), an abduction (5), a terror mission (6), one aggression
+ * fewer (10). Long War's late mission (9, its eObjective_Infiltrate_2) is not in the port, here as in the monthly plan.
+ */
+function DynamicWar()
+{
+	local array<float> Cost;
+	local float R, A, Marathon;
+	local int k, Passes, Sides, Country;
+	local array<int> Targets;
+
+	Passes = Max(1, class'LWX2SecondWave'.default.MarathonPasses);
+	Marathon = class'LWX2SecondWave'.default.Marathon;
+	if (WarPasses.Length < 11)
+		StartWar();
+	R = Clamp(AlienResources, 9 * Month, 300);
+	AlienAggression = Clamp(AlienAggression, 0, 8);
+	A = AlienAggression;
+	Cost.Length = 11;
+	Cost[0] = (0.07 * R) * Marathon;
+	Cost[1] = (21 + 0.05 * R + A) * Marathon;
+	Cost[2] = (21 - 0.07 * R) * Marathon;
+	Cost[4] = (-3 + 0.025 * R + 2 * A) * Marathon;
+	Cost[5] = (27 + 0.034 * R - 1.5 * A) * Marathon;
+	Cost[6] = (0.03 * R + 1.5 * A) * Marathon;
+	Cost[8] = (0.05 * R + A) * Marathon;
+	Cost[9] = (0.01 * R + 0.5 * A) * Marathon;
+	Cost[10] = A * 5 * Marathon;
+	Sides = 10000 / Passes;
+	for (k = 0; k < 11; k++)
+		if (Rand(Sides) < int(Cost[k]))
+			WarPasses[k]++;
+	for (k = 0; k < 11; k++)
+	{
+		if (WarPasses[k] < Passes)
+			continue;
+		WarPasses[k] = 0;
+		switch (k)
+		{
+		case 0: case 1: case 2: case 4: case 8:
+			AddUfos(k, Hours, true);
+			break;
+		case 5:
+			Targets.Length = 0;
+			for (Country = 0; Country < Countries.Length; Country++)
+				if (!Countries[Country].bLeft && !IsTerrorTarget(Country))
+					Targets.AddItem(Country);
+			if (Targets.Length > 0)
+				AddObjective(5, Hours, 0, Targets[Rand(Targets.Length)], -1);
+			break;
+		case 6:
+			AddObjective(6, Hours, 0, Rand(4) == 0 ? RandomCountry() : TerrorTarget(), -1);
+			break;
+		case 10:
+			AlienAggression = Max(0, AlienAggression - 1);
+			break;
+		}
+		`log("LongWarX2: Dynamic War: kind" @ k @ "comes on day" @ Days(), , 'LongWarX2');
+	}
+}
+
+/** Dynamic War's starting passes (XGStrategy: kinds 0, 1, 2, 5, 6 at 0.2, 0.7, 0.4, 0.7, 0.5 of SW_ELERIUM_LOSS). */
+function StartWar()
+{
+	local int Passes;
+
+	Passes = class'LWX2SecondWave'.default.MarathonPasses;
+	WarPasses.Length = 0;
+	WarPasses.Length = 11;
+	WarPasses[0] = int(Passes * 0.2);
+	WarPasses[1] = int(Passes * 0.7);
+	WarPasses[2] = int(Passes * 0.4);
+	WarPasses[5] = int(Passes * 0.7);
+	WarPasses[6] = int(Passes * 0.5);
 }
 
 /** An objective's UFOs, one per phase, each launching no earlier than the one before. */

@@ -107,7 +107,9 @@ out.push('', '[LongWarX2.LWGearRepair]', `WearChance=${ini('SW_RARE_PSI')}`, `Ti
   ...[...core.matchAll(/^BalanceMods_Classic=\(eType=(\d+),.*?iWill=(-?\d+)/gm)].filter((m) => Number(m[2]) > 0).map((m) => `+Chances=(Item=${m[1]}, Chance=${m[2]})`))
 // Red Fog's caps (SW_ABDUCTION_SITES and SW_COVER_INCREASE, as Long War's ApplyHPStatPenalties reads them).
 out.push('', '[LongWarX2.LWX2SecondWave]', `RedFogAim=${ini('SW_ABDUCTION_SITES')}`, `RedFogMobility=${ini('SW_COVER_INCREASE')}`,
-  `SatelliteIncrease=${ini('SW_SATELLITE_INCREASE')}`)
+  `SatelliteIncrease=${ini('SW_SATELLITE_INCREASE')}`,
+  // Dynamic War (#9; features/lw-dynamic-war.md): its master coefficient and the passes a mission needs.
+  `Marathon=${ini('SW_MARATHON')}`, `MarathonPasses=${ini('SW_ELERIUM_LOSS')}`)
 // Quick and Dirty (ContBalance_Classic[33]) and Green Fog (ContBalance_Normal[1] and [2]: its toggle's step, its most).
 const cont = (arr, k) => core.match(new RegExp(`^${arr}\\[${k}\\]=\\(([^)]*)\\)`, 'm'))[1]
 const field = (s, f) => Number(s.match(new RegExp(`${f}=(-?\\d+)`))[1])

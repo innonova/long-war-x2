@@ -74,3 +74,25 @@ The live ones:
 ## Decisions
 
 - Its own feature: it is a variant of the whole strategy layer, not one rule.
+
+## Report (2026-11-17, the alien AI)
+
+- **Dynamic War's own monthly branch** (`XComGameState_LWStrategy.PlanMonth`, from Long War's `else` after its table):
+  no table of UFOs, abductions and terror. At tier 4 with aggression below 4, an infiltration. At tier 3 or 4 with aggression
+  4 or more, the HQ assault's count (every third such month). The aggression is not lowered each month. The resources'
+  growth, the first month's infiltration, month 12's HQ assault and the Overseers are as before.
+- **The passes** (`DynamicWar`, run twice in each hour of Long War's clock as Long War's two half-hour updates; `WarPasses`,
+  started by `StartWar` at Long War's fractions): each kind's cost line from the resources and aggression, the pass roll,
+  and on the 40th pass the mission at once (`AddUfos(…, bNow)`, `AddObjective(…, Hours, 0, …)`):
+  - a UFO of objective 0, 1, 2, 4 or 8;
+  - an abduction in a council country not under terror;
+  - terror (a quarter of the time anywhere, else the terror target);
+  - aggression one lower.
+- **Not in the port, here as in the standard plan:** Long War's late mission (`AddLateMission`, its `eObjective_Infiltrate_2`
+  over a continent where XCOM flies Firestorms). Its passes count and fire to nothing.
+- **The numbers** in `XComLWGear.ini` (`Marathon=0.5`, `MarathonPasses=40`; `scripts/gear-config.mjs`).
+- **Checked on wingpu** (new test aid `war`: the passes, resources, aggression, the objectives in the plan by kind):
+  - **Standard Long War, days 30 to 59:** 4 scouting, 2 harvest, 5 abductions, 1 terror.
+  - **Dynamic War, the same days:** 1 recon, 2 scouting, 3 abductions, 1 terror. About half, as `SW_MARATHON` 0.5 means.
+  - The passes rose and fell back to 0 as missions came: abduction 33 → 39 → 2.
+- **Next:** phase 2, the economy's scalars.
