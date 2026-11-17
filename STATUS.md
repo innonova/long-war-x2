@@ -40,6 +40,7 @@ buttons and text, no art).
 | Squad selection and loadout | most | X2 | XCOM 2's squad select and armory for a Long War mission (Long War's squad size, rested soldiers first, Long War's launch, backing out leaves the mission) | the armory and loadout still in the Avenger's armory (squad select itself is in EW's hangar, all slots picked) | `lw-squad-select` |
 | Fatigue | done | X2 | Long War's hours, all in, shown as War of the Chosen's Tired; psi powers' and gene mods' hours, officers' hours, critical wounds' hours, Stay Frosty, the psi armour, Gift of Osiris and Call to Arms | | `lw-fatigue` |
 | Soldiers: recruits, ranks | done | X2 | Long War's eight classes, ranks, stat gains and experience in XCOM 2's barracks; Long War's random rookie stats; the officer powers on experience (So Shall You Fight, Into the Breach) | | `lw-classes` |
+| Second-wave options | none | - | | Long War's 31 campaign options (Damage Roulette, Red Fog, The Friendly Skies, Dynamic War …): neither the choice nor their rules | `lw-second-wave` |
 
 ## Tactical
 
