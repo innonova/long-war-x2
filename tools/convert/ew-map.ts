@@ -950,8 +950,8 @@ for (const p of pieces) if (p.lightmap) lmPairs.set(exports[p.lightmap.color - 1
 const lmDirs = new Set(lmPairs.values())
 const dirMips = new Map<string, Uint8Array>()
 if (lmDirs.size)
-  inlineTextures(bytes.slice(), exports, meta.names, dirname(src), stubAt + stub.length, (e) => !lmDirs.has(e), (e, _format, mip) => {
-    dirMips.set(`${e.fullName}:${mip.length}`, mip.slice())
+  inlineTextures(bytes.slice(), exports, meta.names, dirname(src), stubAt + stub.length, (e) => !lmDirs.has(e), (e, _format, mip, w, h) => {
+    dirMips.set(`${e.fullName}:${w}x${h}`, mip.slice())
     return undefined
   })
 // The combined atlases made plain textures (Texture2D's class, the lightmap's flags at the end left off): bound to our
@@ -959,11 +959,11 @@ if (lmDirs.size)
 const tex2dClass = exports.find((e) => e.type === 'Texture2D')
 if (tex2dClass) for (const e of lmPairs.keys()) v.setInt32(e.entryOffset + 0, v.getInt32(tex2dClass.entryOffset + 0, true), true)
 const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'),
-  (e, format, mip) => {
+  (e, format, mip, w, h) => {
     if (maskExports.has(e)) return maskMip(format, mip)
     const dir = lmPairs.get(e)
-    const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${mip.length}`) : undefined
-    return d ? combineLightmapMip(mip, d) : undefined
+    const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${w}x${h}`) : undefined
+    return d ? combineLightmapMip(mip, d, w, h) : undefined
   },
   (e) => (tex2dClass && lmPairs.has(e) ? 4 : 0))
 const outBytes = new Uint8Array(bytes.length + stub.length + tex.appended.length)

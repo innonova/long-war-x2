@@ -106,20 +106,18 @@ export function encodeDXT1(rgba: Uint8Array, w: number, h: number): Uint8Array {
   return out
 }
 
-/** The side of a square DXT1 mip of this many bytes (EW's lightmap atlases are square). */
-export function dxt1Side(bytes: number): number {
-  return Math.max(1, Math.round(Math.sqrt(bytes * 2)))
-}
-
-/** A colour atlas's mip combined with the directional atlas's mip of the same size: colour × mean of the directions. */
-export function combineLightmapMip(color: Uint8Array, dir: Uint8Array): Uint8Array {
-  const side = dxt1Side(color.length)
-  if (dir.length !== color.length || side < 4) return color
-  const c = decodeDXT1(color, side, side)
-  const d = decodeDXT1(dir, side, side)
-  for (let i = 0; i < side * side; i++) {
+/** A colour atlas's mip combined with the directional atlas's mip of the same size (width × height): colour × mean of
+ *  the directions. The mip comes back the same size in bytes (a different size, as from assuming square atlases, would be
+ *  read past its end as it is uploaded: XCOM 2 crashed with heap corruption). */
+export function combineLightmapMip(color: Uint8Array, dir: Uint8Array, w: number, h: number): Uint8Array {
+  const expected = 8 * Math.max(1, Math.ceil(w / 4)) * Math.max(1, Math.ceil(h / 4))
+  if (dir.length !== color.length || color.length !== expected || w < 4 || h < 4) return color
+  const c = decodeDXT1(color, w, h)
+  const d = decodeDXT1(dir, w, h)
+  for (let i = 0; i < w * h; i++) {
     const k = (d[4 * i]! + d[4 * i + 1]! + d[4 * i + 2]!) / (3 * 255)
     for (let j = 0; j < 3; j++) c[4 * i + j] = Math.round(c[4 * i + j]! * k)
   }
-  return encodeDXT1(c, side, side)
+  const out = encodeDXT1(c, w, h)
+  return out.length === color.length ? out : color
 }

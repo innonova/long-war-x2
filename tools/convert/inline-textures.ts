@@ -30,7 +30,7 @@ export function inlineTextures(
   base: number,
   skip: (e: Export) => boolean = () => false,
   /** A texture's mips made otherwise (by its pixel format), as they are written: the masks (mask-textures.ts). */
-  transform?: (e: Export, format: string, mip: Uint8Array) => Uint8Array | undefined,
+  transform?: (e: Export, format: string, mip: Uint8Array, width: number, height: number) => Uint8Array | undefined,
   /** Bytes left off the end of a texture's data (a LightMapTexture2D made a Texture2D: its lightmap flags). */
   trimEnd: (e: Export) => number = () => 0,
 ): { appended: Uint8Array; textures: number; mips: number } {
@@ -114,9 +114,9 @@ export function inlineTextures(
     push(i32s(n))
     for (let k = 0; k < n; k++) {
       const read = bulk()
-      const data = read && transform ? (transform(e, format, read) ?? read) : read
       const w = v.getInt32(o, true)
       const h = v.getInt32(o + 4, true)
+      const data = read && transform ? (transform(e, format, read, w, h) ?? read) : read
       o += 8
       writeBulk(data)
       push(i32s(w, h))
