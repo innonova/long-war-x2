@@ -13,12 +13,14 @@
 class UILWEWHub extends UILWEWScreen config(LWEWMaps);
 
 /** The hub in place of the Geoscape as the strategy layer's root (off while it is being made: features/lw-base-view.md). */
+/** The tab's anchor points EW's submenu attaches to (TabAnchorsToHUD). */
+var array<string> Anchors;
 var config bool Enabled;
 
 /** EW's words, written from the player's install (scripts/lw-words.mjs, makeHubWords). */
 var localized string RoomNames[5];
 var localized string MissionControlName;
-var localized string NewResearch, BuildItems, BuildItemsHelp, BuildFacilities, BuildFacilitiesHelp, Foundry, FoundryHelp;
+var localized string NewResearch, NewResearchHelp, ChangeResearch, ChangeResearchHelp, GeneLab, GeneLabHelp, BuildItems, BuildItemsHelp, BuildFacilities, BuildFacilitiesHelp, Foundry, FoundryHelp;
 var localized string ViewSoldiers, ViewSoldiersHelp, AircraftList, AircraftListHelp, SituationRoom, GreyMarket, GreyMarketHelp;
 var localized string LaunchSatellite, LaunchSatelliteHelp;
 var localized string RepairBay, RepairBayHelp;
@@ -93,9 +95,34 @@ function ShowRoomMenu()
 	CallNow("subMenuMC.Show");
 	// (Show waits for a frame on the hidden clip, which XCOM 2's Flash does not advance: shown at once.)
 	CallNow("subMenuMC.onInvalidate");
+	TabAnchorsToHUD(Room);
 	CallNow("subMenuMC.UpdateLocation");
 	SelectOption(0);
 	SetTimer(0.15, true, nameof(HoverOption));
+}
+
+/**
+ * The room's tab's anchors (fsmAnchorLeft, fsmAnchorRight: where EW's submenu attaches, UpdateLocation) in the HUD's own
+ * units. The tab takes them with localToGlobal, which in EW was the HUD's stage; here the HUD is drawn STAGE_SCALE times
+ * larger (UILWEWScreen.ScaleToStage), so they came out that much too far right and down, and the menus of the right-hand
+ * rooms off the screen (ew-compare, 2026-11-17). Taken again, then divided back.
+ */
+function TabAnchorsToHUD(int i)
+{
+	local string Tab, A;
+	local float X0, Y0;
+
+	if (i < 0)
+		return;
+	Tab = "theMenu.facilityMenu." $ i;
+	CallNow(Tab $ ".PositionRealized");
+	X0 = Movie.GetVariableNumber(MCPath $ "._x");
+	Y0 = Movie.GetVariableNumber(MCPath $ "._y");
+	foreach Anchors(A)
+	{
+		Movie.SetVariableNumber(MCPath $ "." $ Tab $ "." $ A $ ".x", (Movie.GetVariableNumber(MCPath $ "." $ Tab $ "." $ A $ ".x") - X0) / STAGE_SCALE);
+		Movie.SetVariableNumber(MCPath $ "." $ Tab $ "." $ A $ ".y", (Movie.GetVariableNumber(MCPath $ "." $ Tab $ "." $ A $ ".y") - Y0) / STAGE_SCALE);
+	}
 }
 
 /** The option under the mouse selected, its help shown, as in EW (the submenu's own mouse events do not reach XCOM 2:
@@ -177,8 +204,9 @@ function ShowBase()
 
 	B = class'LWX2EWBase'.static.Get(self);
 	B.Show();
-	if (Room >= 0)
-		B.LookAt(RoomCameras[Room], 0);
+	// Outside a room, the base's own view: a screen over the hub (Mission Control) may have turned the camera to its room,
+	// and the hub came back looking at it (ew-compare, 2026-11-17).
+	B.LookAt(Room >= 0 ? RoomCameras[Room] : 'Base', 0);
 	class'UILWEWStrategyHUD'.static.ShowIfAvailable();
 }
 
@@ -259,7 +287,12 @@ function EnterRoom(int i)
 	switch (i)
 	{
 	case 0:
+		// (EW's research menu, XGResearchUI.UpdateMainMenu: the project, then the Genetics Lab once it is built. EW's
+		// Research Archives and Research Credits are not in the port yet.)
 		RoomOptions.AddItem(OPT_RESEARCH);
+		S = class'XComGameState_LWStrategy'.static.Get();
+		if (S != none && class'LWBase'.static.Count(S, 23) > 0)
+			RoomOptions.AddItem(OPT_GENE);
 		break;
 	case 1:
 		RoomOptions.AddItem(OPT_ITEMS);
@@ -277,7 +310,8 @@ function EnterRoom(int i)
 		break;
 	case 2:
 		RoomOptions.AddItem(OPT_SOLDIERS);
-		// (As EW: each once its facility is built: the Officer Training School, the Psi Labs, the Genetics Lab.)
+		// (As EW: each once its facility is built: the Officer Training School, the Psi Labs. The Genetics Lab is in the
+		// research room's menu, as in EW.)
 		S = class'XComGameState_LWStrategy'.static.Get();
 		if (S != none && class'LWBase'.static.Count(S, 12) > 0)
 			RoomOptions.AddItem(OPT_OTS);
@@ -286,8 +320,6 @@ function EnterRoom(int i)
 			RoomOptions.AddItem(OPT_OFFICERS);
 		if (S != none && class'LWBase'.static.Count(S, 17) > 0)
 			RoomOptions.AddItem(OPT_PSI);
-		if (S != none && class'LWBase'.static.Count(S, 23) > 0)
-			RoomOptions.AddItem(OPT_GENE);
 		break;
 	case 3:
 		RoomOptions.AddItem(OPT_AIRCRAFT);
@@ -320,7 +352,11 @@ function string OptionName(int Option)
 {
 	switch (Option)
 	{
-	case OPT_RESEARCH: return Word(NewResearch, "Start a research project");
+	case OPT_RESEARCH:
+		// (EW's: Change Research Project while one is under way, else New.)
+		if (class'UIUtilities_Strategy'.static.GetXComHQ().GetCurrentResearchProject() != none)
+			return Word(ChangeResearch, "Change research project");
+		return Word(NewResearch, "Start a research project");
 	case OPT_ITEMS: return Word(BuildItems, "Build items");
 	case OPT_FACILITIES: return Word(BuildFacilities, "Build facilities");
 	case OPT_FOUNDRY: return Word(Foundry, "Foundry");
@@ -333,7 +369,7 @@ function string OptionName(int Option)
 	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
 	case OPT_AUGMENT: return Word(Augment, "Augment Soldiers");
 	case OPT_REPAIR: return Word(RepairBay, "Repair Bay");
-	case OPT_GENE: return class'LWBase'.static.FacilityName(23);
+	case OPT_GENE: return Word(GeneLab, class'LWBase'.static.FacilityName(23));
 	case OPT_OFFICERS: return Word(class'UILWOfficers'.default.Promotions, "Officer Promotions");
 	case OPT_EXALT: return "EXALT";
 	}
@@ -353,6 +389,9 @@ function string OptionHelp(int Option)
 	case OPT_SATELLITE: return LaunchSatelliteHelp;
 	case OPT_OTS: return OTSHelp;
 	case OPT_PSI: return PsiLabsHelp;
+	case OPT_RESEARCH:
+		return class'UIUtilities_Strategy'.static.GetXComHQ().GetCurrentResearchProject() != none ? ChangeResearchHelp : NewResearchHelp;
+	case OPT_GENE: return GeneLabHelp;
 	case OPT_AUGMENT: return AugmentHelp;
 	case OPT_REPAIR: return RepairBayHelp;
 	case OPT_OFFICERS: return class'UILWOfficers'.default.PromotionsHelp;
@@ -560,6 +599,8 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 
 defaultproperties
 {
+	Anchors(0) = "fsmAnchorLeft"
+	Anchors(1) = "fsmAnchorRight"
 	RoomCameras(0) = ScienceLab
 	RoomCameras(1) = ENGINEERING
 	RoomCameras(2) = BARRACKS
