@@ -49,7 +49,10 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   for XCOM aircraft", added to each weapon's to-hit in `XGItemTree.BuildShipWeapons`, the Foundry's versions too):
   `LWAirWar.WeaponFor`, weapons 1 to 7.
 - **Checked on wingpu:** the same Raven-1 against the same small UFO at Balanced: 39% of 1,000 simulated fights downed it with
-  the option off, 60% with it on (`logs/wingpu_friendly_skies_off.png`, `…_on.png`). **Not seen:** the options on XCOM 2's
-  new-campaign screen (the test campaigns are made by the control port, without it).
+  the option off, 60% with it on (`logs/wingpu_friendly_skies_off.png`, `…_on.png`).
+- **The screen, seen:** XCOM 2's new-campaign screen with Long War's difficulties (Normal, Classic, Brutal, Impossible, with
+  Long War's texts: the same fields of `[UIShellDifficulty]`; `logs/wingpu_lw_difficulties.png`) and, under its advanced
+  options, Long War's 31 options by their titles with each one's text below the list (`logs/wingpu_second_wave_options.png`).
+  A first version put title and text on one line; the list cut them.
 - **Corrected:** STATUS's "the Firestorm's refits" waited on this option by a misreading; Firestorms are refitted as
   interceptors are.

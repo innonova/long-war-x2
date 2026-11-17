@@ -709,9 +709,11 @@ export function makeRequestWords({ strategyLoc, countryIds }) {
   return { text: ['[UILWEWCouncilRequest]', ...found.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: found.length }
 }
 
-/** Long War's second-wave options' titles and texts (features/lw-second-wave.md) for XCOM 2's new-campaign screen
- *  (UIShellDifficulty, whose options XComUI.ini sets to Long War's 31 in its order): "Damage Roulette (#0): …" as each
- *  option's line, the text as its tooltip, by the number Long War's title carries ([UIGameplayToggles]). */
+/** XCOM 2's new-campaign screen (UIShellDifficulty) in Long War's words: its difficulties' names and texts (Long War's
+ *  own [UIShellDifficulty], the same fields: Normal, Classic, Brutal, Impossible, which the port's four are), and Long War's
+ *  second-wave options (features/lw-second-wave.md; XComUI.ini sets the screen's list to Long War's 31 in its order): each
+ *  option's line its title ("Damage Roulette (#0)"), its text the description shown under the list, by the number Long War's
+ *  title carries ([UIGameplayToggles]). */
 export function makeSecondWaveWords({ loc }) {
   const text = loc.replace(/\r/g, '')
   const titles = new Map()
@@ -719,14 +721,20 @@ export function makeSecondWaveWords({ loc }) {
   for (const m of text.matchAll(/^m_arrGameplayToggleTitle\[([^\]]+)\]="(.*)"\s*$/gm)) titles.set(m[1], m[2])
   for (const m of text.matchAll(/^m_arrGameplayToggleDesc\[([^\]]+)\]="(.*)"\s*$/gm)) descs.set(m[1], m[2])
   const lines = []
+  let options = 0
   for (const [key, title] of titles) {
     const n = title.match(/\(#(\d+)\)/)?.[1]
     if (n === undefined) continue
-    const desc = descs.get(key) ?? ''
-    lines.push(`SecondWaveDescriptions[${n}]="${title}${desc ? ': ' + desc : ''}"`)
-    lines.push(`SecondWaveTooltips[${n}]="${desc}"`)
+    lines.push(`SecondWaveDescriptions[${n}]="${title}"`)
+    lines.push(`SecondWaveTooltips[${n}]="${descs.get(key) ?? ''}"`)
+    options++
   }
-  return { text: lines.length ? ['[UIShellDifficulty]', ...lines, ''].join('\r\n') : '', named: lines.length / 2 }
+  let difficulties = 0
+  for (const m of text.matchAll(/^(m_arrDifficultyTypeStrings|m_arrDifficultyDescStrings)\[([0-3])\]="(.*)"\s*$/gm)) {
+    lines.push(`${m[1]}[${m[2]}]="${m[3]}"`)
+    if (m[1] === 'm_arrDifficultyTypeStrings') difficulties++
+  }
+  return { text: lines.length ? ['[UIShellDifficulty]', ...lines, ''].join('\r\n') : '', named: options, difficulties }
 }
 
 /** Mobile cover's name on a shot's breakdown (X2Effect_LWMobileCover): Long War's for the Alloy SHIV's (m_strShivCoverName). */
