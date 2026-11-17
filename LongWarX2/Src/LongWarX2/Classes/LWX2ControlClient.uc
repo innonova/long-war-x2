@@ -2475,6 +2475,8 @@ function XComUnits(out array<string> Out)
 	for (i = 0; i < Units.Length; i++)
 		Out.AddItem(i @ Units[i].GetFullName() @ "(" $ Units[i].GetMyTemplateName() $ "," @ Units[i].GetSoldierClassTemplateName() $ ") at" @ Units[i].TileLocation.X @ Units[i].TileLocation.Y @ Units[i].TileLocation.Z
 			@ "ap" @ Units[i].ActionPoints.Length @ "sight" @ int(Units[i].GetCurrentStat(eStat_SightRadius)) @ "hp" @ int(Units[i].GetCurrentStat(eStat_HP)) $ "/" $ int(Units[i].GetMaxStat(eStat_HP))
+			@ "mob" @ int(Units[i].GetCurrentStat(eStat_Mobility)) @ "def" @ int(Units[i].GetCurrentStat(eStat_Defense))
+			@ "weapon" @ (Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon) != none ? string(Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon).GetMyTemplateName()) : "-")
 			$ (Units[i].IsConcealed() ? " concealed" : "") $ (Units[i].IsUnitAffectedByEffectName('RangerStealth') ? " stealth" : ""));
 }
 

@@ -28,6 +28,8 @@ struct LWWeaponDef
 	/** XCOM 2's range table: SHORT, MEDIUM, LONG. */
 	var name Range;
 	var bool Infinite;
+	/** Mobility and defence while carried (Long War's BalanceMods_Classic line: X2Ability_LWWeaponStats). */
+	var int Mobility, Defense;
 };
 
 /** A Long War soldier armour (its Armors= line). */

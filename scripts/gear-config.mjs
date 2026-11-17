@@ -25,6 +25,9 @@ const out = [
   '; reloads; Category: the classes that may carry it; Infinite: held without limit (Long War\'s ballistic tier).',
   '[LongWarX2.LWGearRules]',
 ]
+/** A field of an item's BalanceMods_Classic line (Long War's extra weapon and item stats: "iDefense -- defense, works only for
+ *  weapons and items; iMobility -- mobility, works only for weapons/items"; XGTacticalGameCore.GetUpgradeAbilities). */
+const balanceOf = (id, k) => Number(core.match(new RegExp(`^BalanceMods_Classic=\\(eType=${id},.*?${k}=(-?\\d+)`, 'm'))?.[1] ?? 0)
 for (const items of Object.values(FAMILIES)) {
   for (const item of items) {
     if (item === null) continue
@@ -37,7 +40,7 @@ for (const items of Object.values(FAMILIES)) {
       `+Weapons=(Item=${item}, Enum=${ITEMS[item]}, Family=${family}, Tier=${TIERS[tier]}, Damage=${w.iDamage}, Crit=${w.iCritical}, Aim=${w.iOffenseBonus}, ` +
         `Ammo=${Number(w.iSuppression) % 100}, AmmoConserved=${Math.floor(Number(w.iSuppression) / 100) || Number(w.iSuppression) % 100}, Environment=${w.iEnvironmentDamage ?? 0}, Category=${categoryFor(w.props, item)}, ` +
         `Slot=${secondary ? 'eInvSlot_SecondaryWeapon' : 'eInvSlot_PrimaryWeapon'}, Kind=${kind}, Look=${look}, Tech=${TECH[tier]}, ` +
-        `Range=${RANGE[family]}, Infinite=${infinite.has(item)})`,
+        `Range=${RANGE[family]}, Infinite=${infinite.has(item)}, Mobility=${balanceOf(item, 'iMobility')}, Defense=${balanceOf(item, 'iDefense')})`,
     )
   }
 }
@@ -64,8 +67,6 @@ out.push(
   '; takes; Damage, Environment; Radius and Range in tiles; Aim, Crit, HP while carried; Ammo: shots x this; Classes: who may carry it.',
 )
 const scopeCrit = Number(core.match(/^FOUNDRY_SCOPE_CRIT_BONUS=(\d+)/m)[1])
-/** A field of an item's BalanceMods_Classic line. */
-const balanceOf = (id, k) => Number(core.match(new RegExp(`^BalanceMods_Classic=\\(eType=${id},.*?${k}=(-?\\d+)`, 'm'))?.[1] ?? 0)
 for (const x of SMALL) {
   const w = weapons.get(x.item)
   if (!w) throw new Error(`no Weapons= line for small item ${x.item}`)
@@ -81,7 +82,8 @@ for (const x of SMALL) {
       (x.item === 74 || x.item === 79 ? `, ScopeCrit=${Math.trunc(scopeCrit / (x.item === 79 ? 2 : 1))}` : '') +
       (x.weaponCrit ? `, WeaponCrit=${x.weaponCrit}` : '') +
       (x.psi ? ', Psionic=true' : '') + (x.stealth ? ', Stealth=true' : '') + (x.respirator ? ', Respirator=true' : '') +
-      (x.balance ? `, Defense=${balanceOf(x.item, 'iDefense')}, Mobility=${balanceOf(x.item, 'iMobility')}, DR=${itemDR.get(x.item) ?? 0}` : '') +
+      // (Defense and mobility while carried: every item's line, as GetBackpackStatBonus adds them; DR only where read.)
+      `, Defense=${balanceOf(x.item, 'iDefense')}, Mobility=${balanceOf(x.item, 'iMobility')}` + (x.balance ? `, DR=${itemDR.get(x.item) ?? 0}` : '') +
       (anyone ? '' : `, Classes=(${classes.map((c) => `LWS_${c}`).join(',')})`) +
       ')',
   )

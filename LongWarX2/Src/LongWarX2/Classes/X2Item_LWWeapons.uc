@@ -71,6 +71,9 @@ static function X2WeaponTemplate WeaponTemplate(LWGearRules.LWWeaponDef W)
 		Template.Abilities.AddItem('Reload');
 		Template.Abilities.AddItem('HotLoadAmmo');
 	}
+	// Long War's mobility and defence for carrying it (shotguns and SMGs lighter, LMGs and sniper rifles heavier).
+	if (W.Mobility != 0 || W.Defense != 0)
+		Template.Abilities.AddItem(class'X2Ability_LWWeaponStats'.static.StatsFor(W.Item));
 	Template.StartingItem = W.Infinite;
 	Template.bInfiniteItem = W.Infinite;
 	Template.CanBeBuilt = false;

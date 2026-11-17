@@ -578,3 +578,21 @@ All four of the items left open above are in.
   for (several of the numbers Long War reused) give nothing.
 - **Checked on wingpu:** item 71 given to five soldiers: in the mission each had Steadfast's effects.
 - `BalanceMods` (mobility and will by weapon) stay open.
+
+## Report (2026-11-17, BalanceMods: weapons' and items' mobility and defence)
+
+**Read** (stock Long War's `DefaultGameCore.ini`, its "extra weapon and armor stat configuration (in BalanceMods_Classic
+entries)"; `XGTacticalGameCore.GetInventoryStatModifiers`, `GetUpgradeAbilities` and the repurposed
+`CalcHitChance_NonUnitTarget`, which sums a line's field by stat): an item's `iMobility` and `iDefense` apply to whoever
+carries it, weapon or backpack item; `iHP` is damage reduction (already read for armours and three items).
+- **Weapons** now carry theirs as a stat ability (`X2Ability_LWWeaponStats`, `LWWeaponStats_<item>`, on the weapon template
+  while equipped): shotguns +1, SMGs +3 (the plasma SMG +4), LMGs -1 to -2, sniper rifles -1 and -2 by tier, the Alloy
+  Cannon's +1 and defence +6 (item 14).
+- **Small items:** every one's mobility and defence is now read (grenades -1 each), not only the three marked before.
+- **Not ported:** `iWill`, "the maximum chance for an item to be damaged after a mission in which the soldier was reduced to
+  0 hit points": Long War's strategy code never damages a soldier's item (`XGStorage.DamageItem` is called from debug code
+  only), so there is nothing to port. `iCritHit` (a weapon model's size) and `iDamage` (flight fuel) are looks and the
+  Hover SHIV's fuel.
+
+**Checked on wingpu:** a sniper given the SMG (231) had `LWWeaponStats_231` and a gunner's LMG (214) `LWWeaponStats_214`
+in a mission.
