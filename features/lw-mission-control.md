@@ -192,3 +192,14 @@ panel: EW has no Mission Control alert for them (a cinematic, the Situation Room
   the consoles and the stairs, as EW shows the room. Checked on wingpu (`logs/wingpu_ew_mission_control_room.png`).
 - **The globe there** is a plain grey sphere: the hologlobe's material is not converted (and EW's globe, with the UFOs and
   missions on it, is not ported). Next.
+
+## Report (2026-11-17, the hologlobe)
+
+- **EW's hologlobe in EW's teal:** the globe in Mission Control's room (`Command1.QX_Globe.Globe` with EW's `M_Globe_Holo`)
+  takes EW's holographic earth as the setup makes it teal for the Situation Room (`FX_Globe.T_Earth_Holo`,
+  `tools/convert/ew-earth.ts`), by a new override of a converted material's texture (`LWX2EWMapPieces.LookOverrides`, with the
+  package to load first); its own copy is EW's raw channels. EW's 3D screens (`UIDisplayMaterial`: the interception display
+  hung in front of the globe, the armory's) are skipped: EW draws movies on them, the port drew grey slabs.
+- **Checked on wingpu:** Mission Control with the teal globe, Africa and Europe on it, nothing in front
+  (`logs/wingpu_ew_mission_control_globe.png`).
+- **Not done:** the globe does not turn or show UFOs and missions (EW's Geoscape does); the moon beside it stays grey.

@@ -73,6 +73,17 @@ var config string PropParent;
 var config string FoliageParent;
 /** The parent for EW's cut-out materials (tree cards, signs, fences, road paint), given the look's mask as its Masks. */
 var config string MaskedParent;
+/** EW materials given another texture than the one the converter found (by the material's path in the converted level):
+ *  the base's hologlobe takes EW's holographic earth in EW's teal, which the setup makes for the Situation Room
+ *  (tools/convert/ew-earth.ts), where its own copy is EW's raw channels. */
+struct LWX2LookOverride
+{
+	var string Material;
+	var string Diffuse;
+	/** An object of the package the texture is in, loaded first (the package is loaded with it). */
+	var string Load;
+};
+var config array<LWX2LookOverride> LookOverrides;
 var config string AlienParent;
 /** Scalars set on every stand-in (SpecularScale 0: the parents' placeholder mask made EW's surfaces glossy and grey). */
 var config array<LWX2Scalar> StandinScalars;
@@ -565,7 +576,7 @@ static function MaterialInterface PlainStandin(string Path, Object InOuter)
 /** The material a slot gets: the EW material's XCOM 2 stand-in, made once; the EW material itself when it has none. */
 static function MaterialInterface MaterialFor(string Path, Object InOuter, out array<LWX2Standin> Standins, optional LWX2EWMapData D)
 {
-	local int k;
+	local int k, i;
 	local LWX2Look L;
 	local LWX2Standin S;
 	local string ParentPath;
@@ -585,6 +596,13 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	if (k != INDEX_NONE)
 	{
 		L = D.Looks[k];
+		i = default.LookOverrides.Find('Material', Path);
+		if (i != INDEX_NONE)
+		{
+			if (default.LookOverrides[i].Load != "")
+				DynamicLoadObject(default.LookOverrides[i].Load, class'Object', true);
+			L.Diffuse = default.LookOverrides[i].Diffuse;
+		}
 		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : ((L.Kind == 'Masked' && default.MaskedParent != "") ? default.MaskedParent : default.PropParent));
 	}
 	if (k != INDEX_NONE && L.Diffuse == "" && default.PropParent != "" && !Matches(Path, default.SkipMaterials))
