@@ -82,3 +82,17 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   other reads of unit values in loops checked (none affected).
 - **Not ported:** Long War also shortens a hurt unit's throwing range by the aim penalty's share (`GetMoveModifierCost`).
 - **Checked on wingpu:** Red Fog on, a soldier hurt to 2/6: aim −23, mobility 12 → 9; the rest unchanged.
+
+## Report (2026-11-17, Damage Roulette)
+
+- **#0 Damage Roulette** (`XGTacticalGameCore.CalcOverallDamage`): Long War rolls (3D + 1 + rand(2D + 2)) / 4 without it, about
+  D ± 1 (the port's spread 1), and (2D + 1 + rand(4D + 2)) / 4 with it, about D ± 2 with a crit about 2D. As a mission
+  begins (`LWX2SecondWave.ApplyDamageRoulette`), every weapon with a spread has it one wider (XCOM 2's alien weapons too: Long
+  War's roll is every weapon's; their crit stays XCOM 2's), and Long War's own weapons crit D more instead of (D + 1) / 2.
+  Without the option, as they were. The templates are shared by every campaign, so a widened one is marked on its damage's
+  tag and put back when a campaign without the option plays.
+- **Found on the way:** an item keeps the template it first found, and the port's arming pass makes Long War's weapons'
+  templates again; the manager's alone were not the ones the soldiers' rifles held. Both are changed.
+- **Checked on wingpu** (`units` now prints the primary weapon's damage, spread and crit): with the option the sniper rifle
+  read 5 ± 2, crit +5; without, the carbine 4 ± 1, crit +2. **Not seen:** putting it back within one game session (the off
+  test was a fresh start).

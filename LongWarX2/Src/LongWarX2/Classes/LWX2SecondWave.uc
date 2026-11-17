@@ -116,3 +116,54 @@ static function UpdateRedFog()
 	if (NewGameState != none)
 		`TACTICALRULES.SubmitGameState(NewGameState);
 }
+
+/**
+ * #0 Damage Roulette (XGTacticalGameCore.CalcOverallDamage), as a mission begins: Long War rolls (3D + 1 + rand(2D + 2)) / 4
+ * without it, about D ± 1 (the port's spread 1), and (2D + 1 + rand(4D + 2)) / 4 with it, about D ± 2, a crit about 2D
+ * (the port's spread 2 and crit D, where it is (D + 1) / 2). Every weapon with a spread (XCOM 2's alien weapons too: Long
+ * War's roll is every weapon's; their crit stays XCOM 2's) is set so; without the option, as it was.
+ */
+static function ApplyDamageRoulette()
+{
+	local X2ItemTemplateManager Manager;
+	local X2DataTemplate Data;
+	local array<X2DataTemplate> All;
+	local array<name> Names;
+	local XComGameState_Item Item;
+	local name N;
+	local bool bOn;
+	local int Changed;
+
+	bOn = On(0);
+	Manager = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
+	foreach Manager.IterateTemplates(Data, none)
+		if (X2WeaponTemplate(Data) != none)
+			Names.AddItem(Data.DataName);
+	foreach Names(N)
+	{
+		All.Length = 0;
+		Manager.FindDataTemplateAllDifficulties(N, All);
+		foreach All(Data)
+			Changed += Roulette(X2WeaponTemplate(Data), bOn);
+	}
+	// (And the templates the items in play hold: an item keeps the template it first found, and the port's arming pass
+	// makes Long War's weapons' templates again, so these can be others than the manager's.)
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Item', Item)
+		Changed += Roulette(X2WeaponTemplate(Item.GetMyTemplate()), bOn);
+	`log("LongWarX2: Damage Roulette" @ (bOn ? "on:" : "off:") @ Changed @ "weapon templates changed", , 'LongWarX2');
+}
+
+/** A weapon template widened (or put back): its spread one more, and Long War's own weapons' crit D (else (D + 1) / 2).
+ *  Marked on its damage's tag (the templates are shared by every campaign); one whose tag is something else's left alone. */
+static function int Roulette(X2WeaponTemplate W, bool bOn)
+{
+	if (W == none || (W.BaseDamage.Tag != '' && W.BaseDamage.Tag != 'LWX2Roulette'))
+		return 0;
+	if (bOn == (W.BaseDamage.Tag == 'LWX2Roulette') || (bOn && W.BaseDamage.Spread <= 0))
+		return 0;
+	W.BaseDamage.Spread += bOn ? 1 : -1;
+	W.BaseDamage.Tag = bOn ? 'LWX2Roulette' : '';
+	if (Left(string(W.DataName), 9) == "LWWeapon_")
+		W.BaseDamage.Crit = bOn ? W.BaseDamage.Damage : (W.BaseDamage.Damage + 1) / 2;
+	return 1;
+}

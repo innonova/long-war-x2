@@ -2493,6 +2493,9 @@ function XComUnits(out array<string> Out)
 			@ "ap" @ Units[i].ActionPoints.Length @ "sight" @ int(Units[i].GetCurrentStat(eStat_SightRadius)) @ "hp" @ int(Units[i].GetCurrentStat(eStat_HP)) $ "/" $ int(Units[i].GetMaxStat(eStat_HP))
 			@ "mob" @ int(Units[i].GetCurrentStat(eStat_Mobility)) @ "def" @ int(Units[i].GetCurrentStat(eStat_Defense)) @ "flankcrit" @ int(Units[i].GetCurrentStat(eStat_FlankingCritChance)) $ "/" $ int(Units[i].GetBaseStat(eStat_FlankingCritChance)) $ "/" $ int(Units[i].GetMyTemplate().CharacterBaseStats[eStat_FlankingCritChance])
 			@ "weapon" @ (Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon) != none ? string(Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon).GetMyTemplateName()) : "-")
+			$ (X2WeaponTemplate(Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon) != none ? Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon).GetMyTemplate() : none) != none
+				? " dmg" @ X2WeaponTemplate(Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon).GetMyTemplate()).BaseDamage.Damage $ "s" $ X2WeaponTemplate(Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon).GetMyTemplate()).BaseDamage.Spread
+					$ "c" $ X2WeaponTemplate(Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon).GetMyTemplate()).BaseDamage.Crit : "")
 			$ (Units[i].IsConcealed() ? " concealed" : "") $ (Units[i].IsUnitAffectedByEffectName('RangerStealth') ? " stealth" : ""));
 }
 

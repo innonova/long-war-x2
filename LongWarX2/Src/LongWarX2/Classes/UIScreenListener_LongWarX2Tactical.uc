@@ -34,6 +34,8 @@ event OnInit(UIScreen Screen)
 	if (UITacticalHUD(Screen) == none)
 		return;
 	class'LWX2PerkProbe'.static.Start(Screen);
+	// Damage Roulette (second wave #0): the weapons' spread as the campaign has it (LWX2SecondWave).
+	class'LWX2SecondWave'.static.ApplyDamageRoulette();
 	if (class'UIScreenListener_LongWarX2HQ'.default.ShowTestEndMission && XGBattle_SP(`BATTLE) != none && !`BATTLE.m_kDesc.bIsTacticalQuickLaunch)
 		AddEndButton(Screen);
 	// A mission of the Long War Geoscape is won when its aliens are all dead or taken (lw-missions.md); so is any mission
