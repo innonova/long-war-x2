@@ -100,21 +100,23 @@ static function X2TechTemplate TechTemplate(LWResearchRules.LWTechDef T)
 		Resource.Quantity = T.Items;
 		Template.Cost.ArtifactCosts.AddItem(Resource);
 	}
-	if (T.GrantsCredit > 0)
-		Template.ResearchCompletedFn = CreditGranted;
+	Template.ResearchCompletedFn = Researched;
 	return Template;
 }
 
-/** An interrogation done: its research credit held from now on (Long War's XGFacility_Labs credits). */
-static function CreditGranted(XComGameState NewGameState, XComGameState_Tech TechState)
+/** A research done: counted for the council's report (XGFacility_Labs.OnResearchCompleted: on the home continent); an
+ *  interrogation's research credit held from now on (Long War's XGFacility_Labs credits). */
+static function Researched(XComGameState NewGameState, XComGameState_Tech TechState)
 {
 	local LWResearchRules.LWTechDef T;
 
+	class'XComGameState_LWStrategy'.static.TechResearched(NewGameState);
 	foreach class'LWResearchRules'.default.Techs(T)
 	{
 		if (class'LWResearchRules'.static.TemplateFor(T) == TechState.GetMyTemplateName())
 		{
-			class'XComGameState_LWStrategy'.static.CreditHeld(NewGameState, T.GrantsCredit);
+			if (T.GrantsCredit > 0)
+				class'XComGameState_LWStrategy'.static.CreditHeld(NewGameState, T.GrantsCredit);
 			return;
 		}
 	}

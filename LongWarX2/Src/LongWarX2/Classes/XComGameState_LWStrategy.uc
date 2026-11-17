@@ -233,6 +233,34 @@ var int ExaltMissionUntil, ExaltMissionsFought;
 /** EXALT's base found (the right country accused): the raid on it can be launched until it is won. */
 var bool bExaltRaidReady;
 
+// The month's tallies (Long War's TMonthlySummary, each continent's m_kMonthly): MonthTally[continent x TALLIES + T_…],
+// counted where Long War counts them, cleared at the month's end. The council's last report (XGWorld.CouncilMeeting's
+// TCouncilMeeting): the tallies summed, the grade (DetermineMonthlyGrade: 0 A, 1 B, 2 C, 3 D, 4 F), the funding and the
+// specialists the council gave, XCOM's money when it was in debt (mismanaged), the countries that left, the hour it met,
+// and whether the player is still to see it (UILWEWEndOfMonth).
+const T_ABDUCTIONS_THWARTED = 0;
+const T_ABDUCTIONS_FAILED = 1;
+const T_ABDUCTIONS_IGNORED = 2;
+const T_TERROR_THWARTED = 3;
+const T_TERROR_FAILED = 4;
+const T_TERROR_IGNORED = 5;
+const T_UFOS_SHOT_DOWN = 6;
+const T_UFOS_DETECTED = 7;
+const T_UFO_RAIDS = 8;
+const T_SATELLITES_LAUNCHED = 9;
+const T_SATELLITES_LOST = 10;
+const T_TECHS = 11;
+const T_ALIEN_BASES = 12;
+const T_COUNCIL_MISSIONS = 13;
+const TALLIES = 14;
+var array<int> MonthTally;
+var array<int> ReportTally;
+var int ReportGrade, ReportFunding, ReportScientists, ReportEngineers, ReportHours;
+var bool bReportMismanaged;
+var int ReportMoney;
+var array<int> ReportLeaving;
+var bool bReportDue;
+
 // --- Making it ------------------------------------------------------------------------------
 
 static function XComGameState_LWStrategy Get()
@@ -424,6 +452,17 @@ static function CreditHeld(XComGameState NewGameState, int Credit)
 	S.TechTimesIn(NewGameState);
 }
 
+/** A research done, counted for the council's report (on the home continent, as Long War counts it). */
+static function TechResearched(XComGameState NewGameState)
+{
+	local XComGameState_LWStrategy S;
+
+	if (Get() == none)
+		return;
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
+	S.Tally(S.CountryContinent(S.HomeCountry()), T_TECHS);
+}
+
 /** Every Long War tech's time cut (LWResearchRules.TimeCut: the credits held, Expertise, We Have Ways) set on XCOM 2's
  * tech where it differs. */
 function TechTimesIn(XComGameState NewGameState)
@@ -511,7 +550,7 @@ static function XCom2TimePasses(int PassedHours)
 
 function Tick(XComGameState NewGameState)
 {
-	local int i;
+	local int i, Expired;
 
 	Hours++;
 	class'LWBase'.static.Tick(self);
@@ -583,8 +622,14 @@ function Tick(XComGameState NewGameState)
 	}
 	for (i = 0; i < Ufos.Length; i++)
 		TickUfo(i);
+	// Abductions let go are counted once an hour, however many (XGStrategyAI.AIUpdateMissions' bAbductionBlitzExpired: on
+	// the continent of the last mission it looked at).
+	Expired = -1;
 	for (i = 0; i < Sites.Length; i++)
-		TickSite(i);
+		if (TickSite(i) && !Sites[i].bTerror && !Sites[i].bCouncil && !Sites[i].bHQ)
+			Expired = CountryContinent(Sites[i].Country);
+	if (Expired >= 0)
+		Tally(Expired, T_ABDUCTIONS_IGNORED);
 	class'LWExalt'.static.Hour(NewGameState, self);
 	class'LWCouncil'.static.Hour(self);
 	if (Hours % HoursPerMonth() == 0)
@@ -1007,6 +1052,9 @@ function UfoDone(int i)
 	Ufos[i].Status = 5;
 	U = Ufos[i];
 	Intact = U.MaxHp > 0 ? float(U.Hp) / float(U.MaxHp) : 1.0;
+	// Seen and not brought down: counted as detected, so escaped (XGAlienObjective.NotifyOfSuccess).
+	if (U.bDetected)
+		Tally(CountryContinent(U.Country), T_UFOS_DETECTED);
 	if (U.Objective != 4 && U.Ufo != 9)
 		AddPanic(U.Country, int((U.Objective == 8 ? class'LWStrategyRules'.default.PanicAirRaid : class'LWStrategyRules'.default.PanicUfoIgnored) * Intact));
 	if (U.Objective == 2 && class'LWStrategyRules'.static.HarvestOf(U.Ufo) > 0)
@@ -1038,6 +1086,7 @@ function UfoDone(int i)
 	case 4:
 		if (FoundSatellite(U))
 		{
+			Tally(CountryContinent(U.Country), T_SATELLITES_LOST);
 			Countries[U.Country].bSatellite = false;
 			AddPanic(U.Country, class'LWStrategyRules'.default.PanicSatDestroyedCountry);
 			AddContinentPanic(CountryContinent(U.Country), class'LWStrategyRules'.default.PanicSatDestroyedContinent);
@@ -1145,6 +1194,9 @@ static function Intercepted(int i, int Outcome, int UfoHp)
 	S.AlienResources -= Round(class'LWStrategyRules'.static.WorthOf(U.Ufo) * (1.0 - float(U.Hp) / float(Max(1, U.MaxHp))));
 	if (Outcome == 0 || Outcome == 1) // crashed or destroyed
 	{
+		// (XGAlienObjective.NotifyOfCrash: shot down, and detected.)
+		S.Tally(S.CountryContinent(U.Country), T_UFOS_SHOT_DOWN);
+		S.Tally(S.CountryContinent(U.Country), T_UFOS_DETECTED);
 		S.UfoDowned(U);
 		S.AddPanic(U.Country, class'LWStrategyRules'.default.PanicUfoShotDown);
 		if (Outcome == 0)
@@ -1220,13 +1272,18 @@ function AddCouncilSite(int Mission, int Country, array<LWCouncilReward> Rewards
 	bStop = true;
 }
 
-function TickSite(int i)
+/** A site's hour: let go once its time is up (true then); terror let go is counted (AIUpdateMissions). */
+function bool TickSite(int i)
 {
 	if (Sites[i].Status == 1 && Hours >= Sites[i].Until)
 	{
 		Sites[i].Status = 2;
+		if (Sites[i].bTerror)
+			Tally(CountryContinent(Sites[i].Country), T_TERROR_IGNORED);
 		SiteIgnored(i);
+		return true;
 	}
+	return false;
 }
 
 /**
@@ -1244,8 +1301,13 @@ function TerrorWon(int i)
 	local int Country, Lost;
 
 	Country = Sites[i].Country;
+	// Stopped, unless the country leaves for it or had gone already (ApplyMissionPanic: a secret pact's is not counted).
 	if (PendingCivilians < 0)
+	{
+		if (!Countries[Country].bLeft)
+			Tally(CountryContinent(Country), T_TERROR_THWARTED);
 		return;
+	}
 	Lost = PendingCivilians - PendingCiviliansSaved;
 	Note(PendingCiviliansSaved @ "of" @ PendingCivilians @ "civilians saved in" @ CountryName(Country) $ ".");
 	AddContinentPanic(CountryContinent(Country), Lost * class'LWStrategyRules'.default.PanicTerrorCivilianContinent);
@@ -1257,6 +1319,7 @@ function TerrorWon(int i)
 		Note("No civilian was saved in" @ CountryName(Country) $ ": it has left the council.");
 		return;
 	}
+	Tally(CountryContinent(Country), T_TERROR_THWARTED);
 	AddPanic(Country, Lost * class'LWStrategyRules'.default.PanicTerrorCivilianCountry);
 }
 
@@ -1476,6 +1539,7 @@ static function MissionBack(bool bWon)
 			S.BringCaptivesHome(NewGameState, Squad);
 			S.LeaveSurvivors(Squad);
 			S.GiveKillLoot(NewGameState, Squad);
+			S.Tally(S.CountryContinent(S.Sites[S.PendingIndex].Country), T_COUNCIL_MISSIONS);
 			class'LWCouncil'.static.Grant(NewGameState, S, S.PendingIndex);
 		}
 		else
@@ -1490,6 +1554,8 @@ static function MissionBack(bool bWon)
 	Country = S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Country : ((S.PendingKind <= 4 || S.PendingKind == 7) ? S.Sites[S.PendingIndex].Country : (S.PendingKind == 5 ? S.PendingIndex : S.HomeCountry()));
 	if (S.PendingKind >= 5)
 	{
+		if (S.PendingKind == 5 && bWon)
+			S.Tally(S.CountryContinent(Country), T_ALIEN_BASES);
 		S.StoryMissionBack(NewGameState, bWon, Country);
 		S.PendingKind = 0;
 		S.PendingMission = 0;
@@ -1515,6 +1581,8 @@ static function MissionBack(bool bWon)
 		S.TerrorsTaken++;
 		if (bWon)
 			S.TerrorWon(S.PendingIndex);
+		else
+			S.Tally(S.CountryContinent(Country), T_TERROR_FAILED);
 	}
 	if (S.PendingKind == 3 && bWon)
 		S.GiveAbductionReward(NewGameState, Country);
@@ -1522,6 +1590,7 @@ static function MissionBack(bool bWon)
 	{
 		if (bWon)
 		{
+			S.Tally(S.CountryContinent(Country), T_UFO_RAIDS);
 			S.AddPanic(Country, class'LWStrategyRules'.default.PanicUfoAssault);
 			S.GiveSalvage(NewGameState, S.Ufos[S.PendingIndex].Ufo, true);
 		}
@@ -1533,6 +1602,7 @@ static function MissionBack(bool bWon)
 		U = S.Ufos[S.PendingIndex];
 		if (bWon)
 		{
+			S.Tally(S.CountryContinent(Country), T_UFO_RAIDS);
 			S.AddPanic(Country, class'LWStrategyRules'.default.PanicUfoAssault);
 			S.UfoDowned(U);
 			S.AlienResources -= class'LWStrategyRules'.static.WorthOf(U.Ufo);
@@ -1547,6 +1617,7 @@ static function MissionBack(bool bWon)
 	}
 	else if (S.PendingKind == 3)
 	{
+		S.Tally(S.CountryContinent(Country), bWon ? T_ABDUCTIONS_THWARTED : T_ABDUCTIONS_FAILED);
 		if (bWon)
 			S.AddPanic(Country, class'LWStrategyRules'.default.PanicAbductionThwartedCountry);
 		else
@@ -1949,6 +2020,7 @@ static function bool LaunchSatellite(int Country)
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	S.SatellitesReady--;
 	S.Countries[Country].bSatellite = true;
+	S.Tally(S.CountryContinent(Country), T_SATELLITES_LAUNCHED);
 	S.AddPanic(Country, class'LWStrategyRules'.default.PanicSatAddedCountry);
 	S.AddContinentPanic(S.CountryContinent(Country), class'LWStrategyRules'.default.PanicSatAddedContinent);
 	S.Note("A satellite now watches" @ S.CountryName(Country) $ ".");
@@ -1973,16 +2045,22 @@ function EndMonth()
 	local XComGameState_HeadquartersXCom XComHQ;
 	local LWStrategyRules.LWCountryDef Def;
 	local array<int> Leaving;
-	local int i, d, Blocks, Funding, Chance, Upkeep;
+	local int i, d, Blocks, Funding, Chance, Upkeep, MetScientists, MetEngineers;
 	local string Report;
 
 	class'LWExalt'.static.MonthEnded(self);
 	class'LWCouncil'.static.MonthEnded(self);
+	History = `XCOMHISTORY;
+	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
+	XComHQ = XComGameState_HeadquartersXCom(GetParentGameState().ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
+	// The council's grade, on the month's tallies and XCOM's money before it is paid (DetermineMonthlyGrade).
+	Grade(XComHQ.GetSupplies());
 
 	d = class'LWStrategyRules'.static.Difficulty();
 	for (i = 0; i < Countries.Length; i++)
 	{
-		if (Countries[i].bLeft || HasAbductions(i))
+		// (A country with abductions under way, or EXALT's covert operative in it, stays: AddToDefectorsList, WhoIsLeaving.)
+		if (Countries[i].bLeft || HasAbductions(i) || (ExaltOperative > 0 && ExaltOperativeCountry == i))
 			continue;
 		Blocks = Countries[i].Panic + 1;
 		if (NotHelped.Find(i) != INDEX_NONE && Blocks >= class'LWStrategyRules'.default.DefectNotHelpedThreshold[d])
@@ -1995,14 +2073,22 @@ function EndMonth()
 			Chance *= class'LWStrategyRules'.default.SatHelpDefect[d];
 		else if (ContinentHasSatellite(CountryContinent(i)))
 			Chance *= class'LWStrategyRules'.default.SatNearbyHelpDefect[d];
-		if (Rand(100) < Chance && Leaving.Length < class'LWStrategyRules'.default.DefectionsPerMonth[d])
+		if (Rand(100) < Chance)
 			Leaving.AddItem(i);
 	}
+	// The most panicked first; a month graded A to C loses at most DefectionsPerMonth of them, a D or F month all
+	// (XGWorld.DetermineDefections, AdjustDefections). The grade then falls a step for any country leaving, two for more
+	// than two.
+	Leaving.Sort(ByPanic);
+	if (ReportGrade < 3 && Leaving.Length > class'LWStrategyRules'.default.DefectionsPerMonth[d])
+		Leaving.Length = class'LWStrategyRules'.default.DefectionsPerMonth[d];
+	ReportGrade = Min(4, ReportGrade + (Leaving.Length > 0 ? 1 : 0) + (Leaving.Length > 2 ? 1 : 0));
 	for (i = 0; i < Leaving.Length; i++)
 	{
 		Leave(Leaving[i]);
 		Report @= CountryName(Leaving[i]) @ "has left the council.";
 	}
+	ReportLeaving = Leaving;
 	NotHelped.Length = 0;
 	for (i = 0; i < Countries.Length; i++)
 	{
@@ -2015,6 +2101,8 @@ function EndMonth()
 		// The staff a watched country sends (XGWorld's council meeting).
 		Scientists += Def.Scientists;
 		Engineers += Def.Engineers;
+		MetScientists += Def.Scientists;
+		MetEngineers += Def.Engineers;
 		Blocks = Countries[i].Panic + 1;
 		if ((Blocks >= 95 && Rand(100) < class'LWStrategyRules'.default.Panic5ReductionChance[d])
 			|| (Blocks >= 80 && Rand(100) < class'LWStrategyRules'.default.Panic4ReductionChance[d])
@@ -2024,17 +2112,80 @@ function EndMonth()
 	// Wealth of Nations (XGWorld.GetIncome): the funding raised by its share.
 	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.WEALTH_OF_NATIONS, self) > 0)
 		Funding = int(Funding + Funding * (class'LWBonuses'.static.Has(class'LWBonuses'.const.WEALTH_OF_NATIONS, self) / 100.0));
-	History = `XCOMHISTORY;
-	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
-	XComHQ = XComGameState_HeadquartersXCom(GetParentGameState().ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 	// The base's upkeep, paid from it (XGHeadQuarters.PayMaintenance).
 	Upkeep = TileType.Length > 0 ? class'LWBase'.static.Upkeep(self) : 0;
 	XComHQ.AddResource(GetParentGameState(), 'Supplies', Funding - Upkeep);
+	ReportFunding = Funding;
+	ReportScientists = MetScientists;
+	ReportEngineers = MetEngineers;
+	ReportHours = Hours;
+	bReportDue = true;
 	Note("Council report: funding" @ class'LWStrategyRules'.static.Money(Funding) $ ", upkeep" @ class'LWStrategyRules'.static.Money(Upkeep) $ "." $ Report);
 	`log("LongWarX2: Long War month" @ Month @ "ended: funding" @ Funding @ "countries left" @ NumLeft(), , 'LongWarX2');
 	Month++;
 	PlanMonth();
 	bStop = true;
+}
+
+/** The defectors' order (XGWorld.SortDefectorsList): the more panicked first. */
+function int ByPanic(int A, int B)
+{
+	return Countries[B].Panic > Countries[A].Panic ? -1 : 0;
+}
+
+/** One more of a tally this month (MonthTally), on a continent. */
+function Tally(int Continent, int T)
+{
+	if (Continent < 0 || Continent > 4)
+		return;
+	if (MonthTally.Length < 5 * TALLIES)
+		MonthTally.Length = 5 * TALLIES;
+	MonthTally[Continent * TALLIES + T] += 1;
+}
+
+/** A tally this month, on a continent (-1: on all of them). */
+function int Tallied(int T, optional int Continent = -1)
+{
+	local int c, n;
+
+	for (c = 0; c < 5; c++)
+		if ((Continent < 0 || Continent == c) && c * TALLIES + T < MonthTally.Length)
+			n += MonthTally[c * TALLIES + T];
+	return n;
+}
+
+/**
+ * The council's report of the month (XGFundingCouncil.DetermineMonthlyGrade): the tallies summed, UFOs escaped (detected and
+ * not brought down) among them; XCOM in debt (Money below 0) is a mismanaged month. The score is minus every failure:
+ * mismanaged, terror and abductions let go or lost, satellites lost; the wins are abductions and terror stopped, UFOs shot
+ * down, alien bases and council missions. F at -6 or less, or below 0 with no win; D at -4, or below -1 with one win; C at
+ * -2; B at -1; else A. The tallies are then cleared for the next month.
+ */
+function Grade(int Money)
+{
+	local int T, Score, Wins;
+
+	ReportTally.Length = TALLIES + 1;
+	for (T = 0; T < TALLIES; T++)
+		ReportTally[T] = Tallied(T);
+	// (TALLIES: UFOs escaped.)
+	ReportTally[TALLIES] = ReportTally[T_UFOS_DETECTED] - ReportTally[T_UFOS_SHOT_DOWN];
+	bReportMismanaged = Money < 0;
+	ReportMoney = Money;
+	Wins = ReportTally[T_ABDUCTIONS_THWARTED] + ReportTally[T_TERROR_THWARTED] + ReportTally[T_UFOS_SHOT_DOWN] + ReportTally[T_ALIEN_BASES] + ReportTally[T_COUNCIL_MISSIONS];
+	Score = -(bReportMismanaged ? 1 : 0) - ReportTally[T_TERROR_IGNORED] - ReportTally[T_TERROR_FAILED] - ReportTally[T_ABDUCTIONS_IGNORED] - ReportTally[T_ABDUCTIONS_FAILED] - ReportTally[T_SATELLITES_LOST];
+	if (Score <= -6 || (Score < 0 && Wins == 0))
+		ReportGrade = 4;
+	else if (Score <= -4 || (Score < -1 && Wins == 1))
+		ReportGrade = 3;
+	else if (Score <= -2)
+		ReportGrade = 2;
+	else if (Score <= -1)
+		ReportGrade = 1;
+	else
+		ReportGrade = 0;
+	MonthTally.Length = 0;
+	`log("LongWarX2: the council's grade" @ ReportGrade @ "score" @ Score @ "wins" @ Wins, , 'LongWarX2');
 }
 
 /** Abductions under way in the country (Long War's CountryHasAbductionMission). */

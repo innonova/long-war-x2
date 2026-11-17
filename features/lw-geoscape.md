@@ -342,3 +342,40 @@ through the control port:
   (`AddObjective(4, …)`), so it finds the satellite as the monthly hunts do.
 - **Checked on wingpu** (`run 1400 all` in a new campaign): two scouts seen over the United States each brought a hunt
   ("UFO detected over United States: Fighter, Hunt.").
+
+## Report (2026-11-17, the month's end on EW's own screens)
+
+- **Read:** the council meeting (`XGWorld.CouncilMeeting`): each continent's month closed (`XGContinent.EndOfMonth`:
+  who leaves, its rewards, its tallies `m_kMonthly`), then the grade (`XGFundingCouncil.DetermineMonthlyGrade`), then the
+  defections (`DetermineDefections`, `AdjustDefections`, `SortDefectorsList`), then the pay. The tallies are counted
+  where Long War counts them: abductions and terror stopped (`ApplyMissionPanic`), lost (`PostCombat`) and let go
+  (`AIUpdateMissions`: abductions once per update however many expired), UFOs shot down and detected
+  (`XGAlienObjective.NotifyOfCrash`, `NotifyOfSuccess`; escaped is detected less shot down), UFOs raided (crash sites and
+  landed UFOs won), satellites launched and lost, research done (`XGFacility_Labs.OnResearchCompleted`, on the home
+  continent), alien bases and council missions won. The grade: the score is minus each failure (terror and abductions
+  let go or lost, satellites lost, a month ended in debt); the wins are abductions and terror stopped, UFOs shot down,
+  alien bases, council missions. F at -6 or less, or below 0 with no win; D at -4, or below -1 with one win; C at -2;
+  B at -1; else A. Then a step lower if any country leaves, two if more than two.
+- **Found on the way, now as Long War has it:** the defectors are sorted by panic and the month's cap
+  (`DefectionsPerMonth`) applies only to a month graded A to C (a D or F month loses every country that rolled to
+  leave); a country with EXALT's covert operative in it stays. The cap was applied every month before. (Stock Long War's
+  cap is 16, so this rarely shows.)
+- **Done:** `XComGameState_LWStrategy` keeps the month's tallies per continent (`Tally`, `MonthTally`) and the last
+  report (`Grade`, `Report*`, `bReportDue`); research counts through every Long War tech's `ResearchCompletedFn`. Once a
+  month has ended, the Long War Geoscape opens EW's World Report (`UILWEWWorldReport`: "Transmitting encrypted
+  data...", decrypting, then who withdrew, as EW words it), then EW's End of Month Report (`UILWEWEndOfMonth`: the
+  month, XCOM's activity in EW's order and colours, the funding and specialists, the grade; per continent its
+  specialists and its bonus when held; per council country its panic bar at Long War's panic, its funding, or
+  WITHDRAWN). EW's words come from the player's install (`makeReportWords`, 32 of them); Enter, Escape or a click
+  carries on. Test aid: `report` (the month's tallies, the last report), `report show` (the screens again).
+- **Choices:** the transmission's button reads EW's "Next" (its screen's word): EW's "Authorize Transmission" does not
+  fit the button. The four failure labels Long War's text leaves empty (terror and abductions failed or ignored) read
+  in plain English of our own. The second "Monthly Reward:" line stays empty in a month with no specialists, as in EW.
+  EW's council spokesman (the voice and portrait over the report) is not there.
+- **Checked on wingpu:** a month played by `auto 720 100 1 sats` (four abductions stopped, a UFO shot down, a council
+  mission, research done, three UFOs escaped) came out A, and the report showed it with each country's panic and
+  funding (`logs/wingpu_ew_end_of_month.png`). Two months answering nothing: F, with six countries withdrawn named on
+  the transmission (`logs/wingpu_ew_world_report_defections.png`) and WITHDRAWN on the report
+  (`logs/wingpu_ew_end_of_month_f.png`). The buttons work by mouse and by key.
+- **Seen, not ours:** in the A month a portrait of XCOM 2's Tygan was up in the screen's top right corner, most likely
+  XCOM 2's own comm link for the research it saw finish. Not looked into.

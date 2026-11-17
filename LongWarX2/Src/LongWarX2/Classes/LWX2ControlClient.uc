@@ -288,6 +288,11 @@ function Handle(string Line, out array<string> Out)
 		// (Long War's EFCMission; a test aid).
 		Council(Args, Out);
 		return;
+	case "report":
+		// report: the month's tallies so far and the council's last report (its grade, funding, whether it is still to be
+		// seen); 'report show': EW's transmission and report opened again (a test aid).
+		Report(Args, Out);
+		return;
 	case "hive":
 		// hive: the Chryssalid hive's state (LWX2ChryssalidHive): its objective, turns, spawns made; 'hive stage <n>': the
 		// objectives moved to that one (a test aid: 3 the transponder, as on seeing the whale).
@@ -2843,6 +2848,39 @@ function Spawns(out array<string> Out)
 		Out.AddItem(PathName(Spawn) @ "at" @ Spawn.Location @ ((`PARCELMGR != none && `PARCELMGR.SoldierSpawn == Spawn) ? "CHOSEN" : ""));
 	if (Battle != none)
 		Out.AddItem("the battle's soldier spawn" @ Battle.MapData.SoldierSpawnLocation @ "plot" @ Battle.MapData.PlotMapName);
+}
+
+/** The month's tallies (XComGameState_LWStrategy.MonthTally, summed) and the council's last report. */
+function Report(array<string> Args, out array<string> Out)
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState NewGameState;
+	local string Line;
+	local int T;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none)
+	{
+		Out.AddItem("ERR no Long War campaign");
+		return;
+	}
+	if (Args.Length > 1 && Args[1] ~= "show")
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: the report shown again");
+		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+		S.bReportDue = true;
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		Out.AddItem(class'UILWEWWorldReport'.static.OpenIfDue(`HQPRES) ? "ok the transmission opened" : "ERR not opened (no EW screens, or one open)");
+		return;
+	}
+	for (T = 0; T < class'XComGameState_LWStrategy'.const.TALLIES; T++)
+		Line @= T $ "=" $ S.Tallied(T);
+	Out.AddItem("month" @ S.Month @ "tallies" $ Line);
+	Line = "";
+	for (T = 0; T < S.ReportTally.Length; T++)
+		Line @= T $ "=" $ S.ReportTally[T];
+	Out.AddItem("last report: grade" @ Mid("ABCDF", Clamp(S.ReportGrade, 0, 4), 1) @ "funding" @ S.ReportFunding @ "scientists" @ S.ReportScientists @ "engineers" @ S.ReportEngineers
+		@ "mismanaged" @ S.bReportMismanaged @ "left" @ S.ReportLeaving.Length @ "due" @ S.bReportDue @ "hour" @ S.ReportHours @ "tallies" $ Line);
 }
 
 function Council(array<string> Args, out array<string> Out)

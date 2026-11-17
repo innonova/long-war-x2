@@ -557,6 +557,41 @@ export function makeGeneWords({ strategyLoc }) {
   return { text: ['[UILWEWGeneMods]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
 
+/** The council's monthly report's words (UILWEWEndOfMonth, in the mod's LongWarX2.int): EW's (XGWorldReportUI,
+ *  UIEndOfMonthReport, UIWorldReport) from Long War's strategy text. Its grades by EGrade's names (A, B, C, D, F). */
+export function makeReportWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const sectionOf = (name) => {
+    const at = text.indexOf(`\n[${name}]\n`)
+    if (at < 0) return ''
+    const end = text.indexOf('\n[', at + 2)
+    return text.slice(at, end < 0 ? undefined : end)
+  }
+  const from = (name, key) => sectionOf(name).match(new RegExp(`^${key.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const wr = (key) => from('XGWorldReportUI', key)
+  const grades = ['A', 'B', 'C', 'D', 'F']
+  const words = [
+    ['MonthlyReport', wr('m_strLabelMonthlyReport')], ['FundingAwarded', wr('m_strLabelFundingAwarded')],
+    ['MilitaryGrade', wr('m_strLabelMilitaryGrade')], ['XComActivity', wr('m_strLabelXComActivity')],
+    ['SpecialistsAwarded', wr('m_strLabelSpecialistsAwarded')], ['NumScientists', wr('m_strNumScientists')],
+    ['NumEngineers', wr('m_strNumEngineers')],
+    ...grades.map((g, i) => [`GradeNames[${i}]`, wr(`m_arrGradeNames[eGrade_${g}]`)]),
+    ['UFOShotDown', wr('m_strLabelUFOShotDown')], ['TerrorStopped', wr('m_strLabelTerrorStopped')],
+    ['AbductionsStopped', wr('m_strLabelAbductionsStopped')], ['SatellitesLaunched', wr('m_strLabelSatellitesLaunched')],
+    ['ResearchCompleted', wr('m_strLabelResearchCompleted')], ['UFORaided', wr('m_strLabelUFORaided')],
+    ['SatellitesLost', wr('m_strLabelSatellitesLost')], ['UFOsEscaped', wr('m_strLabelUFOsEscaped')],
+    ['MismanagedResources', wr('m_strLabelMismanagedResources')], ['NoSatelliteCoverage', wr('m_strLabelNoSatelliteCoverage')],
+    ['Withdrawn', wr('m_strLabelWithdrawn')], ['BaseAssaulted', wr('m_strLabelBaseAssaulted')], ['FCMissions', wr('m_strLabelFCMissions')],
+    ['TerrorFailed', wr('m_strLabelTerrorFailed')], ['TerrorIgnored', wr('m_strLabelTerrorIgnored')],
+    ['AbductionsFailed', wr('m_strLabelAbductionsFailed')], ['AbductionsIgnored', wr('m_strLabelAbductionsIgnored')],
+    ['LinkStatus', wr('m_strLinkStatus')], ['AndAppend', wr('m_strAndAppend')],
+    ['OneWithdrawn', wr('m_strOneWithdrawn')], ['ManyWithdrawn', wr('m_strManyWithdrawn')],
+    ['MonthlyReward', from('UIEndOfMonthReport', 'm_strMonthlyReward')], ['CarryOn', from('UIEndOfMonthReport', 'm_strLabelCarryOn')],
+    ['Decoded', from('UIWorldReport', 'm_strDecoded')], ['Next', from('UIWorldReport', 'm_strNext')],
+  ].filter(([, v]) => v)
+  return { text: ['[UILWEWEndOfMonth]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}
+
 /** Mobile cover's name on a shot's breakdown (X2Effect_LWMobileCover): Long War's for the Alloy SHIV's (m_strShivCoverName). */
 export function makeMobileCoverWords({ strategyLoc }) {
   const name = strategyLoc.match(/^m_strShivCoverName="(.*)"\s*$/m)?.[1]

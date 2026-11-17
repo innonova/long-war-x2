@@ -207,6 +207,9 @@ function Refresh()
 		bWinShown = true;
 		XComHQPresentationLayer(Movie.Pres).UIYouWin();
 	}
+	// The council's monthly report, once the month has ended (EW's transmission, then its End of Month Report).
+	if (!S.bLost && XComHQPresentationLayer(Movie.Pres) != none)
+		class'UILWEWWorldReport'.static.OpenIfDue(XComHQPresentationLayer(Movie.Pres));
 }
 
 simulated function int ActiveCount(XComGameState_LWStrategy S)
