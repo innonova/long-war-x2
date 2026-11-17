@@ -22,7 +22,7 @@ buttons and text, no art).
 | Council, panic, funding | done | plain | countries, panic, leaving, the council report, funding | the monthly tallies (terrors thwarted …) in the report | `lw-geoscape` |
 | Satellites | done | plain | launching, coverage, detection | | `lw-geoscape` |
 | The aliens' plan | most | plain | resources, research, the monthly plan, UFOs, abductions, terror targets, the hunts after scouting | UFOs seen as they cross watched countries | `lw-geoscape` |
-| The air war | most | plain | jets per continent, interception, damage, repair, refits, orders, transfers, consumables (built, stocked, used up) | Friendly Skies, fuel, the Firestorm's refits | `lw-hangar` |
+| The air war | most | plain | jets per continent, interception, damage, repair, refits, orders, transfers, consumables (built, stocked, used up) | fuel, the Firestorm's refits (Friendly Skies is a second-wave option, which the port does not offer) | `lw-hangar` |
 | The base | most | LW | the grid, digging, facilities, power, upkeep, steam; built on EW's own Build Facilities and ChooseFacility screens over EW's base | facilities' effects (containment, Hyperwave, Gollop chamber); removing a facility | `lw-base`, `lw-base-view` |
 | Research | most | X2 + plain | Long War's techs, costs, times, prerequisites, credits; labs and their adjacency (`lw-base`) | XCOM 2's research room still shows its own staff | `lw-research` |
 | Engineering | most | plain | building items and armour at Long War's costs and requirements; workshops' discount and rebate (`lw-base`) | | `lw-gear`, `lw-research` |
