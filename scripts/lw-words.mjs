@@ -672,6 +672,43 @@ export function makeAlertWords({ strategyLoc }) {
   return { text: ['[UILWEWAlert]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
 
+/** EW's council request screen's words (UILWEWCouncilRequest, from [XGPendingRequestsUI] and XGFundingCouncil's request
+ *  intros), and the council countries' names in EW's forms (with the article, the adjective, the possessive) for the
+ *  intros' <XGCountry:…/> tags, by the mod's country order (countryIds: XComLWStrategy.ini's +Countries Id, EW's
+ *  eCountry_<Id>). */
+export function makeRequestWords({ strategyLoc, countryIds }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const sections = (name) => {
+    const out = []
+    for (let at = text.indexOf(`\n[${name}]\n`); at >= 0; at = text.indexOf(`\n[${name}]\n`, at + 2)) {
+      const end = text.indexOf('\n[', at + 2)
+      out.push(text.slice(at, end < 0 ? undefined : end))
+    }
+    return out.join('\n')
+  }
+  const esc = (k) => k.replace(/[[\]]/g, '\\$&')
+  const one = (from, key) => from.match(new RegExp(`^${esc(key)}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const ui = sections('XGPendingRequestsUI')
+  if (!ui) return { text: '', named: 0 }
+  const council = sections('XGFundingCouncil')
+  const data = sections('XGLocalizedData')
+  const words = [
+    ['TitleLabel', 'm_strTitleLabel'], ['Requested', 'm_strLabelRequested'], ['ValueRequested', 'm_strValueRequested'],
+    ['InStorage', 'm_strLabelInStorage'], ['TimeLimit', 'm_strLabelTimeLimit'], ['TimeLimitDays', 'm_strTimeLimitDays'],
+    ['RewardsLabel', 'm_strLabelRewards'], ['SellItems', 'm_strLabelSellItems'], ['NotNow', 'm_strLabelIgnoreRequest'],
+    ['NumPanic', 'm_strNumCodePieces'], ['NumEngineers', 'm_strNumEngineers'], ['NumScientists', 'm_strNumScientist'], ['NewRecruit', 'm_strNewRecruit'],
+  ].map(([k, key]) => [k, one(ui, key)])
+  for (let i = 0; i < 42; i++) words.push([`Intro[${i}]`, one(council, `m_strRequestIntro[${i}]`)])
+  countryIds.forEach((id, k) => {
+    words.push([`ArticleUpper[${k}]`, one(data, `CountryNamesWithArticle[eCountry_${id}]`)])
+    words.push([`ArticleLower[${k}]`, one(data, `CountryNamesWithArticleLower[eCountry_${id}]`)])
+    words.push([`Adjective[${k}]`, one(data, `CountryAdjective[eCountry_${id}]`)])
+    words.push([`Possessive[${k}]`, one(data, `CountryPossessive[eCountry_${id}]`)])
+  })
+  const found = words.filter(([, v]) => v)
+  return { text: ['[UILWEWCouncilRequest]', ...found.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: found.length }
+}
+
 /** Mobile cover's name on a shot's breakdown (X2Effect_LWMobileCover): Long War's for the Alloy SHIV's (m_strShivCoverName). */
 export function makeMobileCoverWords({ strategyLoc }) {
   const name = strategyLoc.match(/^m_strShivCoverName="(.*)"\s*$/m)?.[1]

@@ -58,3 +58,26 @@ order works for you".
   research), so satellite requests come every few days for the countries without one; seven were open by day 26. That
   is what Long War's code gives.
 - **Not done:** EW's own screens for requests; the jet request was not seen (it needs two jets and a satellite abroad).
+
+## Report (2026-11-17, EW's request screen)
+
+- **`UILWEWCouncilRequest`** on EW's `FundingCouncilRequests` movie, filled as `XGPendingRequestsUI.UpdateRequest` fills
+  `UIFundingCouncilRequest`: REQUEST FROM <country>, the item, REQUESTED and IN STORAGE (red while too few), TIME LIMIT (DAYS),
+  the country's own words (Long War's `m_strRequestIntro` for the request, its `<XGCountry:…/>` tags in EW's forms of the
+  country's name: with the article, the adjective, the possessive), REWARDS in EW's words (cash, scientists, engineers, panic
+  reduction, a recruit); DISPATCH ITEMS (greyed while too few are held) gives them (`LWCouncilRequests.Answer`), NOT NOW
+  leaves the request (a pending one is then ignored, as the Geoscape's refusal does). Opened from Mission Control's list,
+  where each item request XCOM can answer is one entry, REQUEST FROM <country> with its hours (EW opens the screen from its
+  Situation Room).
+- **Words** (written on the player's machine, `makeRequestWords`): `[XGPendingRequestsUI]`'s labels, the 41 request intros,
+  and the 16 council countries' name forms from EW's `[XGLocalizedData]`, by the mod's country order: 118 words.
+- **Clicks:** this movie raises its buttons as `button_0` and `button_1` (EW's script names them `mouseBtn1` and 2); both
+  are taken.
+- **Not shown:** EW's item picture (EW's pictures are not ported); a recruit's class and rank (EW names them; Long War's
+  reward picks the class when the soldier comes). A pending request shows TIME LIMIT 0 days: it must be answered now.
+- **Checked on wingpu:** Argentina's pending request for 12 alien alloys (the intro in Long War's words, 201 in storage,
+  REWARDS: §120; `logs/wingpu_ew_council_request.png`); Nigeria's waiting one (177 hours left in the list) opened from
+  Mission Control and DISPATCH ITEMS clicked: "Nigeria's request met (12 Alien Alloys): 2 engineers", back on Mission
+  Control.
+- **Open:** EW's Situation Room's pending-request list, and the "Incoming Council Communication" alert as a request comes;
+  satellite and jet requests on this screen (EW's Transfer Satellite sends the player to the Situation Room).

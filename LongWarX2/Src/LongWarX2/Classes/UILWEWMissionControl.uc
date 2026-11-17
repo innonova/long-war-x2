@@ -4,8 +4,8 @@
 // holds Long War's state and acts. The list: the UFOs detected in flight (UFO-<n>), the missions waiting with their hours
 // left (one entry for abductions, as EW's), and SCAN FOR ACTIVITY (UpdateScan: time run until something happens). Choosing
 // an entry (a click, or the arrows and Enter) opens its EW alert (UILWEWAlert; abductions their site selection, as EW's
-// OnMissionInput does); what EW decides elsewhere (the HQ's defence, EXALT's base, the council's requests, here until
-// EW's own screens for them come) the Geoscape takes as before. Esc leaves Mission Control. EW's clock and event list are
+// OnMissionInput does), a council request EW's request screen (UILWEWCouncilRequest; EW opens it from its Situation
+// Room); what EW decides elsewhere (the HQ's defence, EXALT's base) the Geoscape takes as before. Esc leaves Mission Control. EW's clock and event list are
 // the strategy HUD's, under this screen; the movie's own are hidden, as for the alerts.
 class UILWEWMissionControl extends UILWEWScreen;
 
@@ -62,6 +62,7 @@ function Refresh()
 	local array<string> Labels;
 	local array<ASValue> Params, NoArgs;
 	local bool bAbductions;
+	local array<int> RequestsListed;
 	local int i, n;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
@@ -75,11 +76,17 @@ function Refresh()
 	Movie.Invoke(MCPath $ ".theMissionList.clear", NoArgs);
 	for (i = 0; i < Kinds.Length; i++)
 	{
-		// (Abductions: one entry, as EW's.)
+		// (Abductions: one entry, as EW's; a council request one, given or refused on its screen.)
 		if (Kinds[i] == 4 && bAbductions)
 			continue;
+		if (Kinds[i] >= 20)
+		{
+			if (RequestsListed.Find(Indexes[i]) != INDEX_NONE)
+				continue;
+			RequestsListed.AddItem(Indexes[i]);
+		}
 		bAbductions = bAbductions || Kinds[i] == 4;
-		AddEntry(n++, Entry(S, Kinds[i], Indexes[i], Labels[i]), Kinds[i] == 1 ? 4 : (Kinds[i] >= 20 ? 0 : 4), Icon(Kinds[i]));
+		AddEntry(n++, Entry(S, Kinds[i], Indexes[i], Labels[i]), 4, Icon(Kinds[i]));
 		EntryKinds.AddItem(Kinds[i]);
 		EntryIndexes.AddItem(Indexes[i]);
 	}
@@ -132,6 +139,12 @@ function string Entry(XComGameState_LWStrategy S, int K, int I, string Label)
 	case 9: T = S.ExaltMissionKind == 2 ? class'UILWEWAlert'.default.TitleDataRecovery : class'UILWEWAlert'.default.TitleCovertExtraction; Left = S.ExaltMissionUntil - S.Hours; break;
 	case 10: T = class'UILWEWAlert'.default.TitleExaltRaid; break;
 	case 11: T = class'UILWEWAlert'.default.FCMission @ class'LWCouncil'.static.KindName(S.Sites[I].CouncilKind); Left = S.Sites[I].Until - S.Hours; break;
+	// A council request (EW lists them in its Situation Room): EW's request title.
+	case 20:
+	case 21:
+		T = Repl(class'UILWEWCouncilRequest'.default.TitleLabel, "<XGParam:StrValue0/>", S.CountryName(S.Requests[I].Country));
+		Left = S.Requests[I].bPending ? -1 : S.Requests[I].HoursLeft;
+		break;
 	default: return Label;
 	}
 	return Left >= 0 ? T @ Left $ class'UILWEWAlert'.default.HoursLeft : T;
@@ -174,6 +187,8 @@ function Choose(int i)
 		Refresh();
 		return;
 	}
+	if (EntryKinds[i] >= 20 && class'UILWEWCouncilRequest'.static.Open(Geo, EntryIndexes[i]))
+		return;
 	if (!class'UILWEWAlert'.static.Open(Geo, EntryKinds[i], EntryIndexes[i], true))
 		Geo.ActOn(EntryKinds[i], EntryIndexes[i]);
 }
