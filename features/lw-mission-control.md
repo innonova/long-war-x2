@@ -203,3 +203,21 @@ panel: EW has no Mission Control alert for them (a cinematic, the Situation Room
 - **Checked on wingpu:** Mission Control with the teal globe, Africa and Europe on it, nothing in front
   (`logs/wingpu_ew_mission_control_globe.png`).
 - **Not done:** the globe does not turn or show UFOs and missions (EW's Geoscape does); the moon beside it stays grey.
+
+## Report (2026-11-17, the hologlobe turns and shows)
+
+- **It turns:** Mission Control's hologlobe (`LWX2EWBase.Globe`: EW's `Globe` mesh at full size; the moon is the same mesh,
+  smaller) turns once in `GlobeSeconds` (120).
+- **Markers:** the headquarters (cyan), each UFO seen in flight (red), each mission waiting (yellow: abductions, terror,
+  council missions, crash sites and landed UFOs) as small spheres on its surface at their countries (`LWStrategyRules.MapPlaces`,
+  EW's flat-earth places), turning with it (hard-attached). `UILWEWMissionControl.MarkGlobe`, on each refresh.
+- **Facing:** an alert turns the globe the short way to bring its country before the camera and holds it there while it is
+  up (EW's `CAMLookAtEarth`); closed, it turns freely again.
+- **Where the flat earth lies on the mesh** (`GlobeLonOffset` 104, `bGlobeMirrored`, `GlobeLonScale` 0.85: EW's texture runs the
+  other way round the mesh and a little more than once): found with a new test aid, `globe <yaw> [offset] [mirrored]
+  [scale]`, which holds the globe and puts markers at 0°/0°, 90°E/0°, 0°/45°N, 90°W/0° and 90°W/45°N. The fit is by eye,
+  to within a few degrees on both sides (`logs/wingpu_ew_globe_calibration.png`: the 90°W markers by the Galápagos and the
+  Great Lakes).
+- **Checked on wingpu:** the globe turning in Mission Control; a UFO contact over the United States: the globe turned and held
+  with the HQ and UFO markers before the camera, North America under them (`logs/wingpu_ew_globe_facing.png`).
+- **Not done:** EW's icons in place of spheres; the markers' own colours are lit (a plain stand-in tinted), not glowing.

@@ -19,6 +19,20 @@ var config float ViewFOV;
 
 var array<Actor> Fixed;
 var array<Actor> Tiles;
+/** Mission Control's hologlobe (EW's Globe mesh at its full size; the moon beside it is the same mesh, smaller), turned as
+ *  EW turns it while nothing is shown on it, a turn in GlobeSeconds. */
+var Actor Globe;
+var config float GlobeSeconds;
+/** Where EW's flat earth (LWStrategyRules.MapPlaces: 0 to 1 across and down, equirectangular) lies on the globe's mesh: the
+ *  yaw of longitude 0 in the mesh's frame, and whether longitude runs the other way round. */
+var config float GlobeLonOffset;
+var config bool bGlobeMirrored;
+/** Degrees of the mesh's turn per degree of longitude (EW's texture lies on the mesh a little more than once round). */
+var config float GlobeLonScale;
+/** The markers on it (the headquarters, the UFOs seen, the missions waiting), and the turn it is held at while an alert
+ *  shows a place (EW's CAMLookAtEarth); -1: turning freely. */
+var array<Actor> GlobeMarkers;
+var int GlobeHoldYaw;
 /** The tiles' types and facilities as placed (Refresh places them again when they differ). */
 var array<int> PlacedType, PlacedFacility;
 /** The cameras of ours where EW's stood (LookAt), by their tags, and the view the base is seen through. */
@@ -114,6 +128,7 @@ function Show()
 			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, BaseOffset, Fixed, true, BaseLightScale, true);
 		}
 		`log("LongWarX2: EW base: the shell and" @ FixedLevels.Length @ "fixed rooms placed," @ Fixed.Length @ "actors", , 'LongWarX2');
+		FindGlobe();
 	}
 	Refresh();
 	LookAt(ViewTag, 0);
@@ -494,8 +509,113 @@ static function string LevelFor(int Type, int Facility, bool bShaft)
 	return bShaft ? "Addon_AccessLift_Excavated" : "Addon_Excavated";
 }
 
+/** The hologlobe among the placed pieces. */
+function FindGlobe()
+{
+	local Actor A;
+
+	foreach Fixed(A)
+		if (DynamicSMActor(A) != none && DynamicSMActor(A).StaticMeshComponent.StaticMesh != none
+			&& DynamicSMActor(A).StaticMeshComponent.StaticMesh.Name == 'Globe' && A.DrawScale3D.X > 0.5)
+		{
+			Globe = A;
+			`log("LongWarX2: EW base: the hologlobe found, turning", , 'LongWarX2');
+			return;
+		}
+}
+
+event Tick(float DeltaTime)
+{
+	local rotator R;
+	local int Step;
+
+	super.Tick(DeltaTime);
+	if (Globe == none)
+		return;
+	R = Globe.Rotation;
+	if (GlobeHoldYaw >= 0)
+	{
+		// Towards the held turn, the short way round, at most a turn in a few seconds.
+		Step = ((GlobeHoldYaw - R.Yaw) % 65536 + 98304) % 65536 - 32768;
+		R.Yaw += Clamp(Step, -int(16384.0 * DeltaTime), int(16384.0 * DeltaTime));
+	}
+	else if (GlobeSeconds > 0)
+		R.Yaw += int(65536.0 * DeltaTime / GlobeSeconds);
+	else
+		return;
+	Globe.SetRotation(R);
+}
+
+/** A place on EW's flat earth (0 to 1 across and down) as a direction in the globe's own frame. */
+function vector GlobeDir(float MapX, float MapY)
+{
+	local float Lon, Lat;
+	local vector D;
+
+	Lon = (MapX - 0.5) * 2 * Pi * (bGlobeMirrored ? -1 : 1) * (GlobeLonScale > 0 ? GlobeLonScale : 1.0) + GlobeLonOffset * Pi / 180;
+	Lat = (0.5 - MapY) * Pi;
+	D.X = Cos(Lat) * Cos(Lon);
+	D.Y = Cos(Lat) * Sin(Lon);
+	D.Z = Sin(Lat);
+	return D;
+}
+
+/** The globe's markers set again: each place a small sphere on its surface in its colour, turning with it. */
+function SetGlobeMarkers(array<float> Xs, array<float> Ys, array<LinearColor> Colours)
+{
+	local Actor A;
+	local DynamicSMActor M;
+	local float R;
+	local int i;
+	local vector At, Centre;
+
+	foreach GlobeMarkers(A)
+		A.Destroy();
+	GlobeMarkers.Length = 0;
+	if (Globe == none)
+		return;
+	// (The sphere's centre is its bounds' centre: the mesh's pivot need not be.)
+	R = DynamicSMActor(Globe).StaticMeshComponent.Bounds.SphereRadius;
+	Centre = DynamicSMActor(Globe).StaticMeshComponent.Bounds.Origin;
+	for (i = 0; i < Xs.Length; i++)
+	{
+		At = Centre + ((GlobeDir(Xs[i], Ys[i]) * R) >> Globe.Rotation);
+		M = Spawn(class'DynamicSMActor_Spawnable', self, , At);
+		if (M == none)
+			continue;
+		M.SetStaticMesh(DynamicSMActor(Globe).StaticMeshComponent.StaticMesh);
+		M.SetDrawScale3D(vect(1, 1, 1) * Globe.DrawScale3D.X * 0.035);
+		M.SetCollision(false, false);
+		M.StaticMeshComponent.SetMaterial(0, class'LWX2EWMapPieces'.static.TintedStandin(Colours[i], M));
+		M.SetHardAttach(true);
+		M.SetBase(Globe);
+		GlobeMarkers.AddItem(M);
+	}
+}
+
+/** The globe turned to show a place to the camera (EW's CAMLookAtEarth as an alert opens), held there; or turning again. */
+function FaceGlobe(float MapX, float MapY, optional bool bRelease)
+{
+	local vector ToCam, D, CamLoc;
+	local rotator CamRot;
+	local float CamYaw, PlaceYaw;
+
+	if (Globe == none || bRelease)
+	{
+		GlobeHoldYaw = -1;
+		return;
+	}
+	GetALocalPlayerController().GetPlayerViewPoint(CamLoc, CamRot);
+	ToCam = CamLoc - DynamicSMActor(Globe).StaticMeshComponent.Bounds.Origin;
+	CamYaw = Atan2(ToCam.Y, ToCam.X);
+	D = GlobeDir(MapX, MapY);
+	PlaceYaw = Atan2(D.Y, D.X);
+	GlobeHoldYaw = ((int((CamYaw - PlaceYaw) * 32768.0 / Pi) % 65536) + 65536) % 65536;
+}
+
 defaultproperties
 {
+	GlobeHoldYaw = -1
 	ViewTag = Base
 	bHidden = true
 }

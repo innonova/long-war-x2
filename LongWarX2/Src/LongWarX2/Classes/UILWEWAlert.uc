@@ -230,6 +230,7 @@ function Fill()
 		return;
 	}
 	FindAlert();
+	FaceGlobe(S);
 	switch (Kind)
 	{
 	case 1:
@@ -335,10 +336,30 @@ function FitTitle(string Title)
 	Call("SetTitle", "<font size='" $ Size $ "'>" $ Title $ "</font>");
 }
 
+/** The hologlobe turned to the decision's country and held there while the alert is up (EW's CAMLookAtEarth). */
+function FaceGlobe(XComGameState_LWStrategy S)
+{
+	local LWX2EWBase B;
+	local float X, Y;
+	local int Country;
+
+	B = class'LWX2EWBase'.static.Get(self);
+	if (B == none)
+		return;
+	Country = (Kind <= 3) ? S.Ufos[Index].Country : ((Kind == 4 || Kind == 5 || Kind == 11) ? S.Sites[Index].Country : (Kind == 6 ? Index : (Kind == 9 ? S.ExaltOperativeCountry : -1)));
+	if (Country >= 0 && class'UILWEWMissionControl'.static.PlaceOf(S, Country, X, Y))
+		B.FaceGlobe(X, Y);
+}
+
 /** The alert closed: its click target no longer one of the screen's panels (it made no clip of its own to remove). */
 function Leave()
 {
+	local LWX2EWBase B;
+
 	DropClickTarget();
+	B = class'LWX2EWBase'.static.Get(self);
+	if (B != none)
+		B.FaceGlobe(0, 0, true);
 	CloseScreen();
 }
 

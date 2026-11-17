@@ -573,6 +573,17 @@ static function MaterialInterface PlainStandin(string Path, Object InOuter)
 	return MIC;
 }
 
+/** A plain stand-in in a colour (the hologlobe's markers, LWX2EWBase). */
+static function MaterialInterface TintedStandin(LinearColor Tint, Object InOuter)
+{
+	local MaterialInstanceConstant MIC;
+
+	MIC = MaterialInstanceConstant(PlainStandin("", InOuter));
+	if (MIC != none)
+		MIC.SetVectorParameterValue('TintColor', Tint);
+	return MIC;
+}
+
 /** The material a slot gets: the EW material's XCOM 2 stand-in, made once; the EW material itself when it has none. */
 static function MaterialInterface MaterialFor(string Path, Object InOuter, out array<LWX2Standin> Standins, optional LWX2EWMapData D)
 {

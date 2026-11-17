@@ -7,7 +7,7 @@
 // OnMissionInput does), a council request EW's request screen (UILWEWCouncilRequest; EW opens it from its Situation
 // Room); what EW decides elsewhere (the HQ's defence, EXALT's base) the Geoscape takes as before. Esc leaves Mission Control. EW's clock and event list are
 // the strategy HUD's, under this screen; the movie's own are hidden, as for the alerts.
-class UILWEWMissionControl extends UILWEWScreen;
+class UILWEWMissionControl extends UILWEWScreen dependson(LWStrategyRules);
 
 /** The screen beneath, and the list's entries: the Geoscape's decision kind and index (kind 0: the scan). */
 var UILWGeoscape Geo;
@@ -113,6 +113,56 @@ function Refresh()
 	}
 	Highlight = Clamp(Highlight, 0, Max(0, EntryKinds.Length - 1));
 	Focus();
+	MarkGlobe(S);
+}
+
+/** The hologlobe's markers (EW's globe shows the base, the UFOs and the missions): the headquarters cyan, each UFO seen in
+ *  flight red, each mission waiting yellow, at their countries. */
+function MarkGlobe(XComGameState_LWStrategy S)
+{
+	local LWX2EWBase B;
+	local array<float> Xs, Ys;
+	local array<LinearColor> Colours;
+	local float X, Y;
+	local int i;
+
+	B = class'LWX2EWBase'.static.Get(self);
+	if (B == none)
+		return;
+	if (PlaceOf(S, S.HomeCountry(), X, Y))
+		AddMark(Xs, Ys, Colours, X, Y, MakeLinearColor(0.1, 0.9, 1.0, 1));
+	for (i = 0; i < S.Ufos.Length; i++)
+		if (S.Ufos[i].bDetected && (S.Ufos[i].Status == 1 || S.Ufos[i].Status == 2) && PlaceOf(S, S.Ufos[i].Country, X, Y))
+			AddMark(Xs, Ys, Colours, X + 0.01, Y - 0.01, MakeLinearColor(1.0, 0.1, 0.1, 1));
+	for (i = 0; i < S.Sites.Length; i++)
+		if (S.Sites[i].Status == 1 && PlaceOf(S, S.Sites[i].Country, X, Y))
+			AddMark(Xs, Ys, Colours, X - 0.01, Y + 0.01, MakeLinearColor(1.0, 0.8, 0.1, 1));
+	for (i = 0; i < S.Ufos.Length; i++)
+		if ((S.Ufos[i].Status == 3 || (S.Ufos[i].Status == 4 && S.Ufos[i].bDetected)) && PlaceOf(S, S.Ufos[i].Country, X, Y))
+			AddMark(Xs, Ys, Colours, X - 0.01, Y + 0.01, MakeLinearColor(1.0, 0.8, 0.1, 1));
+	B.SetGlobeMarkers(Xs, Ys, Colours);
+}
+
+static function AddMark(out array<float> Xs, out array<float> Ys, out array<LinearColor> Colours, float X, float Y, LinearColor C)
+{
+	Xs.AddItem(X);
+	Ys.AddItem(Y);
+	Colours.AddItem(C);
+}
+
+/** A country's place on EW's flat earth (LWStrategyRules.MapPlaces). */
+static function bool PlaceOf(XComGameState_LWStrategy S, int Country, out float X, out float Y)
+{
+	local LWStrategyRules.LWMapPlace P;
+
+	foreach class'LWStrategyRules'.default.MapPlaces(P)
+		if (S.CountryIndex(P.Country) == Country)
+		{
+			X = P.X;
+			Y = P.Y;
+			return true;
+		}
+	return false;
 }
 
 /** An entry (UIMissionControl_MissionList.UpdateData): its words coloured by its state, in capitals. */

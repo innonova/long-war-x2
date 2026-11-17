@@ -328,6 +328,12 @@ function Handle(string Line, out array<string> Out)
 	case "unbox":
 		Out.AddItem("moved" @ class'LWX2PartPlacer'.static.FreeBoxedIn(Args.Length > 1 ? int(Args[1]) : 40));
 		return;
+	case "globe":
+		// globe <yaw> [lonoffset] [mirrored 0|1] [scale]: Mission Control's hologlobe held at a turn, with markers at 0°/0° (red),
+		// 90°E/0° (yellow), 0°/45°N (cyan), 90°W/0° (magenta) and 90°W/45°N (white), for placing EW's flat earth on it (a
+		// test aid: LWX2EWBase.GlobeLonOffset).
+		Out.AddItem(GlobeTest(Args));
+		return;
 	case "ewscreen":
 		Out.AddItem(Args.Length > 1 ? class'UILWEWScreen'.static.ShowMovie(Args[1], Args.Length > 2 ? Args[2] : "") : "ERR ewscreen <EW movie: MissionControl, StrategyHUD …>");
 		return;
@@ -2485,6 +2491,37 @@ function XComUnits(out array<string> Out)
  * unit's reach this turn) and submitted by the tactical controller's move, so the game's rules all apply (what it
  * sees, the pods it reveals, reaction fire).
  */
+function string GlobeTest(array<string> Args)
+{
+	local LWX2EWBase B;
+	local array<float> Xs, Ys;
+	local array<LinearColor> Colours;
+	local rotator R;
+
+	B = class'LWX2EWBase'.static.Get(GetALocalPlayerController());
+	if (B == none || B.Globe == none)
+		return "ERR no hologlobe placed";
+	if (Args.Length > 2)
+		B.GlobeLonOffset = float(Args[2]);
+	if (Args.Length > 3)
+		B.bGlobeMirrored = Args[3] == "1";
+	if (Args.Length > 4)
+		B.GlobeLonScale = float(Args[4]);
+	B.GlobeSeconds = 0;
+	B.GlobeHoldYaw = -1;
+	R = B.Globe.Rotation;
+	R.Yaw = Args.Length > 1 ? int(Args[1]) : 0;
+	B.Globe.SetRotation(R);
+	Xs.AddItem(0.5); Ys.AddItem(0.5); Colours.AddItem(MakeLinearColor(1, 0, 0, 1));
+	Xs.AddItem(0.75); Ys.AddItem(0.5); Colours.AddItem(MakeLinearColor(1, 1, 0, 1));
+	Xs.AddItem(0.5); Ys.AddItem(0.25); Colours.AddItem(MakeLinearColor(0, 1, 1, 1));
+	// 90°W at the equator (magenta) and at 45°N (white).
+	Xs.AddItem(0.25); Ys.AddItem(0.5); Colours.AddItem(MakeLinearColor(1, 0, 1, 1));
+	Xs.AddItem(0.25); Ys.AddItem(0.25); Colours.AddItem(MakeLinearColor(1, 1, 1, 1));
+	B.SetGlobeMarkers(Xs, Ys, Colours);
+	return "ok globe yaw" @ R.Yaw @ "offset" @ B.GlobeLonOffset @ "mirrored" @ B.bGlobeMirrored @ "scale" @ B.GlobeLonScale;
+}
+
 function string MoveUnit(int Index, int X, int Y, int Z)
 {
 	local array<XComGameState_Unit> Units;
