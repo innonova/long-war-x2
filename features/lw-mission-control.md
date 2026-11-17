@@ -159,5 +159,5 @@ panel: EW has no Mission Control alert for them (a cinematic, the Situation Room
 - **Words:** 12 more of EW's/Long War's (the stance buttons, "kills)", the statuses, hours and days): 67 alert words.
 - **Checked on wingpu:** a small UFO over the United States: SCRAMBLE clicked, the list (Raven-1 and Raven-2, Avalanche
   Missiles, Ready; `logs/wingpu_ew_ufo_alert_jets.png`), AGG on Raven-1 clicked: the air war on Raven-1, [AGGRESSIVE].
-- **Seen, not fixed:** the jet list runs down over the movie's event list (COUNCIL REPORT) at the bottom right; EW's own
-  `HideNonAlertComponents` is called but leaves it.
+- **Seen, not fixed:** the jet list runs down over the COUNCIL REPORT strip at the bottom right. That strip is not the alert
+  movie's (its `theEventList` is hidden, `_visible` false); it belongs to the strategy HUD beneath.
