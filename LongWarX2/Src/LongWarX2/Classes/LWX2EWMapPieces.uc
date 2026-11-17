@@ -67,6 +67,8 @@ struct LWX2Look
 	var string Normal;
 	/** For the cut-out kinds: the diffuse's alpha in green and blue, which XCOM 2's cut-out parents read (mask-textures.ts). */
 	var string Mask;
+	/** EW's glowing parts' colour (Kind Glow: light rings and strips, consoles' screens; HDR, above 1 brighter). */
+	var LinearColor Tint;
 };
 
 struct LWX2Standin
@@ -84,6 +86,12 @@ var config string PropParent;
 /** The lightmapped stand-ins' parent (our own material, tools/materials: unlit, EW's diffuse × EW's baked lighting on the
  *  mesh's second UV set), and whether EW's base and EW's mission maps use it. "": not used. */
 var config string LightmapParent;
+/** EW's glowing parts (Kind Glow): an XCOM 2 parent that glows in one colour parameter, that parameter, the colour where
+ *  EW takes it from the mesh's vertices, and a scale on EW's colours. */
+var config string GlowParent;
+var config name GlowColorParam;
+var config LinearColor GlowDefault;
+var config float GlowScale;
 var config bool LightmapBase, LightmapMaps;
 /** EW's baked lighting at this brightness (1: as stored). */
 var config float LightmapBrightness;
@@ -644,6 +652,29 @@ static function MaterialInterface TintedStandin(LinearColor Tint, Object InOuter
 }
 
 /** The material a slot gets: the EW material's XCOM 2 stand-in, made once; the EW material itself when it has none. */
+/** A stand-in for one of EW's glowing parts: GlowParent in the look's colour (GlowDefault where EW colours it by vertex),
+ *  over the screen's picture or plain white. */
+static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter)
+{
+	local MaterialInstanceConstant MIC;
+	local Material Parent;
+	local Texture T;
+	local LinearColor C;
+
+	Parent = Material(DynamicLoadObject(default.GlowParent, class'Material', true));
+	if (Parent == none)
+		return none;
+	MIC = new(InOuter) class'MaterialInstanceConstant';
+	MIC.SetParent(Parent);
+	T = Texture(DynamicLoadObject(L.Diffuse != "" ? L.Diffuse : "EngineResources.WhiteSquareTexture", class'Texture', true));
+	if (T != none)
+		MIC.SetTextureParameterValue('Diffuse', T);
+	C = (L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.GlowDefault;
+	C.R *= default.GlowScale; C.G *= default.GlowScale; C.B *= default.GlowScale; C.A = 1;
+	MIC.SetVectorParameterValue(default.GlowColorParam, C);
+	return MIC;
+}
+
 static function MaterialInterface MaterialFor(string Path, Object InOuter, out array<LWX2Standin> Standins, optional LWX2EWMapData D)
 {
 	local int k, i;
@@ -674,6 +705,15 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 			L.Diffuse = default.LookOverrides[i].Diffuse;
 		}
 		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : ((L.Kind == 'Masked' && default.MaskedParent != "") ? default.MaskedParent : default.PropParent));
+	}
+	if (k != INDEX_NONE && L.Kind == 'Glow' && default.GlowParent != "")
+	{
+		S.Standin = GlowStandin(L, InOuter);
+		if (S.Standin != none)
+		{
+			Standins.AddItem(S);
+			return S.Standin;
+		}
 	}
 	if (k != INDEX_NONE && L.Diffuse == "" && default.PropParent != "" && !Matches(Path, default.SkipMaterials))
 	{

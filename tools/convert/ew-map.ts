@@ -713,7 +713,7 @@ for (const level of ['Stream', 'EWI', 'CNH']) {
 // not compile any), so the mod replaces each with an instance of an XCOM 2 parent given
 // the EW material's diffuse and normal maps. Read here: an instance's texture parameters
 // (its parents' for those it does not set), a material's texture expressions.
-interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien'; mask?: string }
+interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[] }
 const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
 /** Root materials drawn see-through (EW's BlendMode BLEND_Translucent: road paint, decals), by name. */
 const translucent = new Set<string>()
@@ -808,8 +808,50 @@ function lookOf(r: number): Look {
     kind: /Foliage|Grass|Veget/i.test(root) ? 'Foliage' : /DifOpc|OpacityMask/i.test(root) || (translucent.has(root) && diffuse) ? 'Masked' : /ALIEN/i.test(root) ? 'Alien' : 'Prop',
   }
 }
+/**
+ * A material's colour parameter (a vector parameter of this name on it or a parent instance): EW's glowing parts, light
+ * strips and screens, carry theirs in TintColor (HDR: above 1 is brighter).
+ */
+function vectorParam(r: number, name: string, depth = 0): number[] | undefined {
+  if (r <= 0 || depth > 8) return undefined
+  let tags: Tag[]
+  try {
+    tags = tagsOf(r - 1, 4)
+  } catch {
+    return undefined
+  }
+  const vp = tags.find((t) => t.name === 'VectorParameterValues')
+  if (vp) {
+    const rd = new Reader(vp.value.subarray(4))
+    const count = new DataView(vp.value.buffer, vp.value.byteOffset).getInt32(0, true)
+    for (let k = 0; k < count; k++) {
+      const st = readTags(rd, pkg)
+      const pn = st.find((t) => t.name === 'ParameterName')
+      const pv = st.find((t) => t.name === 'ParameterValue')
+      if (pn && pv && nameOf(pn) === name && pv.value.length >= 16) {
+        const d = new DataView(pv.value.buffer, pv.value.byteOffset)
+        return [0, 4, 8, 12].map((o) => d.getFloat32(o, true))
+      }
+    }
+  }
+  const parent = tags.find((t) => t.name === 'Parent')
+  return parent ? vectorParam(ref(parent), name, depth + 1) : undefined
+}
+/** EW's glowing materials (the base's light rings and strips, its consoles' and walls' screens): their own kind, with
+ *  their colour and, for a screen, its picture. */
+const GLOW = /HQ_ColorizedLight|HQ_ConsoleScreen/i
 const looks = new Map<number, Look>()
 for (const p of [...pieces, ...doors]) for (const m of p.materials) if (m && !looks.has(m)) looks.set(m, lookOf(m))
+for (const [r, l] of looks) {
+  if (!GLOW.test(pathOf(r))) continue
+  const tex = new Map<string, string>()
+  const root = texturesOf(r, tex)
+  l.kind = 'Glow'
+  l.tint = vectorParam(r, 'TintColor')
+  // (A console's screen its picture; a light its colour alone.)
+  l.diffuse = tex.get('StaticScreenTexture') ?? ''
+  void root
+}
 
 // The cut-out looks' masks (mask-textures.ts): XCOM 2's cut-out parents read the opacity from Masks, not the diffuse.
 // Added now, while the package is small; their mips are made as the textures are inlined. Additions go at the tables'
@@ -1002,7 +1044,7 @@ const lines = [
   ),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
-    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''})`,
+    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''})`,
   ),
   ...pieces.map(
     (p) =>
