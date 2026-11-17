@@ -81,6 +81,8 @@ function SetQueue(XComGameState_LWStrategy S)
 		Qtys.AddItem("---");
 		Etas.AddItem(Eta(class'LWEngineering'.static.HoursFor(S.FoundryProjects[i].WorkLeft, S.FoundryProjects[i].Engineers, S.Engineers), S.FoundryProjects[i].Engineers));
 	}
+	// (Never empty: an empty queue is given too, or the movie's placeholders show.)
+	Shown = "q|";
 	for (i = 0; i < Names.Length; i++)
 		Shown $= Names[i] $ "|" $ Etas[i] $ "|";
 	if (Shown == QueueShown)
