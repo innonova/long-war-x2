@@ -346,3 +346,23 @@ after), a new campaign's council bomb disposal played on `LWX2V_URB_TrainStation
 squad free to move.
 
 Open: the Commercial Restaurant data recovery's first capture area (a roof deck XCOM 2 makes no floor on).
+
+## Release (2026-11-17, night)
+
+`LongWarX2-20261117-30fb091.zip` replaces `50a07ae` on the draft v0.1.0-preview.1.
+
+New since 50a07ae (`lw-council-missions.md`, step 4):
+- **The Chryssalid hive:** offered as Long War does (past day 35, once a Chryssalid corpse was ever held; once, in
+  Canada), on its EW level: EW's objectives in order, the ship's transponder, the run to the EVAC with the air strike
+  countdown, and the level's scripted zombies and Chryssalids.
+- **Progeny:** Portent (the survivor's extraction), Deluge (the dam's collapse, the bypass valves, the transport) and
+  Furies (the alarm, the execution countdown, the command console), offered as Long War's chain; its named soldiers
+  (read by the setup from the player's own Long War).
+- **The levels' alien drops:** EW's reinforcement drops come as the variant levels' Kismet has them (Progeny's, and the
+  council's Highway, Research Outpost, Commercial Alley, Street Hurricane and Pier missions).
+- **Fixed:** the council's rewards paid engineers for scientists and the other way round.
+- The setup converts only the new variant levels; converted maps are kept.
+
+**Checked on wingpu from the zip:** its setup (`--maps`) kept the converted maps, read 32 missions' objectives and the
+four named soldiers, and wrote 123 plots; with the control port on for the check (off again after), a new campaign's
+Chryssalid hive loaded on its plot with its five starting zombies and the objective moving on as a zombie came in sight.
