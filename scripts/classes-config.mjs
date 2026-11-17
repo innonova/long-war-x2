@@ -225,6 +225,10 @@ const REAL = {
   // "Project a bolt of pure psi force that destroys cover but does not harm units": environment damage only, a tile's
   // radius (APPROXIMATION: its radius and strength are not known).
   LW_PsychokineticStrike: () => ({ PsiKind: 'PsychokineticStrike', Radius: 1, Param2: 100, Param: 2 }),
+  // "Ignite fires at the target location. Does not cause injuries." (EW's eAbility_Torch: a location in sight, free aim,
+  // within 27 m: SetChainedDistance's 27 x 64 units, 18 tiles). Its fire's radius and its cooldown are not in Long War's
+  // script or config: 2 tiles (an incendiary's) and a turn (APPROXIMATION).
+  LW_Pyrokinesis: () => ({ PsiKind: 'Pyrokinesis', Radius: 2, Param2: 18, Param: 1 }),
   // "Nearby allies are healed for <RegenPheromoneRegen> health each turn" (cannot die of a critical wound, cured of acid:
   // not done).
   // "Nearby allies in cover receive + Defense": DISTORTIONFIELD_DEFENSE, within DISTORTIONFIELD_RADIUS (EW's units, 96 a tile).
@@ -244,7 +248,8 @@ const REAL = {
   // "+<GeneModBrainDampingWill> will against psionic attacks" (X2AbilityToHitCalc_LWPsiCheck, on every will-defended psi ability).
   // "reach high positions without the need for ladders or other climbing aids": XCOM 2's grapple (the Spider Suit's;
   // an action with a cooldown where Long War's is a way of moving: APPROXIMATION).
-  LW_MuscleFiberDensity: () => ({ AlsoGrants: 'Grapple' }),
+  // (The person's review, 2026-11-02: not a grapple; up a level with no action: XCOM 2's JumpUp traversal.)
+  LW_MuscleFiberDensity: () => ({ Kind: 'JumpUp' }),
   // "...is immune to strangulation" (EW's Seeker): XCOM 2's strangling is the Viper's Bind. The rest ("revealing but not
   // alerting nearby enemies") is not in.
   LW_BioelectricSkin: () => ({ BlocksAbilities: ['Bind'] }),

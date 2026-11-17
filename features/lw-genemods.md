@@ -345,3 +345,14 @@ loads or finds a texture by its path.
   `GetStrategyImagePath`'s 69 paths name EW's pictures in its code. I'm leaving these screens
   as they are.
 - The soldier on the lab's plinth.
+
+## Report (2026-11-17, Muscle Fiber Density as a jump up, as the person asked)
+
+**Muscle Fiber Density** is no longer XCOM 2's Grapple: it gives XCOM 2's **JumpUp** traversal (the one its Chryssalids
+and ADVENT MECs use), a passive with no action of its own (`X2Effect_PersistentTraversalChange`, `Kind=JumpUp` in
+`XComLWClasses.ini`; `classes-config.mjs`).
+
+**Checked on wingpu** (the perk given to a sniper, a council bomb disposal on the Train Station): to the same raised
+platform two levels up beside the squad, a soldier without it walked 17 tiles round by the stairs, both actions; the
+soldier with it got there in 3 tiles, one action, and stands on the platform. Soldiers have an animation for it (the move
+played through; not looked at frame by frame).

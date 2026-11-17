@@ -133,7 +133,7 @@ static function array<X2DataTemplate> CreateTemplates()
 			Templates.AddItem(Adrenal(S));
 		else if (S.Kind == 'Biofield')
 			Templates.AddItem(Biofield(S));
-		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.Damage2 != 0 || S.DamageTaken != 0 || S.CritDamagePct != 0 || S.BonusRadius != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0 || S.HealTaken != 0 || S.Regen != 0 || S.BleedTurns != 0)
+		else if (S.Aim != 0 || S.Crit != 0 || S.Defense != 0 || S.Damage != 0 || S.Damage2 != 0 || S.DamageTaken != 0 || S.CritDamagePct != 0 || S.BonusRadius != 0 || S.DamagePct != 0 || S.CritAgainst != 0 || S.Mobility != 0 || S.FreeShotIf != '' || S.ImmuneTo.Length > 0 || S.HealTaken != 0 || S.Regen != 0 || S.BleedTurns != 0 || S.Kind == 'JumpUp')
 			Templates.AddItem(Passive(S));
 		else
 			Templates.AddItem(PurePassive(S.Name, S.Icon, false, 'eAbilitySource_Perk', true));
@@ -300,6 +300,7 @@ static function X2AbilityTemplate CloseCombatShot(LWStandin S)
  * - Mind Control: controlled for Param2 turns (XCOM 2's); robots immune.
  * - Inspiration: allies within Radius tiles of the place chosen lose disorientation and panic and gain Will for
  *   Param2 turns.
+ * - Pyrokinesis: fires lit within Radius tiles of a place in sight within Param2 tiles.
  * The soldier has no psi animations: the powers show their effects without a firing animation.
  */
 static function X2AbilityTemplate PsiPower(LWStandin S)
@@ -315,6 +316,7 @@ static function X2AbilityTemplate PsiPower(LWStandin S)
 	local X2Effect_RemoveEffects Calm;
 	local X2Effect_PersistentStatChange Will;
 	local X2Effect_LWModifiers Merge;
+	local X2Effect_ApplyFireToWorld Fire;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, S.Name);
 	Template.IconImage = S.Icon;
@@ -383,6 +385,30 @@ static function X2AbilityTemplate PsiPower(LWStandin S)
 		Damage.bApplyOnHit = true;
 		Damage.bApplyOnMiss = true;
 		Template.AddMultiTargetEffect(Damage);
+		return Template;
+	}
+	// Pyrokinesis (EW's eAbility_Torch): fires lit within Radius tiles of a place chosen in sight, within ReachTiles; no unit
+	// harmed by it ("Ignite fires at the target location. Does not cause injuries."): the fire burns who stays in it.
+	if (S.PsiKind == 'Pyrokinesis')
+	{
+		Template.Hostility = eHostility_Offensive;
+		Template.AbilityToHitCalc = default.DeadEye;
+		Cursor = new class'X2AbilityTarget_Cursor';
+		Cursor.bRestrictToSquadsightRange = true;
+		Cursor.FixedAbilityRange = S.Param2 * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
+		Template.AbilityTargetStyle = Cursor;
+		Radius = new class'X2AbilityMultiTarget_Radius';
+		Radius.fTargetRadius = S.Radius * class'XComWorldData'.const.WORLD_StepSize * class'XComWorldData'.const.WORLD_UNITS_TO_METERS_MULTIPLIER;
+		Template.AbilityMultiTargetStyle = Radius;
+		Template.TargetingMethod = class'X2TargetingMethod_VoidRift';
+		Fire = new class'X2Effect_ApplyFireToWorld';
+		Fire.bUseFireChanceLevel = true;
+		Fire.bDamageFragileOnly = true;
+		Fire.FireChance_Level1 = 0.25f;
+		Fire.FireChance_Level2 = 0.15f;
+		Fire.FireChance_Level3 = 0.60f;
+		Fire.bCheckForLOSFromTargetLocation = false;
+		Template.AddMultiTargetEffect(Fire);
 		return Template;
 	}
 	// Telekinetic Field: allies within Radius tiles of the psion gain Defense until its next turn.
@@ -629,6 +655,7 @@ static function X2AbilityTemplate Passive(LWStandin S)
 	local X2Effect_DamageImmunity Immunity;
 	local X2Effect_Regeneration Regen;
 	local X2Effect_LWSecondaryHeart Heart;
+	local X2Effect_PersistentTraversalChange Traversal;
 	local name Immune;
 
 	`CREATE_X2ABILITY_TEMPLATE(Template, S.Name);
@@ -705,6 +732,16 @@ static function X2AbilityTemplate Passive(LWStandin S)
 		Regen.MaxHealAmount = 1000;
 		Regen.HealthRegeneratedName = name(S.Name $ "_Healed");
 		Template.AddTargetEffect(Regen);
+	}
+
+	// Muscle Fiber Density: up a level without a ladder or pipe, no action of its own (XCOM 2's JumpUp, as its Chryssalids
+	// and ADVENT MECs have it, given as a traversal).
+	if (S.Kind == 'JumpUp')
+	{
+		Traversal = new class'X2Effect_PersistentTraversalChange';
+		Traversal.BuildPersistentEffect(1, true, false, false);
+		Traversal.AddTraversalChange(eTraversal_JumpUp, true);
+		Template.AddTargetEffect(Traversal);
 	}
 
 	if (S.Mobility != 0)
