@@ -1546,3 +1546,18 @@ from the evening, one from the morning) give two exception addresses:
   never set it). **Still not a floor on Commercial Restaurant's roof** (`tile 192 96`: nothing at the deck's
   height, though the plot carries `bIsFloor` and a trace hits the deck at 390). What XCOM 2's tile builder wants
   from a breakable floor beyond that is open.
+
+## Report (2026-11-17, EW's night maps at night)
+
+- **Before:** every mission on an EW map took one lighting map, a clear day, so EW's night maps (54 of the maps Long War
+  rotates) were played in daylight.
+- **Read** (XCOM 2's `XComEnvLightingManager.GetMatchingEnvLightingDefs`): a lighting definition naming a plot map
+  (`arrPlotMaps`) is taken over the plot type's.
+- **Done:** `scripts/lighting-config.mjs` writes `XComMaps.ini` from the maps' Night flags (`XComLWEWMaps.ini`, Long War's
+  `DefaultMaps.ini`): the clear day for Long War X2's plot type as before, XCOM 2's city night (`EnvLighting_UrbanNight`)
+  for the night town maps' plots (33, `URB_`), its nature night (`EnvLighting_NatureNight`) for the other 21.
+- **Seen on wingpu:** the bar (`URB_Bar`) at night, dark blue with the cars and the street lit by EW's own lights
+  (`logs/wingpu_night_bar.png`); the nuked city crash site at night, a purple dark with EW's lights on the rubble
+  (`logs/wingpu_night_nukedcity.png`).
+- **Choice:** a map's night is EW's (each EW map has its time of day), not the mission's hour. `EWI_MeldTutorial` and
+  Portent take the nature night by the rule; to be looked at.
