@@ -35,8 +35,9 @@ import { combineLightmapMip } from './lightmap-bake.ts'
  *  11: vehicles not to be stood on; 12: nor sandbags; 13: their tops no valid destinations; 14: no path written as
  *  none, not as the map's name and a dot; 15: EW's materials made inert, XCOM 2 compiling each as the map loaded;
  *  16: the meld canisters' places, MeldPoints; 17: what units see through (EW's VisibilityBlockingData on every piece:
- *  windows, foliage, cars), written onto the plot's pieces). */
-export const CONVERTER_VERSION = 20
+ *  windows, foliage, cars), written onto the plot's pieces; 21: EW's lightmaps, its glowing parts' colours, its 3D UI
+ *  panels, features/ew-lightmaps.md and ew-3d-screens.md). */
+export const CONVERTER_VERSION = 21
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
