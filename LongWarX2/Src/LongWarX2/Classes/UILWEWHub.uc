@@ -560,8 +560,6 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 
 defaultproperties
 {
-	// The HUD places itself by the stage's edges.
-	bScaleToStage = false
 	RoomCameras(0) = ScienceLab
 	RoomCameras(1) = ENGINEERING
 	RoomCameras(2) = BARRACKS

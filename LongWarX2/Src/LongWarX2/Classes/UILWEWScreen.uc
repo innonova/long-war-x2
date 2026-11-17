@@ -8,8 +8,11 @@ class UILWEWScreen extends UIScreen;
 const EW_IMAGES = "Command1.QILibrary_StrategyImages";
 
 var string UIPackage;
-/** EW's movies are laid out for a 1280 x 720 stage, XCOM 2's is 1920 x 1080: a screen that does not place itself by the
- *  stage's edges (as EW's HUD does) is scaled up to fill it. */
+/** EW's movies are laid out for a 1280 x 720 stage, XCOM 2's is 1920 x 1080: every EW screen is scaled up by this, as EW
+ *  scaled its whole stage to the window, and EW's framework is told a stage this much smaller (SetEWView), so a screen
+ *  that places itself by the stage's edges (EW's HUD, the hub, the hangar's list) lands where EW put it, at EW's size.
+ *  (Before 2026-11-17 those screens were left unscaled and drew at two-thirds of EW's size: ew-compare.) */
+const STAGE_SCALE = 1.5;
 var bool bScaleToStage;
 /** Where EW placed the screen's clip on its stage (ScaleToStage): a point of EW's stage is this far from the clip. */
 var float StageX, StageY;
@@ -19,6 +22,11 @@ var bool bShowsBase;
  *  shown and looked at through it as the screen comes up and comes back (the screen under it may have handed the view back);
  *  none: the screen makes its own background. */
 var name BaseCamera;
+/** The screen's movie (EW's SwfMovie in the converted package), held while the screen is up. Nothing else holds the
+ *  package: a garbage collection between loading it and Flash looking the movie up (the base's levels streaming in at a
+ *  campaign's start ran one) purged it, and Mission Control came up empty and stayed so ("Failed to find object 'SwfMovie
+ *  ewxMissionControl.missioncontrol'"; ew-compare, 2026-11-17). */
+var Object MovieObject;
 
 /** Whether the converted EW UI package is in the mod's Content (loading one of its objects loads it whole). */
 static function bool HasEWScreens()
@@ -161,6 +169,7 @@ static function string ReadVar(string SubPath)
 
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
+	HoldMovie();
 	super.InitScreen(InitController, InitMovie, InitName);
 	LendXCom2Spawning(Movie);
 }
@@ -173,6 +182,27 @@ simulated function OnInit()
 	SetEWView(Movie);
 	ShowRoom();
 	`log("LongWarX2: EW screen" @ Package @ "inited", , 'LongWarX2');
+}
+
+/** The movie Package names ("/ package/ewx<Group>/<Movie>") loaded and held (MovieObject). The group is the movie's
+ *  outermost package (its path is ewx<Group>.<Movie>), loaded with the converted file through its name in it. */
+function HoldMovie()
+{
+	local string P;
+	local int i;
+
+	P = string(Package);
+	i = InStr(P, "ewx");
+	if (i == INDEX_NONE || MovieObject != none)
+		return;
+	P = Mid(P, i);
+	i = InStr(P, "/");
+	if (i == INDEX_NONE)
+		return;
+	DynamicLoadObject(UIPackage $ "." $ Left(P, i), class'Object', true);
+	MovieObject = FindObject(Left(P, i) $ "." $ Mid(P, i + 1), class'Object');
+	if (MovieObject == none)
+		`log("LongWarX2: EW screen: no movie" @ Left(P, i) $ "." $ Mid(P, i + 1), , 'LongWarX2');
 }
 
 /** EW's base behind the screen, through its room's camera (BaseCamera). */
@@ -205,7 +235,7 @@ function ScaleToStage()
 {
 	local float Scale;
 
-	Scale = 1920.0 / 1280.0;
+	Scale = STAGE_SCALE;
 	StageX = Movie.GetVariableNumber(MCPath $ "._x");
 	StageY = Movie.GetVariableNumber(MCPath $ "._y");
 	SetPanelScale(Scale);
@@ -253,7 +283,8 @@ static function LendXCom2Spawning(UIMovie TheMovie)
 }
 
 /**
- * EW's Flash framework told the stage, as XCOM 2 tells its own (UIMovie.SetResolutionAndSafeArea: SetUIView). EW's movies
+ * EW's Flash framework told the stage, as XCOM 2 tells its own (UIMovie.SetResolutionAndSafeArea: SetUIView), in EW's
+ * stage units (XCOM 2's divided by STAGE_SCALE, the scale every EW screen is drawn at). EW's movies
  * run on their own framework (tools/convert/ew-ui.ts renames its classes: Environment is Qnvironment), whose singleton
  * anchors EW's screens to the stage edges by what SetView last said (EW's game said it); and the mouse made active, as on
  * the PC.
@@ -268,15 +299,15 @@ static function SetEWView(UIMovie TheMovie)
 	if (Env == none)
 		return;
 	V.Type = AS_Number;
-	V.n = TheMovie.m_v2ScaledDimension.X;
+	V.n = TheMovie.m_v2ScaledDimension.X / STAGE_SCALE;
 	Args.AddItem(V);
-	V.n = TheMovie.m_v2ScaledDimension.Y;
+	V.n = TheMovie.m_v2ScaledDimension.Y / STAGE_SCALE;
 	Args.AddItem(V);
 	V.n = 0;
 	Args.AddItem(V);
-	V.n = TheMovie.m_v2ScaledOrigin.X;
+	V.n = TheMovie.m_v2ScaledOrigin.X / STAGE_SCALE;
 	Args.AddItem(V);
-	V.n = TheMovie.m_v2ScaledOrigin.Y;
+	V.n = TheMovie.m_v2ScaledOrigin.Y / STAGE_SCALE;
 	Args.AddItem(V);
 	V.n = 0;
 	Args.AddItem(V);

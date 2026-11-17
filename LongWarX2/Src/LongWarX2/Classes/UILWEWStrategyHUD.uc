@@ -205,7 +205,6 @@ function SetClock(XComGameState_LWStrategy S)
 defaultproperties
 {
 	InputState = eInputState_None
-	bScaleToStage = false
 	bConsumeMouseEvents = false
 	MaxEvents = 1
 }
