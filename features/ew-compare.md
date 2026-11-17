@@ -38,3 +38,49 @@ so the fixes are driven by evidence and the person is not needed on every round.
   ImageMagick. Nothing is installed on wingpu.
 - **Screenshots to OpenAI** through the person's Codex account: fine by the person (2026-11-17). Nothing goes into a
   repository.
+
+## Report (2026-11-17, the tools and the first two rounds)
+
+**The pipeline works end to end** (`tools/compare/README.md`):
+- **EW** in the harness, loaded from the person's Game 55 (December 2016, a built base): 20 views by clicks
+  (`capture-ew.sh`): the base, the five rooms, research, Gene Lab, build items and facilities, the Foundry, the Repair
+  Bay, the OTS, Psi Labs, Officer Billets, the aircraft list, satellites, the grey market, council requests, Mission
+  Control. The other saves are held aside on wingpu (`SaveData-held`) while comparing: EW lists every save, and the
+  person's 2025 campaign sits far down that list.
+- **The port**: 14 views through the control port (`capture-x2.sh`) from a campaign just made.
+- **Pairs and hints** (`pairs.sh`, `pair.py`), a local gallery (`logs/compare/index.html`).
+- **The reviewer** (Codex, gpt-6-astra, agent `ewreview`): round one, 13 views and about 45 findings; round two, 9 fixed,
+  6 partly, 30 open.
+
+**Fixed from the comparisons:**
+- **EW's screens at two-thirds of EW's size** (the hub, the hangar's list, the HUD): every EW screen is now drawn 1.5
+  times larger and EW's framework told a 1280 × 720 stage, as EW scaled its whole stage. The room menus then needed
+  their tabs' anchors taken back into the HUD's units (`UILWEWHub.TabAnchorsToHUD`).
+- **Mission Control empty at a campaign's start**: a garbage collection purged the converted package before Flash
+  found the movie; every EW screen now holds its movie (`UILWEWScreen.HoldMovie`).
+- **The HUD follows EW's rooms** (`UILWEWStrategyHUD`, after EW's `UIStrategyHUD` and its `UIStrategyHUD_FSM_*`): the
+  clock, event list (NEXT EVENT) and MISSION CONTROL on the base's view and in Mission Control only; EW's back arrow
+  elsewhere (clickable); SCIENTISTS and CURRENT RESEARCH in the lab, ENGINEERS in engineering; EW's resource lines
+  (CREDITS/MONTHLY/MELD; engineering's; Build Facilities').
+- **The research room's menu** as EW's (Change Research Project while one runs, EW's help lines, the Gene Lab there).
+- **The hub coming back** after Mission Control kept Mission Control's camera.
+
+**Ruled out (so it isn't looked at again):**
+- The base's "smeared" surfaces are not the diffuse: EW's master trim sheet (`HQ_MasterMaterial_DIFF`) is a normal
+  grey diffuse with the panel detail in its colour channels; its alpha is a gloss mask. The rooms' palettes (EW's
+  `Colorize A`–`D` on `HQ_Master_*Palette`) only tint, and the material graph that mixes them was stripped in cooking.
+- The washed-out look is not the lighting level's choice (Day_Arid, Facility, Cave, NatureNight and none look alike),
+  not the world ambient override (`WorldAmbientIntensity` 0 changes nothing), and not the stand-ins' white mask.
+
+**Open, ranked by the reviewer, with what is known:**
+1. **Light where EW has none.** With EW's placed lights at zero the lab still renders evenly lit: something fills
+   every surface. In EW the rooms' outer shells and most of the base are black, because EW's light is baked into
+   lightmaps (`Lighting.tfc`) and nothing reaches them. The same cause makes the cutaway's shells show (the reviewer's
+   first item) and the rooms look flat (its third). The faithful fix is EW's lightmaps; first find the fill's source.
+2. **EW's 3D screens drawn flat.** EW draws the Situation Room's map on the room's wall screen, the research and build
+   panels at a slant in the room, and Mission Control as the 3D Earth. EW's base has `UIDisplay_LevelActor`s for this
+   (`UISituationDisplayLevelActor_Right` in its log), as XCOM 2's Avenger has.
+3. **Vahlen and Shen** stand in EW's research and engineering close-ups; the staff fill the rooms.
+4. **Blank monitors and unlit lamps** (EW's `HQ_ConsoleScreen`, `HQ_CustomScreens`, `HQ_ColorizedLight_*`).
+5. Smaller: the grey market's picture cropped; the satellite view's country columns too large; EW's Research Archives
+   and Research Credits screens not in the port.
