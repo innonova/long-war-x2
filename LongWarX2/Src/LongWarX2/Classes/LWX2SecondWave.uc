@@ -6,6 +6,8 @@ class LWX2SecondWave extends Object config(LWGear);
 
 /** Red Fog's caps (Long War's SW_ABDUCTION_SITES and SW_COVER_INCREASE, the names notwithstanding: aim 35, mobility 6). */
 var config float RedFogAim, RedFogMobility;
+/** Diminishing Returns' step (Long War's SW_SATELLITE_INCREASE). */
+var config float SatelliteIncrease;
 
 /** Long War's option n chosen for this campaign. */
 static function bool On(int n)
@@ -62,6 +64,9 @@ static function bool Set(int n, bool bOn)
 		Settings.AddSecondWaveOption(ID);
 	else
 		Settings.RemoveSecondWaveOption(ID);
+	// (New Economy deals the funding as a campaign begins: in a running one, now.)
+	if (n == 1 && bOn && class'XComGameState_LWStrategy'.static.Get() != none)
+		XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID)).RandomizeFunding();
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	return true;
 }
@@ -166,4 +171,20 @@ static function int Roulette(X2WeaponTemplate W, bool bOn)
 	if (Left(string(W.DataName), 9) == "LWWeapon_")
 		W.BaseDamage.Crit = bOn ? W.BaseDamage.Damage : (W.BaseDamage.Damage + 1) / 2;
 	return 1;
+}
+
+/** The satellites XCOM has: ready, in orbit, being built (CalcEscalatingSatelliteCost's count). */
+static function int SatellitesHeld()
+{
+	local XComGameState_LWStrategy S;
+	local int i, n;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none)
+		return 0;
+	n = S.SatellitesReady + S.SatellitesDue.Length;
+	for (i = 0; i < S.Countries.Length; i++)
+		if (S.Countries[i].bSatellite)
+			n++;
+	return n;
 }

@@ -13,6 +13,9 @@ struct LWCountry
 	var bool bLeft;
 	/** A hunt has been over the country (Long War's BeenHunted: the second pass finds satellites more easily). */
 	var bool bHunted;
+	/** Its funding before satellites and options (Long War's m_kTCountry.iFunding: its FundingAmounts x FundingBalance, or
+	 *  New Economy's draw); 0: not set yet (a campaign from before it was kept: the first). */
+	var int Funding;
 };
 
 /**
@@ -351,9 +354,12 @@ function Begin()
 		C.Panic = 0;
 		C.bSatellite = false;
 		C.bLeft = false;
+		C.Funding = Round(Def.Funding * class'LWStrategyRules'.default.FundingBalance[class'LWStrategyRules'.static.Difficulty()]);
 		Countries.AddItem(C);
 		Open.AddItem(Countries.Length - 1);
 	}
+	if (class'LWX2SecondWave'.static.On(1))
+		RandomizeFunding();
 	// Long War (XGWorld.AddInitialPanic): the starting panic goes out in steps of
 	// UFO_ENTERTAINMENT_SURVIVE to random council countries; a country at 84 (85 "blocks") gets no more.
 	Points = class'LWStrategyRules'.default.StartingPanic[class'LWStrategyRules'.static.Difficulty()];
@@ -981,6 +987,59 @@ function bool IsTerrorTarget(int k)
 		if (Ufos[i].Objective == 6 && Ufos[i].Country == k && Ufos[i].Status != 5)
 			return true;
 	return false;
+}
+
+/**
+ * A country's funding this month (XGCountry.CalcFunding): its own (New Economy's draw, else FundingAmounts x
+ * FundingBalance); War Weariness (#15) 5% less each month, at most 90%; Results Driven (#10) less by its panic; without a
+ * satellite, BASE_FUNDING's share. Each step rounded down, as Long War's ints are.
+ */
+function int CountryFunding(int i, bool bSat)
+{
+	local int F, d;
+
+	d = class'LWStrategyRules'.static.Difficulty();
+	F = Countries[i].Funding > 0 ? Countries[i].Funding : Round(class'LWStrategyRules'.default.Countries[i].Funding * class'LWStrategyRules'.default.FundingBalance[d]);
+	if (class'LWX2SecondWave'.static.On(15))
+		F = int(F * (1.0 - FClamp(Month * 0.05, 0.0, 0.9)));
+	if (class'LWX2SecondWave'.static.On(10))
+		F = int(F * float(100 - Countries[i].Panic) / 100.0);
+	if (!bSat)
+		F = int(F * class'LWStrategyRules'.default.BaseFundingPct[d] / 100.0);
+	return F;
+}
+
+/**
+ * New Economy (#1, XGWorld.RandomizeFunding): the council's funding dealt again at random, in tens: each country, in a
+ * random order, half the average left to an average and a half (Rand(1.5 x average) over half), kept between the lowest and
+ * the highest of before.
+ */
+function RandomizeFunding()
+{
+	local array<int> Left;
+	local int i, k, Lo, Hi, Total, Avg, F;
+
+	Lo = 400;
+	for (i = 0; i < Countries.Length; i++)
+	{
+		Lo = Min(Lo, Countries[i].Funding);
+		Hi = Max(Hi, Countries[i].Funding);
+		Total += Countries[i].Funding;
+		Left.AddItem(i);
+	}
+	Total /= 10;
+	Lo /= 10;
+	Hi /= 10;
+	while (Left.Length > 0)
+	{
+		k = Rand(Left.Length);
+		i = Left[k];
+		Avg = Total / Left.Length;
+		F = Clamp(Avg / 2 + Rand(Max(1, int(Avg * 1.5))), Lo, Hi);
+		Countries[i].Funding = F * 10;
+		Left.Remove(k, 1);
+		Total -= F;
+	}
 }
 
 function int CountryIndex(name Id)
@@ -2177,7 +2236,7 @@ function EndMonth()
 		if (Countries[i].bLeft)
 			continue;
 		Def = class'LWStrategyRules'.default.Countries[i];
-		Funding += Round(Def.Funding * class'LWStrategyRules'.default.FundingBalance[d] * (Countries[i].bSatellite ? 1.0 : class'LWStrategyRules'.default.BaseFundingPct[d] / 100.0));
+		Funding += CountryFunding(i, Countries[i].bSatellite);
 		if (!Countries[i].bSatellite)
 			continue;
 		// The staff a watched country sends (XGWorld's council meeting).

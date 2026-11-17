@@ -96,3 +96,22 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
 - **Checked on wingpu** (`units` now prints the primary weapon's damage, spread and crit): with the option the sniper rifle
   read 5 ± 2, crit +5; without, the carbine 4 ± 1, crit +2. **Not seen:** putting it back within one game session (the off
   test was a fresh start).
+
+## Report (2026-11-17, the funding options; Diminishing Returns)
+
+- **One funding** (`XComGameState_LWStrategy.CountryFunding`, as `XGCountry.CalcFunding`), used by the month's payment, the
+  Situation Room, the monthly report and the Geoscape panel alike (each had its own copy of the formula): the country's own
+  funding (set as the campaign begins: FundingAmounts × FundingBalance, kept per country), then
+  - **#15 War Weariness:** 5% less each month, at most 90%;
+  - **#10 Results Driven:** less by the country's panic, (100 − panic)%;
+  - without a satellite, `BASE_FUNDING`'s share; each step rounded down as Long War's ints are.
+- **#1 New Economy** (`XGWorld.RandomizeFunding`): as the campaign begins, the council's funding dealt again at random in
+  tens, each country in a random order from half the average left to an average and a half, between the lowest and highest
+  of before. (The test aid deals it at once when the option is switched on in a running campaign.)
+- **#12 Diminishing Returns** (`XGItemTree.CalcEscalatingSatelliteCost`): a satellite costs `SW_SATELLITE_INCREASE` (1.155)
+  times more for each one in the stores, in orbit or being built. Long War also scales the engineers it takes; the port's
+  satellites take none.
+- **Checked on wingpu** (`geo` now prints each country's funding with and without a satellite, and the satellite's price):
+  a new campaign: USA 160/64, Russia 100/40, China 130/52, the satellite §200 with one held; with Results Driven and
+  Diminishing Returns: USA (panic 30) 112/44, Russia (21) 79/31, the satellite §231; New Economy then: USA 77, Russia 126,
+  China 59. **Not seen:** War Weariness past the first month.

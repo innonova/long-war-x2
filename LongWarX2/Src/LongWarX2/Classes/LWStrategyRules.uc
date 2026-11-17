@@ -192,6 +192,10 @@ static function int SatelliteCash()
 	local int Cash;
 
 	Cash = default.SatelliteCost;
+	// Diminishing Returns (second wave #12, XGItemTree.CalcEscalatingSatelliteCost): dearer by SW_SATELLITE_INCREASE for each
+	// satellite in the stores, in orbit or being built.
+	if (class'LWX2SecondWave'.static.On(12))
+		Cash = int(Cash * class'LWX2SecondWave'.default.SatelliteIncrease ** class'LWX2SecondWave'.static.SatellitesHeld());
 	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.ROSCOSMOS) > 0)
 		Cash *= 1.0 - class'LWBonuses'.static.Has(class'LWBonuses'.const.ROSCOSMOS) / 100.0;
 	return Cash;

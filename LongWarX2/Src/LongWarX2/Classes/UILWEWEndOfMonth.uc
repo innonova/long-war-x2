@@ -113,7 +113,7 @@ static function int CountryFunding(XComGameState_LWStrategy S, int k)
 	local int d;
 
 	d = class'LWStrategyRules'.static.Difficulty();
-	return Round(class'LWStrategyRules'.default.Countries[k].Funding * class'LWStrategyRules'.default.FundingBalance[d] * (S.Countries[k].bSatellite ? 1.0 : class'LWStrategyRules'.default.BaseFundingPct[d] / 100.0));
+	return d >= 0 ? S.CountryFunding(k, S.Countries[k].bSatellite) : 0;
 }
 
 /** The continent's bonus held (all its countries under satellites): its name, without Long War's ": ". */

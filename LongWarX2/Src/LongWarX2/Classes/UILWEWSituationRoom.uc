@@ -149,7 +149,7 @@ function Refresh()
 		k = S.CountryIndex(Order[i]);
 		if (k < 0)
 			continue;
-		Funding = Round(class'LWStrategyRules'.default.Countries[k].Funding * class'LWStrategyRules'.default.FundingBalance[d] * (S.Countries[k].bSatellite ? 1.0 : class'LWStrategyRules'.default.BaseFundingPct[d] / 100.0));
+		Funding = S.CountryFunding(k, S.Countries[k].bSatellite);
 		if (S.Countries[k].bLeft)
 			Left++;
 		MC.BeginFunctionOp("SetCountryInfo");
@@ -219,7 +219,7 @@ static function int FundingOf(int k, bool bSat)
 	local int d;
 
 	d = class'LWStrategyRules'.static.Difficulty();
-	return Round(class'LWStrategyRules'.default.Countries[k].Funding * class'LWStrategyRules'.default.FundingBalance[d] * (bSat ? 1.0 : class'LWStrategyRules'.default.BaseFundingPct[d] / 100.0));
+	return (d >= 0 && class'XComGameState_LWStrategy'.static.Get() != none) ? class'XComGameState_LWStrategy'.static.Get().CountryFunding(k, bSat) : 0;
 }
 
 /** The staff a country under a satellite gives, as EW words it ("+1 Scientist"; BuildBonusString). */

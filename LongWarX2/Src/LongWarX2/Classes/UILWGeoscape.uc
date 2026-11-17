@@ -268,7 +268,7 @@ simulated function string CountryLine(XComGameState_LWStrategy S, int i)
 	for (k = 0; k < 5; k++)
 		Bar $= S.Countries[i].Panic > k * 20 ? "#" : "-";
 	d = class'LWStrategyRules'.static.Difficulty();
-	return "Panic" @ Bar @ S.Countries[i].Panic @ (S.Countries[i].bSatellite ? " SATELLITE" : " no satellite") @ "  " $ class'LWStrategyRules'.static.Money(Round(class'LWStrategyRules'.default.Countries[i].Funding * class'LWStrategyRules'.default.FundingBalance[d] * (S.Countries[i].bSatellite ? 1.0 : class'LWStrategyRules'.default.BaseFundingPct[d] / 100.0))) $ "/month";
+	return "Panic" @ Bar @ S.Countries[i].Panic @ (S.Countries[i].bSatellite ? " SATELLITE" : " no satellite") @ "  " $ class'LWStrategyRules'.static.Money(S.CountryFunding(i, S.Countries[i].bSatellite)) $ "/month";
 }
 
 // --- The clock ----------------------------------------------------------------------------
