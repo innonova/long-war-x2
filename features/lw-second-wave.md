@@ -257,3 +257,24 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
 - **Checked on wingpu** (new test aids: `use #<unit id> <ability> [target]` lets any unit act, an alien too, given an action
   point; `perfectinfo` counts and shows a test message): a Sectoid's shot announced "Sectoid uses Fire Weapon on Ayaka Tanaka:
   76%" over it (`logs/wingpu_perfect_information.png`).
+
+## Report (2026-11-17, Itchy Trigger Tentacle; not yet seen)
+
+- **#14 Itchy Trigger Tentacle** (`XComAlienPod`: on a pod's reveal, an alien that cannot take cover, is not melee only and
+  sees a soldier shoots instead of moving, with a chance of 50 with the option): XCOM 2's scamper for aliens without cover
+  (`ScamperRoot_NoCover`, `ScamperRoot_Overwatch`: the ADVENT MEC, Sectopod, Gatekeeper, Archon and the like, which stand
+  in for Long War's drones, cyberdisks, floaters …) is given the shot first.
+  - **The trees** are the port's own (`XComAI.ini`): `LWX2ScamperRoot_NoCover` and `_Overwatch` try `LWX2ItchyTriggerShot`
+    first, then XCOM 2's root. That shot is XCOM 2's own second-wave condition (`SecondWaveOptionEnabled-
+    LWSW_14_ItchyTriggerTentacle`), a 50% `RandFilter` and XCOM 2's `ShootIfAvailable`.
+  - **The characters** that scampered with XCOM 2's roots are pointed at them (`strScamperBT`, which XCOM 2's AI player runs
+    on a reveal: `XGAIPlayer`). The scamper's action point is a standard one, so a shot is possible.
+- **Not seen in a mission yet.** A reveal could not be brought about by the control port:
+  - a unit set on a tile in view is marked seen without a scamper;
+  - XCOM 2's reveal call waits on a moving soldier;
+  - a queued behaviour tree runs only in the aliens' turn.
+  
+  A real reveal of a no-cover pod needs the squad walked up to one over a few turns. Next time a mission meets one, the
+  shot (and its Perfect Information line) is the check.
+- **New test aids** (kept): `scamper #<group>` (a group's reveal), `bt #<unit> <tree>` (a tree queued for a unit), both
+  limited as above.

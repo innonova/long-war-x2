@@ -69,6 +69,9 @@ static function AddAbilities()
 				C.Abilities.AddItem('LWX2_SecondWave');
 			if (C.CharacterBaseStats[eStat_FlankingCritChance] > 0 && class'X2Effect_LWSecondWave'.default.FlankCrit > 0)
 				C.CharacterBaseStats[eStat_FlankingCritChance] = class'X2Effect_LWSecondWave'.default.FlankCrit;
+			// Itchy Trigger Tentacle (#14): an alien without cover may shoot on its reveal (XComAI.ini's LWX2ScamperRoot_…).
+			if (C.strScamperBT == "ScamperRoot_NoCover" || C.strScamperBT == "ScamperRoot_Overwatch")
+				C.strScamperBT = "LWX2" $ C.strScamperBT;
 		}
 	}
 }

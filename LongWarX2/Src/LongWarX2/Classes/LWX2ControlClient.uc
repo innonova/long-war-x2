@@ -271,6 +271,19 @@ function Handle(string Line, out array<string> Out)
 		// mission (soldier: as give-to counts them).
 		Repair(Args, Out);
 		return;
+	case "bt":
+		// bt #<unit> <behaviour tree>: the tree run for the unit as the AI runs it, the unit given an action point if it has
+		// none (a test aid: Itchy Trigger Tentacle's scamper, LWX2ScamperRoot_NoCover).
+		if (Args.Length < 3)
+			Out.AddItem("ERR bt #<unit> <behaviour tree>");
+		else
+			Out.AddItem(RunTree(int(Mid(Args[1], 1)), Args[2]));
+		return;
+	case "scamper":
+		// scamper #<AI group id>: the group revealed as if a soldier had just seen it, its units scampering (a test aid; the
+		// group's id is in 'enemies').
+		Out.AddItem(Scamper(Args.Length > 1 ? int(Mid(Args[1], 1)) : 0));
+		return;
 	case "perfectinfo":
 		// perfectinfo: Perfect Information's listener's counts (a test aid); 'perfectinfo say <text>': a world message over the
 		// first soldier, as it shows one.
@@ -3174,6 +3187,51 @@ function Repair(array<string> Args, out array<string> Out)
 		Out.AddItem("repairing" @ S.Repairs[i].Template @ S.Repairs[i].HoursLeft @ "hours left");
 	if (S.DamagedItems.Length == 0 && S.Repairs.Length == 0)
 		Out.AddItem("no damaged gear");
+}
+
+function string RunTree(int UnitID, string Tree)
+{
+	local XComGameState NewGameState;
+	local XComGameState_Unit Unit;
+
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
+	if (Unit == none)
+		return "ERR no such unit";
+	if (Unit.ActionPoints.Length == 0)
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: an action point (control port)");
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		Unit.ActionPoints.AddItem(class'X2CharacterTemplateManager'.default.StandardActionPoint);
+		`TACTICALRULES.SubmitGameState(NewGameState);
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
+	}
+	if (!`BEHAVIORTREEMGR.QueueBehaviorTreeRun(Unit, Tree, 1, `XCOMHISTORY.GetCurrentHistoryIndex() + 1, true))
+		return "ERR the tree was not queued";
+	`BEHAVIORTREEMGR.TryUpdateBTQueue();
+	return "ok" @ Tree @ "queued for" @ Unit.GetMyTemplateName() @ "#" $ UnitID;
+}
+
+function string Scamper(int GroupID)
+{
+	local XComGameState NewGameState;
+	local XComGameState_AIGroup Group;
+	local XComGameState_Unit Soldier;
+	local StateObjectReference Ref;
+
+	Group = XComGameState_AIGroup(`XCOMHISTORY.GetGameStateForObjectID(GroupID));
+	if (Group == none)
+		return "ERR no such AI group";
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Soldier)
+		if (Soldier.GetTeam() == eTeam_XCom && Soldier.IsAlive() && Soldier.IsSoldier())
+			break;
+	// (Units dropped by 'spawn' come without a reveal to play: each is given one.)
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a reveal (control port)");
+	foreach Group.m_arrMembers(Ref)
+		XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Ref.ObjectID)).bTriggerRevealAI = true;
+	`TACTICALRULES.SubmitGameState(NewGameState);
+	Group = XComGameState_AIGroup(`XCOMHISTORY.GetGameStateForObjectID(GroupID));
+	Group.InitiateReflexMoveActivate(Soldier, eAC_SeesSpottedUnit);
+	return "ok group" @ GroupID @ "revealed by" @ Soldier.GetFullName();
 }
 
 function PerfectInfo(array<string> Args, out array<string> Out)
