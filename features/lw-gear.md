@@ -572,9 +572,9 @@ All four of the items left open above are in.
 - **Done:** `gear-config.mjs` writes them (`+CarriedPerks=(Template, Perk)`), `classes-config.mjs` maps their numbers
   to abilities with the aliens' perks (`AlienAbilities`), and `LWGearRules.AddCarriedPerks` gives a unit, for the
   mission, the ability of each item it carries, bound to that item. Among them: the smoke grenade's Smoke Bomb (44),
-  item 71's Steadfast (154), item 70's Adrenaline Surge (147), the Titan armour's Damage Control (134), the rocket
-  launcher's HEAT Ammo (90), weapons 246–250's Squadsight (3) and 253's Disabling Shot (9), the MEC suits' Jetboot
-  Module (137) and Body Shield (145) (those two stand-ins for now). Items the port has no equippable template for give
-  nothing.
+  the Mind Shield's Steadfast (154), the Titan armour's Damage Control (134), weapon 6's HEAT Ammo (90), the MEC suits'
+  Jetboot Module (137) and Body Shield (145) (those two stand-ins for now). Combat Stims' perk (147, Adrenaline
+  Surge) has no ability of its own: the port's stims are the item's own. Items the port has no equippable template
+  for (several of the numbers Long War reused) give nothing.
 - **Checked on wingpu:** item 71 given to five soldiers: in the mission each had Steadfast's effects.
 - `BalanceMods` (mobility and will by weapon) stay open.
