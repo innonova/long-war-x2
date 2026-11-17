@@ -57,3 +57,8 @@ the rooms go black: all their light is those lights.
   mod's classes: every build writes them into the SDK's `Script\Manifest.txt`, and the editor asserts on them.
 - **At run time** (`LWX2EWMapPieces.Lightmapped`): each lightmapped piece of a Prop look with a diffuse gets its own
   instance; its scales become one brightness (mean colour scale × mean directional scale × √3).
+- **Checked on wingpu** (a new campaign, `tools/compare`): the research room, engineering and the base's view now
+  show EW's light: dark perimeters and outer shells, lit work areas, the same pools of light
+  (`logs/compare/lightmaps-first.png`, EW left, the port right; not committed). Still to come: EW's glowing parts (light
+  rings, strips, monitors: emissive materials without a diffuse, not lightmapped), the brightness checked against EW's
+  pixels, then the mission maps (`LightmapMaps`).
