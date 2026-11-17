@@ -28,8 +28,6 @@ static function Open(XComHQPresentationLayer HQPres, optional bool bFoundryProje
 		return;
 	}
 	DynamicLoadObject(default.UIPackage $ ".ewxBuildItem", class'Object', true);
-	// The black background the Situation Room uses: the Avenger does not show through.
-	class'UILWEWMapBackdrop'.static.ShowIfAvailable();
 	EWScreen = HQPres.Spawn(class'UILWEWEngineering', HQPres);
 	EWScreen.Package = name("/ package/ewxBuildItem/BuildItem");
 	EWScreen.MCName = 'theBuildScreen';
@@ -346,6 +344,8 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 
 defaultproperties
 {
+	// (Over EW's engineering, as EW shows it.)
+	BaseCamera = ENGINEERING
 	Tabs(0) = 1
 	Tabs(1) = 2
 	Tabs(2) = 3

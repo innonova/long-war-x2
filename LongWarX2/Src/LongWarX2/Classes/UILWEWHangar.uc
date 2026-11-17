@@ -22,7 +22,6 @@ static function Open(XComHQPresentationLayer HQPres)
 		return;
 	}
 	DynamicLoadObject(default.UIPackage $ ".ewxShipList", class'Object', true);
-	class'UILWEWMapBackdrop'.static.ShowIfAvailable();
 	EWScreen = HQPres.Spawn(class'UILWEWHangar', HQPres);
 	EWScreen.Package = name("/ package/ewxShipList/ShipList");
 	EWScreen.MCName = 'theScreen';
@@ -283,6 +282,8 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 
 defaultproperties
 {
+	// (Over EW's the hangar, as EW shows it.)
+	BaseCamera = HANGAR
 	// EW's ShipList places itself by the stage's edges (as its HUD does): not scaled up.
 	bScaleToStage = false
 }

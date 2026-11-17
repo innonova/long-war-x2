@@ -465,3 +465,20 @@ Raven-1's loadout listed Stingray and Avalanche with their numbers.
 - **As it looks:** the HUD's continent panel covers the lower rows of both country columns (EW's two movies scaled
   together to XCOM 2's stage); the rows' satellite icon is EW's (lit for a country still without one). The plain
   Geoscape panel's LAUNCH SATELLITE stays for now.
+
+## Report (2026-11-17, EW's rooms behind its screens)
+
+- **EW shows its screens over the room they belong to.** The port had hidden EW's base under any screen not about the base:
+  research showed XCOM 2's world (open ground outside the Avenger), and engineering, the Repair Bay, the hangar and the grey
+  market a black backdrop.
+- **The fix:** an EW screen can now name the base's camera it stands over (`UILWEWScreen.BaseCamera`). It shows the base and
+  looks through that camera as it comes up and comes back, and the hub keeps the base for it:
+  - research: the lab;
+  - engineering and its Foundry: the engineering room;
+  - the Repair Bay: the engineering room;
+  - the hangar: the hangar;
+  - the grey market: the Situation Room.
+  The month's reports and the Situation Room keep their own backdrop.
+- **Checked on wingpu:** research over EW's lab (`logs/hub_research_screen.png`), engineering over the engineering room
+  (`logs/hub_engineering_screen.png`), the hangar over the hangar (`logs/hub_hangar_screen.png`).
+- **Left:** the hangar movie has a black band across its middle, which the black backdrop used to hide.

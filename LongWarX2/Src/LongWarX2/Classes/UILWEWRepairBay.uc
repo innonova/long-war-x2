@@ -28,7 +28,6 @@ static function Open(XComHQPresentationLayer HQPres)
 	local UILWEWRepairBay EWScreen;
 
 	DynamicLoadObject(default.UIPackage $ ".ewxMECInventory", class'Object', true);
-	class'UILWEWMapBackdrop'.static.ShowIfAvailable();
 	EWScreen = HQPres.Spawn(class'UILWEWRepairBay', HQPres);
 	EWScreen.Package = name("/ package/ewxMECInventory/MECInventory");
 	EWScreen.MCName = 'theScreen';
@@ -355,4 +354,10 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 			return true;
 	}
 	return super.OnUnrealCommand(cmd, arg);
+}
+
+defaultproperties
+{
+	// (Over EW's engineering (the Repair Bay is its lab), as EW shows it.)
+	BaseCamera = ENGINEERING
 }

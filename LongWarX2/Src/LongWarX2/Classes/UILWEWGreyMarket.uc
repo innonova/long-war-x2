@@ -15,7 +15,6 @@ static function Open(XComHQPresentationLayer HQPres)
 	local UILWEWGreyMarket EWScreen;
 
 	DynamicLoadObject(default.UIPackage $ ".ewxGreyMarket", class'Object', true);
-	class'UILWEWMapBackdrop'.static.ShowIfAvailable();
 	EWScreen = HQPres.Spawn(class'UILWEWGreyMarket', HQPres);
 	EWScreen.Package = name("/ package/ewxGreyMarket/GreyMarket");
 	EWScreen.MCName = 'theScreen';
@@ -215,4 +214,10 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 			return true;
 	}
 	return super.OnUnrealCommand(cmd, arg);
+}
+
+defaultproperties
+{
+	// (Over EW's the Situation Room, where EW's grey market is, as EW shows it.)
+	BaseCamera = Cam_SituationRoom
 }

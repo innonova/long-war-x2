@@ -162,3 +162,9 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	}
 	return super.OnUnrealCommand(cmd, arg);
 }
+
+defaultproperties
+{
+	// (Over EW's research lab, as EW shows its research choice.)
+	BaseCamera = ScienceLab
+}

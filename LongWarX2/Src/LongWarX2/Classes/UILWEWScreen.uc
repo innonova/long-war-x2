@@ -15,6 +15,10 @@ var bool bScaleToStage;
 var float StageX, StageY;
 /** Whether the screen shows EW's base itself (the build screens): the screen under it does not hide the base for it. */
 var bool bShowsBase;
+/** The base's camera the screen stands over, as EW shows it over its room (research, engineering, the hangar …): the base
+ *  shown and looked at through it as the screen comes up and comes back (the screen under it may have handed the view back);
+ *  none: the screen makes its own background. */
+var name BaseCamera;
 
 /** Whether the converted EW UI package is in the mod's Content (loading one of its objects loads it whole). */
 static function bool HasEWScreens()
@@ -167,7 +171,29 @@ simulated function OnInit()
 	if (bScaleToStage)
 		ScaleToStage();
 	SetEWView(Movie);
+	ShowRoom();
 	`log("LongWarX2: EW screen" @ Package @ "inited", , 'LongWarX2');
+}
+
+/** EW's base behind the screen, through its room's camera (BaseCamera). */
+function ShowRoom()
+{
+	local LWX2EWBase B;
+
+	if (BaseCamera == '')
+		return;
+	B = class'LWX2EWBase'.static.Get(self);
+	if (B == none)
+		return;
+	B.Show();
+	B.LookAt(BaseCamera, 0);
+}
+
+simulated function OnReceiveFocus()
+{
+	super.OnReceiveFocus();
+	if (bIsInited)
+		ShowRoom();
 }
 
 /**

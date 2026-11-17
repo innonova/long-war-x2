@@ -225,7 +225,7 @@ simulated function OnLoseFocus()
 	ClearTimer(nameof(HoverOption));
 	// (A screen that shows the base itself, building in it, keeps it.)
 	Next = UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen());
-	if ((Next == none || !Next.bShowsBase) && UILWOfficers(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWPsiLabs(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
+	if ((Next == none || (!Next.bShowsBase && Next.BaseCamera == '')) && UILWOfficers(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWPsiLabs(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
 		&& UIPersonnel_LWGene(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
 		&& !(class'LWX2EWBase'.static.ArmoryHere() && (UIPersonnel(Movie.Pres.ScreenStack.GetCurrentScreen()) != none || UIArmory(Movie.Pres.ScreenStack.GetCurrentScreen()) != none)))
 		class'LWX2EWBase'.static.Get(self).Hide();
