@@ -12,7 +12,9 @@ const text = readFileSync(process.argv[2], 'latin1')
 const SHIPS = { eShip_None: 0, eShip_UFOSmallScout: 4, eShip_UFOLargeScout: 5, eShip_UFOAbductor: 6, eShip_UFOSupply: 7, eShip_UFOBattle: 8, eShip_UFOEthereal: 9 }
 const KINDS = { eMission_Abduction: 'Abduction', eMission_Crash: 'Crash', eMission_LandedUFO: 'Landed', eMission_TerrorSite: 'Terror',
   // EXALT's covert missions (features/lw-exalt.md): played with their variant level, the streamed map that carries them.
-  eMission_CovertOpsExtraction: 'CovertExtraction', eMission_CaptureAndHold: 'DataRecovery' }
+  eMission_CovertOpsExtraction: 'CovertExtraction', eMission_CaptureAndHold: 'DataRecovery',
+  // The story's missions (features/lw-story.md): the alien bases, the Temple Ship, the HQ assault, EXALT's base.
+  eMission_AlienBase: 'AlienBase', eMission_Final: 'Final', eMission_HQAssault: 'HQAssault', eMission_ExaltRaid: 'ExaltRaid' }
 const maps = []
 for (const line of text.split(/\r?\n/)) {
   // (Names quoted or not: the covert extractions' are bare.)

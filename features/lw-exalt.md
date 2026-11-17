@@ -307,3 +307,9 @@ operation in Russia succeeded …", "The data recovery brought §120 home.".
 - The capture areas are not marked on the map (EW drew their border); the objective's count is the only sign.
 - The covert extraction's and the data recovery's reinforcement drops tied to Kismet events (the relays'
   proximity) are not in.
+
+## Report (2026-11-17, the raid on EW's own map)
+
+The raid now plays on EW's `EWI_ExaltHQAssault` (at night) instead of an XCOM 2 guerrilla plot; how is in
+`lw-story.md`'s report of the same date. Checked on wingpu: the raid chose that map and EXALT's squad spawned at its
+pods. Its objective is still "kill all"; EW's level has its own scripted waves, not read yet.

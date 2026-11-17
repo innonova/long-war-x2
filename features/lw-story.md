@@ -138,3 +138,19 @@ with a player who builds nothing but satellites and uplinks.
 - **Done:** `XComGameState_LWStrategy.Act`, used by `AbductionDifficulty` and `LWAlienSquads.Commander`.
 - **Checked on wingpu** (`give` a Hyperwave Beacon and a Psi Link, `squad 2 9 200`): a landed large UFO's commander
   became an Ethereal.
+
+## Report (2026-11-17, the story missions on EW's own maps)
+
+- **Before:** the alien base, the Temple Ship and the HQ assault played on XCOM 2's guerrilla plots (no EW map was
+  listed for their kinds).
+- **Done:** `scripts/maps-config.mjs` reads EW's `eMission_AlienBase`, `eMission_Final`, `eMission_HQAssault` and
+  `eMission_ExaltRaid` maps from `DefaultMaps.ini`, so `XComLWEWMaps.ini` lists AlienBase01 and AlienBase02 (the alien
+  base), TempleShip (the final mission), EWI_HQAssault and EWI_ExaltHQAssault (night). `LWX2EWMapPieces.KindFor` maps
+  the strategy's mission kinds 5 (alien base), 6 (Temple Ship), 7 (HQ assault) and 9 (EXALT's raid) to those. The setup
+  converts and writes plots for them like any listed map; `XComMaps.ini`'s night lighting covers the EXALT HQ.
+- **Checked on wingpu:**
+  - each of the five maps loaded in a mission with the squad standing, ready for orders (`ForceMap`);
+  - a mission of kind 5 chose AlienBase01 by itself and spawned its Battleship crew at EW's pods; one of kind 9 chose
+    EWI_ExaltHQAssault and spawned EXALT's raid squad (`ForceKind`).
+- **Still standing in:** their objectives are "kill all". EW's own (the base's command centre, the Temple Ship's
+  Uber Ethereal and its sequence, the HQ assault's waves) are scripted in their levels' Kismet and not read yet.

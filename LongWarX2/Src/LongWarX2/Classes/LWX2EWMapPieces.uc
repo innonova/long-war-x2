@@ -248,6 +248,11 @@ static function name KindFor(int Kind)
 		case 2: return 'Landed';
 		case 3: return 'Abduction';
 		case 4: return 'Terror';
+		// The story's (features/lw-story.md): an alien base, the Temple Ship, the HQ assault, EXALT's base.
+		case 5: return 'AlienBase';
+		case 6: return 'Final';
+		case 7: return 'HQAssault';
+		case 9: return 'ExaltRaid';
 	}
 	return '';
 }
