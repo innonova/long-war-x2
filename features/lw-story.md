@@ -182,6 +182,6 @@ the first arena; the first swarm (5) at the aliens' turn end after the first kil
 the Uber removed: the four died with it and the mission summary showed 32 enemies. Screenshot:
 `logs/wingpu_temple_uber_objective.png`.
 
-**Not done:** the arenas' gates (EW opens them by matinee; what the converted map does with them, whether they block or
-stand open, I haven't walked); the Uber Ethereal fights as XCOM 2's Avatar template with Long War's stats; the
+**Not done:** the arenas' gates: EW's are InterpActors it opens by matinee, and the converter writes no InterpActors, so
+the gates are simply absent and the arenas open from the start (their aliens still come only at their stage); the Uber Ethereal fights as XCOM 2's Avatar template with Long War's stats; the
 cinematics, music and the Gollop Chamber's volunteer are not ported.
