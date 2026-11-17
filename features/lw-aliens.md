@@ -336,3 +336,23 @@ Read from Long War's `XComGame.upk`:
 **Checked on wingpu** (with `OverloadSeen=1` on the test machine only: a squad of six never shows 8 enemies): drones
 overloaded beside the squad (`history`: five `LW_Overload` over three turns), the soldiers next to them losing up to
 3 health, the drones gone. Not looked at: the blast's look (no animation of its own).
+
+## Report (2026-11-17, zombies and their Chryssalid eggs)
+
+**Read** (EW's `XGAIChryssalidEgg`, `XGUnit.ImplantEgg`, `XComZombieManager`, `XComSpecialMissionHandler_ChrysHive.OnEnemySeen`;
+Long War keeps them): a human a Chryssalid kills rises as a zombie carrying an egg (`eZombieDeath`, 3 rounds); when its rounds
+are over a Chryssalid bursts out and the zombie dies; a zombie killed first still lets it out, 4 health down, unless
+explosives or fire killed it (`CanSurviveDamage`). In the hive, a zombie XCOM sees is implanted (`eChryssalidSpawn`, 1
+round), hatching only if the zombie is still alive and well.
+
+**Done** (`LWX2Zombies`):
+- XCOM 2's Chryssalid poison (`X2Effect_ParthenogenicPoison`, on its abilities and its claws: 2 effects found) spawns a psi
+  zombie (`PsiZombieHuman` for a human) in place of the cocoon.
+- A zombie that rose (one without a Long War species: the pods' zombies have one) is given Long War's zombie stats and an egg
+  hatching 3 of XCOM's turns later; the hive's zombies get theirs when seen (1 turn). Eggs hatch as XCOM's turn begins: the
+  Chryssalid (Long War's species 13) out of the zombie, coming for XCOM; 4 health down if the zombie was killed first; none
+  from a zombie blown up (fire is not told apart: `bKilledByExplosion` only).
+
+**Checked on wingpu:** a psi zombie dropped beside the squad (as a risen one) got its egg ("hatches on turn 5"), and on turn 5
+a Chryssalid burst out beside the squad. Not yet seen: a Chryssalid's kill raising the zombie (the two Chryssalids in the test
+never attacked); the hive's implanting.

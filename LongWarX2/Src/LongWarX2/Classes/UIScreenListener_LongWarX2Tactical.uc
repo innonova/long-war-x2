@@ -243,6 +243,8 @@ function CheckSwept()
 	class'LWFatigue'.static.CountCriticalWounds();
 	// A variant level's gated alien drops (LWX2LevelDrops).
 	class'LWX2LevelDrops'.static.Update();
+	// Zombies and their Chryssalid eggs (LWX2Zombies).
+	class'LWX2Zombies'.static.Update();
 	// A council bomb disposal (LWX2CouncilBomb): its timer, and no victory until the bomb is disarmed.
 	if (!class'LWX2CouncilBomb'.static.Update())
 		return;
