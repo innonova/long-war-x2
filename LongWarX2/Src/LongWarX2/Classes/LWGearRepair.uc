@@ -89,8 +89,62 @@ static function Apply()
 		Unit.SetUnitFloatValue('LWX2GearMission', Mission, eCleanup_Never);
 		DamageGear(NewGameState, S, XComHQ, Unit);
 	}
+	DeadGear(NewGameState, S);
 	if (NewGameState != none)
 		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+}
+
+/**
+ * The gear of soldiers who died (Long War's DEMOUltimateSoldier at HP 0: each item rolled at its full chance as it goes back
+ * to storage). XCOM 2 has already put a recovered body's items into storage (none when the body was lost): each of the
+ * soldier's last items (its last version that carried any) that is in storage is rolled, and a damaged one taken out of it
+ * into DamagedItems (an item still on the dead is not in storage, and is skipped). Once a soldier (LWX2GearDead).
+ */
+static function DeadGear(out XComGameState NewGameState, out XComGameState_LWStrategy S)
+{
+	local XComGameStateHistory History;
+	local XComGameState_Unit Unit, Before;
+	local XComGameState_Item Item;
+	local StateObjectReference Ref;
+	local X2ItemTemplate T;
+	local int C;
+
+	History = `XCOMHISTORY;
+	foreach History.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (!Unit.IsSoldier() || !Unit.IsDead() || class'LWFatigue'.static.ValueOf(Unit, 'LWX2GearDead') > 0)
+			continue;
+		if (NewGameState == none)
+		{
+			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: damaged gear");
+			S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+		}
+		XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID)).SetUnitFloatValue('LWX2GearDead', 1, eCleanup_Never);
+		if (class'LWX2SecondWave'.static.On(22))
+			continue;
+		// (The last version that carried more than the dead does now: XCOM 2 leaves what cannot be taken off, the XPad.)
+		Before = Unit;
+		while (Before != none && Before.InventoryItems.Length <= Unit.InventoryItems.Length)
+			Before = XComGameState_Unit(Before.GetPreviousVersion());
+		if (Before == none)
+			continue;
+		foreach Before.InventoryItems(Ref)
+		{
+			// (The item as it was then: taken off the dead, it has no slot any more.)
+			Item = XComGameState_Item(History.GetGameStateForObjectID(Ref.ObjectID, eReturnType_Reference, Before.GetParentGameState().HistoryIndex));
+			T = Item != none ? Item.GetMyTemplate() : none;
+			if (T == none || T.bInfiniteItem || !Worn(Item.InventorySlot))
+				continue;
+			C = ChanceFor(T.DataName);
+			if (C <= 0 || !(Rand(100) < C || (class'LWX2SecondWave'.static.On(13) && Rand(100) < default.WearChance)))
+				continue;
+			if (class'LWEngineering'.static.Held(T.DataName) <= 0)
+				continue;
+			class'LWEngineering'.static.Take(NewGameState, T.DataName, 1);
+			S.DamagedItems.AddItem(T.DataName);
+			S.Note(Unit.GetFullName() $ "'s" @ T.GetItemFriendlyName() @ "came back damaged and waits for repair.");
+		}
+	}
 }
 
 /** The unit's gear rolled for damage as it is now (its health now); how many items were damaged. */

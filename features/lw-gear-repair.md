@@ -103,3 +103,16 @@ Repair Bay. EW only damaged MEC suits. Three second-wave options change this sys
   - The info panel's title for a repair under way is cut before "Days" (the list shows it).
   - The item's icon is the movie's "?" (EW had icons only for MEC gear).
   - Pointing at a row does not select it; a click does.
+
+## Report (2026-11-17, a dead soldier's gear)
+
+- **A soldier who died** (Long War's `DEMOUltimateSoldier` at HP 0: each item rolled at its full chance as it goes back to
+  storage). XCOM 2 has already put a recovered body's items into storage, and keeps none from a body left behind.
+  `LWGearRepair.DeadGear` (with the Geoscape's damaged-gear pass) finds each dead soldier not yet counted
+  (`LWX2GearDead`). It takes the items of the soldier's last version that carried more than the dead does now (XCOM 2 leaves
+  what cannot be taken off, the XPad), each item as it was then. Each non-infinite item that is in storage is rolled at its
+  full chance (and Wear and Tear's, without Durability). A damaged one is taken out of storage into the damaged items and
+  noted ("… came back damaged and waits for repair").
+- **Checked on wingpu** (test aid `repair dead <soldier>`: the soldier's items put into storage, as a recovered body's are,
+  the soldier dead, the pass run): three dead soldiers in Carapace (95%), each Carapace damaged and out of storage (held 0),
+  noted. Found on the way: in strategy a soldier has no team, and the item taken off has no slot; both now handled.

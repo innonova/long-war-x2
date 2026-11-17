@@ -3156,6 +3156,9 @@ function string OpenPromotion(int UnitID)
 
 function Repair(array<string> Args, out array<string> Out)
 {
+	local array<XComGameState_Item> Items;
+	local XComGameState_Item Item;
+	local XComGameState_Unit Before;
 	local XComGameState_LWStrategy S;
 	local XComGameState_HeadquartersXCom XComHQ;
 	local XComGameState NewGameState;
@@ -3186,6 +3189,41 @@ function Repair(array<string> Args, out array<string> Out)
 		n = class'LWGearRepair'.static.DamageGear(NewGameState, S, XComHQ, Unit);
 		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 		Out.AddItem(Unit.GetFullName() @ "hp" @ int(Unit.GetCurrentStat(eStat_HP)) $ "/" $ int(Unit.GetMaxStat(eStat_HP)) @ "items damaged" @ n);
+	}
+	else if (Args.Length > 2 && Args[1] ~= "dead")
+	{
+		// 'repair dead <soldier>': a test aid, the soldier dead with the body recovered (its items into storage, as XCOM 2 puts
+		// them), then the dead's gear rolled as at the Geoscape.
+		foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+		{
+			Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+			if (Unit != none && Unit.IsSoldier())
+				Soldiers.AddItem(Unit);
+		}
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a death (control port)");
+		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Soldiers[int(Args[2])].ObjectID));
+		Items = Unit.GetAllInventoryItems(NewGameState, true);
+		foreach Items(Item)
+		{
+			Item = XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Item.ObjectID));
+			if (Unit.RemoveItemFromInventory(Item, NewGameState))
+				XComHQ.PutItemInInventory(NewGameState, Item, false);
+		}
+		Unit.SetCurrentStat(eStat_HP, 0);
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		class'LWGearRepair'.static.Apply();
+		Out.AddItem(Unit.GetFullName() @ "dead, items in storage; held Carapace" @ class'LWEngineering'.static.Held('LWArmor_60'));
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Unit.ObjectID));
+		i = 0;
+		Before = Unit;
+		while (Before != none && Before.InventoryItems.Length == 0 && i < 50)
+		{
+			Before = XComGameState_Unit(Before.GetPreviousVersion());
+			i++;
+		}
+		Out.AddItem("  dead" @ Unit.IsDead() @ "soldier" @ Unit.IsSoldier() @ "marked" @ class'LWFatigue'.static.ValueOf(Unit, 'LWX2GearDead') @ "items now" @ Unit.InventoryItems.Length
+			@ "earlier version back" @ i @ "with" @ (Before != none ? Before.InventoryItems.Length : -1) @ "items");
 	}
 	else if (Args.Length > 1)
 		Out.AddItem(class'LWGearRepair'.static.StartRepair(name(Args[1]), Why) ? "ok" : "ERR" @ Why);
