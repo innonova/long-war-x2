@@ -23,7 +23,7 @@ buttons and text, no art).
 | Council requests | done | plain | Long War's 41 requests (items, satellites, jets) on its clock, its reward rolls, pending or waiting, given or refused on EW's request screen (from Mission Control's list), met on arrival, science up | EW's Situation Room list and its incoming-request alert | `lw-council-requests` |
 | Satellites | done | plain | launching, coverage, detection | | `lw-geoscape` |
 | The aliens' plan | most | plain | resources, research, the monthly plan, UFOs, abductions, terror targets, the hunts after scouting | the legs of a flight an hour each (no globe: Long War flies them at the ship's speed) | `lw-geoscape` |
-| The air war | most | plain | jets per continent, interception, damage, repair, refits, orders, transfers, consumables (built, stocked, used up) | a flight's own fuel (no globe; jets refuel an hour after a fight), the Firestorm's refits (Friendly Skies is a second-wave option, which the port does not offer) | `lw-hangar` |
+| The air war | most | plain | jets per continent, interception, damage, repair, refits, orders, transfers, consumables (built, stocked, used up) | a flight's own fuel (no globe; jets refuel an hour after a fight) | `lw-hangar` |
 | The base | most | LW | the grid, digging, facilities, power, upkeep, steam; built on EW's own Build Facilities and ChooseFacility screens over EW's base; removing a facility (Long War's rules, EW's dialogs); Alien Containment (captives, the arc thrower), the Hyperwave Relay (UFOs identified), the Gollop Chamber (the Temple Ship) | | `lw-base`, `lw-base-view` |
 | Research | most | X2 + plain | Long War's techs, costs, times, prerequisites, credits; labs and their adjacency (`lw-base`) | XCOM 2's research room still shows its own staff | `lw-research` |
 | Engineering | most | plain | building items and armour at Long War's costs and requirements; workshops' discount and rebate (`lw-base`) | | `lw-gear`, `lw-research` |
@@ -40,7 +40,7 @@ buttons and text, no art).
 | Squad selection and loadout | most | X2 | XCOM 2's squad select and armory for a Long War mission (Long War's squad size, rested soldiers first, Long War's launch, backing out leaves the mission) | the armory and loadout still in the Avenger's armory (squad select itself is in EW's hangar, all slots picked) | `lw-squad-select` |
 | Fatigue | done | X2 | Long War's hours, all in, shown as War of the Chosen's Tired; psi powers' and gene mods' hours, officers' hours, critical wounds' hours, Stay Frosty, the psi armour, Gift of Osiris and Call to Arms | | `lw-fatigue` |
 | Soldiers: recruits, ranks | done | X2 | Long War's eight classes, ranks, stat gains and experience in XCOM 2's barracks; Long War's random rookie stats; the officer powers on experience (So Shall You Fight, Into the Breach) | | `lw-classes` |
-| Second-wave options | none | - | | Long War's 31 campaign options (Damage Roulette, Red Fog, The Friendly Skies, Dynamic War …): neither the choice nor their rules | `lw-second-wave` |
+| Second-wave options | part | X2 | the choice on XCOM 2's new-campaign screen (Long War's 31, in Long War's words); The Friendly Skies | the other 30 options' rules (Damage Roulette, Red Fog, Dynamic War …) | `lw-second-wave` |
 
 ## Tactical
 

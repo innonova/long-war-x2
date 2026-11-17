@@ -328,6 +328,12 @@ function Handle(string Line, out array<string> Out)
 	case "unbox":
 		Out.AddItem("moved" @ class'LWX2PartPlacer'.static.FreeBoxedIn(Args.Length > 1 ? int(Args[1]) : 40));
 		return;
+	case "secondwave":
+		// secondwave: Long War's second-wave options on in this campaign; 'secondwave <n> on|off': one set (a test aid).
+		if (Args.Length > 2)
+			Out.AddItem(class'LWX2SecondWave'.static.Set(int(Args[1]), Args[2] ~= "on") ? "ok" @ class'LWX2SecondWave'.static.IdOf(int(Args[1])) @ Args[2] : "ERR no option" @ Args[1]);
+		Out.AddItem("second wave:" @ class'LWX2SecondWave'.static.Listed());
+		return;
 	case "furiesboom":
 		// furiesboom: a small explosion at Furies' command console (a test aid: the console destroyed, LWX2Furies.ConsoleHit).
 		Out.AddItem(FuriesBoom());

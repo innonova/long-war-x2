@@ -709,6 +709,26 @@ export function makeRequestWords({ strategyLoc, countryIds }) {
   return { text: ['[UILWEWCouncilRequest]', ...found.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: found.length }
 }
 
+/** Long War's second-wave options' titles and texts (features/lw-second-wave.md) for XCOM 2's new-campaign screen
+ *  (UIShellDifficulty, whose options XComUI.ini sets to Long War's 31 in its order): "Damage Roulette (#0): …" as each
+ *  option's line, the text as its tooltip, by the number Long War's title carries ([UIGameplayToggles]). */
+export function makeSecondWaveWords({ loc }) {
+  const text = loc.replace(/\r/g, '')
+  const titles = new Map()
+  const descs = new Map()
+  for (const m of text.matchAll(/^m_arrGameplayToggleTitle\[([^\]]+)\]="(.*)"\s*$/gm)) titles.set(m[1], m[2])
+  for (const m of text.matchAll(/^m_arrGameplayToggleDesc\[([^\]]+)\]="(.*)"\s*$/gm)) descs.set(m[1], m[2])
+  const lines = []
+  for (const [key, title] of titles) {
+    const n = title.match(/\(#(\d+)\)/)?.[1]
+    if (n === undefined) continue
+    const desc = descs.get(key) ?? ''
+    lines.push(`SecondWaveDescriptions[${n}]="${title}${desc ? ': ' + desc : ''}"`)
+    lines.push(`SecondWaveTooltips[${n}]="${desc}"`)
+  }
+  return { text: lines.length ? ['[UIShellDifficulty]', ...lines, ''].join('\r\n') : '', named: lines.length / 2 }
+}
+
 /** Mobile cover's name on a shot's breakdown (X2Effect_LWMobileCover): Long War's for the Alloy SHIV's (m_strShivCoverName). */
 export function makeMobileCoverWords({ strategyLoc }) {
   const name = strategyLoc.match(/^m_strShivCoverName="(.*)"\s*$/m)?.[1]

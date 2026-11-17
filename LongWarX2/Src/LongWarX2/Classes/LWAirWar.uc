@@ -12,6 +12,9 @@
 // is down or the UFO outruns the jet.
 class LWAirWar extends Object config(LWAirWar) dependson(LWGearRules);
 
+/** The Friendly Skies' aim for XCOM's aircraft (Long War's ABDUCTION_REWARD_SCI). */
+var config int FriendlySkiesAim;
+
 struct LWWeaponDef
 {
 	var int Id;
@@ -324,6 +327,9 @@ static function LWWeapon WeaponFor(int Id, int Category)
 	foreach default.FoundryMods(M)
 		if (M.Weapon == Id && FoundryDone(M.Foundry))
 			W.ToHit += M.ToHit;
+	// The Friendly Skies (second-wave option #24): XCOM's own weapons (Long War's ship weapons 1 to 7) aim better.
+	if (Id >= 1 && Id <= 7 && class'LWX2SecondWave'.static.On(24))
+		W.ToHit += default.FriendlySkiesAim;
 	return W;
 }
 

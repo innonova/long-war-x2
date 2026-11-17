@@ -1,6 +1,6 @@
 ---
 title: Long War's second-wave options
-status: planned
+status: in-progress
 priority: 40
 dependsOn: [lw-startbonus]
 ---
@@ -30,7 +30,26 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
    last (it rescales the whole campaign).
 3. Each option checked on wingpu with it on and off.
 
-## Open
+## Decisions
 
-- Where the choice is made: EW's own second-wave screen is in its shell movies, which the port does not convert yet; the
-  start screen (EW's ContinentSelect movie) or XCOM 2's own new-campaign options are the alternatives.
+- **Where the choice is made: XCOM 2's own new-campaign screen** (its second-wave list, `UIShellDifficulty`). EW's own
+  second-wave screen is in its shell movies, which the port does not convert; XCOM 2's list takes options from config, and
+  a campaign's choice is kept in its settings (`XComGameState_CampaignSettings`). XCOM 2's own eight options are taken out
+  of the list: a Long War campaign has Long War's.
+
+## Report (2026-11-17, the choice; The Friendly Skies)
+
+- **The choice:** `XComUI.ini` removes XCOM 2's eight second-wave options from its new-campaign screen and lists Long War's
+  31 in Long War's order (`LWSW_<nn>_<name>`); their lines and tooltips are Long War's own titles and texts ("Damage
+  Roulette (#0): Weapons have a much wider range of damage…"), written from the player's install into the mod's
+  `XComGame.int` (`makeSecondWaveWords`: 31). `LWX2SecondWave.On(n)` answers with Long War's number, as Long War's
+  `IsOptionEnabled`.
+- **Test aid:** `secondwave` lists the options on; `secondwave <n> on|off` sets one in a running campaign.
+- **#24 The Friendly Skies:** XCOM's aircraft weapons aim 15 better (Long War's `ABDUCTION_REWARD_SCI`, "Friendly Skies bonus
+  for XCOM aircraft", added to each weapon's to-hit in `XGItemTree.BuildShipWeapons`, the Foundry's versions too):
+  `LWAirWar.WeaponFor`, weapons 1 to 7.
+- **Checked on wingpu:** the same Raven-1 against the same small UFO at Balanced: 39% of 1,000 simulated fights downed it with
+  the option off, 60% with it on (`logs/wingpu_friendly_skies_off.png`, `…_on.png`). **Not seen:** the options on XCOM 2's
+  new-campaign screen (the test campaigns are made by the control port, without it).
+- **Corrected:** STATUS's "the Firestorm's refits" waited on this option by a misreading; Firestorms are refitted as
+  interceptors are.
