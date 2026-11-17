@@ -91,3 +91,17 @@ hours shown as War of the Chosen's "Tired").
   rested first. Seen: the squad of the last mission tired by the test aid, the next abduction sent six
   others, none all in. To decide with the person: a squad selection of their own (Long War's player
   picks, and may send a tired soldier all in on purpose).
+
+## Report (2026-11-17, critical wounds, the psi armour, Gift of Osiris on officers' hours)
+
+- **Read** (`XGFacility_Barracks.DetermineTimeOut`, whole): besides what was built, every critical wound the soldier has
+  had in the campaign adds `CB_AIRANDSPACE_BONUS` hours (24; Long War keeps the count in stat 15), before the scale;
+  the psi armour (item 65) takes the fatigue away (no hours, and the soldier is never all in); Gift of Osiris cuts the
+  officers' hours by its share as it cuts the powers'.
+- **Done** (`LWFatigue`): a soldier of XCOM bleeding out in a mission is a critical wound, counted once a mission on the
+  unit (`CountCriticalWounds`, `LWX2CriticalWounds`, kept for the campaign); its hours added; `InPsiArmor`; the officers'
+  cut.
+- **Checked on wingpu:** a sniper with a Respirator Implant at 1 HP threw his own frag at his feet, bled out ("critically
+  wounded (1 in the campaign)"); the mission won, he rested 168 hours (144 hurt, 24 the wound) after 216 of healing,
+  the other hurt soldiers 144.
+- **Not seen:** the psi armour in a game (it needs its research), Gift of Osiris on an officer.

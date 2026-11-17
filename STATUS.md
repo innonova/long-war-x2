@@ -37,7 +37,7 @@ buttons and text, no art).
 | MECs, SHIVs, cybernetics | part | X2 + LW | SHIVs: three bodies built in engineering, Long War's stats, weapons and Foundry projects, EW's bodies, rest and repair, squad select and armory; MECs: the Cybernetics Lab's augmentation, the eight MEC classes, seven suits in EW's MEC bodies, five weapons, Kinetic Strike and five subsystems (XCOM 2 items standing in); the Alloy SHIV as high cover for the soldiers beside it (a rule on the shot); the Hover SHIV flies (XCOM 2's flying traversal, no fuel) | the Hover SHIV's fuel | `lw-shivs-mecs` |
 | Grey market | done | LW | Long War's prices (built items at 40%, corpses with Xenological Remedies), what can be sold, NOT RESEARCHED, on EW's own GreyMarket screen | | `lw-greymarket` |
 | Squad selection and loadout | most | X2 | XCOM 2's squad select and armory for a Long War mission (Long War's squad size, rested soldiers first, Long War's launch, backing out leaves the mission) | the armory and loadout still in the Avenger's armory (squad select itself is in EW's hangar, all slots picked) | `lw-squad-select` |
-| Fatigue | most | X2 | Long War's hours, all in, shown as War of the Chosen's Tired | officers' hours, the country bonuses' | `lw-fatigue` |
+| Fatigue | done | X2 | Long War's hours, all in, shown as War of the Chosen's Tired; psi powers' and gene mods' hours, officers' hours, critical wounds' hours, Stay Frosty, the psi armour, Gift of Osiris and Call to Arms | | `lw-fatigue` |
 | Soldiers: recruits, ranks | most | X2 | Long War's eight classes, ranks, stat gains and experience in XCOM 2's barracks; Long War's random rookie stats | Wet Work, medals' experience | `lw-classes` |
 
 ## Tactical

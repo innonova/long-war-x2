@@ -239,6 +239,8 @@ function CheckSwept()
 	NoReinforcements();
 	LongWarObjectives();
 	class'X2Effect_LWRespirator'.static.Update();
+	// Critical wounds counted for Long War's fatigue (LWFatigue.CountCriticalWounds).
+	class'LWFatigue'.static.CountCriticalWounds();
 	// A variant level's gated alien drops (LWX2LevelDrops).
 	class'LWX2LevelDrops'.static.Update();
 	// A council bomb disposal (LWX2CouncilBomb): its timer, and no victory until the bomb is disarmed.

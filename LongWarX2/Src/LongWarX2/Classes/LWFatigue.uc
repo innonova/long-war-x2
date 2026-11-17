@@ -6,7 +6,9 @@
 // lets a fatigued one go all in): the will set to the top of the Tired band as the Geoscape opens after the mission, XCOM
 // 2's own will recovery taken off, the will full again when Long War's hours are over (each hour of Long War's clock).
 // Each psi power and gene mod the soldier has adds its own hours (config PerkHours).
-// Officers rest more per officer rank, and Stay Frosty (the squad's leader's) takes a day off. Not yet: the critical wounds' hours, the psi armour, the country bonuses that lessen the powers' hours.
+// Officers rest more per officer rank (Gift of Osiris cuts those hours too), and Stay Frosty (the squad's leader's) takes a
+// day off. Each critical wound the soldier has had in the campaign adds CritWoundHours (Long War's CB_AIRANDSPACE_BONUS, its
+// stat 15). The psi armour (item 65) takes the fatigue away: no hours, never all in.
 class LWFatigue extends Object config(LWStrategy);
 
 /** A psi power's or a gene mod's own hours (Long War's ItemBalance_Easy: the perk, its iEng). */
@@ -19,7 +21,7 @@ struct LWPerkHours
 };
 var config array<LWPerkHours> PerkHours;
 
-var int BaseHours, RollHours, HardHours, ScalePct;
+var int BaseHours, RollHours, HardHours, ScalePct, CritWoundHours, PsiArmor;
 
 static function int ValueOf(XComGameState_Unit Unit, name Key)
 {
@@ -58,8 +60,8 @@ static function Apply()
 			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: fatigue");
 		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
 		bSHIV = class'LWSHIVs'.static.IsSHIV(Unit);
-		// (A SHIV never goes all in: it is out its own hours, whatever it did.)
-		bAllIn = !bSHIV && ValueOf(Unit, 'LWX2AllIn') > 0;
+		// (A SHIV never goes all in: it is out its own hours, whatever it did; nor does one in the psi armour.)
+		bAllIn = !bSHIV && ValueOf(Unit, 'LWX2AllIn') > 0 && !InPsiArmor(Unit);
 		bHurt = Unit.GetCurrentStat(eStat_HP) < Unit.GetMaxStat(eStat_HP);
 		if (bSHIV)
 			H = class'LWSHIVs'.static.RestHoursFor();
@@ -71,13 +73,20 @@ static function Apply()
 		{
 			H = (bAllIn || bHurt) ? default.HardHours : default.BaseHours + Rand(default.RollHours);
 			H += PowersHours(Unit);
-			// An officer's hours, per officer rank (SPECIES_POINT_LIMIT).
-			H += class'LWOfficers'.static.FatigueHours(Unit);
+			// An officer's hours, per officer rank (SPECIES_POINT_LIMIT), less Gift of Osiris's share.
+			H += class'LWBonuses'.static.Has(class'LWBonuses'.const.GIFT_OF_OSIRIS) > 0
+				? int((1.0 - class'LWBonuses'.static.Has(class'LWBonuses'.const.GIFT_OF_OSIRIS) / 100.0) * class'LWOfficers'.static.FatigueHours(Unit))
+				: class'LWOfficers'.static.FatigueHours(Unit);
 		}
+		// The critical wounds of the campaign (CB_AIRANDSPACE_BONUS each).
+		H += ValueOf(Unit, 'LWX2CriticalWounds') * default.CritWoundHours;
 		H = H * default.ScalePct / 100;
 		// Stay Frosty, the squad's leader's: a day less.
 		if (class'LWOfficers'.static.SquadHad(Unit, class'LWOfficers'.const.STAY_FROSTY))
 			H = Max(0, H - 24);
+		// The psi armour: no fatigue at all.
+		if (InPsiArmor(Unit))
+			H = 0;
 		Wound = WoundHours(Unit);
 		if (bAllIn)
 		{
@@ -94,6 +103,36 @@ static function Apply()
 	}
 	if (NewGameState != none)
 		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+}
+
+/** Wearing Long War's psi armour (its item 65, LWArmor_65). */
+static function bool InPsiArmor(XComGameState_Unit Unit)
+{
+	local XComGameState_Item Armor;
+
+	Armor = Unit.GetItemInSlot(eInvSlot_Armor);
+	return Armor != none && Armor.GetMyTemplateName() == name("LWArmor_" $ default.PsiArmor);
+}
+
+/** In a mission: a soldier of XCOM bleeding out is a critical wound, counted once a mission on the unit (LWX2CriticalWounds,
+ *  kept for the campaign: Long War's stat 15). */
+static function CountCriticalWounds()
+{
+	local XComGameState_Unit Unit;
+	local XComGameState NewGameState;
+	local UnitValue Counted;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Unit.GetTeam() != eTeam_XCom || !Unit.IsSoldier() || !Unit.IsBleedingOut() || Unit.GetUnitValue('LWX2CritThisMission', Counted))
+			continue;
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a critical wound");
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		Unit.SetUnitFloatValue('LWX2CritThisMission', 1, eCleanup_BeginTactical);
+		Unit.SetUnitFloatValue('LWX2CriticalWounds', ValueOf(Unit, 'LWX2CriticalWounds') + 1, eCleanup_Never);
+		`TACTICALRULES.SubmitGameState(NewGameState);
+		`log("LongWarX2: fatigue:" @ Unit.GetFullName() @ "critically wounded (" $ ValueOf(Unit, 'LWX2CriticalWounds') @ "in the campaign)", , 'LongWarX2');
+	}
 }
 
 /** Each hour of Long War's clock: the soldiers whose rest is over are ready again; those resting keep no XCOM 2 recovery. */
@@ -323,4 +362,7 @@ defaultproperties
 	RollHours=48
 	HardHours=144
 	ScalePct=100
+	// CB_AIRANDSPACE_BONUS: hours per critical wound suffered in the campaign; the psi armour's item.
+	CritWoundHours=24
+	PsiArmor=65
 }
