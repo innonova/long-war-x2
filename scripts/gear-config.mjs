@@ -184,4 +184,8 @@ out.push(
     // Alloys and elerium are XCOM 2's own resources in the port (X2Item_LWArtifacts.ItemFor).
     .map(([item, b]) => `+Sales=(Item=${item}, Template=${{ 161: 'EleriumDust', 162: 'AlienAlloy' }[item] ?? SHIVS[item] ?? itemTemplate(item, ITEMS)}, Cash=${b.days !== -1 ? Math.trunc(b.cash * 0.4) : b.cash}${isCorpse(item) ? ', Corpse=true' : ''})`),
 )
+// The MEC flamethrower's cone (X2Ability_LWMECFlamethrower): EW's sweep, as Long War configures it.
+const flame = (k) => Number(core.match(new RegExp(`\\[XComGame\\.XGAction_FireCustom_Flamethrower\\][^\\[]*?^${k}=([\\d.]+)`, 'm'))?.[1] ?? 0)
+out.push('', "; The MEC flamethrower's cone: Long War's XGAction_FireCustom_Flamethrower Range (tiles) and SweepAngle (degrees).",
+  '[LongWarX2.X2Ability_LWMECFlamethrower]', `RangeTiles=${flame('Range')}`, `SweepAngle=${flame('SweepAngle')}`)
 console.log(out.join('\r\n'))

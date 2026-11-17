@@ -236,8 +236,10 @@ export const SMALL = [
   { item: 72, kind: 'Passive', look: 'CommonPCSConditioning' },
   // Long War's MEC subsystems (features/lw-shivs-mecs.md, phase 4), MEC classes only, each an XCOM 2 item standing in for
   // EW's ability (APPROXIMATIONS, Decisions there): the Grenade Launcher a thrown frag, the Proximity Mine Launcher XCOM 2's
-  // proximity mine, the Flamethrower a firebomb, the Electro Pulse an EMP grenade, the Restorative Mist a medikit's heal.
-  ...[[24, 'FragGrenade'], [27, 'ProximityMine'], [23, 'Firebomb'], [26, 'EMPGrenade']].map(([item, look]) => ({ item, kind: 'Grenade', look, mec: true })),
+  // proximity mine, the Electro Pulse an EMP grenade, the Restorative Mist a medikit's heal. The Flamethrower is a cone of its
+  // own (X2Ability_LWMECFlamethrower: EW's 8 tiles and 60 degrees), with the firebomb's look.
+  ...[[24, 'FragGrenade'], [27, 'ProximityMine'], [26, 'EMPGrenade']].map(([item, look]) => ({ item, kind: 'Grenade', look, mec: true })),
+  { item: 23, kind: 'Flamethrower', look: 'Firebomb', mec: true },
   { item: 25, kind: 'Medikit', look: 'Medikit', mec: true },
 ]
 /** Long War's MEC classes (classes-config.mjs), the only ones that carry MEC subsystems. */

@@ -3299,7 +3299,7 @@ function string UseAbility(string Who, name AbilityName, int TargetIndex, option
 			if (Ability.GetMyTemplate().AbilityMultiTargetStyle != none)
 				Ability.GetMyTemplate().AbilityMultiTargetStyle.GetMultiTargetsForLocation(Ability, Here[0], Area);
 			Action.AvailableTargets[0] = Area;
-			return class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, Here) ? "used at" @ Here[0] : "ERR it did not go";
+			return class'XComGameStateContext_Ability'.static.ActivateAbility(Action, 0, Here) ? "used at" @ Here[0] @ "on" @ Area.AdditionalTargets.Length @ "units in its area" : "ERR it did not go";
 		}
 		if (TargetIndex < 0 || TargetIndex >= Action.AvailableTargets.Length)
 		{

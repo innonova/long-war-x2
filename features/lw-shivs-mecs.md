@@ -416,3 +416,23 @@ turn and stayed at 3 (half of 5, rounded down).
 
 **Not done:** Long War's last clause, "additional damage taken before repairs are complete
 reduces how much can be repaired".
+
+## Report (2026-11-17, the MEC flamethrower as a cone)
+
+The Flamethrower (item 23) was a thrown firebomb. It is now a cone from the MEC (`X2Ability_LWMECFlamethrower`,
+`LWX2_MECFlamethrower`, on the item; the item's kind `Flamethrower`):
+- **Long War's numbers:** its `Weapons=` line's 5 damage; EW's `XGAction_FireCustom_Flamethrower` as Long War configures it,
+  a sweep of 60 degrees over 8 tiles (`RangeTiles`, `SweepAngle` in `XComLWGear.ini`, from `DefaultGameCore.ini`); fire set
+  with EW's chances by fire level (1.0, 0.3, 0.2); two charges an item (`XGUnit.UpdateItemCharges`); one action, the turn's
+  end.
+- **Never misses**, and burns what it reaches, friend or foe, as EW's sweep does.
+- **Looks:** the firebomb's item picture; the MEC plays its own firing animation (EW's flamethrower sweep is not among its
+  converted animations).
+
+**Checked on wingpu:** a MEC (Pathfinder) with the flamethrower, two Sectoids spawned beside the squad: the cone found 4
+units, both Sectoids died, two soldiers standing in the cone took the flame (6 → 1, 8 → 3 HP), the street burned. Screenshot:
+`logs/wingpu_mec_flamethrower_cone.png`. (Seen on the way: the control port's `near` moves a unit's state but not its pawn,
+so a cone aimed from a moved unit starts where the pawn stands.)
+
+**Jellied Elerium** (the Foundry's): in Long War it changes the flame's effect and makes its morale hit one step stronger;
+the port has no panic from fire, so it still does nothing.
