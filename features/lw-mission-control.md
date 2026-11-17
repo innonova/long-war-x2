@@ -69,3 +69,38 @@ labels alone (the `[ENTER]`/`[ESC]` hints are gone).
 Checked on wingpu, new campaigns: hovering `SCRAMBLE INTERCEPTORS` sends `MOUSE_IN` on `button_0`, clicking it opened the
 air war on the UFO; clicking `IGNORE CONTACT` closed the alert and left the UFO on the Geoscape's list. Screenshot:
 `logs/wingpu_ew_ufo_alert_clicks.png`. Not seen: a hover highlight on EW's buttons (none visible in the screenshot).
+
+## Report (2026-11-17, the other decisions' alerts)
+
+Every Geoscape decision EW asks with a Mission Control alert now opens EW's alert, filled as EW's alert classes fill it
+from `XGMissionControlUI.UpdateAlert` (read from Long War's own package, decompiled outside the repository):
+
+| Decision | EW's alert | What it shows | First button | Second / Esc |
+|---|---|---|---|---|
+| 4 abductions | `AbductionAlert` | ALIEN ABDUCTIONS REPORTED | VIEW ABDUCTION SITE: the alert closes on the Geoscape's list of sites (EW's site selection, for now) | IGNORE |
+| 5 terror | `TerrorAlert` | ALIENS TERRORIZING, the country (EW: the city; the port has none), PANIC with Long War's bar (`GetPanicBlocks`), ALIEN ACTIVITY: Swarming (EW's `eMissionDiff_VeryHard`) | SEND SKYRANGER: squad select | IGNORE |
+| 6 alien base | `AlienBaseAlert` | ASSAULT THE ALIEN BASE, LOCATION: the country | ASSAULT | WAIT |
+| 7 Temple Ship | `TempleShipAlert` | ASSAULT THE TEMPLE SHIP, EW's line under it | ASSAULT | WAIT |
+| 9 operative ready | `ExaltAlert` | OPERATIVE READY, EW's warning that the operative is lost if ignored | SEND EXTRACTION SQUAD | NOT NOW |
+| 11 council mission | `FundingCouncilAlert` (a `SimpleAlert`, one button) | COUNCIL MISSION: its kind, Location: the country | SEND SKYRANGER | Esc |
+
+Abductions that come together get one alert, as in EW. The HQ's defence, EXALT's base and the council's requests stay on the
+panel: EW has no Mission Control alert for them (a cinematic, the Situation Room, the council's request screen).
+
+- **Words:** EW's own (`makeAlertWords`): every `[XGMissionControlUI]` section of the player's `XComStrategyGame.int` (the
+  file has more than one; the first version read only the first) and `[XGLocalizedData]` for the activity's name: 27 words.
+- **Clicks:** as EW's `AlertWithMultipleButtons.OnMouseEvent`: the clicked clip `button_<N>` (or a simple alert's single
+  `button`); the second button leaves the alert.
+- **Names:** the alert's clip is `<Name>MC` (the UFO landing's `UFOLandingAlertMC`), under the converter's name when the
+  alert has a class of its own (`QerrorAlertMC`, `QempleShipAlertMC`); `FindAlert` takes whichever the movie has.
+- **The Temple Ship's title:** XCOM 2's font standing in for EW's runs wider, and the title was cut at the alert's frame
+  (its field runs past the frame). Scaleform's `textAutoSize` and scaling the field did not help; the title is now set at the
+  size that fits (measured at a known size by `textWidth`). Only this alert's title was seen to overflow.
+- **Test aid:** `ewinvoke`'s `s:` strings take `_` for a space.
+- **Checked on wingpu** (new campaigns, time run): abductions (`logs/wingpu_ew_alert_abductions.png`), the council's bomb
+  disposal (`logs/wingpu_ew_alert_council.png`), terror in the United States after the month's report
+  (`logs/wingpu_ew_alert_terror.png`), the Temple Ship with a Gollop Chamber placed by the test aid
+  (`logs/wingpu_ew_alert_temple.png`); ASSAULT clicked opened squad select. **Not seen:** the alien base and the operative
+  alerts (no quick way to an alien base or a ready operative yet); written the same way, from EW's classes.
+- **Open:** EW's abduction site selection (`LoadAbductionSelection`) in place of the panel's list; the UFO contact's other
+  rows (size, altitude, objective with the Hyperwave Relay) and its jet list; the Mission Control screen itself (plan 2).

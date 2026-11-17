@@ -624,16 +624,33 @@ export function makeReportWords({ strategyLoc }) {
 /** EW's Mission Control alerts' words (UILWEWAlert), from its [XGMissionControlUI]. */
 export function makeAlertWords({ strategyLoc }) {
   const text = strategyLoc.replace(/\r/g, '')
-  const at = text.indexOf('\n[XGMissionControlUI]\n')
-  if (at < 0) return { text: '', named: 0 }
-  const end = text.indexOf('\n[', at + 2)
-  const section = text.slice(at, end < 0 ? undefined : end)
-  const mc = (key) => section.match(new RegExp(`^${key}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  // (The section comes more than once in the file: every one of them read.)
+  const sections = (name) => {
+    const out = []
+    for (let at = text.indexOf(`\n[${name}]\n`); at >= 0; at = text.indexOf(`\n[${name}]\n`, at + 2)) {
+      const end = text.indexOf('\n[', at + 2)
+      out.push(text.slice(at, end < 0 ? undefined : end))
+    }
+    return out.join('\n')
+  }
+  const section = sections('XGMissionControlUI')
+  if (!section) return { text: '', named: 0 }
+  const data = sections('XGLocalizedData')
+  const esc = (k) => k.replace(/[[\]]/g, '\\$&')
+  const one = (from, key) => from.match(new RegExp(`^${esc(key)}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const mc = (key) => one(section, key)
   const words = [
     ['RadarContact', mc('m_strLabelRadarContact')], ['Contact', mc('m_strLabelContact')], ['Location', mc('m_strLabelLocation')],
     ['UFOClass', mc('m_strLabelUFOClass')], ['Unidentified', mc('m_strLabelUnidentified')], ['Scramble', mc('m_strLabelScrambleInterceptors')],
     ['IgnoreContact', mc('m_strLabelIgnoreContact')], ['SendSkyranger', mc('m_strLabelSendSkyranger')], ['Ignore', mc('m_strLabelIgnore')],
     ['CrashSite', mc('m_strLabelUFOCrashSite')], ['HasLanded', mc('m_strLabelUFOHasLanded')],
+    ['AbductionsReported', mc('m_strLabelAbductionsReported')], ['ViewAbductionSites', mc('m_strLabelViewAbductionSites')],
+    ['TerrorCity', mc('m_strLabelTerrorCity')], ['PanicLevel', mc('m_strLabelPanicLevel')], ['Difficulty', mc('m_strLabelDifficulty')],
+    ['Swarming', one(data, 'MissionDifficultyNames[eMissionDiff_VeryHard]')], ['FCMission', mc('m_strLabelFCMission')],
+    ['AssaultAlienBase', mc('m_strLabelAssaultAlienBase')], ['AssaultTempleShip', mc('m_strLabelAssaultTempleShip')],
+    ['TempleShipText', mc('m_strLabelTempleShip')], ['Assault', mc('m_strLabelAssault')], ['Wait', mc('m_strlabelWait')],
+    ['ExaltTitle', mc('m_strLabelExaltAlertTitle')], ['ExaltBody', mc('m_strLabelExaltAlertBody')],
+    ['ExaltSend', mc('m_strLabelExaltAlertSendSquad')], ['ExaltNotNow', mc('m_strLabelExaltAlertNotNow')],
   ].filter(([, v]) => v)
   return { text: ['[UILWEWAlert]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }

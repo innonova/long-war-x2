@@ -107,8 +107,9 @@ static function string InvokeMovie(array<string> Args)
 	{
 		if (Left(Args[i], 2) == "s:")
 		{
+			// (A command's words are split at spaces: "_" stands for one.)
 			V.Type = AS_String;
-			V.s = Mid(Args[i], 2);
+			V.s = Repl(Mid(Args[i], 2), "_", " ");
 		}
 		else if (Args[i] ~= "true" || Args[i] ~= "false")
 		{
