@@ -4,7 +4,9 @@
 // an easy one on a roll of 2 or more out of 3, a second hard one on 3. Each is XCOM 2's loot drop (its marker, its turns
 // shown, taken by a soldier who reaches it, brought home in the backpack) holding Long War's meld: the aliens' resources
 // / 10, 5 to 30 (the patch's own factor not read, taken as 1); gone on EW's turn for it.
-class LWMeld extends Object dependson(LWX2EWMapPieces);
+// Without Recon (second wave #29: "You will see meld cans … in the fog") a canister is hidden in the fog until XCOM sees it:
+// it waits unmade (XComGameState_LWX2Meld) until its tile has been seen (Reveal), as XCOM 2 would show its marker anywhere.
+class LWMeld extends Object dependson(LWX2EWMapPieces, XComGameState_LWX2Meld);
 
 static function Place()
 {
@@ -20,6 +22,8 @@ static function Place()
 	local vector Shift;
 	local float Best;
 	local int Group, Roll, k, First, Second, Amount;
+	local XComGameState_LWX2Meld Waiting;
+	local XComGameState_LWX2Meld.LWX2HiddenCanister H;
 
 	History = `XCOMHISTORY;
 	S = class'XComGameState_LWStrategy'.static.Get();
@@ -29,6 +33,8 @@ static function Place()
 	foreach History.IterateByClassType(class'XComGameState_LootDrop', Drop)
 		if (Drop.LastLootOwnerName == "Meld canister")
 			return;
+	if (History.GetSingleGameStateObjectForClass(class'XComGameState_LWX2Meld', true) != none)
+		return;
 	Map = class'LWX2EWMapPieces'.static.Map();
 	if (Map.MeldPoints.Length == 0)
 		return;
@@ -82,8 +88,23 @@ static function Place()
 		return;
 	Amount = Clamp(S.AlienResources / 10, 5, 30);
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: meld canisters");
+	// Without Recon: kept unmade until seen (Reveal).
+	if (!class'LWX2SecondWave'.static.On(29))
+	{
+		Waiting = XComGameState_LWX2Meld(NewGameState.CreateNewStateObject(class'XComGameState_LWX2Meld'));
+		foreach Chosen(P)
+		{
+			H.Tile = TileOf(P, Shift);
+			H.Turns = Max(1, P.Turns);
+			H.Amount = Amount;
+			Waiting.Hidden.AddItem(H);
+		}
+		`TACTICALRULES.SubmitGameState(NewGameState);
+		`log("LongWarX2: meld:" @ Chosen.Length @ "canisters hidden in the fog until seen", , 'LongWarX2');
+		return;
+	}
 	foreach Chosen(P)
-		Canister(NewGameState, Source, P, Shift, Amount);
+		Canister(NewGameState, Source, TileOf(P, Shift), Max(1, P.Turns), Amount);
 	// Each one's marker where it is, with its turns (XCOM 2's fountain, which CreateLootDrop asks for, would fly the meld
 	// from the soldier).
 	NewGameState.GetContext().PostBuildVisualizationFn.Length = 0;
@@ -93,16 +114,80 @@ static function Place()
 	`log("LongWarX2: meld:" @ Chosen.Length @ "canisters (roll" @ Roll $ ", group" @ Group $ ";" @ Hard.Length @ "hard," @ Easy.Length @ "easy places)," @ Amount @ "meld each", , 'LongWarX2');
 }
 
-/** One canister: a loot drop holding the meld at EW's place, gone on its turn. */
-static function Canister(XComGameState NewGameState, XComGameState_Unit Source, LWX2EWMapPieces.LWX2Meld P, vector Shift, int Amount)
+/** A canister's tile: the floor at EW's place. */
+static function TTile TileOf(LWX2EWMapPieces.LWX2Meld P, vector Shift)
+{
+	local TTile Tile;
+	local vector At;
+
+	At = P.Loc + Shift;
+	if (!`XWORLD.GetFloorTileForPosition(At, Tile, true))
+		Tile = `XWORLD.GetTileCoordinatesFromPosition(At);
+	return Tile;
+}
+
+/** Without Recon: each canister waiting whose tile XCOM has now seen made, with the turns it has left; one gone already is
+ *  dropped. (Every two seconds of a mission: UIScreenListener_LongWarX2Tactical.CheckSwept.) */
+static function Reveal()
+{
+	local XComGameStateHistory History;
+	local XComGameState_LWX2Meld Waiting;
+	local XComGameState_Unit Source, Unit;
+	local XComGameState NewGameState;
+	local XComGameState_LootDrop Drop;
+	local FOWTileStatus Status;
+	local byte Flags;
+	local TTile T;
+	local int i, Left;
+	local bool bAny;
+
+	History = `XCOMHISTORY;
+	Waiting = XComGameState_LWX2Meld(History.GetSingleGameStateObjectForClass(class'XComGameState_LWX2Meld', true));
+	if (Waiting == none || Waiting.Hidden.Length == 0)
+		return;
+	foreach History.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_XCom && Unit.IsSoldier() && Unit.IsAlive())
+		{
+			Source = Unit;
+			break;
+		}
+	for (i = Waiting.Hidden.Length - 1; i >= 0; i--)
+	{
+		T = Waiting.Hidden[i].Tile;
+		`XWORLD.GetTileFOWValue(T, Status, Flags);
+		Left = Waiting.Hidden[i].Turns - (class'LWX2CovertExtraction'.static.TurnNow() - 1);
+		if (Left > 0 && Status == eFOWTileStatus_NeverSeen)
+			continue;
+		if (NewGameState == none)
+		{
+			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a meld canister seen");
+			Waiting = XComGameState_LWX2Meld(NewGameState.ModifyStateObject(class'XComGameState_LWX2Meld', Waiting.ObjectID));
+		}
+		if (Left > 0 && Source != none)
+		{
+			Canister(NewGameState, Source, Waiting.Hidden[i].Tile, Left, Waiting.Hidden[i].Amount);
+			bAny = true;
+		}
+		Waiting.Hidden.Remove(i, 1);
+	}
+	if (NewGameState == none)
+		return;
+	if (bAny)
+	{
+		NewGameState.GetContext().PostBuildVisualizationFn.Length = 0;
+		foreach NewGameState.IterateByClassType(class'XComGameState_LootDrop', Drop)
+			NewGameState.GetContext().PostBuildVisualizationFn.AddItem(Drop.VisualizeLootFountainMove);
+	}
+	`TACTICALRULES.SubmitGameState(NewGameState);
+}
+
+/** One canister: a loot drop holding the meld on its tile, gone after Turns. */
+static function Canister(XComGameState NewGameState, XComGameState_Unit Source, TTile Tile, int Turns, int Amount)
 {
 	local XComGameState_Item Item;
 	local XComGameState_LootDrop Drop;
 	local array<XComGameState_Item> Items;
 	local X2ItemTemplate Template;
-	local XComWorldData World;
-	local TTile Tile;
-	local vector At;
 
 	Template = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(class'X2Item_LWArtifacts'.static.ItemFor('Meld'));
 	if (Template == none)
@@ -111,17 +196,13 @@ static function Canister(XComGameState NewGameState, XComGameState_Unit Source, 
 	Item.Quantity = Amount;
 	Items.AddItem(Item);
 	class'XComGameState_LootDrop'.static.CreateLootDrop(NewGameState, Items, Source, true);
-	World = `XWORLD;
-	At = P.Loc + Shift;
-	if (!World.GetFloorTileForPosition(At, Tile, true))
-		Tile = World.GetTileCoordinatesFromPosition(At);
 	foreach NewGameState.IterateByClassType(class'XComGameState_LootDrop', Drop)
 	{
 		if (Drop.LastLootOwnerName == "Meld canister")
 			continue;
 		Drop.TileLocation = Tile;
 		Drop.LastLootOwnerName = "Meld canister";
-		Drop.LootExpirationTurnsRemaining = Max(1, P.Turns);
+		Drop.LootExpirationTurnsRemaining = Turns;
 	}
 }
 

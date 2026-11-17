@@ -279,6 +279,10 @@ function Handle(string Line, out array<string> Out)
 		else
 			Out.AddItem(RunTree(int(Mid(Args[1], 1)), Args[2]));
 		return;
+	case "meld":
+		// meld: the mission's meld canisters, made (tile, turns left) and, without Recon, still hidden in the fog (a test aid).
+		Meld(Out);
+		return;
 	case "scamper":
 		// scamper #<AI group id>: the group revealed as if a soldier had just seen it, its units scampering (a test aid; the
 		// group's id is in 'enemies').
@@ -3187,6 +3191,29 @@ function Repair(array<string> Args, out array<string> Out)
 		Out.AddItem("repairing" @ S.Repairs[i].Template @ S.Repairs[i].HoursLeft @ "hours left");
 	if (S.DamagedItems.Length == 0 && S.Repairs.Length == 0)
 		Out.AddItem("no damaged gear");
+}
+
+function Meld(out array<string> Out)
+{
+	local XComGameState_LootDrop Drop;
+	local XComGameState_LWX2Meld Waiting;
+	local FOWTileStatus Status;
+	local byte Flags;
+	local TTile T;
+	local int i;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_LootDrop', Drop)
+		if (Drop.LastLootOwnerName == "Meld canister")
+			Out.AddItem("canister at" @ Drop.TileLocation.X @ Drop.TileLocation.Y @ Drop.TileLocation.Z @ "turns left" @ Drop.LootExpirationTurnsRemaining);
+	Waiting = XComGameState_LWX2Meld(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_LWX2Meld', true));
+	if (Waiting != none)
+		for (i = 0; i < Waiting.Hidden.Length; i++)
+		{
+			T = Waiting.Hidden[i].Tile;
+			`XWORLD.GetTileFOWValue(T, Status, Flags);
+			Out.AddItem("hidden at" @ T.X @ T.Y @ T.Z @ "turns" @ Waiting.Hidden[i].Turns @ "meld" @ Waiting.Hidden[i].Amount @ "fog" @ Status);
+		}
+	Out.AddItem("turn" @ class'LWX2CovertExtraction'.static.TurnNow() @ "Recon" @ class'LWX2SecondWave'.static.On(29));
 }
 
 function string RunTree(int UnitID, string Tree)

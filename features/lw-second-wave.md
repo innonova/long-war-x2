@@ -278,3 +278,17 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   shot (and its Perfect Information line) is the check.
 - **New test aids** (kept): `scamper #<group>` (a group's reveal), `bt #<unit> <tree>` (a tree queued for a unit), both
   limited as above.
+
+## Report (2026-11-17, Recon; meld hidden in the fog without it)
+
+- **#29 Recon** ("You will see meld cans and bomb nodes in the fog"; EW does this natively, no script reads the option).
+  XCOM 2 shows a loot drop's marker anywhere, fog or not. So the port had always shown Long War's meld canisters from the
+  start, as Recon does, while Long War without it hides them until seen.
+  - **Without Recon:** a canister now waits unmade (`XComGameState_LWX2Meld`) until XCOM has seen its tile (its fog status,
+    checked every two seconds with the mission's other updates: `LWMeld.Reveal`). It is then made with the turns it has
+    left; one whose turn has passed unseen is gone.
+  - **With Recon:** made at the start, as before.
+  - **Bomb nodes** are pieces of EW's map in the port, seen through the fog either way; unchanged.
+- **Checked on wingpu** (new test aid `meld`: the canisters made and those still hidden, with their fog): an abduction
+  without Recon held its canister back ("hidden at 10 14 1, turns 5, fog NeverSeen"). When a soldier came into view of the
+  tile it was made, "turns left 5", on turn 1. **Not seen:** Recon on (the code path that made them at the start, as before).

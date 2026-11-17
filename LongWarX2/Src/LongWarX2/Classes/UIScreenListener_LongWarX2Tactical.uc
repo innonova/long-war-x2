@@ -249,6 +249,8 @@ function CheckSwept()
 	class'LWX2Zombies'.static.Update();
 	// Bioelectric Skin's reveal (LWX2Bioelectric).
 	class'LWX2Bioelectric'.static.Update();
+	// Meld canisters hidden in the fog until seen, without Recon (second wave #29; LWMeld).
+	class'LWMeld'.static.Reveal();
 	// Red Fog (second wave #6): the hurt slowed and less sure (LWX2SecondWave).
 	class'LWX2SecondWave'.static.UpdateRedFog();
 	// Green Fog (second wave #30): XCOM's aim and will worn down turn by turn.
