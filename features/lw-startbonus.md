@@ -249,3 +249,12 @@ so the armours are taken from the text: items 57, 59, 182, 159, 68). `LWX2Gear.A
 small slots as the armoury and squad select open, adds the slot to a soldier in one of those armours while the bonus holds
 and the Foundry's Tactical Rigging (24) is not done. Compiled; not seen in a campaign (the test campaigns start in the
 United States without a start option).
+
+## Report (2026-11-17, Ancient Artifact: the Illuminator Gunsight)
+
+The Illuminator Gunsight (Long War's item 209, EXALT's loot) is in the port as a small item (`LWSmall_209`): its `Weapons=`
+line's +12 aim and +12 crit, its BalanceMods line's -1 mobility, the perk its `ItemBalance` line packs in (11, while carried);
+named from the player's own text ("Illuminator Gunsight"). Ancient Artifact (Mexico's start option, type 23, its value the
+item) puts one in the stores at the start (`LWBonusEffects.AtStart`). Checked on wingpu: the item given and carried by a
+soldier. Not seen: the start option itself (the test campaigns start in the United States). EXALT's missions do not drop it
+yet (the port's EXALT loot has no item drops).

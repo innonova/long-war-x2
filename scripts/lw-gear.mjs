@@ -225,6 +225,9 @@ export const SMALL = [
   // Reaper Rounds: +16 crit with any weapon but a pistol (XGAbility_Targeted.GetCriticalChance; WeaponCrit). Its text's
   // doubled range penalty for shotguns and sniper rifles is not in Long War's script (native): not done.
   { item: 78, kind: 'Passive', look: 'CommonPCSPerception', weaponCrit: 16 },
+  // The Illuminator Gunsight (EXALT's loot, item 209): its line's +12 aim and +12 crit, -1 mobility; Ancient Artifact's start
+  // option (LWBonuses.ANCIENT_ARTIFACT) gives one.
+  { item: 209, kind: 'Passive', look: 'CommonPCSPerception' },
   // Armor Piercing Ammo: its carrier's shots ignore 2 of the target's reduction (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction).
   { item: 198, kind: 'Passive', look: 'CommonPCSPerception' },
   // Combat Stims: XCOM 2's stims (a used item), and damage x0.6 while they last (XGUnit.AbsorbDamage; X2Ability_LWDamageReduction).

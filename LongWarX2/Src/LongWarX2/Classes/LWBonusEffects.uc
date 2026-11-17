@@ -53,6 +53,10 @@ static function AtStart(XComGameState NewGameState, XComGameState_LWStrategy S)
 		for (i = 1; i <= 4; i++)
 			NewSoldier(NewGameState, XComHQ, i, v);
 	// Ghost in the Machine's two SHIVs (XGFacility_Engineering.GrantInitialStores: eItem_SHIV x 2, made SHIVs in the barracks).
+	// Ancient Artifact: an Illuminator Gunsight (its Value: the item) in the stores.
+	v = class'LWBonuses'.static.Has(class'LWBonuses'.const.ANCIENT_ARTIFACT, S);
+	if (v > 0)
+		class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, name("LWSmall_" $ v), 1);
 	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.GHOST_IN_THE_MACHINE, S) > 0)
 	{
 		class'LWSHIVs'.static.AddSHIV(NewGameState, class'LWSHIVs'.default.Bodies[0].Template, S);
