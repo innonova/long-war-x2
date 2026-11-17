@@ -1838,12 +1838,36 @@ static function AddCount(out array<name> Names, out array<int> Counts, name N)
 		Counts[k]++;
 }
 
-/** An abduction's difficulty (XGStrategyAI.GetAbductionDifficulty): the act (1 for now) and the country's panic, 0-3. */
+/** Long War's act (XGStrategy.GetAct): 3 once a Hyperwave Beacon has ever been held, 2 once a captive has been
+ *  interrogated (LABS().HasInterrogatedCaptive: an interrogation researched), else 1. */
+static function int Act()
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local name Tech;
+	local int Id;
+
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	if (XComHQ == none)
+		return 1;
+	if (XComHQ.EverAcquiredInventoryTypes.Find(class'X2Item_LWArtifacts'.static.ItemFor('HyperwaveBeacon')) != INDEX_NONE)
+		return 3;
+	for (Id = 0; Id < 100; Id++)
+	{
+		if (!class'LWResearchRules'.static.IsInterrogation(Id))
+			continue;
+		Tech = class'LWResearchRules'.static.TemplateForId(Id);
+		if (Tech != '' && XComHQ.IsTechResearched(Tech))
+			return 2;
+	}
+	return 1;
+}
+
+/** An abduction's difficulty (XGStrategyAI.GetAbductionDifficulty): the act and the country's panic, 0-3. */
 function int AbductionDifficulty(int Country)
 {
 	local int Diff;
 
-	Diff = 1 - 1 + (Countries[Country].Panic + 1) / 20 - 1 + Rand(2);
+	Diff = Act() - 1 + (Countries[Country].Panic + 1) / 20 - 1 + Rand(2);
 	if (Days() > 210)
 		Diff += Rand(2);
 	return Clamp(Diff, 0, 3);

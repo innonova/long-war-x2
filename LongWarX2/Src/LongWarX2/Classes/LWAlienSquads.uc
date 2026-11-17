@@ -45,10 +45,18 @@ static function int Factor(int Days)
 	return Days > 240 ? 3 : (Days > 120 ? 2 : 1);
 }
 
-/** The aliens' commander (GetCommanderType): an Outsider before act 3. */
+/** The aliens' commander (GetCommanderType): an Outsider before act 3; then a Sectoid Commander, or, once XCOM has
+ *  held a Psi Link, a Sectoid Commander or an Ethereal at even odds. */
 static function int Commander()
 {
-	return 18;
+	local XComGameState_HeadquartersXCom XComHQ;
+
+	if (class'XComGameState_LWStrategy'.static.Act() < 3)
+		return 18;
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	if (XComHQ != none && XComHQ.EverAcquiredInventoryTypes.Find(class'X2Item_LWArtifacts'.static.ItemFor('PsiLink')) != INDEX_NONE)
+		return Rand(2) * 3 + 9;
+	return 9;
 }
 
 /** XGStrategyAI.DetermineUFOSquad: a landed UFO's crew is chosen a month ahead (m_bFirstMission). */

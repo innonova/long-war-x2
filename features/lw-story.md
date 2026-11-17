@@ -125,3 +125,16 @@ plan:
 Also seen: thirteen months of `auto … 90 % … sats` lost the campaign in
 month 10, sixteen countries gone, before any HQ assault. Long War's pace
 with a player who builds nothing but satellites and uplinks.
+
+## Report (2026-11-17, Long War's acts)
+
+- **Read** (`XGStrategy.GetAct`): act 3 once XCOM has ever held a Hyperwave Beacon, act 2 once a captive has been
+  interrogated (`LABS().HasInterrogatedCaptive`), else act 1. What the acts change in Long War's code:
+  - an abduction's difficulty starts at the act less one (`XGStrategyAI.GetAbductionDifficulty`; the port had act 1
+    always);
+  - the aliens' commander (`GetCommanderType`): an Outsider before act 3; then a Sectoid Commander, or, once XCOM has
+    held a Psi Link, a Sectoid Commander or an Ethereal at even odds. (The rest: the Situation Room's headlines,
+    the base's chatter and the music.)
+- **Done:** `XComGameState_LWStrategy.Act`, used by `AbductionDifficulty` and `LWAlienSquads.Commander`.
+- **Checked on wingpu** (`give` a Hyperwave Beacon and a Psi Link, `squad 2 9 200`): a landed large UFO's commander
+  became an Ethereal.
