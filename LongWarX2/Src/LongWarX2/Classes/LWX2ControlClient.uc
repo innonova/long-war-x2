@@ -104,6 +104,10 @@ function Handle(string Line, out array<string> Out)
 		GetALocalPlayerController().ClientUpdateLevelStreamingStatus(name(Args[1]), true, Args.Length < 3 || Args[2] != "false", false);
 		Out.AddItem("ok" @ Args[1]);
 		return;
+	case "ewdisplay":
+		// A test aid: one of EW's 3D panels changed live: ewdisplay <tag> scale <s> | yaw <add> | pitch <add> | roll <add>.
+		Out.AddItem(EWDisplay(Args));
+		return;
 	case "baseparents":
 		// A test aid: EW's base's pieces' materials counted by their parent (features/ew-lightmaps.md).
 		BaseParents(Out);
@@ -1745,7 +1749,10 @@ function UI3D(name Tag, bool bShow, out array<string> Out)
 
 	foreach `XWORLDINFO.AllActors(class'UIDisplay_LevelActor', Display)
 		if (Tag == '' || Display.Tag == Tag)
-			Out.AddItem("display" @ Display.Name @ "tag" @ Display.Tag @ "hidden" @ Display.StaticMeshComponent.HiddenGame @ "level" @ Display.GetPackageName() @ "at" @ Display.Location);
+			Out.AddItem("display" @ Display.Name @ "tag" @ Display.Tag @ "hidden" @ Display.StaticMeshComponent.HiddenGame @ "level" @ Display.GetPackageName() @ "at" @ Display.Location
+				@ "mesh" @ PathName(Display.StaticMeshComponent.StaticMesh) @ "material" @ PathName(Display.StaticMeshComponent.GetMaterial(0))
+				@ (MaterialInstance(Display.StaticMeshComponent.GetMaterial(0)) != none ? "parent" @ PathName(MaterialInstance(Display.StaticMeshComponent.GetMaterial(0)).Parent) : "")
+				@ "scale" @ Display.DrawScale3D * Display.DrawScale);
 	foreach `XWORLDINFO.AllActors(class'XComBlueprint', Blueprint)
 	{
 		if (Tag != '' && Blueprint.Tag != Tag)
@@ -4338,6 +4345,32 @@ function Dump(XComGameState_LWStrategy S, out array<string> Out)
 }
 
 /** ewmat: a scalar (a number) or texture (a path) parameter set on every stand-in material of the EW map's pieces. */
+function string EWDisplay(array<string> Args)
+{
+	local LWX2UIDisplay D;
+	local rotator R;
+	local string Out_Material;
+
+	D = class'LWX2EWBase'.static.DisplayFor(Pres(), Args.Length > 1 ? name(Args[1]) : '');
+	if (D == none || Args.Length < 4)
+		return "ERR ewdisplay <tag> scale|yaw|pitch|roll <n>";
+	R = D.Rotation;
+	if (Args[2] ~= "scale")
+		D.SetDrawScale3D(vect(1, 1, 1) * float(Args[3]));
+	else if (Args[2] ~= "yaw")
+		R.Yaw += int(Args[3]);
+	else if (Args[2] ~= "pitch")
+		R.Pitch += int(Args[3]);
+	else if (Args[2] ~= "roll")
+		R.Roll += int(Args[3]);
+	else if (Args[2] ~= "show")
+		`HQPRES.Get3DMovie().ShowDisplay(D.Tag, D);
+	else if (Args[2] ~= "material")
+		Out_Material = PathName(D.StaticMeshComponent.GetMaterial(0)) @ (MaterialInstance(D.StaticMeshComponent.GetMaterial(0)) != none ? PathName(MaterialInstance(D.StaticMeshComponent.GetMaterial(0)).Parent) : "");
+	D.SetRotation(R);
+	return "ok" @ D.Tag @ "at" @ D.Location @ "rot" @ D.Rotation @ "scale" @ D.DrawScale3D @ "bounds" @ D.StaticMeshComponent.Bounds.SphereRadius @ "hidden" @ D.bHidden @ D.StaticMeshComponent.HiddenGame @ "movie of" @ D.m_kMovie @ Out_Material;
+}
+
 function BaseParents(out array<string> Out)
 {
 	local DynamicSMActor_Spawnable A;

@@ -32,7 +32,7 @@ static function Open(XComHQPresentationLayer HQPres, optional bool bFoundryProje
 	EWScreen.Package = name("/ package/ewxBuildItem/BuildItem");
 	EWScreen.MCName = 'theBuildScreen';
 	EWScreen.bFoundry = bFoundryProjects;
-	HQPres.ScreenStack.Push(EWScreen);
+	Push3D(HQPres, EWScreen);
 }
 
 simulated function OnInit()
@@ -346,6 +346,9 @@ defaultproperties
 {
 	// (Over EW's engineering, as EW shows it.)
 	BaseCamera = ENGINEERING
+	// (EW's: UIBuildItem and UIFoundry on UIDisplay_Engineering through Engineering_UIDisplayCam.)
+	EWDisplay = UIDisplay_Engineering
+	EWDisplayCamera = Engineering_UIDisplayCam
 	Tabs(0) = 1
 	Tabs(1) = 2
 	Tabs(2) = 3

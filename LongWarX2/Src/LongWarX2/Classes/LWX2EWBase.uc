@@ -49,6 +49,8 @@ var array<LightComponent> WorldLights;
 var config bool ScreensIn3D;
 var config string DisplayMesh, DisplayMaterial;
 var config float DisplayScale;
+/** XCOM 2's plate turned to face as EW's panel mesh faces (added to EW's rotation). */
+var config rotator DisplayTurn;
 /** The panels placed (PlaceDisplays). */
 var array<LWX2UIDisplay> Displays;
 var config string BaseLighting;
@@ -259,14 +261,17 @@ function PlaceDisplays()
 	}
 	foreach Data("Command1").Displays(D)
 	{
-		A = Spawn(class'LWX2UIDisplay', self, D.Tag, D.Loc + BaseOffset, D.Rot);
+		A = Spawn(class'LWX2UIDisplay', self, D.Tag, D.Loc + BaseOffset, D.Rot + DisplayTurn);
 		if (A == none)
 			continue;
 		A.StaticMeshComponent.SetStaticMesh(Mesh);
+		// (An instance: XCOM 2's 3D movie sets its Movie on the panel's instance, UIMovie_3D.ShowDisplayByInst.)
 		A.StaticMeshComponent.SetMaterial(0, Mat);
+		A.StaticMeshComponent.CreateAndSetMaterialInstanceConstant(0).SetScalarParameterValue('Visibility', 1.0);
 		A.SetDrawScale3D(D.Scale * (DisplayScale > 0 ? DisplayScale : 1.0));
 		A.Tag = D.Tag;
-		A.SetHidden(true);
+		// (The mesh hidden, not the actor: XCOM 2's 3D movie unhides the mesh, UIMovie_3D.ShowDisplayByInst.)
+		A.StaticMeshComponent.SetHidden(true);
 		Displays.AddItem(A);
 	}
 	`log("LongWarX2: EW base:" @ Displays.Length @ "3D panels placed", , 'LongWarX2');
