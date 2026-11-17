@@ -217,6 +217,9 @@ var array<name> PendingCaptives;
 /** The aliens still standing when the mission was won (their Long War species: a council VIP's squad evacuated, for one):
  *  no loot from them (UIScreenListener_LongWarX2Tactical.TestWin). */
 var array<int> PendingSurvivors;
+/** The aliens killed by an explosion in the mission won (their Long War species): their weapons wrecked, no fragments from
+ *  them (XGUnit.CheckForDamagedItems). */
+var array<int> PendingExploded;
 /** The converted Enemy Within map the mission sent is played on (LWX2EWMapPieces.ChooseMap; "": XCOM 2's plot). */
 var string PendingEWMap;
 /** Foundry projects whose one-time change to the soldiers' gear has been made (LWX2Gear.ApplyFoundryGear). */
@@ -1444,6 +1447,7 @@ static function MissionChosen(int Kind, int Index, optional bool bCapture)
 	S.bPendingCapture = bCapture;
 	S.PendingCaptives.Length = 0;
 	S.PendingSurvivors.Length = 0;
+	S.PendingExploded.Length = 0;
 	S.bPendingAreaLost = false;
 	S.PendingSquad.Length = 0;
 	S.PendingCivilians = -1;
@@ -1806,19 +1810,29 @@ function GiveKillLoot(XComGameState NewGameState, array<int> Squad)
 {
 	local LWStrategyRules.LWSpecies Sp;
 	local array<name> Corpses;
-	local array<int> CorpseCounts;
-	local int a, k, f, d, Fragments, Elerium, Alloys, Meld;
+	local array<int> CorpseCounts, Exploded;
+	local int a, k, f, d, j, Fragments, Elerium, Alloys, Meld, Wrecked;
 	local string Got;
 
 	d = class'LWStrategyRules'.static.Difficulty();
+	Exploded = PendingExploded;
+	PendingExploded.Length = 0;
 	foreach Squad(a)
 	{
 		k = class'LWStrategyRules'.default.Species.Find('Char', a);
 		if (k == INDEX_NONE)
 			continue;
 		Sp = class'LWStrategyRules'.default.Species[k];
-		foreach Sp.Fragments(f)
-			Fragments += Max(1, int(f * class'LWStrategyRules'.default.FragmentBalance[d]));
+		// Killed by an explosion: its weapons wrecked, no fragments (CheckForDamagedItems); its corpse and the rest stay.
+		j = Exploded.Find(a);
+		if (j != INDEX_NONE)
+		{
+			Exploded.Remove(j, 1);
+			Wrecked++;
+		}
+		else
+			foreach Sp.Fragments(f)
+				Fragments += Max(1, int(f * class'LWStrategyRules'.default.FragmentBalance[d]));
 		Elerium += Sp.Elerium;
 		Alloys += Sp.Alloys;
 		Meld += Sp.Meld;
@@ -1834,7 +1848,8 @@ function GiveKillLoot(XComGameState NewGameState, array<int> Squad)
 		class'X2Item_LWArtifacts'.static.Give(NewGameState, Corpses[k], CorpseCounts[k]);
 		Got $= "," @ CorpseCounts[k] @ class'X2Item_LWArtifacts'.static.DisplayName(Corpses[k]);
 	}
-	Note("The aliens killed (" $ Squad.Length $ ") left:" @ Fragments @ "weapon fragments," @ Elerium / 10 @ "elerium," @ Alloys / 10 @ "alloys," @ Meld / 10 @ "meld" $ Got $ ".");
+	Note("The aliens killed (" $ Squad.Length $ ") left:" @ Fragments @ "weapon fragments," @ Elerium / 10 @ "elerium," @ Alloys / 10 @ "alloys," @ Meld / 10 @ "meld" $ Got $ "."
+		$ (Wrecked > 0 ? " The weapons of" @ Wrecked @ "killed by explosions were wrecked." : ""));
 }
 
 /**

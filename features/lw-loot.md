@@ -315,3 +315,14 @@ repository); a spec for the work, not done yet:
   slots EW's enum calls captives and placeholders), so the port's corpses and artifacts need Long War's
   names for its item numbers (its `XComGame.int`) before a price can be put on them. And where the
   player sells (EW's own Grey Market screen, or the stores' list) is the person's to choose.
+
+## Report (2026-11-17, explosions wreck the weapons)
+
+- **Read** (`XGUnit.CheckForDamagedItems`, from `OnDeath`): an alien killed by an explosion has its weapons damaged, and
+  weapon fragments come only from aliens not killed so (`GenerateWeaponFragments` is asked only then); EXALT's weapons
+  are announced destroyed. The corpse is not touched there.
+- **Done:** at a mission won (`UIScreenListener_LongWarX2Tactical.TestWin`) the dead aliens XCOM 2 marks
+  `bKilledByExplosion` are kept by species (`PendingExploded`); `GiveKillLoot` gives no fragments for as many of the
+  squad's aliens of those species, keeps their corpses and the rest, and the note says how many weapons were wrecked.
+- **Not seen in play:** my test grenade did not land on the alien I had spawned, and the mission won by the test aid
+  had every alien alive, so nothing was killed. The change only takes fragments away by XCOM 2's own flag.

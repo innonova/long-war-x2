@@ -366,9 +366,15 @@ static function TestWin()
 	{
 		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
 		S.PendingSurvivors.Length = 0;
+		S.PendingExploded.Length = 0;
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		{
 			if (Unit.GetTeam() == eTeam_Alien && Unit.IsAlive() && !Unit.bRemovedFromPlay && Unit.GetUnitValue('LWX2Species', V))
 				S.PendingSurvivors.AddItem(int(V.fValue));
+			// Killed by an explosion: its weapons wrecked (XGUnit.CheckForDamagedItems).
+			if (Unit.GetTeam() == eTeam_Alien && Unit.IsDead() && Unit.bKilledByExplosion && Unit.GetUnitValue('LWX2Species', V))
+				S.PendingExploded.AddItem(int(V.fValue));
+		}
 	}
 	`TACTICALRULES.SubmitGameState(NewGameState);
 	`log("LongWarX2: test: mission ended as won", , 'LongWarX2');
