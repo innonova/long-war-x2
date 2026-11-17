@@ -63,6 +63,21 @@ static function bool InfiniteByFoundry(int Item)
 	return Item == default.AlienGrenade && class'X2Effect_LWFoundry'.static.Done(default.AlienGrenadesProject);
 }
 
+/** An item's templates: each difficulty's, and the one FindItemTemplate gives (which the game's items use: it is not
+ *  always among them). */
+static function ItemTemplates(name TemplateName, out array<X2DataTemplate> Templates)
+{
+	local X2ItemTemplateManager Manager;
+	local X2ItemTemplate Current;
+
+	Templates.Length = 0;
+	Manager = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
+	Manager.FindDataTemplateAllDifficulties(TemplateName, Templates);
+	Current = Manager.FindItemTemplate(TemplateName);
+	if (Current != none && Templates.Find(Current) == INDEX_NONE)
+		Templates.AddItem(Current);
+}
+
 /** Item templates whose being unlimited depends on the campaign: set from it (templates are not saved). */
 static function SetFoundryInfinite()
 {
@@ -74,9 +89,40 @@ static function SetFoundryInfinite()
 	{
 		if (D.Item != default.AlienGrenade || D.Infinite)
 			continue;
-		class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindDataTemplateAllDifficulties(D.Template, Templates);
+		ItemTemplates(D.Template, Templates);
 		foreach Templates(Data)
 			X2ItemTemplate(Data).bInfiniteItem = InfiniteByFoundry(D.Item);
+	}
+}
+
+/**
+ * The Foundry's Alien Grenades perk (Long War's ePerk_Foundry_AlienGrenades, while the base has a Foundry): the frag
+ * grenade's blast radius times the square root of 2, twice the area (XGWeapon.GetDamageRadius). XCOM 2 sizes a blast
+ * natively from the grenade's own radius, so the frag's template is set from the campaign (templates are not saved).
+ */
+static function SetFoundryRadius()
+{
+	local array<X2DataTemplate> Templates;
+	local X2DataTemplate Data;
+	local X2WeaponTemplate Weapon;
+	local LWGearRules.LWSmallDef D;
+	local int Radius;
+
+	foreach class'LWGearRules'.default.SmallItems(D)
+	{
+		if (D.Item != default.FragGrenade)
+			continue;
+		ItemTemplates(D.Template, Templates);
+		Radius = class'X2Effect_LWFoundry'.static.Perk(default.AlienGrenadesProject) ? Round(D.Radius * Sqrt(2.0)) : D.Radius;
+		foreach Templates(Data)
+		{
+			Weapon = X2WeaponTemplate(Data);
+			if (Weapon != none && Weapon.iRadius != Radius)
+			{
+				Weapon.iRadius = Radius;
+				`log("LongWarX2: gear: the frag grenade's radius" @ Radius @ "m (Alien Grenades)", , 'LongWarX2');
+			}
+		}
 	}
 }
 
@@ -138,7 +184,7 @@ static function int ApplyRigging(XComGameState NewGameState, XComGameState_Headq
 	local StateObjectReference Ref;
 	local int Base, Slots;
 
-	Base = default.UtilityBase + (class'X2Effect_LWFoundry'.static.Done(24) ? 1 : 0);
+	Base = default.UtilityBase + (class'X2Effect_LWFoundry'.static.Perk(24) ? 1 : 0);
 	class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager().FindDataTemplateAllDifficulties('Soldier', Templates);
 	foreach Templates(Data)
 		X2CharacterTemplate(Data).CharacterBaseStats[eStat_UtilityItems] = Base;
@@ -172,6 +218,7 @@ static function int ArmAll()
 	if (XComHQ == none)
 		return 0;
 	SetFoundryInfinite();
+	SetFoundryRadius();
 	EnsureInfinite();
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom', true));
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: soldiers armed as Long War allows");

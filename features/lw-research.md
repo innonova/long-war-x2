@@ -274,3 +274,38 @@ builds the alien grenade otherwise (its item tree gives Foundry 255).
 - Ported on the small items' effect (`ScopeCrit`, generated into `XComLWGear.ini`: 4 for the laser
   sight; the targeting module is not one of the port's items yet). Seen (perk probe, a Sniper with a
   laser sight, the project marked done): the rifle's shot "S.C.O.P.E.: crit=4", the pistol's none.
+
+## Report (2026-11-17, the Foundry's perks need a Foundry; Shaped Armor; Alien Grenades' blast)
+
+- **Read** (`XGFacility_Barracks.UpdateFoundryPerksForSoldier`): Long War gives every soldier its Foundry projects as
+  perks **only while the base has a Foundry**, and takes them all away without one: S.C.O.P.E. (18), the three pistols
+  (13–15), Ammo Conservation (10), Improved Medikit (3), Improved Arc Thrower (4), the capture drone (9), Jellied Elerium
+  (19), Alien Grenades (2), Tactical Rigging (24); a SHIV's SHIV Suppression (16) and Sentinel Drone (23); a MEC's close
+  combat (20); both a SHIV's and a MEC's Advanced Servomotors (21) and Shaped Armor (22). The port gave them whenever the
+  project was done. **`X2Effect_LWFoundry.Perk`** now asks for a Foundry in the base as well (a campaign without its
+  base yet keeps them), and the pistols, Improved Medikit, Ammo Conservation, S.C.O.P.E., Tactical Rigging and the
+  SHIVs' projects use it. What a project changes in the strategy game (Alien Grenades' swap and unlimited alien
+  grenades, the grey market, the interceptors' consumables) stays on the project alone, as in Long War.
+- **Shaped Armor** (22; `XGTacticalGameCore.GetInventoryStatModifiers`, the Foundry perk's bit 1): +3 HP for a SHIV or
+  a MEC. `LWX2_ShapedArmor`, given by `LWSHIVs.AddFoundryAbilities`. Checked: a SHIV at 13/13 HP in a mission (its own
+  10), with Ammo Conservation's clips in the same mission (rifle 4, pistol 3, LMG 7).
+- **Alien Grenades' perk** (`ePerk_Foundry_AlienGrenades`, `XGWeapon.GetDamageRadius`): the frag grenade's radius
+  times √2. XCOM 2 sizes a blast natively from the grenade's own radius, so `LWX2Gear.SetFoundryRadius` sets the frag's
+  template from the campaign at each arming pass (squad select, the armory, the Geoscape): 5 m, or 7 m with the
+  project and a Foundry. Checked with the `foundry` test aid's new line (5 m without a Foundry, 7 m with one). Not seen
+  as a blast in a mission: the project also swaps every carried frag for an alien grenade, so a soldier has to be given
+  a frag again to see it.
+- **Found on the way:** an item's template that `FindItemTemplate` gives (the one the game's items use) is not always
+  among `FindDataTemplateAllDifficulties`' templates: the frag's radius was set on another copy at first and the game
+  kept 5 m. `LWX2Gear.ItemTemplates` gives both; the unlimited alien grenade and Ammo Conservation's clips use it too.
+- **A MEC's projects** (the same function): Advanced Servomotors (21) its +4 mobility (Long War's perk 31, the port's
+  `LW_Sprinter`, as the SHIV's), MEC Close Combat (20: `XGAbility.ApplyCost`, perk 121) a Kinetic Strike that takes one
+  action and leaves the turn open (the strike is XCOM 2's sword slice: `LWX2_MECCloseCombat`'s effect is in its
+  `DoNotConsumeAllEffects`). Checked: a MEC (Jaeger) in a mission at 20/20 HP (17 and Shaped Armor's 3), with
+  `LWX2_ShapedArmor`, `LW_Sprinter` and `LWX2_MECCloseCombat` on it. Not seen striking twice. The project's text also
+  promises a stronger strike; that is not in readable code.
+- **Left as it is:** Improved Arc Thrower's stun bonus is in EW's native `CalcStunChance` (still to be measured with the
+  EW harness). Jellied Elerium changes the MEC flamethrower's flame effect and its panic (a morale event one step
+  stronger): the port's flamethrower is a thrown firebomb, so there is nothing to put it on yet.
+- A tactical save loaded straight from the main menu has the frag's own radius until the strategy game has run an
+  arming pass (templates are not saved), as with Tactical Rigging.

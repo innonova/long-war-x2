@@ -980,6 +980,21 @@ static function RangeCursor(X2AbilityTemplate Template, name Kind)
 	Template.AbilityTargetStyle = Cursor;
 }
 
+/** The Foundry's MEC Close Combat: XCOM 2's sword slice (the MECs' Kinetic Strike) takes one action, not the turn, from a
+ *  unit with its effect (LWX2_MECCloseCombat; Long War's XGAbility.ApplyCost for perk 121). */
+static function AddMECCloseCombat()
+{
+	local array<X2AbilityTemplate> Templates;
+	local X2AbilityTemplate Template;
+	local X2AbilityCost Cost;
+
+	class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplateAllDifficulties('SwordSlice', Templates);
+	foreach Templates(Template)
+		foreach Template.AbilityCosts(Cost)
+			if (X2AbilityCost_ActionPoints(Cost) != none && X2AbilityCost_ActionPoints(Cost).DoNotConsumeAllEffects.Find('LWX2_MECCloseCombat') == INDEX_NONE)
+				X2AbilityCost_ActionPoints(Cost).DoNotConsumeAllEffects.AddItem('LWX2_MECCloseCombat');
+}
+
 /** XCOM 2's grenades (thrown, launched) reaching as Long War's do with Bombard or Grenadier. */
 static function AddGrenadeRange()
 {

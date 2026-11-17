@@ -970,6 +970,7 @@ function Foundry(XComGameState_LWStrategy S, out array<string> Out)
 	local int Id;
 	local XComGameState_LWStrategy.LWBuild P;
 	local string Done;
+	local X2WeaponTemplate Frag;
 
 	Ids = class'LWEngineering'.static.FoundryAvailable();
 	foreach Ids(Id)
@@ -979,6 +980,9 @@ function Foundry(XComGameState_LWStrategy S, out array<string> Out)
 	foreach S.FoundryDone(Id)
 		Done @= string(Id);
 	Out.AddItem("done" $ Done);
+	Frag = X2WeaponTemplate(class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(name("LWSmall_" $ class'LWX2Gear'.default.FragGrenade)));
+	Out.AddItem("perks (a Foundry in the base):" @ (S.TileFacility.Length == 0 || class'LWBase'.static.Count(S, 11) > 0) @ "| Shaped Armor" @ class'X2Effect_LWFoundry'.static.Perk(22)
+		@ "| frag grenade radius" @ (Frag != none ? string(Frag.iRadius) : "?") @ "m");
 }
 
 /** For auto play: the quickest tech XCOM can pay for started, if none is under way. What in What. */

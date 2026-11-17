@@ -22,6 +22,8 @@ static function array<X2DataTemplate> CreateTemplates()
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Templates.AddItem(Template);
 	Templates.AddItem(ExtraConditioning());
+	Templates.AddItem(ShapedArmor());
+	Templates.AddItem(MECCloseCombat());
 	Templates.AddItem(Passive('LWX2_Concealment', new class'X2Effect_LWConcealment'));
 	return Templates;
 }
@@ -42,6 +44,42 @@ static function X2AbilityTemplate Passive(name TemplateName, X2Effect_Persistent
 	Template.AddTargetEffect(Effect);
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	return Template;
+}
+
+/** The Foundry's Shaped Armor on a SHIV or a MEC: +3 HP (Long War's XGTacticalGameCore.GetInventoryStatModifiers, its
+ *  Foundry perk bit 1; LWSHIVs.AddFoundryAbilities gives it). */
+static function X2AbilityTemplate ShapedArmor()
+{
+	local X2AbilityTemplate Template;
+	local X2Effect_PersistentStatChange Effect;
+
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'LWX2_ShapedArmor');
+	Template.AbilitySourceName = 'eAbilitySource_Perk';
+	Template.eAbilityIconBehaviorHUD = EAbilityIconBehavior_NeverShow;
+	Template.Hostility = eHostility_Neutral;
+	Template.AbilityToHitCalc = default.DeadEye;
+	Template.AbilityTargetStyle = default.SelfTarget;
+	Template.AbilityTriggers.AddItem(default.UnitPostBeginPlayTrigger);
+	Effect = new class'X2Effect_PersistentStatChange';
+	Effect.EffectName = 'LWX2_ShapedArmor';
+	Effect.BuildPersistentEffect(1, true, false, false);
+	Effect.AddPersistentStatChange(eStat_HP, 3);
+	Effect.DuplicateResponse = eDupe_Ignore;
+	Template.AddTargetEffect(Effect);
+	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
+	return Template;
+}
+
+/** The Foundry's MEC Close Combat on a MEC: its effect lets the Kinetic Strike (XCOM 2's sword slice) leave the turn open
+ *  (X2Ability_LWStandins.AddMECCloseCombat puts the effect's name in the strike's cost). */
+static function X2AbilityTemplate MECCloseCombat()
+{
+	local X2Effect_Persistent Effect;
+
+	Effect = new class'X2Effect_Persistent';
+	Effect.EffectName = 'LWX2_MECCloseCombat';
+	Effect.DuplicateResponse = eDupe_Ignore;
+	return Passive('LWX2_MECCloseCombat', Effect);
 }
 
 /** Extra Conditioning's hit points by armour (X2Effect_LWExtraConditioning), given with the perk. */

@@ -144,21 +144,34 @@ static function int RestHoursFor()
 	return default.RestHours + Rand(default.RestRollHours);
 }
 
-/** A SHIV's abilities in a mission, as Long War's XGFacility_Barracks.UpdateFoundryPerksForSoldier gives a tank its
- *  Foundry projects: SHIV Suppression (16) suppression with its primary weapon; Advanced Servomotors (21) Sprinter;
- *  Sentinel Drone (23) Repair Servos. (From X2DownloadableContentInfo_LongWarX2.FinalizeUnitAbilitiesForInit.) */
+/** A SHIV's or MEC's abilities in a mission, as Long War's XGFacility_Barracks.UpdateFoundryPerksForSoldier gives a tank
+ *  or an augmented soldier its Foundry projects (while the base has a Foundry): Shaped Armor (22) +3 HP to both
+ *  (XGTacticalGameCore.GetInventoryStatModifiers); a SHIV's SHIV Suppression (16) suppression with its primary weapon,
+ *  Advanced Servomotors (21) Sprinter, Sentinel Drone (23) Repair Servos. (From X2DownloadableContentInfo_LongWarX2.
+ *  FinalizeUnitAbilitiesForInit.) */
 static function AddFoundryAbilities(XComGameState_Unit Unit, out array<AbilitySetupData> SetupData)
 {
+	if ((IsSHIV(Unit) || class'LWMECs'.static.IsMEC(Unit)) && class'X2Effect_LWFoundry'.static.Perk(22))
+		AddAbility(Unit, 'LWX2_ShapedArmor', eInvSlot_Unknown, SetupData);
+	// A MEC's: Advanced Servomotors (21) its +4 mobility (Sprinter, the same perk), MEC Close Combat (20) a Kinetic Strike
+	// that does not end the turn (XGAbility.ApplyCost: it takes one action; X2Ability_LWStandins.AddMECCloseCombat).
+	if (class'LWMECs'.static.IsMEC(Unit))
+	{
+		if (class'X2Effect_LWFoundry'.static.Perk(21))
+			AddAbility(Unit, 'LW_Sprinter', eInvSlot_Unknown, SetupData);
+		if (class'X2Effect_LWFoundry'.static.Perk(20))
+			AddAbility(Unit, 'LWX2_MECCloseCombat', eInvSlot_Unknown, SetupData);
+	}
 	if (!IsSHIV(Unit))
 		return;
-	if (class'X2Effect_LWFoundry'.static.Done(16))
+	if (class'X2Effect_LWFoundry'.static.Perk(16))
 	{
 		AddAbility(Unit, 'Suppression', eInvSlot_PrimaryWeapon, SetupData);
 		AddAbility(Unit, 'SuppressionShot', eInvSlot_PrimaryWeapon, SetupData);
 	}
-	if (class'X2Effect_LWFoundry'.static.Done(21))
+	if (class'X2Effect_LWFoundry'.static.Perk(21))
 		AddAbility(Unit, 'LW_Sprinter', eInvSlot_Unknown, SetupData);
-	if (class'X2Effect_LWFoundry'.static.Done(23))
+	if (class'X2Effect_LWFoundry'.static.Perk(23))
 		AddAbility(Unit, 'LW_RepairServos', eInvSlot_Unknown, SetupData);
 }
 

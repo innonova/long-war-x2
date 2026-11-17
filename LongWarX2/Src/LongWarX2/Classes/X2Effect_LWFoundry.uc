@@ -18,6 +18,16 @@ static function bool Done(int Foundry)
 	return S != none && S.FoundryDone.Find(Foundry) != INDEX_NONE;
 }
 
+/** A project's perk for the soldiers: done, and only while the base has a Foundry (Long War's XGFacility_Barracks.
+ *  UpdateFoundryPerksForSoldier takes them all away without one). A campaign without its base yet keeps them. */
+static function bool Perk(int Foundry)
+{
+	local XComGameState_LWStrategy S;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	return Done(Foundry) && (S.TileFacility.Length == 0 || class'LWBase'.static.Count(S, 11) > 0);
+}
+
 /** Long War's pistols (its weapons of the Pistol family). */
 static function bool IsPistol(XComGameState_Item Weapon)
 {
@@ -41,14 +51,14 @@ function GetToHitModifiers(XComGameState_Effect EffectState, XComGameState_Unit 
 
 	if (AbilityState == none || !IsPistol(AbilityState.GetSourceWeapon()))
 		return;
-	if (Done(13))
+	if (Perk(13))
 	{
 		Mod.ModType = eHit_Crit;
 		Mod.Value = PistolCrit;
 		Mod.Reason = class'LWEngineering'.static.FoundryName(13);
 		ShotModifiers.AddItem(Mod);
 	}
-	if (Done(14))
+	if (Perk(14))
 	{
 		Mod.ModType = eHit_Success;
 		Mod.Value = PistolAim;
@@ -59,7 +69,7 @@ function GetToHitModifiers(XComGameState_Effect EffectState, XComGameState_Unit 
 
 function int GetAttackingDamageModifier(XComGameState_Effect EffectState, XComGameState_Unit Attacker, Damageable TargetDamageable, XComGameState_Ability AbilityState, const out EffectAppliedData AppliedData, const int CurrentDamage, optional XComGameState NewGameState)
 {
-	if (CurrentDamage > 0 && AbilityState != none && Done(15) && IsPistol(AbilityState.GetSourceWeapon()))
+	if (CurrentDamage > 0 && AbilityState != none && Perk(15) && IsPistol(AbilityState.GetSourceWeapon()))
 		return PistolDamage;
 	return 0;
 }

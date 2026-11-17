@@ -5,5 +5,5 @@ var int Foundry;
 
 event name CallMeetsCondition(XComGameState_BaseObject kTarget)
 {
-	return class'X2Effect_LWFoundry'.static.Done(Foundry) ? 'AA_Success' : 'AA_AbilityUnavailable';
+	return class'X2Effect_LWFoundry'.static.Perk(Foundry) ? 'AA_Success' : 'AA_AbilityUnavailable';
 }

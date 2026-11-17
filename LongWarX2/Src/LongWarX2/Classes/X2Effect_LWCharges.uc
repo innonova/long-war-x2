@@ -86,8 +86,8 @@ static function int SetClip(name TemplateName)
 			break;
 	if (W.Item != int(Mid(string(TemplateName), 9)))
 		return 0;
-	Clip = Max(1, (class'X2Effect_LWFoundry'.static.Done(10) && W.AmmoConserved > 0) ? W.AmmoConserved : W.Ammo);
-	class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindDataTemplateAllDifficulties(TemplateName, Variants);
+	Clip = Max(1, (class'X2Effect_LWFoundry'.static.Perk(10) && W.AmmoConserved > 0) ? W.AmmoConserved : W.Ammo);
+	class'LWX2Gear'.static.ItemTemplates(TemplateName, Variants);
 	foreach Variants(Data)
 		if (X2WeaponTemplate(Data) != none)
 			X2WeaponTemplate(Data).iClipSize = Clip;

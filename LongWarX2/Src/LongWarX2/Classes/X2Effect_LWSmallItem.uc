@@ -62,7 +62,7 @@ function GetToHitModifiers(XComGameState_Effect EffectState, XComGameState_Unit 
 		Info.Reason = "Reaper Rounds";
 		ShotModifiers.AddItem(Info);
 	}
-	if (ScopeCrit == 0 || AbilityState == none || bMelee || !class'X2Effect_LWFoundry'.static.Done(18))
+	if (ScopeCrit == 0 || AbilityState == none || bMelee || !class'X2Effect_LWFoundry'.static.Perk(18))
 		return;
 	if (AbilityState.GetSourceWeapon() == none || class'X2Effect_LWFoundry'.static.IsPistol(AbilityState.GetSourceWeapon()))
 		return;
