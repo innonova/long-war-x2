@@ -1,6 +1,6 @@
 ---
 title: Long War's second-wave options
-status: in-progress
+status: review
 priority: 40
 dependsOn: [lw-startbonus]
 ---
