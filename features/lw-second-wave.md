@@ -144,3 +144,14 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
 - **#30 Green Fog** (`ContBalance_Normal[1]`, `[2]`): XCOM's units lose one aim and one will each of their turns, up to 30
   and 20, back after the mission (`UpdateGreenFog`). Checked: a soldier's aim 66, 65, 64, 63 over three turns.
 - With these, 16 of the 31 settled: #0, 1, 2, 6, 7, 8, 10, 11, 12, 15, 17 (nothing to port), 20, 23, 24, 27, 30.
+
+## Report (2026-11-17, We Are Legion; each mission's squad size)
+
+- **The squad size per mission** (`XGShip_Dropship.GetCapacity`; the port had one size for every mission): the Skyranger's
+  and the Officer Training School's sizes; **a covert extraction takes 4** (Long War's capacity for the operative's mission;
+  data recovery the usual size); with the Foundry's **Super Skyranger** (project 37, not ported until now) an alien base and
+  EXALT's base 2 more, the Temple Ship 4 more (`UILWHeadquarters.SquadSize`, by the mission chosen).
+- **#25 We Are Legion:** both squad size upgrades had from the campaign's start (`XGFacility_Barracks`), and a covert
+  extraction 2 more (6).
+- **Checked on wingpu** (`ots`): a new campaign at squad size 6; with We Are Legion, 8, "both bought". **Not seen:** a covert
+  extraction's squad, Super Skyranger's.

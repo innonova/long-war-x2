@@ -72,12 +72,31 @@ function Refresh()
 }
 
 /** Long War's squad: its Skyranger's capacity (4 if the config is from before it was generated) and the squad sizes bought. */
+/**
+ * The squad the mission chosen takes (XGShip_Dropship.GetCapacity): the Skyranger's and the Officer Training School's squad
+ * sizes (both counted as had with We Are Legion, second wave #25); a covert extraction 4 (6 with We Are Legion); with the
+ * Foundry's Super Skyranger (project 37) an alien base and EXALT's base 2 more, the Temple Ship 4 more.
+ */
 static function int SquadSize()
 {
 	local XComGameState_LWStrategy S;
+	local int n;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
-	return (class'LWStrategyRules'.default.SkyrangerCapacity > 0 ? class'LWStrategyRules'.default.SkyrangerCapacity : 4) + (S != none ? S.SquadSizesBought : 0);
+	n = (class'LWStrategyRules'.default.SkyrangerCapacity > 0 ? class'LWStrategyRules'.default.SkyrangerCapacity : 4) + (S != none ? S.SquadSizesBought : 0);
+	if (S == none)
+		return n;
+	// (Kinds: XComGameState_LWStrategy.PendingKind: 5 an alien base, 6 the Temple Ship, 8 a covert operation, 9 EXALT's base.)
+	if (S.PendingKind == 8 && S.ExaltMissionKind != 2)
+		return 4 + (class'LWX2SecondWave'.static.On(25) ? 2 : 0);
+	if (class'LWAirWar'.static.FoundryDone(37))
+	{
+		if (S.PendingKind == 5 || S.PendingKind == 9)
+			n += 2;
+		else if (S.PendingKind == 6)
+			n += 4;
+	}
+	return n;
 }
 
 /** XCOM 2's mission source for a Long War mission kind (XComGameState_LWStrategy.PendingKind). */

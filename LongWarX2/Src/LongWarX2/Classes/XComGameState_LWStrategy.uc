@@ -360,6 +360,9 @@ function Begin()
 	}
 	if (class'LWX2SecondWave'.static.On(1))
 		RandomizeFunding();
+	// We Are Legion (second wave #25, XGFacility_Barracks: both squad size upgrades had from the start).
+	if (class'LWX2SecondWave'.static.On(25))
+		SquadSizesBought = Max(SquadSizesBought, class'LWStrategyRules'.default.SquadSizes.Length);
 	// Long War (XGWorld.AddInitialPanic): the starting panic goes out in steps of
 	// UFO_ENTERTAINMENT_SURVIVE to random council countries; a country at 84 (85 "blocks") gets no more.
 	Points = class'LWStrategyRules'.default.StartingPanic[class'LWStrategyRules'.static.Difficulty()];

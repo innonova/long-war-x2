@@ -54,6 +54,7 @@ static function string Listed()
 /** An option switched on or off in the running campaign (a test aid; the player chooses as the campaign starts). */
 static function bool Set(int n, bool bOn)
 {
+	local XComGameState_LWStrategy S;
 	local XComGameState NewGameState;
 	local XComGameState_CampaignSettings Settings;
 	local name ID;
@@ -68,9 +69,16 @@ static function bool Set(int n, bool bOn)
 		Settings.AddSecondWaveOption(ID);
 	else
 		Settings.RemoveSecondWaveOption(ID);
-	// (New Economy deals the funding as a campaign begins: in a running one, now.)
-	if (n == 1 && bOn && class'XComGameState_LWStrategy'.static.Get() != none)
-		XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID)).RandomizeFunding();
+	// (New Economy and We Are Legion act as a campaign begins: in a running one, now.)
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (bOn && S != none && (n == 1 || n == 25))
+	{
+		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+		if (n == 1)
+			S.RandomizeFunding();
+		else
+			S.SquadSizesBought = Max(S.SquadSizesBought, class'LWStrategyRules'.default.SquadSizes.Length);
+	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	return true;
 }
