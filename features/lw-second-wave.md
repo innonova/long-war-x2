@@ -155,3 +155,27 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   extraction 2 more (6).
 - **Checked on wingpu** (`ots`): a new campaign at squad size 6; with We Are Legion, 8, "both bought". **Not seen:** a covert
   extraction's squad, Super Skyranger's.
+
+## Report (2026-11-17, Hidden Potential; the random will every level)
+
+- **Gains on promotion as Long War's** (`XGStrategySoldier.LevelUpStats`; new `LWX2StatGains`): XCOM 2's class data gives
+  each rank Long War's fixed gains (the last digits of its `SoldierStatProgression`). As XCOM 2 ranks a soldier up (its
+  `UnitRankUp` event), the port now makes them Long War's in a game state of its own. Long War's packed numbers
+  (`XComLWClasses.ini`'s `[LongWarX2.LWX2StatGains]`, 112 rows from `scripts/classes-config.mjs`) drive it:
+  - **Normally:** will also gets Rand(`iRandWillIncrease`) = 0 or 1 more every level. The port had left this out until now.
+  - **#3 Hidden Potential:** each gain is rolled instead: HP +1 with the chance of its xx (of xxyy), aim and will
+    xx + Rand(yy) (of xxyyzz), and no random will on top.
+  - The perk-choice bonuses (`LWX2PerkBonuses`) stay apart from these, as in Long War.
+- **Found on the way, fixed:** XCOM 2 registers its strategy event listener templates only on the way back from a mission
+  (`XGStrategy`'s return from tactical). A new campaign or a loaded save had none until the first mission. They are now
+  registered as the Avenger's HUD comes up (`UIScreenListener_LWX2StrategyEvents`); the manager unregisters them all first,
+  so this does not double them.
+- **Decision:** the listener runs after the promotion's game state is submitted, as XCOM 2's templates do. A listener
+  registered on the event's own game state (`ELD_Immediate`, from a template) was listed by the event manager but never
+  called during the promotion. One state can hold several rank-ups (start bonuses, test aids): each rank since the
+  unit's rank before that state is rolled once (the unit's `LWX2GainsRank` marks the last).
+- **Checked on wingpu** (new test aid `rankup <soldier> [times]`, with the gains XCOM 2 gave and the stats after):
+  - **Option off:** fixed gains plus 0–1 will a level. A sniper's three ranks gave +3 will over the fixed 6.
+  - **Hidden Potential on:** every roll within Long War's ranges. A scout's rank 5: aim +6 (2+Rand(5)), will +6 (1+Rand(6)).
+    A rocketeer's five ranks: aim +15 (5–25), will +25 (5–30), HP +1.
+- **Not seen:** a promotion after a real mission with the option on (the same event; the test aid ranks up as XCOM 2 does).

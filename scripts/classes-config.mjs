@@ -102,9 +102,11 @@ for (const m of core.matchAll(/^SoldierPerkTrees=\(SoldierType=(\d+),\s*(.*)\)\s
   trees.set(id, [...(trees.get(id) ?? []), Object.fromEntries([...m[2].matchAll(/(\w+)=(\w+)/g)].map((x) => [x[1], x[2]]))])
 }
 const progression = new Map()
+const packedGains = [] // each row as Long War packs it (Hidden Potential's numbers too; LWX2StatGains)
 for (const m of core.matchAll(/^SoldierStatProgression=\(eClass=(\d+),\s*eRank=(\w+),\s*iHP=(\d+),\s*iAim=(\d+),\s*iWill=(\d+)\)/gm)) {
   // Under normal settings the gain is the last two digits (the others are for randomised gains).
   progression.set(`${m[1]}:${m[2]}`, { hp: Number(m[3]) % 100, aim: Number(m[4]) % 100, will: Number(m[5]) % 100 })
+  packedGains.push({ id: Number(m[1]), rank: m[2], hp: Number(m[3]), aim: Number(m[4]), will: Number(m[5]) })
 }
 const locOf = (key, perk) => {
   const m = loc.match(new RegExp(`^${key}\\[${perk}\\]="(.*)"\\s*$`, 'm'))
@@ -527,6 +529,16 @@ writeFileSync(
     "; Long War's stat bonuses for a perk choice, by class, rank and which of the rank's perks (LWX2PerkBonuses).",
     '[LongWarX2.LWX2PerkBonuses]',
     ...bonusLines,
+    '',
+    "; Long War's gains on promotion as it packs them (SoldierStatProgression: HP xxyy, aim and will xxyyzz; LWX2StatGains),",
+    "; for Hidden Potential's roll (second wave #3) and the random will every level otherwise (iRandWillIncrease).",
+    '[LongWarX2.LWX2StatGains]',
+    `RandWill=${ini('iRandWillIncrease')}`,
+    ...packedGains.flatMap((g) => {
+      const c = [...CLASSES, ...MEC_CLASSES].find((k) => k.id === g.id)
+      const rank = ['eRank_Squaddie', 'eRank_Corporal', 'eRank_Sergeant', 'eRank_Lieutenant', 'eRank_Captain', 'eRank_Major', 'eRank_Colonel'].indexOf(g.rank) + 1
+      return c && rank > 0 ? [`+Gains=(ClassName=LWS_${c.name}, Rank=${rank}, HP=${g.hp}, Aim=${g.aim}, Will=${g.will})`] : []
+    }),
   ].join('\r\n') + '\r\n',
 )
 
