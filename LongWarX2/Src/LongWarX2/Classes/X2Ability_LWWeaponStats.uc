@@ -1,7 +1,7 @@
 // Long War's weapons' mobility and defence while carried (features/lw-gear.md; their BalanceMods_Classic lines, "iDefense --
 // defense, works only for weapons and items; iMobility -- mobility, works only for weapons/items", as
 // XGTacticalGameCore.GetInventoryStatModifiers adds them): a stat ability on each weapon that has either, for as long as it is
-// equipped. Shotguns +1 to +3, SMGs +3 and +4, LMGs and sniper rifles -1 and -2, the plasma pistol's defence +6.
+// equipped. Carbines +1, SMGs +3 and +4, LMGs -2, sniper rifles and autorifles -1 or -2, the plasma carbine's defence +6.
 class X2Ability_LWWeaponStats extends X2Ability dependson(LWGearRules);
 
 static function array<X2DataTemplate> CreateTemplates()

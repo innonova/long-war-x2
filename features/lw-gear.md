@@ -586,8 +586,8 @@ entries)"; `XGTacticalGameCore.GetInventoryStatModifiers`, `GetUpgradeAbilities`
 `CalcHitChance_NonUnitTarget`, which sums a line's field by stat): an item's `iMobility` and `iDefense` apply to whoever
 carries it, weapon or backpack item; `iHP` is damage reduction (already read for armours and three items).
 - **Weapons** now carry theirs as a stat ability (`X2Ability_LWWeaponStats`, `LWWeaponStats_<item>`, on the weapon template
-  while equipped): shotguns +1, SMGs +3 (the plasma SMG +4), LMGs -1 to -2, sniper rifles -1 and -2 by tier, the Alloy
-  Cannon's +1 and defence +6 (item 14).
+  while equipped): carbines +1 (the plasma carbine also defence +6), SMGs +3 (the plasma SMG +4), autorifles, battle
+  rifles, machine pistols and the sawed-off -1, LMGs -2, sniper rifles -1 (the gauss one -2).
 - **Small items:** every one's mobility and defence is now read (grenades -1 each), not only the three marked before.
 - **Not ported:** `iWill`, "the maximum chance for an item to be damaged after a mission in which the soldier was reduced to
   0 hit points": Long War's strategy code never damages a soldier's item (`XGStorage.DamageItem` is called from debug code
