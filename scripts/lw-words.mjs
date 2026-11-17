@@ -406,6 +406,14 @@ export function makeHubWords({ strategyLoc }) {
     ['OneDay', inSection('XGFacility_Labs', 'm_strETADay')?.replace('<XGParam:IntValue0/>', '%d')],
     ['ManyDays', inSection('XGFacility_Labs', 'm_strETADays')?.replace('<XGParam:IntValue0/>', '%d')],
     ['NextEvent', anywhere('m_strSingleEventListTitle')],
+    ['QueueTitle', inSection('XGEngineeringUI', 'm_strProjectsTitle')],
+    ['QueueEmpty', inSection('XGEngineeringUI', 'm_strProjectsTitleEmpty')],
+    ['EtaLabel', inSection('XGEngineeringUI', 'm_strEtaLabel')],
+    ['ProjectLabel', inSection('XGEngineeringUI', 'm_strProjectNameLabel')],
+    ['QtyLabel', inSection('XGEngineeringUI', 'm_strQtyLabel')],
+    ['FoundryPrefix', inSection('XGEngineeringUI', 'm_strFoundryPrefix')],
+    ['EtaHour', inSection('XGFacility_Engineering', 'm_strETAHour')?.replace('<XGParam:IntValue0/>', '%d')],
+    ['EtaDay', inSection('XGFacility_Engineering', 'm_strETADay')?.replace('<XGParam:IntValue0/>', '%d')],
     ['DaysTitle', anywhere('m_strDays')],
   ].filter(([, v]) => v)
   return {

@@ -5,6 +5,9 @@ class UILWEWStrategyHUD extends UILWEWScreen;
 
 /** EW's words (XGScreenMgr's resource names; the research panel's, XGResearchUI, XGFacility_Labs; the event list's). */
 var localized string ResourceNames[8], CurrentResearch, NoResearch, Speeds[3], OneDay, ManyDays, NextEvent, DaysTitle;
+var localized string QueueTitle, QueueEmpty, EtaLabel, ProjectLabel, QtyLabel, FoundryPrefix, EtaHour, EtaDay;
+/** The engineering queue as last given (given again only when it changes). */
+var string QueueShown;
 /** Where the player is, as EW's HUD changes with it (UIStrategyHUD and its rooms' UIStrategyHUD_FSM_*): 0 the base's view,
  *  1 Mission Control, 2 a room of the base, 3 a screen over the base. */
 var int Context;
@@ -56,6 +59,62 @@ simulated function OnInit()
 	SetTimer(1.0, true, nameof(Refresh));
 }
 
+/** EW's engineering queue (XGEngineeringUI.BuildQueueItem): each build "Item (n)" with done/n and its ETA, each Foundry
+ *  project "Foundry: name", the ETA in EW's hours or days (XGFacility_Engineering.GetETAString). */
+function SetQueue(XComGameState_LWStrategy S)
+{
+	local LWGearRules.LWBuildDef B;
+	local array<string> Names, Qtys, Etas;
+	local string Shown;
+	local int i;
+
+	for (i = 0; i < S.Builds.Length; i++)
+	{
+		class'LWGearRules'.static.BuildFor(S.Builds[i].Item, B);
+		Names.AddItem(class'LWEngineering'.static.ItemName(B.Template) $ " (" $ S.Builds[i].Quantity $ ")");
+		Qtys.AddItem("0/" $ S.Builds[i].Quantity);
+		Etas.AddItem(Eta(class'LWEngineering'.static.HoursFor(S.Builds[i].WorkLeft, S.Builds[i].Engineers, S.Engineers), S.Builds[i].Engineers));
+	}
+	for (i = 0; i < S.FoundryProjects.Length; i++)
+	{
+		Names.AddItem((FoundryPrefix != "" ? FoundryPrefix : "Foundry:") @ class'LWEngineering'.static.FoundryName(S.FoundryProjects[i].Item));
+		Qtys.AddItem("---");
+		Etas.AddItem(Eta(class'LWEngineering'.static.HoursFor(S.FoundryProjects[i].WorkLeft, S.FoundryProjects[i].Engineers, S.Engineers), S.FoundryProjects[i].Engineers));
+	}
+	for (i = 0; i < Names.Length; i++)
+		Shown $= Names[i] $ "|" $ Etas[i] $ "|";
+	if (Shown == QueueShown)
+		return;
+	QueueShown = Shown;
+	MC.ChildFunctionVoid("engineeringQueue", "clear");
+	MC.BeginChildFunctionOp("engineeringQueue", "SetQueueTitle");
+	MC.QueueString(Names.Length > 0 ? (QueueTitle != "" ? QueueTitle : "CURRENT PROJECTS") : (QueueEmpty != "" ? QueueEmpty : "NO CURRENT PROJECTS"));
+	MC.QueueString(Names.Length > 0 ? (EtaLabel != "" ? EtaLabel : "ETA") : "");
+	MC.QueueString(Names.Length > 0 ? (ProjectLabel != "" ? ProjectLabel : "PROJECT") : "");
+	MC.QueueString("");
+	MC.QueueString(Names.Length > 0 ? (QtyLabel != "" ? QtyLabel : "QTY") : "");
+	MC.EndOp();
+	for (i = 0; i < Names.Length; i++)
+	{
+		MC.BeginChildFunctionOp("engineeringQueue", "AddProjectToQueue");
+		MC.QueueString(Names[i]);
+		MC.QueueString("");
+		MC.QueueString(Qtys[i]);
+		MC.QueueString(Etas[i]);
+		MC.QueueNumber(0);
+		MC.EndOp();
+	}
+}
+
+function string Eta(int Hours, int Engineers)
+{
+	if (Engineers <= 0)
+		return "--";
+	if (Hours < 24)
+		return Repl(EtaHour != "" ? EtaHour : "%dh", "%d", string(Max(Hours, 0)));
+	return Repl(EtaDay != "" ? EtaDay : "%dd", "%d", string((Hours + 23) / 24));
+}
+
 /** One entry of the bar, as EW colours it (good when there is some, bad when none). */
 function AddResource(string Label, string Value, bool bGood)
 {
@@ -105,9 +164,11 @@ function Refresh()
 	if (Context <= 1)
 		SetEvents(XComHQ, S);
 	SetPanels(XComHQ, S);
-	// Nor the engineering queue: not fed yet (its AddProjectToQueue not read), it showed its placeholders ("LALALAL", "P",
-	// "E"). Each refresh: the movie shows it again as it lays itself out.
-	Movie.SetVariableBool(MCPath $ ".engineeringQueue._visible", false);
+	// The engineering queue in engineering's room and screens, as EW's (UIStrategyHUD_BuildQueue); hidden elsewhere (each
+	// refresh: the movie shows it again as it lays itself out).
+	Movie.SetVariableBool(MCPath $ ".engineeringQueue._visible", Kind == 'Engineering');
+	if (Kind == 'Engineering')
+		SetQueue(S);
 }
 
 function string Label(int i, string Fallback)
