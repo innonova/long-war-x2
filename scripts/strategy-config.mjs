@@ -636,6 +636,12 @@ function monthlyPlan(upk) {
       else if (tier >= 0) shared.get(tier).push(Number(m[1]))
       continue
     }
+    // The late mission (AddLateMission): objective 10 in the port.
+    if (l === 'AddLateMission();') {
+      if (cell) (roll ? cell.maybe : cell.ufos).push(10)
+      else if (tier >= 0) shared.get(tier).push(10)
+      continue
+    }
     if (!cell) continue
     if ((m = /^iNumAbductions = Rand\(2\) == 0 \? (\d+) : (\d+);$/.exec(l))) cell.abductions = [Number(m[1]), Number(m[2])]
     else if ((m = /^iNumAbductions = (\d+);$/.exec(l))) cell.abductions = [Number(m[1]), Number(m[1])]
@@ -645,7 +651,7 @@ function monthlyPlan(upk) {
   return [
     "; The aliens' monthly plan (Long War's XGStrategyAI.AIAddNewObjectives): by resource tier (resources / 50)",
     '; and aggression (0 to 4): abductions (a 50/50 between two numbers), terror missions, UFOs by objective',
-    '; (0 recon, 1 scout, 2 harvest, 4 hunt, 7 and 8 infiltration) and those under a 50% roll; HQAssault: from',
+    '; (0 recon, 1 scout, 2 harvest, 4 hunt, 7 and 8 infiltration, 10 the late mission) and those under a 50% roll; HQAssault: from',
     '; month 4, every third time such a month comes, the aliens go for XCOM\'s headquarters (AddHQAssaultMission).',
     ...[...cells].map(
       ([k, c]) => `+Plan=(Tier=${k.split(':')[0]}, Aggression=${k.split(':')[1]}, Abductions=${c.abductions[0]}, AbductionsAlt=${c.abductions[1]}, Terror=${c.terror}, Ufos=(${c.ufos.join(',')})${c.maybe.length ? `, MaybeUfos=(${c.maybe.join(',')})` : ''}${hq.has(k) ? ', HQAssault=true' : ''})`,

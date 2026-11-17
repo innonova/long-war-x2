@@ -258,6 +258,7 @@ static function string ObjectiveName(int Objective)
 	case 8: return "Air raid";
 	case 3: return "Flyby";
 	case 9: return "Assault on XCOM";
+	case 10: return "Overseer landing";
 	}
 	return "Unknown";
 }
@@ -349,6 +350,9 @@ static function Phases(int Objective, out array<LWPhase> Out)
 		AddPhase(Out, 0, 1, 8, 1, 6);
 		AddPhase(Out, 2, 1, 7, 2, 0);
 		AddPhase(Out, 4, 3, 9, 3, 0);
+		break;
+	case 10: // the late mission (Long War's AddLateMission, eObjective_Infiltrate_2): an Overseer comes down; landed, it is a crash site
+		AddPhase(Out, 2, 1, 9, 3, 0);
 		break;
 	case 8: AddPhase(Out, 0, 5, -1, 1, 6); break; // air raid: a long scout
 	case 3: AddPhase(Out, 0, 3, 9, 2, 0); break; // flyby: an Overseer passes over and leaves (eUM_Flyby), no landing

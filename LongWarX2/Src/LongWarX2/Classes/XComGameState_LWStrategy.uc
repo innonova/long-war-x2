@@ -881,6 +881,9 @@ function AddUfos(int Objective, int MonthStart, optional bool bNow)
 		Targets = OverseerTargets();
 		Country = Pick(Targets);
 		break;
+	case 10: // the late mission: its own target and start
+		AddLateMission(MonthStart);
+		return;
 	default: // 7, 8: the terror target
 		Country = TerrorTarget();
 	}
@@ -893,7 +896,7 @@ function AddUfos(int Objective, int MonthStart, optional bool bNow)
  * the aliens' resources R (9 x month to 300) and aggression A (0 to 8), times SW_MARATHON, and gains a pass with the chance
  * cost / (10000 / SW_ELERIUM_LOSS); on its SW_ELERIUM_LOSS-th pass it comes at once and its count starts again: a UFO of the
  * objective (0 recon, 1 scouting, 2 harvest, 4 hunt, 8 air raid), an abduction (5), a terror mission (6), one aggression
- * fewer (10). Long War's late mission (9, its eObjective_Infiltrate_2) is not in the port, here as in the monthly plan.
+ * fewer (10), the late mission (9: AddLateMission).
  */
 function DynamicWar()
 {
@@ -944,12 +947,57 @@ function DynamicWar()
 		case 6:
 			AddObjective(6, Hours, 0, Rand(4) == 0 ? RandomCountry() : TerrorTarget(), -1);
 			break;
+		case 9:
+			AddLateMission(Hours);
+			break;
 		case 10:
 			AlienAggression = Max(0, AlienAggression - 1);
 			break;
 		}
 		`log("LongWarX2: Dynamic War: kind" @ k @ "comes on day" @ Days(), , 'LongWarX2');
 	}
+}
+
+/**
+ * Long War's late mission (XGStrategyAI.AddLateMission, its eObjective_Infiltrate_2): over a continent other than XCOM's
+ * where XCOM flies a Firestorm (IsGoodOverseerTarget), an Overseer comes down at the continent's headquarters (its
+ * country: the USA, Brazil, Germany, Japan, Nigeria); landed, it is a crash site (OnObjectiveEnded: CheatCrash). It starts
+ * with the month, or 1 to 26 days on with Dynamic War. None without such a continent.
+ */
+function AddLateMission(int MonthStart)
+{
+	local XComGameState_LWAirWar AirWar;
+	local array<int> Continents;
+	local array<name> HQs;
+	local int c, i, k;
+
+	HQs.AddItem('USA');
+	HQs.AddItem('Brazil');
+	HQs.AddItem('Germany');
+	HQs.AddItem('Japan');
+	HQs.AddItem('Nigeria');
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	if (AirWar == none)
+		return;
+	for (c = 0; c < HQs.Length; c++)
+	{
+		if (c == CountryContinent(HomeCountry()))
+			continue;
+		for (i = 0; i < AirWar.Jets.Length; i++)
+			if (AirWar.Jets[i].Continent == c && AirWar.Jets[i].Type == 3)
+			{
+				Continents.AddItem(c);
+				break;
+			}
+	}
+	if (Continents.Length == 0)
+		return;
+	c = Continents[Rand(Continents.Length)];
+	k = class'LWStrategyRules'.default.Countries.Find('Id', HQs[c]);
+	if (k == INDEX_NONE)
+		return;
+	AddObjective(10, MonthStart, class'LWX2SecondWave'.static.On(9) ? 1 + Rand(26) : 0, k, -1);
+	`log("LongWarX2: the late mission: an Overseer for" @ CountryName(k), , 'LongWarX2');
 }
 
 /** Dynamic War's starting passes (XGStrategy: kinds 0, 1, 2, 5, 6 at 0.2, 0.7, 0.4, 0.7, 0.5 of SW_ELERIUM_LOSS). */
@@ -1336,6 +1384,13 @@ function UfoDone(int i)
 		break;
 	case 9:
 		AddHQSite();
+		break;
+	case 10:
+		// The late mission's Overseer landed: a crash site (CheatCrash).
+		Ufos[i].Status = 3;
+		Ufos[i].Until = Hours + class'LWStrategyRules'.default.CrashSiteHours;
+		Note("An" @ UfoLabel(U.Ufo) @ "has come down in" @ CountryName(U.Country) $ ": a crash site for" @ class'LWStrategyRules'.default.CrashSiteHours @ "hours.");
+		bStop = true;
 		break;
 	}
 }

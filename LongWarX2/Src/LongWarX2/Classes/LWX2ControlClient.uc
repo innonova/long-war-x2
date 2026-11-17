@@ -280,7 +280,10 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem(RunTree(int(Mid(Args[1], 1)), Args[2]));
 		return;
 	case "war":
-		// war: Dynamic War's passes (second wave #9) and the aliens' objectives so far by kind (a test aid).
+		// war: Dynamic War's passes (second wave #9) and the aliens' objectives so far by kind (a test aid); 'war late': a
+		// Firestorm on the next continent and Long War's late mission planned at once.
+		if (Args.Length > 1 && Args[1] ~= "late")
+			WarLate(Out);
 		War(Out);
 		return;
 	case "meld":
@@ -3195,6 +3198,23 @@ function Repair(array<string> Args, out array<string> Out)
 		Out.AddItem("repairing" @ S.Repairs[i].Template @ S.Repairs[i].HoursLeft @ "hours left");
 	if (S.DamagedItems.Length == 0 && S.Repairs.Length == 0)
 		Out.AddItem("no damaged gear");
+}
+
+function WarLate(out array<string> Out)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local XComGameState_LWAirWar AirWar;
+	local int n;
+
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a late mission (control port)");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID));
+	AirWar = class'LWHangar'.static.InState(NewGameState);
+	class'LWHangar'.static.NewJet(AirWar, 3, (class'LWHangar'.static.HomeContinent() + 1) % 5);
+	n = S.Ufos.Length;
+	S.AddLateMission(S.Hours);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	Out.AddItem("late mission:" @ (S.Ufos.Length - n) @ "UFO(s) planned" $ (S.Ufos.Length > n ? ", over" @ S.CountryName(S.Ufos[n].Country) @ "at hour" @ S.Ufos[n].Hour @ "(now" @ S.Hours $ ")" : ""));
 }
 
 function War(out array<string> Out)

@@ -123,3 +123,18 @@ The live ones:
 - **Checked on wingpu** (`war` now also prints six soldiers' experience): a mission won with Dynamic War gave each soldier
   +200 (350 → 550), where standard Long War gives +100. The other scalars are each a line where the port's rule is; not each
   seen.
+
+## Report (2026-11-17, Long War's late mission, in both plans)
+
+- **Long War's late mission** (`XGStrategyAI.AddLateMission`, its `eObjective_Infiltrate_2`) was missing from the port's
+  standard monthly plan as well. It is in both now, as the port's objective 10 ("Overseer landing"):
+  - **Where:** over a continent other than XCOM's where XCOM flies a Firestorm (`IsGoodOverseerTarget`), at the continent's
+    headquarters country (the USA, Brazil, Germany, Japan, Nigeria). None without such a continent.
+  - **What:** one Overseer coming down directly on day 2, give or take a day (`AddUFOMission(eObjective_Infiltrate_2, 2,
+    eShip_UFOEthereal, eUM_Direct, 0, 1)`). Landed, it is a crash site (`OnObjectiveEnded`: `CheatCrash`), with no
+    shoot-down's aggression or panic.
+  - **When:** in the standard plan, under a 50% roll in nine of the table's cells (tiers 2 to 4; `scripts/strategy-config.mjs`
+    now reads `AddLateMission` out of Long War's code into `MaybeUfos` as 10). In Dynamic War, from its pass kind 9,
+    1 to 26 days on.
+- **Checked on wingpu** (test aid `war late`: a Firestorm on the next continent, the late mission planned at once): an
+  Overseer for Brazil at hour 47, "Day 3: an unidentified medium UFO has come down in Brazil: a crash site for 36 hours".
