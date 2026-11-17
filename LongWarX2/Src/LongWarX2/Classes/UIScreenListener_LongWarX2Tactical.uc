@@ -264,6 +264,9 @@ function CheckSwept()
 	// Progeny's Furies (LWX2Furies): the alarm and the execution, and no victory before the console is disarmed.
 	if (!class'LWX2Furies'.static.Update())
 		return;
+	// The Temple Ship (LWX2TempleShip): its arenas, swarms and boss, and no victory before the Uber Ethereal is dead.
+	if (!class'LWX2TempleShip'.static.Update())
+		return;
 	// Units that came after the pods (a Chryssalid's zombie, a spawn of XCOM 2's) given their EW body too.
 	class'LWX2EWBodies'.static.ApplyAll();
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
@@ -312,6 +315,8 @@ static function LongWarObjectives()
 		Label = class'LWX2Deluge'.static.ObjectiveText();
 	if (class'LWX2Furies'.static.ObjectiveText() != "")
 		Label = class'LWX2Furies'.static.ObjectiveText();
+	if (class'LWX2TempleShip'.static.ObjectiveText() != "")
+		Label = class'LWX2TempleShip'.static.ObjectiveText();
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 	if (Battle == none || Battle.MapData.ActiveMission.sType == "Terror")
 		return;

@@ -633,6 +633,109 @@ export function readHive(file: string, map: string, level: string): Hive | undef
   }
 }
 
+/** The Temple Ship (EW's XComSpecialMissionHandler_Templeship with its level's Kismet): the two arenas' pods, each of a forced
+ *  alien type (their Kismet variables FirstArenaPod0-6, SecondArenaPod0-6; a pod whose type is none spawns nothing, as
+ *  XComAlienPodManager.GetAlienPawnType has it), and the Kismet's scripted spawns, each with the stage that brings it. */
+export interface Temple {
+  map: string
+  /** Arena 1 or 2; Long War's character; EW's NumAliens_Min and _Max; where the pod stands. */
+  pods: { arena: number; char: number; min: number; max: number; at: number[] }[]
+  /** The stage: 1 the first swarm (FirstSwarmTriggered, at an aliens' turn end), 2 the second (SecondSwarmTriggered), 3 the
+   *  boss gate opened (BossGateOpen), 4 the boss arena begun (BossArena_Begin: the Uber Ethereal), 5 the Uber Ethereal seen
+   *  (UberVisibleComplete); the alien; its point. */
+  spawns: { stage: number; char: number; at: number[] }[]
+}
+
+/** Long War's character for an EW pawn type name, whatever its spelling (ePawnType_Sectoid_Commander, …_CyberDisc). */
+function charOfPawn(type: string): number {
+  const key = type.replace(/^ePawnType_/, '').replace(/_/g, '').toLowerCase()
+  const more: Record<string, number> = { elder: 12, etherealuber: 19, sectopoddrone: 17, mutonberserker: 15 }
+  if (more[key]) return more[key]!
+  for (const [k, v] of Object.entries(CHAR_OF)) if (k.replace(/_/g, '').toLowerCase() === key) return v
+  return 0
+}
+
+/** The Temple Ship's level read; undefined when it is not as expected. */
+export function readTemple(file: string, map: string): Temple | undefined {
+  const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
+  const meta: any = new Package(bytes)
+  const pkg: any = openPackage(bytes)
+  const K = readKismet(bytes)
+  const dv = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
+  const actorTags = (k: number): Tag[] => {
+    const data = pkg.data(k + 1)
+    for (const start of [26, ...Array.from({ length: 81 }, (_, j) => j)]) {
+      try {
+        const t = readTags(new Reader(data.subarray(start)), pkg)
+        if (t.some((x: Tag) => x.name === 'Location')) return t
+      } catch {
+        // not here
+      }
+    }
+    return []
+  }
+  const loc = (t: Tag[]) => {
+    const l = t.find((x) => x.name === 'Location')
+    return l ? [0, 4, 8].map((o) => Math.round(dv(l.value).getFloat32(o, true))) : undefined
+  }
+  const int = (t: Tag[], n: string) => {
+    const x = t.find((y) => y.name === n)
+    return x ? dv(x.value).getInt32(0, true) : 0
+  }
+  const nameIn = (t: Tag[], n: string) => {
+    const x = t.find((y) => y.name === n)
+    return x && x.value.byteLength >= 8 ? String(pkg.names[dv(x.value).getInt32(0, true)]?.name) : ''
+  }
+  const pods: Temple['pods'] = []
+  for (const o of K.ops.filter((x) => x.type === 'SeqVar_Object')) {
+    const m = /^(First|Second)ArenaPod\d$/.exec(K.name(o, 'VarName'))
+    const k = K.obj(o, 'ObjValue')
+    if (!m || k < 0 || !/^XComAlienPod/.test(meta.exports[k]?.type ?? '')) continue
+    const t = actorTags(k)
+    const at = loc(t)
+    const char = t.some((x) => x.name === 'ForceAlienType') ? charOfPawn(nameIn(t, 'AlienType')) : 0
+    if (!at || !char) continue
+    pods.push({ arena: m[1] === 'First' ? 1 : 2, char, min: int(t, 'NumAliens_Min'), max: int(t, 'NumAliens_Max'), at })
+  }
+  // Who links into an op; the stage of a spawn: the nearest marker upstream (a gate on a swarm's variable, a remote event).
+  const into = new Map<number, number[]>()
+  for (const o of K.ops) for (const t of o.out) into.set(t, [...(into.get(t) ?? []), o.k])
+  const boolVar = (o: KOp) => {
+    const v = K.op(o.vars.get('Bool')?.[0] ?? -1)
+    return v ? K.name(v, 'FindVarName') || K.name(v, 'VarName') : ''
+  }
+  const MARK: Record<string, number> = { FirstSwarmTriggered: 1, SecondSwarmTriggered: 2, BossGateOpen: 3, BossArena_Begin: 4, UberVisibleComplete: 5 }
+  const stageOf = (start: KOp) => {
+    let front = [start.k]
+    const done = new Set(front)
+    for (let d = 0; d < 32 && front.length; d++) {
+      const next: number[] = []
+      for (const k of front)
+        for (const c of into.get(k) ?? []) {
+          if (done.has(c)) continue
+          done.add(c)
+          const o = K.op(c)
+          if (!o) continue
+          const mark = o.type === 'SeqCond_CompareBool' ? MARK[boolVar(o)] : o.type === 'SeqEvent_RemoteEvent' ? MARK[K.name(o, 'EventName')] : undefined
+          if (mark) return mark
+          next.push(c)
+        }
+      front = next
+    }
+    return 0
+  }
+  const spawns: Temple['spawns'] = []
+  for (const o of K.ops.filter((x) => x.type === 'SeqAct_SpawnAlien')) {
+    const char = charOfPawn(K.name(o, 'ForceAlienType'))
+    const v = K.op(o.vars.get('SpawnPoints')?.[0] ?? -1)
+    const at = v ? loc(actorTags(K.obj(v, 'ObjValue'))) : undefined
+    const stage = stageOf(o)
+    if (char && at && stage) spawns.push({ stage, char, at })
+  }
+  if (!pods.some((p) => p.arena === 1) || !spawns.some((s) => s.char === 19)) return undefined
+  return { map, pods, spawns }
+}
+
 export interface CustomSoldier {
   mission: number
   first: string
@@ -1159,6 +1262,17 @@ export function writeObjectives(cooked: string, mod: string): number {
     if (!f) continue
     lines.push(`+Furies=(Map="${f.map}", Level="${f.level}", Console=${vec(f.console)}, AlarmCenter=${vec(f.alarm.center)}, AlarmExtent=${vec(f.alarm.extent)}, Timer=${f.timer}, ` +
       `Rescue=${q(f.rescue)}, ConsoleText=${q(f.consoleText)}, Kill=${q(f.kill)}, Execution=${q(f.execution)})`)
+    n++
+  }
+  // The Temple Ship (LWX2TempleShip): its arenas' pods and its scripted spawns.
+  // (FirstSwarmAt, SecondSwarmAt: EW's handler's LiveAliensThreshold for its first arena and its first wave; UberChar: Long War's
+  // eChar_EtherealUber.)
+  lines.push('', '[LongWarX2.LWX2TempleShip]', 'FirstSwarmAt=8', 'SecondSwarmAt=1', 'UberChar=19')
+  const templeFile = levelFile(cooked, 'TempleShip')
+  const t = templeFile ? readTemple(templeFile, 'TempleShip') : undefined
+  if (t) {
+    for (const p of t.pods) lines.push(`+Pods=(Arena=${p.arena}, Char=${p.char}, Min=${p.min}, Max=${p.max}, At=${vec(p.at)})`)
+    for (const x of t.spawns) lines.push(`+Spawns=(Stage=${x.stage}, Char=${x.char}, At=${vec(x.at)})`)
     n++
   }
   // The variant levels' gated alien drops (LWX2LevelDrops): every council and covert level but the hive's and Deluge's, which

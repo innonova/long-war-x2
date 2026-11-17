@@ -154,3 +154,34 @@ with a player who builds nothing but satellites and uplinks.
     EWI_ExaltHQAssault and spawned EXALT's raid squad (`ForceKind`).
 - **Still standing in:** their objectives are "kill all". EW's own (the base's command centre, the Temple Ship's
   Uber Ethereal and its sequence, the HQ assault's waves) are scripted in their levels' Kismet and not read yet.
+
+## Report (2026-11-17, the Temple Ship as EW scripts it)
+
+**Read** (EW's `XComSpecialMissionHandler_Templeship` and the `TempleShip` level's Kismet; `ew-objectives.ts readTemple`
+writes `[LongWarX2.LWX2TempleShip]`; numbers only):
+- **Not Long War's squad at the map's pods:** the level's fourteen pods each force an alien type
+  (`XComAlienPodManager.GetAlienPawnType`: a forced pod gives its `AlienType`; two of them force none and spawn nothing),
+  and the handler stands them arena by arena (`SpawnArenaPods` on the Kismet variables `FirstArenaPod0-6`,
+  `SecondArenaPod0-6`). Long War's stats apply to each species.
+- **The stages** (`LWX2TempleShip`, state `XComGameState_LWX2Temple`):
+  1. the first arena (a Sectoid Commander, Floaters, a Heavy Floater: 6);
+  2. once an alien is hurt with 8 or fewer left (the handler's `LiveAliensThreshold`, checked in `OnAlienUnitDamaged`),
+     the first swarm at the next aliens' turn end: three Drones and two Cyberdiscs (`FirstSwarmTriggered`);
+  3. at 1 or fewer, the second: three Chryssalids (`SecondSwarmTriggered`);
+  4. all dead: the second arena (Thin Men, Mutons, a Berserker, two Sectopods: 11; `OpenSecondArena`);
+  5. all dead: two Elite Mutons at the boss gate (`BossGateOpen`) and the Uber Ethereal in the boss arena
+     (`BossArena_Begin`);
+  6. the Uber Ethereal seen: two Ethereals and two Elite Mutons (`UberVisibleComplete`).
+- **The win:** the Uber Ethereal's death; every alien left dies with it (`DoWin`). Killing all else wins nothing.
+- **The objective** reads "Kill the Uber Ethereal" once it has come: the port's words; EW's level shows no text of its own.
+- Scripted spawns come for XCOM (as the hive's do); arena pods stand unaware, as pods.
+
+**Checked on wingpu** (a forced Temple Ship, `ForceKind=6`; stages driven with `killaliens` and `endturn`): 6 aliens in
+the first arena; the first swarm (5) at the aliens' turn end after the first kills; the second (3); the second arena
+(11); the gate's two Elite Mutons and the Uber Ethereal (60 HP); the Uber came down, was seen, its guard of four came;
+the Uber removed: the four died with it and the mission summary showed 32 enemies. Screenshot:
+`logs/wingpu_temple_uber_objective.png`.
+
+**Not done:** the arenas' gates (EW opens them by matinee; what the converted map does with them, whether they block or
+stand open, I haven't walked); the Uber Ethereal fights as XCOM 2's Avatar template with Long War's stats; the
+cinematics, music and the Gollop Chamber's volunteer are not ported.
