@@ -621,6 +621,23 @@ export function makeReportWords({ strategyLoc }) {
   return { text: ['[UILWEWEndOfMonth]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }
 
+/** EW's Mission Control alerts' words (UILWEWAlert), from its [XGMissionControlUI]. */
+export function makeAlertWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const at = text.indexOf('\n[XGMissionControlUI]\n')
+  if (at < 0) return { text: '', named: 0 }
+  const end = text.indexOf('\n[', at + 2)
+  const section = text.slice(at, end < 0 ? undefined : end)
+  const mc = (key) => section.match(new RegExp(`^${key}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const words = [
+    ['RadarContact', mc('m_strLabelRadarContact')], ['Contact', mc('m_strLabelContact')], ['Location', mc('m_strLabelLocation')],
+    ['UFOClass', mc('m_strLabelUFOClass')], ['Unidentified', mc('m_strLabelUnidentified')], ['Scramble', mc('m_strLabelScrambleInterceptors')],
+    ['IgnoreContact', mc('m_strLabelIgnoreContact')], ['SendSkyranger', mc('m_strLabelSendSkyranger')], ['Ignore', mc('m_strLabelIgnore')],
+    ['CrashSite', mc('m_strLabelUFOCrashSite')], ['HasLanded', mc('m_strLabelUFOHasLanded')],
+  ].filter(([, v]) => v)
+  return { text: ['[UILWEWAlert]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}
+
 /** Mobile cover's name on a shot's breakdown (X2Effect_LWMobileCover): Long War's for the Alloy SHIV's (m_strShivCoverName). */
 export function makeMobileCoverWords({ strategyLoc }) {
   const name = strategyLoc.match(/^m_strShivCoverName="(.*)"\s*$/m)?.[1]

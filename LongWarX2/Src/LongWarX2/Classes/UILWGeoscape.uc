@@ -26,6 +26,8 @@ var int SelectedCountry;
 var config bool UseSquadSelect;
 var bool bLossShown;
 var bool bWinShown;
+/** Decisions EW's alerts have shown (kind x 100000 + index; UILWEWAlert). */
+var array<int> AlertsShown;
 
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
@@ -214,6 +216,9 @@ function Refresh()
 	// The council's monthly report, once the month has ended (EW's transmission, then its End of Month Report).
 	if (!S.bLost && XComHQPresentationLayer(Movie.Pres) != none)
 		class'UILWEWWorldReport'.static.OpenIfDue(XComHQPresentationLayer(Movie.Pres));
+	// A new decision: EW's Mission Control alert for it, where there is one (UILWEWAlert).
+	if (!S.bLost && S.PendingKind == 0 && Movie.Pres.ScreenStack.GetCurrentScreen() == self)
+		class'UILWEWAlert'.static.OpenNext(self, Kinds, Indexes);
 }
 
 simulated function int ActiveCount(XComGameState_LWStrategy S)
@@ -367,6 +372,18 @@ simulated function OnAction(UIButton Button)
 			break;
 	if (n < MAX_ACTIONS)
 		Act(n);
+}
+
+/** A decision taken by its kind and index (EW's alerts: UILWEWAlert); false if it is no longer open. */
+simulated function bool ActOn(int Kind, int Index)
+{
+	local int n;
+
+	Refresh();
+	for (n = 0; n < MAX_ACTIONS; n++)
+		if (ActionKind[n] == Kind && ActionIndex[n] == Index)
+			return Act(n);
+	return false;
 }
 
 /** The n-th decision taken (its button pressed; also LWX2Control's "act"): false if there is none. */

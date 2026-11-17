@@ -36,3 +36,21 @@ UFOs, council missions, EXALT, the alien base, the Temple Ship, a satellite lost
   alert attaches but showed only its warning icon and rule after `SetTitle`, `SetContact` and `AlertFullyLoaded`; its
   text and frame did not appear. Next: read the RadarContactAlert/UFOAlert ActionScript for what else it waits on (the
   other setters, an intro animation, `_visible` set by its own code).
+
+## Report (2026-11-17, the first alerts)
+
+- **`UILWEWAlert`**: when the Long War Geoscape (the panel) refreshes with a new decision of a kind it handles, EW's alert opens
+  over it on the MissionControl movie: a UFO detected (`RadarContactAlert`: UFO Contact, Contact, Location, UFO Class,
+  Scramble Interceptors / Ignore Contact), a crash site (`UFOCrashAlert`) and a landed UFO (`UFOLandedAlert`: Send Skyranger /
+  Ignore). Words are EW's own (`[XGMissionControlUI]`, `makeAlertWords`, written on the player's machine). Accept takes the
+  decision (`UILWGeoscape.ActOn`: the air war, or squad select); ignore leaves it on the panel's list. Each decision is
+  alerted once while the Geoscape is open.
+- **The movie's calls:** everything by `Movie.Invoke` (XCOM 2's queued `MC` calls never ran on the alert); the alert's own
+  `onLoad` hides its fields a frame after it is attached, so it is filled 0.2 s later; then `UFOAlertFinishedLoading` and
+  `AlertFullyLoaded` show its frame.
+- **Checked on wingpu:** a new campaign, time run on the Geoscape: at the first detected UFO the alert opened ("UFO CONTACT",
+  "unidentified small UFO", "United States", "UNIDENTIFIED", SCRAMBLE INTERCEPTORS / IGNORE CONTACT); Enter opened the air war
+  on that UFO. Screenshot: `logs/wingpu_ew_ufo_alert.png`.
+- **Open:** clicks on the alert's buttons do not reach the screen yet (no mouse event arrives; EW's `MouseHandler` dispatches
+  from the screen's root, `isMouseHit`, `getNextChildHandler`, which this movie may need set up first); Enter and Esc work.
+  Behind the alert is whatever the camera shows (the Avenger); the other decisions still use the panel's buttons.
