@@ -7,21 +7,28 @@
 // converter's name for it (tools/convert/ew-ui.ts: RadarContactAlert's instance is QadarContactAlertMC). The alert's clicks
 // come back under its own clip's path, where UILWEWAlertTarget stands to take them.
 // The decisions with an alert of EW's: a UFO detected (kind 1), a crash site (2), a landed UFO (3), abductions (4: one alert
-// for those come together; "view" leaves the Geoscape's list of their sites, EW's site selection), terror (5), an alien base
+// for those come together; "view" opens EW's site selection, AbductionSelection, where one is chosen), terror (5), an alien base
 // (6), the Temple Ship (7), the covert operative ready (9) and a council mission (11). The others (the HQ's defence, EXALT's
 // base, the council's requests) EW shows on screens of their own; they keep the panel's buttons.
 class UILWEWAlert extends UILWEWScreen;
 
 var localized string RadarContact, Contact, Location, UFOClass, Unidentified, Scramble, IgnoreContact, SendSkyranger, Ignore,
 	CrashSite, HasLanded;
-var localized string AbductionsReported, ViewAbductionSites, TerrorCity, PanicLevel, Difficulty, Swarming, FCMission,
-	AssaultAlienBase, AssaultTempleShip, TempleShipText, Assault, Wait, ExaltTitle, ExaltBody, ExaltSend, ExaltNotNow;
+var localized string AbductionsReported, ViewAbductionSites, TerrorCity, PanicLevel, Difficulty, FCMission,
+	AssaultAlienBase, AssaultTempleShip, TempleShipText, Assault, Wait, ExaltTitle, ExaltBody, ExaltSend, ExaltNotNow,
+	AbductionSites, Reward, Confirm;
+/** EW's mission difficulties' names (XGLocalizedData.MissionDifficultyNames: light to swarming). */
+var localized string DifficultyNames[4];
 
 /** The decision (the Geoscape's kind and index) and its screen. */
 var int Kind, Index;
 var UILWGeoscape Geo;
 var string AlertPath;
 var UILWEWAlertTarget ClickTarget;
+/** The abduction site selection (EW's AbductionSelection) open: the sites shown (Long War's site indexes) and the one chosen. */
+var bool bSelection;
+var array<int> SiteIndexes;
+var int Selected;
 
 /** Kinds this screen can show. */
 static function bool Handles(int K)
@@ -191,7 +198,7 @@ function Fill()
 		Params.AddItem(Str(Caps(PanicLevel)));
 		Params.AddItem(Num(class'LWCouncil'.static.PanicBlocks(S, S.Sites[Index].Country)));
 		Movie.Invoke(AlertPath $ ".SetPanicLevel", Params);
-		Call("SetDifficulty", Caps(Difficulty), Swarming, true);
+		Call("SetDifficulty", Caps(Difficulty), DifficultyNames[3], true);
 		Button(0, Caps(SendSkyranger));
 		Button(1, Caps(Ignore));
 		break;
@@ -252,28 +259,144 @@ function FitTitle(string Title)
 /** The alert closed: its click target no longer one of the screen's panels (it made no clip of its own to remove). */
 function Leave()
 {
+	DropClickTarget();
+	CloseScreen();
+}
+
+function DropClickTarget()
+{
 	if (ClickTarget != none)
 	{
 		ChildPanels.RemoveItem(ClickTarget);
 		ClickTarget.Destroy();
 		ClickTarget = none;
 	}
-	CloseScreen();
 }
 
-/** The decision taken: the alert closed, the Geoscape acts (the air war, squad select). Abductions: their sites are the
- *  Geoscape's list (EW's site selection), where one is chosen. */
+/** The decision taken: the alert closed, the Geoscape acts (the air war, squad select). Abductions: EW's site selection
+ *  first, where one is chosen and confirmed. */
 function Accept()
 {
 	local UILWGeoscape G;
 	local int K, I;
 
+	if (Kind == 4)
+	{
+		if (bSelection)
+			ConfirmSite();
+		else
+			OpenSelection();
+		return;
+	}
 	G = Geo;
 	K = Kind;
 	I = Index;
 	Leave();
-	if (G != none && K != 4)
+	if (G != none)
 		G.ActOn(K, I);
+}
+
+/** EW's abduction site selection in the alert's place (XGMissionControlUI.OnAlertInput: eGA_Abduction's first reply). */
+function OpenSelection()
+{
+	local array<ASValue> NoArgs;
+
+	DropClickTarget();
+	Movie.Invoke(AlertPath $ ".removeMovieClip", NoArgs);
+	bSelection = true;
+	Load("AbductionSelection");
+	SetTimer(0.2, false, nameof(FillSelection));
+}
+
+/** The sites (up to EW's three, XGMissionControlUI.UpdateAbduction: the abductions on the map) as its buttons, the one the
+ *  alert came for chosen. */
+function FillSelection()
+{
+	local XComGameState_LWStrategy S;
+	local array<ASValue> NoArgs;
+	local int i;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	SiteIndexes.Length = 0;
+	for (i = 0; S != none && i < S.Sites.Length && SiteIndexes.Length < 3; i++)
+		if (S.Sites[i].Status == 1 && !S.Sites[i].bTerror && !S.Sites[i].bHQ && !S.Sites[i].bCouncil)
+			SiteIndexes.AddItem(i);
+	if (SiteIndexes.Length == 0)
+	{
+		Leave();
+		return;
+	}
+	Selected = Max(0, SiteIndexes.Find(Index));
+	FindAlert();
+	for (i = 0; i < 3; i++)
+	{
+		WidgetCall("SetButtonLabel", i, i < SiteIndexes.Length ? Caps(S.CountryName(S.Sites[SiteIndexes[i]].Country)) : "");
+		WidgetActive(i, i < SiteIndexes.Length);
+	}
+	ShowSite();
+	Movie.Invoke(AlertPath $ ".AlertFullyLoaded", NoArgs);
+	ClickTarget = class'UILWEWAlertTarget'.static.At(self, AlertPath);
+}
+
+/** The chosen site's details (UIMissionControl_AbductionSelection.UpdateData): the country, its panic, the alien activity in
+ *  EW's colours (light green, moderate yellow, else red), the cash it pays (Long War: every abduction pays cash). */
+function ShowSite()
+{
+	local XComGameState_LWStrategy S;
+	local array<ASValue> Params;
+	local int Site, Diff;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Site = SiteIndexes[Selected];
+	Diff = Clamp(S.Sites[Site].Difficulty, 0, 3);
+	WidgetCall("SetSelected", Selected);
+	Params.AddItem(Str(Caps(AbductionSites)));
+	Params.AddItem(Str(Caps(PanicLevel)));
+	Params.AddItem(Str(Caps(Difficulty)));
+	Params.AddItem(Str(Caps(Reward)));
+	Params.AddItem(Str(Confirm));
+	Movie.Invoke(AlertPath $ ".SetHeaderLabels", Params);
+	Params.Length = 0;
+	Params.AddItem(Str(Caps(S.CountryName(S.Sites[Site].Country))));
+	Params.AddItem(Num(class'LWCouncil'.static.PanicBlocks(S, S.Sites[Site].Country)));
+	Params.AddItem(Str("<font color='#" $ (Diff == 0 ? "5CD16C" : (Diff == 1 ? "FFD038" : "EE1C25")) $ "'>" $ DifficultyNames[Diff] $ "</font>"));
+	Params.AddItem(Str(class'LWStrategyRules'.static.Money(S.AbductionReward(Diff))));
+	Movie.Invoke(AlertPath $ ".SetData", Params);
+}
+
+function ConfirmSite()
+{
+	local UILWGeoscape G;
+	local int I;
+
+	G = Geo;
+	I = SiteIndexes[Selected];
+	Leave();
+	if (G != none)
+		G.ActOn(4, I);
+}
+
+/** The selection's widget helper (EW's UIWidgetHelper: widgetHelper.<Func>(index[, text])). */
+function WidgetCall(string Func, int i, optional string Text)
+{
+	local array<ASValue> Params;
+
+	Params.AddItem(Num(i));
+	if (Func != "SetSelected")
+		Params.AddItem(Str(Text));
+	Movie.Invoke(AlertPath $ ".widgetHelper." $ Func, Params);
+}
+
+function WidgetActive(int i, bool bActive)
+{
+	local array<ASValue> Params;
+	local ASValue V;
+
+	Params.AddItem(Num(i));
+	V.Type = AS_Boolean;
+	V.b = bActive;
+	Params.AddItem(V);
+	Movie.Invoke(AlertPath $ ".widgetHelper.SetActive", Params);
 }
 
 /** A button clicked (EW's AlertWithMultipleButtons.OnMouseEvent): the clip named button<N> (button_<N>; a simple alert's one
@@ -284,7 +407,25 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 	local int i;
 
 	`log("LongWarX2: EW alert: mouse" @ cmd @ (args.Length > 1 ? args[args.Length - 2] : "") @ (args.Length > 0 ? args[args.Length - 1] : ""), , 'LongWarX2');
-	if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP)
+	// The site selection: a site's button (option<N>) chosen, Confirm sends the squad.
+	if (bSelection && cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP)
+	{
+		for (i = args.Length - 1; i >= 0; i--)
+		{
+			if (args[i] == "confirmButton")
+			{
+				ConfirmSite();
+				return;
+			}
+			if (InStr(args[i], "option") == 0 && int(Mid(args[i], 6)) < SiteIndexes.Length)
+			{
+				Selected = int(Mid(args[i], 6));
+				ShowSite();
+				return;
+			}
+		}
+	}
+	else if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP)
 	{
 		// (The click's clip is the button's own, or one inside it named "button": the numbered one wins.)
 		for (i = args.Length - 1; i >= 0 && Len(Clicked) <= 6; i--)
@@ -308,6 +449,24 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		return true;
 	switch (cmd)
 	{
+		case class'UIUtilities_Input'.const.FXS_ARROW_UP:
+		case class'UIUtilities_Input'.const.FXS_DPAD_UP:
+		case class'UIUtilities_Input'.const.FXS_VIRTUAL_LSTICK_UP:
+			if (bSelection)
+			{
+				Selected = (Selected + SiteIndexes.Length - 1) % SiteIndexes.Length;
+				ShowSite();
+			}
+			return true;
+		case class'UIUtilities_Input'.const.FXS_ARROW_DOWN:
+		case class'UIUtilities_Input'.const.FXS_DPAD_DOWN:
+		case class'UIUtilities_Input'.const.FXS_VIRTUAL_LSTICK_DOWN:
+			if (bSelection)
+			{
+				Selected = (Selected + 1) % SiteIndexes.Length;
+				ShowSite();
+			}
+			return true;
 		case class'UIUtilities_Input'.const.FXS_BUTTON_A:
 		case class'UIUtilities_Input'.const.FXS_KEY_ENTER:
 		case class'UIUtilities_Input'.const.FXS_KEY_SPACEBAR:

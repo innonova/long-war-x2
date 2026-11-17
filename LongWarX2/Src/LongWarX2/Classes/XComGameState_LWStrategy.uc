@@ -76,6 +76,9 @@ struct LWSite
 	var int CouncilMission;
 	var int CouncilKind;
 	var array<LWCouncilReward> Rewards;
+	/** An abduction's (and a council mission's) difficulty, 0-3, fixed as it comes (Long War's mission m_eDifficulty, from
+	 *  GetAbductionDifficulty as the mission is made): its squad, its reward and what the alert shows. */
+	var int Difficulty;
 };
 
 /** An engineering project (LWEngineering): Quantity of Long War's item Item, the work left in engineer hours, the engineers on it. */
@@ -1281,6 +1284,8 @@ function AddSite(bool bTerror, int Country)
 	Site.Hour = Hours;
 	Site.Status = 1;
 	Site.Until = Hours + (bTerror ? class'LWStrategyRules'.default.TerrorHours : class'LWStrategyRules'.default.AbductionHours);
+	if (!bTerror)
+		Site.Difficulty = AbductionDifficulty(Country);
 	Sites.AddItem(Site);
 	Note((bTerror ? "Terror in" : "Abductions in") @ CountryName(Country) $ ". XCOM has" @ (Site.Until - Hours) @ "hours.");
 	bStop = true;
@@ -1315,6 +1320,7 @@ function AddCouncilSite(int Mission, int Country, array<LWCouncilReward> Rewards
 	Site.Hour = Hours;
 	Site.Status = 1;
 	Site.Until = Hours + class'LWStrategyRules'.default.AbductionHours;
+	Site.Difficulty = AbductionDifficulty(Country);
 	Sites.AddItem(Site);
 	CouncilPlayed.AddItem(Mission);
 	Note("The council asks for XCOM's help in" @ CountryName(Country) $ ":" @ class'LWCouncil'.static.KindName(Site.CouncilKind) $ " (" $ class'LWCouncil'.static.RewardsText(Rewards) $ "). XCOM has" @ (Site.Until - Hours) @ "hours.");
@@ -1430,14 +1436,14 @@ function array<int> MissionSquad()
 	// A council mission: an abduction's squad in its country (APPROXIMATION: Long War's DetermineSpecialMissionSquad builds its own,
 	// 7 to 15 aliens by the month).
 	if (PendingKind == 10)
-		return class'LWAlienSquads'.static.SquadFor(3, 0, Days(), AlienAggression, AlienResources, AbductionDifficulty(Sites[PendingIndex].Country), TerrorsTaken);
+		return class'LWAlienSquads'.static.SquadFor(3, 0, Days(), AlienAggression, AlienResources, Sites[PendingIndex].Difficulty, TerrorsTaken);
 	if (PendingKind == 5)
 		return class'LWAlienSquads'.static.SquadFor(2, 8, Days(), AlienAggression, AlienResources, 0, TerrorsTaken);
 	if (PendingKind >= 6)
 		return class'LWAlienSquads'.static.SquadFor(2, 14, Days(), AlienAggression, AlienResources, 0, TerrorsTaken);
 	Country = PendingKind <= 2 ? Ufos[PendingIndex].Country : Sites[PendingIndex].Country;
 	return class'LWAlienSquads'.static.SquadFor(PendingKind, PendingKind <= 2 ? Ufos[PendingIndex].Ufo : 0, Days(),
-		AlienAggression, AlienResources, PendingKind == 3 ? AbductionDifficulty(Country) : 0, TerrorsTaken);
+		AlienAggression, AlienResources, PendingKind == 3 ? Sites[PendingIndex].Difficulty : 0, TerrorsTaken);
 }
 
 /** A mission is sent to a crash site (1), landed UFO (2), abduction (3) or terror site (4): chosen and committed at once. */
@@ -1635,7 +1641,7 @@ static function MissionBack(bool bWon)
 			S.Tally(S.CountryContinent(Country), T_TERROR_FAILED);
 	}
 	if (S.PendingKind == 3 && bWon)
-		S.GiveAbductionReward(NewGameState, Country);
+		S.GiveAbductionReward(NewGameState, S.Sites[S.PendingIndex].Difficulty);
 	if (S.PendingKind == 1)
 	{
 		if (bWon)
@@ -2029,22 +2035,32 @@ function int AbductionDifficulty(int Country)
 }
 
 /** An abduction won: Long War's cash (DetermineAbductionReward: every abduction pays cash), by its difficulty. */
-function GiveAbductionReward(XComGameState NewGameState, int Country)
+function GiveAbductionReward(XComGameState NewGameState, int Diff)
 {
-	local XComGameState_HeadquartersXCom XComHQ;
-	local int Cash, Diff;
+	GiveCash(NewGameState, AbductionReward(Diff));
+	Note("The abduction's reward:" @ class'LWStrategyRules'.static.Money(AbductionReward(Diff)) $ ".");
+}
 
-	Diff = AbductionDifficulty(Country);
+/** The cash an abduction of this difficulty pays (DetermineAbductionReward). */
+function int AbductionReward(int Diff)
+{
+	local int Cash;
+
 	Cash = class'LWStrategyRules'.default.AbductionRewardCash;
 	// Bounties (DetermineAbductionReward): more, before the difficulty's scale.
 	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.BOUNTIES, self) > 0)
 		Cash *= 1.0 + class'LWBonuses'.static.Has(class'LWBonuses'.const.BOUNTIES, self) / 100.0;
-	Cash = int(Cash * (Diff == 0 ? 0.8 : (Diff == 1 ? 0.9 : (Diff == 2 ? 1.0 : 1.15))));
+	return int(Cash * (Diff == 0 ? 0.8 : (Diff == 1 ? 0.9 : (Diff == 2 ? 1.0 : 1.15))));
+}
+
+function GiveCash(XComGameState NewGameState, int Amount)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
 	if (XComHQ == none)
 		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
-	XComHQ.AddResource(NewGameState, 'Supplies', Cash);
-	Note("The abduction's reward:" @ class'LWStrategyRules'.static.Money(Cash) $ ".");
+	XComHQ.AddResource(NewGameState, 'Supplies', Amount);
 }
 
 // --- Satellites ------------------------------------------------------------------------------

@@ -104,3 +104,21 @@ panel: EW has no Mission Control alert for them (a cinematic, the Situation Room
   alerts (no quick way to an alien base or a ready operative yet); written the same way, from EW's classes.
 - **Open:** EW's abduction site selection (`LoadAbductionSelection`) in place of the panel's list; the UFO contact's other
   rows (size, altitude, objective with the Hyperwave Relay) and its jet list; the Mission Control screen itself (plan 2).
+
+## Report (2026-11-17, the abduction site selection)
+
+- **EW's `AbductionSelection`:** the abduction alert's VIEW ABDUCTION SITE now replaces the alert with EW's site selection, in the
+  same movie, as `UIMissionControl_AbductionSelection` fills it from `XGMissionControlUI.UpdateAbduction`: up to three sites
+  as its buttons (EW's widget helper: `widgetHelper.SetButtonLabel`, `SetActive`, `SetSelected`; clicks on `option<N>`,
+  arrow keys), and for the chosen one the country, its panic bar, ALIEN ACTIVITY in EW's colours (Light green, Moderate yellow,
+  Heavy and Swarming red; EW's `MissionDifficultyNames`) and the REWARD; Confirm (or Enter) opens squad select for it, Esc
+  leaves the abductions on the list.
+- **A fix underneath:** an abduction's difficulty was rolled again each time it was asked for (once for the alien squad, once
+  more for the reward), so the two could disagree. Long War fixes it when the mission is made (`m_eDifficulty`); the port now
+  does too (`LWSite.Difficulty`, set as an abduction or council mission comes), and the squad, the reward
+  (`AbductionReward`) and the selection read it. Sites from a save made before this read as Light.
+- **Words:** six more of EW's (`m_strLabelAbductionSites`, `m_strLabelReward`, the selection's Confirm, the four difficulty
+  names): 33 alert words.
+- **Checked on wingpu:** abductions in Japan: the alert, VIEW ABDUCTION SITE clicked, the selection (JAPAN, panic, Moderate,
+  §90; `logs/wingpu_ew_abduction_selection.png`), Confirm clicked: squad select. **Not seen:** a selection with more than one
+  site (this campaign's abductions came one at a time).
