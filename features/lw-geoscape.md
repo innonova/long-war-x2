@@ -330,3 +330,15 @@ through the control port:
   "Long War's first mission, won before the campaign began, brought back
   what its aliens left:", above "The aliens killed (10) left: …".
 - Checked on the screen.
+
+## Report (2026-11-17, the hunts after scouting)
+
+- **Read** (`XGStrategyAI.LogUFORecord`, `ShouldHunt`, `AddHuntTarget`): a scout's flight (not the Ethereals') that XCOM
+  saw, detected or attacked and got away, may bring a hunt for the satellite over its country: unless a roll on half the
+  country's science (`iScience`) turns it away, then a roll on how whole the UFO came back (its hull share), then a roll
+  on 40 + the day / 15. The hunt starts within five days (`AIAddNewObjective(eObjective_Hunt, Rand(5), …)`), its ship
+  from the hunt's ship table (`GetNumOutsiders` with the hunt's kind).
+- **Done:** `XComGameState_LWStrategy.ShouldHunt`, from `UfoDone`; the hunt is the plan's own hunt objective
+  (`AddObjective(4, …)`), so it finds the satellite as the monthly hunts do.
+- **Checked on wingpu** (`run 1400 all` in a new campaign): two scouts seen over the United States each brought a hunt
+  ("UFO detected over United States: Fighter, Hunt.").

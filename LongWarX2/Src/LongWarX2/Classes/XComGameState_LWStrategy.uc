@@ -712,6 +712,20 @@ function ForgetFinished()
 			Sites.Remove(i, 1);
 }
 
+/** Whether a scout seen brings a hunt (XGStrategyAI.ShouldHunt): not if the country's science turns it away (a roll on half
+ *  its scientists, TCountry.iScience), only with a roll on how whole the UFO came back, then a roll on 40 + day / 15. And only
+ *  over a country with a satellite to hunt. */
+function bool ShouldHunt(LWUfo U, float Intact)
+{
+	if (!Countries[U.Country].bSatellite || Countries[U.Country].bLeft)
+		return false;
+	if (Rand(100) < class'LWStrategyRules'.default.Countries[U.Country].Scientists / 2)
+		return false;
+	if (Rand(100) >= int(100 * Intact))
+		return false;
+	return Rand(100) < 40 + Days() / 15;
+}
+
 /**
  * An objective of the plan (Long War's AddUFOs): its target and start day by objective, its ship by
  * the aliens' resources and the campaign's day.
@@ -999,6 +1013,13 @@ function UfoDone(int i)
 		AlienResources += class'LWStrategyRules'.static.HarvestOf(U.Ufo) + Rand(5);
 	if (U.bDetected && U.Objective != 5 && U.Objective != 6 && U.Objective != 7)
 		Note("The" @ ShipName(U.Ufo) @ "over" @ CountryName(U.Country) @ "finished its mission.");
+	// A scout seen (detected, or attacked and away) may bring a hunt for the satellite that saw it (LogUFORecord,
+	// ShouldHunt, AddHuntTarget).
+	if (U.Objective == 1 && U.Ufo != 9 && U.bDetected && ShouldHunt(U, Intact))
+	{
+		AddObjective(4, Hours, Rand(5), U.Country, class'LWStrategyRules'.static.ShipFor(4, AlienResources, Days()));
+		`log("LongWarX2: Geoscape: the scout seen over" @ CountryName(U.Country) @ "brings a hunt for its satellite", , 'LongWarX2');
+	}
 	// The aliens' research (XGStrategyAI.LogUFORecord), for a UFO that was not the Ethereals' and not hunting: +1 come
 	// back whole, +0 or 1 above half its hull (not for a pact's); a research flight (recon) by its size: a small scout 3,
 	// a large scout 5, an abductor 8, larger 10.

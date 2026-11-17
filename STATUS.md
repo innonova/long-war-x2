@@ -21,7 +21,7 @@ buttons and text, no art).
 | EW's base as the strategy scene | part | LW | EW's base (shell, fixed rooms, a level per tile from Long War's base) behind the Long War screens, in even light of its own; the hub on EW's layout (its five rooms, MISSION CONTROL above the clock, the camera into each room, the room's menu: EW's own submenu), the strategy layer's root; the setup converts the base | EW's glowing light strips (grey); the armory in EW's rooms | `lw-base-view` |
 | Council, panic, funding | done | plain | countries, panic, leaving, the council report, funding | the monthly tallies (terrors thwarted …) in the report | `lw-geoscape` |
 | Satellites | done | plain | launching, coverage, detection | | `lw-geoscape` |
-| The aliens' plan | most | plain | resources, research, the monthly plan, UFOs, abductions, terror targets | scout hunts after scouting; UFOs seen as they cross watched countries | `lw-geoscape` |
+| The aliens' plan | most | plain | resources, research, the monthly plan, UFOs, abductions, terror targets, the hunts after scouting | UFOs seen as they cross watched countries | `lw-geoscape` |
 | The air war | most | plain | jets per continent, interception, damage, repair, refits, orders, transfers | consumables, Friendly Skies, fuel, the Firestorm's refits | `lw-hangar` |
 | The base | most | LW | the grid, digging, facilities, power, upkeep, steam; built on EW's own Build Facilities and ChooseFacility screens over EW's base | facilities' effects (containment, Hyperwave, Gollop chamber); removing a facility | `lw-base`, `lw-base-view` |
 | Research | most | X2 + plain | Long War's techs, costs, times, prerequisites, credits; labs and their adjacency (`lw-base`) | XCOM 2's research room still shows its own staff | `lw-research` |
