@@ -321,3 +321,9 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   (`logs/wingpu_pause_restart.png`). Its question is XCOM 2's (`logs/wingpu_restart_question.png`). Accepted, the mission
   restarted: a soldier moved four tiles was back where she began with both action points.
 - **Not seen:** an Ironman campaign with Bronzeman (the same item and path).
+
+## Report (2026-11-17, Itchy Trigger Tentacle in play, once)
+
+- **A natural reveal** (the squad walked up with real moves): a pod of two Sectoids and an ADVENT MEC revealed when a soldier
+  came into view. The MEC scampered (28 → 36) rather than shot: one roll of 50%, so it shows nothing either way. The walk
+  to a pod of three MECs lost track in the fight that followed. Still to see: a reveal shot announced by Perfect Information.
