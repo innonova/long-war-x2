@@ -69,3 +69,16 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   templates are made.
 - **Checked on wingpu** (the control port's `units` now prints the flanking crit): soldiers 50 with the option off, 100 with it
   on (the option set before the mission; before the fix: 40 and 90).
+
+## Report (2026-11-17, Red Fog)
+
+- **#6 Red Fog** (`XGUnit.SetUnitHP`, `ApplyHPStatPenalties`): every unit hurt, XCOM's and the aliens', has its aim and
+  mobility down as its health is down: the share of health left (doubled for a robot; else raised by will over 60, ×
+  (1 + max(0, 1 − 60/will))), and below one, aim × 35 and mobility × 6 of what is missing (Long War's `SW_ABDUCTION_SITES` and
+  `SW_COVER_INCREASE`, the names notwithstanding). Applied as Long War does, to the current stats, the last penalty taken
+  back first (`LWX2SecondWave.UpdateRedFog`, twice a second in a mission).
+- **A bug caught in testing:** a unit without the stored penalty read the previous unit's (UnrealScript leaves the struct as
+  it was), and the first version gave every unhurt unit the hurt one's penalty back as a bonus. Cleared per unit now; the
+  other reads of unit values in loops checked (none affected).
+- **Not ported:** Long War also shortens a hurt unit's throwing range by the aim penalty's share (`GetMoveModifierCost`).
+- **Checked on wingpu:** Red Fog on, a soldier hurt to 2/6: aim −23, mobility 12 → 9; the rest unchanged.

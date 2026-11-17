@@ -95,6 +95,8 @@ const ini = (k) => Number(core.match(new RegExp(`^${k}=([\\d.]+)`, 'm'))[1])
 out.push('', '[LongWarX2.X2Effect_LWRespirator]', 'ExtraTurns=2')
 // The second-wave options' tactical numbers (features/lw-second-wave.md): Absolutely Critical's flanking crit and the usual.
 out.push('', '[LongWarX2.X2Effect_LWSecondWave]', `AbsolutelyCriticalFlankCrit=${ini('SW_FLANK_CRIT')}`, `FlankCrit=${ini('FLANKING_CRIT_BONUS')}`)
+// Red Fog's caps (SW_ABDUCTION_SITES and SW_COVER_INCREASE, as Long War's ApplyHPStatPenalties reads them).
+out.push('', '[LongWarX2.LWX2SecondWave]', `RedFogAim=${ini('SW_ABDUCTION_SITES')}`, `RedFogMobility=${ini('SW_COVER_INCREASE')}`)
 // Flight's air evasion (AIR_EVADE_DEF: the defence a flying unit with eAP_AirEvade has, in place of cover).
 out.push('', '[LongWarX2.X2Effect_LWFlying]', `AirEvade=${ini('AIR_EVADE_DEF')}`)
 out.push('', '[LongWarX2.LWGearRules]')
