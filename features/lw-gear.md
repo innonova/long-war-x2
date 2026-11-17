@@ -603,3 +603,14 @@ Rookies (XCOM 2's Rookie class, until their first promotion deals a Long War cla
 They now carry Long War's rookie kit: `startingKit`'s default branch of `GetInfinitePrimary`, the ballistic rifle (212),
 and the pistol (2): the Rookie class's `SquaddieLoadout` is `LWS_SquaddieRookie` and it may hold those two weapons'
 categories (`classes-config.mjs`; `LWX2Gear.ArmAll` arms them as it arms the classes).
+
+## Report (2026-11-17, small items' aim and crit not with a pistol)
+
+**Read** (`XGTacticalGameCore.GetInventoryStatModifiers`): a backpack item's aim and crit are added only while the soldier's
+weapon is not a pistol (`WeaponHasProperty(weapon, 2)`); the crit modifiers (`XGAbility_Targeted.GetCritSummary`) name the
+Illuminator Gunsight, Reaper Rounds and two others the same way. The port had added every small item's aim and crit as plain
+stats. They are now on the shot (`X2Effect_LWSmallItem`: `ItemAim`, `ItemCrit`, named by the item in the breakdown), not on
+pistol shots; HP, defence, mobility and will stay stats.
+
+**Checked on wingpu:** a sniper carrying the Illuminator Gunsight: the rifle's shot read "Illuminator Gunsight=12" for aim
+and for crit; the pistol's shot had neither.

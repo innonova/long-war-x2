@@ -55,14 +55,11 @@ static function X2AbilityTemplate Stats(LWGearRules.LWSmallDef D)
 	Template.AbilityTargetStyle = default.SelfTarget;
 	Template.AbilityTriggers.AddItem(default.UnitPostBeginPlayTrigger);
 
-	if (D.Aim != 0 || D.Crit != 0 || D.HP != 0 || D.Defense != 0 || D.Mobility != 0 || D.Will != 0)
+	// (Aim and crit on the shot, X2Effect_LWSmallItem: not while firing a pistol.)
+	if (D.HP != 0 || D.Defense != 0 || D.Mobility != 0 || D.Will != 0)
 	{
 		Effect = new class'X2Effect_PersistentStatChange';
 		Effect.BuildPersistentEffect(1, true, false, false);
-		if (D.Aim != 0)
-			Effect.AddPersistentStatChange(eStat_Offense, D.Aim);
-		if (D.Crit != 0)
-			Effect.AddPersistentStatChange(eStat_CritChance, D.Crit);
 		if (D.HP != 0)
 			Effect.AddPersistentStatChange(eStat_HP, D.HP);
 		if (D.Defense != 0)
@@ -79,7 +76,7 @@ static function X2AbilityTemplate Stats(LWGearRules.LWSmallDef D)
 		Respirator.BuildPersistentEffect(1, true, false, false);
 		Template.AddTargetEffect(Respirator);
 	}
-	if (D.Ammo > 1 || D.Kind == 'Rocket' || D.CritAgainstReaction != 0 || D.ScopeCrit != 0 || D.WeaponCrit != 0)
+	if (D.Ammo > 1 || D.Kind == 'Rocket' || D.CritAgainstReaction != 0 || D.ScopeCrit != 0 || D.WeaponCrit != 0 || D.Aim != 0 || D.Crit != 0)
 	{
 		Extra = new class'X2Effect_LWSmallItem';
 		Extra.BuildPersistentEffect(1, true, false, false);
@@ -89,6 +86,9 @@ static function X2AbilityTemplate Stats(LWGearRules.LWSmallDef D)
 		Extra.CritAgainstReaction = D.CritAgainstReaction;
 		Extra.ScopeCrit = D.ScopeCrit;
 		Extra.WeaponCrit = D.WeaponCrit;
+		Extra.ItemAim = D.Aim;
+		Extra.ItemCrit = D.Crit;
+		Extra.ItemName = D.Template;
 		Template.AddTargetEffect(Extra);
 	}
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;

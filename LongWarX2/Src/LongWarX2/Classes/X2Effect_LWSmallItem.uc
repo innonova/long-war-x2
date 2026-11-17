@@ -11,6 +11,11 @@ var int CritAgainstReaction;
 var int ScopeCrit;
 /** Crit for its carrier's shots with any weapon but a pistol (Reaper Rounds: XGAbility_Targeted.GetCriticalChance). */
 var int WeaponCrit;
+/** The item's own aim and crit (its Weapons= line): its carrier's, but not while firing a pistol (Long War's
+ *  XGTacticalGameCore.GetInventoryStatModifiers adds a backpack item's aim and crit only when the weapon is not one). */
+var int ItemAim, ItemCrit;
+/** The item, for the shot's breakdown. */
+var name ItemName;
 
 simulated protected function OnEffectAdded(const out EffectAppliedData ApplyEffectParameters, XComGameState_BaseObject kNewTargetState, XComGameState NewGameState, XComGameState_Effect NewEffectState)
 {
@@ -55,6 +60,24 @@ function GetToHitModifiers(XComGameState_Effect EffectState, XComGameState_Unit 
 {
 	local ShotModifierInfo Info;
 
+	if ((ItemAim != 0 || ItemCrit != 0) && AbilityState != none && !bMelee && AbilityState.GetSourceWeapon() != none
+		&& !class'X2Effect_LWFoundry'.static.IsPistol(AbilityState.GetSourceWeapon()))
+	{
+		Info.Reason = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(ItemName) != none
+			? class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(ItemName).GetItemFriendlyName() : string(ItemName);
+		if (ItemAim != 0)
+		{
+			Info.ModType = eHit_Success;
+			Info.Value = ItemAim;
+			ShotModifiers.AddItem(Info);
+		}
+		if (ItemCrit != 0)
+		{
+			Info.ModType = eHit_Crit;
+			Info.Value = ItemCrit;
+			ShotModifiers.AddItem(Info);
+		}
+	}
 	if (WeaponCrit != 0 && AbilityState != none && !bMelee && AbilityState.GetSourceWeapon() != none && !class'X2Effect_LWFoundry'.static.IsPistol(AbilityState.GetSourceWeapon()))
 	{
 		Info.ModType = eHit_Crit;
