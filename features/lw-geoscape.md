@@ -379,3 +379,20 @@ through the control port:
   (`logs/wingpu_ew_end_of_month_f.png`). The buttons work by mouse and by key.
 - **Seen, not ours:** in the A month a portrait of XCOM 2's Tygan was up in the screen's top right corner, most likely
   XCOM 2's own comm link for the research it saw finish. Not looked into.
+
+## Report (2026-11-17, detection as Long War has it)
+
+**Read** (`XGGeoscape.DetectUFO`, `TrackUFO`, `RadarUpdate`; `XGShip_UFO.IsInCountry`): a UFO is seen through its *target*
+country, not along a path: while it is over that country (any leg but its departure), the country's satellite sees it;
+without one, a hunting UFO (objective 4) is seen anyway, else each ready interceptor in range rolls once for the whole flight
+(`m_eSpecies` marks the roll as spent). An Overseer (ship 9) cannot be seen at all without a Hyperwave Relay; a landed UFO is
+not newly seen. The radar runs every update, so a satellite that arrives while a UFO is still over the country sees it.
+
+**Done** (`XComGameState_LWStrategy.Seen`, `Detected`, `TickUfo`): the Overseer's rule, the hunt's, and the satellite seeing a
+UFO already over the country (each hour of its time there); the interceptors' roll stays once a UFO.
+
+**Checked on wingpu** (a new campaign run through two months with nothing answered): the month's Overseers over the United
+States (watched by the starting satellite) passed without being seen, as Long War has it without the Relay.
+
+**Struck from STATUS:** "UFOs seen as they cross watched countries": Long War has no such rule. What the missing globe still
+costs is the legs' lengths (an hour each here, `LegHours`).

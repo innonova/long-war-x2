@@ -1025,16 +1025,16 @@ function TickUfo(int i)
 		Ufos[i].Status = 1;
 		Ufos[i].Until = Hours + Legs * class'LWStrategyRules'.static.LegHours() + (Ufos[i].Flight == 1 ? Ufos[i].SpendHours : 0);
 		// Without a satellite, each ready interceptor on the continent may spot it, twice as likely with the
-		// Foundry's Enhanced UFO Detection (35) (XGGeoscape: GetNumInterceptorsInRangeAndAvailable).
+		// Foundry's Enhanced UFO Detection (35) (XGGeoscape: GetNumInterceptorsInRangeAndAvailable): rolled once a UFO.
 		Ready = class'LWHangar'.static.ReadyOn(CountryContinent(Ufos[i].Country));
-		if (Countries[Ufos[i].Country].bSatellite || Rand(100) < class'LWStrategyRules'.default.InterceptorDetectPct * (FoundryDone.Find(35) != INDEX_NONE ? 2 : 1) * Ready.Length)
-		{
-			Ufos[i].bDetected = true;
-			Note("UFO detected over" @ CountryName(Ufos[i].Country) $ ":" @ UfoLabel(Ufos[i].Ufo) $ (Hyperwave() ? "," @ class'LWStrategyRules'.static.ObjectiveName(Ufos[i].Objective) : "") $ ".");
-			bStop = true;
-		}
+		if (Seen(Ufos[i]) || Rand(100) < class'LWStrategyRules'.default.InterceptorDetectPct * (FoundryDone.Find(35) != INDEX_NONE ? 2 : 1) * Ready.Length
+			&& (Ufos[i].Ufo != 9 || Hyperwave()))
+			Detected(i);
 		return;
 	case 1:
+		// Still over the country: a satellite there now sees it (XGGeoscape.RadarUpdate, every update).
+		if (!Ufos[i].bDetected && Seen(Ufos[i]))
+			Detected(i);
 		if (Hours < Ufos[i].Until)
 			return;
 		if (Ufos[i].Flight == 0)
@@ -1067,6 +1067,22 @@ function TickUfo(int i)
 		Ufos[i].Until = Hours + class'LWStrategyRules'.static.LegHours();
 		return;
 	}
+}
+
+/** A UFO over its country seen without a roll (XGGeoscape.DetectUFO): by the satellite over the country, or, hunting
+ *  (objective 4), at once; an Overseer (9) only with the Hyperwave Relay. */
+function bool Seen(LWUfo U)
+{
+	if (U.Ufo == 9 && !Hyperwave())
+		return false;
+	return Countries[U.Country].bSatellite || U.Objective == 4;
+}
+
+function Detected(int i)
+{
+	Ufos[i].bDetected = true;
+	Note("UFO detected over" @ CountryName(Ufos[i].Country) $ ":" @ UfoLabel(Ufos[i].Ufo) $ (Hyperwave() ? "," @ class'LWStrategyRules'.static.ObjectiveName(Ufos[i].Objective) : "") $ ".");
+	bStop = true;
 }
 
 /**
