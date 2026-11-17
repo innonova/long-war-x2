@@ -17,7 +17,7 @@ import { execFileSync } from 'node:child_process'
 import { wordsFrom } from '../../scripts/write-words.mjs'
 import { convertUI } from '../convert/ew-ui.ts'
 import { openImages } from '../convert/ew-images.ts'
-import { writePictures } from '../convert/ew-pictures.ts'
+import { cookPictures, writePictures } from '../convert/ew-pictures.ts'
 import { councilMissions, variantLevels, writeObjectives } from '../convert/ew-objectives.ts'
 import { writeKismet } from '../convert/ew-kismet.ts'
 import { convertPackage } from '../convert/ew-package.ts'
@@ -326,9 +326,12 @@ async function convertEW(ew, target) {
   } catch (e) {
     say(`Enemy Within's pictures could not be made ready (${e?.message ?? e}); the screens show none.`)
   }
-  // Which of EW's pictures each item, tech and Foundry project has, as Long War lists them (ew-pictures.ts).
+  // Which picture each item, tech and Foundry project has, as Long War lists them, and Long War's own pictures package in
+  // EW's cooked layout (ew-pictures.ts).
   try {
-    say(`Long War's pictures: ${writePictures(ew, target)} listed.`)
+    const own = join(cooked, 'LongWar.upk')
+    const cookedOwn = existsSync(own) ? (cookPictures(own, join(content, 'LongWar.upk')), true) : false
+    say(`Long War's pictures: ${writePictures(ew, target, cookedOwn)} listed${cookedOwn ? ', its own package converted' : ''}.`)
   } catch (e) {
     say(`Long War's pictures could not be listed (${e?.message ?? e}); the screens keep XCOM 2's.`)
   }

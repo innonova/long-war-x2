@@ -47,3 +47,18 @@ point either into EW's `UILibrary_StrategyImages` (128 items, 67 techs, 24 proje
 - **Checked on wingpu:** research with EW's Xenobiology picture (`logs/wingpu_ew_research_picture.png`); engineering with a
   Long War weapon (XCOM 2's picture, as expected) and no crash.
 - **Not checked:** the grey market's, the Foundry's and the request screen's pictures on screen.
+
+## Report (2026-11-17, Long War's own pictures)
+
+- **Why the package crashed:** Long War saved its `LongWar.upk` uncooked (package flags 0x1, licensee version 0), each
+  texture with its source art inline (the shotgun's: 14,834 bytes) and with only the GUID and one count after its mips. EW's
+  cooked textures have no source art and the GUID followed by 0, 1, 0, in a package marked cooked with licensee version
+  64. XCOM 2 read the uncooked layout wrongly and stopped.
+- **`cookPictures`** (`tools/convert/ew-pictures.ts`, run by the setup) writes each of its 389 textures again in EW's cooked
+  layout (its properties, no source art, its mips inline as they were, the GUID and EW's tail), and marks the package cooked
+  with EW's licensee version. Into the mod's Content as `LongWar.upk`; the list then takes Long War's pictures too: 357.
+- **Checked on wingpu:** engineering's Sawed-Off Shotgun with Long War's own picture (`logs/wingpu_lw_picture_sawedoff.png`),
+  the grey market's Sectoid corpse with EW's (`logs/wingpu_ew_greymarket_picture.png`), research's Xenobiology with EW's;
+  no crash. Converted on this machine by hand (the package copied in); the setup's run of it is checked with the next
+  download.
+- **Not checked:** the Foundry's and the council request screen's pictures on screen; the hangar's.
