@@ -647,7 +647,7 @@ export interface Temple {
 }
 
 /** Long War's character for an EW pawn type name, whatever its spelling (ePawnType_Sectoid_Commander, …_CyberDisc). */
-function charOfPawn(type: string): number {
+export function charOfPawn(type: string): number {
   const key = type.replace(/^ePawnType_/, '').replace(/_/g, '').toLowerCase()
   const more: Record<string, number> = { elder: 12, etherealuber: 19, sectopoddrone: 17, mutonberserker: 15 }
   if (more[key]) return more[key]!

@@ -185,3 +185,41 @@ the Uber removed: the four died with it and the mission summary showed 32 enemie
 **Not done:** the arenas' gates: EW's are InterpActors it opens by matinee, and the converter writes no InterpActors, so
 the gates are simply absent and the arenas open from the start (their aliens still come only at their stage); the Uber Ethereal fights as XCOM 2's Avatar template with Long War's stats; the
 cinematics, music and the Gollop Chamber's volunteer are not ported.
+
+## Report (2026-11-17, the HQ assault as EW scripts it: a Kismet interpreter)
+
+**Decision:** the HQ assault's level (`EWI_HQAssault_Stream`) carries a 5,700-line Kismet: a random choice between two
+alien sets, extra groups by difficulty from turn counters, which door the reinforcements use by where the squad stands,
+reinforcements when soldiers fall, objectives per wave, victory held until the final wave. Rather than translate that by
+hand, the mod now runs the level's Kismet itself:
+- **`tools/convert/ew-kismet.ts`** (run by the setup) exports a level's ops with their output links (op and input), variable
+  links (each resolved to the variable it stands for: named, a subsequence's external), the few properties acted on, each
+  sequence's inputs and outputs, and the variables' values (an actor: its class, place and a volume's box); and the level's
+  `XComWaveSystem` (sets, waves, groups). Into `Config/XComLWX2Kismet.ini`, on the player's machine (it holds the level's
+  objective texts), gitignored.
+- **`LWX2Kismet`** is the interpreter: events (level loaded, the roaming alien count, the battle begun, the four turn
+  events, a unit killed, remote events) start ops; set/add/compare ints and bools, random switch, delays (turn-based: they
+  only order things), remote events, subsequences in and out, mission handler states (`<State>_Begin`), objectives, units
+  counted in volumes, XCOM reinforcements and Delay Victory act as EW's do; cinematics, cameras, sounds, narrative, effects
+  and toggles pass on. Its values persist in `XComGameState_LWX2Kismet`.
+- **`LWX2WaveSystem`** is EW's wave system: sets begun at the start or by their remote event, ended by their disable event;
+  waves on their turn after the set began, at the beginning or end of the aliens' turn; groups of their type (a scalable
+  one: one of the squad's species that arrives that way) at their points, coming for XCOM; a group's activated and spawned
+  events go back to the Kismet. The battle cannot be won while a set is not done (`IsAlienWaveSystemActive`).
+- **`LWX2HQAssault`** ties it to the mission: Long War's squad is not stood at the map's pods (EW's level culls them); the
+  turn events come from XCOM 2's `PlayerTurnBegun`/`PlayerTurnEnded` (the mod's 2-second check missed empty aliens' turns);
+  reinforcements are the base's soldiers not on the field (as XCOM 2's Avenger defence's `SeqAct_SpawnUnitFromAvenger`
+  takes them; the wounded left out; they go home with the squad) or blueshirts made for the battle.
+
+**Checked on wingpu** (a forced HQ assault, `ForceKind=7`; waves killed with `killaliens`, turns ended): the script sent
+two blueshirts in at the start and three reinforcements on turn 2 (one soldier from the barracks), as EW's does; waves came
+at the end of the aliens' turns 1, 3, 4, 6, 7, 10, 11, 13, 14, 15 and 16 (difficulty groups among them); the objective read
+EW's own "Latest enemy wave in Command Center."; after turn 16's final wave the mission was won (42 aliens) and the game
+returned to strategy. Screenshot: `logs/wingpu_hq_assault_objective.png`.
+
+**Not done / approximate:**
+- Reinforcements are placed at their destination point; EW walks them in from the door.
+- Scalable groups choose among the squad's species by flying or not; EW also knows which species can drop in.
+- Blueshirts are XCOM 2 rookies with its default loadout, not EW's base security.
+- The map is dark in places (its lighting, as with other interiors).
+- The council assault variants' own Kismet could now run the same way; not wired yet.

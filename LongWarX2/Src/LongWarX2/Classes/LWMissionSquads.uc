@@ -81,8 +81,9 @@ static function SpawnAtEWPods()
 	Squad = SquadNow();
 	if (!class'LWX2PartPlacer'.default.bEWPlaced || Squad.Length == 0)
 		return;
-	// The Temple Ship stands its own arenas (LWX2TempleShip).
-	if (class'LWX2TempleShip'.static.Active())
+	// The Temple Ship stands its own arenas (LWX2TempleShip); the HQ assault's aliens come by its waves (LWX2HQAssault: EW's
+	// level culls its pods at the start).
+	if (class'LWX2TempleShip'.static.Active() || class'LWX2HQAssault'.static.Active())
 		return;
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
 		if (Unit.GetTeam() == eTeam_Alien && Unit.IsAlive() && !Unit.bRemovedFromPlay)

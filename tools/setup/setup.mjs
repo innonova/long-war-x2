@@ -18,6 +18,7 @@ import { wordsFrom } from '../../scripts/write-words.mjs'
 import { convertUI } from '../convert/ew-ui.ts'
 import { openImages } from '../convert/ew-images.ts'
 import { councilMissions, variantLevels, writeObjectives } from '../convert/ew-objectives.ts'
+import { writeKismet } from '../convert/ew-kismet.ts'
 import { convertPackage } from '../convert/ew-package.ts'
 import { convertUnits } from '../convert/ew-units.ts'
 import { tealEarth } from '../convert/ew-earth.ts'
@@ -311,6 +312,12 @@ async function convertEW(ew, target) {
     say(`Enemy Within's council and EXALT missions: ${writeObjectives(cooked, target)} objectives read.`)
   } catch (e) {
     say(`Enemy Within's council missions' objectives could not be read (${e?.message ?? e}); they play as assaults.`)
+  }
+  // The levels whose own Kismet the mod runs (ew-kismet.ts): the HQ assault's, with its wave system.
+  try {
+    say(`Enemy Within's level scripts: ${writeKismet(cooked, target)} read.`)
+  } catch (e) {
+    say(`Enemy Within's level scripts could not be read (${e?.message ?? e}); the HQ assault plays as an assault.`)
   }
   // EW's strategy pictures, in the converted base (ew-images.ts).
   try {

@@ -264,6 +264,9 @@ function CheckSwept()
 	// Progeny's Furies (LWX2Furies): the alarm and the execution, and no victory before the console is disarmed.
 	if (!class'LWX2Furies'.static.Update())
 		return;
+	// The HQ assault (LWX2HQAssault): its level's Kismet and wave system, and no victory before they release it.
+	if (!class'LWX2HQAssault'.static.Update())
+		return;
 	// The Temple Ship (LWX2TempleShip): its arenas, swarms and boss, and no victory before the Uber Ethereal is dead.
 	if (!class'LWX2TempleShip'.static.Update())
 		return;
@@ -317,6 +320,8 @@ static function LongWarObjectives()
 		Label = class'LWX2Furies'.static.ObjectiveText();
 	if (class'LWX2TempleShip'.static.ObjectiveText() != "")
 		Label = class'LWX2TempleShip'.static.ObjectiveText();
+	if (class'LWX2HQAssault'.static.ObjectiveText() != "")
+		Label = class'LWX2HQAssault'.static.ObjectiveText();
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 	if (Battle == none || Battle.MapData.ActiveMission.sType == "Terror")
 		return;
