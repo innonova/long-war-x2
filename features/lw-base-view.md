@@ -453,8 +453,10 @@ Test aids: `ewset <path> <value>`, `ewinvoke <function> [args]` (at once, its re
   tag (`UIMovie_3D.ShowDisplayByTag`), so the listener spawns one with the blueprint's mesh and material beside the
   soldier as EW's camera sees it (`ArmoryDisplayForward`, `Side`, `Up`, `Yaw`, `Scale` in `XComLWEWMaps.ini`). The
   blueprint's display was not unreadable after all: EW's base stands at an offset far below the world (`BaseOffset`).
-  **Not seen on screen yet:** the menu did not appear where it was put; whether the shared material draws the movie
-  there, or the display stands hidden, is the next thing to find out.
+  **Not seen on screen yet:** the menu did not appear where it was put. A second look put it straight between the
+  camera and the soldier: it is shown (not hidden), with the Avenger's display material, and still nothing is drawn
+  there. Left: whether XCOM 2 draws its 3D UI meshes only through its own UI cameras or render pass, which the
+  next try should start from.
 - **Two things in the way of the look,** seen on wingpu: big grey curved panels fill EW's armory behind the soldier
   (EW's own room geometry, not our display: they stayed with our display moved far away), and EW's HUD (the clock, the
   council report, the resources) stays over the armory.

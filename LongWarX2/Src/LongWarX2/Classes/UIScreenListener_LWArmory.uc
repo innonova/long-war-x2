@@ -85,6 +85,8 @@ static function Place(UIArmory Armory)
 			Ours.SetDrawScale3D(Display.DrawScale3D);
 			Ours.SetDrawScale(Display.DrawScale * class'LWX2EWBase'.default.ArmoryDisplayScale);
 			Armory.Movie.Pres.Get3DMovie().ShowDisplay(Armory.DisplayTag);
+			`log("LongWarX2: armory in EW's: our display hidden" @ Ours.StaticMeshComponent.HiddenGame @ Ours.bHidden @ "material" @ Ours.StaticMeshComponent.GetMaterial(0)
+				@ "camera" @ CamLoc @ "soldier" @ Loc, , 'LongWarX2');
 		}
 	}
 	Placement.SetLocation(Loc);
