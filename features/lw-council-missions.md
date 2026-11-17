@@ -428,3 +428,10 @@ mission summary, and the council paid with Furies' three named soldiers. The exe
 **Step 4 stands at:** the hive, Progeny's three missions and the levels' drops are in; the Meld tutorial is left out
 (tutorial only). Left: the council assaults' own variant Kismet beyond their drops, and the parts listed as not ported
 in each report.
+
+## Report (2026-11-17, the council assaults' own Kismet)
+
+Read with the new Kismet exporter (`ew-kismet.ts`, see `lw-story.md`): the six assault variants' levels (Street Overpass,
+Pier, Truck Stop, Industrial Office, Grand Cemetery, Research Outpost) hold only narrative in their Kismet (lines spoken as
+squad members are counted and units killed) beside the alien drops `LWX2LevelDrops` already plays. Nothing of their play is
+missing; the gap is struck from STATUS.
