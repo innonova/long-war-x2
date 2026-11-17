@@ -43,12 +43,26 @@ simulated function OnInit()
 	Movie.SetVariableBool(MCPath $ ".theEventList._visible", false);
 	Movie.Invoke(MCPath $ ".theMissionList.onLoad", NoArgs);
 	ListTarget = class'UILWEWAlertTarget'.static.At(self, MCPath $ ".theMissionList");
+	LookAtRoom();
 	SetTimer(0.2, false, nameof(Refresh));
+}
+
+/** EW's Mission Control room behind the screen (its MissionControl camera in EW's base, as EW enters the room). */
+function LookAtRoom()
+{
+	local LWX2EWBase B;
+
+	B = class'LWX2EWBase'.static.Get(self);
+	if (B == none)
+		return;
+	B.Show();
+	B.LookAt('MissionControl', 1.0);
 }
 
 simulated function OnReceiveFocus()
 {
 	super.OnReceiveFocus();
+	LookAtRoom();
 	if (Geo != none)
 		Geo.Refresh();
 	Refresh();

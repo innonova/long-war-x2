@@ -184,3 +184,11 @@ panel: EW has no Mission Control alert for them (a cinematic, the Situation Room
   out of Mission Control.
 - **Open:** EW's globe (the Mission Control room shows the base camera's view); the scan as EW's running clock; the council
   requests' own screen.
+
+## Report (2026-11-17, the room)
+
+- **EW's Mission Control room behind the screen:** Mission Control now looks through EW's own `MissionControl` camera in EW's
+  base (`LWX2EWBase.LookAt`, as the hub's rooms do), on opening and whenever it comes back on top: the hologlobe projector,
+  the consoles and the stairs, as EW shows the room. Checked on wingpu (`logs/wingpu_ew_mission_control_room.png`).
+- **The globe there** is a plain grey sphere: the hologlobe's material is not converted (and EW's globe, with the UFOs and
+  missions on it, is not ported). Next.
