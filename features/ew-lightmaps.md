@@ -62,3 +62,16 @@ the rooms go black: all their light is those lights.
   (`logs/compare/lightmaps-first.png`, EW left, the port right; not committed). Still to come: EW's glowing parts (light
   rings, strips, monitors: emissive materials without a diffuse, not lightmapped), the brightness checked against EW's
   pixels, then the mission maps (`LightmapMaps`).
+
+## Report (2026-11-17, EW's glowing parts)
+
+- **The converter** marks EW's glowing looks `Kind=Glow` (`HQ_ColorizedLight*`, `HQ_ConsoleScreen*`) with their
+  `TintColor` and a console's screen picture: 199 in the base. They get XCOM 2's `Objective_UI` in that colour, the
+  base's teal where EW colours by the mesh's vertices (`GlowParent`, `GlowDefault` in `XComLWEWMaps.ini`).
+- **Seen on wingpu** (`logs/compare/lightmaps-glow.png`, not committed): the lab's light rings and hanging lamps glow
+  in EW's blue, its monitors are lit, the barracks' cutaway shells are dark as in EW.
+- **Found on the way:** the base's conversion fails level by level while the game is running (it holds the converted
+  packages through the build's hard links); `tools/test/on.sh` calls longer than its timeout report "fetch failed" and
+  leave the conversion's joining step undone. Run it with the game stopped, detached (a batch file), and poll its log.
+- **Left:** the consoles' screens show EW's test pattern (`HQscreens_test`, in green) where EW's show pictures EW's
+  code sets; the Situation Room's wall map; the mission maps (`LightmapMaps`).
