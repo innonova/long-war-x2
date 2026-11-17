@@ -5,6 +5,7 @@
 // leaves it for later (it stays on the Geoscape's list). The movie's functions are called by Invoke (XCOM 2's queued calls
 // do not reach an alert), and an alert whose name is also one of EW's ActionScript classes is attached under the converter's
 // name for it (tools/convert/ew-ui.ts: RadarContactAlert's instance is QadarContactAlertMC).
+// The alert's clicks come back under its own clip's path, where UILWEWAlertTarget stands to take them.
 // For now: a UFO detected (kind 1), a crash site (2) and a landed UFO (3); the other decisions keep the panel's buttons.
 class UILWEWAlert extends UILWEWScreen;
 
@@ -15,6 +16,7 @@ var localized string RadarContact, Contact, Location, UFOClass, Unidentified, Sc
 var int Kind, Index;
 var UILWGeoscape Geo;
 var string AlertPath;
+var UILWEWAlertTarget ClickTarget;
 
 /** Kinds this screen can show. */
 static function bool Handles(int K)
@@ -119,7 +121,7 @@ function Fill()
 	S = class'XComGameState_LWStrategy'.static.Get();
 	if (S == none || Index < 0 || Index >= S.Ufos.Length)
 	{
-		CloseScreen();
+		Leave();
 		return;
 	}
 	Ufo = S.Ufos[Index].Ufo;
@@ -133,11 +135,23 @@ function Fill()
 	Call("SetContact", Red(Caps(Contact)), S.UfoLabel(Ufo), true);
 	Call("SetLocation", Red(Caps(Location)), S.CountryName(Country), true);
 	Call("SetClass", Red(Caps(UFOClass)), S.Identified(Ufo) ? S.UfoLabel(Ufo) : Caps(Unidentified), true);
-	// (The keys shown: clicks on EW's alert buttons do not reach the screen yet, features/lw-mission-control.md.)
-	Button(0, Caps(Kind == 1 ? Scramble : SendSkyranger) @ "[ENTER]");
-	Button(1, Caps(Kind == 1 ? IgnoreContact : Ignore) @ "[ESC]");
+	Button(0, Caps(Kind == 1 ? Scramble : SendSkyranger));
+	Button(1, Caps(Kind == 1 ? IgnoreContact : Ignore));
 	Movie.Invoke(AlertPath $ ".UFOAlertFinishedLoading", NoArgs);
 	Movie.Invoke(AlertPath $ ".AlertFullyLoaded", NoArgs);
+	ClickTarget = class'UILWEWAlertTarget'.static.At(self, AlertPath);
+}
+
+/** The alert closed: its click target no longer one of the screen's panels (it made no clip of its own to remove). */
+function Leave()
+{
+	if (ClickTarget != none)
+	{
+		ChildPanels.RemoveItem(ClickTarget);
+		ClickTarget.Destroy();
+		ClickTarget = none;
+	}
+	CloseScreen();
 }
 
 /** The decision taken: the alert closed, the Geoscape acts (the air war, squad select). */
@@ -149,7 +163,7 @@ function Accept()
 	G = Geo;
 	K = Kind;
 	I = Index;
-	CloseScreen();
+	Leave();
 	if (G != none)
 		G.ActOn(K, I);
 }
@@ -169,7 +183,7 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 		}
 		if (InStr(Target, "button_1") != INDEX_NONE || (args.Length > 1 && InStr(args[args.Length - 2], "button_1") != INDEX_NONE))
 		{
-			CloseScreen();
+			Leave();
 			return;
 		}
 	}
@@ -190,7 +204,7 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		case class'UIUtilities_Input'.const.FXS_BUTTON_B:
 		case class'UIUtilities_Input'.const.FXS_KEY_ESCAPE:
 		case class'UIUtilities_Input'.const.FXS_R_MOUSE_DOWN:
-			CloseScreen();
+			Leave();
 			return true;
 	}
 	return super.OnUnrealCommand(cmd, arg);

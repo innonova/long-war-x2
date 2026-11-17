@@ -51,17 +51,21 @@ UFOs, council missions, EXALT, the alien base, the Temple Ship, a satellite lost
 - **Checked on wingpu:** a new campaign, time run on the Geoscape: at the first detected UFO the alert opened ("UFO CONTACT",
   "unidentified small UFO", "United States", "UNIDENTIFIED", SCRAMBLE INTERCEPTORS / IGNORE CONTACT); Enter opened the air war
   on that UFO. Screenshot: `logs/wingpu_ew_ufo_alert.png`.
-- **Open:** clicks on the alert's buttons do not reach the screen yet (no mouse event arrives; EW's `MouseHandler` dispatches
-  from the screen's root, `isMouseHit`, `getNextChildHandler`, which this movie may need set up first); Enter and Esc work.
+- **Clicks:** solved the same day, below (*The clicks*). Enter and Esc work too.
   Behind the alert is whatever the camera shows (the Avenger); the other decisions still use the panel's buttons.
 
-### The clicks (2026-11-17, not solved)
+### The clicks (2026-11-17, solved)
 
-What was tried, with the alert open on wingpu: the buttons are visible and enabled and carry EW's `MouseHandler`
-(`button_0.onRelease`, `mouseHandler`); their parents carry none; no mouse event of any kind (not even the hover's
-`MOUSE_IN`) reaches the screen. Not the cause: the movie's other panels (`theEventList`, `theClock`, `theMissionList`
-hidden), the alert's frame (`bgRight` hidden), the alert container's depth (`swapDepths` to the top), the click's
-coordinates (the game's UI coordinates, hovering first), a mouse guard (XCOM 2's `bConsumeMouseEvents` is off).
-EW's `MouseHandler_onRelease` returns at once unless `isMouseHit`, which asks Scaleform's `Mouse.getTopMostEntity()` and
-wants it inside the button: something else is topmost there. Next: a way to read the topmost entity (its `_target`) from
-the control port.
+The cause: EW's `AlertBase.OnChildMouseEvent` raises its buttons' events (`FlashRaiseMouseEvent`) under the alert's own
+clip path (`…theScreen.theAlertContainer.QadarContactAlertMC`), and XCOM 2's `UIMovie.FlashRaiseMouseEvent` hands an event
+only to a panel whose `MCPath` is exactly that path; there was none, so every event (hover and click) was dropped without a
+log line. The Flash side was fine all along (the earlier guesses about `isMouseHit` and the topmost entity were wrong:
+`isMouseHit` only refuses under a `mouseShield`, which this movie never sets).
+
+The fix: `UILWEWAlertTarget`, a panel that stands at the alert's path (bound to its existing clip, made nothing in Flash) as
+one of the alert screen's panels and passes the events to it; removed again as the alert closes. The buttons now show EW's
+labels alone (the `[ENTER]`/`[ESC]` hints are gone).
+
+Checked on wingpu, new campaigns: hovering `SCRAMBLE INTERCEPTORS` sends `MOUSE_IN` on `button_0`, clicking it opened the
+air war on the UFO; clicking `IGNORE CONTACT` closed the alert and left the UFO on the Geoscape's list. Screenshot:
+`logs/wingpu_ew_ufo_alert_clicks.png`. Not seen: a hover highlight on EW's buttons (none visible in the screenshot).
