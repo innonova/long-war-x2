@@ -189,11 +189,15 @@ function Refresh()
 	}
 	for (n = 0; n < MAX_ACTIONS; n++)
 	{
-		WinButtons[n].SetVisible(ActionKind[n] >= 2);
-		CaptureButtons[n].SetVisible(ActionKind[n] >= 2);
+		WinButtons[n].SetVisible(ActionKind[n] >= 2 && ActionKind[n] < 20);
+		CaptureButtons[n].SetVisible(ActionKind[n] >= 2 && ActionKind[n] < 20);
 	}
 	StatusText.SetText(S.PendingKind != 0 ? "A squad is out on a mission." : (ActiveCount(S) > 0 ? "XCOM's decision:" : "Nothing waits on XCOM. Run time to see the aliens move."));
-	for (i = S.Events.Length - 1; i >= 0 && i >= S.Events.Length - 14; i--)
+	// The council's open requests first (EW lists them in its Situation Room).
+	for (i = 0; i < S.Requests.Length; i++)
+		Events $= "Council request:" @ S.CountryName(S.Requests[i].Country) @ "wants" @ class'LWCouncilRequests'.static.Words(S.Requests[i])
+			@ "(" $ (S.Requests[i].bPending ? "XCOM has them" : S.Requests[i].HoursLeft $ "h left") $ "; offers" @ class'LWCouncil'.static.RewardsText(S.Requests[i].Rewards) $ ")\n";
+	for (i = S.Events.Length - 1; i >= 0 && i >= S.Events.Length - 14 + S.Requests.Length; i--)
 		Events $= S.Events[i] $ "\n";
 	EventsText.SetText(bShowStores ? StoresText(S) : Events);
 	StoresButton.SetText(bShowStores ? "EVENTS" : "STORES");
@@ -372,6 +376,13 @@ simulated function bool Act(int n)
 
 	if (n < 0 || n >= MAX_ACTIONS || ActionKind[n] == 0)
 		return false;
+	// A council request given or refused (LWCouncilRequests).
+	if (ActionKind[n] == 20 || ActionKind[n] == 21)
+	{
+		class'LWCouncilRequests'.static.Answer(ActionIndex[n], ActionKind[n] == 20);
+		Refresh();
+		return true;
+	}
 	if (ActionKind[n] == 1)
 	{
 		Air = Spawn(class'UILWInterception', Movie.Pres);

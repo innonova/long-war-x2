@@ -48,6 +48,21 @@ struct LWCouncilReward
 	var int SoldierClass;
 };
 
+/** A council request (LWCouncilRequests; Long War's TFCRequest): what the country asks for (an item, a satellite over it, a
+ *  jet on its continent), how many, its rewards rolled, the hours left; pending (XCOM holds enough: to answer now) or
+ *  current (to hand over when XCOM has them, until its hours are out). */
+struct LWRequest
+{
+	var int Id;
+	var int Country;
+	var name Item;
+	var int Amount;
+	var int Transfer;
+	var array<LWCouncilReward> Rewards;
+	var int HoursLeft;
+	var bool bPending;
+};
+
 struct LWSite
 {
 	var bool bTerror;
@@ -90,6 +105,13 @@ var int StartChoice;
 /** The council's missions (LWCouncil): the hours to the month's mission, whether that clock was started, those played. */
 var int CouncilCountdown;
 var bool bCouncilSetUp;
+/** The council's requests (LWCouncilRequests): those open, the hours to the next, the requests ever made (by EFCRequest), and
+ *  what each finished request added to its country's science (Long War's iScience + 10, its hunts' roll). */
+var array<LWRequest> Requests;
+var int RequestCountdown;
+var bool bRequestsSetUp;
+var array<int> RequestsMade;
+var array<int> CountryScience;
 /** Progeny's next mission (XGFundingCouncil.m_eNextProgenyMission: 25 Portent, 26 Deluge, 27 Furies, 28 the chain over);
  *  0 not begun (Portent next). */
 var int NextProgeny;
@@ -637,6 +659,7 @@ function Tick(XComGameState NewGameState)
 		Tally(Expired, T_ABDUCTIONS_IGNORED);
 	class'LWExalt'.static.Hour(NewGameState, self);
 	class'LWCouncil'.static.Hour(self);
+	class'LWCouncilRequests'.static.Hour(self);
 	if (Hours % HoursPerMonth() == 0)
 		EndMonth();
 }
@@ -769,7 +792,7 @@ function bool ShouldHunt(LWUfo U, float Intact)
 {
 	if (!Countries[U.Country].bSatellite || Countries[U.Country].bLeft)
 		return false;
-	if (Rand(100) < class'LWStrategyRules'.default.Countries[U.Country].Scientists / 2)
+	if (Rand(100) < (class'LWStrategyRules'.default.Countries[U.Country].Scientists + (U.Country < CountryScience.Length ? CountryScience[U.Country] : 0)) / 2)
 		return false;
 	if (Rand(100) >= int(100 * Intact))
 		return false;
@@ -1161,6 +1184,8 @@ function Leave(int Country)
 	}
 	Countries[Country].bLeft = true;
 	Countries[Country].bSatellite = false;
+	// Its requests go with it (XGFundingCouncil.OnCountryLeft).
+	class'LWCouncilRequests'.static.CountryLeft(self, Country);
 	if (Month != 0)
 		AlienResources -= 50;
 	// XGStrategy.CheckForLoseGame.
@@ -2028,6 +2053,8 @@ static function bool LaunchSatellite(int Country)
 	S.SatellitesReady--;
 	S.Countries[Country].bSatellite = true;
 	S.Tally(S.CountryContinent(Country), T_SATELLITES_LAUNCHED);
+	// A council request for a satellite there, met (OnSatelliteSuccessfullyTransferred).
+	class'LWCouncilRequests'.static.SatelliteArrived(NewGameState, S, Country);
 	S.AddPanic(Country, class'LWStrategyRules'.default.PanicSatAddedCountry);
 	S.AddContinentPanic(S.CountryContinent(Country), class'LWStrategyRules'.default.PanicSatAddedContinent);
 	S.Note("A satellite now watches" @ S.CountryName(Country) $ ".");
@@ -2057,6 +2084,7 @@ function EndMonth()
 
 	class'LWExalt'.static.MonthEnded(self);
 	class'LWCouncil'.static.MonthEnded(self);
+	class'LWCouncilRequests'.static.MonthEnded(self);
 	History = `XCOMHISTORY;
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom'));
 	XComHQ = XComGameState_HeadquartersXCom(GetParentGameState().ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
@@ -2328,6 +2356,17 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 			AddDecision(Kinds, Indexes, Labels, 11, i, "COUNCIL:" @ class'LWCouncil'.static.KindName(Sites[i].CouncilKind) @ "in" @ CountryName(Sites[i].Country) @ "(" $ (Sites[i].Until - Hours) $ "h;" @ class'LWCouncil'.static.RewardsText(Sites[i].Rewards) $ ")");
 		else if (Sites[i].Status == 1)
 			AddDecision(Kinds, Indexes, Labels, Sites[i].bTerror ? 5 : 4, i, (Sites[i].bTerror ? "RESPOND: terror in" : "RESPOND: abductions in") @ CountryName(Sites[i].Country) @ "(" $ (Sites[i].Until - Hours) $ "h)");
+	// The council's requests (LWCouncilRequests): one XCOM can meet, to give (or, pending, to refuse).
+	for (i = 0; i < Requests.Length; i++)
+	{
+		if (Requests[i].Transfer != 0)
+			continue;
+		if (class'LWCouncilRequests'.static.Held(Requests[i]) >= Requests[i].Amount)
+			AddDecision(Kinds, Indexes, Labels, 20, i, "COUNCIL REQUEST: give" @ CountryName(Requests[i].Country) @ class'LWCouncilRequests'.static.Words(Requests[i])
+				@ "for" @ class'LWCouncil'.static.RewardsText(Requests[i].Rewards) $ (Requests[i].bPending ? "" : " (" $ Requests[i].HoursLeft $ "h)"));
+		if (Requests[i].bPending)
+			AddDecision(Kinds, Indexes, Labels, 21, i, "COUNCIL REQUEST: refuse" @ CountryName(Requests[i].Country) $ "'s");
+	}
 	// EXALT: the covert operative ready for extraction (features/lw-exalt.md).
 	if (ExaltOperative > 0 && ExaltMissionUntil > Hours)
 		AddDecision(Kinds, Indexes, Labels, 9, 0, "COVERT OPERATION:" @ (ExaltMissionKind == 2 ? "data recovery" : "extraction") @ "in" @ CountryName(ExaltOperativeCountry) @ "(" $ (ExaltMissionUntil - Hours) $ "h)");

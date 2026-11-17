@@ -167,6 +167,7 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 		case 6:
 			AirWar.Jets[i].Continent = AirWar.Jets[i].TransferTo;
 			S.Note(AirWar.Jets[i].Callsign @ "has arrived in" @ class'LWStrategyRules'.static.ContinentName(AirWar.Jets[i].Continent) $ ".");
+			class'LWCouncilRequests'.static.JetArrived(NewGameState, S, AirWar.Jets[i].Continent);
 			break;
 		case 7:
 			S.Note(AirWar.Jets[i].Callsign @ "is refitted with" @ WeaponName(AirWar.Jets[i].Weapon) $ ".");
@@ -181,6 +182,7 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 		for (k = 0; k < AirWar.Orders[i].Count; k++)
 			NewJet(AirWar, 1, AirWar.Orders[i].Continent);
 		S.Note(AirWar.Orders[i].Count @ (AirWar.Orders[i].Count == 1 ? "interceptor has" : "interceptors have") @ "arrived in" @ class'LWStrategyRules'.static.ContinentName(AirWar.Orders[i].Continent) $ ".");
+		class'LWCouncilRequests'.static.JetArrived(NewGameState, S, AirWar.Orders[i].Continent);
 		AirWar.Orders.Remove(i, 1);
 		S.bStop = true;
 	}

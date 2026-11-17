@@ -288,6 +288,11 @@ function Handle(string Line, out array<string> Out)
 		// (Long War's EFCMission; a test aid).
 		Council(Args, Out);
 		return;
+	case "request":
+		// request [now [id]]: the council's open requests; 'request now [id]': a new one at once (that request if it passes; a
+		// test aid).
+		Requests(Args, Out);
+		return;
 	case "report":
 		// report: the month's tallies so far and the council's last report (its grade, funding, whether it is still to be
 		// seen); 'report show': EW's transmission and report opened again (a test aid).
@@ -2865,6 +2870,36 @@ function Spawns(out array<string> Out)
 }
 
 /** The month's tallies (XComGameState_LWStrategy.MonthTally, summed) and the council's last report. */
+/** The council's requests (LWCouncilRequests), and 'request now [id]' one made at once. */
+function Requests(array<string> Args, out array<string> Out)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local int i;
+	local bool bMade;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none)
+	{
+		Out.AddItem("ERR no Long War campaign");
+		return;
+	}
+	if (Args.Length > 1 && Args[1] ~= "now")
+	{
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2 test: a council request");
+		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+		bMade = class'LWCouncilRequests'.static.NewRequest(S, Args.Length > 2 ? int(Args[2]) : 0);
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		Out.AddItem(bMade ? "ok a request made" : "ERR no request passes now");
+		S = class'XComGameState_LWStrategy'.static.Get();
+		Refreshed();
+	}
+	Out.AddItem("next request in" @ S.RequestCountdown $ "h; made so far:" @ S.RequestsMade.Length);
+	for (i = 0; i < S.Requests.Length; i++)
+		Out.AddItem("request" @ i @ "id" @ S.Requests[i].Id @ S.CountryName(S.Requests[i].Country) @ class'LWCouncilRequests'.static.Words(S.Requests[i]) @ "held"
+			@ class'LWCouncilRequests'.static.Held(S.Requests[i]) @ "for" @ class'LWCouncil'.static.RewardsText(S.Requests[i].Rewards) @ (S.Requests[i].bPending ? "pending" : S.Requests[i].HoursLeft $ "h"));
+}
+
 function Report(array<string> Args, out array<string> Out)
 {
 	local XComGameState_LWStrategy S;
@@ -3369,6 +3404,9 @@ function string ResolveDecision(int n, bool bWon, int Stance, optional bool bCap
 	S.Decisions(Kinds, Indexes, Labels);
 	if (n < 0 || n >= Kinds.Length)
 		return "ERR no such decision";
+	// A council request: given (won) or refused (LWCouncilRequests).
+	if (Kinds[n] == 20 || Kinds[n] == 21)
+		return (class'LWCouncilRequests'.static.Answer(Indexes[n], Kinds[n] == 20) ? "answered" : "ERR not answered") @ Labels[n];
 	if (Kinds[n] != 1)
 	{
 		if (bWon)

@@ -157,8 +157,8 @@ Seen:
 - **The bonuses that wait on their system:**
   - ~~SHIVs and MECs: Ghost in the Machine, Robotics, NeoPanzers, Cyberware~~ (all four act:
     the report below);
-  - officers: the officer side of Sandhurst, and Gift of Osiris's medal hours;
-  - council requests and intel: Quai d'Orsay;
+  - officers: the officer side of Sandhurst; ~~Gift of Osiris's medal hours~~ (2026-11-17, lw-fatigue);
+  - ~~council requests: Quai d'Orsay~~ (2026-11-17, lw-council-requests: its sooner requests, cooldowns and science);
   - the Illuminator Gunsight item: Ancient Artifact;
   - small slots on early armour: Jungle Scouts.
 - **The country bonuses on the Situation Room,** as EW shows them.

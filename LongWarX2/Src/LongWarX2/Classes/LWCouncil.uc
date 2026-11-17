@@ -313,16 +313,26 @@ static function string RewardsText(array<XComGameState_LWStrategy.LWCouncilRewar
 /** Won (GrantFCRewards): the rewards paid. */
 static function Grant(XComGameState NewGameState, XComGameState_LWStrategy S, int SiteIndex)
 {
+	GrantRewards(NewGameState, S, S.Sites[SiteIndex].Rewards, S.Sites[SiteIndex].Country, S.Sites[SiteIndex].CouncilMission);
+	// Progeny on to its next mission (PostCombat: m_eNextProgenyMission + 1; after Furies the chain is over).
+	if (S.Sites[SiteIndex].CouncilMission == NextProgeny(S))
+		S.NextProgeny = S.Sites[SiteIndex].CouncilMission + 1;
+	if (S.Sites[SiteIndex].CouncilMission == 29)
+		HivePanicBonus(S);
+	S.Note("The council paid for the" @ KindName(S.Sites[SiteIndex].CouncilKind) @ "in" @ S.CountryName(S.Sites[SiteIndex].Country) $ ":" @ RewardsText(S.Sites[SiteIndex].Rewards) $ ".");
+}
+
+/** Rewards paid for a country (GrantFCRewards): a council mission's (Mission: its named soldiers'), or a request's. */
+static function GrantRewards(XComGameState NewGameState, XComGameState_LWStrategy S, array<XComGameState_LWStrategy.LWCouncilReward> Rewards, int Country, optional int Mission)
+{
 	local XComGameState_HeadquartersXCom XComHQ;
 	local XComGameState_LWStrategy.LWCouncilReward R;
 	local XComGameState_Unit Soldier;
-	local int Country;
 
-	Country = S.Sites[SiteIndex].Country;
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.GetGameStateForObjectID(class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
 	if (XComHQ == none)
 		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
-	foreach S.Sites[SiteIndex].Rewards(R)
+	foreach Rewards(R)
 	{
 		switch (R.Type)
 		{
@@ -350,18 +360,12 @@ static function Grant(XComGameState NewGameState, XComGameState_LWStrategy S, in
 			break;
 		case 9:
 			// A named soldier (Progeny's: GiveCustomSoldier).
-			Soldier = class'LWX2CustomSoldiers'.static.Give(NewGameState, XComHQ, S.Sites[SiteIndex].CouncilMission, R.Amount);
+			Soldier = class'LWX2CustomSoldiers'.static.Give(NewGameState, XComHQ, Mission, R.Amount);
 			if (Soldier != none)
 				S.Note(Soldier.GetFullName() @ "joins XCOM.");
 			break;
 		}
 	}
-	// Progeny on to its next mission (PostCombat: m_eNextProgenyMission + 1; after Furies the chain is over).
-	if (S.Sites[SiteIndex].CouncilMission == NextProgeny(S))
-		S.NextProgeny = S.Sites[SiteIndex].CouncilMission + 1;
-	if (S.Sites[SiteIndex].CouncilMission == 29)
-		HivePanicBonus(S);
-	S.Note("The council paid for the" @ KindName(S.Sites[SiteIndex].CouncilKind) @ "in" @ S.CountryName(Country) $ ":" @ RewardsText(S.Sites[SiteIndex].Rewards) $ ".");
 }
 
 /** The hive won with Canada gone from the council (ApplyChryssalidHivePanicBonus): the United States or Mexico loses 20 panic,
