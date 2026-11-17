@@ -327,6 +327,27 @@ exports.forEach((e, i) => {
   })
 })
 
+/** EW's 3D UI panels (UIDisplay_LevelActor, placed by tag: EW's screens draw on them, features/ew-3d-screens.md). */
+interface Display { tag: string; loc: number[]; rot: number[]; scale: number[] }
+const displays: Display[] = []
+exports.forEach((e, i) => {
+  if (e.type !== 'UIDisplay_LevelActor' || !e.fullName.startsWith('TheWorld.PersistentLevel.')) return
+  const tags = actorTags(i)
+  if (!tags) return
+  const tag = inherited(i, tags, 'Tag', 26)
+  const loc = inherited(i, tags, 'Location', 26)
+  const rot = inherited(i, tags, 'Rotation', 26)
+  const ds = inherited(i, tags, 'DrawScale', 26)
+  const ds3 = inherited(i, tags, 'DrawScale3D', 26)
+  const s1 = ds ? f32(ds, 0) : 1
+  displays.push({
+    tag: tag ? (pkg.names[new DataView(tag.value.buffer, tag.value.byteOffset).getInt32(0, true)].name as string) : '',
+    loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
+    rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
+    scale: ds3 ? [f32(ds3, 0) * s1, f32(ds3, 1) * s1, f32(ds3, 2) * s1] : [s1, s1, s1],
+  })
+})
+
 /**
  * A static mesh component's baked lighting, after its properties (the component's leading 8 bytes, then the tagged
  * properties): its LODs; the first's shadow maps and shadow vertex buffers (counts and references), then its light map:
@@ -1042,6 +1063,8 @@ const lines = [
       `Radius=${n(l.radius)},Brightness=${n(l.brightness)},Color=(R=${l.color[0]},G=${l.color[1]},B=${l.color[2]},A=${l.color[3]}),` +
       `Falloff=${n(l.falloff)},Inner=${n(l.inner)},Outer=${n(l.outer)},Lower=${n(l.lower)})`,
   ),
+  "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
+  ...displays.map((d) => `+Displays=(Tag=${d.tag || 'None'},Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}))`),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
     ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''})`,
