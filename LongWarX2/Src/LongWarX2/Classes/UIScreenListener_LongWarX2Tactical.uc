@@ -245,6 +245,8 @@ function CheckSwept()
 	class'LWX2LevelDrops'.static.Update();
 	// Zombies and their Chryssalid eggs (LWX2Zombies).
 	class'LWX2Zombies'.static.Update();
+	// Bioelectric Skin's reveal (LWX2Bioelectric).
+	class'LWX2Bioelectric'.static.Update();
 	// A council bomb disposal (LWX2CouncilBomb): its timer, and no victory until the bomb is disarmed.
 	if (!class'LWX2CouncilBomb'.static.Update())
 		return;

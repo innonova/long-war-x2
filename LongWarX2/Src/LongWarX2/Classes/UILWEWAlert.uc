@@ -27,6 +27,9 @@ var localized string ObjectiveNames[11];
  *  after the weapon, the jets' statuses (XGLocalizedData.ShipStatusNames, by Long War's interceptor status) and their time
  *  (XGShip_Interceptor: hours, days). */
 var localized string LaunchStances, Kills, ValueHours, ValueDays;
+/** Mission Control's list (UILWEWMissionControl): its title, the scan, the hours left, the missions' titles (XGMission_*). */
+var localized string MissionsTitle, ScanForActivity, HoursLeft, TitleAbductions, TitleTerror, TitleCrash, TitleLanded,
+	TitleAlienBase, TitleTempleShip, TitleHQ, TitleCovertExtraction, TitleDataRecovery, TitleExaltRaid;
 var localized string StatusNames[8];
 /** EW's mission difficulties' names (XGLocalizedData.MissionDifficultyNames: light to swarming). */
 var localized string DifficultyNames[4];
@@ -56,7 +59,6 @@ static function bool Handles(int K)
 static function bool OpenNext(UILWGeoscape Geoscape, array<int> Kinds, array<int> Indexes)
 {
 	local XComHQPresentationLayer HQPres;
-	local UILWEWAlert EWScreen;
 	local int i, j;
 
 	HQPres = XComHQPresentationLayer(Geoscape.Movie.Pres);
@@ -73,17 +75,31 @@ static function bool OpenNext(UILWGeoscape Geoscape, array<int> Kinds, array<int
 			for (j = 0; j < Kinds.Length; j++)
 				if (Kinds[j] == 4 && Geoscape.AlertsShown.Find(400000 + Indexes[j]) == INDEX_NONE)
 					Geoscape.AlertsShown.AddItem(400000 + Indexes[j]);
-		DynamicLoadObject(default.UIPackage $ ".ewxMissionControl", class'Object', true);
-		EWScreen = HQPres.Spawn(class'UILWEWAlert', HQPres);
-		EWScreen.Package = name("/ package/ewxMissionControl/MissionControl");
-		EWScreen.MCName = 'theScreen';
-		EWScreen.Kind = Kinds[i];
-		EWScreen.Index = Indexes[i];
-		EWScreen.Geo = Geoscape;
-		HQPres.ScreenStack.Push(EWScreen);
-		return true;
+		return Open(Geoscape, Kinds[i], Indexes[i]);
 	}
 	return false;
+}
+
+/** A decision's alert opened (Mission Control's list: the mission chosen there); abductions straight to their site
+ *  selection, as EW's list opens it (XGMissionControlUI.OnMissionInput). False if there is none for it. */
+static function bool Open(UILWGeoscape Geoscape, int K, int I, optional bool bSites)
+{
+	local XComHQPresentationLayer HQPres;
+	local UILWEWAlert EWScreen;
+
+	HQPres = XComHQPresentationLayer(Geoscape.Movie.Pres);
+	if (HQPres == none || !Handles(K) || !HasEWScreens() || HQPres.ScreenStack.GetFirstInstanceOf(class'UILWEWAlert') != none)
+		return false;
+	DynamicLoadObject(default.UIPackage $ ".ewxMissionControl", class'Object', true);
+	EWScreen = HQPres.Spawn(class'UILWEWAlert', HQPres);
+	EWScreen.Package = name("/ package/ewxMissionControl/MissionControl");
+	EWScreen.MCName = 'theScreen';
+	EWScreen.Kind = K;
+	EWScreen.Index = I;
+	EWScreen.Geo = Geoscape;
+	EWScreen.bSelection = bSites && K == 4;
+	HQPres.ScreenStack.Push(EWScreen);
+	return true;
 }
 
 simulated function OnInit()
@@ -95,6 +111,12 @@ simulated function OnInit()
 	Movie.Invoke(MCPath $ ".HideNonAlertComponents", NoArgs);
 	Movie.SetVariableBool(MCPath $ ".theMissionList._visible", false);
 	Movie.SetVariableBool(MCPath $ ".clockMC._visible", false);
+	if (bSelection)
+	{
+		Load("AbductionSelection");
+		SetTimer(0.2, false, nameof(FillSelection));
+		return;
+	}
 	switch (Kind)
 	{
 		case 1: Load("RadarContactAlert"); break;

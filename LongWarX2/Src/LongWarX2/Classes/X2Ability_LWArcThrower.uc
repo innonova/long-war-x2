@@ -1,7 +1,8 @@
 // Long War's arc thrower (features/lw-gear.md, phase 5): a shot at an alien close by that, if it stuns, takes it
 // alive: off the field and home as Long War's captive (X2Effect_LWCapture, XComGameState_LWStrategy.PendingCaptives).
 // One charge an arc thrower; the shot ends the soldier's turn as Long War's shots do. Never at robots, chryssalids,
-// zombies (XGTacticalGameCore.CanBeStunned); not without Alien Containment in the base. Its chance: X2AbilityToHitCalc_LWStun.
+// zombies (XGTacticalGameCore.CanBeStunned, which asks nothing of the base: without Alien Containment the captive is lost
+// at home, XComGameState_LWStrategy). Its chance: X2AbilityToHitCalc_LWStun.
 class X2Ability_LWArcThrower extends X2Ability config(LWGear);
 
 /** In tiles: Enemy Within's arc thrower is a short-range shot (APPROXIMATION, its range is not in its config). */
@@ -45,8 +46,6 @@ static function X2AbilityTemplate Stun()
 	Template.AbilityCosts.AddItem(AmmoCost);
 
 	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
-	// (Long War lets no one carry an arc thrower without Alien Containment.)
-	Template.AbilityShooterConditions.AddItem(new class'X2Condition_LWContainment');
 	Template.AddShooterEffectExclusions();
 	Target = new class'X2Condition_UnitProperty';
 	Target.ExcludeDead = true;

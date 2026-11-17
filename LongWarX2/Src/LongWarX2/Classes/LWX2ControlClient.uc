@@ -2567,7 +2567,7 @@ function Enemies(out array<string> Out, optional bool bAll)
 		World.GetTileFOWValue(T, FogStatus, FogFlags);
 		Vis = XGUnit(Unit.GetVisualizer());
 		Out.AddItem("  seen by" @ class'X2TacticalVisibilityHelpers'.static.GetNumEnemyViewersOfTarget(Unit.ObjectID) @ "tile fog" @ FogStatus @ "flags" @ FogFlags
-			@ "visible to teams" @ (Vis != none ? string(Vis.m_eTeamVisibilityFlags) : "no visualizer") @ "pawn hidden" @ ((Vis != none && Vis.GetPawn() != none) ? string(Vis.GetPawn().bHidden) : "-")
+			@ "visible to teams" @ (Vis != none ? string(Vis.m_eTeamVisibilityFlags) : "no visualizer") @ "pawn hidden" @ ((Vis != none && Vis.GetPawn() != none) ? string(Vis.GetPawn().bHidden) : "-") @ "outlined" @ ((Vis != none && Vis.GetPawn() != none) ? string(Vis.GetPawn().bAffectedByTargetDefinition) : "-")
 			@ "forced" @ Unit.ForceModelVisible()
 			@ "mesh" @ ((Vis != none && Vis.GetPawn() != none && Vis.GetPawn().Mesh != none) ? PathName(Vis.GetPawn().Mesh.SkeletalMesh) : "-")
 			@ "weapon" @ WeaponMeshOf(Unit)

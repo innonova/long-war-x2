@@ -658,6 +658,12 @@ export function makeAlertWords({ strategyLoc }) {
     ['LaunchStances', one(sections('XGInterceptionUI'), 'm_strLabelLaunchFightersPC')], ['Kills', one(sections('XGInterceptionUI'), 'm_strLabelMaxSpeed')],
     ['ValueHours', one(sections('XGShip_Interceptor'), 'm_strValueHours')], ['ValueDays', one(sections('XGShip_Interceptor'), 'm_strValueDays')],
     ...['Ready', 'OnMission', 'Refuelling', 'Damaged', 'Repairing', 'Destroyed', 'Transfer', 'Rearming'].map((k, i) => [`StatusNames[${i}]`, one(data, `ShipStatusNames[eShipStatus_${k}]`)]),
+    // Mission Control's list (UILWEWMissionControl).
+    ['MissionsTitle', one(sections('UIMissionControl_MissionList'), 'm_strMissionListTitle')], ['ScanForActivity', mc('m_strLabelScanUFO')],
+    ['HoursLeft', mc('m_strLabelHours')],
+    ...[['TitleAbductions', 'Abduction'], ['TitleTerror', 'Terror'], ['TitleCrash', 'UFOCrash'], ['TitleLanded', 'UFOLanded'],
+      ['TitleAlienBase', 'AlienBase'], ['TitleTempleShip', 'TempleShip'], ['TitleHQ', 'HQAssault'], ['TitleCovertExtraction', 'CovertOpsExtraction'],
+      ['TitleDataRecovery', 'CaptureAndHold'], ['TitleExaltRaid', 'ExaltRaid']].map(([k, m]) => [k, one(sections(`XGMission_${m}`), 'm_strTitle')]),
     ['AssaultAlienBase', mc('m_strLabelAssaultAlienBase')], ['AssaultTempleShip', mc('m_strLabelAssaultTempleShip')],
     ['TempleShipText', mc('m_strLabelTempleShip')], ['Assault', mc('m_strLabelAssault')], ['Wait', mc('m_strlabelWait')],
     ['ExaltTitle', mc('m_strLabelExaltAlertTitle')], ['ExaltBody', mc('m_strLabelExaltAlertBody')],

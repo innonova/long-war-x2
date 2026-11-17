@@ -161,3 +161,26 @@ panel: EW has no Mission Control alert for them (a cinematic, the Situation Room
   Missiles, Ready; `logs/wingpu_ew_ufo_alert_jets.png`), AGG on Raven-1 clicked: the air war on Raven-1, [AGGRESSIVE].
 - **Seen, not fixed:** the jet list runs down over the COUNCIL REPORT strip at the bottom right. That strip is not the alert
   movie's (its `theEventList` is hidden, `_visible` false); it belongs to the strategy HUD beneath.
+
+## Report (2026-11-17, Mission Control's screen)
+
+- **`UILWEWMissionControl`:** opening the Geoscape now opens EW's Mission Control over it (the Geoscape's plain panel stays
+  beneath, hidden, holding the state and acting; without EW's screens converted it is the Geoscape as before). EW's
+  MISSIONS list (`theMissionList`, as `UIMissionControl_MissionList` fills it from `XGMissionControlUI.UpdateMissions`): the
+  UFOs detected in flight as `UFO-<n>`, the missions waiting with their hours left (UFO Crash Site, UFO Landing Site, Alien
+  Abductions as one entry, Alien Terror Attack in <country>, Assault Base: <country>, Temple Ship Assault, XCOM Base
+  Defense, Covert Extraction / Covert Data Recovery, EXALT Base Raid, Council Mission: <kind>), in EW's colours and icons
+  (`GetMissionListItemIcon`), and SCAN FOR ACTIVITY last. Choosing an entry (click, or arrows and Enter) opens its EW alert
+  (abductions straight to the site selection, as EW's `OnMissionInput`); the HQ's defence, EXALT's raid and the council's
+  requests go to the Geoscape as before. The scan runs time until something happens (a month at most; the port's time runs
+  in steps, not EW's animated clock). Esc leaves Mission Control. The movie's clock and event list stay hidden: the strategy
+  HUD's are on screen.
+- **Approximation:** the council's requests stay in the list in the port's words until EW's request screen is wired (EW
+  answers them in the Situation Room).
+- **Words:** 13 more of EW's (the list's title, the scan, "hours left", the missions' titles): 80 alert words.
+- **Checked on wingpu:** a new campaign: MISSIONS with SCAN FOR ACTIVITY; the scan clicked ran to the first abductions, whose
+  alert opened over Mission Control; Esc: the list with ALIEN ABDUCTIONS 8 HOURS LEFT and the scan
+  (`logs/wingpu_ew_mission_control.png`); ALIEN ABDUCTIONS clicked: EW's site selection (UNITED KINGDOM); Esc twice: back
+  out of Mission Control.
+- **Open:** EW's globe (the Mission Control room shows the base camera's view); the scan as EW's running clock; the council
+  requests' own screen.

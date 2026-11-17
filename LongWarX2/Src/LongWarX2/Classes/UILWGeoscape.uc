@@ -119,6 +119,16 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	// EW's base behind it, when converted on this machine (features/lw-base-view.md).
 	class'LWX2EWBase'.static.Get(self).Show();
 	`log("LongWarX2: Long War Geoscape shown", , 'LongWarX2');
+	// EW's Mission Control over this panel, where EW's screens are converted (UILWEWMissionControl).
+	SetTimer(0.1, false, nameof(OpenEWMissionControl));
+}
+
+/** EW's Mission Control screen opened over this one, which then stays out of sight beneath it, holding the state and acting
+ *  for it. Without EW's screens this panel is the Geoscape. */
+simulated function OpenEWMissionControl()
+{
+	if (class'UILWEWMissionControl'.static.OpenOver(self))
+		Hide();
 }
 
 simulated function OnRemoved()
@@ -159,6 +169,7 @@ simulated function int RowOf(int i)
 
 function Refresh()
 {
+	local UILWEWMissionControl MissionControl;
 	local XComGameState_LWStrategy S;
 	local XComGameState_HeadquartersXCom XComHQ;
 	local array<int> Kinds, Indexes;
@@ -216,8 +227,12 @@ function Refresh()
 	// The council's monthly report, once the month has ended (EW's transmission, then its End of Month Report).
 	if (!S.bLost && XComHQPresentationLayer(Movie.Pres) != none)
 		class'UILWEWWorldReport'.static.OpenIfDue(XComHQPresentationLayer(Movie.Pres));
-	// A new decision: EW's Mission Control alert for it, where there is one (UILWEWAlert).
-	if (!S.bLost && S.PendingKind == 0 && Movie.Pres.ScreenStack.GetCurrentScreen() == self)
+	// EW's Mission Control's list brought up to date (UILWEWMissionControl), and a new decision: EW's alert for it, where
+	// there is one (UILWEWAlert), over this screen or Mission Control.
+	MissionControl = UILWEWMissionControl(Movie.Pres.ScreenStack.GetFirstInstanceOf(class'UILWEWMissionControl'));
+	if (MissionControl != none)
+		MissionControl.Refresh();
+	if (!S.bLost && S.PendingKind == 0 && (Movie.Pres.ScreenStack.GetCurrentScreen() == self || Movie.Pres.ScreenStack.GetCurrentScreen() == MissionControl))
 		class'UILWEWAlert'.static.OpenNext(self, Kinds, Indexes);
 }
 

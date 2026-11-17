@@ -160,3 +160,12 @@ the state in the Geoscape's). Its rules, read from Long War's code:
 - **Alien Containment and the arc thrower** (`XGFacility_Lockers.EquipSmallItem`: no arc thrower without containment):
   the arc thrower's stun is not offered in a mission while the base has no Alien Containment
   (`X2Condition_LWContainment`). XCOM 2 still lets the item be equipped. Not seen in a mission yet.
+
+## Correction (2026-11-17): the arc thrower without Alien Containment
+
+The report above read `XGFacility_Lockers.EquipSmallItem` as "no arc thrower without containment" and withheld the stun in
+missions while the base had none (`X2Condition_LWContainment`). That was a misreading. `EquipSmallItem` equips the arc
+thrower anyway and only sets `m_bNarrArcWarning` (EW's "UrgeContainment" voice line). EW's stun asks nothing of the base
+(`XGTacticalGameCore.CanBeStunned`). Without containment a captive is lost at home (`XGFacility_Hangar.UnloadArtifacts`),
+which the port already does. The condition is gone; the stun is offered whatever the base has. The voice line is not ported:
+the port has no narrative moments.

@@ -362,3 +362,17 @@ played through; not looked at frame by frame).
 The "post-mission fatigue of every mod" left open above is in: `LWFatigue.PowersHours` adds each gene mod's hours
 (`PerkHours`, Long War's `ItemBalance_Easy` iEng, with Gift of Osiris and Call to Arms cutting them as
 `DetermineTimeOut` does). STATUS no longer lists it.
+
+## Report (2026-11-17, Bioelectric Skin's reveal)
+
+- **The reveal** (`LWX2Bioelectric`, twice a second in a mission): every living enemy within EW's `BioelectricSkinRange`
+  (12 of EW's metres of 64 units: 768 units, eight tiles) of a soldier with Bioelectric Skin is drawn even out of sight (its
+  visualizer forced visible, as XCOM 2's `X2Action_Fire` shows a target it cannot see; the game's visibility, which targeting
+  uses, is untouched, so it cannot be shot unless seen, as in EW) and outlined as XCOM 2 outlines a unit the Reaper's Target
+  Definition marked (`bAffectedByTargetDefinition`); both are switched off as it leaves the reach. In place of EW's aura
+  particle (`P_Bioelectric_Skin_Enemy_Aura`), which the port does not have.
+- **Checked on wingpu** (Bioelectric Skin given by the control port; `enemies` now prints each pawn's outline): Sectoids
+  dropped 5 tiles from the squad were outlined and drawn; the pods 10 tiles and more away were not. **Not seen:** an enemy
+  within reach but out of sight (the ones within reach were in the soldier's view), and the outline itself was not clearly
+  visible in the screenshot at the camera's distance.
+- With this the gene mods have no stand-in left (`STATUS.md`).
