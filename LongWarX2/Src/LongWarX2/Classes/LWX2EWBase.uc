@@ -219,6 +219,20 @@ static function NeutralLook(CameraActor Cam)
 	Cam.CamOverridePostProcess.bShowFog = false;
 }
 
+/** Another lighting level for the base, live (a test aid: the control port's baselighting). */
+function string SetLighting(string Level)
+{
+	if (LightingLevel != none)
+		`MAPS.SetStreamingLevelVisible(LightingLevel, false);
+	LightingLevel = none;
+	BaseLighting = Level;
+	if (Level != "")
+		LightingLevel = `MAPS.AddStreamingMap(Level, BaseOffset, rot(0, 0, 0), false, true, true);
+	RefreshAmbient();
+	SetTimer(1.0, false, nameof(RefreshAmbient));
+	return "ok" @ Level @ ((Level == "" || LightingLevel != none) ? "" : "not found");
+}
+
 /** The strategy world's height fog, sky lights and sun off while EW's base is in view, back on with the Avenger's views.
  *  The base lies far below the Avenger, inside its fog (the scene drowned in the Avenger's sky colour), and the Avenger's
  *  sky and sun reach everywhere (the scene cast in its sky's colour); EW's own lights, placed with the base, light it. */

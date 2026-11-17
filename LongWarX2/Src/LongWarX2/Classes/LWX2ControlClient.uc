@@ -104,6 +104,20 @@ function Handle(string Line, out array<string> Out)
 		GetALocalPlayerController().ClientUpdateLevelStreamingStatus(name(Args[1]), true, Args.Length < 3 || Args[2] != "false", false);
 		Out.AddItem("ok" @ Args[1]);
 		return;
+	case "worldambient":
+		// A test aid: the world's ambient light overridden (WorldInfo's world ambient: on, its intensity), live, and the
+		// ambient cube taken again: worldambient <intensity> | off.
+		WorldInfo.bUseWorldAmbientVars = Args.Length > 1 && Args[1] != "off";
+		if (WorldInfo.bUseWorldAmbientVars)
+			WorldInfo.WorldAmbientIntensity = float(Args[1]);
+		`XENGINE.bRefreshAmbientCubeRequested = true;
+		Out.AddItem("ok world ambient" @ (WorldInfo.bUseWorldAmbientVars ? string(WorldInfo.WorldAmbientIntensity) : "off") @ "cube" @ PathName(WorldInfo.WorldAmbientCubemap));
+		return;
+	case "baselighting":
+		// A test aid: EW's base lit by another of XCOM 2's lighting levels, live (LWX2EWBase.BaseLighting; "" none):
+		// baselighting <EnvLighting_…>.
+		Out.AddItem(class'LWX2EWBase'.static.Get(Pres()).SetLighting(Args.Length > 1 ? Args[1] : ""));
+		return;
 	case "ambient":
 		// A test aid: the ambient light's colour as the engine has it (from the visible lighting level's cube: the Avenger's
 		// sky-and-light level for the hour, or EW's base's own, LWX2EWBase.BaseLighting).

@@ -8,7 +8,7 @@ var localized string ResourceNames[8], CurrentResearch, NoResearch, Speeds[3], O
 /** Where the player is, as EW's HUD changes with it (UIStrategyHUD and its rooms' UIStrategyHUD_FSM_*): 0 the base's view,
  *  1 Mission Control, 2 a room of the base, 3 a screen over the base. */
 var int Context;
-/** What the room or screen is about, for its panels: 'Research', 'Engineering' or none. */
+/** What the room or screen is about, for its panels and resource line: 'Research', 'Engineering', 'Facilities' or none. */
 var name Kind;
 /** The context the back arrow and panels were last set for ("": not yet). */
 var string ShownFor;
@@ -77,19 +77,20 @@ function Refresh()
 	Cash = XComHQ.GetSupplies();
 	Meld = XComHQ.GetResourceAmount(class'X2Item_LWArtifacts'.static.ItemFor('Meld'));
 	MC.FunctionVoid("ClearResources");
-	// EW's line (UIStrategyHUD.UpdateDefaultResources): credits, the month's net, meld once there is some; engineering's
-	// and its screens' (UIStrategyHUD_FSM_Engineering): credits, elerium, alloys, meld, power.
-	bWide = Kind == 'Engineering';
+	// EW's lines: the default (UIStrategyHUD.UpdateDefaultResources) credits, the month's net, meld once there is some;
+	// engineering's and its screens' (UIStrategyHUD_FSM_Engineering) credits, elerium, alloys, meld, power; building
+	// facilities' (UIBuildFacilities.UpdateResources) credits, the month's net, elerium, alloys, meld, power.
+	bWide = Kind == 'Engineering' || Kind == 'Facilities';
 	AddResource(Label(0, "CREDITS"), class'LWStrategyRules'.static.Money(Cash), Cash > 0);
+	if (Kind != 'Engineering')
+	{
+		Net = S.MonthlyNet();
+		AddResource(Label(6, "MONTHLY"), (Net > 0 ? "+" : "") $ class'LWStrategyRules'.static.Money(Net), Net > 0);
+	}
 	if (bWide)
 	{
 		AddResource(Label(1, "ELERIUM"), string(XComHQ.GetResourceAmount('EleriumDust')), true);
 		AddResource(Label(2, "ALLOYS"), string(XComHQ.GetResourceAmount('AlienAlloy')), true);
-	}
-	else
-	{
-		Net = S.MonthlyNet();
-		AddResource(Label(6, "MONTHLY"), (Net > 0 ? "+" : "") $ class'LWStrategyRules'.static.Money(Net), Net > 0);
 	}
 	if (Meld > 0 || bWide)
 		AddResource(Label(7, "MELD"), string(Meld), Meld > 0);
@@ -140,6 +141,8 @@ function FindContext()
 			Kind = 'Research';
 		else if (UILWEWEngineering(Top) != none || UILWEWManufacturing(Top) != none)
 			Kind = 'Engineering';
+		else if (UILWEWBuildFacilities(Top) != none || UILWEWChooseFacility(Top) != none)
+			Kind = 'Facilities';
 	}
 }
 
