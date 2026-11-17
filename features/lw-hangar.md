@@ -145,3 +145,15 @@ name, and engineering's BUILD button covered the item's first letter
 allowed for. The texts and the second button have moved right. Checked on
 both screens: "Sawed-off Shotgun: §0, 1 Shotgun; 1 days"; SEND, REFIT,
 "Raven-1 (Interceptor, Avalanche Missiles) …", each clear of the others.
+
+## Report (2026-11-17, the interceptors' consumables)
+
+- **Read** (`XGInterceptionEngagement.IsConsumableResearched`, `UseConsumable`): Uplink Targeting (item 127: Aim),
+  Defense Matrix (125: Dodge) and UFO Tracking (126: Boost) are items engineering builds once Foundry project 26 and
+  the item's research are done (Floater, Cyberdisc autopsies, Alien Materials); each use takes one from the stores.
+- **Done:** the three are in engineering's builds (Long War's costs, `Category=3`, `Foundry=26`); in a campaign the
+  air war's AIM, DODGE and BOOST buttons show how many XCOM can use and are greyed without one
+  (`LWAirWar.ConsumableStock`), and an engagement's used ones are taken from the stores when it is recorded
+  (`UseConsumables`). The free air war (no campaign) keeps them unlimited.
+- **Checked on wingpu:** with none researched, none usable; with Foundry 26 and the research given, 2 each usable;
+  in an interception of an Overseer, AIM used: the stock 2 → 1.

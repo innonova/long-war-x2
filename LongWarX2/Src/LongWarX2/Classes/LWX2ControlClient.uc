@@ -691,6 +691,8 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "hangar":
 		Hangar(Out);
+		Out.AddItem("consumables usable: aim" @ class'LWAirWar'.static.ConsumableStock(0) @ "dodge" @ class'LWAirWar'.static.ConsumableStock(1)
+			@ "boost" @ class'LWAirWar'.static.ConsumableStock(2));
 		return;
 	case "order":
 		Before = S.EventCount;

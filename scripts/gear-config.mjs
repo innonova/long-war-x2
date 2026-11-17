@@ -96,7 +96,9 @@ out.push(`EngineerRate=${ini('ABDUCTION_REWARD_ENG')}`, `TimeBalance=${ini('ITEM
 out.push('[LongWarX2.X2AbilityToHitCalc_LWStun]', `StunBalance=${ini('UFO_PSI_LINK_SURVIVE')}`, '[LongWarX2.X2Ability_LWArcThrower]', 'ArcThrowerRange=4', '[LongWarX2.LWGearRules]')
 // What engineering builds: the weapons and armours with a cost; -1 (the starting kit) is never built. And the
 // interceptors' weapons and the Firestorm (the hangar, features/lw-hangar.md), the Skeleton Key (lw-story.md).
-const CRAFT = [117, 119, 120, 121, 122, 104, 184]
+// And the interceptors' consumables (125 Defense Matrix: Dodge, 126 UFO Tracking: Boost, 127 Uplink Targeting: Aim), after
+// their Foundry project (26) and their research (XGInterceptionEngagement.IsConsumableResearched).
+const CRAFT = [117, 119, 120, 121, 122, 104, 184, 125, 126, 127]
 // XGFacility_Engineering.GetItemProjectCost's own cases: items consumed beyond the item requirement (the
 // Firestorm UFO power sources and navigation computers, the Skeleton Key the Outsider Shard).
 const SPECIAL = { 104: [[170, 4], [168, 8]], 184: [[183, 1]] }

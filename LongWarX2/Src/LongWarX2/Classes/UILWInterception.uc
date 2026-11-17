@@ -98,13 +98,13 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	EngageButton = Spawn(class'UIButton', self).InitButton('LWEngage', "ENGAGE", OnEngage);
 	EngageButton.SetPosition(390, 570);
 	AimButton = Spawn(class'UIButton', self).InitButton('LWAim', "AIM", OnAim);
-	AimButton.SetPosition(560, 570);
+	AimButton.SetPosition(570, 570);
 	DodgeButton = Spawn(class'UIButton', self).InitButton('LWDodge', "DODGE", OnDodge);
-	DodgeButton.SetPosition(700, 570);
+	DodgeButton.SetPosition(740, 570);
 	BoostButton = Spawn(class'UIButton', self).InitButton('LWBoost', "BOOST", OnBoost);
-	BoostButton.SetPosition(840, 570);
+	BoostButton.SetPosition(910, 570);
 	AbortButton = Spawn(class'UIButton', self).InitButton('LWAbort', "BREAK OFF", OnAbort);
-	AbortButton.SetPosition(980, 570);
+	AbortButton.SetPosition(1080, 570);
 
 	OutcomeText = Spawn(class'UIText', self).InitText('LWOutcome', "");
 	OutcomeText.SetPosition(390, 630);
@@ -220,9 +220,16 @@ simulated function UpdateButtons()
 	local int i;
 
 	EngageButton.SetDisabled(bFighting || Jet.Hp <= 0);
-	AimButton.SetDisabled(!bFighting || Act.Aim >= 0 || !class'LWAirWar'.static.ConsumableAllowed(0, Stance));
-	DodgeButton.SetDisabled(!bFighting || Act.Dodge >= 0 || !class'LWAirWar'.static.ConsumableAllowed(1, Stance));
-	BoostButton.SetDisabled(!bFighting || Act.Boost >= 0);
+	if (bCampaign)
+	{
+		AimButton.SetText("AIM (" $ class'LWAirWar'.static.ConsumableStock(0) $ ")");
+		DodgeButton.SetText("DODGE (" $ class'LWAirWar'.static.ConsumableStock(1) $ ")");
+		BoostButton.SetText("BOOST (" $ class'LWAirWar'.static.ConsumableStock(2) $ ")");
+	}
+	// (In a campaign, only with the consumable in stores, its Foundry project and research done.)
+	AimButton.SetDisabled(!bFighting || Act.Aim >= 0 || !class'LWAirWar'.static.ConsumableAllowed(0, Stance) || (bCampaign && class'LWAirWar'.static.ConsumableStock(0) <= 0));
+	DodgeButton.SetDisabled(!bFighting || Act.Dodge >= 0 || !class'LWAirWar'.static.ConsumableAllowed(1, Stance) || (bCampaign && class'LWAirWar'.static.ConsumableStock(1) <= 0));
+	BoostButton.SetDisabled(!bFighting || Act.Boost >= 0 || (bCampaign && class'LWAirWar'.static.ConsumableStock(2) <= 0));
 	AbortButton.SetDisabled(!bFighting || Act.Abort >= 0);
 	for (i = 0; i < 3; i++)
 		StanceButtons[i].SetDisabled(bFighting);
@@ -353,6 +360,7 @@ simulated function Finished()
 	if (bCampaign)
 	{
 		class'XComGameState_LWAirWar'.static.Record(JetIndex, Result.CraftHp, Kill);
+		class'LWAirWar'.static.UseConsumables(Act);
 		if (StrategyUfo >= 0)
 			class'XComGameState_LWStrategy'.static.Intercepted(StrategyUfo, int(Result.Outcome), Result.UfoHp);
 		`log("LongWarX2: interception recorded: jet" @ JetIndex @ "HP" @ Result.CraftHp @ "kill" @ Kill, , 'LongWarX2');

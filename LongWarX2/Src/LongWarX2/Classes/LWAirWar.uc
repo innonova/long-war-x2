@@ -10,7 +10,7 @@
 // two missed shots of the jet's own weapon into hits, Dodge cancelling the next
 // two hits on the jet, Boost keeping up with the UFO for longer, until a ship
 // is down or the UFO outruns the jet.
-class LWAirWar extends Object config(LWAirWar);
+class LWAirWar extends Object config(LWAirWar) dependson(LWGearRules);
 
 struct LWWeaponDef
 {
@@ -204,6 +204,53 @@ static function bool ConsumableAllowed(int Kind, int Stance)
 	if (Kind == 1)
 		return Stance != 2;
 	return true;
+}
+
+/** In a campaign, the interceptor consumables XCOM can use now (XGInterceptionEngagement.IsConsumableResearched and
+ *  its storage): Kind 0 Aim (Uplink Targeting, item 127), 1 Dodge (Defense Matrix, 125), 2 Boost (UFO Tracking, 126); their
+ *  Foundry project (26) and the item's research done, and one in stores. */
+static function int ConsumableStock(int Kind)
+{
+	local LWGearRules.LWBuildDef B;
+	local name Item, Tech;
+	local int k;
+
+	Item = ConsumableItem(Kind);
+	k = class'LWGearRules'.default.Builds.Find('Template', Item);
+	if (k == INDEX_NONE || !class'X2Effect_LWFoundry'.static.Done(26))
+		return 0;
+	B = class'LWGearRules'.default.Builds[k];
+	Tech = B.Tech > 0 ? class'LWResearchRules'.static.TemplateForId(B.Tech) : '';
+	if (Tech != '' && !class'UIUtilities_Strategy'.static.GetXComHQ().IsTechResearched(Tech))
+		return 0;
+	return class'LWEngineering'.static.Held(Item);
+}
+
+static function name ConsumableItem(int Kind)
+{
+	switch (Kind)
+	{
+	case 0: return 'LWItem_IntConsumable_Hit';
+	case 1: return 'LWItem_IntConsumable_Dodge';
+	}
+	return 'LWItem_IntConsumable_Boost';
+}
+
+/** The consumables an engagement used, taken from the stores (UseConsumable: STORAGE().RemoveItem). */
+static function UseConsumables(LWActions A)
+{
+	local XComGameState NewGameState;
+
+	if (A.Aim < 0 && A.Dodge < 0 && A.Boost < 0)
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: interceptor consumables used");
+	if (A.Aim >= 0)
+		class'LWEngineering'.static.Take(NewGameState, ConsumableItem(0), 1);
+	if (A.Dodge >= 0)
+		class'LWEngineering'.static.Take(NewGameState, ConsumableItem(1), 1);
+	if (A.Boost >= 0)
+		class'LWEngineering'.static.Take(NewGameState, ConsumableItem(2), 1);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 }
 
 /** Nothing used yet. */
