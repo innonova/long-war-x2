@@ -563,6 +563,10 @@ writeFileSync(
     '; DefaultGameCore.ini. Do not edit by hand.',
     '[XComGame.XGTacticalGameCore]',
     `NUM_STARTING_SOLDIERS=${ini('NUM_STARTING_SOLDIERS')}`,
+    // XCOM 2's bonus for a good angle on a target in cover: Long War has none (its Aiming Angles, second wave #19, is
+    // X2Effect_LWSecondWave's).
+    '[XComGame.X2AbilityToHitCalc_StandardAim]',
+    'MAX_ANGLE_BONUS_MOD=0.0',
   ].join('\r\n') + '\r\n',
 )
 

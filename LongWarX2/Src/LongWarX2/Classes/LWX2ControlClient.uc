@@ -265,6 +265,14 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(PutUnit(Args[1], int(Args[2]), int(Args[3]), int(Args[4])));
 		return;
+	case "coverscan":
+		// coverscan <shooter #id> <target #id> [radius]: tiles around the target (its floor) where it would have cover from the
+		// shooter, with XCOM 2's angle to that cover (a test aid, for Aiming Angles).
+		if (Args.Length < 3)
+			Out.AddItem("ERR coverscan <shooter #id> <target #id> [radius]");
+		else
+			CoverScan(int(Mid(Args[1], InStr(Args[1], "#") == 0 ? 1 : 0)), int(Mid(Args[2], InStr(Args[2], "#") == 0 ? 1 : 0)), Args.Length > 3 ? int(Args[3]) : 4, Out);
+		return;
 	case "tile":
 		// tile <x> <y>: the column of tiles at a world point (EW's coordinates on its own plot): each floor's tile, whether it
 		// is a floor and units can enter it, and what a trace down from above hits first (a test aid).
@@ -3083,12 +3091,50 @@ function Council(array<string> Args, out array<string> Out)
 }
 
 /** A shot's chance (its ability's to-hit calculation, as the targeting shows it), its crit and the modifiers' reasons. */
+function CoverScan(int ShooterID, int TargetID, int Radius, out array<string> Out)
+{
+	local XComGameState_Unit Shooter, Target;
+	local TTile T;
+	local vector From, To;
+	local float Angle;
+	local ECoverType Cover;
+	local int dx, dy, n;
+
+	Shooter = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(ShooterID));
+	Target = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(TargetID));
+	if (Shooter == none || Target == none)
+	{
+		Out.AddItem("ERR no such units");
+		return;
+	}
+	From = `XWORLD.GetPositionFromTileCoordinates(Shooter.TileLocation);
+	for (dx = -Radius; dx <= Radius && n < 30; dx++)
+		for (dy = -Radius; dy <= Radius && n < 30; dy++)
+		{
+			T = Target.TileLocation;
+			T.X += dx;
+			T.Y += dy;
+			if (!`XWORLD.CanUnitsEnterTile(T))
+				continue;
+			To = `XWORLD.GetPositionFromTileCoordinates(T);
+			Angle = -1;
+			Cover = `XWORLD.GetCoverTypeForTarget(From, To, Angle);
+			if (Cover == CT_None)
+				continue;
+			Out.AddItem(T.X @ T.Y @ T.Z @ Cover @ "angle" @ int(Angle));
+			n++;
+		}
+	if (n == 0)
+		Out.AddItem("no cover within" @ Radius @ "tiles");
+}
+
 function HitChance(out array<string> Out, int AttackerID, int TargetID, name AbilityName)
 {
 	local XComGameState_Unit Attacker, Target;
 	local XComGameState_Ability Ability;
 	local AvailableTarget Pick;
 	local ShotBreakdown Breakdown;
+	local GameRulesCache_VisibilityInfo VisInfo;
 	local string Why;
 	local int i;
 
@@ -3109,6 +3155,9 @@ function HitChance(out array<string> Out, int AttackerID, int TargetID, name Abi
 	Ability.GetMyTemplate().AbilityToHitCalc.GetShotBreakdown(Ability, Pick, Breakdown);
 	for (i = 0; i < Breakdown.Modifiers.Length; i++)
 		Why @= Breakdown.Modifiers[i].Reason $ "=" $ Breakdown.Modifiers[i].Value $ (Breakdown.Modifiers[i].ModType == eHit_Crit ? "(crit)" : "");
+	// (XCOM 2's view of the target's cover from the shooter: its kind and angle, as the hit calculation reads them.)
+	if (`TACTICALRULES.VisibilityMgr.GetVisibilityInfo(Attacker.ObjectID, Target.ObjectID, VisInfo))
+		Why @= "| cover" @ VisInfo.TargetCover @ "angle" @ int(class'X2Effect_LWSecondWave'.static.CoverAngle(Attacker, Target));
 	Out.AddItem(Attacker.GetMyTemplateName() @ AbilityName @ "->" @ Target.GetFullName() @ "(" $ Attacker.TileDistanceBetween(Target) @ "tiles):" @ Breakdown.FinalHitChance $ "% crit" @ Breakdown.ResultTable[eHit_Crit] $ "% |" $ Why);
 }
 

@@ -197,3 +197,21 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
     Profile, Aggression, Steadfast, Ranger) were dealt in place of its own. Its rockets, Suppression, Mayhem, Shock and Awe,
     Double Tap and Danger Zone stayed in their slots. A sniper's twelve dealt perks were all different.
   - **The squaddie bonus:** a Scout's squaddie +1 mobility without the option (12 → 13), none for a Medic with it (12 → 12).
+
+## Report (2026-11-17, Aiming Angles; XCOM 2's good-angle bonus off)
+
+- **Found on the way, fixed:** XCOM 2 gives XCOM's shots a bonus for a good angle on a target in cover (up to half the
+  cover's value, under 44°, "Good Angle"). Long War has none without its option, and the port had kept XCOM 2's. It is off now
+  (`XComGameCore.ini`: `MAX_ANGLE_BONUS_MOD=0`, from `scripts/classes-config.mjs`).
+- **#19 Aiming Angles** (`XGTacticalGameCore.CalcAimingAngleMod`, native; Long War's ini describes it): a shot at a unit in
+  cover gains aim the nearer the shooter is to flanking it. Along the cover it gains the cover's bonus plus
+  `SW_AIMING_ANGLE_MAXBONUS` (−5), at `SW_AIMING_ANGLE_THRESHOLD` (30°) `SW_AIMING_ANGLE_MINBONUS` (5), in a line in between,
+  and nothing beyond. It applies to every unit's shots, under XCOM 2's name for it ("Good Angle")
+  (`X2Effect_LWSecondWave.GetToHitModifiers`).
+- **The angle is asked of the world** (`XComWorldData.GetCoverTypeForTarget`, as XCOM 2's AI does): the visibility cache's
+  angle stayed −1 throughout.
+- **Checked on wingpu** (new test aid `coverscan <shooter> <target> [radius]`: the tiles near the target with cover from the
+  shooter, and their angles; `hit` now prints the cover and its angle):
+  - **An alien's shot:** at a soldier in low cover at 12°, +11 (15 − 10 × 0.4); in high cover at 26°, +9; at 63°, none.
+  - **A soldier's shot:** at an alien in high cover at 20°, +15 with the option and nothing without it (XCOM 2's own
+    would have been about +14).
