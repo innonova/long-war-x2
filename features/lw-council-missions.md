@@ -401,3 +401,30 @@ the aliens shared by two valves come with the one the Kismet reaches first.
 (8), the turn's end (7) and its three aliens dropped beside the valve (they killed the soldier there); a soldier at the
 transport did not secure it before it was spotted; a soldier in the approach volume spotted it and the one at it
 secured it: the mission summary, and the council paid. The dam breaking was not seen in play.
+
+## Report (2026-11-17, step 4: Furies, and the levels' alien drops)
+
+**Furies** (the `DLC2_3_Furies_Stream` level's Kismet with EW's rescue handler; `ew-objectives.ts readFuries`, `LWX2Furies`):
+"Rescue the abductees. Destroy or disarm the command console." A soldier entering the alarm's volume sounds it
+(`AlarmAudioActive`); from then "Turns Until Execution" counts from 12 at XCOM's turn ends, the first one not counted
+(`DecrementFirstTime?`), and at 0 the captives are executed and the mission is lost. A soldier beside the console
+disarms it (`LWX2_DisarmConsole`, one action; EW's interactive actor raising `ConsoleActivated`): "Kill any remaining
+aliens.", and the mission is won when they are dead (EW holds the win until the console is off: so does the port).
+Not ported: destroying the console by fire (EW's `ConsoleDestroyed`; the port's console is not a destructible).
+
+**The levels' alien drops** (`ew-objectives.ts readDrops`, `LWX2LevelDrops`): EW's variant levels drop aliens through one
+Kismet pattern: a soldier entering a volume opens a gate (a bool set by its touch), and as the aliens' turn ends the
+gate's aliens drop at their spawn points, once each. Read for every council and covert variant level but the hive's and
+Deluge's (their own rules spawn theirs): Portent 7, Furies 10, and the council's own variants too, the Highway
+extraction's 6 Thin Men, the Research Outpost rescue's 11, the Commercial Alley's 14, the Street Hurricane's 4 and the
+Pier's 2. The dropped aliens are set on the nearest soldier. This closes "the Kismet's reinforcement drops" for those
+missions.
+
+**Checked on wingpu** (`council now 27`): the objective in EW's words; a soldier in the alarm's volume ("Turns Until
+Execution: 12"), two turn ends (11); a soldier entering a drop volume, and at the aliens' turn's end its Thin Man
+dropped at EW's spawn point; the console disarmed from beside it ("Kill any remaining aliens."), the aliens killed, the
+mission summary, and the council paid with Furies' three named soldiers. The execution itself was not seen.
+
+**Step 4 stands at:** the hive, Progeny's three missions and the levels' drops are in; the Meld tutorial is left out
+(tutorial only). Left: the council assaults' own variant Kismet beyond their drops, and the parts listed as not ported
+in each report.

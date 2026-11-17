@@ -595,13 +595,17 @@ export function makeHiveWords({ loc }) {
   return { text: ['', '[LWX2_ActivateTransponder X2AbilityTemplate]', `LocFriendlyName="${title}"`, `LocHelpText="${help}"`, `LocLongDescription="${help}"`, `LocFlyOverText="${title}"`, ''].join('\r\n'), named: 1 }
 }
 
-/** Deluge's valve action (LWX2Deluge): its help EW's own objective, from the strategy text's [DLC2_2Objectives]
+/** Deluge's valve action (LWX2Deluge) and Furies' console action (LWX2Furies): its help EW's own objective, from the strategy text's [DLC2_2Objectives]
  *  ("Open the bypass valves to delay the dam's collapse."); its name the mod's. */
 export function makeDelugeWords({ strategyLoc }) {
   const help = strategyLoc?.match(/^m_strDLC2_2Obj2="(.*)"\s*$/m)?.[1]
   if (!help) return { text: '', named: 0 }
   const title = 'Open Valve'
-  return { text: ['', '[LWX2_OpenValve X2AbilityTemplate]', `LocFriendlyName="${title}"`, `LocHelpText="${help}"`, `LocLongDescription="${help}"`, `LocFlyOverText="${title}"`, ''].join('\r\n'), named: 1 }
+  const lines = ['', '[LWX2_OpenValve X2AbilityTemplate]', `LocFriendlyName="${title}"`, `LocHelpText="${help}"`, `LocLongDescription="${help}"`, `LocFlyOverText="${title}"`, '']
+  // Furies' console (LWX2Furies): its help EW's own objective, [DLC2_3Objectives] ("Destroy or disarm the command console.").
+  const console = strategyLoc?.match(/^m_strDLC2_3Obj2="(.*)"\s*$/m)?.[1]
+  if (console) lines.push('[LWX2_DisarmConsole X2AbilityTemplate]', 'LocFriendlyName="Disarm Console"', `LocHelpText="${console}"`, `LocLongDescription="${console}"`, 'LocFlyOverText="Disarm Console"', '')
+  return { text: lines.join('\r\n'), named: console ? 2 : 1 }
 }
 
 /** The MECs' words (features/lw-shivs-mecs.md): Long War's item names and summaries for the MEC suits (LWMEC_Suit_<id>) and

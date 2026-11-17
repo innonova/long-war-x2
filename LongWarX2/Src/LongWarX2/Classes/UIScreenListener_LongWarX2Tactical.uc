@@ -239,6 +239,8 @@ function CheckSwept()
 	NoReinforcements();
 	LongWarObjectives();
 	class'X2Effect_LWRespirator'.static.Update();
+	// A variant level's gated alien drops (LWX2LevelDrops).
+	class'LWX2LevelDrops'.static.Update();
 	// A council bomb disposal (LWX2CouncilBomb): its timer, and no victory until the bomb is disarmed.
 	if (!class'LWX2CouncilBomb'.static.Update())
 		return;
@@ -256,6 +258,9 @@ function CheckSwept()
 		return;
 	// Progeny's Deluge (LWX2Deluge): the collapse, the valves and their drops, and no victory before the transport is secured.
 	if (!class'LWX2Deluge'.static.Update())
+		return;
+	// Progeny's Furies (LWX2Furies): the alarm and the execution, and no victory before the console is disarmed.
+	if (!class'LWX2Furies'.static.Update())
 		return;
 	// Units that came after the pods (a Chryssalid's zombie, a spawn of XCOM 2's) given their EW body too.
 	class'LWX2EWBodies'.static.ApplyAll();
@@ -303,6 +308,8 @@ static function LongWarObjectives()
 		Label = class'LWX2ChryssalidHive'.static.ObjectiveText();
 	if (class'LWX2Deluge'.static.ObjectiveText() != "")
 		Label = class'LWX2Deluge'.static.ObjectiveText();
+	if (class'LWX2Furies'.static.ObjectiveText() != "")
+		Label = class'LWX2Furies'.static.ObjectiveText();
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 	if (Battle == none || Battle.MapData.ActiveMission.sType == "Terror")
 		return;

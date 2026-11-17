@@ -789,6 +789,192 @@ export function readDeluge(file: string, map: string, level: string): Deluge | u
   }
 }
 
+export interface LevelDrops {
+  level: string
+  volumes: { center: number[]; extent: number[] }[]
+  /** An alien the level drops once a soldier has entered the volume, as the aliens' turn ends (the Kismet's gates: a bool
+   *  set as the volume is touched, checked on SeqEvent_OnAlienEndingTurn, a "…Once" bool so it drops but once). */
+  drops: { volume: number; char: number; at: number[] }[]
+}
+
+/** A variant level's gated alien drops (Portent's Thin Men, Furies', the council's variants'); undefined when it has none. */
+export function readDrops(file: string, level: string): LevelDrops | undefined {
+  const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
+  const meta: any = new Package(bytes)
+  const pkg: any = openPackage(bytes)
+  const K = readKismet(bytes)
+  const dv = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
+  const actorTags = (k: number): Tag[] => {
+    const data = pkg.data(k + 1)
+    for (const start of [26, ...Array.from({ length: 81 }, (_, j) => j)]) {
+      try {
+        const t = readTags(new Reader(data.subarray(start)), pkg)
+        if (t.some((x: Tag) => x.name === 'Location' || x.name === 'Tag')) return t
+      } catch {
+        // not here
+      }
+    }
+    return []
+  }
+  const loc = (k: number) => {
+    const l = k >= 0 ? actorTags(k).find((x) => x.name === 'Location') : undefined
+    return l ? [0, 4, 8].map((o) => Math.round(dv(l.value).getFloat32(o, true))) : undefined
+  }
+  const box = (k: number) => {
+    const t = actorTags(k)
+    const l = loc(k)
+    const brush = t.find((x) => x.name === 'Brush')
+    if (!l || !brush) return undefined
+    const v = dv(pkg.data(dv(brush.value).getInt32(0, true)))
+    const none = meta.names.indexOf('None')
+    let o = 4
+    while (v.getInt32(o, true) !== none) o += 24 + v.getInt32(o + 16, true)
+    o += 8
+    const b = Array.from({ length: 6 }, (_, j) => v.getFloat32(o + 4 * j, true))
+    return { center: [0, 1, 2].map((j) => Math.round(l[j]! + b[j]!)), extent: [3, 4, 5].map((j) => Math.round(b[j]!)) }
+  }
+  const varName = (k: number | undefined) => {
+    const v = k !== undefined ? K.op(k) : undefined
+    return v?.type === 'SeqVar_Named' ? K.name(v, 'FindVarName') : v ? K.name(v, 'VarName') : ''
+  }
+  const held = (k: number | undefined) => {
+    const v = k !== undefined ? K.op(k) : undefined
+    if (v?.type === 'SeqVar_Named') {
+      const to = K.ops.find((o) => o.type === 'SeqVar_Object' && K.name(o, 'VarName') === K.name(v, 'FindVarName'))
+      return to ? K.obj(to, 'ObjValue') : -1
+    }
+    return v ? K.obj(v, 'ObjValue') : -1
+  }
+  const into = new Map<number, { desc: string; from: number }[]>()
+  for (const o of K.ops) for (const l of o.links) into.set(l.to, [...(into.get(l.to) ?? []), { desc: l.desc, from: o.k }])
+  // Walking back from an op: the first event reached, and the bools tested True on the way.
+  const back = (k: number) => {
+    const gates: string[] = []
+    const seen = new Set<number>([k])
+    let front = [k]
+    for (let d = 0; d < 16 && front.length; d++) {
+      const next: number[] = []
+      for (const f of front) for (const c of into.get(f) ?? []) {
+        if (seen.has(c.from)) continue
+        seen.add(c.from)
+        const o = K.op(c.from)
+        if (!o) continue
+        if (o.type === 'SeqCond_CompareBool' && c.desc === 'True') gates.push(varName(o.vars.get('Bool')?.[0]))
+        if (/^SeqEvent_/.test(o.type)) return { event: o, gates }
+        next.push(c.from)
+      }
+      front = next
+    }
+    return { event: undefined as KOp | undefined, gates }
+  }
+  const volumes: LevelDrops['volumes'] = []
+  const volumeIndex = (k: number) => {
+    const b = box(k)
+    if (!b) return -1
+    const i = volumes.findIndex((v) => v.center.join() === b.center.join())
+    if (i >= 0) return i
+    volumes.push(b)
+    return volumes.length - 1
+  }
+  // A gate's volume: the touch upstream of a SetBool that sets it.
+  const gateVolume = (gate: string) => {
+    for (const set of K.ops.filter((o) => o.type === 'SeqAct_SetBool' && (o.vars.get('Target') ?? []).some((t) => varName(t) === gate))) {
+      const b = back(set.k)
+      if (b.event?.type === 'SeqEvent_Touch' && K.obj(b.event, 'Originator') >= 0) return volumeIndex(K.obj(b.event, 'Originator'))
+    }
+    return -1
+  }
+  const drops: LevelDrops['drops'] = []
+  for (const o of K.ops.filter((x) => x.type === 'SeqAct_SpawnAlien')) {
+    const char = CHAR_OF[K.name(o, 'ForceAlienType').replace(/^ePawnType_/, '')] ?? 0
+    const at = loc(held(o.vars.get('SpawnPoints')?.[0]))
+    const b = back(o.k)
+    if (!char || !at || b.event?.type !== 'SeqEvent_OnAlienEndingTurn') continue
+    const volume = b.gates.map(gateVolume).find((v) => v >= 0) ?? -1
+    if (volume >= 0) drops.push({ volume, char, at })
+  }
+  return drops.length ? { level, volumes, drops } : undefined
+}
+
+export interface Furies {
+  map: string
+  level: string
+  /** The command console (the interactive actor raising ConsoleActivated). */
+  console: number[]
+  /** The volume whose touch sounds the alarm (sets AlarmAudioActive): the execution's countdown starts. */
+  alarm: { center: number[]; extent: number[] }
+  /** XCOM's turns from the alarm to the execution (the Kismet's Timer). */
+  timer: number
+  /** EW's texts: rescue the abductees, destroy or disarm the console, kill the rest; the count's label. */
+  rescue: string
+  consoleText: string
+  kill: string
+  execution: string
+}
+
+/** Progeny's Furies (its level's Kismet, with EW's rescue handler for its objectives); undefined when it is not as expected. */
+export function readFuries(file: string, map: string, level: string): Furies | undefined {
+  const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
+  const meta: any = new Package(bytes)
+  const pkg: any = openPackage(bytes)
+  const K = readKismet(bytes)
+  const dv = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
+  const nameOf = (t: Tag | undefined) => (t ? String(pkg.names[dv(t.value).getInt32(0, true)]?.name) : '')
+  const actorTags = (k: number): Tag[] => {
+    const data = pkg.data(k + 1)
+    for (const start of [26, ...Array.from({ length: 81 }, (_, j) => j)]) {
+      try {
+        const t = readTags(new Reader(data.subarray(start)), pkg)
+        if (t.some((x: Tag) => x.name === 'Location' || x.name === 'Tag')) return t
+      } catch {
+        // not here
+      }
+    }
+    return []
+  }
+  const loc = (k: number) => {
+    const l = k >= 0 ? actorTags(k).find((x) => x.name === 'Location') : undefined
+    return l ? [0, 4, 8].map((o) => Math.round(dv(l.value).getFloat32(o, true))) : undefined
+  }
+  const box = (k: number) => {
+    const t = actorTags(k)
+    const l = loc(k)
+    const brush = t.find((x) => x.name === 'Brush')
+    if (!l || !brush) return undefined
+    const v = dv(pkg.data(dv(brush.value).getInt32(0, true)))
+    const none = meta.names.indexOf('None')
+    let o = 4
+    while (v.getInt32(o, true) !== none) o += 24 + v.getInt32(o + 16, true)
+    o += 8
+    const b = Array.from({ length: 6 }, (_, j) => v.getFloat32(o + 4 * j, true))
+    return { center: [0, 1, 2].map((j) => Math.round(l[j]! + b[j]!)), extent: [3, 4, 5].map((j) => Math.round(b[j]!)) }
+  }
+  const varName = (k: number | undefined) => {
+    const v = k !== undefined ? K.op(k) : undefined
+    return v?.type === 'SeqVar_Named' ? K.name(v, 'FindVarName') : v ? K.name(v, 'VarName') : ''
+  }
+  const consoleK = meta.exports.findIndex((e: any) => e.type === 'XComInteractiveLevelActor' && /^TheWorld\.PersistentLevel\.[^.]+$/.test(e.fullName)
+    && nameOf(actorTags(meta.exports.indexOf(e)).find((t) => t.name === 'InteractRemoteEvent')) === 'ConsoleActivated')
+  const console = loc(consoleK)
+  // The alarm: the touch that sets AlarmAudioActive.
+  const into = new Map<number, number[]>()
+  for (const o of K.ops) for (const l of o.links) into.set(l.to, [...(into.get(l.to) ?? []), o.k])
+  const set = K.ops.find((o) => o.type === 'SeqAct_SetBool' && (o.vars.get('Target') ?? []).some((t) => varName(t) === 'AlarmAudioActive'))
+  const touch = set ? (into.get(set.k) ?? []).map((k) => K.op(k)!).find((o) => o?.type === 'SeqEvent_Touch') : undefined
+  const alarm = touch ? box(K.obj(touch, 'Originator')) : undefined
+  const timerVar = K.ops.find((o) => o.type === 'SeqVar_Int' && K.name(o, 'VarName') === 'Timer')
+  const timer = timerVar?.props.get('IntValue') ? dv(timerVar.props.get('IntValue')!.value).getInt32(0, true) : 0
+  if (!console || !alarm || timer <= 0) return undefined
+  const strings = new Map(K.ops.filter((o) => o.type === 'SeqVar_LocalizedString').map((o) => [K.str(o, 'strLookup').split('.').pop() ?? '', K.str(o, 'StrValue')]))
+  return {
+    map, level, console, alarm, timer,
+    rescue: strings.get('m_strDLC2_3Obj1') ?? '',
+    consoleText: strings.get('m_strDLC2_3Obj2') ?? '',
+    kill: strings.get('m_strDLC2_3Obj3') ?? '',
+    execution: (strings.get('m_strDLC2_3UntilExecution') ?? '').trim(),
+  }
+}
+
 /** Long War's named soldiers that its council missions reward (XGFundingCouncil.BuildMission's arrRewardSoldiers, and
  *  GiveCustomSoldier's additions), read from the player's own XComStrategyGame.upk with upkit's decompiler: Progeny's
  *  (eFCM_Progeny_*). Their names are Long War's, so they are only ever written on the player's machine. */
@@ -963,6 +1149,30 @@ export function writeObjectives(cooked: string, mod: string): number {
       `SecureText=${q(d.secureText)}, Report=${q(d.report)}, Collapse=${q(d.collapse)}, Remaining=${q(d.remaining)})`)
     for (const x of d.drops) lines.push(`+Drops=(Level="${d.level}", Valve=${x.valve}, Char=${x.char}, At=${vec(x.at)})`)
     n++
+  }
+  // Progeny's Furies (LWX2Furies): the console, the alarm, the execution's countdown.
+  lines.push('', '[LongWarX2.LWX2Furies]', 'ReachTiles=1.5')
+  for (const m of missions.filter((x) => x.id === 27)) {
+    const file = levelFile(cooked, m.level)
+    if (!file) continue
+    const f = readFuries(file, m.map, m.level)
+    if (!f) continue
+    lines.push(`+Furies=(Map="${f.map}", Level="${f.level}", Console=${vec(f.console)}, AlarmCenter=${vec(f.alarm.center)}, AlarmExtent=${vec(f.alarm.extent)}, Timer=${f.timer}, ` +
+      `Rescue=${q(f.rescue)}, ConsoleText=${q(f.consoleText)}, Kill=${q(f.kill)}, Execution=${q(f.execution)})`)
+    n++
+  }
+  // The variant levels' gated alien drops (LWX2LevelDrops): every council and covert level but the hive's and Deluge's, which
+  // have their own (LWX2ChryssalidHive, LWX2Deluge).
+  lines.push('', '[LongWarX2.LWX2LevelDrops]')
+  const own = new Set(missions.filter((x) => x.id === 29 || x.id === 26).map((x) => x.level))
+  for (const [, level] of variantPairs(mod)) {
+    if (own.has(level)) continue
+    const file = levelFile(cooked, level)
+    if (!file) continue
+    const d = readDrops(file, level)
+    if (!d) continue
+    for (const v of d.volumes) lines.push(`+Volumes=(Level="${level}", Center=${vec(v.center)}, Extent=${vec(v.extent)})`)
+    for (const x of d.drops) lines.push(`+Drops=(Level="${level}", Volume=${x.volume}, Char=${x.char}, At=${vec(x.at)})`)
   }
   // Long War's named soldiers its council missions reward (LWX2CustomSoldiers, the council's reward 9: Progeny's).
   lines.push('', '[LongWarX2.LWX2CustomSoldiers]')
