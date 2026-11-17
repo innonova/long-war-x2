@@ -23,6 +23,11 @@ var localized string AbductionsReported, ViewAbductionSites, TerrorCity, PanicLe
 var localized string SizeNames[4];
 var localized string AltitudeNames[3];
 var localized string ObjectiveNames[11];
+/** The contact alert's jet list (XGInterceptionUI.UpdateSquadron): Long War's stance buttons ("DEF|BAL|AGG"), the kills' words
+ *  after the weapon, the jets' statuses (XGLocalizedData.ShipStatusNames, by Long War's interceptor status) and their time
+ *  (XGShip_Interceptor: hours, days). */
+var localized string LaunchStances, Kills, ValueHours, ValueDays;
+var localized string StatusNames[8];
 /** EW's mission difficulties' names (XGLocalizedData.MissionDifficultyNames: light to swarming). */
 var localized string DifficultyNames[4];
 
@@ -35,6 +40,11 @@ var UILWEWAlertTarget ClickTarget;
 var bool bSelection;
 var array<int> SiteIndexes;
 var int Selected;
+/** The contact alert's jet list open (UIMissionControl_UFORadarContactAlert's ShipSelection): the jets listed (the air war's
+ *  indexes), the one chosen, the stance chosen (Long War's: 1 balanced, 2 aggressive, 3 defensive). */
+var bool bShips;
+var array<int> ShipJets;
+var int ShipSel, StanceSel;
 
 /** Kinds this screen can show. */
 static function bool Handles(int K)
@@ -335,12 +345,132 @@ function Accept()
 			OpenSelection();
 		return;
 	}
+	if (Kind == 1)
+	{
+		if (bShips)
+			Launch();
+		else
+			ShowShips();
+		return;
+	}
 	G = Geo;
 	K = Kind;
 	I = Index;
 	Leave();
 	if (G != none)
 		G.ActOn(K, I);
+}
+
+/** The jets based on the UFO's continent (XGInterceptionUI.BuildInterceptorList), each with its weapon and kills and its
+ *  status (green when ready, red otherwise: GetStatusUIState), those not ready greyed; Long War's stance buttons under them. */
+function ShowShips()
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_LWAirWar AirWar;
+	local XComGameState_LWAirWar.LWJet J;
+	local array<ASValue> Params;
+	local ASValue V;
+	local int i, Continent;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	if (S == none || AirWar == none)
+		return;
+	Continent = S.CountryContinent(S.Ufos[Index].Country);
+	ShipJets.Length = 0;
+	for (i = 0; i < AirWar.Jets.Length; i++)
+		if (AirWar.Jets[i].Continent == Continent)
+			ShipJets.AddItem(i);
+	if (ShipJets.Length == 0)
+		return;
+	bShips = true;
+	ShipSel = Max(0, ShipJets.Find(class'LWHangar'.static.BestFor(Index)));
+	StanceSel = 1;
+	foreach ShipJets(i)
+	{
+		J = AirWar.Jets[i];
+		Params.Length = 0;
+		Params.AddItem(Str(J.Callsign));
+		Params.AddItem(Str(class'LWHangar'.static.WeaponName(J.Weapon) @ "(" $ J.Kills @ Kills));
+		Params.AddItem(Str(Coloured(StatusText(J), class'LWHangar'.static.IsReady(J) ? "5CD16C" : "EE1C25")));
+		Params.AddItem(Str(J.Type == 3 ? "firestorm" : "interceptor"));
+		V.Type = AS_Boolean;
+		V.b = !class'LWHangar'.static.IsReady(J);
+		Params.AddItem(V);
+		Movie.Invoke(AlertPath $ ".AddShip", Params);
+	}
+	Params.Length = 0;
+	Params.AddItem(Str(LaunchStances));
+	Movie.Invoke(AlertPath $ ".ActivateShipList", Params);
+	FocusShip(-1);
+}
+
+/** A jet's status in EW's words (XGShip_Interceptor.GetStatusString): ready, or what it is doing and for how long. */
+function string StatusText(XComGameState_LWAirWar.LWJet J)
+{
+	local string Time;
+
+	if (J.Status <= 0 || J.Status >= 8)
+		return StatusNames[0];
+	Time = J.HoursDown >= 24 ? Repl(ValueDays, "<XGParam:IntValue0/>", string((J.HoursDown + 23) / 24)) : Repl(ValueHours, "<XGParam:IntValue0/>", string(J.HoursDown));
+	return Repl(StatusNames[J.Status], "<XGParam:StrValue0/>", Time);
+}
+
+/** The jet and stance shown chosen (SetShipFocus: the jet in the low byte, the stance above it), the one before not. */
+function FocusShip(int Before)
+{
+	local array<ASValue> Params;
+	local ASValue V;
+
+	V.Type = AS_Boolean;
+	if (Before >= 0)
+	{
+		Params.AddItem(Num(Before));
+		V.b = false;
+		Params.AddItem(V);
+		Movie.Invoke(AlertPath $ ".SetShipFocus", Params);
+		Params.Length = 0;
+	}
+	Params.AddItem(Num(ShipSel + StanceSel * 256));
+	V.b = true;
+	Params.AddItem(V);
+	Movie.Invoke(AlertPath $ ".SetShipFocus", Params);
+}
+
+/** The chosen jet launched at the chosen stance (OnAccept: refused while it is not ready). Long War's stances in the air war's
+ *  numbering: balanced 1, aggressive 2, defensive 0. */
+function Launch()
+{
+	local XComGameState_LWAirWar AirWar;
+	local UILWGeoscape G;
+	local int Jet, Ufo, Stance;
+
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	Jet = ShipJets[ShipSel];
+	if (AirWar == none || !class'LWHangar'.static.IsReady(AirWar.Jets[Jet]))
+		return;
+	G = Geo;
+	Ufo = Index;
+	Stance = StanceSel == 2 ? 2 : (StanceSel == 3 ? 0 : 1);
+	Leave();
+	if (G != none)
+		G.Intercept(Ufo, Jet, Stance);
+}
+
+/** Up and down the jets, left and right the stances (DEF, BAL, AGG on screen: 3, 1, 2), each wrapping round. */
+function MoveShip(int Down, int Right)
+{
+	local int Before, Pos;
+
+	Before = ShipSel + StanceSel * 256;
+	ShipSel = (ShipSel + Down + ShipJets.Length) % ShipJets.Length;
+	if (Right != 0)
+	{
+		Pos = StanceSel == 3 ? 0 : (StanceSel == 1 ? 1 : 2);
+		Pos = (Pos + Right + 3) % 3;
+		StanceSel = Pos == 0 ? 3 : (Pos == 1 ? 1 : 2);
+	}
+	FocusShip(Before);
 }
 
 /** EW's abduction site selection in the alert's place (XGMissionControlUI.OnAlertInput: eGA_Abduction's first reply). */
@@ -451,9 +581,34 @@ function WidgetActive(int i, bool bActive)
 simulated function OnMouseEvent(int cmd, array<string> args)
 {
 	local string Clicked;
-	local int i;
+	local int i, Before, Stance;
 
 	`log("LongWarX2: EW alert: mouse" @ cmd @ (args.Length > 1 ? args[args.Length - 2] : "") @ (args.Length > 0 ? args[args.Length - 1] : ""), , 'LongWarX2');
+	// The jet list (the ShipSelection state's OnMouseEvent): a jet's row chosen as the mouse is on it; a stance button (bal,
+	// agg, def) chosen too, and clicked: the chosen jet launched at it.
+	if (bShips)
+	{
+		for (i = args.Length - 1; i >= 0; i--)
+		{
+			if (InStr(args[i], "ship") == 0 && int(Mid(args[i], 4)) < ShipJets.Length && int(Mid(args[i], 4)) != ShipSel)
+			{
+				Before = ShipSel + StanceSel * 256;
+				ShipSel = int(Mid(args[i], 4));
+				FocusShip(Before);
+			}
+			Stance = InStr(args[i], "bal") == 0 ? 1 : (InStr(args[i], "agg") == 0 ? 2 : (InStr(args[i], "def") == 0 ? 3 : 0));
+			if (Stance > 0)
+			{
+				Before = ShipSel + StanceSel * 256;
+				StanceSel = Stance;
+				FocusShip(Before);
+				if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP)
+					Launch();
+				return;
+			}
+		}
+		return;
+	}
 	// The site selection: a site's button (option<N>) chosen, Confirm sends the squad.
 	if (bSelection && cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP)
 	{
@@ -504,6 +659,8 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 				Selected = (Selected + SiteIndexes.Length - 1) % SiteIndexes.Length;
 				ShowSite();
 			}
+			else if (bShips)
+				MoveShip(-1, 0);
 			return true;
 		case class'UIUtilities_Input'.const.FXS_ARROW_DOWN:
 		case class'UIUtilities_Input'.const.FXS_DPAD_DOWN:
@@ -513,6 +670,20 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 				Selected = (Selected + 1) % SiteIndexes.Length;
 				ShowSite();
 			}
+			else if (bShips)
+				MoveShip(1, 0);
+			return true;
+		case class'UIUtilities_Input'.const.FXS_ARROW_LEFT:
+		case class'UIUtilities_Input'.const.FXS_DPAD_LEFT:
+		case class'UIUtilities_Input'.const.FXS_VIRTUAL_LSTICK_LEFT:
+			if (bShips)
+				MoveShip(0, -1);
+			return true;
+		case class'UIUtilities_Input'.const.FXS_ARROW_RIGHT:
+		case class'UIUtilities_Input'.const.FXS_DPAD_RIGHT:
+		case class'UIUtilities_Input'.const.FXS_VIRTUAL_LSTICK_RIGHT:
+			if (bShips)
+				MoveShip(0, 1);
 			return true;
 		case class'UIUtilities_Input'.const.FXS_BUTTON_A:
 		case class'UIUtilities_Input'.const.FXS_KEY_ENTER:

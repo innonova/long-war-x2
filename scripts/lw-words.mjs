@@ -655,6 +655,9 @@ export function makeAlertWords({ strategyLoc }) {
     // (EW's altitudes begin with a space, " (NOE)": kept, as EW appends them to the country.)
     ...['Low', 'High', 'VeryHigh'].map((k, i) => [`AltitudeNames[${i}]`, one(sections('XGShip_UFO'), `m_strAltitude${k}`)]),
     ...Array.from({ length: 11 }, (_, i) => [`ObjectiveNames[${i}]`, one(sections('XGStrategyAI'), `m_arrObjectiveNames[${i}]`)]),
+    ['LaunchStances', one(sections('XGInterceptionUI'), 'm_strLabelLaunchFightersPC')], ['Kills', one(sections('XGInterceptionUI'), 'm_strLabelMaxSpeed')],
+    ['ValueHours', one(sections('XGShip_Interceptor'), 'm_strValueHours')], ['ValueDays', one(sections('XGShip_Interceptor'), 'm_strValueDays')],
+    ...['Ready', 'OnMission', 'Refuelling', 'Damaged', 'Repairing', 'Destroyed', 'Transfer', 'Rearming'].map((k, i) => [`StatusNames[${i}]`, one(data, `ShipStatusNames[eShipStatus_${k}]`)]),
     ['AssaultAlienBase', mc('m_strLabelAssaultAlienBase')], ['AssaultTempleShip', mc('m_strLabelAssaultTempleShip')],
     ['TempleShipText', mc('m_strLabelTempleShip')], ['Assault', mc('m_strLabelAssault')], ['Wait', mc('m_strlabelWait')],
     ['ExaltTitle', mc('m_strLabelExaltAlertTitle')], ['ExaltBody', mc('m_strLabelExaltAlertBody')],

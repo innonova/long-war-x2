@@ -17,6 +17,8 @@ var int OddsRuns;
 var int JetIndex;
 /** Which of the jets that may fly is chosen (OnNextJet). */
 var int JetPick;
+/** The stance chosen before the screen opened (EW's contact alert: DEF, BAL, AGG); -1: Balanced. */
+var int PresetStance;
 var int UfoIndex;
 var int Stance;
 var int Category;
@@ -49,7 +51,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 
 	super.InitScreen(InitController, InitMovie, InitName);
 	UfoTypes = class'LWAirWar'.static.UfoTypes();
-	Stance = 1;
+	Stance = PresetStance >= 0 ? PresetStance : 1;
 	Category = bCampaign ? CampaignCategory() : 4;
 	if (StrategyUfo >= 0)
 	{
@@ -407,6 +409,7 @@ simulated function OnClose(UIButton Button)
 
 defaultproperties
 {
+	PresetStance=-1
 	InputState = eInputState_Consume;
 	OddsRuns = 1000;
 	StrategyUfo = -1;

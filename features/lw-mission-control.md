@@ -141,5 +141,23 @@ panel: EW has no Mission Control alert for them (a cinematic, the Situation Room
   test aid, an Overseer (`UFO-10`, Medium, Overseer, objective Command Overwatch, orange;
   `logs/wingpu_ew_ufo_alert_hyperwave.png`).
 - **Open:** a landed or crashed UFO's crew size and species under the Hyperwave Relay (EW shows them; the port makes the
-  alien squad only when the mission is launched, so there is nothing true to show yet); the contact alert's jet list (EW
-  picks the interceptor in the alert; the port's air war picks its own).
+  alien squad only when the mission is launched, so there is nothing true to show yet). The contact alert's jet list: next
+  report.
+
+## Report (2026-11-17, the contact alert's jets)
+
+- **Long War's jet list in the alert** (`UIMissionControl_UFORadarContactAlert`, state `ShipSelection`, data from
+  `XGInterceptionUI.UpdateSquadron`): SCRAMBLE INTERCEPTORS now turns the alert into EW's list of the jets based on the UFO's
+  continent: callsign, weapon and kills ("Avalanche Missiles (0 kills)"), status in EW's words and colour (Ready green;
+  Refuelling, Repairing, In Transit, Arming Weapon with their hours or days, red; such a jet greyed and refused), the
+  Firestorm's or Interceptor's icon, and under the chosen jet Long War's stance buttons DEF, BAL, AGG
+  (`m_strLabelLaunchFightersPC`). The healthiest ready jet starts chosen at BAL. Pointing at a jet chooses it; clicking a
+  stance launches it at that stance; the arrows move between jets and stances, Enter launches, Esc ignores the contact.
+- **The air war** opens on that jet at that stance (`UILWGeoscape.Intercept`; `UILWInterception.PresetStance`), Long War's
+  stances in the air war's numbering (balanced 1, aggressive 2, defensive 0, as `ToggleInterceptor` takes them from the
+  stance the alert sets).
+- **Words:** 12 more of EW's/Long War's (the stance buttons, "kills)", the statuses, hours and days): 67 alert words.
+- **Checked on wingpu:** a small UFO over the United States: SCRAMBLE clicked, the list (Raven-1 and Raven-2, Avalanche
+  Missiles, Ready; `logs/wingpu_ew_ufo_alert_jets.png`), AGG on Raven-1 clicked: the air war on Raven-1, [AGGRESSIVE].
+- **Seen, not fixed:** the jet list runs down over the movie's event list (COUNCIL REPORT) at the bottom right; EW's own
+  `HideNonAlertComponents` is called but leaves it.

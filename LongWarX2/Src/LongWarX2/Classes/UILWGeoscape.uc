@@ -386,6 +386,25 @@ simulated function bool ActOn(int Kind, int Index)
 	return false;
 }
 
+/** A detected UFO met by a chosen jet at a chosen stance (EW's contact alert's jet list): the air war on it, with that jet
+ *  (its place among the jets ready for the UFO) and stance. False if the jet is not ready for it. */
+simulated function bool Intercept(int Ufo, int Jet, int Stance)
+{
+	local UILWInterception Air;
+	local array<int> Ready;
+
+	Ready = class'LWHangar'.static.ReadyFor(Ufo);
+	if (Ready.Find(Jet) == INDEX_NONE)
+		return false;
+	Air = Spawn(class'UILWInterception', Movie.Pres);
+	Air.bCampaign = true;
+	Air.StrategyUfo = Ufo;
+	Air.JetPick = Ready.Find(Jet);
+	Air.PresetStance = Stance;
+	Movie.Pres.ScreenStack.Push(Air);
+	return true;
+}
+
 /** The n-th decision taken (its button pressed; also LWX2Control's "act"): false if there is none. */
 simulated function bool Act(int n)
 {
