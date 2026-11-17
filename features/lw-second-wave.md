@@ -126,3 +126,21 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   names the option. Checked on wingpu: a sniper's shot read "Aim 79, Cinematic Mode 15" (its aim 73 + 15 shown as 88).
 - **#17 Total Loss: nothing to port.** Long War loses a dead soldier's gear only when `Roll(BLUESHIRT_HP_MOD)` succeeds; that
   config is set nowhere in Long War 1.0 and defaults to −1, so the roll never does, option or not.
+
+## Report (2026-11-17, Liberators, Mind Hates Matter, United Humanity, Quick and Dirty, Green Fog)
+
+- **#8 Liberators** (`XGFacility_Barracks.HasPotentialVolunteer`, `CanVolunteer`): no volunteer for the Temple Ship while any
+  country has left the council: the Temple Ship's decision waits until every country is back. **Not ported:** its psionics
+  rule (`XGFacility_Labs.IsResearched(255)`: psi only from interrogating a Sectoid Commander or an Ethereal, not their
+  autopsies); the port's psi has no such gate yet. **Not seen in the game.**
+- **#20 Mind Hates Matter** (`XGFacility_GeneLabs`, `XGGeneLabUI`): a soldier with a gene mod cannot train psi powers, one with
+  a psi power cannot be gene-modded (`PsiSoldierWhy`, `GeneSoldierWhy`). Checked on wingpu: with the option, a soldier given
+  Bioelectric Skin was refused the Psi Labs ("needs a soldier without gene mods"); one without was taken.
+- **#23 United Humanity** (`XGExaltSimulation.BeginSimulation`): EXALT never begins. **Not seen in the game** (EXALT begins in
+  the second month).
+- **#27 Quick and Dirty** (`XGStrategyAI`'s squads, `ContBalance_Classic[33]`): a mission's aliens 60% as many, at least 6, at
+  most 55 (`LWAlienSquads.SquadFor`; those over the count left off the list's end, its roaming and secondary aliens).
+  Checked: an abduction's squad 13 → 7, a landed UFO's 20 → 12. (Long War also keeps at least one a pod.)
+- **#30 Green Fog** (`ContBalance_Normal[1]`, `[2]`): XCOM's units lose one aim and one will each of their turns, up to 30
+  and 20, back after the mission (`UpdateGreenFog`). Checked: a soldier's aim 66, 65, 64, 63 over three turns.
+- With these, 16 of the 31 settled: #0, 1, 2, 6, 7, 8, 10, 11, 12, 15, 17 (nothing to port), 20, 23, 24, 27, 30.

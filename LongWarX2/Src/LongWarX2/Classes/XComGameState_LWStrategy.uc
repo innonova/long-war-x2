@@ -2482,7 +2482,9 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 	if (class'LWEngineering'.static.Held('LWItem_Skeleton_Key') > 0)
 		for (i = 0; i < AlienBases.Length; i++)
 			AddDecision(Kinds, Indexes, Labels, 6, AlienBases[i], "ASSAULT: the alien base in" @ CountryName(AlienBases[i]) @ "(a Skeleton Key)");
-	if (!bCampaignWon && TileFacility.Length > 0 && class'LWBase'.static.Count(self, 19) > 0)
+	// (Liberators, second wave #8: the Temple Ship's volunteer only while no country has left the council, as Long War's
+	// XGFacility_Barracks.HasPotentialVolunteer has it: every country freed first.)
+	if (!bCampaignWon && TileFacility.Length > 0 && class'LWBase'.static.Count(self, 19) > 0 && (!class'LWX2SecondWave'.static.On(8) || NumLeft() == 0))
 		AddDecision(Kinds, Indexes, Labels, 7, 0, "ASSAULT: the Temple Ship");
 }
 
@@ -2567,7 +2569,36 @@ static function string PsiSoldierWhy(XComGameState_LWStrategy S, XComGameState_U
 		return "a free place in the Psi Labs";
 	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic() || class'LWMECs'.static.IsMEC(Unit) || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
 		return "a soldier ready for duty";
+	// Mind Hates Matter (second wave #20, XGFacility_GeneLabs: a gene-modded soldier counts as psi-tested, without the gift).
+	if (class'LWX2SecondWave'.static.On(20) && HasAnyGeneMod(Unit))
+		return "a soldier without gene mods";
 	return "";
+}
+
+/** Any of Long War's gene mods on the soldier. */
+static function bool HasAnyGeneMod(XComGameState_Unit Unit)
+{
+	local LWBaseRules.LWGeneMod G;
+
+	foreach class'LWBaseRules'.default.GeneMods(G)
+		if (HasGeneMod(Unit, G.Perk))
+			return true;
+	return false;
+}
+
+/** Any of Long War's psi powers on the soldier. */
+static function bool HasAnyPsiPower(XComGameState_Unit Unit)
+{
+	local LWBaseRules.LWPsiPower P;
+	local name Ability;
+
+	foreach class'LWBaseRules'.default.PsiPowers(P)
+	{
+		Ability = class'X2Ability_LWStandins'.static.PsiAbilityFor(P.Perk);
+		if (Ability != '' && Unit.HasSoldierAbility(Ability))
+			return true;
+	}
+	return false;
 }
 
 /** Whether a soldier may begin training a power now; Why says what is missing. */
@@ -2669,6 +2700,9 @@ static function string GeneSoldierWhy(XComGameState_LWStrategy S, XComGameState_
 		return "a free tank in the Genetics Lab";
 	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic() || class'LWMECs'.static.IsMEC(Unit) || !Unit.CanGoOnMission() || S.InPsiTraining(Unit.ObjectID))
 		return "a soldier ready for duty";
+	// Mind Hates Matter (second wave #20, XGGeneLabUI: a psi-gifted soldier can never be modified).
+	if (class'LWX2SecondWave'.static.On(20) && HasAnyPsiPower(Unit))
+		return "a soldier without psi powers";
 	return "";
 }
 

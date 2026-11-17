@@ -30,13 +30,32 @@ struct LWPossible
 /** The squad a mission holds. Kind: 1 crash site, 2 landed UFO, 3 abduction, 4 terror; Ufo: the ship (crash, landed). */
 static function array<int> SquadFor(int Kind, int Ufo, int Days, int Aggression, int Resources, int AbductionDifficulty, int TerrorsTaken)
 {
+	local array<int> Squad;
+
 	switch (Kind)
 	{
-	case 1: return UfoSquad(Ufo, false, Days, Aggression);
-	case 2: return UfoSquad(Ufo, true, Days, Aggression);
-	case 3: return AbductionSquad(AbductionDifficulty, Days, Resources);
-	case 4: return TerrorSquad(TerrorsTaken, Days);
+	case 1: Squad = UfoSquad(Ufo, false, Days, Aggression); break;
+	case 2: Squad = UfoSquad(Ufo, true, Days, Aggression); break;
+	case 3: Squad = AbductionSquad(AbductionDifficulty, Days, Resources); break;
+	case 4: Squad = TerrorSquad(TerrorsTaken, Days); break;
 	}
+	return QuickAndDirty(Squad);
+}
+
+/** Quick and Dirty (second wave #27, XGStrategyAI's squad: ContBalance_Classic[33]): the aliens 60% as many, at least 6, at
+ *  most 55; those after the count left out (the list's last: its roaming and secondary aliens come after its commanders and
+ *  soldiers). */
+static function array<int> QuickAndDirty(array<int> Squad)
+{
+	local int n;
+
+	if (!class'LWX2SecondWave'.static.On(27) || Squad.Length == 0)
+		return Squad;
+	n = Clamp(int(Squad.Length * class'LWX2SecondWave'.default.QuickAndDirtyPct / 100.0), Min(class'LWX2SecondWave'.default.QuickAndDirtyMin, Squad.Length),
+		class'LWX2SecondWave'.default.QuickAndDirtyMax);
+	if (n < Squad.Length)
+		Squad.Length = n;
+	return Squad;
 }
 
 /** Long War's pod-size factor (its GetAltWeapon(1)): 1, 2, 3 by the campaign's day. */

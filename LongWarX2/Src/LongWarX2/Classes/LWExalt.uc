@@ -75,7 +75,8 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 		return;
 	if (S.ExaltState == NOT_BEGUN)
 	{
-		if (S.Month > 1)
+		// (United Humanity, second wave #23, XGExaltSimulation.BeginSimulation: EXALT never begins.)
+		if (S.Month > 1 && !class'LWX2SecondWave'.static.On(23))
 			Begin(S);
 		return;
 	}
@@ -95,6 +96,7 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 /** Long War's BeginSimulation: EXALT's country (a council country), its clues, the delay before its first cells. */
 static function Begin(XComGameState_LWStrategy S)
 {
+
 	S.ExaltCountry = Rand(S.Countries.Length);
 	SelectClues(S);
 	S.ExaltCooldown = Tune().StartDelay + Rand(Tune().StartDelayVariation);

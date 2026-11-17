@@ -8,6 +8,10 @@ class LWX2SecondWave extends Object config(LWGear);
 var config float RedFogAim, RedFogMobility;
 /** Diminishing Returns' step (Long War's SW_SATELLITE_INCREASE). */
 var config float SatelliteIncrease;
+/** Quick and Dirty's share, least and most (Long War's ContBalance_Classic[33]: 60%, 6, 55). */
+var config int QuickAndDirtyPct, QuickAndDirtyMin, QuickAndDirtyMax;
+/** Green Fog's losses (ContBalance_Normal[1] and [2]: aim and will, one a turn when on, at most 30 and 20). */
+var config int GreenFogAimStep, GreenFogAimMax, GreenFogWillStep, GreenFogWillMax;
 
 /** Long War's option n chosen for this campaign. */
 static function bool On(int n)
@@ -187,4 +191,46 @@ static function int SatellitesHeld()
 		if (S.Countries[i].bSatellite)
 			n++;
 	return n;
+}
+
+/**
+ * #30 Green Fog (XGAbility_Targeted's aim, XGUnit's will; ContBalance_Normal[1] and [2]), asked twice a second in a mission:
+ * XCOM's units lose aim and will with each of their turns, one a turn up to 30 and 20, back after the mission (the change is
+ * the battle's, kept in the unit's LWX2GreenFogAim and LWX2GreenFogWill and taken back before the new one).
+ */
+static function UpdateGreenFog()
+{
+	local XComGameState NewGameState;
+	local XComGameState_Unit Unit;
+	local UnitValue OldAim, OldWill;
+	local int Turn, Aim, Will;
+
+	if (!On(30))
+		return;
+	Turn = class'LWX2CovertExtraction'.static.TurnNow();
+	Aim = -Min(Turn * default.GreenFogAimStep, default.GreenFogAimMax);
+	Will = -Min(Turn * default.GreenFogWillStep, default.GreenFogWillMax);
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Unit.GetTeam() != eTeam_XCom || !Unit.IsAlive() || Unit.bRemovedFromPlay || Unit.GetMyTemplate().bIsCosmetic)
+			continue;
+		OldAim.fValue = 0;
+		OldWill.fValue = 0;
+		Unit.GetUnitValue('LWX2GreenFogAim', OldAim);
+		Unit.GetUnitValue('LWX2GreenFogWill', OldWill);
+		if (Aim == int(OldAim.fValue) && Will == int(OldWill.fValue))
+			continue;
+		if (NewGameState == none)
+			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: Green Fog");
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+		Unit.SetCurrentStat(eStat_Offense, Unit.GetCurrentStat(eStat_Offense) - int(OldAim.fValue) + Aim);
+		Unit.SetCurrentStat(eStat_Will, Max(0, Unit.GetCurrentStat(eStat_Will) - int(OldWill.fValue) + Will));
+		Unit.SetUnitFloatValue('LWX2GreenFogAim', Aim, eCleanup_BeginTactical);
+		Unit.SetUnitFloatValue('LWX2GreenFogWill', Will, eCleanup_BeginTactical);
+	}
+	if (NewGameState != none)
+	{
+		`TACTICALRULES.SubmitGameState(NewGameState);
+		`log("LongWarX2: Green Fog: turn" @ Turn $ ": aim" @ Aim @ "will" @ Will, , 'LongWarX2');
+	}
 }

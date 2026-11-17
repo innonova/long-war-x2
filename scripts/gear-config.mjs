@@ -99,6 +99,13 @@ out.push('', '[LongWarX2.X2Effect_LWSecondWave]', `AbsolutelyCriticalFlankCrit=$
 // Red Fog's caps (SW_ABDUCTION_SITES and SW_COVER_INCREASE, as Long War's ApplyHPStatPenalties reads them).
 out.push('', '[LongWarX2.LWX2SecondWave]', `RedFogAim=${ini('SW_ABDUCTION_SITES')}`, `RedFogMobility=${ini('SW_COVER_INCREASE')}`,
   `SatelliteIncrease=${ini('SW_SATELLITE_INCREASE')}`)
+// Quick and Dirty (ContBalance_Classic[33]) and Green Fog (ContBalance_Normal[1] and [2]: its toggle's step, its most).
+const cont = (arr, k) => core.match(new RegExp(`^${arr}\\[${k}\\]=\\(([^)]*)\\)`, 'm'))[1]
+const field = (s, f) => Number(s.match(new RegExp(`${f}=(-?\\d+)`))[1])
+const qd = cont('ContBalance_Classic', 33), gfAim = cont('ContBalance_Normal', 1), gfWill = cont('ContBalance_Normal', 2)
+out.push(`QuickAndDirtyPct=${field(qd, 'iEngineers1')}`, `QuickAndDirtyMin=${field(qd, 'iScientists1')}`, `QuickAndDirtyMax=${field(qd, 'iEngineers2')}`,
+  `GreenFogAimStep=${field(gfAim, 'iScientists1')}`, `GreenFogAimMax=${field(gfAim, 'iEngineers1')}`,
+  `GreenFogWillStep=${field(gfWill, 'iScientists1')}`, `GreenFogWillMax=${field(gfWill, 'iEngineers1')}`)
 // Flight's air evasion (AIR_EVADE_DEF: the defence a flying unit with eAP_AirEvade has, in place of cover).
 out.push('', '[LongWarX2.X2Effect_LWFlying]', `AirEvade=${ini('AIR_EVADE_DEF')}`)
 out.push('', '[LongWarX2.LWGearRules]')
