@@ -36,6 +36,10 @@ mkdir -p "$stage/LongWarX2/Content" && cp tools/maps/*.umap "$stage/LongWarX2/Co
 # No Long War words either (the setup writes them from the player's install).
 if find "$stage" -iname '*.int' | grep -q .; then echo "Long War's words in the download:"; find "$stage" -iname '*.int'; exit 1; fi
 if find "$stage" -iname '*.upk' -o -iname '*.tfc' -o -iname '*.png' | grep -q .; then echo "game content in the download:"; find "$stage" -iname '*.upk' -o -iname '*.tfc' -o -iname '*.png'; exit 1; fi
+# Our own packages, after that check: the lightmapped stand-ins' material (made in the SDK editor, features/ew-lightmaps.md)
+# and its shaders as the build compiled them.
+cp LongWarX2/Content/LWX2Lightmap.upk "$stage/LongWarX2/Content/"
+scp -q "$host:$game/Content/LongWarX2_ModShaderCache.upk" "$stage/LongWarX2/Content/"
 
 npm run -s setup:bundle >/dev/null
 cp dist/LongWarX2-setup.exe "$stage/"

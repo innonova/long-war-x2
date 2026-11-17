@@ -219,9 +219,10 @@ async function main() {
     if (existsSync(kept)) {
       rmSync(join(target, 'Content'), { recursive: true, force: true })
       renameSync(kept, join(target, 'Content'))
-      // The mod's own maps (the template plot, the empty parcel) from this download, over the kept ones.
+      // The mod's own content from this download, over the kept: its maps (the template plot, the empty parcel), its
+      // lightmap material and the shaders compiled for it (features/ew-lightmaps.md). Everything else there is converted.
       for (const f of existsSync(join(source, 'Content')) ? readdirSync(join(source, 'Content')) : [])
-        if (f.endsWith('.umap')) cpSync(join(source, 'Content', f), join(target, 'Content', f))
+        if (f.endsWith('.umap') || f === 'LWX2Lightmap.upk' || f === 'LongWarX2_ModShaderCache.upk') cpSync(join(source, 'Content', f), join(target, 'Content', f))
     }
     say(`Installed the mod: ${target}`)
   }
