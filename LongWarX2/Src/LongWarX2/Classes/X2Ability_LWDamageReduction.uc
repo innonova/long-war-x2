@@ -60,6 +60,10 @@ static function X2AbilityTemplate DamageReduction()
 	Template.AbilityTriggers.AddItem(default.UnitPostBeginPlayTrigger);
 	Effect = new class'X2Effect_LWDamageReduction';
 	Effect.BuildPersistentEffect(1, true, false, false);
+	// The reduction shown with the hit's damage, as Long War shows its number beside a shield (XCOM 2's special damage
+	// messages: the effect's name and what it took off).
+	Effect.FriendlyName = "Damage Reduction";
+	Effect.bDisplayInSpecialDamageMessageUI = true;
 	Template.AddTargetEffect(Effect);
 	Template.bSkipFireAction = true;
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;

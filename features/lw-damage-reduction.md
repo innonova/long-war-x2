@@ -143,3 +143,11 @@ MEC its turns when it is hit, so the perk does next to nothing in stock Long War
 leaves it as a stand-in.
 
 Repair Servos (repairs half the damage taken, at most 2 a turn) is still a stand-in.
+
+## Report (2026-11-17, the reduction shown with the hit)
+
+- **Done:** the damage reduction's effect now carries XCOM 2's `bDisplayInSpecialDamageMessageUI`, so a hit it reduced
+  shows "Damage Reduction" and what it took off beside the damage (XCOM 2's special damage messages, recorded by
+  `X2Effect_ApplyWeaponDamage` for a defending modifier). Long War showed the number beside a shield icon; the words
+  are our own (EW has no label for it).
+- **Not seen in play yet:** it needs a hit the reduction rounds down; the mechanism is XCOM 2's own.

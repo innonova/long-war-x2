@@ -123,8 +123,9 @@ static function MissionOver()
 				Earned = (bSawBetter && Rank <= default.BetterWinUpToRank) ? default.BetterSpecialWinXP : default.SpecialWinXP;
 			else
 				Earned = (bSawBetter && Rank <= default.BetterWinUpToRank) ? default.BetterWinXP : default.WinXP;
-			// Into the Breach, the squad's leader's: up to sergeant, the mission's XP and a TERRA_XP-th more.
-			if (Rank <= 3 && class'LWOfficers'.static.SquadHad(Unit, class'LWOfficers'.const.INTO_THE_BREACH))
+			// Into the Breach, the squad's leader's: up to lieutenant (CalcXP: iRank <= 4, its ranks numbered as XCOM 2's), the
+			// mission's XP and a TERRA_XP-th more.
+			if (Rank <= 4 && class'LWOfficers'.static.SquadHad(Unit, class'LWOfficers'.const.INTO_THE_BREACH))
 				Earned += Earned / class'LWOfficers'.default.TerraXPDivisor;
 			Gained += Earned;
 			if (bNoDeaths)
