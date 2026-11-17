@@ -9,6 +9,10 @@ class LWX2Gear extends Object dependson(LWGearRules);
 
 /** XCOM 2's soldier's utility slots without armour (its 'Soldier' character), before Tactical Rigging. */
 var int UtilityBase;
+/** Jungle Scouts (LWBonuses.JUNGLE_SCOUTS): "Early armors (Tac Vest and Tac, Kestrel, Phalanx and Aurora Armors) receive an
+ *  additional small item slot until Tactical Rigging is developed" (its text; the slots are counted in EW's native code):
+ *  those armours' items. */
+var array<int> JungleScoutsArmors;
 /** The Foundry's Alien Grenades (2): Long War's alien grenade (84) then unlimited, in place of the soldiers' frag grenades (81). */
 var int AlienGrenadesProject, AlienGrenade, FragGrenade;
 
@@ -195,6 +199,10 @@ static function int ApplyRigging(XComGameState NewGameState, XComGameState_Headq
 			continue;
 		Armor = Unit.GetItemInSlot(eInvSlot_Armor);
 		Slots = Base + ((Armor != none && X2ArmorTemplate(Armor.GetMyTemplate()) != none && X2ArmorTemplate(Armor.GetMyTemplate()).bAddsUtilitySlot) ? 1 : 0);
+		// Jungle Scouts: an early armour's extra slot, until Tactical Rigging.
+		if (Armor != none && !class'X2Effect_LWFoundry'.static.Perk(24) && class'LWBonuses'.static.Has(class'LWBonuses'.const.JUNGLE_SCOUTS) > 0
+			&& default.JungleScoutsArmors.Find(int(Mid(string(Armor.GetMyTemplateName()), 8))) != INDEX_NONE && Left(string(Armor.GetMyTemplateName()), 8) == "LWArmor_")
+			Slots++;
 		if (int(Unit.GetMaxStat(eStat_UtilityItems)) == Slots)
 			continue;
 		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
@@ -431,6 +439,11 @@ static function Report(out array<string> Out)
 defaultproperties
 {
 	UtilityBase = 1
+	JungleScoutsArmors(0) = 57
+	JungleScoutsArmors(1) = 59
+	JungleScoutsArmors(2) = 182
+	JungleScoutsArmors(3) = 159
+	JungleScoutsArmors(4) = 68
 	AlienGrenadesProject = 2
 	AlienGrenade = 84
 	FragGrenade = 81

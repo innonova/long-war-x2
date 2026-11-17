@@ -240,3 +240,12 @@ The two SHIV and MEC bonuses act now, as in Long War's code:
 
 NeoPanzers and Cyberware already acted on the SHIV and MEC items' costs. With these two, the SHIV
 and MEC bonuses are all in.
+
+## Report (2026-11-17, Jungle Scouts)
+
+Jungle Scouts (Brazil's second start option, type 35): "Early armors (Tac Vest and Tac, Kestrel, Phalanx and Aurora Armors)
+receive an additional small item slot until Tactical Rigging is developed" (its text; EW counts small slots in native code,
+so the armours are taken from the text: items 57, 59, 182, 159, 68). `LWX2Gear.ApplyRigging`, which sets every soldier's
+small slots as the armoury and squad select open, adds the slot to a soldier in one of those armours while the bonus holds
+and the Foundry's Tactical Rigging (24) is not done. Compiled; not seen in a campaign (the test campaigns start in the
+United States without a start option).
