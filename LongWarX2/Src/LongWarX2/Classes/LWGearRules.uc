@@ -151,6 +151,14 @@ var config array<LWArmorDef> Armors;
 /** What a Long War soldier wears unless given another (Long War's item number). */
 var config int StartingArmor;
 var config array<LWBuildDef> Builds;
+
+/** A perk an item gives whoever carries it (XGStorage.ClaimItem: its ItemBalance's iAlloys / 1000). */
+struct LWCarriedPerk
+{
+	var name Template;
+	var int Perk;
+};
+var config array<LWCarriedPerk> CarriedPerks;
 /** How a project's engineers make its work an hour (GetWorkPerHour: Long War's ABDUCTION_REWARD_ENG). */
 var config float EngineerRate;
 /** Long War's ITEM_TIME_BALANCE. */
@@ -220,4 +228,34 @@ static function bool SmallFor(name Template, out LWSmallDef D)
 		return false;
 	D = default.SmallItems[k];
 	return true;
+}
+
+/** The perks a unit's items give while carried (XGStorage.ClaimItem), each the ability a perk of that number is
+ *  (X2Ability_LWStandins.AlienAbilities), bound to the item that gives it. */
+static function AddCarriedPerks(XComGameState_Unit Unit, out array<AbilitySetupData> SetupData, optional XComGameState StartState)
+{
+	local array<XComGameState_Item> Items;
+	local XComGameState_Item Item;
+	local AbilitySetupData Data;
+	local X2AbilityTemplate Template;
+	local name Ability;
+	local int k;
+
+	Items = Unit.GetAllInventoryItems(StartState);
+	foreach Items(Item)
+	{
+		k = default.CarriedPerks.Find('Template', Item.GetMyTemplateName());
+		if (k == INDEX_NONE)
+			continue;
+		Ability = class'X2Ability_LWStandins'.static.AlienAbilityFor(default.CarriedPerks[k].Perk);
+		if (Ability == '' || SetupData.Find('TemplateName', Ability) != INDEX_NONE)
+			continue;
+		Template = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager().FindAbilityTemplate(Ability);
+		if (Template == none)
+			continue;
+		Data.TemplateName = Ability;
+		Data.Template = Template;
+		Data.SourceWeaponRef = Item.GetReference();
+		SetupData.AddItem(Data);
+	}
 }

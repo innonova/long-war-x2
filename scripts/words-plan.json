@@ -383,12 +383,20 @@
    "perk": "ePerk_Foundry_EleriumFuel"
   },
   {
+   "name": "LW_JetbootModule",
+   "perk": "ePerk_JetbootModule"
+  },
+  {
    "name": "LW_CombinedArms",
    "perk": "ePerk_ExpandedStorage"
   },
   {
    "name": "LW_FortioresUna",
    "perk": "ePerk_Overdrive"
+  },
+  {
+   "name": "LW_BodyShield",
+   "perk": "ePerk_BodyShield"
   }
  ]
 }

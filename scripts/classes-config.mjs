@@ -464,7 +464,9 @@ const alienLines = []
 if (gameUpk) {
   const perkNames = readEnum(new Package(decompressPackage(new Uint8Array(readFileSync(gameUpk)))), 'EPerkType')
   const aliens = readFileSync(join(mod, 'Config', 'XComLWAliens.ini'), 'utf8')
-  const numbers = [...new Set([...aliens.matchAll(/^\+Leader=\(.*\bPerk=(\d+)/gm)].map((m) => Number(m[1])).filter((n) => n > 0))].sort((a, b) => a - b)
+  // (And the perks items give while carried, ItemBalance_Normal's iAlloys / 1000: gear-config.mjs's CarriedPerks, looked up here too.)
+  const carried = [...core.matchAll(/^ItemBalance_Normal=\(.*?iAlloys=\s*(\d+)/gm)].map((m) => Math.trunc(Number(m[1]) / 1000))
+  const numbers = [...new Set([...[...aliens.matchAll(/^\+Leader=\(.*\bPerk=(\d+)/gm)].map((m) => Number(m[1])), ...carried].filter((n) => n > 0))].sort((a, b) => a - b)
   for (const n of numbers) alienLines.push(`+AlienAbilities=(Perk=${n}, Ability=${q(abilityFor(perkNames[n]))})`)
 }
 

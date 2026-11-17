@@ -161,7 +161,8 @@ export function readBalance(core, ITEMS) {
     const f = Object.fromEntries(m[1].split(',').filter((p) => p.includes('=')).map((p) => p.split('=').map((s) => s.trim())))
     const id = /^\d+$/.test(f.eItem) ? Number(f.eItem) : ITEMS.findIndex((e) => e.toLowerCase() === f.eItem.toLowerCase())
     const n = (k) => Number(f[k])
-    out.set(id, { cash: n('iCash'), elerium: n('iElerium') % 1000, meld: Math.trunc(n('iElerium') / 1000), alloys: n('iAlloys') % 1000, days: n('iTime'), engineers: n('iEng') })
+    // (iAlloys / 1000: the perk the item gives while carried, XGItemTree.BalanceItems' iStructureReq, XGStorage.ClaimItem.)
+    out.set(id, { cash: n('iCash'), elerium: n('iElerium') % 1000, meld: Math.trunc(n('iElerium') / 1000), alloys: n('iAlloys') % 1000, perk: Math.trunc(n('iAlloys') / 1000), days: n('iTime'), engineers: n('iEng') })
   }
   return out
 }

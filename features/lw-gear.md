@@ -563,3 +563,18 @@ the Ghost Grenade and the Psi Grenade (psionic soldiers only, which the armory d
   `XComLWGear.ini` now.
 
 All four of the items left open above are in.
+
+## Report (2026-11-17, the perks items give while carried)
+
+- **Read:** Long War packs a perk into an item's alloy cost: `ItemBalance_Normal`'s iAlloys / 1000 is the item's
+  `iStructureReq` (`XGItemTree.BalanceItems`), and `XGStorage.ClaimItem` gives that perk to the soldier who equips the
+  item (`ReleaseItem` takes it back).
+- **Done:** `gear-config.mjs` writes them (`+CarriedPerks=(Template, Perk)`), `classes-config.mjs` maps their numbers
+  to abilities with the aliens' perks (`AlienAbilities`), and `LWGearRules.AddCarriedPerks` gives a unit, for the
+  mission, the ability of each item it carries, bound to that item. Among them: the smoke grenade's Smoke Bomb (44),
+  item 71's Steadfast (154), item 70's Adrenaline Surge (147), the Titan armour's Damage Control (134), the rocket
+  launcher's HEAT Ammo (90), weapons 246–250's Squadsight (3) and 253's Disabling Shot (9), the MEC suits' Jetboot
+  Module (137) and Body Shield (145) (those two stand-ins for now). Items the port has no equippable template for give
+  nothing.
+- **Checked on wingpu:** item 71 given to five soldiers: in the mission each had Steadfast's effects.
+- `BalanceMods` (mobility and will by weapon) stay open.

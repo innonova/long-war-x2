@@ -158,6 +158,13 @@ for (const m of core.matchAll(/^FoundryBalance=\((.*?)\)/gm)) {
       ')',
   )
 }
+// The perks items give while carried (XGStorage.ClaimItem: the item's iStructureReq, ItemBalance_Normal's iAlloys / 1000,
+// held while the item is equipped; LWGearRules.CarriedPerks).
+out.push('; CarriedPerks: the Long War perk an item gives its carrier (X2DownloadableContentInfo_LongWarX2, as the alien perks map them).')
+for (const [item, b] of [...balance].sort((x, y) => x[0] - y[0])) {
+  if (item <= 0 || !b.perk || !ITEMS[item]) continue
+  out.push(`+CarriedPerks=(Template=${SHIVS[item] ?? itemTemplate(item, ITEMS)}, Perk=${b.perk})`)
+}
 // The grey market (XGItemTree.GetItemSalePrice, CanBeSold; LWGreyMarket): what Long War buys and for how much, its
 // ItemBalance_Normal's iCash (an item engineering builds, iTime not -1: 40% of it); never craft, their weapons, the satellite
 // or the Skyranger (CanBeSold's list). Corpse: Xenological Remedies raises its price (XGFacility_Engineering.IsCorpseItem).

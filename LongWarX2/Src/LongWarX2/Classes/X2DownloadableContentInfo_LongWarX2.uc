@@ -143,6 +143,8 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	local LWX2Furies.LWX2FuriesDef Furies;
 
 	class'LWSHIVs'.static.AddFoundryAbilities(UnitState, SetupData);
+	// The perks Long War's items give while carried (LWGearRules.CarriedPerks).
+	class'LWGearRules'.static.AddCarriedPerks(UnitState, SetupData, StartState);
 	// Neural Feedback's answer to psionic attacks (X2Ability_LWNeuralFeedback).
 	if (UnitState.GetTeam() == eTeam_XCom && UnitState.HasSoldierAbility('LW_NeuralFeedback'))
 		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_NeuralFeedback', eInvSlot_Unknown, SetupData);
