@@ -348,8 +348,9 @@ Regen Biofield was done on 2026-11-02 (above); with this, none of Long War's psi
 cause injuries."): a psi power aimed at a place in sight (free aim), within 27 m (18 tiles: `SetChainedDistance`'s
 27 × 64 units for it), that lights fires there (XCOM 2's fire on the world, as an incendiary's); it harms no unit
 itself, the fire burns who stays in it. `X2Ability_LWStandins` (`PsiKind=Pyrokinesis`).
-- **APPROXIMATION:** its fire's radius and its cooldown are in neither Long War's script nor its config (EW's native
-  code): 2 tiles (an incendiary's) and one turn.
+- Its fire is EW's fire volume (`XGAbilityTree.GetVolume`: eVolume_Fire; `XGVolumeMgr.BuildTVolumes`: 3 m, so 2
+  tiles): the same as the port's 2.
+- **APPROXIMATION:** its cooldown is in neither Long War's script nor its config: one turn.
 
 **Checked on wingpu:** a soldier given it in a council assault cast it at the nearest alien's place: fires lit there.
 All of Long War's psi powers now act in missions.

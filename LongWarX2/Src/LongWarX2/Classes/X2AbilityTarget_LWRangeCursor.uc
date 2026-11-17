@@ -1,7 +1,9 @@
 // A thrown or launched explosive's aim (features/lw-classes.md), as Long War reaches it (its repurposed
 // XGUnit.GetMoveModifierCost): XCOM 2's cursor within the weapon's range, times
 // - a grenade (thrown or launched): Bombard x1.4, else Grenadier x1.2;
-// - a rocket: Javelin Rockets x1.25; after moving x0.4, or x0.6 with Snap Shot.
+// - a rocket: Javelin Rockets x1.25; after moving x0.4, or x0.6 with Snap Shot;
+// then divided by 1 + each of: suppressed, poisoned, flashbanged, mindfrayed (EW counts the last two apart; in XCOM 2 both
+// are its one disorientation, so they count once).
 class X2AbilityTarget_LWRangeCursor extends X2AbilityTarget_Cursor config(LWClasses);
 
 /** 'Grenade' or 'Rocket'. */
@@ -30,7 +32,23 @@ static function float Factor(XComGameState_Unit Unit, name WhatKind)
 		if (Unit.ActionPoints.Length < 2)
 			F *= Unit.HasSoldierAbility('LW_SnapShotRocket') ? default.SnapShotRocketRange : default.MovedRocketRange;
 	}
-	return F;
+	return F / Hampered(Unit);
+}
+
+/** Long War's divisor of an explosive's reach: 1, and one more for each of being suppressed, poisoned, flashbanged or
+ *  mindfrayed (XGUnit.GetMoveModifierCost's IsBeingSuppressed, IsPoisoned, eAbility_FlashBang, eAbility_Mindfray). */
+static function float Hampered(XComGameState_Unit Unit)
+{
+	local int n;
+
+	n = 1;
+	if (Unit.IsUnitAffectedByEffectName(class'X2Effect_Suppression'.default.EffectName))
+		n++;
+	if (Unit.IsPoisoned())
+		n++;
+	if (Unit.IsDisoriented())
+		n++;
+	return n;
 }
 
 simulated function float GetCursorRangeMeters(XComGameState_Ability AbilityState)

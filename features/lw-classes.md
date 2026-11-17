@@ -782,3 +782,12 @@ Smoke's wider cloud. (Field Surgeon and Fire in the Hole were done earlier: the 
   concealment also makes the soldier invisible to the aliens' sight in the open, where EW only stopped them targeting.
 - **Checked on wingpu:** a squad all with the perk, each moved a few tiles: the one who ended beside a wall was
   hidden ("Concealment: … hidden in high cover", "concealed" in `units`); moved again into the open, it was not.
+
+## Report (2026-11-17, the reach divided; Dense Smoke's cloud)
+
+- **An explosive's reach divided** as Long War's `GetMoveModifierCost` divides it: by 1 plus one for each of being
+  suppressed, poisoned, flashbanged and mindfrayed (`X2AbilityTarget_LWRangeCursor.Hampered`). In XCOM 2 a flashbang and
+  Mindfray are both its one disorientation, so together they count once (EW counts them apart). Built; not seen in play.
+- **Dense Smoke's wider cloud stays undone, for a reason:** Long War widens the smoke volume ×1.25 for its thrower
+  (`XGAbilityTree.GetVolume`, upgrade 51). XCOM 2 sizes a grenade's cloud in native code from the throw's radius, whose
+  per-soldier bonus (`AddAbilityBonusRadius`) would widen every grenade the soldier throws, not only smoke.

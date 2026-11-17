@@ -226,8 +226,8 @@ const REAL = {
   // radius (APPROXIMATION: its radius and strength are not known).
   LW_PsychokineticStrike: () => ({ PsiKind: 'PsychokineticStrike', Radius: 1, Param2: 100, Param: 2 }),
   // "Ignite fires at the target location. Does not cause injuries." (EW's eAbility_Torch: a location in sight, free aim,
-  // within 27 m: SetChainedDistance's 27 x 64 units, 18 tiles). Its fire's radius and its cooldown are not in Long War's
-  // script or config: 2 tiles (an incendiary's) and a turn (APPROXIMATION).
+  // within 27 m: SetChainedDistance's 27 x 64 units, 18 tiles); its fire EW's fire volume (BuildTVolumes: 3 m, 2 tiles).
+  // Its cooldown is not in Long War's script or config: a turn (APPROXIMATION).
   LW_Pyrokinesis: () => ({ PsiKind: 'Pyrokinesis', Radius: 2, Param2: 18, Param: 1 }),
   // "Nearby allies are healed for <RegenPheromoneRegen> health each turn" (cannot die of a critical wound, cured of acid:
   // not done).
