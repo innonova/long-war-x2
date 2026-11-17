@@ -461,3 +461,16 @@ Test aids: `ewset <path> <value>`, `ewinvoke <function> [args]` (at once, its re
   (EW's own room geometry, not our display: they stayed with our display moved far away), and EW's HUD (the clock, the
   council report, the resources) stays over the armory.
 - `ArmoryInBase` stays `false`: the armory stands the soldier in the Avenger, as before.
+
+## Notes (2026-11-17, EW's light strips: what a stand-in needs)
+
+- **EW's strips** are many materials, `HQ_ColorizedLight_*` (in the converted base data's `+Looks`):
+  - `PureVertexColor` and `VertexColor`: the glow's colour comes from the mesh's vertex colours;
+  - `…_NoTint_Warm_A/B/C`, `…_NoTint_Cool_A`: fixed warm and cool ones;
+  - a few per room (`_Excavated`, `_AC`).
+- **An XCOM 2 parent that glows through a colour parameter alone,** with no static switch (switches cannot be set at run
+  time), read from the SDK's uncooked `Materials.upk` (the cooked packages are Oodle-compressed, which upkit does not read):
+  `Materials.Approved.Objective_UI` (`ObjectiveUIColor`, `Diffuse`, `Normal`). `Hologram_Props` (`HoloColor`) is made
+  for units, and `Hologram_Translucent` has no colour. `Props_SD`'s emissive is behind `UseEmissive`, a static switch.
+- **Next try:** strips as `Objective_UI` stand-ins with a white `Diffuse`: warm and cool by name, the vertex-coloured ones in
+  EW's base teal until the colour can be read from the meshes. Then check against EW's own base in the EW harness.
