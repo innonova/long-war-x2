@@ -17,7 +17,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { readConsts, makeWords } from './lw-words.mjs'
 import { Package, decompressPackage, readEnum } from '@innonova/upkit/upk'
-import { LAUNCHER_CATEGORY, classCategories, readWeapons, startingKit, weaponTemplate } from './lw-gear.mjs'
+import { LAUNCHER_CATEGORY, categoryFor, classCategories, readWeapons, startingKit, weaponTemplate } from './lw-gear.mjs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -286,6 +286,12 @@ const out = [
   '',
   "; Recruits become Long War's classes, not XCOM 2's.",
   ...['Ranger', 'Sharpshooter', 'Grenadier', 'Specialist'].flatMap((n) => [`[${n} X2SoldierClassTemplate]`, 'NumInForcedDeck=0', 'NumInDeck=0']),
+  '',
+  "; Rookies carry Long War's rookie kit (its default branch of GetInfinitePrimary: the ballistic rifle, and a pistol), not XCOM 2's.",
+  '[Rookie X2SoldierClassTemplate]',
+  'SquaddieLoadout="LWS_SquaddieRookie"',
+  // (Its two weapons' categories, so a rookie may hold them.)
+  ...[[212, 'eInvSlot_PrimaryWeapon'], [2, 'eInvSlot_SecondaryWeapon']].map(([item, slot]) => `+AllowedWeapons=(SlotType=${slot}, WeaponType=${q(categoryFor(weapons.get(item).props, item))})`),
 ]
 // The classes' starting kits: the item manager reads GameData (XComGameData.ini), not ClassData. (And the Avenger's
 // sky-and-light level, also GameData's.)
@@ -296,6 +302,7 @@ writeFileSync(
     '; from scripts/lw-gear.mjs (GetInfinitePrimary). Do not edit by hand.',
     '[XComGame.X2ItemTemplateManager]',
     ...Object.entries(LOADOUTS).map(([n, items]) => `+Loadouts=(LoadoutName=${q('LWS_Squaddie' + n)}, ${items.map((it, k) => `Items[${k}]=(Item=${q(it)})`).join(', ')})`),
+    `+Loadouts=(LoadoutName="LWS_SquaddieRookie", Items[0]=(Item=${q(weaponTemplate(212))}), Items[1]=(Item=${q(weaponTemplate(2))}))`,
     "; Long War's soldiers carry as many grenades and medikits as they have small slots (a charge each): XCOM 2's one-each rule lifted.",
     '-UniqueEquipCategories=grenade',
     '-UniqueEquipCategories=heal',

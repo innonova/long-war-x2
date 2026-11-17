@@ -596,3 +596,10 @@ carries it, weapon or backpack item; `iHP` is damage reduction (already read for
 
 **Checked on wingpu:** a sniper given the SMG (231) had `LWWeaponStats_231` and a gunner's LMG (214) `LWWeaponStats_214`
 in a mission.
+
+## Report (2026-11-17, the rookies' kit)
+
+Rookies (XCOM 2's Rookie class, until their first promotion deals a Long War class) carried XCOM 2's conventional rifle.
+They now carry Long War's rookie kit: `startingKit`'s default branch of `GetInfinitePrimary`, the ballistic rifle (212),
+and the pistol (2): the Rookie class's `SquaddieLoadout` is `LWS_SquaddieRookie` and it may hold those two weapons'
+categories (`classes-config.mjs`; `LWX2Gear.ArmAll` arms them as it arms the classes).
