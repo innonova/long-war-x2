@@ -304,3 +304,20 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   reloaded (the soldier's action points stayed spent), so neither the option's effect nor XCOM 2's own replay was observed.
   To check by hand: in a mission, quicksave before a shot of about 50%, shoot, quickload, shoot again a few times. Without
   the option the result repeats; with it, it varies.
+
+## Report (2026-11-17, Bronzeman Mode; mission restarts as Long War's)
+
+- **Restart Mission as Long War offers it:** XCOM 2's pause menu has Restart Mission only in its first and final missions
+  and never in Ironman. Long War offers it in every mission of a game not in Ironman ("Restarts are automatically enabled
+  for non-Ironman games"). The port now adds XCOM 2's own item where XCOM 2 left it out, with XCOM 2's own question and
+  restart (`UIScreenListener_LWX2PauseMenu`).
+- **#16 Bronzeman Mode** ("Allows restart of tactical missions via pause menu in Ironman mode"): the same in Ironman. Its
+  click goes to XCOM 2's question directly, since XCOM 2's own handler refuses a restart in Ironman.
+- **A crash caught in testing:** the first version kept the pause menu in a variable of the listener. A screen listener is
+  a default object outside the world, so that kept the mission's world alive through the restart's map change ("World …
+  not cleaned up by garbage collection", the game closed). The listener now keeps nothing and looks the menu up when it
+  needs it. The port's other listeners hold no such reference.
+- **Checked on wingpu** (an abduction, not the campaign's first mission, not Ironman): the pause menu ends with Restart Mission
+  (`logs/wingpu_pause_restart.png`). Its question is XCOM 2's (`logs/wingpu_restart_question.png`). Accepted, the mission
+  restarted: a soldier moved four tiles was back where she began with both action points.
+- **Not seen:** an Ironman campaign with Bronzeman (the same item and path).
