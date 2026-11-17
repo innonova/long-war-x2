@@ -43,3 +43,17 @@ the rooms go black: all their light is those lights.
 
 - Lightmaps over tuning dynamic lights (posted 2026-11-17): the dark shells and corners are shadows, which only the
   baked lighting has.
+
+## Report (2026-11-17, first pass: converter, material, run time)
+
+- **The converter** reads each piece's lightmap (`ew-map.ts`, `lightmapOf`): 95 of the lab's 96 pieces, 1374 in the
+  base. The colour atlas's mips are rewritten as colour × the mean of the directional atlas's channels
+  (`lightmap-bake.ts`: DXT1 decoded and encoded again), and written as a plain `Texture2D`: bound as
+  `LightMapTexture2D`, XCOM 2 crashed with heap corruption as the base came into view.
+- **The material** (`LongWarX2/Content/LWX2Lightmap.upk`, `M_EWLightmapped`): unlit, Diffuse (UV0) × LightMap (UV1 ×
+  LMScaleBias.xy + .zw) × LMBrightness. Made by hand in the SDK editor: pasting expressions as text into the material
+  editor did nothing (its paste reads its own buffer), so the nodes were placed from the expression list and wired by
+  mouse. The build precompiles its shaders (`LongWarX2_ModShaderCache.upk`). The editor first had to be freed of the
+  mod's classes: every build writes them into the SDK's `Script\Manifest.txt`, and the editor asserts on them.
+- **At run time** (`LWX2EWMapPieces.Lightmapped`): each lightmapped piece of a Prop look with a diffuse gets its own
+  instance; its scales become one brightness (mean colour scale × mean directional scale × √3).
