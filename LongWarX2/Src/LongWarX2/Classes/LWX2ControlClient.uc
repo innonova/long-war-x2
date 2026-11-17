@@ -2489,7 +2489,7 @@ function XComUnits(out array<string> Out)
 	if (Units.Length == 0)
 		Out.AddItem("ERR no units of XCOM on the field (not in a mission?)");
 	for (i = 0; i < Units.Length; i++)
-		Out.AddItem(i @ Units[i].GetFullName() @ "(" $ Units[i].GetMyTemplateName() $ "," @ Units[i].GetSoldierClassTemplateName() $ ") at" @ Units[i].TileLocation.X @ Units[i].TileLocation.Y @ Units[i].TileLocation.Z
+		Out.AddItem(i @ Units[i].GetFullName() @ "#" $ Units[i].ObjectID @ "(" $ Units[i].GetMyTemplateName() $ "," @ Units[i].GetSoldierClassTemplateName() $ ") at" @ Units[i].TileLocation.X @ Units[i].TileLocation.Y @ Units[i].TileLocation.Z
 			@ "ap" @ Units[i].ActionPoints.Length @ "sight" @ int(Units[i].GetCurrentStat(eStat_SightRadius)) @ "hp" @ int(Units[i].GetCurrentStat(eStat_HP)) $ "/" $ int(Units[i].GetMaxStat(eStat_HP))
 			@ "mob" @ int(Units[i].GetCurrentStat(eStat_Mobility)) @ "def" @ int(Units[i].GetCurrentStat(eStat_Defense)) @ "flankcrit" @ int(Units[i].GetCurrentStat(eStat_FlankingCritChance)) $ "/" $ int(Units[i].GetBaseStat(eStat_FlankingCritChance)) $ "/" $ int(Units[i].GetMyTemplate().CharacterBaseStats[eStat_FlankingCritChance])
 			@ "weapon" @ (Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon) != none ? string(Units[i].GetItemInSlot(eInvSlot_PrimaryWeapon).GetMyTemplateName()) : "-")
@@ -2628,7 +2628,7 @@ function Enemies(out array<string> Out, optional bool bAll)
 				if ((dx != 0 || dy != 0) && World.CanUnitsEnterTile(N))
 					Open++;
 			}
-		Out.AddItem(Unit.GetMyTemplateName() @ "(" $ Unit.GetMyTemplate().CharacterGroupName $ ") team" @ Unit.GetTeam() @ "hp" @ int(Unit.GetCurrentStat(eStat_HP)) $ "/" $ int(Unit.GetMaxStat(eStat_HP)) @ "tiles" @ Best
+		Out.AddItem(Unit.GetMyTemplateName() @ "#" $ Unit.ObjectID @ "(" $ Unit.GetMyTemplate().CharacterGroupName $ ") team" @ Unit.GetTeam() @ "hp" @ int(Unit.GetCurrentStat(eStat_HP)) $ "/" $ int(Unit.GetMaxStat(eStat_HP)) @ "tiles" @ Best
 			@ "at" @ T.X $ "," $ T.Y $ "," $ T.Z @ (World.GetFloorPositionForTile(T, Floor) ? "floor" : "NOT floor") @ "open around" @ Open
 			@ "ai data" @ Unit.GetAIUnitDataID() @ "group" @ (Unit.GetGroupMembership() != none ? Unit.GetGroupMembership().ObjectID : 0) @ "ap" @ Unit.ActionPoints.Length
 			@ "effects" @ JoinNames(Unit.AffectedByEffectNames));

@@ -50,6 +50,10 @@ struct LWArmorDef
 	var bool Infinite;
 	/** Its damage reduction (Long War's BalanceMods_Classic iHP, in tenths: Titan 0.5; X2Ability_LWDamageReduction). */
 	var float DR;
+	/** Flight (eAbility_Fly: X2Ability_LWFlight): its fuel, and air evasion while flying (eAP_AirEvade). */
+	var bool Fly;
+	var int Fuel;
+	var bool AirEvade;
 };
 
 /** An item engineering builds (Long War's ItemBalance_Normal and XGItemTree.BuildItems). */

@@ -35,8 +35,9 @@ static function X2CharacterTemplate SHIVTemplate(LWSHIVs.LWSHIVBody B)
 	T.bCanUse_eTraversal_Landing = true;
 	T.bCanUse_eTraversal_BreakWindow = true;
 	T.bCanUse_eTraversal_KickDoor = true;
-	T.bCanUse_eTraversal_JumpUp = B.Fly;
-	T.bCanUse_eTraversal_Flying = B.Fly;
+	// (The Hover SHIV flies by Long War's rules, its deck's fuel: X2Ability_LWFlight's abilities, below.)
+	T.bCanUse_eTraversal_JumpUp = false;
+	T.bCanUse_eTraversal_Flying = false;
 	T.bCanUse_eTraversal_WallClimb = false;
 	T.bCanUse_eTraversal_BreakWall = false;
 	T.bAppearanceDefinesPawn = false;
@@ -65,6 +66,11 @@ static function X2CharacterTemplate SHIVTemplate(LWSHIVs.LWSHIVBody B)
 	T.strTargetingMatineePrefix = "CIN_AdventMEC_FF_StartPos";
 	T.strTargetIconImage = class'UIUtilities_Image'.const.TargetIcon_XCom;
 	T.Abilities.AddItem('RobotImmunities');
+	if (B.Fly)
+	{
+		T.Abilities.AddItem('LWX2_Fly');
+		T.Abilities.AddItem('LWX2_Land');
+	}
 	T.Abilities.AddItem('Loot');
 	T.Abilities.AddItem('Evac');
 	T.Abilities.AddItem('PlaceEvacZone');

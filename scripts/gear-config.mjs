@@ -45,8 +45,8 @@ for (const items of Object.values(FAMILIES)) {
   }
 }
 
-// The armours: HP, defence, will and mobility; grapple and immunities (the rest of their properties, flight and
-// ghost, not yet); the XCOM 2 armour each looks like; those never built (cost -1) unlimited.
+// The armours: HP, defence, will and mobility; grapple and immunities; flight (eAbility_Fly: its fuel, air evasion; ghost
+// not yet); the XCOM 2 armour each looks like; those never built (cost -1) unlimited.
 const armours = readArmours(core, ITEMS)
 // Each item's damage reduction: BalanceMods_Classic's iHP, in tenths ("iHP -- damage reduction, works for weapons/armor/items").
 const itemDR = new Map([...core.matchAll(/^BalanceMods_Classic=\(eType=(\d+),.*?iHP=(-?\d+)/gm)].map((m) => [Number(m[1]), Number(m[2]) / 10]))
@@ -57,7 +57,8 @@ for (const [id, look] of Object.entries(ARMOURS)) {
   out.push(
     `+Armors=(Item=${id}, Enum=${ITEMS[id]}, HP=${a.iHPBonus}, Defense=${a.iDefenseBonus}, Will=${a.iWillBonus}, Mobility=${a.iMobilityBonus}, ` +
       `SmallItems=${a.iSmallItems}, Look=${look}, Grapple=${a.props.includes('Grapple')}, FireImmune=${a.props.includes('FireImmunity')}, ` +
-      `PoisonImmune=${a.props.includes('PoisonImmunity')}, Infinite=${(balance.get(Number(id))?.cash ?? -1) < 0}, DR=${itemDR.get(Number(id)) ?? 0})`,
+      `PoisonImmune=${a.props.includes('PoisonImmunity')}, Infinite=${(balance.get(Number(id))?.cash ?? -1) < 0}, DR=${itemDR.get(Number(id)) ?? 0}` +
+      (a.abilities.includes('Fly') ? `, Fly=true, Fuel=${a.iFlightFuel ?? 0}, AirEvade=${a.props.includes('AirEvade')}` : '') + ')',
   )
 }
 out.push(`StartingArmor=${STARTING_ARMOUR}`)
@@ -94,6 +95,8 @@ const ini = (k) => Number(core.match(new RegExp(`^${k}=([\\d.]+)`, 'm'))[1])
 out.push('', '[LongWarX2.X2Effect_LWRespirator]', 'ExtraTurns=2')
 // The second-wave options' tactical numbers (features/lw-second-wave.md): Absolutely Critical's flanking crit and the usual.
 out.push('', '[LongWarX2.X2Effect_LWSecondWave]', `AbsolutelyCriticalFlankCrit=${ini('SW_FLANK_CRIT')}`, `FlankCrit=${ini('FLANKING_CRIT_BONUS')}`)
+// Flight's air evasion (AIR_EVADE_DEF: the defence a flying unit with eAP_AirEvade has, in place of cover).
+out.push('', '[LongWarX2.X2Effect_LWFlying]', `AirEvade=${ini('AIR_EVADE_DEF')}`)
 out.push('', '[LongWarX2.LWGearRules]')
 out.push(`EngineerRate=${ini('ABDUCTION_REWARD_ENG')}`, `TimeBalance=${ini('ITEM_TIME_BALANCE')}`, `WorkshopBonus=${ini('WORKSHOP_ENG_BONUS')}`)
 // The arc thrower: Long War's multiplier on Enemy Within's stun chance (UFO_PSI_LINK_SURVIVE, the name notwithstanding),

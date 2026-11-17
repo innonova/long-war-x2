@@ -26,6 +26,11 @@ static function X2ArmorTemplate ArmorTemplate(LWGearRules.LWArmorDef A)
 	Template.Abilities.AddItem(class'X2Ability_LWArmorStats'.static.StatsFor(A.Item));
 	if (A.Grapple)
 		Template.Abilities.AddItem('Grapple');
+	if (A.Fly)
+	{
+		Template.Abilities.AddItem('LWX2_Fly');
+		Template.Abilities.AddItem('LWX2_Land');
+	}
 	Template.bAddsUtilitySlot = A.SmallItems >= 2;
 	Template.StartingItem = A.Infinite;
 	Template.bInfiniteItem = A.Infinite;

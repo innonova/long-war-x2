@@ -614,3 +614,26 @@ pistol shots; HP, defence, mobility and will stay stats.
 
 **Checked on wingpu:** a sniper carrying the Illuminator Gunsight: the rifle's shot read "Illuminator Gunsight=12" for aim
 and for crit; the pistol's shot had neither.
+
+## Report (2026-11-17, flight)
+
+The person's choice (the chat, 2026-11-17): Long War's flying rules on XCOM 2's flying movement, though XCOM 2's soldiers
+have no flying animations and fly in their ground poses.
+
+- **Who flies:** Archangel and Seraph armour (Long War's `Armors=` lines with `eAbility_Fly`: fuel 6 each, air evasion),
+  and the Hover SHIV (its deck: fuel 6). They get two abilities (`X2Ability_LWFlight`); the Hover SHIV no longer flies
+  always, as it did since its report: it flies by these rules.
+- **LWX2_Fly** takes off: no action, one fuel, and only with two or more (`XGUnit.CanSatisfyHoverRequirements`;
+  `GetFlightFuelCost` -1). The fuel is the ability's charges (the armour's or the deck's, each mission), on its icon.
+- **In flight** (`X2Effect_LWFlying`): XCOM 2's flying and jump-up traversal (over obstacles, up to roofs); each of the unit's
+  turns that begins in the air burns a fuel; at none it comes down (onto the floor below, if it was over none). Shots at it:
+  air evasion in place of cover (Long War's `AIR_EVADE_DEF`, 30: the attacker's aim down by 30 less the cover the unit has
+  there) and no bonus for its being exposed (Long War's flying perk text: "immune to enemy critical hit bonuses for being
+  exposed": the attacker's flanking aim and crit taken off). Long War's Deadeye counts a unit in flight as flying.
+- **LWX2_Land** comes down: no action.
+- **Not ported:** EW's flight animations and the hovering in mid-air between moves (XCOM 2's flying units end their moves on
+  floors and roofs); Elerium Fuel (Long War took out its doubling of the fuel: nothing to port).
+- **Checked on wingpu:** a sniper in Archangel armour: Fly and Land among the abilities; taking off, then five turns ended:
+  fuel 5 → 0, one a turn, and at 0 the flight over. A Sectoid 6 tiles off at the exposed sniper: 74% to hit, 50% crit on the
+  ground; 44%, 0% crit in flight ("Flying −30", "Flying −50 (crit)"). **Not seen:** the flying move itself over an obstacle
+  (the control port's `move` takes a path a soldier walks), the Hover SHIV's.
