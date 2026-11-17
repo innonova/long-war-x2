@@ -121,6 +121,9 @@ var config array<LWX2TextureParam> StandinTextures;
  * Anything else: plain grey (GreyTint). Before, EW's own material was kept, which XCOM 2 draws as its checkerboard.
  */
 var config array<string> SkipMaterials;
+/** In EW's base only: materials EW draws opaque and black there (DoNothing, no colour input: the cutaway's cut surfaces
+ *  between the rooms and floors, ew-compare), drawn so (our lightmap material at no light) rather than skipped. */
+var config array<string> BaseBlackMaterials;
 var config array<string> GlassMaterials;
 var config string GlassParent;
 var config float GlassOpacity;
@@ -436,7 +439,7 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 	{
 		if (Radius > 0 && VSize2D(P.Loc - Center) > Radius)
 			continue;
-		if (AllSkipped(P, D))
+		if (AllSkipped(P, D, ActorClass == class'DynamicSMActor_Spawnable'))
 		{
 			Skipped++;
 			continue;
@@ -483,7 +486,9 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 		for (i = 0; i < P.Materials.Length; i++)
 		{
 			M = none;
-			if (P.LightMap.Color != "" && (ActorClass == class'DynamicSMActor_Spawnable' ? default.LightmapBase : default.LightmapMaps))
+			if (ActorClass == class'DynamicSMActor_Spawnable' && Matches(P.Materials[i], default.BaseBlackMaterials))
+				M = BlackStandin(A);
+			else if (P.LightMap.Color != "" && (ActorClass == class'DynamicSMActor_Spawnable' ? default.LightmapBase : default.LightmapMaps))
 				M = Lightmapped(P, P.Materials[i], A, D);
 			if (M == none)
 				M = MaterialFor(P.Materials[i], A, Standins, D);
@@ -582,7 +587,7 @@ static function bool Matches(string Path, array<string> Parts)
 }
 
 /** Whether every material of the piece is an EW material without a diffuse that is skipped (SkipMaterials). */
-static function bool AllSkipped(LWX2Piece P, LWX2EWMapData D)
+static function bool AllSkipped(LWX2Piece P, LWX2EWMapData D, optional bool bBase)
 {
 	local string M;
 	local int k;
@@ -594,7 +599,7 @@ static function bool AllSkipped(LWX2Piece P, LWX2EWMapData D)
 		if (M == "")
 			continue;
 		k = D.Looks.Find('Material', M);
-		if (k == INDEX_NONE || D.Looks[k].Diffuse != "" || !Matches(M, default.SkipMaterials))
+		if (k == INDEX_NONE || D.Looks[k].Diffuse != "" || !Matches(M, default.SkipMaterials) || (bBase && Matches(M, default.BaseBlackMaterials)))
 			return false;
 	}
 	return true;
@@ -652,6 +657,21 @@ static function MaterialInterface TintedStandin(LinearColor Tint, Object InOuter
 }
 
 /** The material a slot gets: the EW material's XCOM 2 stand-in, made once; the EW material itself when it has none. */
+/** Unlit black: LightmapParent at no light. */
+static function MaterialInterface BlackStandin(Object InOuter)
+{
+	local MaterialInstanceConstant MIC;
+	local Material Parent;
+
+	Parent = Material(DynamicLoadObject(default.LightmapParent, class'Material', true));
+	if (Parent == none)
+		return none;
+	MIC = new(InOuter) class'MaterialInstanceConstant';
+	MIC.SetParent(Parent);
+	MIC.SetScalarParameterValue('LMBrightness', 0);
+	return MIC;
+}
+
 /** A stand-in for one of EW's glowing parts: GlowParent in the look's colour (GlowDefault where EW colours it by vertex),
  *  over the screen's picture or plain white. */
 static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter)

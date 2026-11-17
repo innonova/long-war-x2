@@ -104,6 +104,10 @@ function Handle(string Line, out array<string> Out)
 		GetALocalPlayerController().ClientUpdateLevelStreamingStatus(name(Args[1]), true, Args.Length < 3 || Args[2] != "false", false);
 		Out.AddItem("ok" @ Args[1]);
 		return;
+	case "baseparents":
+		// A test aid: EW's base's pieces' materials counted by their parent (features/ew-lightmaps.md).
+		BaseParents(Out);
+		return;
 	case "basedle":
 		// A test aid: the light environments of EW's base's pieces (DynamicSMActor_Spawnable) on or off, live:
 		// basedle on|off. Off, each piece is lit by the lights themselves instead of their summary.
@@ -4334,6 +4338,38 @@ function Dump(XComGameState_LWStrategy S, out array<string> Out)
 }
 
 /** ewmat: a scalar (a number) or texture (a path) parameter set on every stand-in material of the EW map's pieces. */
+function BaseParents(out array<string> Out)
+{
+	local DynamicSMActor_Spawnable A;
+	local MaterialInterface M;
+	local MaterialInstance MI;
+	local array<string> Names;
+	local array<int> Counts;
+	local string N;
+	local int i, k;
+
+	foreach WorldInfo.AllActors(class'DynamicSMActor_Spawnable', A)
+	{
+		for (i = 0; i < A.StaticMeshComponent.GetNumElements(); i++)
+		{
+			M = A.StaticMeshComponent.GetMaterial(i);
+			MI = MaterialInstance(M);
+			N = MI != none ? "instance of " $ PathName(MI.Parent) : (M != none ? string(M.Class.Name) @ PathName(M) : "none");
+			k = Names.Find(N);
+			if (k == INDEX_NONE)
+			{
+				Names.AddItem(N);
+				Counts.AddItem(0);
+				k = Names.Length - 1;
+			}
+			Counts[k]++;
+		}
+	}
+	for (i = 0; i < Names.Length; i++)
+		if (Counts[i] > 5 || InStr(Names[i], "Lightmap") != INDEX_NONE)
+			Out.AddItem(Counts[i] @ Names[i]);
+}
+
 function string BaseLightEnvironments(bool bOn)
 {
 	local DynamicSMActor_Spawnable A;
