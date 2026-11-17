@@ -117,6 +117,7 @@ static event OnPostTemplatesCreated()
 	class'LWAlienStats'.static.AddAbilities();
 	class'LWOfficers'.static.AddAbilities();
 	class'X2Ability_LWDamageReduction'.static.AddAbilities();
+	class'X2Ability_LWSecondWave'.static.AddAbilities();
 	class'X2Ability_LWMobileCover'.static.AddAbilities();
 	class'X2StrategyElement_LWTechs'.static.HideXCom2Techs();
 	class'X2Item_LWWeapons'.static.CopyLooks();

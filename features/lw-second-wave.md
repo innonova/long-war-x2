@@ -56,3 +56,16 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   A first version put title and text on one line; the list cut them.
 - **Corrected:** STATUS's "the Firestorm's refits" waited on this option by a misreading; Firestorms are refitted as
   interceptors are.
+
+## Report (2026-11-17, Absolutely Critical; Long War's flanking crit for everyone)
+
+- **The carrier:** `LWX2_SecondWave` (`X2Ability_LWSecondWave`, on every character as the battle begins) with
+  `X2Effect_LWSecondWave`, where the tactical options' effects on a unit go.
+- **#7 Absolutely Critical:** a flanking shot's crit bonus Long War's `SW_FLANK_CRIT` (100) in place of
+  `FLANKING_CRIT_BONUS` (50): every unit's flanking crit raised by the difference while the option is on (numbers generated
+  from Long War's `DefaultGameCore.ini` into `XComLWGear.ini`).
+- **Found on the way, fixed:** every unit's flanking crit was XCOM 2's (its soldiers 40 at run time, its aliens 33), not Long
+  War's 50 for every shooter (`XGTacticalGameCore.GetFlankingCritBonus`). Every character's is now Long War's, as the
+  templates are made.
+- **Checked on wingpu** (the control port's `units` now prints the flanking crit): soldiers 50 with the option off, 100 with it
+  on (the option set before the mission; before the fix: 40 and 90).
