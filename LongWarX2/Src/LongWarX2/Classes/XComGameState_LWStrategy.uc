@@ -198,6 +198,15 @@ struct LWMECPatient
 	var int HoursLeft;
 };
 var array<LWMECPatient> MECPatients;
+/** Long War's damaged gear (features/lw-gear-repair.md, LWGearRepair): each damaged item's template, one entry per item, and
+ *  the repairs under way. */
+var array<name> DamagedItems;
+struct LWItemRepair
+{
+	var name Template;
+	var int HoursLeft;
+};
+var array<LWItemRepair> Repairs;
 /** Engineering's projects (LWEngineering). */
 var array<LWBuild> Builds;
 /** The Foundry's projects under way (Item: the project's id) and those done. */
@@ -598,6 +607,7 @@ function Tick(XComGameState NewGameState)
 	class'LWBase'.static.Tick(self);
 	class'LWFatigue'.static.Tick(NewGameState, self);
 	class'LWHangar'.static.Hour(NewGameState, self);
+	class'LWGearRepair'.static.Hour(NewGameState, self);
 	// Engineering: a project whose work is done delivers its items.
 	for (i = Builds.Length - 1; i >= 0; i--)
 	{
@@ -1594,11 +1604,12 @@ static function MissionLaunched(int MissionID)
 
 /** Back on the Geoscape: if the mission sent from it has been played, its result applied. */
 /** The strategy layer opened (the hub, the Geoscape): the campaign's state there, a mission come back counted, Long War's
- *  wounds and fatigue on those who went, the research rate. */
+ *  wounds, damaged gear and fatigue on those who went, the research rate. */
 static function Arrived()
 {
 	GetOrCreate();
 	class'LWWounds'.static.Apply();
+	class'LWGearRepair'.static.Apply();
 	class'LWFatigue'.static.Apply();
 	CheckMissionBack();
 	SyncResearch();

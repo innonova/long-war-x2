@@ -265,6 +265,12 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(PutUnit(Args[1], int(Args[2]), int(Args[3]), int(Args[4])));
 		return;
+	case "repair":
+		// repair: the damaged items and the repairs under way (features/lw-gear-repair.md); 'repair <template>': one put into
+		// repair; 'repair wear <soldier> <hp>': a test aid, the soldier's health set and its gear rolled for damage as after a
+		// mission (soldier: as give-to counts them).
+		Repair(Args, Out);
+		return;
 	case "coverscan":
 		// coverscan <shooter #id> <target #id> [radius]: tiles around the target (its floor) where it would have cover from the
 		// shooter, with XCOM 2's angle to that cover (a test aid, for Aiming Angles).
@@ -3091,6 +3097,52 @@ function Council(array<string> Args, out array<string> Out)
 }
 
 /** A shot's chance (its ability's to-hit calculation, as the targeting shows it), its crit and the modifiers' reasons. */
+function Repair(array<string> Args, out array<string> Out)
+{
+	local XComGameState_LWStrategy S;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState NewGameState;
+	local XComGameState_Unit Unit;
+	local array<XComGameState_Unit> Soldiers;
+	local StateObjectReference Ref;
+	local string Why;
+	local int i, n;
+
+	if (Args.Length > 3 && Args[1] ~= "wear")
+	{
+		foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+		{
+			Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+			if (Unit != none && Unit.IsSoldier())
+				Soldiers.AddItem(Unit);
+		}
+		if (int(Args[2]) < 0 || int(Args[2]) >= Soldiers.Length)
+		{
+			Out.AddItem("ERR no such soldier");
+			return;
+		}
+		NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: gear worn (control port)");
+		S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', class'XComGameState_LWStrategy'.static.Get().ObjectID));
+		XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Soldiers[int(Args[2])].ObjectID));
+		Unit.SetCurrentStat(eStat_HP, int(Args[3]));
+		n = class'LWGearRepair'.static.DamageGear(NewGameState, S, XComHQ, Unit);
+		`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+		Out.AddItem(Unit.GetFullName() @ "hp" @ int(Unit.GetCurrentStat(eStat_HP)) $ "/" $ int(Unit.GetMaxStat(eStat_HP)) @ "items damaged" @ n);
+	}
+	else if (Args.Length > 1)
+		Out.AddItem(class'LWGearRepair'.static.StartRepair(name(Args[1]), Why) ? "ok" : "ERR" @ Why);
+	S = class'XComGameState_LWStrategy'.static.Get();
+	for (i = 0; i < S.DamagedItems.Length; i++)
+		Out.AddItem("damaged" @ S.DamagedItems[i] @ "(" $ class'LWEngineering'.static.ItemName(S.DamagedItems[i]) $ "): chance"
+			@ class'LWGearRepair'.static.ChanceFor(S.DamagedItems[i]) $ "%, repair" @ class'LWGearRepair'.static.CostText(S.DamagedItems[i])
+			@ "in" @ class'LWGearRepair'.static.HoursFor(S, S.DamagedItems[i]) @ "hours");
+	for (i = 0; i < S.Repairs.Length; i++)
+		Out.AddItem("repairing" @ S.Repairs[i].Template @ S.Repairs[i].HoursLeft @ "hours left");
+	if (S.DamagedItems.Length == 0 && S.Repairs.Length == 0)
+		Out.AddItem("no damaged gear");
+}
+
 function CoverScan(int ShooterID, int TargetID, int Radius, out array<string> Out)
 {
 	local XComGameState_Unit Shooter, Target;

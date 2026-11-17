@@ -98,6 +98,13 @@ out.push('', '[LongWarX2.X2Effect_LWSecondWave]', `AbsolutelyCriticalFlankCrit=$
   `CinematicAim=${ini('ABDUCTION_REWARD_SCI')}`,
   // Aiming Angles (#19; XGTacticalGameCore.CalcAimingAngleMod, native: its numbers as Long War's ini explains them).
   `AimingAngleThreshold=${ini('SW_AIMING_ANGLE_THRESHOLD')}`, `AimingAngleMin=${ini('SW_AIMING_ANGLE_MINBONUS')}`, `AimingAngleMax=${Number(core.match(/^SW_AIMING_ANGLE_MAXBONUS=(-?[\d.]+)/m)[1])}`)
+// Long War's damaged gear and its repair (features/lw-gear-repair.md; LWGearRepair): each item's damage chance after a
+// mission (BalanceMods_Classic's iWill, "Max%DamagedChance", read by XGGameData.GetMecBaseArmor), Wear and Tear's chance
+// (SW_RARE_PSI), a repair's share of the build time (CB_EXPERT_BONUS), its share of the cost (XGFacility_CyberneticsLab's
+// m_fMecRepairCostMod: EW's 0.5, which Long War's ini leaves as it is), its least hours and the Foundry project that speeds it.
+out.push('', '[LongWarX2.LWGearRepair]', `WearChance=${ini('SW_RARE_PSI')}`, `TimeShare=${ini('CB_EXPERT_BONUS')}`, 'CostShare=0.5',
+  'MinHours=72', 'FasterFoundry=5', 'FasterScale=0.67',
+  ...[...core.matchAll(/^BalanceMods_Classic=\(eType=(\d+),.*?iWill=(-?\d+)/gm)].filter((m) => Number(m[2]) > 0).map((m) => `+Chances=(Item=${m[1]}, Chance=${m[2]})`))
 // Red Fog's caps (SW_ABDUCTION_SITES and SW_COVER_INCREASE, as Long War's ApplyHPStatPenalties reads them).
 out.push('', '[LongWarX2.LWX2SecondWave]', `RedFogAim=${ini('SW_ABDUCTION_SITES')}`, `RedFogMobility=${ini('SW_COVER_INCREASE')}`,
   `SatelliteIncrease=${ini('SW_SATELLITE_INCREASE')}`)
