@@ -792,6 +792,17 @@ export function makeDelugeWords({ strategyLoc }) {
 
 /** The MECs' words (features/lw-shivs-mecs.md): Long War's item names and summaries for the MEC suits (LWMEC_Suit_<id>) and
  *  weapons (LWMEC_Weapon_<id>, and the Kinetic Strike Module, LWMEC_KineticStrike), from XComLWMECs.ini's Enum= names. */
+/** Perfect Information's words (second wave #28; X2Effect_LWSecondWave): Long War's for a shot it announces with its chance
+ *  (XComPresentationLayer's m_strArmorExplodeFragments, which it rewrote, and the reaction shot's expanded string). */
+export function makePerfectInfoWords({ loc }) {
+  const one = (key) => loc.match(new RegExp(`^${key.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const words = [
+    ['UsesOn', one('m_strArmorExplodeFragments')],
+    ['ReactionShot', one('m_aExpandedLocalizedStrings[eELS_UnitReactionShot]')],
+  ].filter(([, v]) => v)
+  return { text: ['[X2Effect_LWSecondWave]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+}
+
 /** The Repair Bay's words (UILWEWRepairBay, features/lw-gear-repair.md): Long War's, which it wrote over EW's MEC inventory
  *  (sections UIMECInventory and XGCyberneticsUI of its strategy text). */
 export function makeRepairWords({ strategyLoc }) {

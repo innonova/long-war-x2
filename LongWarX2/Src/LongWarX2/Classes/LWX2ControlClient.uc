@@ -271,6 +271,11 @@ function Handle(string Line, out array<string> Out)
 		// mission (soldier: as give-to counts them).
 		Repair(Args, Out);
 		return;
+	case "perfectinfo":
+		// perfectinfo: Perfect Information's listener's counts (a test aid); 'perfectinfo say <text>': a world message over the
+		// first soldier, as it shows one.
+		PerfectInfo(Args, Out);
+		return;
 	case "coverscan":
 		// coverscan <shooter #id> <target #id> [radius]: tiles around the target (its floor) where it would have cover from the
 		// shooter, with XCOM 2's angle to that cover (a test aid, for Aiming Angles).
@@ -561,7 +566,7 @@ function Handle(string Line, out array<string> Out)
 	case "use":
 		if (Args.Length < 3)
 		{
-			Out.AddItem("ERR use <soldier name or class part> <ability> [target index]");
+			Out.AddItem("ERR use <soldier name or class part | #unit id> <ability> [target index]");
 			return;
 		}
 		// <ability>:<item template>: the ability of that item (a soldier's grenades each have their ThrowGrenade).
@@ -3171,6 +3176,29 @@ function Repair(array<string> Args, out array<string> Out)
 		Out.AddItem("no damaged gear");
 }
 
+function PerfectInfo(array<string> Args, out array<string> Out)
+{
+	local XComGameState_Unit Unit;
+	local XComGameState_Effect Effect;
+	local X2Effect_LWSecondWave E;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Effect', Effect)
+	{
+		E = X2Effect_LWSecondWave(Effect.GetX2Effect());
+		if (E != none)
+			break;
+	}
+	Out.AddItem("seen" @ (E != none ? E.Seen : -1) @ "announced" @ (E != none ? E.Announced : -1) @ "option" @ class'LWX2SecondWave'.static.On(28));
+	if (Args.Length > 2 && Args[1] ~= "say")
+	{
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+			if (Unit.GetTeam() == eTeam_XCom && Unit.IsAlive() && Unit.IsSoldier())
+				break;
+		`PRES.QueueWorldMessage(Repl(Args[2], "_", " "), `XWORLD.GetPositionFromTileCoordinates(Unit.TileLocation), Unit.GetReference(), eColor_Bad, , , eTeam_All);
+		Out.AddItem("said over" @ Unit.GetFullName());
+	}
+}
+
 function CoverScan(int ShooterID, int TargetID, int Radius, out array<string> Out)
 {
 	local XComGameState_Unit Shooter, Target;
@@ -3450,6 +3478,7 @@ function string MoveNear(string Who, int Tiles)
 
 function string UseAbility(string Who, name AbilityName, int TargetIndex, optional name ItemName)
 {
+	local XComGameState NewGameState;
 	local XComGameState_Unit Unit, Target;
 	local GameRulesCache_Unit Cache;
 	local AvailableAction Action;
@@ -3462,9 +3491,22 @@ function string UseAbility(string Who, name AbilityName, int TargetIndex, option
 	local int Best;
 	local int i;
 
-	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
-		if (Unit.GetTeam() == eTeam_XCom && !Unit.bRemovedFromPlay && (InStr(Caps(Unit.GetFullName()), Caps(Who)) != INDEX_NONE || InStr(Caps(string(Unit.GetSoldierClassTemplateName())), Caps(Who)) != INDEX_NONE))
-			break;
+	// (#<id>: any unit, an alien too; given an action point if it has none, to act in XCOM's turn: a test aid.)
+	if (Left(Who, 1) == "#")
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(int(Mid(Who, 1))));
+		if (Unit != none && Unit.ActionPoints.Length == 0)
+		{
+			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: an action point (control port)");
+			Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+			Unit.ActionPoints.AddItem(class'X2CharacterTemplateManager'.default.StandardActionPoint);
+			`TACTICALRULES.SubmitGameState(NewGameState);
+		}
+	}
+	else
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+			if (Unit.GetTeam() == eTeam_XCom && !Unit.bRemovedFromPlay && (InStr(Caps(Unit.GetFullName()), Caps(Who)) != INDEX_NONE || InStr(Caps(string(Unit.GetSoldierClassTemplateName())), Caps(Who)) != INDEX_NONE))
+				break;
 	if (Unit == none || `TACTICALRULES == none || !`TACTICALRULES.GetGameRulesCache_Unit(Unit.GetReference(), Cache))
 		return "ERR no such soldier in a mission";
 	foreach Cache.AvailableActions(Action)

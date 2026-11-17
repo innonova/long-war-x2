@@ -242,3 +242,18 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
   barracks, the soldier list, the rookie's armory and PROMOTE SOLDIER, the chooser opened with Long War's classes
   (`logs/wingpu_commanders_choice.png`). Choosing Gunner made her a Gunner specialist with the Gunner's kit, on XCOM 2's
   promotion screen (`logs/wingpu_commanders_choice_promoted.png`).
+
+## Report (2026-11-17, Perfect Information)
+
+- **#28 Perfect Information** (`XComPresentationLayer.MSGArmorFragments` and `MSGOverwatchShot`, which Long War rewrote
+  for it): as an enemy's shot is shown, its chance to hit is announced over the shooter in Long War's words ("<shooter> uses
+  <shot> on <target>: n%"; for a reaction shot "<shooter> takes a reaction shot: n%"; `makePerfectInfoWords`, written on the
+  player's machine).
+  - **How:** the second-wave effect every unit carries listens for its unit's shots as their visualization begins
+    (`ELD_OnVisualizationBlockStarted`) and shows XCOM 2's world message at once. Queued, as XCOM 2 queues one by default, it
+    waited for the visualization to end and was not seen.
+  - **The chance** is the one the shot was rolled with (its context's `CalculatedHitChance`).
+- **Not ported:** Long War also shows Lightning Reflexes' chance when it is used.
+- **Checked on wingpu** (new test aids: `use #<unit id> <ability> [target]` lets any unit act, an alien too, given an action
+  point; `perfectinfo` counts and shows a test message): a Sectoid's shot announced "Sectoid uses Fire Weapon on Ayaka Tanaka:
+  76%" over it (`logs/wingpu_perfect_information.png`).
