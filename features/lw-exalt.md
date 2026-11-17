@@ -313,3 +313,8 @@ operation in Russia succeeded …", "The data recovery brought §120 home.".
 The raid now plays on EW's `EWI_ExaltHQAssault` (at night) instead of an XCOM 2 guerrilla plot; how is in
 `lw-story.md`'s report of the same date. Checked on wingpu: the raid chose that map and EXALT's squad spawned at its
 pods. Its objective is still "kill all"; EW's level has its own scripted waves, not read yet.
+
+## Note (2026-11-17)
+
+EXALT's HQ level has no wave system and its Kismet is narration and holograms only (read with `ew-kismet.ts`): the raid is
+"kill every EXALT operative", which is what the port plays. STATUS no longer lists scripted waves for it.

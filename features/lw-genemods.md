@@ -356,3 +356,9 @@ and ADVENT MECs use), a passive with no action of its own (`X2Effect_PersistentT
 platform two levels up beside the squad, a soldier without it walked 17 tiles round by the stairs, both actions; the
 soldier with it got there in 3 tiles, one action, and stands on the platform. Soldiers have an animation for it (the move
 played through; not looked at frame by frame).
+
+## Note (2026-11-17)
+
+The "post-mission fatigue of every mod" left open above is in: `LWFatigue.PowersHours` adds each gene mod's hours
+(`PerkHours`, Long War's `ItemBalance_Easy` iEng, with Gift of Osiris and Call to Arms cutting them as
+`DetermineTimeOut` does). STATUS no longer lists it.
