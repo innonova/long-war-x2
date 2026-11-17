@@ -409,3 +409,11 @@ New since 7a8cec5:
 **Checked on wingpu from the zip:** its setup (`--maps`) ran and wrote the words (the monthly report's among them); with
 the control port on for the check (off again after), a new campaign's first month ended on EW's transmission and End of
 Month Report (grade F after four abductions let go), and a council request (a satellite over France) was open.
+
+## Report (2026-11-17, release 42be671)
+
+`LongWarX2-20261117-42be671.zip` on the draft v0.1.0-preview.1 (replacing cebd922). Its setup converts the five story maps
+(both alien bases, the Temple Ship, the HQ assault, EXALT's base: 90 maps in all) and, new, reads the HQ assault's level
+script (`ew-kismet.ts`). Installed from the zip on wingpu with `--maps`: an HQ assault started its own Kismet (two
+blueshirts in at the start), and a new campaign's 40 rookies held Long War's rifle. Rookies hold no pistol: XCOM 2's
+rookies have no secondary slot.
