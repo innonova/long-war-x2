@@ -1283,7 +1283,7 @@ function UfoDone(int i)
 	if (U.Objective != 4 && U.Ufo != 9)
 		AddPanic(U.Country, int((U.Objective == 8 ? class'LWStrategyRules'.default.PanicAirRaid : class'LWStrategyRules'.default.PanicUfoIgnored) * Intact));
 	if (U.Objective == 2 && class'LWStrategyRules'.static.HarvestOf(U.Ufo) > 0)
-		AlienResources += class'LWStrategyRules'.static.HarvestOf(U.Ufo) + Rand(5);
+		AlienResources += class'LWX2SecondWave'.static.War(class'LWStrategyRules'.static.HarvestOf(U.Ufo) + Rand(5));
 	if (U.bDetected && U.Objective != 5 && U.Objective != 6 && U.Objective != 7)
 		Note("The" @ UfoLabel(U.Ufo) @ "over" @ CountryName(U.Country) @ "finished its mission.");
 	// A scout seen (detected, or attacked and away) may bring a hunt for the satellite that saw it (LogUFORecord,
@@ -1418,7 +1418,7 @@ static function Intercepted(int i, int Outcome, int UfoHp)
 	U = S.Ufos[i];
 	U.bAttacked = true;
 	U.Hp = (Outcome == 0 || Outcome == 1) ? 0 : Max(0, UfoHp);
-	S.AlienResources -= Round(class'LWStrategyRules'.static.WorthOf(U.Ufo) * (1.0 - float(U.Hp) / float(Max(1, U.MaxHp))));
+	S.AlienResources -= Round(class'LWX2SecondWave'.static.War(class'LWStrategyRules'.static.WorthOf(U.Ufo)) * (1.0 - float(U.Hp) / float(Max(1, U.MaxHp))));
 	if (Outcome == 0 || Outcome == 1) // crashed or destroyed
 	{
 		// (XGAlienObjective.NotifyOfCrash: shot down, and detected.)
@@ -1846,7 +1846,7 @@ static function MissionBack(bool bWon)
 		{
 			S.AddPanic(Country, class'LWStrategyRules'.default.PanicUfoEscaped);
 			if (U.Objective == 2 && class'LWStrategyRules'.static.HarvestOf(U.Ufo) > 0)
-				S.AlienResources += class'LWStrategyRules'.static.HarvestOf(U.Ufo) + Rand(5);
+				S.AlienResources += class'LWX2SecondWave'.static.War(class'LWStrategyRules'.static.HarvestOf(U.Ufo) + Rand(5));
 		}
 	}
 	else if (S.PendingKind == 3)
@@ -1959,7 +1959,8 @@ function GiveSalvage(XComGameState NewGameState, int Ufo, bool bCrashed)
 			continue;
 		if (Item.Item == 'Alloys')
 		{
-			Alloys = int(Item.Count * class'LWStrategyRules'.default.AlloyBalance[d]);
+			// (Dynamic War: ÷ SW_MARATHON, XGItemTree.Alloys.)
+			Alloys = class'LWX2SecondWave'.static.War(int(Item.Count * class'LWStrategyRules'.default.AlloyBalance[d]));
 			if (bCrashed)
 				Alloys = int(Alloys * RandRange(class'LWStrategyRules'.default.MinWreckedAlloys, class'LWStrategyRules'.default.MaxWreckedAlloys));
 			continue;
@@ -1977,7 +1978,8 @@ function GiveSalvage(XComGameState NewGameState, int Ufo, bool bCrashed)
 		}
 		if (Item.Item == 'UFOPowerSource')
 		{
-			Elerium = Total * class'LWStrategyRules'.default.EleriumPerPowerSource[d];
+			// (Dynamic War: ÷ SW_MARATHON, XGItemTree.Elerium.)
+			Elerium = class'LWX2SecondWave'.static.War(Total * class'LWStrategyRules'.default.EleriumPerPowerSource[d]);
 			if (bCrashed)
 				Elerium -= int(RandRange(class'LWStrategyRules'.default.MinLostWreckedElerium * class'LWStrategyRules'.default.EleriumPerPowerSource[d],
 					class'LWStrategyRules'.default.MaxLostWreckedElerium * class'LWStrategyRules'.default.EleriumPerPowerSource[d]) * (Total - Count));
@@ -2226,7 +2228,8 @@ function int AbductionReward(int Diff)
 	// Bounties (DetermineAbductionReward): more, before the difficulty's scale.
 	if (class'LWBonuses'.static.Has(class'LWBonuses'.const.BOUNTIES, self) > 0)
 		Cash *= 1.0 + class'LWBonuses'.static.Has(class'LWBonuses'.const.BOUNTIES, self) / 100.0;
-	return int(Cash * (Diff == 0 ? 0.8 : (Diff == 1 ? 0.9 : (Diff == 2 ? 1.0 : 1.15))));
+	// (Dynamic War: ÷ SW_MARATHON.)
+	return class'LWX2SecondWave'.static.War(int(Cash * (Diff == 0 ? 0.8 : (Diff == 1 ? 0.9 : (Diff == 2 ? 1.0 : 1.15)))));
 }
 
 function GiveCash(XComGameState NewGameState, int Amount)
@@ -2463,6 +2466,9 @@ function AddPanic(int Country, int Amount)
 {
 	if (Country < 0 || Country >= Countries.Length || Countries[Country].bLeft)
 		return;
+	// Dynamic War (second wave #9, XGCountry.AddPanic): ÷ SW_MARATHON after the first day.
+	if (Days() > 0)
+		Amount = class'LWX2SecondWave'.static.War(Amount);
 	// (Long War's XGCountry.AddPanic: EXALT's hidden cells on the continent add to a rise.)
 	Amount += class'LWExalt'.static.PanicMod(self, Country, Amount);
 	Countries[Country].Panic = Clamp(Countries[Country].Panic + Amount, 0, 99);

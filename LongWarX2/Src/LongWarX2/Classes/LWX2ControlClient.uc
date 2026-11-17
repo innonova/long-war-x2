@@ -3199,6 +3199,8 @@ function Repair(array<string> Args, out array<string> Out)
 
 function War(out array<string> Out)
 {
+	local XComGameState_Unit Unit;
+	local StateObjectReference Ref;
 	local XComGameState_LWStrategy S;
 	local array<int> ByKind, Groups;
 	local string Line;
@@ -3221,6 +3223,17 @@ function War(out array<string> Out)
 	for (i = 0; i < ByKind.Length; i++)
 		if (ByKind[i] > 0)
 			Line @= class'LWStrategyRules'.static.ObjectiveName(i) $ ":" $ ByKind[i];
+	Out.AddItem(Line);
+	// The soldiers' Long War experience (LWX2XP), the first six.
+	Line = "xp";
+	i = 0;
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier() || i++ >= 6)
+			continue;
+		Line @= class'LWExperience'.static.XPOf(Unit);
+	}
 	Out.AddItem(Line);
 }
 

@@ -86,7 +86,8 @@ static function Place()
 	}
 	if (Source == none)
 		return;
-	Amount = Clamp(S.AlienResources / 10, 5, 30);
+	// (Dynamic War: ÷ SW_MARATHON, XComMeldContainerActor.GetMeldAmount.)
+	Amount = class'LWX2SecondWave'.static.War(Clamp(S.AlienResources / 10, 5, 30));
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: meld canisters");
 	// Without Recon: kept unmade until seen (Reveal).
 	if (!class'LWX2SecondWave'.static.On(29))

@@ -294,12 +294,13 @@ static function PlaceNextCell(XComGameState_LWStrategy S, optional bool bForce)
 		if (bForce || FRand() < Chance)
 		{
 			Cell.Country = Country;
-			Cell.DaysUntilNextActivity = Between(T.MinDaysBetweenOperations, T.MaxDaysBetweenOperations);
+			// (Dynamic War: ÷ SW_MARATHON, XGExaltSimulation.)
+			Cell.DaysUntilNextActivity = class'LWX2SecondWave'.static.WarDays(Between(T.MinDaysBetweenOperations, T.MaxDaysBetweenOperations));
 			S.ExaltCells.AddItem(Cell);
 			`log("LongWarX2: EXALT: a cell placed in" @ S.CountryName(Country), , 'LongWarX2');
 		}
 	}
-	S.ExaltCooldown = Between(T.MinDaysBetweenCells, T.MaxDaysBetweenCells);
+	S.ExaltCooldown = class'LWX2SecondWave'.static.WarDays(Between(T.MinDaysBetweenCells, T.MaxDaysBetweenCells));
 }
 
 /** Long War's ExposeCell: shown for some days (a day count already running is not renewed). */

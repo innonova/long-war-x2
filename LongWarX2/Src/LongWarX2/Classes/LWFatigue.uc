@@ -84,6 +84,8 @@ static function Apply()
 		// Stay Frosty, the squad's leader's: a day less.
 		if (class'LWOfficers'.static.SquadHad(Unit, class'LWOfficers'.const.STAY_FROSTY))
 			H = Max(0, H - 24);
+		// Dynamic War (second wave #9, DetermineTimeOut): longer.
+		H = class'LWX2SecondWave'.static.WarTimeOut(H);
 		// The psi armour: no fatigue at all.
 		if (InPsiArmor(Unit))
 			H = 0;

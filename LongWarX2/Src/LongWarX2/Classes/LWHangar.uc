@@ -129,6 +129,9 @@ static function AfterFight(XComGameState_LWAirWar AirWar, int Index)
 		return;
 	}
 	Hours = class'LWBaseRules'.default.RepairHours * (1.0 - float(J.Hp) / MaxHp(J));
+	// Dynamic War (second wave #9, XGFacility_Hangar): ÷ SW_MARATHON.
+	if (class'LWX2SecondWave'.static.On(9) && class'LWX2SecondWave'.default.Marathon > 0)
+		Hours /= class'LWX2SecondWave'.default.Marathon;
 	if (class'XComGameState_LWStrategy'.static.Get() != none && class'XComGameState_LWStrategy'.static.Get().FoundryDone.Find(5) != INDEX_NONE)
 		Hours *= 0.67;
 	AirWar.Jets[Index].Status = 4;

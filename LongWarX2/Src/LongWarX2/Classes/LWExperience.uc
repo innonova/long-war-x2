@@ -131,6 +131,8 @@ static function MissionOver()
 			if (bNoDeaths)
 				Gained += default.NoDeathsXP;
 		}
+		// Dynamic War (second wave #9, XGCharacter_Soldier.AddXP): ÷ SW_MARATHON.
+		Gained = class'LWX2SecondWave'.static.War(Gained);
 		XP += Gained;
 		// A mission won promotes at most one rank.
 		if (bWon && Rank < 6)

@@ -22,6 +22,29 @@ var config int MarathonPasses;
  *  results." XCOM 2 restores the seed a save was made with (Checkpoint.PostLoadCheckpoint): with the option a new one is
  *  drawn as the game comes up again (the Avenger's HUD in strategy, the tactical HUD in a mission; also at a mission's
  *  start, where it changes nothing that was decided). */
+/** Dynamic War (#9; features/lw-dynamic-war.md): Long War's "÷ SW_MARATHON" on an amount (fewer missions, each worth more:
+ *  experience, salvage, the aliens' resources, rewards, panic, meld …); the amount as it is without the option. */
+static function int War(int n)
+{
+	return (On(9) && default.Marathon > 0) ? int(n / default.Marathon) : n;
+}
+
+/** Dynamic War's time out after a mission (XGFacility_Barracks.DetermineTimeOut): ÷ ((SW_MARATHON + 1) / 2) below 1, else
+ *  ÷ SW_MARATHON. */
+static function int WarTimeOut(int Hours)
+{
+	if (!On(9) || default.Marathon <= 0)
+		return Hours;
+	return int(Hours / (default.Marathon < 1 ? (default.Marathon + 1) / 2 : default.Marathon));
+}
+
+/** Dynamic War's longer waits (EXALT's cells, interceptors' repair: ÷ SW_MARATHON, where Long War applies it only below 1 for
+ *  EXALT). */
+static function int WarDays(int Days)
+{
+	return (On(9) && default.Marathon > 0 && default.Marathon < 1) ? int(Days / default.Marathon) : Days;
+}
+
 static function SaveScum()
 {
 	if (On(5))

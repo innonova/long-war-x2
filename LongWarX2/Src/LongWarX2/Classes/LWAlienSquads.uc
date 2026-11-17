@@ -37,7 +37,8 @@ static function array<int> SquadFor(int Kind, int Ufo, int Days, int Aggression,
 	case 1: Squad = UfoSquad(Ufo, false, Days, Aggression); break;
 	case 2: Squad = UfoSquad(Ufo, true, Days, Aggression); break;
 	case 3: Squad = AbductionSquad(AbductionDifficulty, Days, Resources); break;
-	case 4: Squad = TerrorSquad(TerrorsTaken, Days); break;
+	// (Dynamic War: the terror missions taken ÷ SW_MARATHON, XGStrategyAI's terror squad.)
+	case 4: Squad = TerrorSquad(class'LWX2SecondWave'.static.War(TerrorsTaken), Days); break;
 	}
 	return QuickAndDirty(Squad);
 }

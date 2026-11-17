@@ -1,6 +1,6 @@
 ---
 title: Dynamic War (second wave #9)
-status: in-progress
+status: review
 priority: 40
 dependsOn: [lw-second-wave, lw-geoscape]
 ---
@@ -96,3 +96,30 @@ The live ones:
   - **Dynamic War, the same days:** 1 recon, 2 scouting, 3 abductions, 1 terror. About half, as `SW_MARATHON` 0.5 means.
   - The passes rose and fell back to 0 as missions came: abduction 33 → 39 → 2.
 - **Next:** phase 2, the economy's scalars.
+
+## Report (2026-11-17, the economy)
+
+- **Fewer missions, each worth more.** Long War's "÷ `SW_MARATHON`" (× 2 at 0.5) applies where the port has each rule
+  (`LWX2SecondWave.War`):
+  - **Experience:** each soldier's gain from a mission (`LWExperience`; `XGCharacter_Soldier.AddXP`).
+  - **Salvage:** a UFO's alloys and elerium (`GiveSalvage`; `XGItemTree.Alloys`, `Elerium`).
+  - **The aliens' resources:** what a successful UFO brings them, and what a downed one costs them (`XGStrategyAI`).
+  - **An abduction's reward cash** (`AbductionReward`; `DetermineAbductionReward`).
+  - **Panic:** a country's change after the first day (`AddPanic`; `XGCountry.AddPanic`).
+  - **A meld canister's meld** (`LWMeld`; `GetMeldAmount`).
+  - **The terror missions taken,** by which the terror squads grow (`LWAlienSquads`).
+- **Longer, as Long War has them:**
+  - **Time out after a mission,** wounds and fatigue: ÷ ((0.5 + 1) / 2), a third longer (`LWWounds`, `LWFatigue`;
+    `DetermineTimeOut`).
+  - **An interceptor's repair:** ÷ 0.5 (`LWHangar`).
+  - **EXALT:** a new cell's days to its first operation and the wait between cells ÷ 0.5 (`LWExalt`).
+- **Smaller:**
+  - **The council's corpse requests:** (1 + rand 4) × month × 0.5, 4 to 10.
+  - **The items an engineering project needs,** above one: × 0.5, at least 1 (`LWEngineering.ReqCount`; `ItemAmount`).
+- **Left out:**
+  - The mission summary's own ÷ `SW_MARATHON` on artifacts 161–164. Which resources those are in Long War's numbering, and
+    whether they stack with the salvage's, is not clear from the code.
+  - The Medal of Honor's missions (medals not ported) and a colonel's roll every 10 × 0.5 missions (not in the port).
+- **Checked on wingpu** (`war` now also prints six soldiers' experience): a mission won with Dynamic War gave each soldier
+  +200 (350 → 550), where standard Long War gives +100. The other scalars are each a line where the port's rule is; not each
+  seen.

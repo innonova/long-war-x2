@@ -211,7 +211,10 @@ static function int AmountFor(XComGameState_LWStrategy S, LWRequestDef D)
 {
 	switch (D.AmountKind)
 	{
-	case 1: return Clamp((1 + Rand(4)) * (S.Month + 1), 6, 20);
+	// (Dynamic War: (1 + rand 4) x month x SW_MARATHON, 4 to 20 x SW_MARATHON; XGFundingCouncil.GetNumberOfCorpsesToSell.)
+	case 1: return class'LWX2SecondWave'.static.On(9)
+		? int(FClamp((1 + Rand(4)) * (S.Month + 1) * class'LWX2SecondWave'.default.Marathon, 4, 20 * class'LWX2SecondWave'.default.Marathon))
+		: Clamp((1 + Rand(4)) * (S.Month + 1), 6, 20);
 	case 2: return Clamp((2 + Rand(4)) * (S.Month + 1), 12, 50);
 	case 3: return Rand(Max(1, D.RandN)) + D.RandAdd;
 	}

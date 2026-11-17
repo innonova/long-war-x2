@@ -70,6 +70,9 @@ static function string Short(LWGearRules.LWBuildDef B, int n)
 
 static function int ReqCount(LWGearRules.LWBuildDef B)
 {
+	// (Dynamic War, XGFacility_Engineering.ItemAmount: more than one x SW_MARATHON, at least 1.)
+	if (B.ItemReqCount > 1 && class'LWX2SecondWave'.static.On(9))
+		return Max(1, int(B.ItemReqCount * class'LWX2SecondWave'.default.Marathon));
 	return B.ItemReqCount > 0 ? B.ItemReqCount : 1;
 }
 

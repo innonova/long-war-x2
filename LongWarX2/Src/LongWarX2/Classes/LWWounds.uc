@@ -32,6 +32,8 @@ static function int HoursFor(XComGameState_Unit Unit, XComGameState_LWStrategy S
 		H *= 1.0 - default.BoneMarrowBonus;
 	if (S.FoundryDone.Find(default.SurgeryFoundry) != INDEX_NONE)
 		H *= default.SurgeryScale;
+	// Dynamic War (second wave #9, DetermineTimeOut): longer.
+	H = class'LWX2SecondWave'.static.WarTimeOut(H);
 	return Max(1, H);
 }
 
