@@ -139,6 +139,7 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	local LWX2CouncilBomb.LWX2BombDef Bomb;
 	local LWX2CovertExtraction.LWX2CovertDef Covert;
 	local LWX2ChryssalidHive.LWX2HiveDef Hive;
+	local LWX2Deluge.LWX2DelugeDef Deluge;
 
 	class'LWSHIVs'.static.AddFoundryAbilities(UnitState, SetupData);
 	// Neural Feedback's answer to psionic attacks (X2Ability_LWNeuralFeedback).
@@ -166,5 +167,8 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	// The council's Chryssalid hive: any soldier can reactivate the ship's transponder (LWX2ChryssalidHive).
 	if (UnitState.GetTeam() == eTeam_XCom && UnitState.IsSoldier() && class'LWX2ChryssalidHive'.static.Active(Hive))
 		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_ActivateTransponder', eInvSlot_Unknown, SetupData);
+	// Progeny's Deluge: any soldier can open its bypass valves (LWX2Deluge).
+	if (UnitState.GetTeam() == eTeam_XCom && UnitState.IsSoldier() && class'LWX2Deluge'.static.Active(Deluge))
+		class'LWSHIVs'.static.AddAbility(UnitState, 'LWX2_OpenValve', eInvSlot_Unknown, SetupData);
 }
 

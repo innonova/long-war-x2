@@ -254,6 +254,9 @@ function CheckSwept()
 	// The council's Chryssalid hive (LWX2ChryssalidHive): its objectives and spawns, and no victory before the air strike.
 	if (!class'LWX2ChryssalidHive'.static.Update())
 		return;
+	// Progeny's Deluge (LWX2Deluge): the collapse, the valves and their drops, and no victory before the transport is secured.
+	if (!class'LWX2Deluge'.static.Update())
+		return;
 	// Units that came after the pods (a Chryssalid's zombie, a spawn of XCOM 2's) given their EW body too.
 	class'LWX2EWBodies'.static.ApplyAll();
 	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
@@ -298,6 +301,8 @@ static function LongWarObjectives()
 		Label = class'LWX2DataRecovery'.static.ObjectiveText();
 	if (class'LWX2ChryssalidHive'.static.ObjectiveText() != "")
 		Label = class'LWX2ChryssalidHive'.static.ObjectiveText();
+	if (class'LWX2Deluge'.static.ObjectiveText() != "")
+		Label = class'LWX2Deluge'.static.ObjectiveText();
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData'));
 	if (Battle == none || Battle.MapData.ActiveMission.sType == "Terror")
 		return;

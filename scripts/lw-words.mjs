@@ -595,6 +595,15 @@ export function makeHiveWords({ loc }) {
   return { text: ['', '[LWX2_ActivateTransponder X2AbilityTemplate]', `LocFriendlyName="${title}"`, `LocHelpText="${help}"`, `LocLongDescription="${help}"`, `LocFlyOverText="${title}"`, ''].join('\r\n'), named: 1 }
 }
 
+/** Deluge's valve action (LWX2Deluge): its help EW's own objective, from the strategy text's [DLC2_2Objectives]
+ *  ("Open the bypass valves to delay the dam's collapse."); its name the mod's. */
+export function makeDelugeWords({ strategyLoc }) {
+  const help = strategyLoc?.match(/^m_strDLC2_2Obj2="(.*)"\s*$/m)?.[1]
+  if (!help) return { text: '', named: 0 }
+  const title = 'Open Valve'
+  return { text: ['', '[LWX2_OpenValve X2AbilityTemplate]', `LocFriendlyName="${title}"`, `LocHelpText="${help}"`, `LocLongDescription="${help}"`, `LocFlyOverText="${title}"`, ''].join('\r\n'), named: 1 }
+}
+
 /** The MECs' words (features/lw-shivs-mecs.md): Long War's item names and summaries for the MEC suits (LWMEC_Suit_<id>) and
  *  weapons (LWMEC_Weapon_<id>, and the Kinetic Strike Module, LWMEC_KineticStrike), from XComLWMECs.ini's Enum= names. */
 export function makeMECWords({ loc, strategyLoc, mecsIni }) {

@@ -655,6 +655,140 @@ export interface CustomSoldier {
   psiRank: number
 }
 
+/** Long War's character (ECharacter) for EW's pawn type a Kismet spawns (SeqAct_SpawnAlien.ForceAlienType); 0 unknown. */
+const CHAR_OF: Record<string, number> = {
+  Sectoid: 4, Floater: 5, ThinMan: 6, Muton: 7, Cyberdisc: 8, SectoidCommander: 9, FloaterHeavy: 10, MutonElite: 11, Ethereal: 12,
+  Chryssalid: 13, Zombie: 14, Muton_Berserker: 15, Sectopod: 16, Drone: 17, Outsider: 18, Mechtoid: 21, Seeker: 23,
+}
+
+export interface Deluge {
+  map: string
+  level: string
+  /** The bypass valves (the interactive actors raising TransponderActivated), by their number in the Kismet (TransponderN). */
+  valves: number[][]
+  /** Where the transport vehicle is spotted (the volume whose touch moves the objective to securing it), and where it is
+   *  secured (the volume whose touch presses its control button). */
+  spotted: { center: number[]; extent: number[] }
+  secure: { center: number[]; extent: number[] }
+  /** XCOM's turns until the dam collapses, at the start and again for the run to the EVAC (Turn Max); the turns a valve
+   *  adds (the AddInt on Turns Left). */
+  turns: number
+  valveTurns: number
+  /** The aliens each valve's opening brings, as the aliens' turn ends: the valve's number, the alien, its point. */
+  drops: { valve: number; char: number; at: number[] }[]
+  /** EW's texts: locate the transport, open the valves, secure it, report to the EVAC; the two counts' labels. */
+  locate: string
+  valvesText: string
+  secureText: string
+  report: string
+  collapse: string
+  remaining: string
+}
+
+/** Progeny's Deluge (its level's Kismet, with EW's bomb handler for its objectives); undefined when it is not as expected. */
+export function readDeluge(file: string, map: string, level: string): Deluge | undefined {
+  const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
+  const meta: any = new Package(bytes)
+  const pkg: any = openPackage(bytes)
+  const K = readKismet(bytes)
+  const dv = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
+  const actorTags = (k: number): Tag[] => {
+    const data = pkg.data(k + 1)
+    for (const start of [26, ...Array.from({ length: 81 }, (_, j) => j)]) {
+      try {
+        const t = readTags(new Reader(data.subarray(start)), pkg)
+        if (t.some((x: Tag) => x.name === 'Location' || x.name === 'Tag')) return t
+      } catch {
+        // not here
+      }
+    }
+    return []
+  }
+  const loc = (k: number) => {
+    const l = k >= 0 ? actorTags(k).find((x) => x.name === 'Location') : undefined
+    return l ? [0, 4, 8].map((o) => Math.round(dv(l.value).getFloat32(o, true))) : undefined
+  }
+  const box = (k: number) => {
+    const t = actorTags(k)
+    const l = loc(k)
+    const brush = t.find((x) => x.name === 'Brush')
+    if (!l || !brush) return undefined
+    const v = dv(pkg.data(dv(brush.value).getInt32(0, true)))
+    const none = meta.names.indexOf('None')
+    let o = 4
+    while (v.getInt32(o, true) !== none) o += 24 + v.getInt32(o + 16, true)
+    o += 8
+    const b = Array.from({ length: 6 }, (_, j) => v.getFloat32(o + 4 * j, true))
+    return { center: [0, 1, 2].map((j) => Math.round(l[j]! + b[j]!)), extent: [3, 4, 5].map((j) => Math.round(b[j]!)) }
+  }
+  const ints = (o: KOp | undefined) => {
+    const t = o?.props.get('IntValue')
+    return t ? dv(t.value).getInt32(0, true) : 0
+  }
+  const varName = (k: number | undefined) => {
+    const v = k !== undefined ? K.op(k) : undefined
+    return v?.type === 'SeqVar_Named' ? K.name(v, 'FindVarName') : v ? K.name(v, 'VarName') : ''
+  }
+  const held = (k: number | undefined) => (k !== undefined && K.op(k) ? K.obj(K.op(k)!, 'ObjValue') : -1)
+  const into = new Map<number, { desc: string; from: number }[]>()
+  for (const o of K.ops) for (const l of o.links) into.set(l.to, [...(into.get(l.to) ?? []), { desc: l.desc, from: o.k }])
+  // The ops upstream of one (breadth first, to a depth), with the labels they were left by.
+  const upstream = (k: number, depth: number) => {
+    const out: { op: KOp; desc: string }[] = []
+    const seen = new Set<number>([k])
+    let front = [k]
+    for (let d = 0; d < depth; d++) {
+      const next: number[] = []
+      for (const f of front) for (const c of into.get(f) ?? []) {
+        if (seen.has(c.from) || !K.op(c.from)) continue
+        seen.add(c.from)
+        out.push({ op: K.op(c.from)!, desc: c.desc })
+        next.push(c.from)
+      }
+      front = next
+    }
+    return out
+  }
+  // The valves: each 'TransponderActivated' listener disables its valve and marks TransponderN_Activated.
+  const valves: number[][] = []
+  for (const ev of K.ops.filter((o) => o.type === 'SeqEvent_RemoteEvent' && K.name(o, 'EventName') === 'TransponderActivated')) {
+    const near = K.reach(ev, 6)
+    const off = near.find((o) => o.type === 'SeqAct_DisableInteractiveActor')
+    const mark = near.map((o) => (o.type === 'SeqAct_SetBool' ? /^Transponder(\d+)_Activated$/.exec(varName(o.vars.get('Target')?.[0])) : null)).find(Boolean)
+    const at = off ? loc(held(off.vars.get('XComInteractiveLevelActor')?.[0])) : undefined
+    if (mark && at) valves[Number(mark[1])] = at
+  }
+  // The volumes: the one whose touch leads to ApproachDefuseBomb, and the one whose touch raises ControlButtonActivated.
+  const touchTo = (pred: (o: KOp) => boolean) => {
+    const target = K.ops.find(pred)
+    const touch = target ? upstream(target.k, 8).find((u) => u.op.type === 'SeqEvent_Touch' && K.obj(u.op, 'Originator') >= 0) : undefined
+    return touch ? box(K.obj(touch.op, 'Originator')) : undefined
+  }
+  const spotted = touchTo((o) => o.type === 'SeqAct_SpecialMissionHandler_GotoState' && K.name(o, 'StateName') === 'ApproachDefuseBomb')
+  const secure = touchTo((o) => o.type === 'SeqAct_ActivateRemoteEvent' && K.name(o, 'EventName') === 'ControlButtonActivated')
+  const turns = ints(K.ops.find((o) => o.type === 'SeqVar_Int' && K.name(o, 'VarName') === 'Turn Max'))
+  const adds = K.ops.find((o) => o.type === 'SeqAct_AddInt' && [...o.vars.values()].flat().some((k) => varName(k) === 'Turns Left') && K.op(o.vars.get('A')?.[0] ?? -1)?.type === 'SeqVar_Int')
+  const valveTurns = adds ? ints(K.op(adds.vars.get('A')![0]!)) : 0
+  const drops: Deluge['drops'] = []
+  for (const o of K.ops.filter((x) => x.type === 'SeqAct_SpawnAlien')) {
+    const char = CHAR_OF[K.name(o, 'ForceAlienType').replace(/^ePawnType_/, '')] ?? 0
+    const at = loc(held(o.vars.get('SpawnPoints')?.[0]))
+    const gate = upstream(o.k, 10).map((u) => (u.op.type === 'SeqCond_CompareBool' && u.desc === 'True' ? /^Transponder(\d+)_Activated$/.exec(varName(u.op.vars.get('Bool')?.[0])) : null)).find(Boolean)
+    if (char && at && gate) drops.push({ valve: Number(gate[1]), char, at })
+  }
+  if (valves.filter(Boolean).length === 0 || !spotted || !secure || turns <= 0) return undefined
+  const strings = new Map(K.ops.filter((o) => o.type === 'SeqVar_LocalizedString').map((o) => [K.str(o, 'strLookup').split('.').pop() ?? '', K.str(o, 'StrValue')]))
+  return {
+    map, level, valves: valves.map((v) => v ?? [0, 0, 0]), spotted, secure, turns, valveTurns, drops,
+    locate: strings.get('m_strDLC2_2Obj1') ?? '',
+    valvesText: strings.get('m_strDLC2_2Obj2') ?? '',
+    secureText: strings.get('m_strDLC2_2Obj3') ?? '',
+    report: strings.get('m_strDLC2_3Obj4') ?? '',
+    collapse: (strings.get('m_strDLC2_2TurnsToCollapse') ?? '').trim(),
+    remaining: (strings.get('m_strDLC2_2TurnsRem') ?? '').trim(),
+  }
+}
+
 /** Long War's named soldiers that its council missions reward (XGFundingCouncil.BuildMission's arrRewardSoldiers, and
  *  GiveCustomSoldier's additions), read from the player's own XComStrategyGame.upk with upkit's decompiler: Progeny's
  *  (eFCM_Progeny_*). Their names are Long War's, so they are only ever written on the player's machine. */
@@ -815,6 +949,19 @@ export function writeObjectives(cooked: string, mod: string): number {
       `Ship=${vecs(h.ship)}, Whale=${vecs(h.whale)}, Texts=(${h.texts.map(q).join(', ')}), Strike=${q(h.strike)})`)
     for (const v of h.volumes) lines.push(`+Volumes=(Level="${h.level}", Center=${vec(v.center)}, Extent=${vec(v.extent)})`)
     for (const s of h.spawns) lines.push(`+Spawns=(Level="${h.level}", Char=${s.char}, At=${vec(s.at)}, When=${s.when}, Volume=${s.volume}, Turn=${s.turn}, EnemyLevel=${s.level})`)
+    n++
+  }
+  // Progeny's Deluge (LWX2Deluge): its valves, its volumes, its countdown and its drops.
+  lines.push('', '[LongWarX2.LWX2Deluge]', 'ReachTiles=1.5')
+  for (const m of missions.filter((x) => x.id === 26)) {
+    const file = levelFile(cooked, m.level)
+    if (!file) continue
+    const d = readDeluge(file, m.map, m.level)
+    if (!d) continue
+    lines.push(`+Deluges=(Map="${d.map}", Level="${d.level}", Valves=(${d.valves.map(vec).join(', ')}), SpottedCenter=${vec(d.spotted.center)}, SpottedExtent=${vec(d.spotted.extent)}, ` +
+      `SecureCenter=${vec(d.secure.center)}, SecureExtent=${vec(d.secure.extent)}, Turns=${d.turns}, ValveTurns=${d.valveTurns}, Locate=${q(d.locate)}, ValvesText=${q(d.valvesText)}, ` +
+      `SecureText=${q(d.secureText)}, Report=${q(d.report)}, Collapse=${q(d.collapse)}, Remaining=${q(d.remaining)})`)
+    for (const x of d.drops) lines.push(`+Drops=(Level="${d.level}", Valve=${x.valve}, Char=${x.char}, At=${vec(x.at)})`)
     n++
   }
   // Long War's named soldiers its council missions reward (LWX2CustomSoldiers, the council's reward 9: Progeny's).

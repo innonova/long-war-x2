@@ -509,9 +509,3 @@ static function string ObjectiveText()
 		return H.Texts[k] @ H.Strike @ Hive.StrikeLeft;
 	return H.Texts[k];
 }
-
-defaultproperties
-{
-	ReachTiles = 1.5
-	SightShare = 0.75
-}

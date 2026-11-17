@@ -376,3 +376,28 @@ squaddie); Furies brought Matthew Hawkins (a sniper, rank 4, one psi power) and 
 psi powers each). Then Portent played: the survivor waited where EW puts them, joined XCOM when a soldier came near
 ("Escort the survivor to the EVAC Zone."), evacuated ("Kill any remaining aliens. All soldiers report to the EVAC
 zone."), the aliens killed, and the council paid.
+
+## Report (2026-11-17, step 4: Deluge)
+
+**Deluge** (the `DLC2_2_Deluge_Stream` level's Kismet, played with EW's bomb handler; `ew-objectives.ts readDeluge`,
+`LWX2Deluge`):
+- **The collapse:** "Turns Until Collapse" from 6 (`Turn Max`), one less at each XCOM turn's end.
+- **The bypass valves:** five (the interactive actors raising `TransponderActivated`); a soldier beside one opens it
+  (`LWX2_OpenValve`, one action): +2 turns (the `AddInt` on `Turns Left`). Only before the transport is secured or the
+  dam breaks (`Current State <= ApproachDiffuseBomb`).
+- **The transport:** spotted when a soldier enters its approach volume ("Approach and secure the transport vehicle.");
+  secured when a soldier enters its own volume once it is spotted or every valve is open (EW's control button). Then
+  the mission is won (EW plays Annette's film and `WinBattleIfHuman`).
+- **The dam breaks** at 0: "All soldiers report to the EVAC zone." with "Turns Remaining" from 6, XCOM 2's evac zone at the
+  Skyranger. The mission is then lost, when the time runs out or the squad has left.
+- **The drops:** each valve opened brings its aliens as the aliens' turn ends (`Spawn_New_Aliens`, once a valve), set on
+  the nearest soldier: 9 on this level (Sectoids, Mechtoids, Mutons), read with the valve whose `TransponderN_Activated`
+  gates them.
+
+**Not ported:** the drops for soldiers in its other volumes (`VolumeN_Occupied`, under the level's cap on spawned aliens);
+the aliens shared by two valves come with the one the Kismet reaches first.
+
+**Checked on wingpu** (`council now 26`): the objective with "Turns Until Collapse: 6"; a valve opened from beside it
+(8), the turn's end (7) and its three aliens dropped beside the valve (they killed the soldier there); a soldier at the
+transport did not secure it before it was spotted; a soldier in the approach volume spotted it and the one at it
+secured it: the mission summary, and the council paid. The dam breaking was not seen in play.
