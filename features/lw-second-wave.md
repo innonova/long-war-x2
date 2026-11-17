@@ -327,3 +327,11 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
 - **A natural reveal** (the squad walked up with real moves): a pod of two Sectoids and an ADVENT MEC revealed when a soldier
   came into view. The MEC scampered (28 → 36) rather than shot: one roll of 50%, so it shows nothing either way. The walk
   to a pod of three MECs lost track in the fight that followed. Still to see: a reveal shot announced by Perfect Information.
+
+## Report (2026-11-17, Liberators' psi rule, looked for)
+
+- `XGFacility_Labs.IsResearched(255)` answers "is psi known": tech 56, 6, 43 or 38 researched, and with Liberators only 43 or
+  38. In the feature's earlier reading these are the interrogations of a Sectoid Commander or an Ethereal; their autopsies
+  no longer count. **No script calls it with 255.** Not the tech tree's prerequisites, the facilities', the items', or the
+  psi powers' config (Rift's "specially coded requirement" has tech 0). The caller is in EW's native code, so what the
+  gate holds back is not known; not ported.
