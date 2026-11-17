@@ -1,0 +1,137 @@
+Begin Object Class=MaterialExpressionTextureSampleParameter2D Name=MaterialExpressionTextureSampleParameter2D_0
+   ParameterName="Diffuse"
+   Texture=Texture2D'EngineResources.DefaultTexture'
+   MaterialExpressionEditorX=-700
+   MaterialExpressionEditorY=-300
+   Name="MaterialExpressionTextureSampleParameter2D_0"
+End Object
+Begin Object Class=MaterialExpressionTextureCoordinate Name=MaterialExpressionTextureCoordinate_0
+   CoordinateIndex=1
+   MaterialExpressionEditorX=-1500
+   MaterialExpressionEditorY=100
+   Name="MaterialExpressionTextureCoordinate_0"
+End Object
+Begin Object Class=MaterialExpressionVectorParameter Name=MaterialExpressionVectorParameter_0
+   ParameterName="LMScaleBias"
+   DefaultValue=(R=1.000000,G=1.000000,B=0.000000,A=0.000000)
+   MaterialExpressionEditorX=-1500
+   MaterialExpressionEditorY=250
+   Name="MaterialExpressionVectorParameter_0"
+End Object
+Begin Object Class=MaterialExpressionComponentMask Name=MaterialExpressionComponentMask_0
+   Input=(Expression=MaterialExpressionVectorParameter'MaterialExpressionVectorParameter_0')
+   R=True
+   G=True
+   MaterialExpressionEditorX=-1300
+   MaterialExpressionEditorY=250
+   Name="MaterialExpressionComponentMask_0"
+End Object
+Begin Object Class=MaterialExpressionComponentMask Name=MaterialExpressionComponentMask_1
+   Input=(Expression=MaterialExpressionVectorParameter'MaterialExpressionVectorParameter_0')
+   B=True
+   A=True
+   MaterialExpressionEditorX=-1300
+   MaterialExpressionEditorY=350
+   Name="MaterialExpressionComponentMask_1"
+End Object
+Begin Object Class=MaterialExpressionMultiply Name=MaterialExpressionMultiply_0
+   A=(Expression=MaterialExpressionTextureCoordinate'MaterialExpressionTextureCoordinate_0')
+   B=(Expression=MaterialExpressionComponentMask'MaterialExpressionComponentMask_0')
+   MaterialExpressionEditorX=-1150
+   MaterialExpressionEditorY=150
+   Name="MaterialExpressionMultiply_0"
+End Object
+Begin Object Class=MaterialExpressionAdd Name=MaterialExpressionAdd_0
+   A=(Expression=MaterialExpressionMultiply'MaterialExpressionMultiply_0')
+   B=(Expression=MaterialExpressionComponentMask'MaterialExpressionComponentMask_1')
+   MaterialExpressionEditorX=-1000
+   MaterialExpressionEditorY=200
+   Name="MaterialExpressionAdd_0"
+End Object
+Begin Object Class=MaterialExpressionTextureSampleParameter2D Name=MaterialExpressionTextureSampleParameter2D_1
+   ParameterName="LMColor"
+   Texture=Texture2D'EngineResources.WhiteSquareTexture'
+   Coordinates=(Expression=MaterialExpressionAdd'MaterialExpressionAdd_0')
+   MaterialExpressionEditorX=-850
+   MaterialExpressionEditorY=50
+   Name="MaterialExpressionTextureSampleParameter2D_1"
+End Object
+Begin Object Class=MaterialExpressionTextureSampleParameter2D Name=MaterialExpressionTextureSampleParameter2D_2
+   ParameterName="LMDir"
+   Texture=Texture2D'EngineResources.WhiteSquareTexture'
+   Coordinates=(Expression=MaterialExpressionAdd'MaterialExpressionAdd_0')
+   MaterialExpressionEditorX=-850
+   MaterialExpressionEditorY=300
+   Name="MaterialExpressionTextureSampleParameter2D_2"
+End Object
+Begin Object Class=MaterialExpressionVectorParameter Name=MaterialExpressionVectorParameter_1
+   ParameterName="LMScale0"
+   DefaultValue=(R=1.000000,G=1.000000,B=1.000000,A=1.000000)
+   MaterialExpressionEditorX=-650
+   MaterialExpressionEditorY=150
+   Name="MaterialExpressionVectorParameter_1"
+End Object
+Begin Object Class=MaterialExpressionVectorParameter Name=MaterialExpressionVectorParameter_2
+   ParameterName="LMScale1"
+   DefaultValue=(R=1.000000,G=1.000000,B=1.000000,A=1.000000)
+   MaterialExpressionEditorX=-650
+   MaterialExpressionEditorY=420
+   Name="MaterialExpressionVectorParameter_2"
+End Object
+Begin Object Class=MaterialExpressionMultiply Name=MaterialExpressionMultiply_1
+   A=(Expression=MaterialExpressionTextureSampleParameter2D'MaterialExpressionTextureSampleParameter2D_1',Mask=1,MaskR=1,MaskG=1,MaskB=1)
+   B=(Expression=MaterialExpressionVectorParameter'MaterialExpressionVectorParameter_1',Mask=1,MaskR=1,MaskG=1,MaskB=1)
+   MaterialExpressionEditorX=-450
+   MaterialExpressionEditorY=80
+   Name="MaterialExpressionMultiply_1"
+End Object
+Begin Object Class=MaterialExpressionMultiply Name=MaterialExpressionMultiply_2
+   A=(Expression=MaterialExpressionTextureSampleParameter2D'MaterialExpressionTextureSampleParameter2D_2',Mask=1,MaskR=1,MaskG=1,MaskB=1)
+   B=(Expression=MaterialExpressionVectorParameter'MaterialExpressionVectorParameter_2',Mask=1,MaskR=1,MaskG=1,MaskB=1)
+   MaterialExpressionEditorX=-450
+   MaterialExpressionEditorY=330
+   Name="MaterialExpressionMultiply_2"
+End Object
+Begin Object Class=MaterialExpressionConstant3Vector Name=MaterialExpressionConstant3Vector_0
+   R=0.577350
+   G=0.577350
+   B=0.577350
+   MaterialExpressionEditorX=-450
+   MaterialExpressionEditorY=450
+   Name="MaterialExpressionConstant3Vector_0"
+End Object
+Begin Object Class=MaterialExpressionDotProduct Name=MaterialExpressionDotProduct_0
+   A=(Expression=MaterialExpressionMultiply'MaterialExpressionMultiply_2')
+   B=(Expression=MaterialExpressionConstant3Vector'MaterialExpressionConstant3Vector_0')
+   MaterialExpressionEditorX=-300
+   MaterialExpressionEditorY=350
+   Name="MaterialExpressionDotProduct_0"
+End Object
+Begin Object Class=MaterialExpressionMultiply Name=MaterialExpressionMultiply_3
+   A=(Expression=MaterialExpressionMultiply'MaterialExpressionMultiply_1')
+   B=(Expression=MaterialExpressionDotProduct'MaterialExpressionDotProduct_0')
+   MaterialExpressionEditorX=-200
+   MaterialExpressionEditorY=150
+   Name="MaterialExpressionMultiply_3"
+End Object
+Begin Object Class=MaterialExpressionScalarParameter Name=MaterialExpressionScalarParameter_0
+   ParameterName="LMBrightness"
+   DefaultValue=1.000000
+   MaterialExpressionEditorX=-200
+   MaterialExpressionEditorY=300
+   Name="MaterialExpressionScalarParameter_0"
+End Object
+Begin Object Class=MaterialExpressionMultiply Name=MaterialExpressionMultiply_4
+   A=(Expression=MaterialExpressionMultiply'MaterialExpressionMultiply_3')
+   B=(Expression=MaterialExpressionScalarParameter'MaterialExpressionScalarParameter_0')
+   MaterialExpressionEditorX=-100
+   MaterialExpressionEditorY=200
+   Name="MaterialExpressionMultiply_4"
+End Object
+Begin Object Class=MaterialExpressionMultiply Name=MaterialExpressionMultiply_5
+   A=(Expression=MaterialExpressionTextureSampleParameter2D'MaterialExpressionTextureSampleParameter2D_0',Mask=1,MaskR=1,MaskG=1,MaskB=1)
+   B=(Expression=MaterialExpressionMultiply'MaterialExpressionMultiply_4')
+   MaterialExpressionEditorX=-80
+   MaterialExpressionEditorY=-100
+   Name="MaterialExpressionMultiply_5"
+End Object

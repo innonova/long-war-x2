@@ -104,6 +104,11 @@ function Handle(string Line, out array<string> Out)
 		GetALocalPlayerController().ClientUpdateLevelStreamingStatus(name(Args[1]), true, Args.Length < 3 || Args[2] != "false", false);
 		Out.AddItem("ok" @ Args[1]);
 		return;
+	case "basedle":
+		// A test aid: the light environments of EW's base's pieces (DynamicSMActor_Spawnable) on or off, live:
+		// basedle on|off. Off, each piece is lit by the lights themselves instead of their summary.
+		Out.AddItem(BaseLightEnvironments(Args.Length > 1 && Args[1] == "on"));
+		return;
 	case "worldambient":
 		// A test aid: the world's ambient light overridden (WorldInfo's world ambient: on, its intensity), live, and the
 		// ambient cube taken again: worldambient <intensity> | off.
@@ -4329,9 +4334,26 @@ function Dump(XComGameState_LWStrategy S, out array<string> Out)
 }
 
 /** ewmat: a scalar (a number) or texture (a path) parameter set on every stand-in material of the EW map's pieces. */
+function string BaseLightEnvironments(bool bOn)
+{
+	local DynamicSMActor_Spawnable A;
+	local int n;
+
+	foreach WorldInfo.AllActors(class'DynamicSMActor_Spawnable', A)
+	{
+		if (A.LightEnvironment == none)
+			continue;
+		A.LightEnvironment.SetEnabled(bOn);
+		A.StaticMeshComponent.SetLightEnvironment(bOn ? A.LightEnvironment : none);
+		n++;
+	}
+	return "ok" @ n @ "light environments" @ (bOn ? "on" : "off");
+}
+
 function string SetEWMaterials(name Param, string Value)
 {
-	local LWX2LevelActor A;
+	local Actor A;
+	local StaticMeshComponent SMC;
 	local MaterialInstanceConstant MIC;
 	local array<MaterialInstanceConstant> Done;
 	local Texture T;
@@ -4345,13 +4367,15 @@ function string SetEWMaterials(name Param, string Value)
 		if (T == none)
 			return "ERR no texture" @ Value;
 	}
-	foreach WorldInfo.AllActors(class'LWX2LevelActor', A)
+	// (The mission maps' pieces and EW's base's, DynamicSMActor_Spawnable.)
+	foreach WorldInfo.AllActors(class'Actor', A)
 	{
-		if (A.StaticMeshComponent == none)
+		SMC = LWX2LevelActor(A) != none ? LWX2LevelActor(A).StaticMeshComponent : (DynamicSMActor(A) != none ? DynamicSMActor(A).StaticMeshComponent : none);
+		if (SMC == none)
 			continue;
-		for (i = 0; i < A.StaticMeshComponent.GetNumElements(); i++)
+		for (i = 0; i < SMC.GetNumElements(); i++)
 		{
-			MIC = MaterialInstanceConstant(A.StaticMeshComponent.GetMaterial(i));
+			MIC = MaterialInstanceConstant(SMC.GetMaterial(i));
 			if (MIC == none || Done.Find(MIC) != INDEX_NONE)
 				continue;
 			Done.AddItem(MIC);

@@ -44,7 +44,8 @@ export function inlineTextures(
   let textures = 0
   let mipCount = 0
   for (const e of exports) {
-    if (e.type !== 'Texture2D' || skip(e)) continue
+    // (EW's lightmap atlases too, LightMapTexture2D: a Texture2D with its flags after, kept with the rest.)
+    if ((e.type !== 'Texture2D' && e.type !== 'LightMapTexture2D') || skip(e)) continue
     let o = e.offset + 4 // net index
     let cacheName = ''
     let cacheAt = -1

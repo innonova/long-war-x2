@@ -277,7 +277,10 @@ function materialsOf(index: number, tags: Tag[]): number[] {
 /** A wall's fracture: its mesh's index count and fragments' height (the component's, or its archetypes'), and EW's
  *  toughness by name (MASONRY, WOOD …), so XCOM 2 can break it as EW did. */
 interface Frac { indices: number; minZ: number; maxZ: number; toughness: string }
-interface Piece { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[]; extent: number[]; fractured: boolean; cover: Cover; frac?: Frac }
+/** A piece's baked lighting (features/ew-lightmaps.md): its two atlases (EW's colour and directional coefficients) and their
+ *  scales, and where its part of them lies: lightmap UV = the mesh's lightmap UV set × scale + bias. */
+interface LightMap { color: number; dir: number; s0: number[]; s1: number[]; scale: number[]; bias: number[]; uv: number }
+interface Piece { lightmap?: LightMap; mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[]; extent: number[]; fractured: boolean; cover: Cover; frac?: Frac }
 const pieces: Piece[] = []
 const skipped: Record<string, number> = {}
 exports.forEach((e, i) => {
@@ -300,6 +303,7 @@ exports.forEach((e, i) => {
   if (!mesh) return
   const hidden = tags.find((t) => t.name === 'bHidden')
   if (hidden?.boolValue) return
+  const lightmap = lightmapOf(ref(comp), mesh)
   // (A placed actor stores only what differs from its archetype: one standing where its archetype stands has no Location
   // of its own, and was put at the origin until converter 18: Street Hurricane's storefront row then covered its drop zone.)
   const loc = inherited(i, tags, 'Location', 26)
@@ -308,6 +312,7 @@ exports.forEach((e, i) => {
   const ds3 = inherited(i, tags, 'DrawScale3D', 26)
   const s = ds ? f32(ds, 0) : 1
   pieces.push({
+    lightmap,
     mesh,
     loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
     rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
@@ -320,6 +325,69 @@ exports.forEach((e, i) => {
     frac: comp.name === 'FracturedStaticMeshComponent' ? fracOf(i, tags, ref(comp) - 1, ctags) : undefined,
   })
 })
+
+/**
+ * A static mesh component's baked lighting, after its properties (the component's leading 8 bytes, then the tagged
+ * properties): its LODs; the first's shadow maps and shadow vertex buffers (counts and references), then its light map:
+ * the type (2: a 2D lightmap), the lights' GUIDs, three coefficients (an atlas and a scale, three floats), the atlas
+ * placement's scale and bias (two floats each). Read from EW's Static_ScienceLabs; undefined where it is not that.
+ */
+function lightmapOf(r: number, mesh: string): LightMap | undefined {
+  if (r <= 0) return undefined
+  const d: Uint8Array = pkg.data(r)
+  const rd = new Reader(d.subarray(8))
+  try {
+    readTags(rd, pkg)
+  } catch {
+    return undefined
+  }
+  const dv = new DataView(d.buffer, d.byteOffset, d.byteLength)
+  let o = 8 + (rd as unknown as { o: number }).o
+  const i = () => {
+    const x = dv.getInt32(o, true)
+    o += 4
+    return x
+  }
+  const f = () => {
+    const x = dv.getFloat32(o, true)
+    o += 4
+    return x
+  }
+  try {
+    const lods = i()
+    if (lods < 1 || lods > 8) return undefined
+    const shadowMaps = i()
+    if (shadowMaps < 0 || shadowMaps > 64) return undefined
+    o += 4 * shadowMaps
+    const shadowBuffers = i()
+    if (shadowBuffers < 0 || shadowBuffers > 64) return undefined
+    o += 4 * shadowBuffers
+    if (i() !== 2) return undefined
+    const guids = i()
+    if (guids < 0 || guids > 256) return undefined
+    o += 16 * guids
+    const coef = [0, 1, 2].map(() => ({ tex: i(), s: [f(), f(), f()] }))
+    const scale = [f(), f()]
+    const bias = [f(), f()]
+    if (!coef[0]!.tex || !coef[1]!.tex || !(scale[0]! > 0) || !(scale[1]! > 0)) return undefined
+    const isLM = (t: number) => t > 0 && exports[t - 1]?.type === 'LightMapTexture2D'
+    if (!isLM(coef[0]!.tex) || !isLM(coef[1]!.tex)) return undefined
+    // The mesh's lightmap UV set (StaticMesh.LightMapCoordinateIndex; EW's are 1).
+    const mi = exports.findIndex((x) => x.fullName === mesh)
+    let uv = 1
+    if (mi >= 0) {
+      try {
+        const mt = tagsOf(mi, 4).find((t) => t.name === 'LightMapCoordinateIndex')
+        if (mt) uv = new DataView(mt.value.buffer, mt.value.byteOffset).getInt32(0, true)
+      } catch {
+        // its default
+      }
+    }
+    return { color: coef[0]!.tex, dir: coef[1]!.tex, s0: coef[0]!.s, s1: coef[1]!.s, scale, bias, uv }
+  } catch {
+    return undefined
+  }
+}
 
 /** The backdrop (the sky dome, the mountains): too big to be ground; it must not collide, or it encloses the map. */
 const isBackdrop = (p: Piece) => p.extent[0]! > 2400 || p.extent[1]! > 2400 || p.extent[2]! > 1200
@@ -857,6 +925,11 @@ const rename = (path: string) => {
 }
 const n = (x: number) => (Math.abs(x) < 1e-4 ? '0' : String(Math.round(x * 1000) / 1000))
 /** A piece's cover flags where they differ from an XComLevelActor's defaults (what the plot places). */
+/** A piece's lightmap in the ini (LWX2PieceLightMap). */
+const lightmapText = (l?: LightMap) =>
+  l
+    ? `,LightMap=(Color="${rename(pathOf(l.color))}",Dir="${rename(pathOf(l.dir))}",S0=(X=${n(l.s0[0]!)},Y=${n(l.s0[1]!)},Z=${n(l.s0[2]!)}),S1=(X=${n(l.s1[0]!)},Y=${n(l.s1[1]!)},Z=${n(l.s1[2]!)}),ScaleX=${l.scale[0]},ScaleY=${l.scale[1]},BiasX=${l.bias[0]},BiasY=${l.bias[1]},UV=${l.uv})`
+    : ''
 const coverText = (c: Cover) =>
   (c.onto ? '' : ',ClimbOnto=false') + (c.floor ? ',ClimbOnto=true,Floor=true' : '') + (c.over ? ',ClimbOver=true' : '') + (c.destination ? '' : ',Destination=false') +
   (c.sight ? '' : ',BlocksSight=false') + (c.window ? ',Window=true' : '')
@@ -911,7 +984,7 @@ const lines = [
   ),
   ...pieces.map(
     (p) =>
-      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''}${isBackdrop(p) ? ',Backdrop=true' : ''}${p.fractured ? ',Fractured=true' : ''}${p.frac ? `,Frac=(Indices=${p.frac.indices},MinZ=${n(p.frac.minZ)},MaxZ=${n(p.frac.maxZ)},Toughness=${p.frac.toughness || 'None'})` : ''}${coverText(p.cover)})`,
+      `+Pieces=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=(X=${n(p.scale[0]!)},Y=${n(p.scale[1]!)},Z=${n(p.scale[2]!)})${p.materials.length ? `,Materials=(${p.materials.map((m) => `"${m ? rename(pathOf(m)) : ''}"`).join(',')})` : ''}${isBackdrop(p) ? ',Backdrop=true' : ''}${p.fractured ? ',Fractured=true' : ''}${p.frac ? `,Frac=(Indices=${p.frac.indices},MinZ=${n(p.frac.minZ)},MaxZ=${n(p.frac.maxZ)},Toughness=${p.frac.toughness || 'None'})` : ''}${coverText(p.cover)}${lightmapText(p.lightmap)})`,
   ),
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')

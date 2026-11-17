@@ -13,6 +13,16 @@ struct LWX2PieceFrac
 	var name Toughness;
 };
 
+/** A piece's baked lighting from EW (features/ew-lightmaps.md): its colour and directional atlases, their scales, and its
+ *  place in them (the lightmap UV = the mesh's UV set UV × scale + bias). */
+struct LWX2PieceLightMap
+{
+	var string Color, Dir;
+	var vector S0, S1;
+	var float ScaleX, ScaleY, BiasX, BiasY;
+	var int UV;
+};
+
 struct LWX2Piece
 {
 	var string Mesh;
@@ -31,6 +41,7 @@ struct LWX2Piece
 	/** Seen through (EW's windows, foliage, cars) and windows: the plot sets them too. */
 	var bool BlocksSight, Window;
 	var LWX2PieceFrac Frac;
+	var LWX2PieceLightMap LightMap;
 };
 
 /** A scalar parameter set on every stand-in (StandinScalars). */
@@ -70,6 +81,12 @@ struct LWX2Standin
  * kind, given the EW material's textures. Empty: the EW materials are kept.
  */
 var config string PropParent;
+/** The lightmapped stand-ins' parent (our own material, tools/materials: unlit, EW's diffuse × EW's baked lighting on the
+ *  mesh's second UV set), and whether EW's base and EW's mission maps use it. "": not used. */
+var config string LightmapParent;
+var config bool LightmapBase, LightmapMaps;
+/** EW's baked lighting at this brightness (1: as stored). */
+var config float LightmapBrightness;
 var config string FoliageParent;
 /** The parent for EW's cut-out materials (tree cards, signs, fences, road paint), given the look's mask as its Masks. */
 var config string MaskedParent;
@@ -457,13 +474,56 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 		}
 		for (i = 0; i < P.Materials.Length; i++)
 		{
-			M = MaterialFor(P.Materials[i], A, Standins, D);
+			M = none;
+			if (P.LightMap.Color != "" && (ActorClass == class'DynamicSMActor_Spawnable' ? default.LightmapBase : default.LightmapMaps))
+				M = Lightmapped(P, P.Materials[i], A, D);
+			if (M == none)
+				M = MaterialFor(P.Materials[i], A, Standins, D);
 			if (M != none)
 				Comp.SetMaterial(i, M);
 		}
 		Placed.AddItem(A);
 	}
 	`log("LongWarX2: EW map:" @ Placed.Length @ "pieces placed as" @ ActorClass.Name $ "," @ Missing @ "meshes not found;" @ Standins.Length @ "materials" $ ";" @ Backdrop @ "backdrop pieces without collision;" @ Skipped @ "skipped (markers, skies, decals)", , 'LongWarX2');
+}
+
+/**
+ * A piece's own stand-in for one of its EW materials, lit by EW's baked lighting (features/ew-lightmaps.md): an instance of
+ * LightmapParent with the material's diffuse and the piece's lightmap. None where that cannot be (no parent, an EW material
+ * without a diffuse or of a see-through kind, the lightmap on another UV set, its atlases not found): the shared stand-in.
+ */
+static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object InOuter, LWX2EWMapData D)
+{
+	local MaterialInstanceConstant MIC;
+	local Material Parent;
+	local Texture Diffuse, Col, Dir;
+	local LinearColor V;
+	local int k;
+
+	if (default.LightmapParent == "" || P.LightMap.UV != 1)
+		return none;
+	k = D.Looks.Find('Material', Path);
+	if (k == INDEX_NONE || D.Looks[k].Kind != 'Prop' || D.Looks[k].Diffuse == "" || Matches(Path, default.GlassMaterials))
+		return none;
+	Parent = Material(DynamicLoadObject(default.LightmapParent, class'Material', true));
+	Diffuse = Texture(DynamicLoadObject(D.Looks[k].Diffuse, class'Texture', true));
+	Col = Texture(DynamicLoadObject(P.LightMap.Color, class'Texture', true));
+	Dir = Texture(DynamicLoadObject(P.LightMap.Dir, class'Texture', true));
+	if (Parent == none || Diffuse == none || Col == none || Dir == none)
+		return none;
+	MIC = new(InOuter) class'MaterialInstanceConstant';
+	MIC.SetParent(Parent);
+	MIC.SetTextureParameterValue('Diffuse', Diffuse);
+	MIC.SetTextureParameterValue('LMColor', Col);
+	MIC.SetTextureParameterValue('LMDir', Dir);
+	V.R = P.LightMap.ScaleX; V.G = P.LightMap.ScaleY; V.B = P.LightMap.BiasX; V.A = P.LightMap.BiasY;
+	MIC.SetVectorParameterValue('LMScaleBias', V);
+	V.R = P.LightMap.S0.X; V.G = P.LightMap.S0.Y; V.B = P.LightMap.S0.Z; V.A = 1;
+	MIC.SetVectorParameterValue('LMScale0', V);
+	V.R = P.LightMap.S1.X; V.G = P.LightMap.S1.Y; V.B = P.LightMap.S1.Z;
+	MIC.SetVectorParameterValue('LMScale1', V);
+	MIC.SetScalarParameterValue('LMBrightness', default.LightmapBrightness > 0 ? default.LightmapBrightness : 1.0);
+	return MIC;
 }
 
 /** Loads the converted map package (any of its objects loads it whole: then its meshes are found by their paths). */
