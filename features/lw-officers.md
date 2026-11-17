@@ -271,3 +271,12 @@ officer ranks 1, 3 and 5; everyone else LCPL.
 - EW's insignia picture. XCOM 2's row has no place for one beside the class, and the medal frames
   live in EW's Medals movie, not as images.
 - The armory's soldier header still shows the soldier rank.
+
+## Report (2026-11-17, the officer rank in the armory's header)
+
+- **Done:** `UISoldierHeader_LW` (in XCOM 2's place by `XComEngine.ini`'s ModClassOverrides) shows an officer's rank as
+  Long War names it: the header's rank line reads the officer rank ("CAPTAIN"), and the name leads with its short form
+  ("CAPT CLAUDIA MÜLLER") where XCOM 2 put the soldier rank's ("LCPL"), as the soldier lists already do. Everything
+  else in the header is XCOM 2's.
+- **Seen on wingpu:** the hub's Barracks → View Soldiers → a captain: the armory's header as above
+  (`logs/wingpu_armory_officer_header.png`).
