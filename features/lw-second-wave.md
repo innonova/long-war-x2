@@ -226,3 +226,19 @@ are not in the port: a campaign plays as with all of them off. Long War 1.0 has 
 - **Checked on wingpu** (new test aid `open promotion`; from the hub's barracks, the soldier list, the armory): a rank-2
   sniper sees the squaddie perks and the Lance Corporal choice, and a locked "?" for every perk from Corporal on
   (`logs/wingpu_hidden_trees.png`).
+
+## Report (2026-11-17, Commander's Choice)
+
+- **#18 Commander's Choice** (`XGSoldierUI` with `eGO_MorePower`: the class chosen for each soldier on promotion from
+  rookie): the armory's PROMOTE SOLDIER for a rookie ready to rank up opens XCOM 2's own class chooser (the training
+  centre's "Choose Soldier Class") with Long War's eight classes, in place of XCOM 2's draw from its class deck.
+  - **The class chosen** is the soldier's at once, as XCOM 2's `PromoteSoldier` gives one: the rank, the squaddie's kit,
+    the best gear, its `PromotionEvent`. XCOM 2's promotion screen follows as usual.
+  - **The chooser's rows** show no training time, and their button is XCOM 2's PROMOTE SOLDIER (`UILWChooseClass`,
+    `UILWClassListItem`).
+  - **The armory menu** is XCOM 2's, overridden only for that choice (`UIArmory_LWMainMenu`, a `ModClassOverride` in
+    `XComEngine.ini`).
+- **Checked on wingpu** (test aid `rankup new 0`: a recruit with the experience for the first promotion): from the hub's
+  barracks, the soldier list, the rookie's armory and PROMOTE SOLDIER, the chooser opened with Long War's classes
+  (`logs/wingpu_commanders_choice.png`). Choosing Gunner made her a Gunner specialist with the Gunner's kit, on XCOM 2's
+  promotion screen (`logs/wingpu_commanders_choice_promoted.png`).

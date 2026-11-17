@@ -3810,8 +3810,13 @@ function RankUp(int Index, int Times, out array<string> Out)
 	}
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: rank up (control port)");
 	if (Index == -2)
+	{
 		Unit = class'LWBonusEffects'.static.NewSoldier(NewGameState, XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom',
 			class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID)), 0, 0);
+		// ('rankup new 0': a recruit with the experience for the first promotion, to be promoted in the armory.)
+		if (Times == 0)
+			Unit.NonTacticalKills = class'X2ExperienceConfig'.static.GetRequiredKills(1);
+	}
 	else
 		Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Soldiers[Index].ObjectID));
 	Out.AddItem("was: hp" @ int(Unit.GetBaseStat(eStat_HP)) @ "aim" @ int(Unit.GetBaseStat(eStat_Offense)) @ "will" @ int(Unit.GetBaseStat(eStat_Will)) @ "mob" @ int(Unit.GetBaseStat(eStat_Mobility)));
@@ -3825,6 +3830,7 @@ function RankUp(int Index, int Times, out array<string> Out)
 			@ "aim +" $ (int(Unit.GetBaseStat(eStat_Offense)) - Aim) @ "will +" $ (int(Unit.GetBaseStat(eStat_Will)) - Will));
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	Out.AddItem("#" $ Unit.ObjectID @ Unit.GetFullName() @ "rank" @ Unit.GetRank() @ "can rank up" @ Unit.CanRankUpSoldier());
 	// (Long War's gains follow in a game state of their own: the soldier's stats as they are now.)
 	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Unit.ObjectID));
 	Out.AddItem("now: hp" @ int(Unit.GetBaseStat(eStat_HP)) @ "aim" @ int(Unit.GetBaseStat(eStat_Offense)) @ "will" @ int(Unit.GetBaseStat(eStat_Will)) @ "mob" @ int(Unit.GetBaseStat(eStat_Mobility)) @ "(" $ (class'LWX2SecondWave'.static.On(3) ? "Hidden Potential" : "normal") $ ")");
