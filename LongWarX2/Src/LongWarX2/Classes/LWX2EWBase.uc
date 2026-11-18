@@ -46,6 +46,8 @@ var array<LightComponent> WorldLights;
  *  the world's). "": none, the base lit by EW's own lights alone (dark: EW baked most of its light). */
 /** EW's people in its base (features/ew-base-people.md): the Anim_ levels whose people stand in the fixed rooms. */
 var config array<string> PeopleLevels;
+/** The parent of EW's people's stand-ins (XCOM 2's material for its own base's staff); empty: the bodies' (LWX2EWBodies). */
+var config string PeopleMaterialParent;
 /** Whether they play EW's animations (false: they stand in their reference pose; a test switch). */
 var config bool PeopleAnimate;
 /** A level's people placed at their matinee's first key plus this, where set (features/ew-base-people.md). */
@@ -383,7 +385,7 @@ function PlacePeople()
 				// (A slot without a diffuse found, hair and lashes: unlit black rather than XCOM 2's checkerboard.)
 				// (A slot without a texture found, the eye lashes: the body's stand-in; our unlit material cannot go on a
 				// skeletal mesh.)
-				Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B) : (Slots.Length > 0 ? Slots[0] : none);
+				Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
 				// (The props' textures and scalars on it too: XCOM 2's placeholder Masks darkened the white coats.)
 				MIC = MaterialInstanceConstant(Slot);
 				if (MIC != none && S.Diffuse != "")

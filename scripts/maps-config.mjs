@@ -168,6 +168,8 @@ console.log(
       ...PEOPLE_LEVELS].map((l) => `+BaseLevels="${l}"`),
     'PeopleAnimate=true',
     ...PEOPLE_LEVELS.map((l) => `+PeopleLevels="${l}"`),
+    "; Their stand-ins' parent: XCOM 2's material for its own base's staff (the aliens' parent turned them blue-grey).",
+    'PeopleMaterialParent="Materials.Approved.AvengerStaff_SD"',
     '',
     "; The Long War hub (UILWEWHub: EW's base, its rooms and Mission Control) as the strategy layer's root in place of the",
     "; Geoscape, where EW's base is converted (the setup does it); false: the Geoscape (features/lw-base-view.md).",

@@ -62,3 +62,12 @@ than the actors' own places (first key minus actor's place):
   `SeqAct_Interp`/`InterpData` for a frame or anchor, or the level's own offset in EW's streaming; then read
   `ew-people.ts`'s `key`/`keyRot`, now written per person (`Key=` on `+People=`; `LWX2EWBase.PeopleFrames` places a
   level's people at key + offset: tried for Anim_Engineering with (2090, 0, −1922), no visible change).
+
+## Report (2026-11-18, their colours)
+
+- **EW's people in their own colours:** their stand-ins were instances of the aliens' parent (`AlienUnit_TC`), which drew
+  them blue-grey (the reviewer: "Vahlen largely untextured"); the textures were found and loaded all along (logged per
+  slot). Now XCOM 2's material for its own base's staff, `Materials.Approved.AvengerStaff_SD` (`PeopleMaterialParent`;
+  found in the SDK's Materials package): Vahlen's white coat, green collar and skin as in EW's capture, the engineers
+  and clerks likewise.
+- **Still:** her hair draws dark (EW tints hair by a colour parameter it sets on the instance); Shen's place.
