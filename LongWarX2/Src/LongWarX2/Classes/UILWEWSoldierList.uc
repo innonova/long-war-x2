@@ -18,6 +18,9 @@ var localized string Active, OnMission, PsiTesting, CovertOps, GeneMod, Augmenti
 /** The soldiers in the list's order, and the one selected. */
 var array<StateObjectReference> Soldiers;
 var int Selected;
+/** Opened to choose a soldier for a lab (OpenFor; EW's UISoldierList_PsiLabs, _GeneLab, _CyberneticsLab): those the lab
+ *  cannot take greyed, the chosen one handed to it. */
+var UILWEWSoldierSlots ForLab;
 
 /** Long War's eight classes (EW's soldier class numbers in its list, UISoldierListBase.UpdateDisplay): XCOM 2's class
  *  template, Long War's number, its colour and its icon in Long War's package. */
@@ -43,6 +46,22 @@ static function Open(XComHQPresentationLayer HQPres)
 	S.Package = name("/ package/ewxSoldierList/SoldierList");
 	S.MCName = 'theScreen';
 	HQPres.ScreenStack.Push(S);
+}
+
+/** For a lab: its soldiers (no SHIVs or MECs), those it cannot take greyed; one chosen, the list closes and the lab has them. */
+static function UILWEWSoldierList OpenFor(XComHQPresentationLayer HQPres, UILWEWSoldierSlots Lab)
+{
+	local UILWEWSoldierList S;
+
+	DynamicLoadObject(default.UIPackage $ ".ewxSoldierList", class'Object', true);
+	DynamicLoadObject("LongWar.ClassIcons.assault", class'Object', true);
+	S = HQPres.Spawn(class'UILWEWSoldierList', HQPres);
+	S.Package = name("/ package/ewxSoldierList/SoldierList");
+	S.MCName = 'theScreen';
+	S.ForLab = Lab;
+	S.BaseCamera = '';
+	HQPres.ScreenStack.Push(S);
+	return S;
 }
 
 simulated function OnInit()
@@ -80,6 +99,9 @@ function Fill()
 		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
 		if (Unit == none || !Unit.IsSoldier() || Unit.IsDead())
 			continue;
+		// (A lab's list: no SHIVs or MECs, XGPsiLabsUI.UpdateSoldierList.)
+		if (ForLab != none && (Unit.IsRobotic() || class'LWMECs'.static.IsMEC(Unit)))
+			continue;
 		Soldiers.AddItem(Ref);
 		Status = StatusOf(Unit, S, UIState);
 		k = Classes.Find('Template', Unit.GetSoldierClassTemplateName());
@@ -88,7 +110,8 @@ function Fill()
 		MC.QueueString(Repl(Unit.GetNickName(), "'", ""));
 		MC.QueueString(ClassText(Unit, k));
 		MC.QueueString(Colored(Status, UIState));
-		MC.QueueBoolean(false);
+		// (Greyed: a lab's list, a soldier it cannot take; UISoldierListBase, the option's state 1.)
+		MC.QueueBoolean(ForLab != none && ForLab.WhyNot(Unit) != "");
 		MC.QueueBoolean(Unit.ShowPromoteIcon());
 		MC.QueueBoolean(false);
 		MC.QueueString("rank" $ Clamp(Unit.GetRank(), 0, 7));
@@ -143,7 +166,7 @@ function string NameLine(XComGameState_Unit Unit)
 }
 
 /** The rank's short name, an officer's as Long War names it (XGStrategySoldier.GetName, type 9: the medal's). */
-function string RankShort(XComGameState_Unit Unit)
+static function string RankShort(XComGameState_Unit Unit)
 {
 	local int Officer;
 
@@ -314,12 +337,28 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	return super.OnUnrealCommand(cmd, arg);
 }
 
-/** A soldier chosen: EW's soldier summary, in EW's armory room. */
+/** A soldier chosen: EW's soldier summary, in EW's armory room; for a lab, handed to it (greyed: refused). */
 function Choose(int i)
 {
+	local UILWEWSoldierSlots Lab;
+	local StateObjectReference Ref;
+
 	if (i < 0 || i >= Soldiers.Length)
 		return;
 	Select(i);
+	if (ForLab != none)
+	{
+		if (ForLab.WhyNot(XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Soldiers[i].ObjectID))) != "")
+		{
+			PlaySound(SoundCue'SoundUI.NegativeSelection2Cue', true);
+			return;
+		}
+		Lab = ForLab;
+		Ref = Soldiers[i];
+		CloseScreen();
+		Lab.Chosen(Ref);
+		return;
+	}
 	class'UILWEWSoldierSummary'.static.Open(XComHQPresentationLayer(Movie.Pres), Soldiers[i]);
 }
 

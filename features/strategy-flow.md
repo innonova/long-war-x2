@@ -243,3 +243,25 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   Ashes and Temples, the meld tutorial council mission its own pair). EW's `[XGMission]` words are copied from the
   player's install (`makeOpNameWords`). Seen on wingpu: the first abduction was "Operation Rotting Crown", both EW's
   words. The briefing that shows it is still XCOM 2's (item 1).
+
+## Report (2026-11-18, the labs on EW's screens)
+
+- **The Psi Labs, Genetics Lab and Cybernetics Lab open on EW's lab screen** (`UILWEWSoldierSlots`, EW's SoldierSlots
+  movie, in the lab's room), with Long War's rows and words (`UILWEWPsiLabs`, `UILWEWGeneLab`, `UILWEWCyberneticsLab`, as
+  `XGPsiLabsUI`, `XGGeneLabUI`, `XGCyberneticsUI` build them): a row a place ("Current Psionic Training:", "Gene Mod
+  Subjects", "Soldiers Being Augmented"), each soldier there with the time left; a psi trainee as "LCPL Christine Kohler
+  (Neural Feedback) (47%)" with REMOVE SOLDIER and Long War's CONFIRM REMOVAL (training stopped,
+  `XComGameState_LWStrategy.StopPsi`); (EMPTY) with ADD SOLDIER (the Genetics and Cybernetics Labs: on the first free
+  place only, as Long War).
+- **ADD SOLDIER opens EW's soldier list for the lab** (`UILWEWSoldierList.OpenFor`, EW's `UISoldierList_PsiLabs` and
+  the others): no SHIVs or MECs, those the lab cannot take greyed (each lab's rule: `PsiSoldierWhy`, `GeneSoldierWhy`,
+  `LWMECs.CanAugment` with the price aside). The soldier chosen: the Psi Labs' powers (the port's power step, until EW's psi
+  tree takes it), EW's Gene Mods screen on them, or Long War's augmentation price in a confirmation.
+- **Seen on wingpu by clicks:** the three labs' screens; ADD SOLDIER → EW's list over the lab → a soldier → Neural
+  Feedback trained → the row as above → REMOVE SOLDIER → CONFIRM → the place free again.
+- **Next here:** the psi powers on EW's promotion screen in its psi mode (Long War's psi tree, `GetPerkInTreePsi`), and
+  EW's augmentation screen (AugmentSoldier) in place of the confirmation.
+- **The reviewer's round on all 29 views** (`logs/compare/review/_summary.md`, not committed) ranks next: the
+  satellite view's wall screen and its country columns, the Situation Room's blank wall map, the soldier too large in
+  the armory's frame, the OTS's and officers' cameras, Vahlen's untextured look and Shen's absence, blank monitors, the
+  Repair Bay's room, and smaller layout overlaps.

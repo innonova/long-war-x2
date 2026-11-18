@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The port's side of the named views (tools/compare/README.md), captured through the control port into
 # logs/compare/x2/<view>.png. The game must be up in a campaign begun (tools/test/new-campaign.sh 1 --begin: EW's hub is
-# the strategy layer's root). Each view from the hub's base view.
+# the strategy layer's root). Each view from the hub's base view, after the facilities are placed (below).
 #   tools/compare/capture-x2.sh [view …]     (all views without arguments)
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -17,22 +17,35 @@ declare -A V=(
   [room-research]='hub 0|sleep 3'
   [room-engineering]='hub 1|sleep 3'
   [room-barracks]='hub 2|sleep 3'
+  [room-barracks-menu]='hub 2|sleep 3'
   [room-hangar]='hub 3|sleep 3'
   [room-sitroom]='hub 4|sleep 3'
   [scr-research]='hub 0|sleep 2|hub option 0|sleep 4'
+  [scr-genelab]='hub 0|sleep 2|hub option 1|sleep 5'
   [scr-builditems]='hub 1|sleep 2|hub option 0|sleep 4'
   [scr-facilities]='hub 1|sleep 2|hub option 1|sleep 5'
+  [scr-foundry]='hub 1|sleep 2|hub option 2|sleep 4'
+  [scr-repairbay]='hub 1|sleep 2|hub option 4|sleep 4'
+  [scr-soldiers]='hub 2|sleep 2|hub option 0|sleep 4'
+  [scr-ots]='hub 2|sleep 2|hub option 1|sleep 4'
+  [scr-psilabs]='hub 2|sleep 2|hub option 2|sleep 4'
+  [scr-memorial]='hub 2|sleep 2|hub option 3|sleep 4'
+  [scr-hire]='hub 2|sleep 2|hub option 4|sleep 4'
+  [scr-officers]='hub 2|sleep 2|hub option 5|sleep 4'
   [scr-aircraft]='hub 3|sleep 2|hub option 0|sleep 4'
   [scr-satellite]='hub 4|sleep 2|hub option 0|sleep 5'
   [scr-sitroom]='hub 4|sleep 2|hub option 1|sleep 5'
   [scr-greymarket]='hub 4|sleep 2|hub option 2|sleep 5'
-  [scr-soldiers]='hub 2|sleep 2|hub option 0|sleep 4'
-  [soldier-summary]='open armory|sleep 5'
-  [soldier-loadout]='open loadout|sleep 5'
-  [soldier-promotion]='open promotion|sleep 5'
+  [soldier-summary]='open summary|sleep 5'
+  [soldier-promotion]='open abilities|sleep 5'
+  [soldier-loadout]='open summary|sleep 4|open loadout|sleep 5'
 )
-order=(base mission-control room-research room-engineering room-barracks room-hangar room-sitroom scr-research scr-builditems scr-facilities
-  scr-aircraft scr-satellite scr-sitroom scr-greymarket scr-soldiers soldier-summary soldier-loadout soldier-promotion)
+order=(base mission-control room-research room-engineering room-barracks room-hangar room-sitroom scr-research scr-genelab scr-builditems
+  scr-facilities scr-foundry scr-repairbay scr-soldiers scr-ots scr-psilabs scr-memorial scr-hire scr-officers scr-aircraft scr-satellite
+  scr-sitroom scr-greymarket soldier-summary soldier-promotion soldier-loadout)
+# Once, before the views: every room's menu as full as EW's in the reference save (the facilities placed and an officer
+# project bought, test aids) and a soldier with ranks to show (the first one).
+for p in 'base set 1 2 11' 'base set 2 2 22' 'base set 3 2 12' 'base set 4 2 17' 'base set 5 2 23' 'officers buy 0' 'rankup 0 4'; do lw "$p" >/dev/null; done
 [ $# -gt 0 ] && order=("$@")
 lw 'open hub' >/dev/null
 sleep 3

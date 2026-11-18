@@ -16,6 +16,8 @@ var StateObjectReference Soldier;
 var array<int> ListedPerks;
 var array<int> ListedAble;
 var int ChosenPerk;
+/** Opened on one soldier from EW's Psi Labs screen (UILWEWPsiLabs): no list; done or out, back to that screen. */
+var bool bFromLab;
 
 static function Open(XComHQPresentationLayer HQPres)
 {
@@ -30,6 +32,17 @@ static function Open(XComHQPresentationLayer HQPres)
 	List = HQPres.Spawn(class'UIPersonnel_LWPsi', HQPres);
 	List.onSelectedDelegate = Labs.OnSoldierChosen;
 	HQPres.ScreenStack.Push(List);
+}
+
+/** The powers a soldier chosen on EW's Psi Labs list may train (UILWEWPsiLabs.Chosen). */
+static function OpenPowers(XComHQPresentationLayer HQPres, StateObjectReference UnitRef)
+{
+	local UILWPsiLabs Labs;
+
+	Labs = HQPres.Spawn(class'UILWPsiLabs', HQPres);
+	Labs.bFromLab = true;
+	Labs.Soldier = UnitRef;
+	HQPres.ScreenStack.Push(Labs);
 }
 
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
@@ -183,8 +196,10 @@ simulated function OnConfirm(Name Action)
 		Movie.Pres.PlayUISound(eSUISound_MenuSelect);
 		Soldier.ObjectID = 0;
 		Fill();
-		// A place still free: the soldier list again, as EW's labs go back to theirs.
-		if (class'XComGameState_LWStrategy'.static.PsiPlaceFree(class'XComGameState_LWStrategy'.static.Get()))
+		// Back to EW's lab screen; or, a place still free, the soldier list again, as EW's labs go back to theirs.
+		if (bFromLab)
+			CloseScreen();
+		else if (class'XComGameState_LWStrategy'.static.PsiPlaceFree(class'XComGameState_LWStrategy'.static.Get()))
 			ChooseSoldier();
 		return;
 	}
@@ -206,8 +221,8 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	if ((arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0
 		&& (cmd == class'UIUtilities_Input'.const.FXS_KEY_ESCAPE || cmd == class'UIUtilities_Input'.const.FXS_BUTTON_B))
 	{
-		// From a soldier's powers back to the list; from the list's place, closed.
-		if (Soldier.ObjectID != 0)
+		// From a soldier's powers back to the list; from the list's place, closed (opened from EW's lab screen: back to it).
+		if (Soldier.ObjectID != 0 && !bFromLab)
 		{
 			Soldier.ObjectID = 0;
 			Fill();

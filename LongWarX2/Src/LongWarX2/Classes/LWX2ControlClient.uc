@@ -660,6 +660,13 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem(OpenLoadout(Args.Length > 2 ? int(Mid(Args[2], 1)) : 0, Args[1] ~= "armory"));
 			return;
 		}
+		// EW's soldier summary or promotion tree of the first soldier, or of a unit ('open summary #<id>'), as the barracks'
+		// soldier list opens them.
+		if (Args.Length > 1 && (Args[1] ~= "summary" || Args[1] ~= "abilities"))
+		{
+			Out.AddItem(OpenEWSoldier(Args.Length > 2 ? int(Mid(Args[2], 1)) : 0, Args[1] ~= "abilities"));
+			return;
+		}
 		// The promotion screen of the first soldier (arm's order) or of a unit ('open promotion #<id>'), as the armory opens it.
 		if (Args.Length > 1 && Args[1] ~= "promotion")
 		{
@@ -3174,6 +3181,31 @@ function Council(array<string> Args, out array<string> Out)
 }
 
 /** A shot's chance (its ability's to-hit calculation, as the targeting shows it), its crit and the modifiers' reasons. */
+function string OpenEWSoldier(int UnitID, bool bAbilities)
+{
+	local XComGameState_Unit Unit;
+	local StateObjectReference Ref;
+
+	if (UnitID == 0)
+		foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+		{
+			Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+			if (Unit != none && Unit.IsSoldier())
+			{
+				UnitID = Unit.ObjectID;
+				break;
+			}
+		}
+	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
+	if (Unit == none || `HQPRES == none)
+		return "ERR no such soldier, or not at the base";
+	if (bAbilities)
+		class'UILWEWSoldierPromotion'.static.Open(`HQPRES, Unit.GetReference());
+	else
+		class'UILWEWSoldierSummary'.static.Open(`HQPRES, Unit.GetReference());
+	return "ok" @ (bAbilities ? "abilities" : "summary") @ "of" @ Unit.GetFullName() @ "rank" @ Unit.GetRank();
+}
+
 function string OpenPromotion(int UnitID)
 {
 	local XComGameState_Unit Unit;

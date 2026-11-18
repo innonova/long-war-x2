@@ -2829,6 +2829,24 @@ static function bool CanTrainPsi(XComGameState_LWStrategy S, XComGameState_Unit 
 	return Why == "";
 }
 
+/** A soldier taken out of the Psi Labs (XGPsiLabsUI.OnRemoveTrainee): training stopped, nothing gained, back in the barracks. */
+static function StopPsi(int UnitID)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+	local int i;
+
+	S = Get();
+	i = S != none ? S.PsiTrainees.Find('Unit', UnitID) : INDEX_NONE;
+	if (i == INDEX_NONE)
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("LongWarX2: psi training stopped");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', S.ObjectID));
+	S.PsiTrainees.Remove(i, 1);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	`log("LongWarX2: psi: training stopped for unit" @ UnitID, , 'LongWarX2');
+}
+
 /** A soldier begins training a power: out of the barracks until it is done. */
 static function bool StartPsi(int UnitID, int Perk, out string Why)
 {

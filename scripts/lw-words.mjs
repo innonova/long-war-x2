@@ -869,6 +869,28 @@ export function makeMainMenuWords({ shellLoc }) {
 }
 
 /** EW's memorial (UILWEWMemorial): its [UIMemorial] section of the strategy text, under the mod's class. */
+/** Long War's words for its labs on EW's lab screen (UILWEWPsiLabs, UILWEWGeneLab, UILWEWCyberneticsLab: XGPsiLabsUI,
+ *  XGGeneLabUI, XGCyberneticsUI; UISoldierSlots' STATUS). */
+export function makeLabWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const section = (name) => text.match(new RegExp(`^\\[${name}\\]\\n([\\s\\S]*?)(?=^\\[|(?![\\s\\S]))`, 'm'))?.[1] ?? ''
+  const key = (sec, k) => section(sec).match(new RegExp(`^${k.replace(/[\[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''
+  const status = key('UISoldierSlots', 'm_strSoldierSlotBaseStatusLabel')
+  const labs = [
+    ['UILWEWPsiLabs', 'XGPsiLabsUI', [['Title', 'm_strLabelCurrentTestSubjects'], ['Empty', 'm_strItemEmpty'], ['AddSoldier', 'm_strLabelAddSoldier'], ['RemoveSoldier', 'm_strLabelRemoveSoldier'], ['Days', 'm_strLabelDays'], ['Hours', 'm_strLabelHours'], ['RemoveTitle', 'm_strConfirmRemovalDialogTitle'], ['RemoveText', 'm_strConfirmRemovalDialogText'], ['RemoveAccept', 'm_strConfirmRemovalDialogAcceptText']]],
+    ['UILWEWGeneLab', 'XGGeneLabUI', [['Title', 'm_strLabelCurrentPatients'], ['Empty', 'm_strLabelEmpty'], ['AddSoldier', 'm_strLabelAddSoldier'], ['Days', 'm_strLabelDays'], ['Hours', 'm_strLabelHours']]],
+    ['UILWEWCyberneticsLab', 'XGCyberneticsUI', [['Title', 'm_strLabelCurrentPatients'], ['Empty', 'm_strLabelEmpty'], ['AddSoldier', 'm_strLabelAddSoldier'], ['Days', 'm_strLabelDays'], ['Hours', 'm_strLabelHours']]],
+  ]
+  const out = []
+  let named = 0
+  for (const [to, from, keys] of labs) {
+    const lines = [...(status ? [['StatusLabel', status]] : []), ...keys.map(([k, ew]) => [k, key(from, ew)])].filter(([, v]) => v)
+    named += lines.length
+    out.push(`[${to}]`, ...lines.map(([k, v]) => `${k}="${v.replace(/"/g, "'")}"`), '')
+  }
+  return { text: out.join('\r\n'), named }
+}
+
 /** EW's operation names (LWOpNames: XGMission's two word lists, its "Operation …" and the story missions' own). */
 export function makeOpNameWords({ strategyLoc }) {
   return copySections(strategyLoc, [['XGMission', 'LWOpNames']])

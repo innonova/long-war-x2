@@ -452,12 +452,19 @@ function ChooseOption(int Option)
 			HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres));
 		break;
 	// The Psi Labs on XCOM 2's widgets (soldier screens are XCOM 2's, agreed 2026-11-16).
+	// The labs on EW's lab screen (UILWEWSoldierSlots), XCOM 2's screens where the converted ones are missing.
 	case OPT_PSI:
-		class'UILWPsiLabs'.static.Open(HQPres);
+		if (class'UILWEWScreen'.static.HasEWScreens())
+			class'UILWEWSoldierSlots'.static.OpenLab(HQPres, class'UILWEWPsiLabs');
+		else
+			class'UILWPsiLabs'.static.Open(HQPres);
 		break;
-	// The Cybernetics Lab: XCOM 2's soldier list of those who may be augmented (features/lw-shivs-mecs.md).
+	// The Cybernetics Lab (features/lw-shivs-mecs.md).
 	case OPT_AUGMENT:
-		class'UIPersonnel_LWAugment'.static.Open(HQPres);
+		if (class'UILWEWScreen'.static.HasEWScreens())
+			class'UILWEWSoldierSlots'.static.OpenLab(HQPres, class'UILWEWCyberneticsLab');
+		else
+			class'UIPersonnel_LWAugment'.static.Open(HQPres);
 		break;
 	// The Repair Bay on EW's MEC inventory screen (features/lw-gear-repair.md).
 	case OPT_REPAIR:
@@ -467,7 +474,7 @@ function ChooseOption(int Option)
 	// The Genetics Lab on EW's own Gene Mods screen (agreed 2026-11-16).
 	case OPT_GENE:
 		if (class'UILWEWScreen'.static.HasEWScreens())
-			class'UILWEWGeneMods'.static.Open(HQPres);
+			class'UILWEWSoldierSlots'.static.OpenLab(HQPres, class'UILWEWGeneLab');
 		else
 			HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWBase', HQPres));
 		break;
