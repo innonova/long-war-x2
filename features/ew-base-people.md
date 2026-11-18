@@ -87,3 +87,15 @@ than the actors' own places (first key minus actor's place):
   lighting dynamic objects in a baked room), not a lamp each. Also their chairs are missing (EW's chairs in that scene).
 - **Tried and dropped:** the walls' custom screens as glowing screens with their picture sheet (`HQ_DecalSheet_A`): they
   drew flat cream, EW's parent applying its own UV transform and colour to the sheet.
+
+## Report (2026-11-18 night, their places: the base's frame)
+
+- **Where EW's matinee puts them:** EW hangs a scene's people and props on a hidden `CineDummy` (their `Base`), and their
+  move keys are in that base's frame; the dummy itself is placed by its own group's key (Anim_Engineering's at
+  (2042, 0, −1922)), else where it stands, turned by its yaw. `ew-people.ts` now places them so (converter 26); an actor on
+  its own keeps its place. The per-level `PeopleFrames` guess (the earlier notes) is not needed.
+- **Seen on wingpu:** engineering as EW's (the engineer in the middle, the welding arms on the conveyor line, one at the
+  front right); **Shen stands beside the build panel**, as in EW (`logs/eng_build.png`); the lab unchanged but for Vahlen's
+  turn. The hangar's launch pads follow the same rule (bays 2 and 3's pads sit 560 nearer their bay, under their craft).
+- **Still:** the lab's two clerks stand where EW seats them (EW's chairs are not there); hair colour; the barracks' soldiers
+  (EW puts the campaign's own soldiers in its barracks scenes, `Soldier01`… groups bound at run time).

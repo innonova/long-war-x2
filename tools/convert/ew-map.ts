@@ -39,8 +39,9 @@ import { peopleIn } from './ew-people.ts'
  *  windows, foliage, cars), written onto the plot's pieces; 21: EW's lightmaps, its glowing parts' colours, its 3D UI
  *  panels, features/ew-lightmaps.md and ew-3d-screens.md; 22: EW's people, ew-base-people.md; 23: people hidden in their level left out, as the armory's MEC scene); 24: the plinths soldiers stand on
  *  (Spots: EW's SkeletalMeshActors tagged …Plinth, XGStrategySoldier.PlaceOnPlinth); 25: the hangar's bays (People with
- *  Bay, BayState, BayPart: Anim_Hangar_LaunchBays' launch pads and craft), a diffuse named plain "diff" (the Skyranger's). */
-export const CONVERTER_VERSION = 25
+ *  Bay, BayState, BayPart: Anim_Hangar_LaunchBays' launch pads and craft), a diffuse named plain "diff" (the Skyranger's); 26: EW's people where their matinee puts them, in their base's frame
+ *  (an actor's Base: the scene's CineDummy, itself placed by its key). */
+export const CONVERTER_VERSION = 26
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',

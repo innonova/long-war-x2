@@ -100,6 +100,33 @@ export function peopleIn(meta: any, pkg: any): Person[] {
     }
   })
 
+  // Where the matinee puts an actor. An actor attached to another (its Base: EW hangs a scene's people and props on a
+  // hidden CineDummy) has its keys in its base's frame: the base where the matinee puts it (its own group's first key),
+  // else where it stands; turned by the base's yaw. An actor on its own: its key is where it goes. (Before, the keys were
+  // read as one frame per level, which held for none: engineering's people stood about the room's front.)
+  const deg = 65536 / 360
+  const actorAt = (a: number) => {
+    const t = tagsAt(a - 1, [26, 22, 30, 4, 8])
+    const loc = t.find((x) => x.name === 'Location')
+    const rot = t.find((x) => x.name === 'Rotation')
+    return { t, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)], rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)] }
+  }
+  const placed = (actor: number, g: Group, groupOf: (a: number) => Group | undefined): { loc: number[]; rot: number[] } | undefined => {
+    if (!g.key) return undefined
+    const r = g.keyRot ?? [0, 0, 0]
+    const own = { loc: g.key, rot: [Math.round(r[1]! * deg), Math.round(r[2]! * deg), Math.round(r[0]! * deg)] }
+    const base = i32(actorAt(actor).t.find((x) => x.name === 'Base'))
+    if (base <= 0) return own
+    const bg = groupOf(base)
+    const frame = bg?.key ? placed(base, bg, groupOf) ?? actorAt(base) : actorAt(base)
+    const yaw = (frame.rot[1]! / 65536) * 2 * Math.PI
+    const [x, y, z] = own.loc as [number, number, number]
+    return {
+      loc: [frame.loc[0]! + x * Math.cos(yaw) - y * Math.sin(yaw), frame.loc[1]! + x * Math.sin(yaw) + y * Math.cos(yaw), frame.loc[2]! + z],
+      rot: [own.rot[0]!, own.rot[1]! + frame.rot[1]!, own.rot[2]!],
+    }
+  }
+
   // EW's hangar bays (Anim_Hangar_LaunchBays): a matinee per bay and state, Base_Bay<n>_<Open|Repair|Closed>
   // (XGFacility_Hangar.UpdateHangarBays plays one of the three per bay). Its Track group is the bay's launch pad (an actor
   // of the level, posed by the state's loop); its Interceptor and FireStorm groups are where the bay's craft stands
@@ -107,7 +134,6 @@ export function peopleIn(meta: any, pkg: any): Person[] {
   // its bay and state; their actors not people of the level.
   const bays: Person[] = []
   const inBays = new Set<number>()
-  const deg = 65536 / 360
   exports.forEach((e, i) => {
     if (e.type !== 'SeqAct_Interp') return
     const t = tagsAt(i)
@@ -122,6 +148,9 @@ export function peopleIn(meta: any, pkg: any): Person[] {
       const g = groupAt.get(gr)
       if (g) byName.set(name(tagsAt(gr - 1).find((x) => x.name === 'GroupName')), g)
     }
+    const descOf = new Map<number, string>()
+    for (const l of links) for (const v of l.vars) if (exports[v - 1]!.type === 'SeqVar_Object') descOf.set(i32(tagsAt(v - 1).find((x) => x.name === 'ObjValue')), l.desc)
+    const groupOf = (a: number) => byName.get(descOf.get(a) ?? '')
     for (const l of links) {
       const g = byName.get(l.desc)
       if (!g || !g.seqs.length) continue
@@ -134,13 +163,12 @@ export function peopleIn(meta: any, pkg: any): Person[] {
         if (!p) continue
         p.bay = Number(m[1])
         p.bayState = m[2]
-        // (The pad where it stands, posed, turned by its key: the arm (its bones' −Y) then reaches the bay, as seen in XCOM 2
-        // with the key's yaw (90) taken off; a craft at the group's first key, its rotation in degrees: roll, pitch, yaw.)
-        if (l.desc === 'Track') p.rot = [p.rot[0]!, p.rot[1]! - Math.round((g.keyRot?.[2] ?? 0) * deg), p.rot[2]!]
-        else if (g.key) {
-          p.loc = g.key
-          const r = g.keyRot ?? [0, 0, 0]
-          p.rot = [Math.round(r[1]! * deg), Math.round(r[2]! * deg), Math.round(r[0]! * deg)]
+        // (The pad and the craft where the state's matinee puts them: the pad on its base, turned by its key so its arm (its
+        // bones' −Y) reaches the bay; a craft (bound at run time to the bay's ship, on nothing) at its key.)
+        const at = placed(actor, g, groupOf)
+        if (at) {
+          p.loc = at.loc
+          p.rot = at.rot
         }
         p.key = undefined
         bays.push(p)
@@ -205,7 +233,17 @@ export function peopleIn(meta: any, pkg: any): Person[] {
     const g = group ? groups.get(group) : undefined
     if (!g || !g.seqs.length) return
     const p = personOf(i, group!, g)
-    if (p) out.push(p)
+    if (!p) return
+    // (Attached to a base: placed by the matinee, in its base's frame; on its own, where it stands, as before.)
+    if (i32(actorAt(i + 1).t.find((x) => x.name === 'Base')) > 0) {
+      const at = placed(i + 1, g, (a) => (bound.has(a) ? groups.get(bound.get(a)!) : undefined))
+      if (at) {
+        p.loc = at.loc
+        p.rot = at.rot
+        p.key = undefined
+      }
+    }
+    out.push(p)
   })
   return [...out, ...bays]
 }
