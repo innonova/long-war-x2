@@ -7,6 +7,8 @@
 // converted (tools/convert/ew-maps.ts). Also the shared settings of the converted maps (lights, materials).
 //   node scripts/maps-config.mjs <Long War's DefaultMaps.ini> > LongWarX2/Config/XComLWEWMaps.ini
 import { readFileSync } from 'node:fs'
+/** The fixed rooms' animation levels, with EW's people in them (features/ew-base-people.md). */
+const PEOPLE_LEVELS = ['Anim_ScienceLabs', 'Anim_Engineering', 'Anim_Barracks', 'Anim_Hangar', 'Anim_MissionControl', 'Anim_Armory']
 
 const text = readFileSync(process.argv[2], 'latin1')
 const SHIPS = { eShip_None: 0, eShip_UFOSmallScout: 4, eShip_UFOLargeScout: 5, eShip_UFOAbductor: 6, eShip_UFOSupply: 7, eShip_UFOBattle: 8, eShip_UFOEthereal: 9 }
@@ -114,7 +116,11 @@ console.log(
     ...['Command1', 'Static_SituationRoom', 'Static_Infirmary', 'Static_ScienceLabs', 'Static_Barracks', 'Static_Hangar', 'Static_Hangar_CAP', 'Static_MissionControl', 'Static_Armory', 'Static_Engineering',
       'Addon_AccessLift_Excavated', 'Addon_AlienContainment', 'Addon_Cave', 'Addon_CyberneticsLab', 'Addon_EleriumPowerGenerator', 'Addon_Excavated', 'Addon_Excavated_Thermal', 'Addon_Foundry', 'Addon_Genelab',
       'Addon_GollopChamber', 'Addon_HyperwaveRadar', 'Addon_Laboratory', 'Addon_LargeRadar', 'Addon_OfficerTrainingSchool', 'Addon_PowerGenerator', 'Addon_PsionicLab', 'Addon_SmallRadar', 'Addon_SolidRock',
-      'Addon_ThermalCave', 'Addon_ThermalPower', 'Addon_Workshop'].map((l) => `+BaseLevels="${l}"`),
+      'Addon_ThermalCave', 'Addon_ThermalPower', 'Addon_Workshop',
+      // EW's people in its fixed rooms (features/ew-base-people.md): converted with the base, placed by PeopleLevels.
+      ...PEOPLE_LEVELS].map((l) => `+BaseLevels="${l}"`),
+    'PeopleAnimate=true',
+    ...PEOPLE_LEVELS.map((l) => `+PeopleLevels="${l}"`),
     '',
     "; The Long War hub (UILWEWHub: EW's base, its rooms and Mission Control) as the strategy layer's root in place of the",
     "; Geoscape, where EW's base is converted (the setup does it); false: the Geoscape (features/lw-base-view.md).",
