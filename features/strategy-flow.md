@@ -86,7 +86,11 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
 5. **XCOM 2's random looks include its DLC's bare-chested torsos and cargo shorts** (one soldier stood so in the armory;
    the armour itself shows: another stood in hers). EW's soldiers never look so; to decide which of XCOM 2's parts a
    Long War recruit may get.
-6. **The barracks have no people;** EW's soldiers stand at the bar, train in the gym.
+6. **The barracks have no people;** EW's soldiers stand at the bar, train in the gym. They are the roster's own soldiers,
+   placed by EW's HQ units event (`SeqEvent_HQUnits`), not scenery: `Anim_Barracks`' own 15 actors are a hidden cinematic.
+6c. **Operation names are XCOM 2's** ("Operation Gatecrasher" for the first mission). XCOM 2 draws them from the same two
+   word lists EW does (`XGMission.m_aFirstOpName`, `m_aSecondOpName`): EW's words written over them would give EW's
+   names.
 7. **The start screen stands on black;** EW's (after the first mission) not captured yet.
 8. Still to walk: research, engineering and hangar second-level screens and their dialogs (EW's order interceptors and
    transfer captured), the Situation Room's, Mission Control's events and dialogs, the post-mission screens.

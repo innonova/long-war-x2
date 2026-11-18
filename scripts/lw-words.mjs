@@ -843,6 +843,14 @@ export function makeShellWords({ loc }) {
   return copySections(loc, [['UIShellDifficulty', 'UILWEWDifficulty'], ['UIGameplayToggles', 'UILWEWSecondWave']])
 }
 
+/** EW's main menu (UILWEWMainMenu): its [UIFinalShell] section of the player's XComUIShell.int, under the mod's class. */
+export function makeMainMenuWords({ shellLoc }) {
+  // (Its Load and Options are its base class's, [UIShell]: both under the one section.)
+  const r = copySections(shellLoc, [['UIFinalShell', 'UILWEWMainMenu'], ['UIShell', 'UILWEWMainMenu']])
+  const lines = r.text.split('\r\n')
+  return { text: lines.filter((l, i) => l !== '[UILWEWMainMenu]' || lines.indexOf(l) === i).join('\r\n'), named: r.named }
+}
+
 /** EW's memorial (UILWEWMemorial): its [UIMemorial] section of the strategy text, under the mod's class. */
 export function makeMemorialWords({ strategyLoc }) {
   return copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial']])

@@ -13,7 +13,10 @@ event OnInit(UIScreen Screen)
 {
 	local UIButton Button;
 
-	if (UIShell(Screen) == none || UIShell(Screen).GetChildByName('LWX2AirWarDemo', false) != none)
+	// (On EW's main menu where it stands over XCOM 2's, which is hidden: UILWEWMainMenu.)
+	if (UIShell(Screen) != none && class'UILWEWMainMenu'.static.Available())
+		return;
+	if ((UIShell(Screen) == none && UILWEWMainMenu(Screen) == none) || Screen.GetChildByName('LWX2AirWarDemo', false) != none)
 		return;
 	Button = Screen.Spawn(class'UIButton', Screen);
 	Button.InitButton('LWX2AirWarDemo', "LONG WAR: AIR WAR (DEMO)", OnAirWar);
