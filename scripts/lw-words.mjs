@@ -396,6 +396,11 @@ export function makeHubWords({ strategyLoc }) {
     ['GreyMarketHelp', inSection('XGSituationRoomUI', 'm_stdLabelVisitGreyMarketHelp')],
     ['LaunchSatellite', inSection('XGSituationRoomUI', 'm_strLabelLaunchSatellite')],
     ['LaunchSatelliteHelp', inSection('XGSituationRoomUI', 'm_strLabelMonitorUFO')],
+    ['Archives', inSection('XGResearchUI', 'm_strLabelResearchArchives')],
+    ['ArchivesHelp', inSection('XGResearchUI', 'm_strHelpResearchArchives')],
+    ['Credits', inSection('XGResearchUI', 'm_strLabelCreditArchives')],
+    ['CreditsHelp', inSection('XGResearchUI', 'm_strHelpCreditArchives')],
+    ['NoProjectsHelp', inSection('XGResearchUI', 'm_strHelpNoProjects')],
     ['Finances', inSection('XGSituationRoomUI', 'm_strLabelViewFinances')],
     ['FinancesHelp', inSection('XGSituationRoomUI', 'm_strLabelViewExpenditures')],
     ['Bonuses', inSection('XGSituationRoomUI', 'm_strLabelCodeDecryption')],
@@ -906,6 +911,52 @@ export function makeLabWords({ strategyLoc }) {
 /** EW's operation names (LWOpNames: XGMission's two word lists, its "Operation …" and the story missions' own). */
 export function makeOpNameWords({ strategyLoc }) {
   return copySections(strategyLoc, [['XGMission', 'LWOpNames']])
+}
+
+/** EW's research screens (UILWEWResearch: UIChooseTech, XGResearchUI, XGFacility_Labs, XGLocalizedData's research credits;
+ *  UILWEWScienceLabs: UIScienceLabs and XGResearchUI's report). */
+export function makeResearchWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const section = (name) => text.match(new RegExp(`^\\[${name}\\]\\n([\\s\\S]*?)(?=^\\[|(?![\\s\\S]))`, 'm'))?.[1] ?? ''
+  const key = (sec, k) => section(sec).match(new RegExp(`^${k.replace(/[[\]]/g, '\\$&')}\\s*=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''
+  const credits = ['', 'Weapons_I', 'PlasmaWeapons', 'AllWeapons', 'Armor_I', 'AllArmor', 'UFOTech', 'Flight', 'Psionics', 'AllTech']
+  const research = [
+    ['Title', key('UIChooseTech', 'm_strScienceTechSelectTitle')],
+    ['CreditTitle', key('UIChooseTech', 'm_strCreditArchiveTitle')],
+    ['Confirm', key('UIChooseTech', 'm_strConfirm')],
+    ['Priority', key('XGResearchUI', 'm_strLabelPriority')],
+    ['CostLabel', key('XGResearchUI', 'm_strCostLabel')],
+    ['CreditApplies', key('XGResearchUI', 'm_strResearchCreditApplies')],
+    ['ETAInstant', key('XGFacility_Labs', 'm_strETAInstant')],
+    ['ETADay', key('XGFacility_Labs', 'm_strETADay')],
+    ['ETADays', key('XGFacility_Labs', 'm_strETADays')],
+    ['CostAmount', key('XGFacility_Labs', 'm_strCostLabel')],
+    ['CostElerium', key('XGFacility_Labs', 'm_strCostElerium')],
+    ['CostAlloys', key('XGFacility_Labs', 'm_strCostAlloys')],
+    ['ErrFunds', key('XGFacility_Labs', 'm_strErrInsufficientFunds')],
+    ['ErrElerium', key('XGFacility_Labs', 'm_strErrInsufficientElerium')],
+    ['ErrAlloys', key('XGFacility_Labs', 'm_strErrInsufficientAlloys')],
+    ['ErrResources', key('XGFacility_Labs', 'm_strErrInsufficientResources')],
+    ['Progress[0]', key('XGFacility_Labs', 'm_arrResearchProgress[eResearchProgress_Fast]')],
+    ['Progress[1]', key('XGFacility_Labs', 'm_arrResearchProgress[eResearchProgress_Normal]')],
+    ['Progress[2]', key('XGFacility_Labs', 'm_arrResearchProgress[eResearchProgress_Slow]')],
+    ...credits.flatMap((c, i) => (c ? [[`CreditNames[${i}]`, key('XGLocalizedData', `ResearchCreditNames[eResearchCredit_${c}]`)], [`CreditSummary[${i}]`, key('XGLocalizedData', `ResearchCreditSummary[eResearchCredit_${c}]`)]] : [])),
+  ].filter(([, v]) => v)
+  const labs = [
+    ['m_strScienceLabsArchiveTitle', key('UIScienceLabs', 'm_strScienceLabsArchiveTitle')],
+    ['m_strScienceLabsReportTitle', key('UIScienceLabs', 'm_strScienceLabsReportTitle')],
+    ['m_strTopSecret', key('UIScienceLabs', 'm_strTopSecret')],
+    ['ReportTitle', key('XGResearchUI', 'm_strLabelResearchReport')],
+    ['CodeName', key('XGResearchUI', 'm_strLabelCodeName')],
+    ['FacilityAvailable', key('XGResearchUI', 'm_strFacilityBuildAvailable')],
+    ['ItemAvailable', key('XGResearchUI', 'm_strItemBuildAvailable')],
+    ['GeneModAvailable', key('XGResearchUI', 'm_strGeneModAvailable')],
+    ['FoundryAvailable', key('XGResearchUI', 'm_strFoundryBuildAvailable')],
+    ['CreditEarned', key('XGResearchUI', 'm_strResearchCreditEarned')],
+    ['BonusMeld', key('XGResearchUI', 'm_strBonusMeld')],
+  ].filter(([, v]) => v)
+  const line = ([k, v]) => `${k}="${v.replace(/\\"/g, "'").replace(/"/g, "'")}"`
+  return { text: ['[UILWEWResearch]', ...research.map(line), '', '[UILWEWScienceLabs]', ...labs.map(line), ''].join('\r\n'), named: research.length + labs.length }
 }
 
 /** EW's finances (UILWEWFinances): XGFinanceUI's labels and the craft's names (ShipTypeNames). */

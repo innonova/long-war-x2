@@ -22,6 +22,7 @@ var localized string RoomNames[5];
 var localized string MissionControlName;
 var localized string NewResearch, NewResearchHelp, ChangeResearch, ChangeResearchHelp, GeneLab, GeneLabHelp, BuildItems, BuildItemsHelp, BuildFacilities, BuildFacilitiesHelp, Foundry, FoundryHelp;
 var localized string ViewSoldiers, ViewSoldiersHelp, AircraftList, AircraftListHelp, SituationRoom, GreyMarket, GreyMarketHelp;
+var localized string Archives, ArchivesHelp, Credits, CreditsHelp, NoProjectsHelp;
 var localized string LaunchSatellite, LaunchSatelliteHelp, Finances, FinancesHelp, Bonuses, BonusesHelp, Requests, RequestsHelp,
 	CovertOps, CovertOpsHelp;
 /** The Situation Room's Bonuses dialog (XGSatelliteSitRoomUI.UpdateHelp): its title, closing text and button. */
@@ -60,6 +61,8 @@ const OPT_MEMORIAL = 17;
 const OPT_FINANCES = 18;
 const OPT_BONUSES = 19;
 const OPT_REQUESTS = 20;
+const OPT_ARCHIVES = 21;
+const OPT_CREDITS = 22;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
 const FACILITY_FOUNDRY = 11;
@@ -97,7 +100,7 @@ function ShowRoomMenu()
 		Params.Length = 0;
 		Params.AddItem(Num(k));
 		Params.AddItem(Str(Caps(OptionName(RoomOptions[k]))));
-		Params.AddItem(Num(0));
+		Params.AddItem(Num(OptionDisabled(RoomOptions[k]) ? 1 : 0));
 		CallNow("subMenuMC.AddOption", Params);
 	}
 	CallNow("subMenuMC.Show");
@@ -293,12 +296,15 @@ function EnterRoom(int i)
 	switch (i)
 	{
 	case 0:
-		// (EW's research menu, XGResearchUI.UpdateMainMenu: the project, then the Genetics Lab once it is built. EW's
-		// Research Archives and Research Credits are not in the port yet.)
+		// (EW's research menu, XGResearchUI.UpdateMainMenu: the project, the archives (greyed until two techs are done), the
+		// Genetics Lab once it is built, the research credits once one is held.)
 		RoomOptions.AddItem(OPT_RESEARCH);
+		RoomOptions.AddItem(OPT_ARCHIVES);
 		S = class'XComGameState_LWStrategy'.static.Get();
 		if (S != none && class'LWBase'.static.Count(S, 23) > 0)
 			RoomOptions.AddItem(OPT_GENE);
+		if (S != none && S.Credits.Length > 0)
+			RoomOptions.AddItem(OPT_CREDITS);
 		break;
 	case 1:
 		RoomOptions.AddItem(OPT_ITEMS);
@@ -413,6 +419,8 @@ function string OptionName(int Option)
 	case OPT_HIRE: return Word(Hire, "Hire Soldiers");
 	case OPT_MEMORIAL: return Word(Memorial, "View the Memorial");
 	case OPT_FINANCES: return Word(Finances, "View XCOM Finances");
+	case OPT_ARCHIVES: return Word(Archives, "Access Research Archives");
+	case OPT_CREDITS: return Word(Credits, "Review Research Credits");
 	case OPT_BONUSES: return Word(Bonuses, "Bonuses");
 	case OPT_REQUESTS:
 		S = class'XComGameState_LWStrategy'.static.Get();
@@ -442,10 +450,14 @@ function string OptionHelp(int Option)
 	case OPT_HIRE: return HireHelp;
 	case OPT_MEMORIAL: return MemorialHelp;
 	case OPT_FINANCES: return FinancesHelp;
+	case OPT_ARCHIVES: return ArchivesHelp;
+	case OPT_CREDITS: return CreditsHelp;
 	case OPT_BONUSES: return BonusesHelp;
 	case OPT_REQUESTS: return RequestsHelp;
 	case OPT_PSI: return PsiLabsHelp;
 	case OPT_RESEARCH:
+		if (OptionDisabled(OPT_RESEARCH))
+			return NoProjectsHelp;
 		return class'UIUtilities_Strategy'.static.GetXComHQ().GetCurrentResearchProject() != none ? ChangeResearchHelp : NewResearchHelp;
 	case OPT_GENE: return GeneLabHelp;
 	case OPT_AUGMENT: return AugmentHelp;
@@ -457,6 +469,25 @@ function string OptionHelp(int Option)
 }
 
 
+/** An option EW shows greyed (state 1) and refuses: a new research project with none to choose (XGResearchUI.UpdateMainMenu:
+ *  HasTechsAvailable), the archives before two techs are done (GetNumTechsResearched() > 1). */
+function bool OptionDisabled(int Option)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local array<StateObjectReference> Available;
+
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	switch (Option)
+	{
+	case OPT_RESEARCH:
+		// (The list held first: .Length straight on a function's returned array reads 0 in UnrealScript.)
+		Available = XComHQ.GetAvailableTechsForResearch();
+		return XComHQ.GetCurrentResearchProject() == none && Available.Length == 0;
+	case OPT_ARCHIVES: return class'UILWEWResearch'.static.NumResearched() <= 1;
+	}
+	return false;
+}
+
 /** A room's option: its screen opened over the hub. */
 function ChooseOption(int Option)
 {
@@ -464,8 +495,15 @@ function ChooseOption(int Option)
 
 	HQPres = XComHQPresentationLayer(Movie.Pres);
 	`log("LongWarX2: Long War hub: option" @ OptionName(Option), , 'LongWarX2');
+	if (OptionDisabled(Option))
+	{
+		PlaySound(SoundCue'SoundUI.NegativeSelection2Cue', true);
+		return;
+	}
 	switch (Option)
 	{
+	case OPT_ARCHIVES: class'UILWEWScienceLabs'.static.Open(HQPres); break;
+	case OPT_CREDITS: class'UILWEWResearch'.static.Open(true); break;
 	case OPT_RESEARCH: class'UILWEWResearch'.static.Open(); break;
 	case OPT_ITEMS: class'UILWEWEngineering'.static.Open(HQPres); break;
 	case OPT_FACILITIES:

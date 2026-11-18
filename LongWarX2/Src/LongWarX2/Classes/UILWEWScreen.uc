@@ -107,6 +107,28 @@ static function ASValue Str(string Text)
 	return V;
 }
 
+/** Text in one of EW's colours, by EW's state numbers (EW's UIUtilities.GetHTMLColoredText): 0 normal, 1 disabled, 2 good,
+ *  3 bad, 4 warning, 5 highlight, 6 cash, 10 and 12 hyperwave, 11 psionic. */
+static function string EWColoured(string Txt, int EWState, optional int FontSize = -1)
+{
+	local string Colour;
+
+	if (Txt == "")
+		return Txt;
+	switch (EWState)
+	{
+	case 1: Colour = "808080"; break;
+	case 2: case 6: Colour = "5CD16C"; break;
+	case 3: Colour = "EE1C25"; break;
+	case 4: Colour = "FFD038"; break;
+	case 5: Colour = "B9FFFF"; break;
+	case 10: case 12: Colour = "F78000"; break;
+	case 11: Colour = "A09CD6"; break;
+	default: Colour = "67E8ED";
+	}
+	return "<font " $ (FontSize > 0 ? "size='" $ FontSize $ "' " : "") $ "color='#" $ Colour $ "'>" $ Txt $ "</font>";
+}
+
 static function ASValue Num(float N)
 {
 	local ASValue V;
