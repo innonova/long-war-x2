@@ -142,6 +142,7 @@ function ShowForTop()
 
 	Top = Movie.Pres.ScreenStack.GetCurrentScreen();
 	ShowNavHelpFor(Top);
+	class'UILWEWSituationRoom'.static.WallFor(XComHQPresentationLayer(Movie.Pres));
 	bHide = UIPersonnel_Armory(Top) != none || UILWEWSoldierList(Top) != none || UILWEWSoldierSummary(Top) != none || UILWEWMemorial(Top) != none || UIArmory(Top) != none || UICustomize(Top) != none || UIMouseGuard_RotatePawn(Top) != none;
 	if (bHide == bResourcesHidden)
 		return;
