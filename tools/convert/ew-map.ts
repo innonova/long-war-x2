@@ -23,6 +23,7 @@ import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, maskMip } from './mask-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
+import { peopleIn } from './ew-people.ts'
 
 /** Raised when what a conversion writes changes so that maps converted before must be converted again
  *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods,
@@ -885,6 +886,16 @@ for (const [r, l] of looks) {
   l.diffuse = tex.get('StaticScreenTexture') ?? ''
   void root
 }
+// EW's people in its base (an Anim_ level's skeletal mesh actors and its matinee's loops: ew-people.ts), their material
+// slots read as looks are (diffuse and normal for XCOM 2's skeletal stand-in parent).
+const people = (() => {
+  try {
+    return peopleIn(meta, pkg)
+  } catch {
+    return []
+  }
+})()
+const personSlots = people.map((p) => p.materialRefs.map((m) => (m ? lookOf(m) : undefined)))
 
 // The cut-out looks' masks (mask-textures.ts): XCOM 2's cut-out parents read the opacity from Masks, not the diffuse.
 // Added now, while the package is small; their mips are made as the textures are inlined. Additions go at the tables'
@@ -925,6 +936,51 @@ let neutralized = 0
 // stand-ins draw the map).
 // As empty material instances (no parent: a material wherever one is expected, nothing to compile), their instances too
 // (one with static permutations builds them from its parent as it loads: with an empty one the game crashed).
+// The skeletal meshes' own material references cleared (EW's people, ew-people.ts): a skeletal mesh checks its materials'
+// usage as it loads, and the inert instances below have no parent (XCOM 2 crashed as an Anim_ level loaded). The mod gives
+// each person stand-ins of its own.
+let skelCleared = 0
+// (And the people's animations' notifies cleared: footsteps, sounds, EW's IK blends, which the mod's base has no use for;
+// the IK ones are made inert below, and a sequence firing one crashed XCOM 2.)
+let notifiesCleared = 0
+if (people.length)
+  exports.forEach((e, k) => {
+    if (e.type !== 'AnimSequence') return
+    try {
+      const st = readTags(new Reader(pkg.data(k + 1).subarray(4)), pkg) as Tag[]
+      const nt = st.find((t) => t.name === 'Notifies')
+      if (!nt) return
+      const n = new DataView(nt.value.buffer, nt.value.byteOffset).getInt32(0, true)
+      const r = new Reader(nt.value.subarray(4))
+      for (let j = 0; j < n; j++) {
+        const f = (readTags(r, pkg) as Tag[]).find((t) => t.name === 'Notify')
+        if (f && f.value.byteOffset >= bytes.byteOffset) {
+          v.setInt32(f.value.byteOffset - bytes.byteOffset, 0, true)
+          notifiesCleared++
+        }
+      }
+    } catch {
+      // left as it is
+    }
+  })
+exports.forEach((e, k) => {
+  if (e.type !== 'SkeletalMesh') return
+  try {
+    const d: Uint8Array = pkg.data(k + 1)
+    const r = new Reader(d.subarray(4))
+    const st = readTags(r, pkg) as Tag[]
+    // (Its FaceFX asset too: made inert below, XCOM 2 has no FaceFX.)
+    const fx = st.find((t) => t.name === 'FaceFXAsset')
+    if (fx && fx.value.byteOffset >= bytes.byteOffset) v.setInt32(fx.value.byteOffset - bytes.byteOffset, 0, true)
+    const o = e.offset + 4 + (r as unknown as { o: number }).o + 28
+    const n = v.getInt32(o, true)
+    if (n <= 0 || n >= 16) return
+    for (let j = 0; j < n; j++) v.setInt32(o + 4 + 4 * j, 0, true)
+    skelCleared++
+  } catch {
+    // left as it is
+  }
+})
 let materialsStubbed = 0
 const micDonor = exports.find((e) => e.type === 'MaterialInstanceConstant')
 exports.forEach((e) => {
@@ -940,7 +996,9 @@ exports.forEach((e) => {
     if (e.type === 'Material') materialsStubbed++
     return
   }
-  if (e.fullName.split('.')[0] !== 'TheWorld') return
+  // (And with EW's people, what of theirs XCOM 2 cannot load: EW's FaceFX, its cinematic anim tree and its nodes; the mod
+  // drives each person with an AnimNodeSequence of its own. XCOM 2 crashed as an Anim_ level loaded.)
+  if (e.fullName.split('.')[0] !== 'TheWorld' && !(people.length && /^(FaceFXAsset|AnimTree|AnimNode\w*|AnimNotify_BlendIK)$/.test(e.type))) return
   const at = e.entryOffset
   v.setInt32(at + 0, donorClass, true) // class
   v.setInt32(at + 4, 0, true) // super
@@ -1077,6 +1135,8 @@ const lines = [
   ),
   "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
   ...displays.map((d) => `+Displays=(${d.mesh ? `Mesh="${rename(d.mesh)}",` : ''}Tag=${d.tag || 'None'},Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}))`),
+  "; EW's people (an Anim_ level's: its matinee's loops; features/ew-base-people.md).",
+  ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}")`).join(',')}))`),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
     ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''})`,
@@ -1088,7 +1148,7 @@ const lines = [
 ]
 writeFileSync(iniOut, lines.join('\r\n') + '\r\n')
 const meshes = new Set(pieces.map((p) => p.mesh))
-console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed (${nested} nested), ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB), ${masked.masks.size} masks for cut-out looks, ${materialsStubbed} materials made inert`)
+console.log(`${out}: world neutralized (${neutralized} objects), ${renamedPackages.size} carried packages renamed (${nested} nested), ${tex.textures} textures rewritten (${tex.mips} mips, ${(tex.appended.length / 1e6).toFixed(0)} MB), ${masked.masks.size} masks for cut-out looks, ${materialsStubbed} materials made inert${skelCleared ? `, ${skelCleared} skeletal meshes' materials cleared` : ''}${notifiesCleared ? `, ${notifiesCleared} anim notifies cleared` : ''}`)
 const noDiffuse = [...looks.values()].filter((l) => !l.diffuse).length
 console.log(`${iniOut}: ${looks.size} materials (${noDiffuse} without a diffuse map found)`)
 console.log(`${iniOut}: ${pods.length} pods, ${spawnPoints.length} spawn points (${spawnPoints.filter((p) => p[3]).length} civilian), ${meldPoints.length} meld points, ${lights.length} lights, ${buildings.length} buildings (${buildings.reduce((a, b) => a + b.floors.length, 0)} floors)`)

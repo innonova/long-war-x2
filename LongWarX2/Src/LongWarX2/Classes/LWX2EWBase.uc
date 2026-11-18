@@ -6,7 +6,7 @@
 //
 // An actor of the strategy world: made while a Long War screen is up (Show), the camera given back when it closes (Hide);
 // placed once per world, the tiles placed again when the base changes (Refresh).
-class LWX2EWBase extends Actor config(LWEWMaps);
+class LWX2EWBase extends Actor config(LWEWMaps) dependson(LWX2EWBodies, LWX2EWMapPieces);
 
 /** Where EW's base is put in the strategy world (its own coordinates moved by this): below the Avenger's. */
 var config vector BaseOffset;
@@ -44,6 +44,12 @@ var array<LightComponent> WorldLights;
 /** The lighting level streamed in at the base while it is in view, for its ambient light (one of XCOM 2's environment
  *  lighting levels, as a map's plot has: its ambient cube lights the base evenly; its sun and fog are switched off with
  *  the world's). "": none, the base lit by EW's own lights alone (dark: EW baked most of its light). */
+/** EW's people in its base (features/ew-base-people.md): the Anim_ levels whose people stand in the fixed rooms. */
+var config array<string> PeopleLevels;
+/** Whether they play EW's animations (false: they stand in their reference pose; a test switch). */
+var config bool PeopleAnimate;
+var array<LWX2BasePerson> People;
+
 /** EW's screens on their 3D panels in the rooms (features/ew-3d-screens.md), and the panel's mesh and material: XCOM 2's
  *  (its material takes the 3D movie in its Movie parameter), scaled from EW's. */
 var config bool ScreensIn3D;
@@ -149,6 +155,7 @@ function Show()
 		`log("LongWarX2: EW base: the shell and" @ FixedLevels.Length @ "fixed rooms placed," @ Fixed.Length @ "actors", , 'LongWarX2');
 		FindGlobe();
 	}
+	PlacePeople();
 	Refresh();
 	LookAt(ViewTag, 0);
 }
@@ -250,6 +257,66 @@ function string SetLighting(string Level)
 	RefreshAmbient();
 	SetTimer(1.0, false, nameof(RefreshAmbient));
 	return "ok" @ Level @ ((Level == "" || LightingLevel != none) ? "" : "not found");
+}
+
+/** EW's people placed, once (their levels converted with the base); shown and hidden with it. */
+function PlacePeople()
+{
+	local LWX2EWMapPieces.LWX2Person P;
+	local LWX2EWMapPieces.LWX2PersonSlot S;
+	local LWX2EWMapData D;
+	local LWX2BasePerson A;
+	local SkeletalMesh Mesh;
+	local array<AnimSet> Sets;
+	local array<MaterialInterface> Slots;
+	local AnimSet Set;
+	local LWX2EWBodies.LWX2Body B;
+	local string Level, Path;
+
+	if (People.Length > 0)
+		return;
+	foreach PeopleLevels(Level)
+	{
+		D = Data(Level);
+		if (D == none || D.People.Length == 0)
+			continue;
+		`log("LongWarX2: EW base: people of" @ Level $ ": loading" @ D.MapPackage, , 'LongWarX2');
+		if (D.MapPackage != "")
+			DynamicLoadObject(D.MapPackage $ ".TheWorld", class'Object', true);
+		foreach D.People(P)
+		{
+			`log("LongWarX2: EW base: person" @ P.Mesh, , 'LongWarX2');
+			Mesh = SkeletalMesh(DynamicLoadObject(P.Mesh, class'SkeletalMesh', true));
+			`log("LongWarX2: EW base: mesh" @ (Mesh != none ? "loaded" : "not found"), , 'LongWarX2');
+			if (Mesh == none)
+				continue;
+			Sets.Length = 0;
+			foreach P.AnimSets(Path)
+			{
+				Set = AnimSet(DynamicLoadObject(Path, class'AnimSet', true));
+				if (Set != none)
+					Sets.AddItem(Set);
+			}
+			Slots.Length = 0;
+			foreach P.Slots(S)
+			{
+				B.Diffuse = S.Diffuse;
+				B.Normal = S.Normal;
+				// (A slot without a diffuse found, hair and lashes: unlit black rather than XCOM 2's checkerboard.)
+				Slots.AddItem(S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B) : class'LWX2EWMapPieces'.static.BlackStandin(self));
+			}
+			`log("LongWarX2: EW base: spawning", , 'LongWarX2');
+			A = Spawn(class'LWX2BasePerson', self, , P.Loc + BaseOffset, P.Rot);
+			if (A == none)
+				continue;
+			A.SetDrawScale(P.Scale > 0 ? P.Scale : 1.0);
+			if (!PeopleAnimate)
+				Sets.Length = 0;
+			A.Setup(Mesh, Sets, (PeopleAnimate && P.Seqs.Length > 0) ? P.Seqs[0] : '', Slots);
+			People.AddItem(A);
+		}
+	}
+	`log("LongWarX2: EW base:" @ People.Length @ "people placed", , 'LongWarX2');
 }
 
 /** EW's 3D UI panels placed, once, hidden (XCOM 2's 3D movie shows the one a screen asks for). */

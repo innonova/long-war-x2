@@ -184,6 +184,24 @@ struct LWX2Display
 	var vector Scale;
 };
 
+/** A material slot of one of EW's people: its textures, for XCOM 2's skeletal stand-in (LWX2EWBodies.MaterialParent). */
+struct LWX2PersonSlot
+{
+	var string Diffuse, Normal;
+};
+
+/** One of EW's people in its base (an Anim_ level's, features/ew-base-people.md). */
+struct LWX2Person
+{
+	var string Mesh;
+	var vector Loc;
+	var rotator Rot;
+	var float Scale;
+	var array<string> AnimSets;
+	var array<name> Seqs;
+	var array<LWX2PersonSlot> Slots;
+};
+
 struct LWX2Camera
 {
 	var name Tag;

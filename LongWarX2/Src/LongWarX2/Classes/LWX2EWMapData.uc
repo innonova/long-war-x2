@@ -20,3 +20,5 @@ var config array<LWX2EWMapPieces.LWX2Room> Rooms;
 var config array<LWX2EWMapPieces.LWX2Camera> Cameras;
 /** EW's 3D UI panels (features/ew-3d-screens.md). */
 var config array<LWX2EWMapPieces.LWX2Display> Displays;
+/** EW's people (features/ew-base-people.md). */
+var config array<LWX2EWMapPieces.LWX2Person> People;
