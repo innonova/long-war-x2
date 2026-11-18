@@ -5,7 +5,7 @@
 // (soldierInfoMC.SetSoldierInformation), Long War's stats line (soldierStatsMC.SetUnitStats: HP|mod|Mobility|mod|Will|mod|
 // Aim|mod|Defense|mod|…|XP|needed|Psi XP|needed) and the abilities (soldierAbilityListMC.SetTitle, AddAbility). The menu
 // is Long War's (XGSoldierUI.UpdateMainMenu): Abilities (Long War's promotion screen), Psi-Abilities, Loadout and
-// Customize (XCOM 2's, in EW's armory), Dismiss. (Gene Mods, the mods a soldier has, not yet.)
+// Customize (XCOM 2's, in EW's armory), Gene Mods (EW's screen on the soldier), Dismiss.
 class UILWEWSoldierSummary extends UILWEWScreen;
 
 var localized string StatusLabel, MissionsLabel, KillsLabel, AbilitiesTitle;
@@ -93,6 +93,9 @@ function Fill()
 	Options.AddItem('Abilities');
 	if (class'LWGearRules'.static.IsPsionic(U))
 		Options.AddItem('PsiAbilities');
+	// (Once the Genetics Lab is built; not for MECs and SHIVs: XGSoldierUI.UpdateMainMenu.)
+	if (S != none && class'LWBase'.static.Count(S, 23) > 0 && !U.IsRobotic() && !class'LWMECs'.static.IsMEC(U))
+		Options.AddItem('GeneMods');
 	Options.AddItem('Loadout');
 	Options.AddItem('Customize');
 	Options.AddItem('Dismiss');
@@ -162,7 +165,7 @@ function FillInfo(XComGameState_Unit U, XComGameState_LWStrategy S)
 	MC.QueueString(Caps(U.GetName(eNameType_First) @ U.GetName(eNameType_Last)));
 	MC.QueueString(Repl(U.GetNickName(), "'", "") != "" ? "'" $ Repl(U.GetNickName(), "'", "") $ "'" : "");
 	MC.QueueString(class'UIUtilities_Text'.static.GetColoredText(Word(StatusLabel, "STATUS:"), eUIState_Normal) @ class'UILWEWSoldierList'.static.Colored(Status, UIState) $ "   ");
-	MC.QueueString(class'UILWEWSoldierList'.static.FlagOf(U.GetCountry()));
+	MC.QueueString(HeaderFlag(U.GetCountry()));
 	MC.QueueString(k != INDEX_NONE ? class'UILWEWSoldierList'.default.Classes[k].Frame : "");
 	MC.QueueString(U.GetSoldierClassTemplate() != none ? Caps(U.GetSoldierClassTemplate().DisplayName) : "");
 	MC.QueueString("rank" $ Clamp(U.GetRank(), 0, 7));
@@ -171,6 +174,22 @@ function FillInfo(XComGameState_Unit U, XComGameState_LWStrategy S)
 	MC.QueueString(class'UIUtilities_Text'.static.GetColoredText(Word(MissionsLabel, "MISSIONS:") @ U.GetNumMissions(), eUIState_Normal));
 	MC.QueueString(class'UIUtilities_Text'.static.GetColoredText(Word(KillsLabel, "KILLS:") @ U.GetNumKills(), eUIState_Normal));
 	MC.EndOp();
+}
+
+/** The header's flag: a frame of EW's flag clip there (XComIcons' larger set, which has Belgium, the Netherlands, Norway,
+ *  Poland, Scotland and Sweden too), "_" and the name, as the panel goes to it directly (flagIconMC.gotoAndStop). */
+static function string HeaderFlag(name Country)
+{
+	local string N;
+
+	N = Locs(Mid(string(Country), 8));
+	switch (N)
+	{
+	case "usa": return "_unitedstates";
+	case "uk": return "_unitedkingdom";
+	case "indonesia": case "iran": return "_unknown";
+	}
+	return "_" $ N;
 }
 
 /** Long War's stats line (UIStrategyComponent_SoldierStats.UpdateData): each stat and its gear's bonus, then the
@@ -349,6 +368,9 @@ function Choose(int i)
 		break;
 	case 'PsiAbilities':
 		HQPres.UIArmory_Promotion(UnitRef);
+		break;
+	case 'GeneMods':
+		class'UILWEWGeneMods'.static.OpenFor(HQPres, UnitRef);
 		break;
 	case 'Loadout':
 		HQPres.UIArmory_Loadout(UnitRef);

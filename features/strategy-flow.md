@@ -73,8 +73,8 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
    cannot play). Still XCOM 2's: the main menu, and the Skyranger briefing "Operation Gatecrasher" ("Wilderness of
    South Africa", over an EW map) for the first mission, and every mission's briefing (EW's dropship screen is in
    EW's UICollection_Dropship_SF).
-2. **The soldier screens are XCOM 2's where EW has its own** (list, summary, abilities tree and EW's perk icons: done,
-   reports below; still to do: the psi tree, Gene Mods, Report for Duty): the soldier list (EW's: Long War's stats per soldier,
+2. **The soldier screens are XCOM 2's where EW has its own** (list, summary, abilities tree, EW's perk icons and
+   Gene Mods from the summary: done, reports below; still to do: the psi tree, Report for Duty's ceremony): the soldier list (EW's: Long War's stats per soldier,
    class counts in the title), the soldier's summary menu (EW: Abilities, Gene Mods, Loadout, Customize, Report for
    Duty, Dismiss, and next/previous soldier buttons), the abilities tree (EW's: Long War's ranks as a vertical list
    beside the soldier; XCOM 2's horizontal panel covers the soldier), Gene Mods.
@@ -216,3 +216,19 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
 - **A risk noted, not seen:** classes renamed in 2026-11-15's change whose names are also instance names (`Debrief`,
   `Inventory`, `PauseMenu`, `ClassIcon` …) have their instance references in code renamed too; screens using those
   (EW's debriefs, inventory) should be checked when they are ported.
+
+## Report (2026-11-18, the summary's Gene Mods and flag)
+
+- **Gene Mods in the soldier summary**, in Long War's place and on its terms (`XGSoldierUI.UpdateMainMenu`: once a
+  Genetics Lab is built; not for MECs and SHIVs): EW's Gene Mods screen on that soldier (`UILWEWGeneMods.OpenFor`, no list
+  first), the mods ordered as in the lab while the soldier can go into a tank (else shown only, without the confirm
+  button); Escape and a confirmed order return to the summary. Seen on wingpu.
+- **The summary's flag** shows: its panel goes to EW's flag clip's frame directly (`flagIconMC.gotoAndStop`), which wants
+  the underscored label; that clip (XComIcons' larger set) also has Belgium, the Netherlands, Norway, Poland, Scotland
+  and Sweden (Indonesia and Iran show EW's unknown flag). Long War's own flag pictures (`LongWar.Flags_Strategy`) were
+  tried and dropped: EW's flag clips take only frame labels.
+- **Not as Long War:** REPORT FOR DUTY (Long War's word for EW's medals option, shown for officers) plays EW's award
+  ceremony, a narrative scene (`XGFacility_Barracks.AwardCeremony`); not ported. The psi tree waits for Long War's psi
+  ranks (`features/lw-psi.md`, left open).
+- **Open:** an intermittent crash at campaign start while EW's base levels stream in (1 start in 13 today, crash handler
+  at "GettingNameData"; the dump kept on wingpu, `XCom-HTPC-NUC-CL469133-2026.11.18-11.26.52-Crash`).

@@ -32,6 +32,8 @@ var int Row, Column;
 var array<int> Chosen;
 var UIButton ConfirmButtonWidget;
 var bool bTreeShown;
+/** Opened on one soldier (the soldier summary's Gene Mods, XGSoldierUI's gene view): no list; out, back to the summary. */
+var StateObjectReference Fixed;
 
 static function Open(XComHQPresentationLayer HQPres)
 {
@@ -48,6 +50,20 @@ static function Open(XComHQPresentationLayer HQPres)
 	EWScreen = HQPres.Spawn(class'UILWEWGeneMods', HQPres);
 	EWScreen.Package = name("/ package/ewxSoldierGeneMods/SoldierGeneMods");
 	EWScreen.MCName = 'theScreen';
+	HQPres.ScreenStack.Push(EWScreen);
+}
+
+/** On one soldier, from the soldier summary (Long War's XGSoldierUI.OnMainMenuOption, the gene view): the soldier's mods
+ *  shown, and ordered as in the lab while the soldier can go into a tank (GeneSoldierWhy). */
+static function OpenFor(XComHQPresentationLayer HQPres, StateObjectReference UnitRef)
+{
+	local UILWEWGeneMods EWScreen;
+
+	DynamicLoadObject(default.UIPackage $ ".ewxSoldierGeneMods", class'Object', true);
+	EWScreen = HQPres.Spawn(class'UILWEWGeneMods', HQPres);
+	EWScreen.Package = name("/ package/ewxSoldierGeneMods/SoldierGeneMods");
+	EWScreen.MCName = 'theScreen';
+	EWScreen.Fixed = UnitRef;
 	HQPres.ScreenStack.Push(EWScreen);
 }
 
@@ -87,7 +103,10 @@ simulated function OnInit()
 	ConfirmButtonWidget.SetPosition(60 - StageX, 640 - StageY);
 	ConfirmButtonWidget.Hide();
 	ShowBase();
-	ChooseSoldier();
+	if (Fixed.ObjectID != 0)
+		OnSoldierChosen(Fixed);
+	else
+		ChooseSoldier();
 }
 
 /** EW's base behind it, the camera in the (first) Genetics Lab. */
@@ -166,7 +185,11 @@ function OnSoldierChosen(StateObjectReference UnitRef)
 		CallNow("ShowAbilityTree");
 		bTreeShown = true;
 	}
-	ConfirmButtonWidget.Show();
+	// (Shown on one soldier who cannot go into a tank now: the mods only.)
+	if (class'XComGameState_LWStrategy'.static.GeneSoldierWhy(class'XComGameState_LWStrategy'.static.Get(), Unit()) == "")
+		ConfirmButtonWidget.Show();
+	else
+		ConfirmButtonWidget.Hide();
 	Realize();
 }
 
@@ -542,7 +565,7 @@ simulated function OnConfirm(Name Action)
 	Movie.Pres.PlayUISound(eSUISound_MenuSelect);
 	if (XComHQPresentationLayer(Movie.Pres) != none && XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD != none)
 		XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD.UpdateResources();
-	if (class'XComGameState_LWStrategy'.static.GeneTankFree(class'XComGameState_LWStrategy'.static.Get()))
+	if (Fixed.ObjectID == 0 && class'XComGameState_LWStrategy'.static.GeneTankFree(class'XComGameState_LWStrategy'.static.Get()))
 		ChooseSoldier();
 	else
 		CloseScreen();
@@ -603,8 +626,11 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		return true;
 	case class'UIUtilities_Input'.const.FXS_KEY_ESCAPE:
 	case class'UIUtilities_Input'.const.FXS_BUTTON_B:
-		// Out of a soldier's mods, back to the list (EW's BackOutOfScreen).
-		ChooseSoldier();
+		// Out of a soldier's mods, back to the list (EW's BackOutOfScreen); opened on one soldier, back to the summary.
+		if (Fixed.ObjectID != 0)
+			CloseScreen();
+		else
+			ChooseSoldier();
 		return true;
 	}
 	return super(UIScreen).OnUnrealCommand(cmd, arg);
