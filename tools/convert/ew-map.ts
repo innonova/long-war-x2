@@ -40,8 +40,9 @@ import { cameras as matineeCameras, peopleIn } from './ew-people.ts'
  *  panels, features/ew-lightmaps.md and ew-3d-screens.md; 22: EW's people, ew-base-people.md; 23: people hidden in their level left out, as the armory's MEC scene); 24: the plinths soldiers stand on
  *  (Spots: EW's SkeletalMeshActors tagged …Plinth, XGStrategySoldier.PlaceOnPlinth); 25: the hangar's bays (People with
  *  Bay, BayState, BayPart: Anim_Hangar_LaunchBays' launch pads and craft), a diffuse named plain "diff" (the Skyranger's); 26: EW's people where their matinee puts them, in their base's frame
- *  (an actor's Base: the scene's CineDummy, itself placed by its key). */
-export const CONVERTER_VERSION = 26
+ *  (an actor's Base: the scene's CineDummy, itself placed by its key); 27: people's glowing slots (Glow, Tint: the Genetics
+ *  Lab's tank glass). */
+export const CONVERTER_VERSION = 27
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -920,7 +921,19 @@ const people = (() => {
     return []
   }
 })()
-const personSlots = people.map((p) => p.materialRefs.map((m) => (m ? lookOf(m) : undefined)))
+// (A slot of EW's unlit glowing materials, the Genetics Lab's tanks' glass: a glow in its colour, not a stand-in body.)
+const PERSON_GLOW = /TankGlassMaster|HQ_ColorizedLight|EmissivePallete/i
+const personSlots = people.map((p) =>
+  p.materialRefs.map((m) => {
+    if (!m) return undefined
+    const l = lookOf(m)
+    if (PERSON_GLOW.test(pathOf(m))) {
+      l.kind = 'Glow'
+      l.tint = vectorParam(m, 'Color') ?? vectorParam(m, 'TintColor')
+    }
+    return l
+  }),
+)
 // (And the matinees' cameras the port looks through: the hangar's craft view.)
 cameras.push(...matineeCameras)
 
@@ -1164,7 +1177,7 @@ const lines = [
   "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
   ...displays.map((d) => `+Displays=(${d.mesh ? `Mesh="${rename(d.mesh)}",` : ''}Tag=${d.tag || 'None'},Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}))`),
   "; EW's people (an Anim_ level's: its matinee's loops; features/ew-base-people.md).",
-  ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}")`).join(',')}))`),
+  ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}"${l?.kind === 'Glow' ? `,Glow=true${l.tint ? `,Tint=(R=${n(l.tint[0]!)},G=${n(l.tint[1]!)},B=${n(l.tint[2]!)},A=1)` : ''}` : ''})`).join(',')}))`),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
     ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''})`,

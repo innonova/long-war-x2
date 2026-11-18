@@ -199,6 +199,9 @@ struct LWX2Display
 struct LWX2PersonSlot
 {
 	var string Diffuse, Normal;
+	/** One of EW's unlit glowing materials (the Genetics Lab's tank glass): a glow in Tint. */
+	var bool Glow;
+	var LinearColor Tint;
 };
 
 /** One of EW's people in its base (an Anim_ level's, features/ew-base-people.md). */

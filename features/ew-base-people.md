@@ -99,3 +99,19 @@ than the actors' own places (first key minus actor's place):
   turn. The hangar's launch pads follow the same rule (bays 2 and 3's pads sit 560 nearer their bay, under their craft).
 - **Still:** the lab's two clerks stand where EW seats them (EW's chairs are not there); hair colour; the barracks' soldiers
   (EW puts the campaign's own soldiers in its barracks scenes, `Soldier01`… groups bound at run time).
+
+## Notes (2026-11-18 late, the black clerks)
+
+The labs' clerks draw almost black, and not for want of light (an ambient glow of 0.35 on every person's light
+environment left them black). Their material is EW's `MInst_ComClerkMaleBase_SCI` on `CHH_Soldiers`, whose `CMOD`
+(0.48, 0.50, 0.54 for the labs; 0.05, 0.07, 0 elsewhere) colours the uniform the diffuse leaves dark green-black. The
+stand-in (`AvengerStaff_SD`) takes the diffuse only. The fix is a stand-in that applies `CMOD` where EW's mask says
+(read the mask's channel from `CHH_Soldiers`), a material of ours as for the glass and light cards.
+
+## Report (2026-11-18 late, glowing slots)
+
+- **A person's or prop's slot of EW's unlit glowing materials** (`GeneLabTankGlassMaster`, the Genetics Lab's canisters'
+  fluid; colorized lights, palette lamps) is written as `Glow=true, Tint=` (its `Color` or `TintColor`; converter 27) and
+  placed as a glow in that colour (`LWX2EWMapPieces.GlowStandin`), not as a body stand-in with EW's hex pattern for a
+  diffuse. The canisters' rack is not in the Genetics Lab's screen view, so this is not yet seen; the lab's yellow tank
+  faces are something else again (still dark).

@@ -449,6 +449,7 @@ function PlacePeopleOf(string Level, vector Offset, out array<Actor> Placed)
 function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, vector Offset)
 {
 	local LWX2EWMapPieces.LWX2PersonSlot S;
+	local LWX2EWMapPieces.LWX2Look GlowLook;
 	local LWX2BasePerson A;
 	local SkeletalMesh Mesh;
 	local array<AnimSet> Sets;
@@ -482,6 +483,13 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 		B.Normal = S.Normal;
 		// (A slot without a texture found, the eye lashes: the body's stand-in; our unlit material cannot go on a
 		// skeletal mesh.)
+		if (S.Glow)
+		{
+			GlowLook.Diffuse = "";
+			GlowLook.Tint = S.Tint;
+			Slots.AddItem(class'LWX2EWMapPieces'.static.GlowStandin(GlowLook, self));
+			continue;
+		}
 		Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
 		// (The props' textures and scalars on it too: XCOM 2's placeholder Masks darkened the white coats.)
 		MIC = MaterialInstanceConstant(Slot);
