@@ -972,8 +972,20 @@ export function makeShipLoadoutWords({ strategyLoc, loc }) {
   const cards = loc.replace(/\r/g, '').match(/^\[UIItemCards\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
   const keys = ['m_strHitChanceLabel', 'm_strRangeLabel', 'm_strFireRateLabel', 'm_strDamageLabel', 'm_strArmorPenetrationLabel', 'm_strRangeShort', 'm_strRangeMedium', 'm_strRangeLong', 'm_strRateSlow', 'm_strRateMedium', 'm_strRateRapid', 'm_strGenericScaleLow', 'm_strGenericScaleMedium', 'm_strGenericScaleHigh']
   const lines = keys.map((k) => [k, cards.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim() ?? '']).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`)
-  const text = copied.text.includes('[UILWEWShipLoadout]') ? copied.text.replace('[UILWEWShipLoadout]\r\n', `[UILWEWShipLoadout]\r\n${lines.map((l) => l + '\r\n').join('')}`) : ['[UILWEWShipLoadout]', ...lines, ''].join('\r\n')
-  return { text, named: copied.named + lines.length }
+  // (The item card, UILWEWItemCard: UIItemCards' header and close label, the craft weapons' texts (XGLocalizedData's), the
+  // craft types' texts and names (XGItemTree's), by EShipWeapon and EShipType.)
+  // (The section comes more than once in the file: every one of them read.)
+  const tree = [...strategyLoc.replace(/\r/g, '').matchAll(/^\[(?:XGItemTree|XGLocalizedData)\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/gm)].map((m) => m[1]).join('\n')
+  const one = (k) => tree.match(new RegExp(`^${k.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1]?.trim() ?? ''
+  const weapons = ['None', 'Cannon', 'Stingray', 'Avalanche', 'Laser', 'Plasma', 'EMP', 'Fusion']
+  const card = [
+    ...['m_strTacticalInfoHeader', 'm_strCloseCardLabel'].map((k) => [k, cards.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim() ?? '']),
+    ...weapons.map((w, i) => [`WeaponText[${i}]`, one(`ShipWeaponFlavorTxt[eShipWeapon_${w}]`)]),
+    ...[[1, 'Interceptor'], [3, 'Firestorm']].flatMap(([i, t]) => [[`CraftName[${i}]`, one(`ShipTypeNames[eShip_${t}]`)], [`CraftText[${i}]`, one(`ShipTypeFlavorTxt[eShip_${t}]`)]]),
+  ].filter(([, v]) => v).map(([k, v]) => `${k}=${v}`)
+  const cardText = ['[UILWEWItemCard]', ...card, ''].join('\r\n')
+  const text0 = copied.text.includes('[UILWEWShipLoadout]') ? copied.text.replace('[UILWEWShipLoadout]\r\n', `[UILWEWShipLoadout]\r\n${lines.map((l) => l + '\r\n').join('')}`) : ['[UILWEWShipLoadout]', ...lines, ''].join('\r\n')
+  return { text: text0 + '\r\n' + cardText, named: copied.named + lines.length + card.length }
 }
 
 /** EW's finances (UILWEWFinances): XGFinanceUI's labels and the craft's names (ShipTypeNames). */

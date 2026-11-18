@@ -6,7 +6,8 @@
 // after its next kill). Seen through EW's camera on the hangar's summary display (Hangar_UIDisplayCam_Summary).
 class UILWEWShipSummary extends UILWEWScreen;
 
-var localized string m_strKillsLabel, m_strWeaponLabel, m_strEditLoadoutBtnHelp, m_strDismissShipBtnHelp,
+var localized string m_strKillsLabel, m_strWeaponLabel, m_strEditLoadoutBtnHelp, m_strDismissShipBtnHelp, m_strWeaponInfoBtnHelp,
+	m_strShipInfoBtnHelp,
 	m_strDismissShipConfirmDialogTitle, m_strDismissShipConfirmDialogText, m_strDismissShipConfirmDialogAcceptText;
 /** Long War's pilots (XGLocalizedData.ShipWeaponFlavorTxt[11..255]). */
 var localized array<string> Pilots;
@@ -41,7 +42,21 @@ simulated function OnInit()
 {
 	super.OnInit();
 	Focused = -1;
+	// (UpdateButtonHelp, with the mouse: WEAPON INFO on the left of the movie's help bar, SHIP INFO on the right.)
+	HelpButton("helpBarMC", false, 0, Word(m_strWeaponInfoBtnHelp, "WEAPON INFO"), "");
+	HelpButton("helpBarMC", true, 1, Word(m_strShipInfoBtnHelp, "SHIP INFO"), "");
 	SetTimer(0.1, false, nameof(Fill));
+}
+
+/** WEAPON INFO and SHIP INFO: EW's item cards for the craft's weapon and for the craft (OnWeaponItemCard, OnShipItemCard). */
+function WeaponCard()
+{
+	class'UILWEWItemCard'.static.OpenShipWeapon(XComHQPresentationLayer(Movie.Pres), class'XComGameState_LWAirWar'.static.Get().Jets[Jet].Weapon);
+}
+
+function CraftCard()
+{
+	class'UILWEWItemCard'.static.OpenCraft(XComHQPresentationLayer(Movie.Pres), class'XComGameState_LWAirWar'.static.Get().Jets[Jet].Type == 3 ? 3 : 1);
 }
 
 simulated function OnReceiveFocus()
@@ -221,10 +236,27 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 
 simulated function bool OnUnrealCommand(int cmd, int arg)
 {
+	local string Help;
+
 	if ((arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0)
 	{
 		switch (cmd)
 		{
+		case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP:
+		case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED:
+			Help = HelpButtonUnderMouse();
+			if (Help == "")
+				break;
+			// (The lookup gives the bar and the button: buttonHelp_0 the left one, buttonHelp_1 the right.)
+			if (Right(Help, 1) == "0")
+				WeaponCard();
+			else
+				CraftCard();
+			return true;
+		// (UIShipSummary: the right stick or Tab for the weapon's card.)
+		case class'UIUtilities_Input'.const.FXS_KEY_TAB:
+			WeaponCard();
+			return true;
 		case class'UIUtilities_Input'.const.FXS_ARROW_UP:
 		case class'UIUtilities_Input'.const.FXS_DPAD_UP:
 			Focus(Focused <= 0 ? 2 : Focused - 1);
