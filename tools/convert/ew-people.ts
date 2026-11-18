@@ -10,7 +10,7 @@ import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 
-export interface Person { group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
+export interface Person { key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
 
 export function peopleOf(file: string): Person[] {
   const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
@@ -47,13 +47,31 @@ export function peopleIn(meta: any, pkg: any): Person[] {
   }
 
   // The groups: name, AnimSets, the anim track's sequences.
-  const groups = new Map<string, { animSets: string[]; seqs: string[]; animSetRefs: number[] }>()
+  const groups = new Map<string, { animSets: string[]; seqs: string[]; animSetRefs: number[]; key?: number[]; keyRot?: number[] }>()
   exports.forEach((e, i) => {
     if (e.type !== 'InterpGroup') return
     const t = tagsAt(i)
     const setRefs = refs(t.find((x) => x.name === 'GroupAnimSets')).filter((r) => r !== 0)
     const g = { animSets: setRefs.map(path), animSetRefs: setRefs, seqs: [] as string[] }
     for (const tr of refs(t.find((x) => x.name === 'InterpTracks'))) {
+      if (tr > 0 && exports[tr - 1]!.type === 'InterpTrackMove') {
+        // (Its first key: where the matinee puts the actor, and its rotation.)
+        const mt = tagsAt(tr - 1)
+        const first = (name: string) => {
+          const c = mt.find((x) => x.name === name)
+          if (!c) return undefined
+          const pts = (readTags(new Reader(c.value), pkg) as Tag[]).find((x) => x.name === 'Points')
+          if (!pts || dv(pts.value).getInt32(0, true) < 1) return undefined
+          const ov = (readTags(new Reader(pts.value.subarray(4)), pkg) as Tag[]).find((x) => x.name === 'OutVal')
+          return ov ? [0, 1, 2].map((k) => dv(ov.value).getFloat32(4 * k, true)) : undefined
+        }
+        try {
+          g.key = first('PosTrack')
+          g.keyRot = first('EulerTrack')
+        } catch {
+          // none read
+        }
+      }
       if (tr <= 0 || exports[tr - 1]!.type !== 'InterpTrackAnimControl') continue
       const at = tagsAt(tr - 1).find((x) => x.name === 'AnimSeqs')
       if (at) for (const k of structs(at.value)) g.seqs.push(name(k.find((x) => x.name === 'AnimSeqName')))
@@ -115,6 +133,8 @@ export function peopleIn(meta: any, pkg: any): Person[] {
     const ds = t.find((x) => x.name === 'DrawScale')
     out.push({
       group: group!,
+      key: g.key,
+      keyRot: g.keyRot,
       mesh,
       materials: materialRefs.map(path),
       meshRef,

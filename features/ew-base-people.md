@@ -47,3 +47,17 @@ research panel, Shen beside the build panel, clerks and engineers work in the ro
   engineers and the welding robots working in engineering.
 - **Not yet:** Shen is not visible beside the build panel (a robot arm shows where EW has him); hair colour; only the
   first of each person's sequences plays; the facility rooms' own `Anim_` levels (laboratory, workshop …).
+
+## Notes (2026-11-18, where EW's matinee puts them)
+
+Each group's move track (`InterpTrackMove`, no `MoveFrame` property: EW's default) holds positions in another frame
+than the actors' own places (first key minus actor's place):
+- **Anim_ScienceLabs:** Z +2498 for all four; X −3025 to −3956, Y +163 to +1668. The keys are small (Vahlen's
+  (−195, 320, 47)), as if relative to something.
+- **Anim_Engineering:** the conveyor arms (−2090, 0…144, +1922), the overhead arms (−2010, 32…144, +1842), the engineers
+  (−1646…−2191, …, +1704…+1921), Shen (−2344, −462, +1853).
+- Taking engineering's frame as the conveyor arms' (key + (2090, 0, −1922)) puts Shen at (−194, −582, −2786), right
+  beside the build panel (−321, −766, −2680), where EW shows him, and the arms on the conveyor line. But the lab's keys
+  don't fit the same reading, and Vahlen already stands right at her actor's place. To settle: EW's
+  `SeqAct_Interp`/`InterpData` for a frame or anchor, or the level's own offset in EW's streaming; then read
+  `ew-people.ts`'s `key`/`keyRot`, now written per person.
