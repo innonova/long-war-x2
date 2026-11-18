@@ -87,3 +87,12 @@ the rooms go black: all their light is those lights.
   surfaces between the base's rooms and floors. The port skipped them, which left the rooms' outer shells in view. In
   the base they are now drawn black (`BaseBlackMaterials`): the barracks' view is close to EW's
   (`logs/compare/lightmaps-cutaway.png`, not committed).
+
+## Report (2026-11-18, the glows on our own material)
+
+- **Our material has a colour** (`Tint`, added in the SDK editor; the lightmapped instances set it white): EW's glowing
+  parts now use it too, unlit as EW's are, in EW's own HDR colour (`GlowParent` = our material). The lab's light rings
+  glow white-blue as EW's.
+- **The consoles' screens** in EW's tint alone: EW's picture for them (`HQscreens_test`) is a green pattern EW's material
+  uses as a mask; multiplied by the tint, as ours does, it came out green dots.
+- **Hangar:** `Static_Hangar_CAP` left out of the fixed rooms: its dark beam crossed the hangar's view, open in EW's.

@@ -546,6 +546,8 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 	// × 1/sqrt(3) (each direction's weight for a surface facing out of its face).
 	B = (P.LightMap.S0.X + P.LightMap.S0.Y + P.LightMap.S0.Z) / 3 * (P.LightMap.S1.X + P.LightMap.S1.Y + P.LightMap.S1.Z) / 3 * 1.732;
 	MIC.SetScalarParameterValue('LMBrightness', B * (default.LightmapBrightness > 0 ? default.LightmapBrightness : 1.0));
+	V.R = 1; V.G = 1; V.B = 1; V.A = 1;
+	MIC.SetVectorParameterValue('Tint', V);
 	return MIC;
 }
 
@@ -689,20 +691,36 @@ static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter)
 {
 	local MaterialInstanceConstant MIC;
 	local Material Parent;
-	local Texture T;
-	local LinearColor C;
+	local Texture T, White;
+	local LinearColor C, SB;
+	local bool bOurs;
 
 	Parent = Material(DynamicLoadObject(default.GlowParent, class'Material', true));
 	if (Parent == none)
 		return none;
+	// (Our own unlit material, as EW's glows are unlit: white, no lightmap, EW's colour as Tint.)
+	bOurs = default.GlowParent == default.LightmapParent;
 	MIC = new(InOuter) class'MaterialInstanceConstant';
 	MIC.SetParent(Parent);
-	T = Texture(DynamicLoadObject(L.Diffuse != "" ? L.Diffuse : "EngineResources.WhiteSquareTexture", class'Texture', true));
+	White = Texture(DynamicLoadObject("EngineResources.WhiteSquareTexture", class'Texture', true));
+	// (A console's screen in EW's tint alone: EW's picture there, HQscreens_test, is a green pattern EW's material reads
+	// as a mask; multiplied by the tint, as ours does, it came out green.)
+	T = Texture(DynamicLoadObject((L.Diffuse != "" && !bOurs) ? L.Diffuse : "EngineResources.WhiteSquareTexture", class'Texture', true));
 	if (T != none)
 		MIC.SetTextureParameterValue('Diffuse', T);
 	C = (L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.GlowDefault;
 	C.R *= default.GlowScale; C.G *= default.GlowScale; C.B *= default.GlowScale; C.A = 1;
-	MIC.SetVectorParameterValue(default.GlowColorParam, C);
+	if (bOurs)
+	{
+		if (White != none)
+			MIC.SetTextureParameterValue('LightMap', White);
+		SB.R = 1; SB.G = 1; SB.B = 0; SB.A = 0;
+		MIC.SetVectorParameterValue('LMScaleBias', SB);
+		MIC.SetScalarParameterValue('LMBrightness', 1.0);
+		MIC.SetVectorParameterValue('Tint', C);
+	}
+	else
+		MIC.SetVectorParameterValue(default.GlowColorParam, C);
 	return MIC;
 }
 
