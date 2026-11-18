@@ -437,6 +437,27 @@ export function makeHubWords({ strategyLoc }) {
     ['GravelyWounded', inSection('XGStrategySoldier', 'm_strHumanGravelyWounded')],
     ['Dead', inSection('XGStrategySoldier', 'm_strHumanDead')],
   ].filter(([, v]) => v)
+  // EW's soldier summary (UILWEWSoldierSummary: XGSoldierUI's menu, the components' labels).
+  const summary = [
+    ['StatusLabel', inSection('UIStrategyComponent_SoldierInfo', 'm_strStatusLabel')],
+    ['MissionsLabel', inSection('UIStrategyComponent_SoldierInfo', 'm_strMissionsLabel')],
+    ['KillsLabel', inSection('UIStrategyComponent_SoldierInfo', 'm_strKillsLabel')],
+    ['AbilitiesTitle', inSection('UIStrategyComponent_SoldierAbilityList', 'm_strAbilitiesTitle')],
+    ['Abilities', inSection('XGSoldierUI', 'm_strLabelAbilities')],
+    ['AbilitiesHelp', inSection('XGSoldierUI', 'm_strLabelAbilityHelp')],
+    ['PsiAbilities', inSection('XGSoldierUI', 'm_strLabelPsiAbilities')],
+    ['PsiAbilitiesHelp', inSection('XGSoldierUI', 'm_strLabelPsiAbilityHelp')],
+    ['GeneMods', inSection('XGSoldierUI', 'm_strLabelGeneView')],
+    ['GeneModsHelp', inSection('XGSoldierUI', 'm_strLabelGeneViewHelp')],
+    ['Loadout', inSection('XGSoldierUI', 'm_strLoadout')],
+    ['LoadoutHelp', inSection('XGSoldierUI', 'm_strChooseEquipGoop')],
+    ['Customize', inSection('XGSoldierUI', 'm_strLabelCustomize')],
+    ['CustomizeHelp', inSection('XGSoldierUI', 'm_strLabelCustomizeHelp')],
+    ['Dismiss', inSection('XGSoldierUI', 'm_strLabelDismiss')],
+    ['DismissHelp', inSection('XGSoldierUI', 'm_strLabelDismissHelp')],
+    ['DismissTitle', inSection('XGSoldierUI', 'm_strDismissSoldierDialogTitle')],
+    ['DismissText', inSection('XGSoldierUI', 'm_strDismissSoldierDialogText')],
+  ].filter(([, v]) => v)
   // EW's hiring dialog (UILWEWHiring: UIHiring, XGBarracksUI's hiring view) and its event (XGMissionControlUI).
   const hire = [
     ['Title', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_Hire]')],
@@ -448,8 +469,8 @@ export function makeHubWords({ strategyLoc }) {
     ['Event', inSection('XGMissionControlUI', 'm_strNewSoldierEvent')],
   ].filter(([, v]) => v)
   return {
-    text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWStrategyHUD]', ...hud.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWHiring]', ...hire.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierList]', ...list.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
-    named: words.length + hud.length + hire.length + list.length,
+    text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWStrategyHUD]', ...hud.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWHiring]', ...hire.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierList]', ...list.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierSummary]', ...summary.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
+    named: words.length + hud.length + hire.length + list.length + summary.length,
   }
 }
 

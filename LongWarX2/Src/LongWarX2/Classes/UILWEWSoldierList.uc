@@ -5,7 +5,7 @@
 //   (XGStrategySoldier.GetName, type 8: "RANK First 'Nick' Last|HP|Mobility|Will|Aim|Defense|<experience>|<psi>"), the
 //   class in its colour, the status in its state's colour, promotable, the rank's and class's icons, the flag;
 // - the title's tally (SetCountLabel): soldiers available of all, then per class, with Long War's class icons;
-// - the selection (SetSelected) follows the mouse; a click opens the soldier (XCOM 2's armory, in EW's armory room).
+// - the selection (SetSelected) follows the mouse; a click opens the soldier (EW's summary, UILWEWSoldierSummary).
 // Long War's class icons in the title's tally come from Long War's own package, converted on the player's machine
 // (LongWar.upk: img://LongWar.ClassIcons.*); the rows' class icons and flags are EW's own (XComIcons' frames). EW's
 // resource panel is hidden over it
@@ -163,14 +163,14 @@ function string ClassText(XComGameState_Unit Unit, int k)
 
 /** Long War's status and its state (XGStrategySoldier.GetStatusString, GetStatusUIState): wounds first, then the labs,
  *  covert operations, fatigue, with the days or hours left. */
-function string StatusOf(XComGameState_Unit Unit, XComGameState_LWStrategy S, out int UIState)
+static function string StatusOf(XComGameState_Unit Unit, XComGameState_LWStrategy S, out int UIState)
 {
 	local int i, Hours;
 
 	if (Unit.IsDead())
 	{
 		UIState = 3;
-		return Word(Dead, "KIA");
+		return Word(default.Dead, "KIA");
 	}
 	if (S != none)
 	{
@@ -178,40 +178,40 @@ function string StatusOf(XComGameState_Unit Unit, XComGameState_LWStrategy S, ou
 			if (S.PsiTrainees[i].Unit == Unit.ObjectID)
 			{
 				UIState = 1;
-				return Word(PsiTesting, "Psionic Training") @ Time(S.PsiTrainees[i].HoursLeft);
+				return Word(default.PsiTesting, "Psionic Training") @ Time(S.PsiTrainees[i].HoursLeft);
 			}
 		for (i = 0; i < S.GenePatients.Length; i++)
 			if (S.GenePatients[i].Unit == Unit.ObjectID)
 			{
 				UIState = 1;
-				return Word(GeneMod, "Genetics Lab") @ Time(class'XComGameState_LWStrategy'.static.GeneHoursLeft(S.GenePatients[i]));
+				return Word(default.GeneMod, "Genetics Lab") @ Time(class'XComGameState_LWStrategy'.static.GeneHoursLeft(S.GenePatients[i]));
 			}
 		for (i = 0; i < S.MECPatients.Length; i++)
 			if (S.MECPatients[i].Unit == Unit.ObjectID)
 			{
 				UIState = 1;
-				return Word(Augmenting, "Cybernetic Augmentation") @ Time(S.MECPatients[i].HoursLeft);
+				return Word(default.Augmenting, "Cybernetic Augmentation") @ Time(S.MECPatients[i].HoursLeft);
 			}
 		if (S.ExaltOperative == Unit.ObjectID)
 		{
 			UIState = 5;
-			return Word(CovertOps, "On Covert Operation");
+			return Word(default.CovertOps, "On Covert Operation");
 		}
 	}
 	if (Unit.IsInjured())
 	{
 		UIState = 3;
 		Hours = S != none ? class'LWWounds'.static.HoursFor(Unit, S) : 0;
-		return (Unit.IsGravelyInjured() ? Word(GravelyWounded, "Gravely Wounded") : Word(Wounded, "Wounded")) @ Time(Hours);
+		return (Unit.IsGravelyInjured() ? Word(default.GravelyWounded, "Gravely Wounded") : Word(default.Wounded, "Wounded")) @ Time(Hours);
 	}
 	Hours = S != none ? class'LWFatigue'.static.ValueOf(Unit, 'LWX2RestedAt') - S.Hours : 0;
 	if (Hours > 0)
 	{
 		UIState = 0;
-		return Word(Fatigued, "Fatigued") @ Time(Hours);
+		return Word(default.Fatigued, "Fatigued") @ Time(Hours);
 	}
 	UIState = 2;
-	return Word(Active, "Active");
+	return Word(default.Active, "Active");
 }
 
 /** "(n days)" or "(n hours)", as Long War appends the time out (UIUtilities.GetDaysString, GetHoursString). */
@@ -314,13 +314,13 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	return super.OnUnrealCommand(cmd, arg);
 }
 
-/** A soldier chosen: their armory (XCOM 2's, in EW's armory room). */
+/** A soldier chosen: EW's soldier summary, in EW's armory room. */
 function Choose(int i)
 {
 	if (i < 0 || i >= Soldiers.Length)
 		return;
 	Select(i);
-	XComHQPresentationLayer(Movie.Pres).UIArmory_MainMenu(Soldiers[i]);
+	class'UILWEWSoldierSummary'.static.Open(XComHQPresentationLayer(Movie.Pres), Soldiers[i]);
 }
 
 defaultproperties

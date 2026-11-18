@@ -73,7 +73,9 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
    cannot play). Still XCOM 2's: the main menu, and the Skyranger briefing "Operation Gatecrasher" ("Wilderness of
    South Africa", over an EW map) for the first mission, and every mission's briefing (EW's dropship screen is in
    EW's UICollection_Dropship_SF).
-2. **The soldier screens are XCOM 2's where EW has its own:** the soldier list (EW's: Long War's stats per soldier,
+2. **The soldier screens are XCOM 2's where EW has its own** (list and summary: done, reports below; still to do: the
+   abilities tree, Gene Mods, the summary's previous/next soldier buttons, Report for Duty, EW's icons for Long War's
+   perks): the soldier list (EW's: Long War's stats per soldier,
    class counts in the title), the soldier's summary menu (EW: Abilities, Gene Mods, Loadout, Customize, Report for
    Duty, Dismiss, and next/previous soldier buttons), the abilities tree (EW's: Long War's ranks as a vertical list
    beside the soldier; XCOM 2's horizontal panel covers the soldier), Gene Mods.
@@ -151,3 +153,16 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
 - **Not as EW's yet:** the rows' class icons are EW's four base classes' (Long War's per-class icons show in Game 55's
   rows; how Long War passes them is not found: its row does `classMC.gotoAndStop(label)` and EW's icon clip has only the
   four); eight nationalities have no flag in EW's icon clip (EW's blank); the flag's medal badge shows a placeholder.
+
+## Report (2026-11-18, EW's soldier summary)
+
+- **A soldier chosen in the list opens EW's soldier summary** (its SoldierSummary movie, `UILWEWSoldierSummary`) on EW's
+  soldier summary panel in EW's armory, through EW's camera, the soldier on EW's pad with XCOM 2's idle and gear
+  (`UIPawnMgr`, as XCOM 2's armory requests its pawn). EW's panels filled as EW's components fill them: the soldier's
+  information (name, status, class, rank, missions, kills), Long War's stats line with the gear's bonus ("5+2",
+  "12+1") and experience (350/700), the abilities by name. The menu is Long War's: Abilities (Long War's promotion
+  screen), Psi-Abilities for psionic soldiers, Loadout and Customize (XCOM 2's, in EW's armory), Dismiss (greyed while
+  wounded, with Long War's question).
+- **Seen on wingpu:** list → summary → Loadout (XCOM 2's, in EW's armory) → back to the summary.
+- **Not yet as EW's:** the previous/next soldier buttons, Gene Mods (the mods a soldier has), Report for Duty, EW's
+  icons for Long War's perks (the port's perks wear XCOM 2's), the flag and medal badge beside the name.
