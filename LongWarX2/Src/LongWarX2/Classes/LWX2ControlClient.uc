@@ -4363,6 +4363,8 @@ function string EWDisplay(array<string> Args)
 		R.Pitch += int(Args[3]);
 	else if (Args[2] ~= "roll")
 		R.Roll += int(Args[3]);
+	else if (Args[2] ~= "move")
+		D.SetLocation(D.Location + vect(1, 0, 0) * float(Args[3]) + vect(0, 1, 0) * float(Args.Length > 4 ? Args[4] : "0") + vect(0, 0, 1) * float(Args.Length > 5 ? Args[5] : "0"));
 	else if (Args[2] ~= "show")
 		`HQPRES.Get3DMovie().ShowDisplay(D.Tag, D);
 	else if (Args[2] ~= "material")

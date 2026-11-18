@@ -51,6 +51,16 @@ var config string DisplayMesh, DisplayMaterial;
 var config float DisplayScale;
 /** XCOM 2's plate turned to face as EW's panel mesh faces (added to EW's rotation). */
 var config rotator DisplayTurn;
+/** A tag's panels replaced by one XCOM 2 plate showing the whole movie (the Situation Room's wall: EW's wall meshes take
+ *  slices of EW's movie layout, which XCOM 2's 3D movie does not reproduce). */
+struct LWX2PlateDisplay
+{
+	var name Tag;
+	var vector Loc;
+	var rotator Rot;
+	var float Scale;
+};
+var config array<LWX2PlateDisplay> PlateDisplays;
 /** The panels placed (PlaceDisplays). */
 var array<LWX2UIDisplay> Displays;
 var config string BaseLighting;
@@ -248,6 +258,7 @@ function PlaceDisplays()
 	local LWX2EWMapPieces.LWX2Display D;
 	local LWX2UIDisplay A;
 	local StaticMesh Mesh, EWMesh;
+	local LWX2PlateDisplay P;
 	local MaterialInterface Mat;
 
 	if (!ScreensIn3D || Displays.Length > 0)
@@ -259,8 +270,24 @@ function PlaceDisplays()
 		`log("LongWarX2: EW base: no display mesh or material (" $ DisplayMesh $ "," @ DisplayMaterial $ ")", , 'LongWarX2');
 		return;
 	}
+	foreach PlateDisplays(P)
+	{
+		A = Spawn(class'LWX2UIDisplay', self, P.Tag, P.Loc + BaseOffset, P.Rot);
+		if (A == none)
+			continue;
+		A.StaticMeshComponent.SetStaticMesh(Mesh);
+		A.StaticMeshComponent.SetMaterial(0, Mat);
+		A.StaticMeshComponent.CreateAndSetMaterialInstanceConstant(0).SetScalarParameterValue('Visibility', 1.0);
+		A.SetDrawScale3D(vect(1, 1, 1) * P.Scale);
+		A.Tag = P.Tag;
+		A.bEWMesh = true;
+		A.StaticMeshComponent.SetHidden(true);
+		Displays.AddItem(A);
+	}
 	foreach Data("Command1").Displays(D)
 	{
+		if (PlateDisplays.Find('Tag', D.Tag) != INDEX_NONE)
+			continue;
 		// EW's own panel mesh, at EW's rotation and scale, where the converter found it; else XCOM 2's plate, turned and
 		// scaled to EW's panel.
 		EWMesh = D.Mesh != "" ? StaticMesh(DynamicLoadObject(D.Mesh, class'StaticMesh', true)) : none;

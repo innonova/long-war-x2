@@ -50,9 +50,15 @@ where EW's country panels stand.
   on the panel). Switch: `ScreensIn3D` in `XComLWEWMaps.ini`.
 - **The engineering queue** (EW's CURRENT PROJECTS) beside it, from the HUD.
 - **Not yet:**
-  - **The Situation Room's wall:** pushed onto `UIDisplay_CountryPanels`, EW's wall meshes (`UI_situationroom_*`, at
-    EW's place, rotation and scale; the three panels without an EW mesh left out) show only slivers of the movie: small
-    regions of it, as if the movie's layout in XCOM 2's 3D render target were not EW's. Next: the render target's size
-    and the movie's stage there, against EW's wall meshes' UVs. Left flat until then.
+  - **The Situation Room's wall:** see the next report.
   - **Vahlen and Shen** beside the panels (EW's characters in its base, not converted).
   - The Repair Bay, the Gene Lab, the soldier screens' own panels.
+
+## Report (2026-11-18, the Situation Room on its wall)
+
+- **EW's wall meshes** (`UI_situationroom_*`) showed only slivers of the movie: they take slices of EW's movie layout,
+  which XCOM 2's 3D movie does not reproduce. In their place **one XCOM 2 plate across the wall**
+  (`LWX2EWBase.PlateDisplays`: centre of EW's wall panels, facing the room, scale 1150), and the Situation Room pushed
+  onto it through EW's `Cam_SituationRoom`: the countries, funding, the earth on the room's wall as in EW.
+- **Clicks work there:** in EXALT's view a click on a country with an exposed cell opened the covert operative list.
+- **Not as EW's:** EW's wall is curved and in panels, ours one flat plate; EW's objectives panel below it is not shown.
