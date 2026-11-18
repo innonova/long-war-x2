@@ -462,3 +462,30 @@ surface detail and lighting, the soldier summary's right-hand header width, the 
 - Placing this in the shell is what used to crash every start; with the base's pieces physics-free it starts cleanly.
 - **Not yet as EW's:** the framing (EW's view is from further back and left: its shell likely moves the camera by a
   matinee from the map's Kismet), EW's lens flare, and a bright gap at the right where a few pieces are skipped.
+
+## Report (2026-11-18 evening, after a mission: EW's debrief, back to EW's base)
+
+Found by playing a mission through: after it, XCOM 2's whole Avenger sequence still ran (its After Action Report with
+the squad on the Avenger's walkway, its loot screen, a soldier-bond alert, "New Objective: Contact the Resistance in the
+Blacksite Region" from XCOM 2's story, its rewards recap) and ended in XCOM 2's Commander's Quarters, not EW's base.
+Now (checked by a council mission won, `logs/ew_debrief.png`):
+
+- **EW's debrief** (`UILWEWDebrief` on EW's Debrief movie, through EW's Cargo camera, in place of XCOM 2's
+  `UIAfterAction`: a ModClassOverride, `UILWAfterAction`, which keeps XCOM 2's own bookkeeping after it):
+  - **After Action Report:** the operation's name, a row per soldier (rank and class icons, name, kills, missions, the
+    promotion due, Long War's status: Active, Fatigued or Wounded with the days, KIA); SHIVs and MECs in their kind of row.
+  - **Artifacts Recovered** (when anything was): each item and how many, with EW's and Long War's pictures. The debrief
+    applies Long War's result of the mission itself (its loot, wounds and fatigue; `XComGameState_LWStrategy.Arrived`,
+    which the hub would otherwise apply) and shows the stores' difference.
+- **XCOM 2's loot screen** keeps its opening of the mission's caches and closes at once, straight into the return to the
+  base (`UILWLootRecovered`): no research-unlocked screen, no rewards recap.
+- **XCOM 2's story silenced:** its objectives keep running (some of XCOM 2's code asks after them), but their narrative
+  triggers are removed at start-up: no "New Objective" alerts, advisor lines or the rooms they opened.
+- **No soldier bonds** (Long War has none): XCOM 2's per-mission cohesion set to 0 in config, so no bond alert.
+- **The Situation Room's wall** is put just under the hub when it opens (it had stayed over the hub when a popup was on top
+  at that moment), so the hub's menu and HUD are there on return.
+- **The loading briefing** (XCOM 2's dropship, `UILWDropShipBriefing`): Long War's country as the location (it named the
+  XCOM 2 plot's "Wilderness of Eastern U.S." for a mission in Argentina) and Long War's objective; to be checked by eye.
+
+**Still open here:** the debrief's flag images draw empty; EW's council debrief (the council's rewards and panic as EW
+words them) for council missions; Long War's mission titles in `PendingWords` are English of ours, not EW's words.

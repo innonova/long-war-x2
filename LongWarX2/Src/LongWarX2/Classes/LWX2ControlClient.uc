@@ -975,6 +975,8 @@ function string Continue()
 		return "nothing to continue:" @ (Top != none ? string(Top.Class.Name) : "no screen");
 	if (UIDropShipBriefing_MissionStart(Top) != none || UIDropShipBriefing_MissionEnd(Top) != none)
 		WorldInfo.bContinueToSeamlessTravelDestination = true; // what the Skyranger's "press any key" sets (X2TacticalGameRuleset waits on it)
+	else if (UILWEWDebrief(Top) != none)
+		UILWEWDebrief(Top).GoOn();
 	else if (UIAfterAction(Top) != none)
 		UIAfterAction(Top).OnContinue();
 	else if (UILWStartSelect(Top) != none)

@@ -133,6 +133,39 @@ static event OnPostTemplatesCreated()
 	class'X2Ability_LWStandins'.static.AddGrenadeRange();
 	class'X2Ability_LWStandins'.static.AddMECCloseCombat();
 	class'LWX2Zombies'.static.AddZombies();
+	SilenceXCom2Objectives();
+}
+
+/**
+ * XCOM 2's story (its objectives' narrative triggers: the "New Objective" alerts, the advisors' lines, the screens they
+ * push, as "Contact the Resistance in the Blacksite Region" after a first mission, which then opened the Avenger's CIC)
+ * silenced: Long War's strategy layer replaces it (features/strategy-flow.md). The objectives stay, as XCOM 2's code asks
+ * after some of them.
+ */
+static function SilenceXCom2Objectives()
+{
+	local X2StrategyElementTemplateManager Manager;
+	local array<X2DataTemplate> Variants;
+	local X2DataTemplate Data, Template;
+	local X2ObjectiveTemplate Objective;
+	local int n;
+
+	Manager = class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager();
+	foreach Manager.IterateTemplates(Template, none)
+	{
+		if (X2ObjectiveTemplate(Template) == none)
+			continue;
+		Manager.FindDataTemplateAllDifficulties(Template.DataName, Variants);
+		foreach Variants(Data)
+		{
+			Objective = X2ObjectiveTemplate(Data);
+			if (Objective == none || Objective.NarrativeTriggers.Length == 0)
+				continue;
+			Objective.NarrativeTriggers.Length = 0;
+			n++;
+		}
+	}
+	`log("LongWarX2: XCOM 2's objectives silenced:" @ n, , 'LongWarX2');
 }
 
 /** Abilities a unit gets for the mission beyond its template's and its class's (XCOM 2's hook): the SHIVs' Foundry

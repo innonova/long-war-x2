@@ -2741,6 +2741,19 @@ function Decisions(out array<int> Kinds, out array<int> Indexes, out array<strin
 }
 
 /** The pending mission in words, for squad select's mission panel: its title and what it brings home. */
+/** The country of the mission sent (as MissionBack reckons it): a UFO's, a site's (abductions, terror, the HQ's assault, a
+ *  council mission), an alien base's; else XCOM's home. */
+function int PendingCountry()
+{
+	switch (PendingKind)
+	{
+	case 1: case 2: return Ufos[PendingIndex].Country;
+	case 3: case 4: case 7: case 10: return Sites[PendingIndex].Country;
+	case 5: return PendingIndex;
+	}
+	return HomeCountry();
+}
+
 function PendingWords(out string Title, out string Reward)
 {
 	switch (PendingKind)

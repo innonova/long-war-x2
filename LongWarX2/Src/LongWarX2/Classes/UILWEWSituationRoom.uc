@@ -45,14 +45,14 @@ var Texture2D EarthTexture;
 static function OpenWall(XComHQPresentationLayer HQPres)
 {
 	local UILWEWSituationRoom EWScreen;
-	local UIScreen Top;
+	local UIScreen S;
+	local array<UIScreen> Above;
 
 	if (HQPres == none || !class'LWX2EWBase'.default.ScreensIn3D || class'LWX2EWBase'.static.DisplayFor(HQPres, default.EWDisplay) == none)
 		return;
 	EWScreen = UILWEWSituationRoom(HQPres.ScreenStack.GetScreen(class'UILWEWSituationRoom'));
 	if (EWScreen != none)
 		return;
-	Top = HQPres.ScreenStack.GetCurrentScreen();
 	DynamicLoadObject(default.UIPackage $ ".ewxSituationRoom", class'Object', true);
 	EWScreen = HQPres.Spawn(class'UILWEWSituationRoom', HQPres);
 	EWScreen.Package = name("/ package/ewxSituationRoom/SituationRoom");
@@ -63,9 +63,21 @@ static function OpenWall(XComHQPresentationLayer HQPres)
 	EWScreen.EWDisplayCamera = '';
 	EWScreen.BaseCamera = '';
 	Push3D(HQPres, EWScreen);
-	// (Under the screen that was on top: the hub keeps the focus.)
-	if (Top != none)
-		HQPres.ScreenStack.MoveToTopOfStack(Top.Class);
+	// (Just under the hub: the hub, then the screens that were over it, back on top in their order. Only the one on top
+	// was moved before, and a passing popup on top at that moment (XCOM 2's bond alert after a mission) left the wall over
+	// the hub once it closed.)
+	Above.Length = 0;
+	foreach HQPres.ScreenStack.Screens(S)
+	{
+		if (UILWEWHub(S) != none)
+			break;
+		if (S != EWScreen)
+			Above.InsertItem(0, S);
+	}
+	if (HQPres.ScreenStack.GetScreen(class'UILWEWHub') != none)
+		HQPres.ScreenStack.MoveToTopOfStack(class'UILWEWHub');
+	foreach Above(S)
+		HQPres.ScreenStack.MoveToTopOfStack(S.Class);
 }
 
 /** The wall out of sight while another screen is drawn in 3D (XCOM 2's 3D movie is one picture for all its panels: a wall
