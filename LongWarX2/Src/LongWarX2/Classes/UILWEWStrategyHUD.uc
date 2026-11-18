@@ -251,7 +251,8 @@ function FindContext()
 		Context = 3;
 		if (UILWEWResearch(Top) != none)
 			Kind = 'Research';
-		else if (UILWEWEngineering(Top) != none || UILWEWManufacturing(Top) != none)
+		// (And the Repair Bay, EW's MEC inventory: engineering's lines and its engineers, as EW's capture shows.)
+		else if (UILWEWEngineering(Top) != none || UILWEWManufacturing(Top) != none || UILWEWRepairBay(Top) != none)
 			Kind = 'Engineering';
 		else if (UILWEWBuildFacilities(Top) != none || UILWEWChooseFacility(Top) != none)
 			Kind = 'Facilities';

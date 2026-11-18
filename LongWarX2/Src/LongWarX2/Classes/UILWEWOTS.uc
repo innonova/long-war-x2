@@ -33,14 +33,15 @@ simulated function OnInit()
 	Fill();
 }
 
-/** EW's base behind it, through the barracks' camera (the screen under it may have handed the view back). */
+/** EW's base behind it, through the school's camera (EW's XGOTSUI.Init: LookAtFacility), the barracks' where none is built
+ *  (the screen under it may have handed the view back). */
 function ShowBase()
 {
 	local LWX2EWBase B;
 
 	B = class'LWX2EWBase'.static.Get(self);
 	B.Show();
-	B.LookAt('BARRACKS', 0);
+	B.LookAt(BaseCamera != '' ? BaseCamera : 'BARRACKS', 0);
 }
 
 simulated function OnReceiveFocus()

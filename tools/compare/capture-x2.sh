@@ -44,8 +44,8 @@ order=(base mission-control room-research room-engineering room-barracks room-ha
   scr-facilities scr-foundry scr-repairbay scr-soldiers scr-ots scr-psilabs scr-memorial scr-hire scr-officers scr-aircraft scr-satellite
   scr-sitroom scr-greymarket soldier-summary soldier-promotion soldier-loadout)
 # Once, before the views: every room's menu as full as EW's in the reference save (the facilities placed and an officer
-# project bought, test aids) and a soldier with ranks to show (the first one).
-for p in 'base set 1 2 11' 'base set 2 2 22' 'base set 3 2 12' 'base set 4 2 17' 'base set 5 2 23' 'officers buy 0' 'rankup 0 4'; do lw "$p" >/dev/null; done
+# project bought, test aids; column 4 is the shaft) and a soldier with ranks to show (the first one).
+for p in 'base set 1 2 11' 'base set 2 2 22' 'base set 3 2 12' 'base set 6 2 17' 'base set 5 2 23' 'officers buy 0' 'rankup 0 4'; do lw "$p" >/dev/null; done
 [ $# -gt 0 ] && order=("$@")
 lw 'open hub' >/dev/null
 sleep 3

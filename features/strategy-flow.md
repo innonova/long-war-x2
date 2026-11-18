@@ -304,3 +304,28 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   whose tabs are empty there (the hub's instance has the tabs); it drew alone over every screen. Hidden in that instance;
   the base view keeps the hub's tabs with their bracket.
 - Test aids: `ewset abs:<path>` sets a variable from the movie's root.
+
+## Report (2026-11-18, the reviewer's second round; a tile's old level; the barracks crash)
+
+- **The reviewer's second round** (all 29 views captured again): fixed since the morning, by its account, the satellites'
+  view, the live Situation Room wall, the soldier's size on the plinth, the small navigation icons and the line across the
+  top; partly, the labs, the Repair Bay, Vahlen. Its new top items, and what they turned out to be:
+  - **Psi Labs black, Repair Bay rock:** a real bug. When a tile changed (excavated, built, removed), `LWX2EWBase.Refresh`
+    placed the new level and left the old one's actors until the next load: the rock stayed over a new facility, a removed
+    facility stayed drawn. Each tile's actors are now kept with it (`TileOf`) and taken away when it is placed again. Seen:
+    the Psi Labs tile shows the lab as EW's capture does, the OTS tile the school. (The capture had also put the Psi Labs
+    on column 4, the shaft: moved.) The Repair Bay's rock beside the plinth is the fresh campaign's unexcavated tiles.
+  - **The OTS over the barracks:** its own `ShowBase` kept the barracks' camera; now the school's (EW's `LookAtFacility`).
+  - **The Repair Bay's resources:** engineering's lines and engineers, as EW shows them.
+- **The intermittent crash at a campaign's start (open):** XCOM 2 crashes as EW's `Static_Barracks` level loads (about 1
+  start in 13). Placing the base's fixed rooms in the shell made it happen every time, which gave a test:
+  - It is the static meshes: with all of the level's meshes made inert, 3 of 3 starts clean. But no one mesh or small group
+    is it: halves of them help (any 50 or so), single packages do not. The dump (read with a Python minidump parser; WinDbg's
+    `cdb`, installed on wingpu, could not open it): an access violation reading a vertex position buffer, 709 positions
+    (`Barracks_Gym_Border`), at index 0, its data pointer at an unmapped page: data freed or never there, the mesh in hand
+    being whichever is being read when it happens. That points to memory corrupted earlier, or a limit crossed.
+  - Not the cause: the level's cube texture; the thousands of "invalid NetIndex" errors per run (raising the packages'
+    net object counts moved the maximum but not the crash). Those experiments are not kept.
+  - Next: the faulting code's caller (`XCom2.exe+0x70eec8`, called from around `+0x7534c4`), to know who reads the positions
+    and when they are freed; and whether XCOM 2 keeps a mesh's CPU copy of its vertices only when asked (EW's cooked meshes
+    may not ask).

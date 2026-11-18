@@ -19,6 +19,8 @@ var config float ViewFOV;
 
 var array<Actor> Fixed;
 var array<Actor> Tiles;
+/** Each placed tile actor's tile (its index in the base's grid), beside Tiles: a tile placed again takes its old actors away. */
+var array<int> TileOf;
 /** Mission Control's hologlobe (EW's Globe mesh at its full size; the moon beside it is the same mesh, smaller), turned as
  *  EW turns it while nothing is shown on it, a turn in GlobeSeconds. */
 var Actor Globe;
@@ -134,6 +136,26 @@ static function LWX2EWMapData Data(string Level)
 	return D;
 }
 
+/** Command1 and the fixed rooms placed, once. */
+function PlaceFixed()
+{
+	local string Level;
+
+	if (Fixed.Length > 0)
+		return;
+	class'LWX2EWMapPieces'.static.PlaceOf(Data("Command1"), self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
+	class'LWX2EWMapPieces'.static.PlaceLightsOf(Data("Command1"), self, BaseOffset, Fixed, true, BaseLightScale, true);
+	foreach FixedLevels(Level)
+	{
+		if (Data(Level).Pieces.Length == 0)
+			continue;
+		class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
+		class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, BaseOffset, Fixed, true, BaseLightScale, true);
+	}
+	`log("LongWarX2: EW base: the shell and" @ FixedLevels.Length @ "fixed rooms placed," @ Fixed.Length @ "actors", , 'LongWarX2');
+	FindGlobe();
+}
+
 /** The base placed (once) and the tiles brought up to date, and the camera on it. */
 function Show()
 {
@@ -158,20 +180,7 @@ function Show()
 	else if (LightingLevel != none)
 		`MAPS.SetStreamingLevelVisible(LightingLevel, true);
 	RefreshAmbient();
-	if (Fixed.Length == 0)
-	{
-		class'LWX2EWMapPieces'.static.PlaceOf(Command, self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
-		class'LWX2EWMapPieces'.static.PlaceLightsOf(Command, self, BaseOffset, Fixed, true, BaseLightScale, true);
-		foreach FixedLevels(Level)
-		{
-			if (Data(Level).Pieces.Length == 0)
-				continue;
-			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
-			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, BaseOffset, Fixed, true, BaseLightScale, true);
-		}
-		`log("LongWarX2: EW base: the shell and" @ FixedLevels.Length @ "fixed rooms placed," @ Fixed.Length @ "actors", , 'LongWarX2');
-		FindGlobe();
-	}
+	PlaceFixed();
 	PlacePeople();
 	// (The 3D panels too: XCOM 2's screens ask for their display as they open, before any listener of ours runs.)
 	PlaceDisplays();
@@ -785,6 +794,7 @@ function Refresh()
 			if (A != none)
 				A.Destroy();
 		Tiles.Length = 0;
+		TileOf.Length = 0;
 		PlacedType.Length = 0;
 		PlacedType.Length = S.TileType.Length;
 		PlacedFacility.Length = 0;
@@ -801,8 +811,16 @@ function Refresh()
 			Facility = S.TileFacility[i];
 			if (PlacedType[i] == Type && PlacedFacility[i] == Facility)
 				continue;
-			// (A tile placed before is placed again: its old actors stay until the base is shown in a new world. The
-			// first version; tiles change rarely.)
+			// (A tile placed before: its old level's actors taken away first, the rock an excavation removes, the facility a
+			// removal does. They had stayed until the base was shown in a new world, over the new level.)
+			for (k = Tiles.Length - 1; k >= 0; k--)
+				if (TileOf[k] == i)
+				{
+					if (Tiles[k] != none)
+						Tiles[k].Destroy();
+					Tiles.Remove(k, 1);
+					TileOf.Remove(k, 1);
+				}
 			PlacedType[i] = Type;
 			PlacedFacility[i] = Facility;
 			Level = LevelFor(Type, Facility, X == class'LWBase'.const.SHAFT);
@@ -813,7 +831,10 @@ function Refresh()
 			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, Command.Rooms[k].Loc + BaseOffset, class'DynamicSMActor_Spawnable', Placed, false, true);
 			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed, true, BaseLightScale, true);
 			foreach Placed(A)
+			{
 				Tiles.AddItem(A);
+				TileOf.AddItem(i);
+			}
 			n++;
 		}
 	}
