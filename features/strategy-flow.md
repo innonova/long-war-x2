@@ -449,3 +449,16 @@ surface detail and lighting, the soldier summary's right-hand header width, the 
 - **Unblocked:** EW's main menu scene (the shell's base view), parked because placing the base in the shell crashed.
 - Ten ordinary campaign starts in a row reached the base (10 of 10); the base view, Build Facilities and engineering
   look as before.
+
+## Report (2026-11-18 evening, EW's scene behind the main menu)
+
+- EW's main menu shows its own shell map (`XComShell.upk`: a Mission Control room of its own, with the globe and an
+  officer at the rail), seen through `XComHeadquartersCamera.StartStrategyShellView`. The setup now converts that map with
+  the base (`BaseLevels`), and `LWX2EWBase.ShowShell` places it far below the shell's world (`ShellOffset`) when EW's
+  main menu comes up: its pieces (as physics-free base pieces, with EW's baked lighting), its 256 lights and its people;
+  the shell's own scene hidden, the base's lighting level beneath for the ambient light, and the camera on the map's first
+  camera. The hologlobe takes the same teal earth as the base's (a `LookOverrides` line). Side by side:
+  `logs/main_menu_ew_scene.png` (EW left).
+- Placing this in the shell is what used to crash every start; with the base's pieces physics-free it starts cleanly.
+- **Not yet as EW's:** the framing (EW's view is from further back and left: its shell likely moves the camera by a
+  matinee from the map's Kismet), EW's lens flare, and a bright gap at the right where a few pieces are skipped.

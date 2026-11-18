@@ -21,6 +21,9 @@ event OnInit(UIScreen Screen)
 	// campaign's start happen every time: features/strategy-flow.md.)
 	if (class'LWX2EWBase'.default.PlaceInShell && class'LWX2EWBase'.static.Converted())
 		class'LWX2EWBase'.static.Get(Screen).PlaceFixed();
+	// (EW's own scene behind EW's main menu: LWX2EWBase.ShowShell.)
+	if (class'LWX2EWBase'.default.ShellScene && UILWEWMainMenu(Screen) != none && class'LWX2EWBase'.static.Converted())
+		class'LWX2EWBase'.static.Get(Screen).ShowShell();
 	// (The test scripts wait for this line: tools/test/start-game.ps1.)
 	`log("LongWarX2: main menu up on" @ Screen.Class.Name, , 'LongWarX2');
 	if (!default.ShowTestCampaign)

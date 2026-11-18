@@ -51,6 +51,11 @@ var config array<string> PeopleLevels;
 /** A test aid (off): the fixed rooms placed at the main menu (UIScreenListener_LongWarX2Shell), the campaign start's crash
  *  reproduced at every start (features/strategy-flow.md). */
 var config bool PlaceInShell;
+/** EW's main menu scene (ShowShell): on, and where it is placed. */
+var config bool ShellScene;
+var config vector ShellOffset;
+var array<Actor> ShellPlaced;
+var LevelStreaming ShellLighting;
 /** The parent of EW's people's stand-ins (XCOM 2's material for its own base's staff); empty: the bodies' (LWX2EWBodies). */
 var config string PeopleMaterialParent;
 /** Whether they play EW's animations (false: they stand in their reference pose; a test switch). */
@@ -157,6 +162,50 @@ function PlaceFixed()
 	}
 	`log("LongWarX2: EW base: the shell and" @ FixedLevels.Length @ "fixed rooms placed," @ Fixed.Length @ "actors", , 'LongWarX2');
 	FindGlobe();
+}
+
+/**
+ * EW's main menu scene (features/strategy-flow.md): EW's shell map (XComShell, its own Mission Control room with the globe
+ * and the officer at the console), converted with the base, placed below the shell's world at ShellOffset, its lights and
+ * its people with it, seen through its camera as EW's shell shows it (XComHeadquartersCamera.StartStrategyShellView: the
+ * map's first camera). The shell's own scene is left where it is, out of view.
+ */
+function ShowShell()
+{
+	local LWX2EWMapData D;
+	local CameraActor Cam;
+	local XComPresentationLayerBase Pres;
+	local name CamName;
+
+	D = Data("XComShell");
+	if (D.Pieces.Length == 0 || D.Cameras.Length == 0)
+		return;
+	Fog(false);
+	if (ShellPlaced.Length == 0)
+	{
+		class'LWX2EWMapPieces'.static.PlaceOf(D, self, vect(0, 0, 0), 0, ShellOffset, class'LWX2BasePiece', ShellPlaced, false, true);
+		class'LWX2EWMapPieces'.static.PlaceLightsOf(D, self, ShellOffset, ShellPlaced, true, BaseLightScale, true);
+		PlacePeopleOf("XComShell", ShellOffset, ShellPlaced);
+		`log("LongWarX2: EW shell scene:" @ ShellPlaced.Length @ "actors placed", , 'LongWarX2');
+	}
+	CamName = 'LWX2EWShell';
+	Cam = Spawn(class'DynamicCameraActor', self, CamName, D.Cameras[0].Loc + ShellOffset, D.Cameras[0].Rot);
+	if (Cam == none)
+		return;
+	Cam.FOVAngle = D.Cameras[0].FOV;
+	Cam.bConstrainAspectRatio = false;
+	Pres = XComPlayerController(GetALocalPlayerController()) != none ? XComPlayerController(GetALocalPlayerController()).Pres : none;
+	if (Pres != none)
+		Pres.CAMLookAtNamedLocation(string(CamName), 0);
+	// (As the base's view: the shell's own scene hidden, the base's lighting level beneath the room for its ambient light,
+	// and the ambient captured again once the camera is there; captured in the shell's bright scene it washed the room
+	// out.)
+	HideWorld();
+	if (BaseLighting != "" && ShellLighting == none)
+		ShellLighting = `MAPS.AddStreamingMap(BaseLighting, ShellOffset, rot(0, 0, 0), false, true, true);
+	RefreshAmbient();
+	SetTimer(0.5, false, nameof(RefreshAmbient));
+	SetTimer(1.5, false, nameof(RefreshAmbientLater));
 }
 
 /** The base placed (once) and the tiles brought up to date, and the camera on it. */
