@@ -16,6 +16,8 @@ struct LWJet
 	/** 0 ready, 2 refuelling, 4 repairing, 6 transferring, 7 refitting (Long War's interceptor statuses); the hours until done. */
 	var int Status;
 	var int HoursDown;
+	/** Its bay in the base's hangar (1-4: EW's m_iHomeBay + 1; LWHangar.AssignBays), 0 none: based elsewhere, on its way. */
+	var int Bay;
 };
 
 /** Interceptors ordered (the hangar, LWHangar): how many, where to, the hours until they arrive. */

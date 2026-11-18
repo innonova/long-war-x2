@@ -10,7 +10,7 @@ import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 
-export interface Person { key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
+export interface Person { bay?: number; bayState?: string; key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
 
 export function peopleOf(file: string): Person[] {
   const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
@@ -47,7 +47,9 @@ export function peopleIn(meta: any, pkg: any): Person[] {
   }
 
   // The groups: name, AnimSets, the anim track's sequences.
-  const groups = new Map<string, { animSets: string[]; seqs: string[]; animSetRefs: number[]; key?: number[]; keyRot?: number[] }>()
+  type Group = { animSets: string[]; seqs: string[]; animSetRefs: number[]; key?: number[]; keyRot?: number[] }
+  const groups = new Map<string, Group>()
+  const groupAt = new Map<number, Group>()
   exports.forEach((e, i) => {
     if (e.type !== 'InterpGroup') return
     const t = tagsAt(i)
@@ -77,6 +79,7 @@ export function peopleIn(meta: any, pkg: any): Person[] {
       if (at) for (const k of structs(at.value)) g.seqs.push(name(k.find((x) => x.name === 'AnimSeqName')))
     }
     groups.set(name(t.find((x) => x.name === 'GroupName')), g)
+    groupAt.set(i + 1, g)
   })
   // The matinee's bindings: group name → actor (through its SeqVar_Object).
   const bound = new Map<number, string>()
@@ -97,16 +100,59 @@ export function peopleIn(meta: any, pkg: any): Person[] {
     }
   })
 
-  const out: Person[] = []
+  // EW's hangar bays (Anim_Hangar_LaunchBays): a matinee per bay and state, Base_Bay<n>_<Open|Repair|Closed>
+  // (XGFacility_Hangar.UpdateHangarBays plays one of the three per bay). Its Track group is the bay's launch pad (an actor
+  // of the level, posed by the state's loop); its Interceptor and FireStorm groups are where the bay's craft stands
+  // (XGFacility_Hangar.SetHangarShipsForKismet binds the craft; the level's own stand-ins are hidden). Each a record of
+  // its bay and state; their actors not people of the level.
+  const bays: Person[] = []
+  const inBays = new Set<number>()
+  const deg = 65536 / 360
   exports.forEach((e, i) => {
-    if (!/^SkeletalMeshActor/.test(e.type) || !e.fullName.startsWith('TheWorld.PersistentLevel.')) return
-    const group = bound.get(i + 1)
-    const g = group ? groups.get(group) : undefined
-    if (!g || !g.seqs.length) return
+    if (e.type !== 'SeqAct_Interp') return
+    const t = tagsAt(i)
+    const m = /^Base_Bay(\d)_(Open|Repair|Closed)$/.exec(str(t.find((x) => x.name === 'ObjComment')))
+    const vl = t.find((x) => x.name === 'VariableLinks')
+    if (!m || !vl) return
+    const links = structs(vl.value).map((link) => ({ desc: str(link.find((x) => x.name === 'LinkDesc')), vars: refs(link.find((x) => x.name === 'LinkedVariables')).filter((v) => v > 0) }))
+    const data = links.flatMap((l) => l.vars).find((v) => exports[v - 1]!.type === 'InterpData')
+    if (!data) return
+    const byName = new Map<string, Group>()
+    for (const gr of refs(tagsAt(data - 1).find((x) => x.name === 'InterpGroups'))) {
+      const g = groupAt.get(gr)
+      if (g) byName.set(name(tagsAt(gr - 1).find((x) => x.name === 'GroupName')), g)
+    }
+    for (const l of links) {
+      const g = byName.get(l.desc)
+      if (!g || !g.seqs.length) continue
+      for (const v of l.vars) {
+        if (exports[v - 1]!.type !== 'SeqVar_Object') continue
+        const actor = i32(tagsAt(v - 1).find((x) => x.name === 'ObjValue'))
+        if (actor <= 0 || !/^SkeletalMeshActor/.test(exports[actor - 1]!.type)) continue
+        inBays.add(actor)
+        const p = personOf(actor - 1, l.desc, g, true)
+        if (!p) continue
+        p.bay = Number(m[1])
+        p.bayState = m[2]
+        // (The pad where it stands, posed, turned by its key: the arm (its bones' −Y) then reaches the bay, as seen in XCOM 2
+        // with the key's yaw (90) taken off; a craft at the group's first key, its rotation in degrees: roll, pitch, yaw.)
+        if (l.desc === 'Track') p.rot = [p.rot[0]!, p.rot[1]! - Math.round((g.keyRot?.[2] ?? 0) * deg), p.rot[2]!]
+        else if (g.key) {
+          p.loc = g.key
+          const r = g.keyRot ?? [0, 0, 0]
+          p.rot = [Math.round(r[1]! * deg), Math.round(r[2]! * deg), Math.round(r[0]! * deg)]
+        }
+        p.key = undefined
+        bays.push(p)
+      }
+    }
+  })
+
+  function personOf(i: number, group: string, g: Group, hiddenToo = false): Person | undefined {
     const t = tagsAt(i, [26, 22, 30, 4, 8])
     // (Hidden in the level: a scene's actor EW shows only while its matinee plays, as the armory's MEC suit and its weapons
     // on the soldier's pad for a MEC conversion; left out.)
-    if ((t.find((x) => x.name === 'bHidden') as { boolValue?: number } | undefined)?.boolValue) return
+    if (!hiddenToo && (t.find((x) => x.name === 'bHidden') as { boolValue?: number } | undefined)?.boolValue) return
     const comp = i32(t.find((x) => x.name === 'SkeletalMeshComponent'))
     let ct: Tag[] = []
     if (comp > 0) ct = tagsAt(comp - 1, [8, 12, 4, 16])
@@ -134,8 +180,8 @@ export function peopleIn(meta: any, pkg: any): Person[] {
     const loc = t.find((x) => x.name === 'Location')
     const rot = t.find((x) => x.name === 'Rotation')
     const ds = t.find((x) => x.name === 'DrawScale')
-    out.push({
-      group: group!,
+    return {
+      group,
       key: g.key,
       keyRot: g.keyRot,
       mesh,
@@ -147,11 +193,21 @@ export function peopleIn(meta: any, pkg: any): Person[] {
       rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
       scale: ds ? f32(ds) : 1,
       animSets: g.animSets,
-      seqs: g.seqs,
+      seqs: [...g.seqs],
       loop,
-    })
+    }
+  }
+
+  const out: Person[] = []
+  exports.forEach((e, i) => {
+    if (!/^SkeletalMeshActor/.test(e.type) || !e.fullName.startsWith('TheWorld.PersistentLevel.') || inBays.has(i + 1)) return
+    const group = bound.get(i + 1)
+    const g = group ? groups.get(group) : undefined
+    if (!g || !g.seqs.length) return
+    const p = personOf(i, group!, g)
+    if (p) out.push(p)
   })
-  return out
+  return [...out, ...bays]
 }
 
 if (/ew-people\.ts$/.test(process.argv[1] ?? '')) {

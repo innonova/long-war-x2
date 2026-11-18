@@ -68,6 +68,11 @@ struct LWX2PeopleFrame
 };
 var config array<LWX2PeopleFrame> PeopleFrames;
 var array<LWX2BasePerson> People;
+/** The level of EW's hangar bays (RefreshBays), its pads and craft as placed, and the bays' states they show. */
+var config string BaysLevel;
+var array<LWX2BasePerson> BayActors;
+var string BaysShown;
+var array<Object> BayAssets;
 
 /** EW's screens on their 3D panels in the rooms (features/ew-3d-screens.md), and the panel's mesh and material: XCOM 2's
  *  (its material takes the 3D movie in its Movie parameter), scaled from EW's. */
@@ -418,8 +423,29 @@ function PlacePeople()
 function PlacePeopleOf(string Level, vector Offset, out array<Actor> Placed)
 {
 	local LWX2EWMapPieces.LWX2Person P;
-	local LWX2EWMapPieces.LWX2PersonSlot S;
 	local LWX2EWMapData D;
+	local LWX2BasePerson A;
+
+	D = Data(Level);
+	if (D == none || D.People.Length == 0)
+		return;
+	if (D.MapPackage != "")
+		DynamicLoadObject(D.MapPackage $ ".TheWorld", class'Object', true);
+	foreach D.People(P)
+	{
+		// (A hangar bay's pad or craft: placed by the hangar's state, RefreshBays.)
+		if (P.Bay > 0)
+			continue;
+		A = PlacePerson(P, Level, Offset);
+		if (A != none)
+			Placed.AddItem(A);
+	}
+}
+
+/** One of a level's people (or animated props) spawned at Offset, posed and animated. */
+function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, vector Offset)
+{
+	local LWX2EWMapPieces.LWX2PersonSlot S;
 	local LWX2BasePerson A;
 	local SkeletalMesh Mesh;
 	local array<AnimSet> Sets;
@@ -433,57 +459,128 @@ function PlacePeopleOf(string Level, vector Offset, out array<Actor> Placed)
 	local int k;
 	local vector At;
 
-	D = Data(Level);
+	Mesh = SkeletalMesh(DynamicLoadObject(P.Mesh, class'SkeletalMesh', true));
+	if (Mesh == none)
+	{
+		`log("LongWarX2: EW base:" @ Level $ "'s" @ P.Mesh @ "not found", , 'LongWarX2');
+		return none;
+	}
+	Sets.Length = 0;
+	foreach P.AnimSets(Path)
+	{
+		Set = AnimSet(DynamicLoadObject(Path, class'AnimSet', true));
+		if (Set != none)
+			Sets.AddItem(Set);
+	}
+	Slots.Length = 0;
+	foreach P.Slots(S)
+	{
+		B.Diffuse = S.Diffuse;
+		B.Normal = S.Normal;
+		// (A slot without a texture found, the eye lashes: the body's stand-in; our unlit material cannot go on a
+		// skeletal mesh.)
+		Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
+		// (The props' textures and scalars on it too: XCOM 2's placeholder Masks darkened the white coats.)
+		MIC = MaterialInstanceConstant(Slot);
+		if (MIC != none && S.Diffuse != "")
+		{
+			for (k = 0; k < class'LWX2EWMapPieces'.default.StandinTextures.Length; k++)
+			{
+				T = Texture(DynamicLoadObject(class'LWX2EWMapPieces'.default.StandinTextures[k].Path, class'Texture', true));
+				if (T != none)
+					MIC.SetTextureParameterValue(class'LWX2EWMapPieces'.default.StandinTextures[k].Name, T);
+			}
+			for (k = 0; k < class'LWX2EWMapPieces'.default.StandinScalars.Length; k++)
+				MIC.SetScalarParameterValue(class'LWX2EWMapPieces'.default.StandinScalars[k].Name, class'LWX2EWMapPieces'.default.StandinScalars[k].Value);
+		}
+		Slots.AddItem(Slot);
+	}
+	k = PeopleFrames.Find('Level', Level);
+	At = (k != INDEX_NONE && VSize(P.Key) > 0) ? P.Key + PeopleFrames[k].Offset : P.Loc;
+	// (Wherever it stands, overlapping or not: a Firestorm on its pad had failed to spawn.)
+	A = Spawn(class'LWX2BasePerson', self, , At + Offset, P.Rot, , true);
+	if (A == none)
+	{
+		`log("LongWarX2: EW base:" @ Level $ "'s" @ P.Mesh @ "not spawned at" @ At + Offset, , 'LongWarX2');
+		return none;
+	}
+	A.SetDrawScale(P.Scale > 0 ? P.Scale : 1.0);
+	if (!PeopleAnimate)
+		Sets.Length = 0;
+	A.Setup(Mesh, Sets, (PeopleAnimate && P.Seqs.Length > 0) ? P.Seqs[0] : '', Slots);
+	return A;
+}
+
+/**
+ * EW's hangar bays as XGFacility_Hangar.UpdateHangarBays has them: the home continent's craft in bays 1-4 (EW's
+ * m_iHomeBay: each jet's Bay, LWHangar.AssignBays), each bay's launch pad posed
+ * for its state (Open: its craft ready; Repair: down, refuelling, repairing or refitting; Closed: empty) with its
+ * Interceptor or Firestorm on it (Anim_Hangar_LaunchBays' Base_Bay<n>_<state> matinees, read by the setup). Placed again
+ * when that changes.
+ */
+function RefreshBays()
+{
+	local XComGameState_LWAirWar AirWar;
+	local LWX2EWMapData D;
+	local LWX2EWMapPieces.LWX2Person P;
+	local array<string> States;
+	local array<name> Parts;
+	local LWX2BasePerson A;
+	local XComGameState_LWAirWar.LWJet J;
+	local string Sig, Path;
+	local int i, Home;
+
+	D = Data(BaysLevel);
 	if (D == none || D.People.Length == 0)
 		return;
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	Home = class'LWHangar'.static.HomeContinent();
+	States.Length = 4;
+	Parts.Length = 4;
+	for (i = 0; i < 4; i++)
+	{
+		States[i] = "Closed";
+		Parts[i] = '';
+	}
+	if (AirWar != none)
+		foreach AirWar.Jets(J)
+		{
+			if (J.Bay < 1 || J.Bay > 4 || J.Continent != Home || J.Status == 6)
+				continue;
+			States[J.Bay - 1] = class'LWHangar'.static.IsReady(J) ? "Open" : "Repair";
+			Parts[J.Bay - 1] = J.Type == 3 ? 'FireStorm' : 'Interceptor';
+		}
+	for (i = 0; i < 4; i++)
+		Sig $= States[i] $ Parts[i] $ ";";
+	if (Sig == BaysShown && BayActors.Length > 0)
+		return;
+	foreach BayActors(A)
+		if (A != none)
+			A.Destroy();
+	BayActors.Length = 0;
+	BaysShown = Sig;
 	if (D.MapPackage != "")
 		DynamicLoadObject(D.MapPackage $ ".TheWorld", class'Object', true);
+	// (Every bay's meshes and animations held while the base lives: those of a craft not yet in a bay had been collected
+	// with the level's package by the time one came, a Firestorm then not found.)
+	if (BayAssets.Length == 0)
+		foreach D.People(P)
+			if (P.Bay > 0)
+			{
+				BayAssets.AddItem(DynamicLoadObject(P.Mesh, class'SkeletalMesh', true));
+				foreach P.AnimSets(Path)
+					BayAssets.AddItem(DynamicLoadObject(Path, class'AnimSet', true));
+			}
 	foreach D.People(P)
 	{
-		Mesh = SkeletalMesh(DynamicLoadObject(P.Mesh, class'SkeletalMesh', true));
-		if (Mesh == none)
+		if (P.Bay < 1 || P.Bay > 4 || P.BayState != States[P.Bay - 1] || (P.BayPart != 'Track' && P.BayPart != Parts[P.Bay - 1]))
 			continue;
-		Sets.Length = 0;
-		foreach P.AnimSets(Path)
-		{
-			Set = AnimSet(DynamicLoadObject(Path, class'AnimSet', true));
-			if (Set != none)
-				Sets.AddItem(Set);
-		}
-		Slots.Length = 0;
-		foreach P.Slots(S)
-		{
-			B.Diffuse = S.Diffuse;
-			B.Normal = S.Normal;
-			// (A slot without a texture found, the eye lashes: the body's stand-in; our unlit material cannot go on a
-			// skeletal mesh.)
-			Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
-			// (The props' textures and scalars on it too: XCOM 2's placeholder Masks darkened the white coats.)
-			MIC = MaterialInstanceConstant(Slot);
-			if (MIC != none && S.Diffuse != "")
-			{
-				for (k = 0; k < class'LWX2EWMapPieces'.default.StandinTextures.Length; k++)
-				{
-					T = Texture(DynamicLoadObject(class'LWX2EWMapPieces'.default.StandinTextures[k].Path, class'Texture', true));
-					if (T != none)
-						MIC.SetTextureParameterValue(class'LWX2EWMapPieces'.default.StandinTextures[k].Name, T);
-				}
-				for (k = 0; k < class'LWX2EWMapPieces'.default.StandinScalars.Length; k++)
-					MIC.SetScalarParameterValue(class'LWX2EWMapPieces'.default.StandinScalars[k].Name, class'LWX2EWMapPieces'.default.StandinScalars[k].Value);
-			}
-			Slots.AddItem(Slot);
-		}
-		k = PeopleFrames.Find('Level', Level);
-		At = (k != INDEX_NONE && VSize(P.Key) > 0) ? P.Key + PeopleFrames[k].Offset : P.Loc;
-		A = Spawn(class'LWX2BasePerson', self, , At + Offset, P.Rot);
+		A = PlacePerson(P, BaysLevel, BaseOffset);
 		if (A == none)
 			continue;
-		A.SetDrawScale(P.Scale > 0 ? P.Scale : 1.0);
-		if (!PeopleAnimate)
-			Sets.Length = 0;
-		A.Setup(Mesh, Sets, (PeopleAnimate && P.Seqs.Length > 0) ? P.Seqs[0] : '', Slots);
-		Placed.AddItem(A);
+		BayActors.AddItem(A);
 	}
+	`log("LongWarX2: EW base: hangar bays" @ Sig @ "(" $ BayActors.Length @ "placed)", , 'LongWarX2');
 }
 
 /** EW's 3D UI panels placed, once, hidden (XCOM 2's 3D movie shows the one a screen asks for). */
@@ -935,6 +1032,7 @@ function Refresh()
 	}
 	if (n > 0)
 		`log("LongWarX2: EW base:" @ n @ "tiles placed," @ Tiles.Length @ "actors in all", , 'LongWarX2');
+	RefreshBays();
 }
 
 /** EW's cut surfaces between the rooms and floors (the base's black, LWX2EWMapPieces' BaseBlackMaterials) shown or hidden. */

@@ -2754,40 +2754,48 @@ function int PendingCountry()
 	return HomeCountry();
 }
 
+/** EW's word, or ours where the player's EW words are not written. */
+static function string TitleOr(string EW, string Ours)
+{
+	return EW != "" ? EW : Ours;
+}
+
+/** The mission sent, as squad select and the loading briefing name it: EW's mission titles (XGMission_*.m_strTitle, as
+ *  Mission Control lists them) and its country; what it brings home. */
 function PendingWords(out string Title, out string Reward)
 {
 	switch (PendingKind)
 	{
 	case 1:
-		Title = "Crash site:" @ UfoLabel(Ufos[PendingIndex].Ufo) @ "in" @ CountryName(Ufos[PendingIndex].Country);
+		Title = TitleOr(class'UILWEWAlert'.default.TitleCrash, "Crash site:") @ UfoLabel(Ufos[PendingIndex].Ufo) @ "-" @ CountryName(Ufos[PendingIndex].Country);
 		Reward = "The UFO's salvage";
 		break;
 	case 2:
-		Title = "Landed UFO:" @ UfoLabel(Ufos[PendingIndex].Ufo) @ "in" @ CountryName(Ufos[PendingIndex].Country);
+		Title = TitleOr(class'UILWEWAlert'.default.TitleLanded, "Landed UFO:") @ UfoLabel(Ufos[PendingIndex].Ufo) @ "-" @ CountryName(Ufos[PendingIndex].Country);
 		Reward = "The UFO's salvage";
 		break;
 	case 3:
-		Title = "Abductions in" @ CountryName(Sites[PendingIndex].Country);
+		Title = TitleOr(class'UILWEWAlert'.default.TitleAbductions, "Abductions") @ "-" @ CountryName(Sites[PendingIndex].Country);
 		Reward = "Cash, and the country's panic down";
 		break;
 	case 4:
-		Title = "Terror in" @ CountryName(Sites[PendingIndex].Country);
+		Title = Repl(TitleOr(class'UILWEWAlert'.default.TitleTerror, "Terror in <XGParam:StrValue0/>"), "<XGParam:StrValue0/>", CountryName(Sites[PendingIndex].Country));
 		Reward = "The civilians saved";
 		break;
 	case 5:
-		Title = "The alien base in" @ CountryName(PendingIndex);
+		Title = TitleOr(class'UILWEWAlert'.default.TitleAlienBase, "The alien base in ") $ CountryName(PendingIndex);
 		Reward = "The country back, and the Hyperwave Beacon";
 		break;
 	case 6:
-		Title = "The Temple Ship";
+		Title = TitleOr(class'UILWEWAlert'.default.TitleTempleShip, "The Temple Ship");
 		Reward = "The end of the war";
 		break;
 	case 7:
-		Title = "XCOM's headquarters under attack";
+		Title = TitleOr(class'UILWEWAlert'.default.TitleHQ, "XCOM's headquarters under attack");
 		Reward = "XCOM's survival";
 		break;
 	case 10:
-		Title = "Council" @ class'LWCouncil'.static.KindName(Sites[PendingIndex].CouncilKind) @ "in" @ CountryName(Sites[PendingIndex].Country);
+		Title = TitleOr(class'UILWEWAlert'.default.FCMission, "Council") @ class'LWCouncil'.static.KindName(Sites[PendingIndex].CouncilKind) @ "-" @ CountryName(Sites[PendingIndex].Country);
 		Reward = class'LWCouncil'.static.RewardsText(Sites[PendingIndex].Rewards);
 		break;
 	default:

@@ -189,6 +189,7 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 		AirWar.Orders.Remove(i, 1);
 		S.bStop = true;
 	}
+	AssignBays(AirWar);
 }
 
 static function NewJet(XComGameState_LWAirWar AirWar, int Type, int Continent)
@@ -196,6 +197,7 @@ static function NewJet(XComGameState_LWAirWar AirWar, int Type, int Continent)
 	AirWar.Counter++;
 	AirWar.AddJet((Type == 3 ? "Firestorm-" : "Raven-") $ AirWar.Counter, Type, Type == 3 ? 3 : 3);
 	AirWar.Jets[AirWar.Jets.Length - 1].Continent = Continent;
+	AssignBays(AirWar);
 }
 
 /** Craft built in engineering (a Firestorm), at home. */
@@ -250,6 +252,7 @@ static function bool Dismiss(int Index, out string Why)
 	AirWar = InState(NewGameState);
 	NoteIn(NewGameState, AirWar.Jets[Index].Callsign @ "was dismissed.");
 	AirWar.Jets.Remove(Index, 1);
+	AssignBays(AirWar);
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	return true;
 }
@@ -271,6 +274,55 @@ static function Rename(int Index, string Callsign)
 
 /** One interceptor of a continent's order cancelled (XGHeadQuarters.ReduceInterceptorOrder): its price back, the order one
  *  smaller, gone at none. False if the continent has no order. */
+/**
+ * The base's hangar bays (Long War's XGFacility_Hangar.GetAvailableBay, as a jet arrives at the base, is built there or comes
+ * back from a transfer; m_iHomeBay -1 as it leaves): a jet based on the home continent keeps its bay, one without takes the
+ * lowest free one; a jet based elsewhere or on its way has none. What the base's hangar shows (LWX2EWBase.RefreshBays).
+ */
+static function AssignBays(XComGameState_LWAirWar AirWar, optional int Home = -1)
+{
+	local int i, b;
+	local array<int> Taken;
+
+	if (Home < 0)
+		Home = HomeContinent();
+	for (i = 0; i < AirWar.Jets.Length; i++)
+		if (AirWar.Jets[i].Continent != Home || AirWar.Jets[i].Status == 6)
+			AirWar.Jets[i].Bay = 0;
+		else if (AirWar.Jets[i].Bay > 0)
+			Taken.AddItem(AirWar.Jets[i].Bay);
+	for (i = 0; i < AirWar.Jets.Length; i++)
+	{
+		if (AirWar.Jets[i].Bay > 0 || AirWar.Jets[i].Continent != Home || AirWar.Jets[i].Status == 6)
+			continue;
+		for (b = 1; b <= 4 && Taken.Find(b) != INDEX_NONE; b++);
+		if (b > 4)
+			break;
+		AirWar.Jets[i].Bay = b;
+		Taken.AddItem(b);
+	}
+}
+
+/** A test aid (the control port's jet): a jet's status and hours down set, or its kind (1 Interceptor, 3 Firestorm). */
+static function bool TestSetJet(int Index, int Status, int Hours, optional int Type)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWAirWar AirWar;
+
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	if (AirWar == none || Index < 0 || Index >= AirWar.Jets.Length)
+		return false;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a jet set (test aid)");
+	AirWar = InState(NewGameState);
+	AirWar.Jets[Index].Status = Status;
+	AirWar.Jets[Index].HoursDown = Hours;
+	if (Type > 0)
+		AirWar.Jets[Index].Type = Type;
+	AssignBays(AirWar);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	return true;
+}
+
 static function bool CancelOrder(int Continent)
 {
 	local XComGameState NewGameState;
@@ -365,6 +417,7 @@ static function bool Transfer(int Index, int Continent, out string Why)
 	AirWar.Jets[Index].Status = 6;
 	AirWar.Jets[Index].TransferTo = Continent;
 	AirWar.Jets[Index].HoursDown = class'LWBaseRules'.default.TransferHours;
+	AssignBays(AirWar);
 	NoteIn(NewGameState, AirWar.Jets[Index].Callsign @ "is on its way to" @ class'LWStrategyRules'.static.ContinentName(Continent) $ ".");
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	Why = "";

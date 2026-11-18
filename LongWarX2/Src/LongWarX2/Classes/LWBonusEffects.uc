@@ -40,6 +40,7 @@ static function AtStart(XComGameState NewGameState, XComGameState_LWStrategy S)
 		class'LWHangar'.static.NewJet(AirWar, 1, Home);
 		class'LWHangar'.static.NewJet(AirWar, 1, Home);
 	}
+	class'LWHangar'.static.AssignBays(AirWar, Home);
 	// The soldiers the bonuses bring (XGFacility_Barracks.InitNewGame): Foreign Legion recruits, a Kiryu-Kai Commander
 	// (a Japanese soldier of its rank, of a random base class), Cadre's four of its rank, one of each base class.
 	v = class'LWBonuses'.static.Has(class'LWBonuses'.const.FOREIGN_LEGION, S);

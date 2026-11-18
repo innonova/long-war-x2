@@ -109,6 +109,11 @@ function Handle(string Line, out array<string> Out)
 		GetALocalPlayerController().ClientUpdateLevelStreamingStatus(name(Args[1]), true, Args.Length < 3 || Args[2] != "false", false);
 		Out.AddItem("ok" @ Args[1]);
 		return;
+	case "basehide":
+		// A test aid: EW's base's pieces and people whose mesh's path holds <text> hidden, or shown again: basehide <text> [show];
+		// or the people among them turned or moved, live: basehide <text> yaw|z <add>.
+		Out.AddItem(BaseHide(Args.Length > 1 ? Args[1] : "", Args.Length > 2 && Args[2] == "show", Args.Length > 3 ? Args[2] : "", Args.Length > 3 ? float(Args[3]) : 0.0));
+		return;
 	case "people":
 		// A test aid: EW's people's light, live: people glow <v> (their light environment's ambient glow) | le on|off.
 		Out.AddItem(PeopleLight(Args));
@@ -828,6 +833,15 @@ function Handle(string Line, out array<string> Out)
 		Hangar(Out);
 		Out.AddItem("consumables usable: aim" @ class'LWAirWar'.static.ConsumableStock(0) @ "dodge" @ class'LWAirWar'.static.ConsumableStock(1)
 			@ "boost" @ class'LWAirWar'.static.ConsumableStock(2));
+		return;
+	case "jet":
+		// A test aid: a jet's status and hours down (and kind: 1 Interceptor, 3 Firestorm), the base's hangar bays placed again:
+		// jet <index> <status> <hours> [kind].
+		if (Args.Length > 3 && class'LWHangar'.static.TestSetJet(int(Args[1]), int(Args[2]), int(Args[3]), Args.Length > 4 ? int(Args[4]) : 0))
+			Out.AddItem("ok");
+		else
+			Out.AddItem("ERR jet <index> <status> <hours> [kind]");
+		class'LWX2EWBase'.static.Get(Pres()).RefreshBays();
 		return;
 	case "order":
 		Before = S.EventCount;
@@ -4663,6 +4677,37 @@ function ForceShown(XComBuildingVolume B, out array<string> Out)
 			n++;
 		}
 	Out.AddItem("forced shown:" @ n @ "actors");
+}
+
+/** A test aid: EW's base's pieces and people by their mesh's path (basehide). */
+function string BaseHide(string Text, bool bShow, optional string Move, optional float By)
+{
+	local DynamicSMActor_Spawnable Piece;
+	local LWX2BasePerson Person;
+	local int n;
+	local string Where;
+
+	if (Text == "")
+		return "ERR basehide <text> [show]";
+	foreach AllActors(class'DynamicSMActor_Spawnable', Piece)
+		if (Move == "" && InStr(PathName(Piece.StaticMeshComponent.StaticMesh), Text, , true) != INDEX_NONE)
+		{
+			Piece.SetHidden(!bShow);
+			n++;
+		}
+	foreach AllActors(class'LWX2BasePerson', Person)
+		if (InStr(PathName(Person.SkeletalMeshComponent.SkeletalMesh), Text, , true) != INDEX_NONE)
+		{
+			if (Move == "yaw")
+				Person.SetRotation(Person.Rotation + rot(0, 1, 0) * By);
+			else if (Move == "z")
+				Person.SetLocation(Person.Location + vect(0, 0, 1) * By);
+			else
+				Person.SetHidden(!bShow);
+			n++;
+			Where $= " [" $ Person.Location @ Person.Rotation.Yaw $ "]";
+		}
+	return "ok" @ n @ (Move != "" ? Move @ By : (bShow ? "shown" : "hidden")) $ Where;
 }
 
 defaultproperties

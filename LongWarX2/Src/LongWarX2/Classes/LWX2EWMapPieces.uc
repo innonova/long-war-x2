@@ -202,6 +202,12 @@ struct LWX2Person
 	var array<string> AnimSets;
 	var array<name> Seqs;
 	var array<LWX2PersonSlot> Slots;
+	/** EW's hangar bays (Anim_Hangar_LaunchBays, features/strategy-flow.md): a bay's (1-4) launch pad or craft for one of
+	 *  its states (Open: a craft ready; Repair: a craft down; Closed: empty), its part (Track: the pad; Interceptor;
+	 *  FireStorm); placed by the hangar's state, not with the level's people. */
+	var int Bay;
+	var string BayState;
+	var name BayPart;
 };
 
 struct LWX2Camera
@@ -481,7 +487,8 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 		Mesh = StaticMesh(DynamicLoadObject(P.Mesh, class'StaticMesh', true));
 		if (Mesh == none)
 		{
-			Missing++;
+			if (Missing++ == 0)
+				`log("LongWarX2: EW map: not found:" @ P.Mesh, , 'LongWarX2');
 			continue;
 		}
 		A = Spawner.Spawn(ActorClass, , , At + P.Loc - Center, P.Rot);

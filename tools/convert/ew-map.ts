@@ -38,8 +38,9 @@ import { peopleIn } from './ew-people.ts'
  *  16: the meld canisters' places, MeldPoints; 17: what units see through (EW's VisibilityBlockingData on every piece:
  *  windows, foliage, cars), written onto the plot's pieces; 21: EW's lightmaps, its glowing parts' colours, its 3D UI
  *  panels, features/ew-lightmaps.md and ew-3d-screens.md; 22: EW's people, ew-base-people.md; 23: people hidden in their level left out, as the armory's MEC scene); 24: the plinths soldiers stand on
- *  (Spots: EW's SkeletalMeshActors tagged …Plinth, XGStrategySoldier.PlaceOnPlinth). */
-export const CONVERTER_VERSION = 24
+ *  (Spots: EW's SkeletalMeshActors tagged …Plinth, XGStrategySoldier.PlaceOnPlinth); 25: the hangar's bays (People with
+ *  Bay, BayState, BayPart: Anim_Hangar_LaunchBays' launch pads and craft), a diffuse named plain "diff" (the Skyranger's). */
+export const CONVERTER_VERSION = 25
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -847,7 +848,7 @@ function lookOf(r: number): Look {
   const pick = (params: string[], re: RegExp) =>
     params.map((p) => tex.get(p)).find(Boolean)
     ?? [...tex].find(([param, p]) => !/^Damage/i.test(param) && re.test(p.split('.').pop()!))?.[1] ?? ''
-  const diffuse = pick(['Diffuse', 'Diffuse_Base', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock', 'Hairstyle Texture'], /(_DIFF?|_D|Diffuse|_Dif)\d*$/i)
+  const diffuse = pick(['Diffuse', 'Diffuse_Base', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock', 'Hairstyle Texture'], /(_DIFF?|_D|Diffuse|_Dif|^diff)\d*$/i)
   return {
     diffuse,
     normal: pick(['Normal', 'Normal_Base', 'Leaves_Normal', 'Dirt_Normal', 'Rock_Normal', 'Normal Map'], /(_NRM|_NORM|_N|Normal|_Nrm)\d*$/i),
@@ -1151,7 +1152,7 @@ const lines = [
   "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
   ...displays.map((d) => `+Displays=(${d.mesh ? `Mesh="${rename(d.mesh)}",` : ''}Tag=${d.tag || 'None'},Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}))`),
   "; EW's people (an Anim_ level's: its matinee's loops; features/ew-base-people.md).",
-  ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}")`).join(',')}))`),
+  ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}")`).join(',')}))`),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
     ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''})`,

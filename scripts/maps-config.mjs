@@ -8,7 +8,7 @@
 //   node scripts/maps-config.mjs <Long War's DefaultMaps.ini> > LongWarX2/Config/XComLWEWMaps.ini
 import { readFileSync } from 'node:fs'
 /** The fixed rooms' animation levels, with EW's people in them (features/ew-base-people.md). */
-const PEOPLE_LEVELS = ['Anim_ScienceLabs', 'Anim_Engineering', 'Anim_Barracks', 'Anim_Hangar', 'Anim_MissionControl', 'Anim_Armory']
+const PEOPLE_LEVELS = ['Anim_ScienceLabs', 'Anim_Engineering', 'Anim_Barracks', 'Anim_Hangar', 'Anim_MissionControl', 'Anim_Armory', 'Anim_Hangar_LaunchBays']
 
 const text = readFileSync(process.argv[2], 'latin1')
 const SHIPS = { eShip_None: 0, eShip_UFOSmallScout: 4, eShip_UFOLargeScout: 5, eShip_UFOAbductor: 6, eShip_UFOSupply: 7, eShip_UFOBattle: 8, eShip_UFOEthereal: 9 }
@@ -79,6 +79,8 @@ console.log(
     "; The base's hologlobe (Mission Control): EW's holographic earth, made teal by the setup (tools/convert/ew-earth.ts), in",
     "; place of its own copy's raw channels (red borders, green cities, blue land).",
     "+LookOverrides=(Material=\"Command1.QX_Globe.M_Globe_Holo\", Diffuse=\"FX_Globe.T_Earth_Holo\", Load=\"EWSitRoomMap.TheWorld\")",
+    "; (And the main menu scene's, EW's shell map: LWX2EWBase.ShowShell.)",
+    "+LookOverrides=(Material=\"XComShell.QX_Globe.M_Globe_Holo\", Diffuse=\"FX_Globe.T_Earth_Holo\", Load=\"EWSitRoomMap.TheWorld\")",
     "; The kinds cut out by the diffuse's alpha (Masked: EW's tree cards, signs, fences) take the diffuse as their Masks too:",
     "; XCOM 2's masked parents read the opacity from one of the two, and the white placeholder made them solid.",
     'DiffuseMasks="Foliage,Masked"',
@@ -157,7 +159,9 @@ console.log(
     'SquadSpacing=80',
     'SquadFloorZ=-1714',
     // (Not Static_Hangar_CAP: it covered the hangar's view with a dark beam where EW's is open; ew-compare, 2026-11-18.)
-    ...['Static_SituationRoom', 'Static_Infirmary', 'Static_ScienceLabs', 'Static_Barracks', 'Static_Hangar', 'Static_MissionControl', 'Static_Armory', 'Static_Engineering'].map((l) => `+FixedLevels="${l}"`),
+    ...['Static_SituationRoom', 'Static_Infirmary', 'Static_ScienceLabs', 'Static_Barracks', 'Static_Hangar', 'Static_MissionControl', 'Static_Armory', 'Static_Engineering',
+      // (The hangar's grounded Skyranger, Anim_Hangar's one placed mesh.)
+      'Anim_Hangar'].map((l) => `+FixedLevels="${l}"`),
     "; Every level of EW's base the setup converts (tools/convert/ew-maps.ts --base): Command1, its fixed rooms and each tile's",
     "; levels (LWX2EWBase.LevelFor). Not mission maps: no plots are written for them.",
     ...['Command1', 'Static_SituationRoom', 'Static_Infirmary', 'Static_ScienceLabs', 'Static_Barracks', 'Static_Hangar', 'Static_Hangar_CAP', 'Static_MissionControl', 'Static_Armory', 'Static_Engineering',
@@ -165,8 +169,17 @@ console.log(
       'Addon_GollopChamber', 'Addon_HyperwaveRadar', 'Addon_Laboratory', 'Addon_LargeRadar', 'Addon_OfficerTrainingSchool', 'Addon_PowerGenerator', 'Addon_PsionicLab', 'Addon_SmallRadar', 'Addon_SolidRock',
       'Addon_ThermalCave', 'Addon_ThermalPower', 'Addon_Workshop',
       // EW's people in its fixed rooms (features/ew-base-people.md): converted with the base, placed by PeopleLevels.
-      ...PEOPLE_LEVELS].map((l) => `+BaseLevels="${l}"`),
+      ...PEOPLE_LEVELS,
+      // (EW's main menu scene: its shell map, its own room, seen through its Shell camera.)
+      'XComShell'].map((l) => `+BaseLevels="${l}"`),
     'PeopleAnimate=true',
+    "; EW's hangar bays: their launch pads and craft by the hangar's state (LWX2EWBase.RefreshBays).",
+    'BaysLevel="Anim_Hangar_LaunchBays"',
+    '; A test aid: the fixed rooms placed at the main menu (the crash at a campaign start, every start).',
+    'PlaceInShell=false',
+    "; EW's main menu scene: its shell map placed far below the shell's own world, seen through its camera (LWX2EWBase.ShowShell).",
+    'ShellScene=true',
+    'ShellOffset=(X=0, Y=0, Z=-90000)',
     ...PEOPLE_LEVELS.map((l) => `+PeopleLevels="${l}"`),
     "; Their stand-ins' parent: XCOM 2's material for its own base's staff (the aliens' parent turned them blue-grey).",
     'PeopleMaterialParent="Materials.Approved.AvengerStaff_SD"',

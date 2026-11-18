@@ -492,5 +492,37 @@ Now (checked by a council mission won, `logs/ew_debrief.png`):
   up or down or its withdrawal, read across Long War's result as the loot is; through the Situation Room's camera
   (`logs/ew_debrief_council.png`).
 
-**Still open here:** the Situation Room's wall is blank behind the council view (EW shows its council there); Long War's
-mission titles in `PendingWords` are English of ours, not EW's words; EW's council missions' own completion texts.
+**Still open here:** the Situation Room's wall is blank behind the council view (EW shows its council there); EW's council missions' own completion texts.
+
+## Report (2026-11-18 night, the hangar's craft and the Skyranger)
+
+- **The hangar's bays as EW's** (`logs/hangar_bays_pair.png`, EW's Game 55 on the left): EW keeps them in a level of its
+  own, `Anim_Hangar_LaunchBays`, which the port had not converted. Per bay (four, around the Skyranger's pad) and state, a
+  matinee `Base_Bay<n>_<Open|Repair|Closed>` poses the bay's launch pad (a skeletal mesh: the arm, the pad, the bay's doors)
+  by a loop and puts the Interceptor or Firestorm where it stands (`XGFacility_Hangar.UpdateHangarBays`,
+  `SetHangarShipsForKismet`).
+  - **The setup** converts that level with the base; `ew-people.ts` reads each matinee's pad (where it stands, its loop) and
+    craft (the group's first key, its loop) as people records with `Bay`, `BayState` and `BayPart` (converter 25).
+  - **The mod** (`LWX2EWBase.RefreshBays`, with each `Refresh`): Open for a ready craft (doors up, the pad out with the craft
+    on it), Repair for one refuelling, repairing or refitting (the pad back, doors almost shut), Closed for an empty bay;
+    placed again when that changes. The meshes are held while the base lives (a Firestorm's had been collected with the
+    level's package before one came to a bay).
+  - **The bays are Long War's:** each jet keeps its bay (`LWJet.Bay`, `LWHangar.AssignBays`, as `GetAvailableBay`: the
+    lowest free bay as a jet arrives, is built or comes back; none while based elsewhere or on its way). A jet lost or sent
+    away leaves its bay empty; the others stay where they were. Campaigns from before get their bays at the next hour.
+  - **The pads' turn:** the pad's arm runs along its bones' −Y; EW's matinee turns it by its key (yaw 90). Seen in XCOM 2,
+    the arm reaches the bay with the key's yaw taken off its own, and that is what the converter writes (measured by the
+    pads' bone positions against the craft's places).
+  - Checked on wingpu: two Interceptors in bays 1 and 2 of a new campaign, a Firestorm ready in bay 2, a Firestorm under
+    repair (bay 2 shut), one sent to Europe (bay 1 shut, bay 2 kept).
+- **The Skyranger** stands on its pad (Anim_Hangar's one placed mesh, now placed with the fixed rooms) with its body
+  texture: its diffuse is named plain `diff`, which the converter's name test did not take for one.
+- **The mission's name** in squad select and the loading briefing (`PendingWords`) is EW's mission title (Mission
+  Control's: crash site, landed UFO, abductions, terror, alien base, Temple Ship, the HQ, council) and the country, in
+  place of English of ours; compiled, not yet seen on screen.
+- **Test aids:** `basehide <text> [show] | <text> yaw|z <add>` (the base's pieces and people by mesh path), `jet <i>
+  <status> <hours> [kind]`.
+
+**Still open here:** the craft's weapons on their hardpoints (`XGHangarShip.UpdateWeapon`: EW's jet weapon meshes on the
+sockets); the hangar's orange ramp strips draw grey (the light strips); `HQ_RoomBorderFX.Meshes.RoomBorderGlowRing`, a
+piece of 17 facility levels, is not found (an EW package the setup does not carry; EW's hover glow around a room).
