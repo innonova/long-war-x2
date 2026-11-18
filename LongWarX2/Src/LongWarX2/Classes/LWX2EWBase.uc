@@ -48,6 +48,13 @@ var array<LightComponent> WorldLights;
 var config array<string> PeopleLevels;
 /** Whether they play EW's animations (false: they stand in their reference pose; a test switch). */
 var config bool PeopleAnimate;
+/** A level's people placed at their matinee's first key plus this, where set (features/ew-base-people.md). */
+struct LWX2PeopleFrame
+{
+	var string Level;
+	var vector Offset;
+};
+var config array<LWX2PeopleFrame> PeopleFrames;
 var array<LWX2BasePerson> People;
 
 /** EW's screens on their 3D panels in the rooms (features/ew-3d-screens.md), and the panel's mesh and material: XCOM 2's
@@ -276,6 +283,7 @@ function PlacePeople()
 	local MaterialInstanceConstant MIC;
 	local Texture T;
 	local int k;
+	local vector At;
 
 	if (People.Length > 0)
 		return;
@@ -326,7 +334,9 @@ function PlacePeople()
 				Slots.AddItem(Slot);
 			}
 			`log("LongWarX2: EW base: spawning", , 'LongWarX2');
-			A = Spawn(class'LWX2BasePerson', self, , P.Loc + BaseOffset, P.Rot);
+			k = PeopleFrames.Find('Level', Level);
+			At = (k != INDEX_NONE && VSize(P.Key) > 0) ? P.Key + PeopleFrames[k].Offset : P.Loc;
+			A = Spawn(class'LWX2BasePerson', self, , At + BaseOffset, P.Rot);
 			if (A == none)
 				continue;
 			A.SetDrawScale(P.Scale > 0 ? P.Scale : 1.0);

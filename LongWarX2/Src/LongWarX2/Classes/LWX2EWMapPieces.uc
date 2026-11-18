@@ -197,6 +197,8 @@ struct LWX2Person
 	var vector Loc;
 	var rotator Rot;
 	var float Scale;
+	/** Its matinee's first move key (features/ew-base-people.md: its frame not settled). */
+	var vector Key;
 	var array<string> AnimSets;
 	var array<name> Seqs;
 	var array<LWX2PersonSlot> Slots;

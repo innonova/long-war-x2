@@ -60,4 +60,5 @@ than the actors' own places (first key minus actor's place):
   beside the build panel (−321, −766, −2680), where EW shows him, and the arms on the conveyor line. But the lab's keys
   don't fit the same reading, and Vahlen already stands right at her actor's place. To settle: EW's
   `SeqAct_Interp`/`InterpData` for a frame or anchor, or the level's own offset in EW's streaming; then read
-  `ew-people.ts`'s `key`/`keyRot`, now written per person.
+  `ew-people.ts`'s `key`/`keyRot`, now written per person (`Key=` on `+People=`; `LWX2EWBase.PeopleFrames` places a
+  level's people at key + offset: tried for Anim_Engineering with (2090, 0, −1922), no visible change).
