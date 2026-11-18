@@ -3,8 +3,17 @@
 // drives the movie (SetTitle, SetColumnLabels, ClearAll, AddShip, AddPendingShip, SetContinentTitle, SetSelection; clicks
 // 391 on a row's "theButton" or its help button "clickableButton"). A craft's row opens its loadout
 // (UILWEWShipLoadout); its TRANSFER picks it up, and TRANSFER HERE on another continent's empty bay sends it; an empty
-// bay's ORDER INTERCEPTORS orders one. The rules are LWHangar's.
+// bay's ORDER INTERCEPTORS orders one (EW's order dialog, UILWEWHiring.OpenOrder). The rules are LWHangar's; the words
+// EW's (UIShipList), each craft with Long War's icon (its Raven or Firestorm) before its callsign, its status in EW's words
+// and colours (XGShip_Interceptor.GetStatusString; red while damaged, yellow while refuelling, refitting or transferring).
 class UILWEWHangar extends UILWEWScreen;
+
+var localized string m_strScreenTitle, m_strEmptySlotLabel, m_strFullContinentLabel, m_strTransferShipButtonHelp,
+	m_strTransferShipHereButtonHelp, m_strHireShipButtonHelp, m_strCancelHireButtonHelp, m_strCancelTransferButtonHelp,
+	m_strPendingInterceptorInfo, m_strPendingOrderRemainingDays, m_strColumnShipName, m_strColumnShipWeapon,
+	m_strColumnShipStatus;
+/** The cancel-order confirmation (XGHangarUI.ConfirmRemovalOfPendingShipOrder). */
+var localized string CancelOrderTitle, CancelOrderText;
 
 /** For each continent's rows: the jet (its index in the air war), -1 an order, -2 the empty bay. */
 var array<int> Rows0, Rows1, Rows2, Rows3, Rows4;
@@ -32,11 +41,13 @@ static function Open(XComHQPresentationLayer HQPres)
 simulated function OnInit()
 {
 	super.OnInit();
-	MC.FunctionString("SetTitle", "HANGAR");
+	// (Long War's craft icons, in its own package: LongWar.Icons.)
+	DynamicLoadObject("LongWar.Icons.IC_Raven", class'Object', true);
+	MC.FunctionString("SetTitle", Word(m_strScreenTitle, "AIRCRAFT LIST"));
 	MC.BeginFunctionOp("SetColumnLabels");
-	MC.QueueString("CRAFT");
-	MC.QueueString("WEAPON");
-	MC.QueueString("STATUS");
+	MC.QueueString(Word(m_strColumnShipName, "SHIP NAME"));
+	MC.QueueString(Word(m_strColumnShipWeapon, "WEAPON"));
+	MC.QueueString(Word(m_strColumnShipStatus, "STATUS"));
 	MC.EndOp();
 	Fill();
 }
@@ -97,22 +108,24 @@ function Fill()
 			if (AirWar.Jets[i].Continent != c)
 				continue;
 			RowState = AirWar.Jets[i].Status == 0 ? 0 : 1;
-			if (AirWar.Jets[i].Status == 0)
-				Colour = eUIState_Good;
-			else if (AirWar.Jets[i].Status == 4)
-				Colour = eUIState_Bad;
-			else
-				Colour = eUIState_Warning;
-			Status = StatusText(AirWar.Jets[i]);
+			// (UIShipList.UpdateData: the row greyed and its status red while damaged (EW's statuses 3 to 5), yellow while
+			// refuelling, transferring or refitting (2, 6, 7), green when ready.)
+			switch (AirWar.Jets[i].Status)
+			{
+			case 3: case 4: case 5: Colour = 3; break;
+			case 2: case 6: case 7: Colour = 4; break;
+			default: Colour = 2;
+			}
+			Status = class'UILWEWAlert'.static.StatusText(AirWar.Jets[i]);
 			if (Transferring >= 0)
-				Help = Transferring == i ? "CANCEL TRANSFER" : "";
+				Help = Transferring == i ? Word(m_strCancelTransferButtonHelp, "CANCEL TRANSFER") : "";
 			else
-				Help = class'LWHangar'.static.IsReady(AirWar.Jets[i]) ? "TRANSFER" : "";
+				Help = class'LWHangar'.static.IsReady(AirWar.Jets[i]) ? Word(m_strTransferShipButtonHelp, "TRANSFER") : "";
 			MC.BeginFunctionOp("AddShip");
 			MC.QueueNumber(c);
-			MC.QueueString(AirWar.Jets[i].Callsign);
+			MC.QueueString("<img src='img:///LongWar.Icons." $ (AirWar.Jets[i].Type == 3 ? "IC_Firestorm" : "IC_Raven") $ "' height='16' width='16'>" $ AirWar.Jets[i].Callsign);
 			MC.QueueString("          " $ class'LWHangar'.static.WeaponName(AirWar.Jets[i].Weapon));
-			MC.QueueString(class'UIUtilities_Text'.static.GetColoredText(Status, EUIState(Colour)));
+			MC.QueueString(EWColoured(Status, Colour));
 			MC.QueueString(Help);
 			MC.QueueNumber(RowState);
 			MC.EndOp();
@@ -126,12 +139,13 @@ function Fill()
 			{
 				MC.BeginFunctionOp("AddPendingShip");
 				MC.QueueNumber(c);
-				MC.QueueString("Interceptor Purchase");
-				MC.QueueString(class'UIUtilities_Text'.static.GetColoredText("Ready in" @ class'LWEngineering'.static.HoursText(AirWar.Orders[i].HoursLeft), eUIState_Warning));
-				MC.QueueString("");
+				MC.QueueString(Word(m_strPendingInterceptorInfo, "Interceptor Purchase"));
+				MC.QueueString(EWColoured(Repl(Word(m_strPendingOrderRemainingDays, "Ready in <XGParam:StrValue0/> day(s)"), "<XGParam:StrValue0/>", string((AirWar.Orders[i].HoursLeft + 23) / 24)), 4));
+				// (The first of a continent's pending ones offers CANCEL ORDER, as UIShipList.UpdateData does.)
+				MC.QueueString((n == 0 && Transferring < 0) ? EWColoured(Word(m_strCancelHireButtonHelp, "CANCEL ORDER"), 3) : "");
 				MC.QueueNumber(1);
 				MC.EndOp();
-				R.AddItem(-1);
+				R.AddItem(n == 0 ? -3 : -1);
 			}
 		}
 		Taken = class'LWHangar'.static.BaysTaken(AirWar, c);
@@ -139,18 +153,18 @@ function Fill()
 		{
 			MC.BeginFunctionOp("AddShip");
 			MC.QueueNumber(c);
-			MC.QueueString("( Empty Slot )");
+			MC.QueueString(Word(m_strEmptySlotLabel, "( Empty Slot )"));
 			MC.QueueString("");
 			MC.QueueString("");
-			MC.QueueString(Transferring >= 0 ? (AirWar.Jets[Transferring].Continent != c ? "TRANSFER HERE" : "") : "ORDER INTERCEPTORS");
+			MC.QueueString(Transferring >= 0 ? (AirWar.Jets[Transferring].Continent != c ? Word(m_strTransferShipHereButtonHelp, "TRANSFER HERE") : "") : Word(m_strHireShipButtonHelp, "ORDER INTERCEPTORS"));
 			MC.QueueNumber(-1);
 			MC.EndOp();
 			R.AddItem(-2);
 		}
 		MC.BeginFunctionOp("SetContinentTitle");
 		MC.QueueNumber(c);
-		MC.QueueString(Caps(class'LWStrategyRules'.static.ContinentName(c)) @ "(" $ Taken $ "/" $ class'LWBaseRules'.default.HangarBays $ ")"
-			$ (Taken >= class'LWBaseRules'.default.HangarBays ? " " $ class'UIUtilities_Text'.static.GetColoredText("FULL", eUIState_Bad) : ""));
+		MC.QueueString(class'LWStrategyRules'.static.ContinentName(c) @ "(" $ Taken $ "/" $ class'LWBaseRules'.default.HangarBays $ ")"
+			$ (Taken >= class'LWBaseRules'.default.HangarBays ? " " $ EWColoured(Word(m_strFullContinentLabel, "FULL"), 3) : ""));
 		MC.EndOp();
 		SetRows(c, R);
 	}
@@ -235,37 +249,35 @@ function OnRow(int Row, bool bHelp)
 		return;
 	}
 	if (Row == -2)
-		ConfirmOrder();
+		class'UILWEWHiring'.static.OpenOrder(XComHQPresentationLayer(Movie.Pres), SelectedContinent);
+	if (Row == -3 && bHelp)
+		ConfirmCancel();
 }
 
-/** An interceptor ordered into the selected continent's hangar, once confirmed. */
-function ConfirmOrder()
+/** CANCEL ORDER: EW's confirmation, then one interceptor of the continent's order cancelled, its price back. */
+function ConfirmCancel()
 {
 	local TDialogueBoxData Data;
 
 	Data.eType = eDialog_Normal;
-	Data.strTitle = "ORDER AN INTERCEPTOR";
-	Data.strText = "Order an interceptor for" @ class'LWStrategyRules'.static.ContinentName(SelectedContinent) $ "'s hangar, for"
-		@ class'LWStrategyRules'.static.Money(class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.InterceptorCost)) $ "? It arrives in"
-		@ class'LWEngineering'.static.HoursText(class'LWBaseRules'.default.OrderHours) $ ".";
-	Data.strAccept = "ORDER";
+	Data.strTitle = Word(CancelOrderTitle, "CANCEL ORDER");
+	Data.strText = Word(CancelOrderText, "Are you sure you want to cancel your Interceptor order?");
+	Data.strAccept = class'UIUtilities_Text'.default.m_strGenericConfirm;
 	Data.strCancel = class'UIDialogueBox'.default.m_strDefaultCancelLabel;
-	Data.fnCallback = OnOrderDialog;
+	Data.fnCallback = OnCancelDialog;
 	Movie.Pres.UIRaiseDialog(Data);
 }
 
-simulated function OnOrderDialog(Name Action)
+simulated function OnCancelDialog(Name Action)
 {
-	local string Why;
-
-	if (Action != 'eUIAction_Accept')
-		return;
-	if (!class'LWHangar'.static.Order(SelectedContinent, 1, Why))
-	{
-		`log("LongWarX2: EW hangar:" @ Why, , 'LongWarX2');
-		Movie.Pres.PlayUISound(eSUISound_MenuClose);
-	}
+	if (Action == 'eUIAction_Accept' && class'LWHangar'.static.CancelOrder(SelectedContinent))
+		PlaySound(SoundCue'SoundUI.MenuSelectCue', true);
 	Fill();
+}
+
+static function string Word(string W, string Fallback)
+{
+	return W != "" ? W : Fallback;
 }
 
 simulated function bool OnUnrealCommand(int cmd, int arg)

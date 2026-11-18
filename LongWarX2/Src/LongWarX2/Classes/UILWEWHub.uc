@@ -336,12 +336,14 @@ function EnterRoom(int i)
 		S = class'XComGameState_LWStrategy'.static.Get();
 		if (S != none && class'LWBase'.static.Count(S, FACILITY_FOUNDRY) > 0)
 			RoomOptions.AddItem(OPT_FOUNDRY);
-		// (As EW: Augment Soldiers once the Cybernetics Lab is built.)
+		// (As EW, XGEngineeringUI.UpdateMainMenu: once the Cybernetics Lab is built, the MEC inventory (Long War's Repair Bay),
+		// then Augment Soldiers once its research (Long War's tech 60) is done.)
 		if (S != none && class'LWBase'.static.Count(S, 22) > 0)
-			RoomOptions.AddItem(OPT_AUGMENT);
-		// (As EW: the MEC inventory, Long War's Repair Bay, once the Cybernetics Lab is built.)
-		if (S != none && class'LWBase'.static.Count(S, 22) > 0)
+		{
 			RoomOptions.AddItem(OPT_REPAIR);
+			if (class'UIUtilities_Strategy'.static.GetXComHQ().IsTechResearched(class'LWResearchRules'.static.TemplateForId(60)))
+				RoomOptions.AddItem(OPT_AUGMENT);
+		}
 		break;
 	case 2:
 		RoomOptions.AddItem(OPT_SOLDIERS);

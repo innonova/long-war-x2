@@ -501,6 +501,11 @@ export function makeHubWords({ strategyLoc }) {
     ['NoMoney', inSection('XGBarracksUI', 'm_strErrNoMoneyForSoldiers')],
     ['Full', inSection('XGBarracksUI', 'm_strErrOTRRequired')],
     ['Event', inSection('XGMissionControlUI', 'm_strNewSoldierEvent')],
+    ['OrderTitle', inSection('XGHangarUI', 'm_strLabelHireInterceptors')],
+    ['OrderCostLabel', inSection('XGHangarUI', 'm_strLabelHireCost')],
+    ['MonthlyCostLabel', inSection('XGHangarUI', 'm_strLabelHireMonthlyCost')],
+    ['HangarCapacityLabel', inSection('XGHangarUI', 'm_strLabelHangarCap')],
+    ['OrderLabel', inSection('UIHiring', 'm_strHelpOrder')],
   ].filter(([, v]) => v)
   return {
     text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWStrategyHUD]', ...hud.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWHiring]', ...hire.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierList]', ...list.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierSummary]', ...summary.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierPromotion]', ...promotion.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
@@ -981,7 +986,13 @@ export function makeFinanceWords({ strategyLoc }) {
 }
 
 export function makeMemorialWords({ strategyLoc }) {
-  return copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial'], ['UIPendingRequests', 'UILWEWPendingRequests']])
+  const copied = copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial'], ['UIPendingRequests', 'UILWEWPendingRequests'], ['UIShipList', 'UILWEWHangar']])
+  // (The hangar's cancel-order confirmation, XGHangarUI's, under the same section.)
+  const hangar = strategyLoc.replace(/\r/g, '').match(/^\[XGHangarUI\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
+  const key = (k) => hangar.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''
+  const extra = [['CancelOrderTitle', key('m_strCancelPendingOrderTitle')], ['CancelOrderText', key('m_strCancelPendingOrderText_Interceptor')]].filter(([, v]) => v)
+  const text = copied.text.replace('[UILWEWHangar]\r\n', `[UILWEWHangar]\r\n${extra.map(([k, v]) => `${k}="${v}"\r\n`).join('')}`)
+  return { text, named: copied.named + extra.length }
 }
 
 /** Sections of an EW text file under the mod's classes, as they are ([from] → [to]). */

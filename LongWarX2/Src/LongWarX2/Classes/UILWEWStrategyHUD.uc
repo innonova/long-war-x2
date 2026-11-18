@@ -175,6 +175,14 @@ function ShowNavHelpFor(UIScreen Top)
 		HQPres.m_kAvengerHUD.NavHelp.Show();
 }
 
+static function string FragmentsName()
+{
+	local X2ItemTemplate T;
+
+	T = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(class'X2Item_LWArtifacts'.static.ItemFor('WeaponFragment'));
+	return T != none ? T.GetItemFriendlyNamePlural() : "Weapon Fragments";
+}
+
 function Refresh()
 {
 	local XComGameState_HeadquartersXCom XComHQ;
@@ -204,6 +212,10 @@ function Refresh()
 	{
 		AddResource(Label(1, "ELERIUM"), string(XComHQ.GetResourceAmount('EleriumDust')), true);
 		AddResource(Label(2, "ALLOYS"), string(XComHQ.GetResourceAmount('AlienAlloy')), true);
+		// (Long War's line in engineering, UIStrategyHUD_FSM_Engineering.UpdateResources: its fragments, named by the item's
+		// plural without "WEAPON ".)
+		if (Kind == 'Engineering')
+			AddResource(Repl(Caps(FragmentsName()), "WEAPON ", ""), string(XComHQ.GetResourceAmount(class'X2Item_LWArtifacts'.static.ItemFor('WeaponFragment'))), true);
 	}
 	if (Meld > 0 || bWide)
 		AddResource(Label(7, "MELD"), string(Meld), Meld > 0);

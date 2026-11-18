@@ -3,11 +3,17 @@
 // (widgetHelper; red when it cannot be paid for), the cost and the barracks' room (UpdateInfo; red when over), the HIRE
 // button (SetMouseConfirmText, theConfirmButton) and CANCEL (its help bar). The count starts at 1 and stays within 1 and
 // the barracks' room (XGBarracksUI.OnIncreaseHiringOrder, OnDecreaseHiringOrder); HIRE orders them (LWHiring.Order).
+// The same dialog orders interceptors into a continent's hangar (EW's UIHiring_Hangar over XGHangarUI.UpdateHireDisplay):
+// ORDER INTERCEPTORS, the jet icon, the initial cost and the monthly cost, the hangar's capacity (its craft and those on
+// order), ORDER (LWHangar.Order).
 class UILWEWHiring extends UILWEWScreen;
 
 var localized string Title, CostLabel, CapacityLabel, HireLabel, NoMoney, Full, Event;
+var localized string OrderTitle, OrderCostLabel, MonthlyCostLabel, HangarCapacityLabel, OrderLabel;
 
 var int Count;
+/** The continent whose hangar interceptors are ordered into; -1: soldiers hired. */
+var int Continent;
 
 static function Open(XComHQPresentationLayer HQPres)
 {
@@ -17,6 +23,20 @@ static function Open(XComHQPresentationLayer HQPres)
 	S = HQPres.Spawn(class'UILWEWHiring', HQPres);
 	S.Package = name("/ package/ewxHiring/Hiring");
 	S.MCName = 'theHiringScreen';
+	S.Continent = -1;
+	HQPres.ScreenStack.Push(S);
+}
+
+/** Interceptors ordered into a continent's hangar (UIShipList's ORDER INTERCEPTORS). */
+static function OpenOrder(XComHQPresentationLayer HQPres, int ContinentIndex)
+{
+	local UILWEWHiring S;
+
+	DynamicLoadObject(default.UIPackage $ ".ewxHiring", class'Object', true);
+	S = HQPres.Spawn(class'UILWEWHiring', HQPres);
+	S.Package = name("/ package/ewxHiring/Hiring");
+	S.MCName = 'theHiringScreen';
+	S.Continent = ContinentIndex;
 	HQPres.ScreenStack.Push(S);
 }
 
@@ -24,9 +44,18 @@ simulated function OnInit()
 {
 	super.OnInit();
 	Count = 1;
-	MC.FunctionString("SetTitle", class'UIUtilities_Text'.static.GetColoredText(Caps(Word(Title, "Hire Soldiers")), eUIState_Normal));
-	MC.FunctionString("SetIcon", "soldier");
-	MC.FunctionString("SetMouseConfirmText", Word(HireLabel, "HIRE"));
+	if (Continent >= 0)
+	{
+		MC.FunctionString("SetTitle", EWColoured(Caps(Word(OrderTitle, "Order Interceptors")), 0));
+		MC.FunctionString("SetIcon", "jet");
+		MC.FunctionString("SetMouseConfirmText", Word(OrderLabel, "ORDER"));
+	}
+	else
+	{
+		MC.FunctionString("SetTitle", class'UIUtilities_Text'.static.GetColoredText(Caps(Word(Title, "Hire Soldiers")), eUIState_Normal));
+		MC.FunctionString("SetIcon", "soldier");
+		MC.FunctionString("SetMouseConfirmText", Word(HireLabel, "HIRE"));
+	}
 	HelpButton("helpBarMC", false, 0, class'UIUtilities_Text'.default.m_strGenericCancel, "Icon_B_CIRCLE");
 	Refresh();
 }
@@ -46,6 +75,11 @@ function Refresh()
 	S = class'XComGameState_LWStrategy'.static.Get();
 	if (S == none)
 		return;
+	if (Continent >= 0)
+	{
+		RefreshOrder();
+		return;
+	}
 	Wanted = class'LWHiring'.static.Counted(S) + Count;
 	Cost = class'LWHiring'.static.Cost(S) * Count;
 	bAfford = Cost <= class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies();
@@ -64,12 +98,47 @@ function Refresh()
 	MC.ChildFunctionNum("widgetHelper", "SetSelected", 0);
 }
 
+/** XGHangarUI.UpdateHireDisplay: the cost (green, red when it cannot be paid), the monthly cost (yellow), the hangar's
+ *  capacity (red when over), the count. */
+function RefreshOrder()
+{
+	local XComGameState_LWAirWar AirWar;
+	local int Wanted, Cost;
+	local bool bAfford;
+
+	class'XComGameState_LWAirWar'.static.EnsureExists();
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	Wanted = class'LWHangar'.static.BaysTaken(AirWar, Continent) + Count;
+	Cost = class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.InterceptorCost) * Count;
+	bAfford = Cost <= class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies();
+	MC.BeginFunctionOp("UpdateInfo");
+	MC.QueueString(EWColoured(Word(OrderCostLabel, "Initial Cost:") $ "<br>" $ class'LWStrategyRules'.static.Money(Cost), bAfford ? 6 : 3) $ "<br>"
+		$ EWColoured(Word(MonthlyCostLabel, "Monthly Cost:") $ "<br>" $ class'LWStrategyRules'.static.Money(class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.InterceptorUpkeep) * Count), 4) $ "<br>");
+	MC.QueueString(EWColoured(Word(HangarCapacityLabel, "Hangar Capacity:") $ "<br>" $ Wanted $ "/" $ class'LWBaseRules'.default.HangarBays, Wanted > class'LWBaseRules'.default.HangarBays ? 3 : 0));
+	MC.EndOp();
+	MC.BeginChildFunctionOp("widgetHelper", "SetSpinnerValue");
+	MC.QueueNumber(0);
+	MC.QueueString(EWColoured(string(Count), bAfford ? 0 : 3));
+	MC.EndOp();
+	MC.BeginChildFunctionOp("widgetHelper", "SetSpinnerArrows");
+	MC.QueueNumber(0);
+	MC.QueueBoolean(true);
+	MC.EndOp();
+	MC.ChildFunctionNum("widgetHelper", "SetSelected", 0);
+}
+
 function Change(int By)
 {
 	local XComGameState_LWStrategy S;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
-	if (By > 0 && class'LWHiring'.static.Counted(S) + Count + By > class'LWHiring'.static.Capacity())
+	// (OnIncreaseHiringOrder: not past the hangar's bays.)
+	if (Continent >= 0 && By > 0 && class'LWHangar'.static.BaysTaken(class'XComGameState_LWAirWar'.static.Get(), Continent) + Count + By > class'LWBaseRules'.default.HangarBays)
+	{
+		PlaySound(SoundCue'SoundUI.NegativeSelection2Cue', true);
+		return;
+	}
+	if (Continent < 0 && By > 0 && class'LWHiring'.static.Counted(S) + Count + By > class'LWHiring'.static.Capacity())
 	{
 		PlaySound(SoundCue'SoundUI.NegativeSelection2Cue', true);
 		return;
@@ -81,6 +150,22 @@ function Change(int By)
 
 function Hire()
 {
+	local string Why;
+
+	if (Continent >= 0)
+	{
+		if (class'LWHangar'.static.Order(Continent, Count, Why))
+		{
+			PlaySound(SoundCue'SoundUI.PositiveUISelctionCue', true);
+			CloseScreen();
+		}
+		else
+		{
+			`log("LongWarX2: EW interceptor order:" @ Why, , 'LongWarX2');
+			PlaySound(SoundCue'SoundUI.NegativeSelection2Cue', true);
+		}
+		return;
+	}
 	if (class'LWHiring'.static.Order(Count))
 	{
 		PlaySound(SoundCue'SoundUI.PositiveUISelctionCue', true);

@@ -481,14 +481,14 @@ function ShowShips()
 }
 
 /** A jet's status in EW's words (XGShip_Interceptor.GetStatusString): ready, or what it is doing and for how long. */
-function string StatusText(XComGameState_LWAirWar.LWJet J)
+static function string StatusText(XComGameState_LWAirWar.LWJet J)
 {
 	local string Time;
 
 	if (J.Status <= 0 || J.Status >= 8)
-		return StatusNames[0];
-	Time = J.HoursDown >= 24 ? Repl(ValueDays, "<XGParam:IntValue0/>", string((J.HoursDown + 23) / 24)) : Repl(ValueHours, "<XGParam:IntValue0/>", string(J.HoursDown));
-	return Repl(StatusNames[J.Status], "<XGParam:StrValue0/>", Time);
+		return default.StatusNames[0];
+	Time = J.HoursDown >= 24 ? Repl(default.ValueDays, "<XGParam:IntValue0/>", string((J.HoursDown + 23) / 24)) : Repl(default.ValueHours, "<XGParam:IntValue0/>", string(J.HoursDown));
+	return Repl(default.StatusNames[J.Status], "<XGParam:StrValue0/>", Time);
 }
 
 /** The jet and stance shown chosen (SetShipFocus: the jet in the low byte, the stance above it), the one before not. */

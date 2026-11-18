@@ -210,6 +210,32 @@ static function AddCraft(XComGameState NewGameState, int Type, int Count)
 }
 
 /** Interceptors ordered to a continent. Why says what stopped it. */
+/** One interceptor of a continent's order cancelled (XGHeadQuarters.ReduceInterceptorOrder): its price back, the order one
+ *  smaller, gone at none. False if the continent has no order. */
+static function bool CancelOrder(int Continent)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWAirWar AirWar;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local int i;
+
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	if (AirWar == none)
+		return false;
+	for (i = 0; i < AirWar.Orders.Length && AirWar.Orders[i].Continent != Continent; i++);
+	if (i >= AirWar.Orders.Length)
+		return false;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: an interceptor order cancelled");
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
+	XComHQ.AddResource(NewGameState, 'Supplies', class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.InterceptorCost));
+	AirWar = InState(NewGameState);
+	AirWar.Orders[i].Count--;
+	if (AirWar.Orders[i].Count <= 0)
+		AirWar.Orders.Remove(i, 1);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	return true;
+}
+
 static function bool Order(int Continent, int Count, out string Why)
 {
 	local XComGameState NewGameState;
