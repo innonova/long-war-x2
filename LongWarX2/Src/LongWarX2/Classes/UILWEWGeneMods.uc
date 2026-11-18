@@ -32,6 +32,9 @@ var int Row, Column;
 var array<int> Chosen;
 var UIButton ConfirmButtonWidget;
 var bool bTreeShown;
+/** The soldier standing on the Genetics Lab's plinth, and whose pawn it is. */
+var Actor Pawn;
+var StateObjectReference PawnUnit;
 /** Opened on one soldier (the soldier summary's Gene Mods, XGSoldierUI's gene view): no list; out, back to the summary. */
 var StateObjectReference Fixed;
 
@@ -109,25 +112,55 @@ simulated function OnInit()
 		ChooseSoldier();
 }
 
-/** EW's base behind it, the camera in the (first) Genetics Lab. */
+/** EW's base behind it: EW's view into the Genetics Lab at its plinth, framed as the armory's promotion view is at the
+ *  armory's (UISoldierGeneMods.MatchCameras); without the lab's plinth, the lab's tile camera. */
 function ShowBase()
 {
-	local XComGameState_LWStrategy S;
 	local LWX2EWBase B;
-	local int i;
 
 	if (!class'LWX2EWBase'.static.Converted())
 		return;
 	B = class'LWX2EWBase'.static.Get(self);
 	B.Show();
-	S = class'XComGameState_LWStrategy'.static.Get();
-	for (i = 0; S != none && i < S.TileFacility.Length; i++)
-		if (S.TileFacility[i] == 23)
-		{
-			B.LookAt(name("AddonCam_R" $ (i / class'LWBase'.const.W) $ "_C" $ (i % class'LWBase'.const.W + 1)), 1.0);
-			return;
-		}
-	B.LookAt('BARRACKS', 1.0);
+	if (B.LookAtMatched('Armory_UIDisplayCam_Promote', 'ArmorySoldierPlinth', 'GeneLabSoldierPlinth', 'GeneMods', 1.0))
+		return;
+	if (FacilityCamera(23) != '')
+		B.LookAt(FacilityCamera(23), 1.0);
+	else
+		B.LookAt('BARRACKS', 1.0);
+}
+
+/** The soldier on the Genetics Lab's plinth (EW's XGStrategySoldier.PlaceOnPlinth, eHQLoc_GeneLab), from XCOM 2's pawn
+ *  manager as the armory's screens have it. */
+function PlaceSoldier()
+{
+	local vector Loc;
+	local rotator Rot;
+	local XComGameState_Unit U;
+
+	if (Pawn != none)
+		Movie.Pres.GetUIPawnMgr().ReleasePawn(self, PawnUnit.ObjectID);
+	Pawn = none;
+	U = Unit();
+	if (U == none || !class'LWX2EWBase'.static.Get(self).SpotFor('GeneLabSoldierPlinth', Loc, Rot))
+		return;
+	PawnUnit = Soldier;
+	Pawn = Movie.Pres.GetUIPawnMgr().RequestPawnByID(self, Soldier.ObjectID, Loc, Rot);
+	if (Pawn == none)
+		return;
+	Pawn.GotoState('CharacterCustomization');
+	if (XComUnitPawn(Pawn) != none)
+		XComUnitPawn(Pawn).CreateVisualInventoryAttachments(Movie.Pres.GetUIPawnMgr(), U);
+	Pawn.SetLocation(Loc);
+	Pawn.SetRotation(Rot);
+}
+
+simulated function OnRemoved()
+{
+	if (Pawn != none)
+		Movie.Pres.GetUIPawnMgr().ReleasePawn(self, PawnUnit.ObjectID);
+	Pawn = none;
+	super.OnRemoved();
 }
 
 simulated function OnReceiveFocus()
@@ -180,6 +213,7 @@ function OnSoldierChosen(StateObjectReference UnitRef)
 	}
 	UpdateIcons();
 	ShowSoldier();
+	PlaceSoldier();
 	if (!bTreeShown)
 	{
 		CallNow("ShowAbilityTree");

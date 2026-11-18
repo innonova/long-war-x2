@@ -236,6 +236,57 @@ function LookAt(name Tag, optional float Interp)
 	SetTimer(Interp + 1.5, false, nameof(RefreshAmbientLater));
 }
 
+/**
+ * A view placed relative to one plinth as another view is to its own (EW's UISoldierGeneMods.MatchCameras: the Genetics
+ * Lab's camera put to the lab's plinth as the armory's promotion camera is to the armory's, with its field of view): the
+ * camera FromCam's offset and turn from FromSpot, applied at ToSpot. False where a camera or plinth is missing.
+ */
+function bool LookAtMatched(name FromCam, name FromSpot, name ToSpot, name AsTag, optional float Interp)
+{
+	local LWX2EWMapPieces.LWX2Camera C;
+	local LWX2EWMapData Command;
+	local vector FromLoc, ToLoc;
+	local rotator FromRot, ToRot;
+	local CameraActor Cam;
+	local name CamName;
+	local int k;
+
+	Command = Data("Command1");
+	k = Command.Cameras.Find('Tag', FromCam);
+	if (k != INDEX_NONE)
+		C = Command.Cameras[k];
+	else if (!FacilityCameraOf(FromCam, C))
+		return false;
+	if (!SpotFor(FromSpot, FromLoc, FromRot) || !SpotFor(ToSpot, ToLoc, ToRot))
+		return false;
+	CamName = name("LWX2EWBase_" $ AsTag);
+	k = CamTags.Find(CamName);
+	if (k == INDEX_NONE)
+	{
+		Cam = Spawn(class'DynamicCameraActor', self, CamName);
+		if (Cam == none)
+			return false;
+		Cam.bConstrainAspectRatio = false;
+		NeutralLook(Cam);
+		CamTags.AddItem(CamName);
+		Cams.AddItem(Cam);
+	}
+	else
+		Cam = Cams[k];
+	Cam.SetLocation(ToLoc + (C.Loc + BaseOffset - FromLoc));
+	Cam.SetRotation(ToRot + (C.Rot - FromRot));
+	Cam.FOVAngle = C.FOV;
+	ViewTag = AsTag;
+	if (`HQPRES != none)
+		`HQPRES.CAMLookAtNamedLocation(string(CamName), Interp);
+	ShowCutaway(false);
+	HideWorld();
+	RefreshAmbient();
+	SetTimer(Interp + 0.5, false, nameof(RefreshAmbient));
+	SetTimer(Interp + 1.5, false, nameof(RefreshAmbientLater));
+	return true;
+}
+
 function RefreshAmbientLater()
 {
 	RefreshAmbient();

@@ -280,3 +280,17 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   (`ShowCutaway`). Seen on wingpu: the Genetics Lab as in EW's capture, then the base view's black between the rooms back.
 - **Not yet:** EW's holographic MEC on the plinth (`XGCyberneticsUI.PutMecOnPlinth`); the Gene Mods screen in the armory
   (EW's `UISoldierGeneMods` uses `Armory_UIDisplayCam_Promote`, the soldier on the pad).
+
+## Report (2026-11-18, the soldier on EW's plinths)
+
+- **The soldier stands on EW's plinths:** EW stands a soldier for its screens on a plinth (`XGStrategySoldier.PlaceOnPlinth`:
+  `SkeletalMeshActor`s tagged `ArmorySoldierPlinth`, `GeneLabSoldierPlinth`, `CyberneticsLabMecPlinth`). The converter now
+  keeps them (version 24: `Spots`), and the armory's screens stand the soldier on EW's (in `Anim_Armory`, 368 units from
+  the summary's camera, where we had put him 250 in front of it): the size and place EW shows (the reviewer's ninth item).
+- **Gene Mods in the Genetics Lab, as EW:** the soldier on the lab's plinth, the view put to it as the armory's promotion
+  view is to the armory's plinth, with that view's field of view (`LWX2EWBase.LookAtMatched`, EW's
+  `UISoldierGeneMods.MatchCameras`). Seen on wingpu beside EW's capture.
+- **Fixed on the way:** the Situation Room's live wall showed on other screens' 3D panels (XCOM 2's 3D movie is one picture
+  for all its panels): it is hidden while the hub is not on top. A camera test aid, `pov`.
+- **Not yet:** EW's X-ray look of the soldier in Gene Mods with the chosen part lit (`ShowXRayView`), its panels in 3D, its
+  GO TO GENE LAB button and previous/next soldier.
