@@ -11,7 +11,8 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
 import { inlineTextures } from './inline-textures.ts'
-import { importsExports, swfOf, tagsOf } from './swf-as2.ts'
+import { actionStrings, importsExports, swfOf, tagsOf } from './swf-as2.ts'
+import { X2_UI_SYMBOLS } from './x2-ui-symbols.ts'
 
 /** An EW UI package converted to out; returns its report. */
 export function convertUI(src: string, out: string): string {
@@ -52,6 +53,12 @@ for (const e of pkg.exports as { type: string; offset: number; size: number }[])
 // __Packages.<name> exports) gets a name of its own, the same length (first letter Q; Colors → EWClrs), in every movie
 // alike: in the export and import tables (its symbol and registration) and in the ActionScript's strings (constant pools
 // and pushed strings), each dotted segment that is such a name. EW's movies then run on EW's framework, whole.
+// The symbols bound to those classes (Object.registerClass("VerticalScrollMC", VerticalAutoScrollText) in an init action)
+// clash the same way: XCOM 2's movies bind symbols of the same names to their own classes, and that binding won, so an
+// EW clip came up as XCOM 2's class and EW's casts to its own failed (the promotion screen's description stayed empty).
+// So each EW symbol of a name XCOM 2's movies register (x2-ui-symbols.ts) gets a name of its own, by the same rule and in
+// the same places. (Only those: Long War's movies register symbols of plain
+// names, such as "Menu", whose other uses as strings would change with them.)
 const BUILTINS = new Set(['Object', 'Function', 'Array', 'String', 'Number', 'Boolean', 'Math', 'Date', 'MovieClip', 'TextField',
   'TextFormat', 'Sound', 'Color', 'Key', 'Mouse', 'Stage', 'System', 'Selection', 'XML', 'XMLNode', 'LoadVars', 'LocalConnection',
   'SharedObject', 'Camera', 'Microphone', 'NetConnection', 'NetStream', 'Video', 'ContextMenu', 'ContextMenuItem', 'Error',
@@ -71,6 +78,24 @@ for (const swf of swfs)
       const last = name.split('.').pop()!
       if (!BUILTINS.has(last)) classNames.add(last)
     }
+// The symbols of the names XCOM 2 registers, wherever an export or import table names them (the same in every package
+// converted: one imports another's, as the promotion screen its perk icons from XComIcons). A symbol whose name is also an instance's on a timeline (theScreen, imageContainer …: in a
+// PlaceObject tag), which code and the mod's paths name, is renamed only where it is a symbol: the export and import
+// tables and the registering init actions. The others everywhere (attachMovie names them in code too).
+const symbols = new Set<string>()
+const registers = (t: { code: number; body: Uint8Array }) => t.code === 59 && actionStrings(t.body, 2).includes('registerClass')
+for (const swf of swfs) {
+  const { imports, exports } = importsExports(tagsOf(swf))
+  for (const n of [...exports, ...imports.flatMap((i) => i.names)]) if (X2_UI_SYMBOLS.has(n) && !classNames.has(n)) symbols.add(n)
+}
+const linkOnly = new Set<string>()
+for (const swf of swfs)
+  for (const t of tagsOf(swf))
+    if (t.code === 26 || t.code === 70) {
+      const text = Buffer.from(t.body).toString('latin1')
+      for (const n of symbols) if (text.includes(n + '\0')) linkOnly.add(n)
+    }
+for (const n of symbols) classNames.add(n)
 const renamed = new Map<string, string>()
 for (const c of classNames) {
   const to = c === 'Colors' ? 'EWClrs' : (c[0] === 'Q' ? 'Z' : 'Q') + c.slice(1)
@@ -78,14 +103,16 @@ for (const c of classNames) {
   renamed.set(c, to)
 }
 let classRefs = 0
-/** A string in place (bytes [at, at + length)): each dotted segment that is a renamed class, renamed. */
+/** A string in place (bytes [at, at + length)): each dotted segment that is a renamed class, renamed (a symbol that is also
+ *  an instance's name only where it is a symbol: asSymbol). */
+let asSymbol = true
 const renameAt = (b: Uint8Array, at: number, length: number) => {
   let segStart = at
   for (let i = at; i <= at + length; i++) {
     if (i < at + length && b[i] !== 0x2e) continue
     const seg = Buffer.from(b.subarray(segStart, i)).toString('latin1')
     const to = renamed.get(seg)
-    if (to) {
+    if (to && (asSymbol || !linkOnly.has(seg))) {
       b.set(Buffer.from(to, 'latin1'), segStart)
       classRefs++
     }
@@ -96,6 +123,7 @@ const cstrEnd = (b: Uint8Array, o: number) => { let e = o; while (e < b.length &
 for (const swf of swfs) {
   for (const t of tagsOf(swf)) {
     const b = t.body
+    asSymbol = t.code === 56 || t.code === 57 || t.code === 71 || registers(t)
     if (t.code === 56 || t.code === 57 || t.code === 71) {
       let o = 0
       if (t.code !== 56) { o = cstrEnd(b, 0) + 1; if (t.code === 71) o += 2 }
@@ -143,7 +171,7 @@ const outBytes = new Uint8Array(bytes.length + tex.appended.length)
 outBytes.set(bytes)
 outBytes.set(tex.appended, bytes.length)
 writeFileSync(out, outBytes)
-return `${out}: ${outBytes.length} bytes; ${groups.length} groups renamed gfx → ewx, ${replaced} names in the movies, ${renamed.size} classes renamed (${classRefs} references); ${tex.textures} textures rewritten (${tex.mips} mips)`
+return `${out}: ${outBytes.length} bytes; ${groups.length} groups renamed gfx → ewx, ${replaced} names in the movies, ${renamed.size} classes and their symbols renamed (${classRefs} references); ${tex.textures} textures rewritten (${tex.mips} mips)`
 }
 
 if (/ew-ui\.ts$/.test(process.argv[1] ?? '')) {

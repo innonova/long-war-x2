@@ -234,6 +234,15 @@ function FillAbilities(XComGameState_Unit U)
 	}
 }
 
+/** Another soldier, shown when the screen next has focus (a screen over it cycled: UILWEWSoldierPromotion). */
+function SwitchTo(StateObjectReference Ref)
+{
+	if (Pawn != none)
+		Movie.Pres.GetUIPawnMgr().ReleasePawn(self, UnitRef.ObjectID);
+	Pawn = none;
+	UnitRef = Ref;
+}
+
 /** The previous (-1) or next (1) soldier of the list it was opened from (EW's PrevSoldier, NextSoldier). */
 function Cycle(int By)
 {
@@ -332,7 +341,11 @@ function Choose(int i)
 	switch (Options[i])
 	{
 	case 'Abilities':
-		HQPres.UIArmory_Promotion(UnitRef);
+		// (EW's promotion screen; XCOM 2's where the converted screens are missing.)
+		if (DynamicLoadObject(UIPackage $ ".ewxSoldierPromotion", class'Object', true) != none)
+			class'UILWEWSoldierPromotion'.static.Open(HQPres, UnitRef);
+		else
+			HQPres.UIArmory_Promotion(UnitRef);
 		break;
 	case 'PsiAbilities':
 		HQPres.UIArmory_Promotion(UnitRef);

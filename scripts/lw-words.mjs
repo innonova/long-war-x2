@@ -458,6 +458,18 @@ export function makeHubWords({ strategyLoc }) {
     ['DismissTitle', inSection('XGSoldierUI', 'm_strDismissSoldierDialogTitle')],
     ['DismissText', inSection('XGSoldierUI', 'm_strDismissSoldierDialogText')],
   ].filter(([, v]) => v)
+  // EW's promotion screen (UILWEWSoldierPromotion: UISoldierPromotion's words; the soldier's panels as the summary's).
+  const promotion = [
+    ...summary.filter(([k]) => ['StatusLabel', 'MissionsLabel', 'KillsLabel'].includes(k)),
+    ['Title', inSection('UISoldierPromotion', 'm_strNormalAbilitiesTitle')],
+    ['ConfirmTitle', inSection('UISoldierPromotion', 'm_strTitleConfirmPromotion')],
+    ['ConfirmText', inSection('UISoldierPromotion', 'm_strConfirmBodyText')],
+    ['OKPromote', inSection('UISoldierPromotion', 'm_strOKPromote')],
+    ['CancelPromote', inSection('UISoldierPromotion', 'm_strCancelPromote')],
+    ['CantTitle', inSection('UISoldierPromotion', 'm_strTitleCannotDoPromotion')],
+    ['CantText', inSection('UISoldierPromotion', 'm_strCantConfirmBodyText')],
+    ['OKCant', inSection('UISoldierPromotion', 'm_strOKCantPromote')],
+  ].filter(([, v]) => v)
   // EW's hiring dialog (UILWEWHiring: UIHiring, XGBarracksUI's hiring view) and its event (XGMissionControlUI).
   const hire = [
     ['Title', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_Hire]')],
@@ -469,7 +481,7 @@ export function makeHubWords({ strategyLoc }) {
     ['Event', inSection('XGMissionControlUI', 'm_strNewSoldierEvent')],
   ].filter(([, v]) => v)
   return {
-    text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWStrategyHUD]', ...hud.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWHiring]', ...hire.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierList]', ...list.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierSummary]', ...summary.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
+    text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWStrategyHUD]', ...hud.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWHiring]', ...hire.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierList]', ...list.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierSummary]', ...summary.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierPromotion]', ...promotion.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
     named: words.length + hud.length + hire.length + list.length + summary.length,
   }
 }

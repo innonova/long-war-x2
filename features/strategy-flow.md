@@ -73,8 +73,8 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
    cannot play). Still XCOM 2's: the main menu, and the Skyranger briefing "Operation Gatecrasher" ("Wilderness of
    South Africa", over an EW map) for the first mission, and every mission's briefing (EW's dropship screen is in
    EW's UICollection_Dropship_SF).
-2. **The soldier screens are XCOM 2's where EW has its own** (list and summary: done, reports below; still to do: the
-   abilities tree, Gene Mods, Report for Duty, EW's icons for Long War's perks): the soldier list (EW's: Long War's stats per soldier,
+2. **The soldier screens are XCOM 2's where EW has its own** (list, summary, abilities tree and EW's perk icons: done,
+   reports below; still to do: the psi tree, Gene Mods, Report for Duty): the soldier list (EW's: Long War's stats per soldier,
    class counts in the title), the soldier's summary menu (EW: Abilities, Gene Mods, Loadout, Customize, Report for
    Duty, Dismiss, and next/previous soldier buttons), the abilities tree (EW's: Long War's ranks as a vertical list
    beside the soldier; XCOM 2's horizontal panel covers the soldier), Gene Mods.
@@ -189,3 +189,30 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   shot) are left out of EW's list, which lists perks.
 - **Still to do here:** EW's main menu stands over XCOM 2's shell scene, where EW shows its Mission Control room
   behind the logo (EW's base levels in the shell map, through EW's shell camera).
+
+## Report (2026-11-18, EW's promotion tree)
+
+- **The summary's Abilities opens EW's promotion screen** (`UILWEWSoldierPromotion`, EW's SoldierPromotion movie on EW's
+  promotion panel in the armory, `UIDisplay_SoldierPromote` through `Armory_UIDisplayCam_Promote`, the soldier on the
+  pad), driven as EW's `UISoldierPromotion` drives it: the class's title and icon, a row per rank (Specialist to Master
+  Sergeant, Long War's names) with its three perks in EW's icons, the rank to choose now highlighted, later unchosen
+  ranks faded, chosen ones plain with the soldier's perk lit; Hidden Trees locks the ranks not reached. Selection by
+  mouse (hover) and the arrow keys (EW's rows run right to left), the perk's words with Long War's stat bonus for it.
+  A click or Enter: EW's NEW TRAINING dialog in Long War's words (and "Prior Training Required" while an earlier rank
+  is unchosen); confirmed, the perk is bought as `LWX2PromotionScreen` buys it (XCOM 2's purchase, Long War's stat bonus).
+  Previous/next soldier as in the summary, which follows. Seen on wingpu: Lone Wolf chosen at Lance Corporal by clicks,
+  Corporal then the rank to choose, the summary listing Lone Wolf with its EW icon.
+- **Found on the way, fixed in the converter (`ew-ui.ts`):** the perk's words stayed EW's placeholder. EW's movie binds
+  its text clip's symbol (`VerticalScrollMC`) to its own `VerticalAutoScrollText`; XCOM 2's movies bind a symbol of the
+  same name to theirs, and XCOM 2's binding won, so EW's cast to its own class failed. The class renaming of 2026-11-15
+  now covers such symbols: each EW symbol of a name XCOM 2 registers gets a name of its own, the same in every converted
+  package (they import from one another). XCOM 2's names come from the SDK's uncooked UI packages, read once by
+  `tools/convert/x2-ui-symbols-read.ts` into `x2-ui-symbols.ts` (865 names; the game's cooked packages use a compression
+  upkit does not read). A symbol that is also an instance name on a timeline (`theScreen`, `imageContainer`, `theClock`)
+  is renamed only in the tables and registrations, as code and our paths name the instance. Research, build facilities,
+  Mission Control, the soldier list and summary, and the new-game and Second Wave screens checked after it.
+- **Not yet:** the psi tree (Psi-Abilities still opens XCOM 2's screen) and MEC promotion; EW's flag and medals in the
+  header. While EW's dialog is up the tree's panel hides and the resource panel shows (XCOM 2's dialog over a 3D screen).
+- **A risk noted, not seen:** classes renamed in 2026-11-15's change whose names are also instance names (`Debrief`,
+  `Inventory`, `PauseMenu`, `ClassIcon` …) have their instance references in code renamed too; screens using those
+  (EW's debriefs, inventory) should be checked when they are ported.

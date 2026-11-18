@@ -210,6 +210,37 @@ export function classesOf(code: Uint8Array): string[] {
   return [...out]
 }
 
+/** The strings an action block names (its constant pools' and its pushed strings), from offset o. */
+export function actionStrings(b: Uint8Array, o: number): string[] {
+  const out: string[] = []
+  const str = (p: number) => { let e = p; while (e < b.length && b[e] !== 0) e++; return [Buffer.from(b.subarray(p, e)).toString('latin1'), e + 1] as const }
+  while (o < b.length) {
+    const op = b[o++]!
+    if (op === 0) break
+    if (op < 0x80) continue
+    const len = b[o]! | (b[o + 1]! << 8)
+    o += 2
+    const end = o + len
+    if (op === 0x88) {
+      const n = b[o]! | (b[o + 1]! << 8)
+      let p = o + 2
+      for (let i = 0; i < n; i++) { const [v, next] = str(p); out.push(v); p = next }
+    } else if (op === 0x96) {
+      let p = o
+      while (p < end) {
+        const ty = b[p++]!
+        if (ty === 0) { const [v, next] = str(p); out.push(v); p = next }
+        else p += ({ 1: 4, 2: 0, 3: 0, 4: 1, 5: 1, 6: 8, 7: 4, 8: 1, 9: 2 } as Record<number, number>)[ty] ?? end - p
+      }
+    } else if (op === 0x8e || op === 0x9b) {
+      o = end
+      continue
+    }
+    o = end
+  }
+  return out
+}
+
 export function movies(path: string) {
   const bytes = decompressPackage(new Uint8Array(readFileSync(path)))
   const pkg = new Package(bytes)
