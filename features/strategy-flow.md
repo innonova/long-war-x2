@@ -577,3 +577,6 @@ piece of 17 facility levels, is not found (an EW package the setup does not carr
   science HUD hides them for each of its views but the room's menu (`UIStrategyHUD_FSM_Science.GoToView`,
   `UISoldierGeneMods`); back in the room they show again (the reviewer's round 4, #14, in part: EW's code hides nothing
   over the Situation Room's screens or the Gray Market).
+- **The Situation Room's wall is bare everywhere but in the room** (its satellite view included): from the base's view,
+  Mission Control and the barracks it shows the map alone, its side panels dark, as EW's (the reviewer's round 4, #11:
+  the country columns at Mission Control's edge are gone).

@@ -98,8 +98,10 @@ static function WallFor(XComHQPresentationLayer HQPres)
 	// (Under the Situation Room's own screens, opened from its menu, EW's room screen hides as it loses the focus
 	// (UISituationRoom's MainSituationViewState.OnLoseFocus) and the wall shows its bare map, a 3D material in EW: here the
 	// countries, the UFO and satellite counters, the objectives and the ticker are hidden and the map stays.)
+	// (And everywhere but the room itself: EW's room screen exists only while the Situation Room is entered, its satellite
+	// view among it; from the base's view, Mission Control and the barracks EW's wall shows its map with dark side panels.)
 	S = HQPres.ScreenStack.GetCurrentScreen();
-	Wall.Bare(UILWEWGreyMarket(S) != none || UILWEWPendingRequests(S) != none || UILWEWFinances(S) != none || UILWEWCouncilRequest(S) != none);
+	Wall.Bare(!(S == Wall || UILWEWSituationRoomHUD(S) != none || (UILWEWHub(S) != none && UILWEWHub(S).Room == 4)));
 	if (bOther3D && Wall.bIsVisible)
 		Wall.Hide();
 	else if (!bOther3D && !Wall.bIsVisible)
