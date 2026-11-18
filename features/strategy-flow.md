@@ -526,3 +526,14 @@ Now (checked by a council mission won, `logs/ew_debrief.png`):
 **Still open here:** the craft's weapons on their hardpoints (`XGHangarShip.UpdateWeapon`: EW's jet weapon meshes on the
 sockets); the hangar's orange ramp strips draw grey (the light strips); `HQ_RoomBorderFX.Meshes.RoomBorderGlowRing`, a
 piece of 17 facility levels, is not found (an EW package the setup does not carry; EW's hover glow around a room).
+
+## Report (2026-11-18 night, glass and lamps)
+
+- **The labs' windows:** EW's base glass kept EW's own material (XCOM 2's translucent parent, `Translucent_SD`, is not
+  loaded in the strategy layer, so no stand-in was made) and drew opaque and dark blue over the autopsy and weapons labs'
+  windows. In the base it is now left out (`BaseGlass=false`); the lit labs show through as in EW. A translucent material
+  of our own would bring back the panes' faint reflections.
+- **EW's palette lamps glow:** `HQ_EmissivePallete` and `HQ_Master_EmissiveComboPallet` (the hangar's bay lamps and ramp
+  lights, engineering's) are glowing parts now, in their `Colorize A`. The hangar ramps' long orange stripes
+  (`HANGAR.StripeTest`, a material with no parameters) are still grey.
+- **Test aid:** `basenear <radius>`: the base's pieces and people near the camera, with their materials.

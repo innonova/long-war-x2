@@ -109,6 +109,10 @@ function Handle(string Line, out array<string> Out)
 		GetALocalPlayerController().ClientUpdateLevelStreamingStatus(name(Args[1]), true, Args.Length < 3 || Args[2] != "false", false);
 		Out.AddItem("ok" @ Args[1]);
 		return;
+	case "basenear":
+		// A test aid: EW's base's pieces and people within <radius> of the camera, nearest first: basenear <radius>.
+		BaseNear(Args.Length > 1 ? float(Args[1]) : 1500.0, Out);
+		return;
 	case "basehide":
 		// A test aid: EW's base's pieces and people whose mesh's path holds <text> hidden, or shown again: basehide <text> [show];
 		// or the people among them turned or moved, live: basehide <text> yaw|z <add>.
@@ -4708,6 +4712,31 @@ function string BaseHide(string Text, bool bShow, optional string Move, optional
 			Where $= " [" $ Person.Location @ Person.Rotation.Yaw $ "]";
 		}
 	return "ok" @ n @ (Move != "" ? Move @ By : (bShow ? "shown" : "hidden")) $ Where;
+}
+
+/** A test aid: what of EW's base stands near the camera (basenear). */
+function BaseNear(float Radius, out array<string> Out)
+{
+	local DynamicSMActor_Spawnable Piece;
+	local LWX2BasePerson Person;
+	local vector At;
+	local float D;
+
+	At = XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.Location;
+	foreach AllActors(class'DynamicSMActor_Spawnable', Piece)
+	{
+		D = VSize(Piece.Location - At);
+		if (D <= Radius && !Piece.bHidden)
+			Out.AddItem(int(D) @ PathName(Piece.StaticMeshComponent.StaticMesh) @ Piece.Location @ "radius" @ int(Piece.StaticMeshComponent.Bounds.SphereRadius)
+				@ "material" @ PathName(Piece.StaticMeshComponent.GetMaterial(0)) @ PathName(MaterialInstance(Piece.StaticMeshComponent.GetMaterial(0)) != none ? MaterialInstance(Piece.StaticMeshComponent.GetMaterial(0)).Parent : none));
+	}
+	foreach AllActors(class'LWX2BasePerson', Person)
+	{
+		D = VSize(Person.Location - At);
+		if (D <= Radius && !Person.bHidden)
+			Out.AddItem(int(D) @ PathName(Person.SkeletalMeshComponent.SkeletalMesh) @ Person.Location);
+	}
+	Out.AddItem("camera at" @ At);
 }
 
 defaultproperties

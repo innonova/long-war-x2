@@ -889,7 +889,7 @@ function vectorParam(r: number, name: string, depth = 0): number[] | undefined {
 }
 /** EW's glowing materials (the base's light rings and strips, its consoles' and walls' screens): their own kind, with
  *  their colour and, for a screen, its picture. */
-const GLOW = /HQ_ColorizedLight|HQ_ConsoleScreen/i
+const GLOW = /HQ_ColorizedLight|HQ_ConsoleScreen|HQ_EmissivePallete|HQ_Master_EmissiveComboPallet/i
 const looks = new Map<number, Look>()
 for (const p of [...pieces, ...doors]) for (const m of p.materials) if (m && !looks.has(m)) looks.set(m, lookOf(m))
 for (const [r, l] of looks) {
@@ -897,7 +897,8 @@ for (const [r, l] of looks) {
   const tex = new Map<string, string>()
   const root = texturesOf(r, tex)
   l.kind = 'Glow'
-  l.tint = vectorParam(r, 'TintColor')
+  // (The palette lights, the hangar's ramp strips among them, take theirs in Colorize A.)
+  l.tint = vectorParam(r, 'TintColor') ?? vectorParam(r, 'Colorize A')
   // (A console's screen its picture; a light its colour alone.)
   l.diffuse = tex.get('StaticScreenTexture') ?? ''
   void root

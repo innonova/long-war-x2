@@ -130,6 +130,8 @@ var config LinearColor UnlitTint;
 var config array<string> GlassMaterials;
 var config string GlassParent;
 var config float GlassOpacity;
+/** EW's base's glass panes placed (as GlassParent); off: left out (the parent is not loaded in the strategy layer). */
+var config bool BaseGlass;
 var config LinearColor GreyTint;
 /** EW's alien pods (lw-missions.md, step 2): where its aliens stand, the commander's pod, how many. */
 /** A place of EW's meld canisters (XComMeldContainerSpawnPoint; lw-loot.md): its drop zone's group, the turn it is gone, hard or easy. */
@@ -639,13 +641,17 @@ static function bool AllSkipped(LWX2Piece P, LWX2EWMapData D, optional bool bBas
 	local string M;
 	local int k;
 
-	if (P.Materials.Length == 0 || default.SkipMaterials.Length == 0)
+	if (P.Materials.Length == 0 || (default.SkipMaterials.Length == 0 && !(bBase && !default.BaseGlass)))
 		return false;
 	foreach P.Materials(M)
 	{
 		if (M == "")
 			continue;
 		k = D.Looks.Find('Material', M);
+		// (EW's base's glass left out where BaseGlass is off: XCOM 2's translucent parent is not loaded in the strategy
+		// layer, and EW's own pane then drew opaque and blue over the labs' windows.)
+		if (bBase && !default.BaseGlass && k != INDEX_NONE && D.Looks[k].Diffuse == "" && Matches(M, default.GlassMaterials))
+			continue;
 		if (k == INDEX_NONE || D.Looks[k].Diffuse != "" || !Matches(M, default.SkipMaterials) || (bBase && Matches(M, default.BaseBlackMaterials)))
 			return false;
 	}
