@@ -171,3 +171,21 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   it was opened from.
 - **Not yet as EW's:** Gene Mods (the mods a soldier has), Report for Duty, EW's
   icons for Long War's perks (the port's perks wear XCOM 2's), the flag and medal badge beside the name.
+
+## Report (2026-11-18, EW's main menu; EW's perk icons)
+
+- **EW's main menu over XCOM 2's** (`UILWEWMainMenu`, EW's Shell movie, Long War's words from the player's
+  `XComUIShell.int`): LONG WAR, CHARACTER POOL (in EW's MULTIPLAYER place: the port has no multiplayer, and the
+  soldiers' looks are XCOM 2's), LOAD GAME, OPTIONS, EXIT TO DESKTOP, in EW's order. Seen on wingpu by clicks: LONG WAR
+  opens EW's SELECT LONG WAR DIFFICULTY, BACK returns; CHARACTER POOL, LOAD GAME and OPTIONS open XCOM 2's screens and
+  Escape returns to EW's menu. EW's logo shows as in EW.
+- **The air war demo button is development-only now** (it covered EW's logo in the player's build; EW has none): all
+  four test buttons follow `ShowTestCampaign` (off with `--player`) and sit below the logo. The test scripts' "menu up"
+  line no longer depends on the button (`LongWarX2: main menu up`, `start-game.ps1`).
+- **EW's perk icons for Long War's perks:** `classes-config.mjs` writes each ability's EW icon frame
+  (`[LongWarX2.LWPerkIcons]` in `XComLWClasses.ini`, 102 abilities), from the perk it stands for and the Tree's
+  `data/perks.json` (Long War's `XComPerkManager.BuildPerkTables`, so Lone Wolf wears EW's "HonorExalt" as in Long War).
+  The soldier summary's abilities show them (seen: Squadsight). XCOM 2's mechanics without a Long War perk (its pistol
+  shot) are left out of EW's list, which lists perks.
+- **Still to do here:** EW's main menu stands over XCOM 2's shell scene, where EW shows its Mission Control room
+  behind the logo (EW's base levels in the shell map, through EW's shell camera).

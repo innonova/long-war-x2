@@ -1,10 +1,9 @@
-// The air war from the main menu, with a demo jet (no campaign): for trying the
-// rules and the screen quickly (features/hard-parts.md, experiment 3). And,
-// for testing only, a new campaign that skips the first mission (the game's own
-// "Debug NonCheat Start"): it starts at the Avenger, nothing else changed.
+// For development only (ShowTestCampaign; never in a release, as EW's main menu has none of these): the air war with a
+// demo jet (no campaign; features/hard-parts.md, experiment 3), a new campaign that skips the first mission (the game's
+// own "Debug NonCheat Start"), XCOM 2's tactical quick launch and an EW map as it is. Below EW's logo (UILWEWMainMenu).
 class UIScreenListener_LongWarX2Shell extends UIScreenListener config(LWAirWar);
 
-/** The test campaign's button; for development, never in a release. */
+/** The test buttons; for development, never in a release. */
 var config bool ShowTestCampaign;
 /** An Enemy Within map to open as it is (experiment 2), with its URL options. */
 var config string TestMapURL;
@@ -18,25 +17,25 @@ event OnInit(UIScreen Screen)
 		return;
 	if ((UIShell(Screen) == none && UILWEWMainMenu(Screen) == none) || Screen.GetChildByName('LWX2AirWarDemo', false) != none)
 		return;
+	// (The test scripts wait for this line: tools/test/start-game.ps1.)
+	`log("LongWarX2: main menu up on" @ Screen.Class.Name, , 'LongWarX2');
+	if (!default.ShowTestCampaign)
+		return;
 	Button = Screen.Spawn(class'UIButton', Screen);
 	Button.InitButton('LWX2AirWarDemo', "LONG WAR: AIR WAR (DEMO)", OnAirWar);
-	Button.SetPosition(40, 40);
-	if (default.ShowTestCampaign)
+	Button.SetPosition(40, 340);
+	Button = Screen.Spawn(class'UIButton', Screen);
+	Button.InitButton('LWX2TestCampaign', "TEST CAMPAIGN (NO FIRST MISSION)", OnTestCampaign);
+	Button.SetPosition(40, 390);
+	Button = Screen.Spawn(class'UIButton', Screen);
+	Button.InitButton('LWX2TestTactical', "TEST TACTICAL (QUICK LAUNCH)", OnTestTactical);
+	Button.SetPosition(40, 440);
+	if (default.TestMapURL != "")
 	{
 		Button = Screen.Spawn(class'UIButton', Screen);
-		Button.InitButton('LWX2TestCampaign', "TEST CAMPAIGN (NO FIRST MISSION)", OnTestCampaign);
-		Button.SetPosition(40, 90);
-		Button = Screen.Spawn(class'UIButton', Screen);
-		Button.InitButton('LWX2TestTactical', "TEST TACTICAL (QUICK LAUNCH)", OnTestTactical);
-		Button.SetPosition(40, 140);
-		if (default.TestMapURL != "")
-		{
-			Button = Screen.Spawn(class'UIButton', Screen);
-			Button.InitButton('LWX2TestMap', "TEST EW MAP", OnTestMap);
-			Button.SetPosition(40, 190);
-		}
+		Button.InitButton('LWX2TestMap', "TEST EW MAP", OnTestMap);
+		Button.SetPosition(40, 490);
 	}
-	`log("LongWarX2: air war button on" @ Screen.Class.Name, , 'LongWarX2');
 }
 
 /** The game's own tactical quick launch (what the development menu's "Tactical" opens). */

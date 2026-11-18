@@ -33,6 +33,8 @@ const x2Abilities = new Set(lines('abilities.txt'))
 const x2Icons = new Map(lines('perk-icons.txt').map((n) => [n.toLowerCase(), n]))
 const core = readFileSync(coreIni, 'latin1')
 // Long War's weapons (features/lw-gear.md): who may carry what, and the starting kit.
+// EW's perk icon frame per perk (XComPerkManager.BuildPerkTables in Long War 1.0, read by the Tree's scripts/upk_perks.py).
+const perkImage = new Map(JSON.parse(readFileSync(join(here, '..', '..', 'xcom-ew-lw-tree', 'data', 'perks.json'), 'utf8')).perks.filter((p) => p.enum && p.image).map((p) => [p.enum, p.image]))
 const ITEM_NAMES = JSON.parse(readFileSync(join(here, '..', '..', 'xcom-ew-lw-tree', 'data', 'enums.json'), 'utf8')).enums.EItemType
 const weapons = readWeapons(core, ITEM_NAMES)
 const loc = readFileSync(gameInt, 'latin1')
@@ -92,6 +94,7 @@ function abilityForClass(perk, cls) {
   if (perk !== 'ePerk_SnapShot' || cls.name === 'Sniper' || cls.name === 'Scout') return abilityFor(perk) // the classes that carry sniper and marksman's rifles
   const name = 'LW_SnapShotRocket'
   if (!standins.has(name)) standins.set(name, { perk, icon: 'UIPerk_standard' })
+  if (!perkOf.has(name)) perkOf.set(name, perk)
   return name
 }
 
@@ -127,9 +130,16 @@ const ini = (key) => {
 const c = (name, times = 1) => (consts.has(name) ? Math.round(consts.get(name) * times) : undefined)
 // --- Perks to abilities ---------------------------------------------------------------
 const standins = new Map() // name -> { perk, icon }
+// Each ability's Long War perk (the first that gives it), for EW's perk icon (EW's screens: XComPerkManager's image).
+const perkOf = new Map()
 // Icons XCOM 2 keeps under another name than Long War's perk.
 const ICON_LIKE = { LW_HyperReactivePupils: 'UIPerk_hyperactivepupils', LW_AdaptiveBoneMarrow: 'UIPerk_regeneration' }
 function abilityFor(perk) {
+  const name = abilityName(perk)
+  if (!perkOf.has(name)) perkOf.set(name, perk)
+  return name
+}
+function abilityName(perk) {
   if (SAME[perk] && x2Abilities.has(SAME[perk])) return SAME[perk]
   const title = titleOf(perk)
   const name = 'LW_' + title.replace(/[^A-Za-z0-9]+/g, ' ').trim().split(' ').map((w) => w[0].toUpperCase() + w.slice(1)).join('')
@@ -551,6 +561,11 @@ writeFileSync(
       const tree = sq ? `, TreeMobility=${sq.Mobility}, TreeAim=${sq.Aim}, TreeWill=${sq.Will}` : ''
       return c && rank > 0 ? [`+Gains=(ClassName=LWS_${c.name}, Rank=${rank}, HP=${g.hp}, Aim=${g.aim}, Will=${g.will}${tree})`] : []
     }),
+    '',
+    "; Each ability's EW perk icon: the frame of EW's perk icon clip its Long War perk shows (XComPerkManager.BuildPerkTables'",
+    "; image, from the Tree's data/perks.json), for EW's screens (the soldier summary's abilities; LWPerkIcons).",
+    '[LongWarX2.LWPerkIcons]',
+    ...[...perkOf].flatMap(([ability, perk]) => (perkImage.get(perk) ? [`+Icons=(Ability=${ability}, Frame=${q(perkImage.get(perk))})`] : [])),
   ].join('\r\n') + '\r\n',
 )
 

@@ -15,7 +15,7 @@ Start-ScheduledTask -TaskName lwx2-game
 $t0 = Get-Date
 do {
   Start-Sleep 3
-  $ready = (Test-Path $GameLog) -and (Select-String -Path $GameLog -SimpleMatch 'LongWarX2: air war button on' -Quiet)
+  $ready = (Test-Path $GameLog) -and (Select-String -Path $GameLog -SimpleMatch 'LongWarX2: main menu up' -Quiet)
 } until ($ready -or ((Get-Date) - $t0).TotalSeconds -gt $TimeoutSeconds)
 Unregister-ScheduledTask -TaskName lwx2-game -Confirm:$false
 Start-Sleep 5

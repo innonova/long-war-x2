@@ -206,13 +206,14 @@ static function string Stat(XComGameState_Unit U, ECharStatType T)
 	return int(U.GetCurrentStat(T)) $ "|" $ (Bonus > 0 ? "+" $ Bonus : (Bonus < 0 ? string(Bonus) : ""));
 }
 
-/** The abilities the soldier has (names; EW's icons for Long War's perks are not mapped yet). */
+/** The abilities the soldier has, each with EW's icon for its Long War perk (LWPerkIcons). */
 function FillAbilities(XComGameState_Unit U)
 {
 	local array<SoldierClassAbilityType> Earned;
 	local SoldierClassAbilityType A;
 	local X2AbilityTemplate T;
 	local X2AbilityTemplateManager Manager;
+	local string Frame;
 
 	MC.ChildFunctionVoid("soldierAbilityListMC", "clear");
 	MC.ChildFunctionString("soldierAbilityListMC", "SetTitle", Word(AbilitiesTitle, "ABILITIES"));
@@ -221,11 +222,13 @@ function FillAbilities(XComGameState_Unit U)
 	foreach Earned(A)
 	{
 		T = Manager.FindAbilityTemplate(A.AbilityName);
-		if (T == none || T.LocFriendlyName == "")
+		Frame = class'LWPerkIcons'.static.FrameOf(A.AbilityName);
+		// (EW lists the soldier's perks: XCOM 2's mechanics without a Long War perk, such as its pistol shot, are left out.)
+		if (T == none || T.LocFriendlyName == "" || Frame == "")
 			continue;
 		MC.BeginChildFunctionOp("soldierAbilityListMC", "AddAbility");
 		MC.QueueString(T.LocFriendlyName);
-		MC.QueueString("");
+		MC.QueueString(Frame);
 		MC.QueueBoolean(false);
 		MC.EndOp();
 	}

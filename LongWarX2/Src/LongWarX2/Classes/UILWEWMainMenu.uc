@@ -4,8 +4,8 @@
 // install (XComUIShell.int, [UIFinalShell]). Over XCOM 2's main menu, hidden (UIScreenListener_LWEWShell).
 //
 // Long War's own entries: LONG WAR (a new game: XCOM 2's difficulty screen, which EW's new-game screen covers), LOAD GAME,
-// OPTIONS, EXIT TO DESKTOP. EW's MULTIPLAYER is left out (the port has none); XCOM 2's CHARACTER POOL takes its place, as
-// the soldiers' looks are XCOM 2's.
+// OPTIONS, EXIT TO DESKTOP. EW's MULTIPLAYER (second) is left out (the port has none); XCOM 2's CHARACTER POOL takes its
+// place, as the soldiers' looks are XCOM 2's.
 class UILWEWMainMenu extends UILWEWScreen;
 
 var localized string m_sSinglePlayer, m_sLoad, m_sOptions, m_sExitToDesktop;
@@ -49,8 +49,8 @@ function Fill()
 
 	Entries.Length = 0;
 	Entries.AddItem('SP');
-	Entries.AddItem('Load');
 	Entries.AddItem('CharacterPool');
+	Entries.AddItem('Load');
 	Entries.AddItem('Options');
 	Entries.AddItem('Exit');
 	MC.BeginFunctionOp("SetDisplay");
