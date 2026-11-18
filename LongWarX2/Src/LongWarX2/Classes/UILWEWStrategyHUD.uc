@@ -173,7 +173,9 @@ function ShowForTop()
 		// (And over the research room's own screens, as EW's science HUD hides it for each of its views but the room's menu,
 		// UIStrategyHUD_FSM_Science.GoToView: the research list, the archives and reports, the credits, the Gene Lab; and
 		// over gene mods, UISoldierGeneMods.)
-		|| UILWEWResearch(Top) != none || UILWEWScienceLabs(Top) != none || UILWEWGeneLab(Top) != none || UILWEWGeneMods(Top) != none;
+		|| UILWEWResearch(Top) != none || UILWEWScienceLabs(Top) != none || UILWEWGeneLab(Top) != none || UILWEWGeneMods(Top) != none
+		// (And over Mission Control, whose own screen hides EW's whole strategy HUD, UIMissionControl.GoToView.)
+		|| UILWEWMissionControl(Top) != none;
 	if (bHide == bResourcesHidden)
 		return;
 	bResourcesHidden = bHide;

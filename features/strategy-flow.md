@@ -584,3 +584,11 @@ piece of 17 facility levels, is not found (an EW package the setup does not carr
   in one picture; not a mix-up of ours). Pending Requests' map ends above EW's (black below): our wall's map is the room
   movie's clip, shorter than EW's 3D map material; the soldier summary's right-hand panels are as wide as their content
   ("MASTER SERGEANT"), as EW's ResizeContents makes them, their right-hand outline not closing (art detail, open).
+
+## Report (2026-11-19, from the reviewer's round 5)
+
+- **The satellites' counters** (AVAILABLE / IN ORBIT) only in the satellite view, as EW's `UISituationRoom.GoToView`
+  shows them for that view and hides them for the room's main view; they had sat over the room's menu (round 5, #9).
+- **Mission Control without the resource lines:** EW's Mission Control hides the whole strategy HUD
+  (`UIMissionControl.GoToView`); ours hides the resource lines (the HUD carries our back arrow there) (round 5, #12, in part).
+- Still from round 5: the room's objectives panel and ticker in the Situation Room's main view (EW shows them there).

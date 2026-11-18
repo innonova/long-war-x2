@@ -102,10 +102,23 @@ static function WallFor(XComHQPresentationLayer HQPres)
 	// view among it; from the base's view, Mission Control and the barracks EW's wall shows its map with dark side panels.)
 	S = HQPres.ScreenStack.GetCurrentScreen();
 	Wall.Bare(!(S == Wall || UILWEWSituationRoomHUD(S) != none || (UILWEWHub(S) != none && UILWEWHub(S).Room == 4)));
+	// (The satellites' counters only in the satellite view, as EW's GoToView shows them for view 4 and hides them for the
+	// room's main view, 0, where the objectives and the ticker show instead.)
+	Wall.ShowUplinks(UILWEWSituationRoomHUD(S) != none);
 	if (bOther3D && Wall.bIsVisible)
 		Wall.Hide();
 	else if (!bOther3D && !Wall.bIsVisible)
 		Wall.Show();
+}
+
+/** The satellites' counters shown or hidden (EW's ShowUplinks, HideUplinks). */
+function ShowUplinks(bool bShow)
+{
+	if (!bIsInited)
+		return;
+	MC.FunctionVoid(bShow ? "ShowUplinks" : "HideUplinks");
+	if (!bIsBare)
+		MC.ChildSetBool("theUplinks", "_visible", bShow);
 }
 
 /** The wall's bare map (bBare), or all of it. */
