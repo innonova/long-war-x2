@@ -11,7 +11,9 @@ Both games run windowed at 1600 x 900 on wingpu, never at once.
 - **Enemy Within:** `tools/ew-test/start-ew.ps1` (through `tools/test/on.sh`), a Long War 1.0 strategy save loaded
   by clicks (LOAD GAME, the save, NEXT, LOAD GAME), the base in view. Then `tools/compare/capture-ew.sh [view …]`
   → `logs/compare/ew/<view>.png`. EW lists every save in its folder; the person's Game 55 (December 2016, a built
-  base) is the reference. EW reads its save list once at start, so arranging the folder needs a restart.
+  base) is the reference. EW reads its save list once at start, so arranging the folder needs a restart. Hold the
+  other saves aside in `SaveData-held` while comparing, and move them back afterwards. Loading a save makes EW write
+  its autosave slot (an existing save1754 was overwritten once): keep a copy of that slot too.
 - **The port:** a development build (control port), `tools/test/new-campaign.sh`, then
   `tools/compare/capture-x2.sh [view …]` → `logs/compare/x2/<view>.png`.
 - `tools/compare/win.ps1` takes the game window's client area (shot) and clicks in its pixels. It does not
