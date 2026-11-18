@@ -9,6 +9,10 @@ class UILWEWDebrief extends UILWEWScreen;
 var localized string m_strDebrief, m_strKills, m_strMissions, m_strActive, m_strWounded, m_strDays, m_strKIA, m_strContinue,
 	m_strPromote, m_strPromoteMouse;
 var localized string AfterReport, ArtifactsRecovered, CouncilTransmission;
+/** The council's transmission (XGDebriefUI.UpdateCouncilDebrief). */
+var localized string m_strAbductionStopped, m_strAbductionFeedback, m_strAbductionLoss, m_strTerrorFeedback, m_strTerrorLoss,
+	m_strCountryWithdraw, m_strAlienBaseFeedback, m_strAlienBaseLoss, m_strReward, m_strPanicIncreaseCountry,
+	m_strPanicDecreaseCountry, m_strScientists, m_strEngineers;
 
 var UILWAfterAction AfterAction;
 /** The view shown: 0 the soldiers (After Action Report), 2 what was recovered (Artifacts Recovered). */
@@ -16,6 +20,11 @@ var int View;
 /** What the mission brought back: the stores' items before and after Long War applied its result (Cargo, CargoCounts). */
 var array<name> Cargo;
 var array<int> CargoCounts;
+/** The council's view (3), for the missions it judges (abductions, terror, an alien base, its own missions): its feedback,
+ *  the rewards and the panic changes, read across Long War's result as the cargo is. */
+var bool bCouncil;
+var string CouncilFeedback, CouncilRewards, CouncilPanic;
+var bool bWon;
 
 static function UILWEWDebrief Open(XComHQPresentationLayer HQPres, UILWAfterAction From)
 {
@@ -132,7 +141,11 @@ function Fill()
 function TakeCargo()
 {
 	local array<name> Names;
-	local array<int> Before;
+	local array<int> Before, Panic, Left;
+	local array<StateObjectReference> Crew;
+	local XComGameState_LWStrategy S;
+	local XComGameState_BattleData Battle;
+	local int Kind, Country, i, Sci, Eng, Cash;
 	local XComGameState_HeadquartersXCom XComHQ;
 	local XComGameState_Item Item;
 	local StateObjectReference Ref;
@@ -147,6 +160,20 @@ function TakeCargo()
 		Names.AddItem(Item.GetMyTemplateName());
 		Before.AddItem(Item.Quantity);
 	}
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Kind = S != none ? S.PendingKind : 0;
+	Country = (S != none && Kind != 0) ? S.PendingCountry() : -1;
+	for (i = 0; S != none && i < S.Countries.Length; i++)
+	{
+		Panic.AddItem(S.Countries[i].Panic);
+		Left.AddItem(S.Countries[i].bLeft ? 1 : 0);
+	}
+	Sci = S != none ? S.Scientists : 0;
+	Eng = S != none ? S.Engineers : 0;
+	Cash = XComHQ.GetSupplies();
+	Crew = XComHQ.Crew;
+	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData', true));
+	bWon = Battle != none && Battle.bLocalPlayerWon;
 	class'XComGameState_LWStrategy'.static.Arrived();
 	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
 	foreach XComHQ.Inventory(Ref)
@@ -163,6 +190,60 @@ function TakeCargo()
 			CargoCounts.AddItem(Now);
 		}
 	}
+	// The council's view: abductions (3), terror (4), an alien base (5), the council's own missions (10).
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || Country < 0 || (Kind != 3 && Kind != 4 && Kind != 5 && Kind != 10))
+		return;
+	bCouncil = true;
+	switch (Kind)
+	{
+	case 3: CouncilFeedback = Expand2(bWon ? m_strAbductionStopped : m_strAbductionLoss, S.CountryName(Country), S.CountryName(Country)); break;
+	case 4: CouncilFeedback = Expand2(bWon ? m_strTerrorFeedback : m_strTerrorLoss, S.CountryName(Country), S.CountryName(Country)); break;
+	case 5: CouncilFeedback = Expand2(bWon ? m_strAlienBaseFeedback : m_strAlienBaseLoss, S.CountryName(Country), ""); break;
+	case 10: CouncilFeedback = bWon ? Expand2(m_strReward, S.CountryName(Country), "") : ""; break;
+	}
+	CouncilFeedback = EWColoured(CouncilFeedback, bWon ? 2 : 3);
+	// (The rewards: a new soldier, scientists, engineers, credits: XGDebriefUI's order.)
+	foreach XComHQ.Crew(Ref)
+		if (Crew.Find('ObjectID', Ref.ObjectID) == INDEX_NONE && XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID)) != none
+			&& XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID)).IsSoldier())
+			CouncilRewards $= (CouncilRewards != "" ? "        " : "") $ XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID)).GetName(eNameType_RankFull);
+	if (S.Scientists > Sci)
+		CouncilRewards $= (CouncilRewards != "" ? "        " : "") $ (S.Scientists - Sci) @ Word(m_strScientists, "Scientists");
+	if (S.Engineers > Eng)
+		CouncilRewards $= (CouncilRewards != "" ? "        " : "") $ (S.Engineers - Eng) @ Word(m_strEngineers, "Engineers");
+	if (XComHQ.GetSupplies() > Cash)
+		CouncilRewards $= (CouncilRewards != "" ? "        " : "") $ class'LWStrategyRules'.static.Money(XComHQ.GetSupplies() - Cash);
+	// (Each country's panic up or down, a country that left: XGDebriefUI's lines, increases first.)
+	for (i = 0; i < S.Countries.Length && i < Panic.Length; i++)
+	{
+		if (S.Countries[i].bLeft && Left[i] == 0)
+			CouncilPanic $= (CouncilPanic != "" ? "<br>" : "") $ EWColoured(Expand2(m_strCountryWithdraw, S.CountryName(i), ""), 3);
+		else if (S.Countries[i].Panic > Panic[i])
+			CouncilPanic $= (CouncilPanic != "" ? "<br>" : "") $ EWColoured(Expand2(m_strPanicIncreaseCountry, S.CountryName(i), ""), 3);
+	}
+	for (i = 0; i < S.Countries.Length && i < Panic.Length; i++)
+		if (S.Countries[i].Panic < Panic[i])
+			CouncilPanic $= (CouncilPanic != "" ? "<br>" : "") $ EWColoured(Expand2(m_strPanicDecreaseCountry, S.CountryName(i), ""), 2);
+}
+
+static function string Expand2(string W, string A, string B)
+{
+	return Repl(Repl(W, "<XGParam:StrValue0/>", A), "<XGParam:StrValue1/>", B);
+}
+
+/** The council's transmission (UIDebrief.ShowCouncilDebrief), through the Situation Room's camera as EW's. */
+function ShowCouncil()
+{
+	local array<ASValue> Params, NoArgs;
+
+	View = 3;
+	class'LWX2EWBase'.static.Get(self).LookAt('Cam_SituationRoom', 1.0);
+	Params.AddItem(Str(CouncilFeedback));
+	Params.AddItem(Str(CouncilRewards != "" ? EWColoured(CouncilRewards, 2) : ""));
+	Params.AddItem(Str(CouncilPanic));
+	CallNow("SetCouncilInfo", Params);
+	CallNow("ShowCouncilDebrief", NoArgs);
 }
 
 /** The Artifacts Recovered view (UIDebrief.ShowScienceDebrief): each item recovered, how many, its picture. */
@@ -204,10 +285,16 @@ function GoOn()
 {
 	local UILWAfterAction A;
 
-	// (After the soldiers, what was recovered, when anything was: XGDebriefUI.OnAdvance.)
+	// (After the soldiers, what was recovered, when anything was; then the council's transmission, for a mission it
+	// judges: XGDebriefUI.OnAdvance.)
 	if (View == 0 && Cargo.Length > 0)
 	{
 		ShowScience();
+		return;
+	}
+	if (View < 3 && bCouncil)
+	{
+		ShowCouncil();
 		return;
 	}
 	A = AfterAction;

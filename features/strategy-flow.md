@@ -487,5 +487,10 @@ Now (checked by a council mission won, `logs/ew_debrief.png`):
 - **The loading briefing** (XCOM 2's dropship, `UILWDropShipBriefing`): Long War's country as the location (it named the
   XCOM 2 plot's "Wilderness of Eastern U.S." for a mission in Argentina) and Long War's objective; to be checked by eye.
 
-**Still open here:** EW's council debrief (the council's rewards and panic as EW
-words them) for council missions; Long War's mission titles in `PendingWords` are English of ours, not EW's words.
+- **EW's council debrief** (the debrief's third view, for abductions, terror, an alien base and council missions): the
+  council's words for the result (EW's), the rewards (a soldier, scientists, engineers, credits) and each country's panic
+  up or down or its withdrawal, read across Long War's result as the loot is; through the Situation Room's camera
+  (`logs/ew_debrief_council.png`).
+
+**Still open here:** the Situation Room's wall is blank behind the council view (EW shows its council there); Long War's
+mission titles in `PendingWords` are English of ours, not EW's words; EW's council missions' own completion texts.

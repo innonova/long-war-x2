@@ -1008,7 +1008,14 @@ export function makeFinanceWords({ strategyLoc }) {
 }
 
 export function makeMemorialWords({ strategyLoc }) {
-  const copied = copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial'], ['UIPendingRequests', 'UILWEWPendingRequests'], ['UIShipList', 'UILWEWHangar']])
+  const copied = copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial'], ['UIPendingRequests', 'UILWEWPendingRequests'], ['UIShipList', 'UILWEWHangar'], ['UIDebrief', 'UILWEWDebrief']])
+  // (The debrief's titles: XGDebriefUI's.)
+  const deb = strategyLoc.replace(/\r/g, '').match(/^\[XGDebriefUI\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
+  const dk = (k) => deb.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim() ?? ''
+  const debKeys = ['m_strAbductionStopped', 'm_strAbductionFeedback', 'm_strAbductionLoss', 'm_strTerrorFeedback', 'm_strTerrorLoss', 'm_strCountryWithdraw', 'm_strAlienBaseFeedback', 'm_strAlienBaseLoss', 'm_strReward', 'm_strPanicIncreaseCountry', 'm_strPanicDecreaseCountry', 'm_strScientists', 'm_strEngineers']
+  const debExtra = [['AfterReport', dk('m_strLabelAfterReport')], ['ArtifactsRecovered', dk('m_strLabelArtifactsRecovered')], ['CouncilTransmission', dk('m_strLabelFundingCouncil')], ...debKeys.map((k) => [k, dk(k)])].filter(([, v]) => v)
+  copied.text = copied.text.replace('[UILWEWDebrief]\r\n', `[UILWEWDebrief]\r\n${debExtra.map(([k, v]) => `${k}=${v}\r\n`).join('')}`)
+  copied.named += debExtra.length
   // (The craft summary: its words, and Long War's pilots for its RENAME, XGLocalizedData.ShipWeaponFlavorTxt[11..255].)
   const summary = copySections(strategyLoc, [['UIShipSummary', 'UILWEWShipSummary']])
   // (Indexed, as a localized array is written; the names keep EW's escaped quotes, "Mad Dog".)
