@@ -80,3 +80,10 @@ than the actors' own places (first key minus actor's place):
   Lab's scientist and clerk where EW's capture has them.
 - **Not yet:** the Genetics Lab's three central tanks' glass (EW's `CIN_XEW_FX.GeneLabTankGlassMaster_Opaque`, a material
   of a cinematic package the converter does not describe; the tank frames are there).
+- **Dark people (open):** the lab's clerks draw almost black under either XCOM 2 parent (`AvengerStaff_SD`,
+  `Alien_SD_Cloth`): they are the only dynamic objects in rooms lit by EW's baked light, and the placed movable lights do not
+  reach them; EW lit its people from its baked light (a light environment sampling the lightmaps). To do properly: the
+  people lit from the room's baked light (an ambient for them from the lightmaps around them, or XCOM 2's own way of
+  lighting dynamic objects in a baked room), not a lamp each. Also their chairs are missing (EW's chairs in that scene).
+- **Tried and dropped:** the walls' custom screens as glowing screens with their picture sheet (`HQ_DecalSheet_A`): they
+  drew flat cream, EW's parent applying its own UV transform and colour to the sheet.
