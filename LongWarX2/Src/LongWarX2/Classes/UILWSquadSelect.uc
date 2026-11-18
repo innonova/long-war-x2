@@ -164,7 +164,9 @@ simulated function OnLoseFocus()
 	// itself in its room.)
 	if (bHangar && !bLaunched)
 	{
-		class'LWX2EWBase'.static.Get(self).Hide(true);
+		// (The Avenger's armory only where the armory is not in EW's: LWX2EWBase.ArmoryHere.)
+		if (!class'LWX2EWBase'.static.ArmoryHere())
+			class'LWX2EWBase'.static.Get(self).Hide(true);
 		// (The screen above is not on the stack yet when this one loses focus: looked for a moment later.)
 		SetTimer(1.5, false, nameof(TellArmory));
 	}

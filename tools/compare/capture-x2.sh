@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # The port's side of the named views (tools/compare/README.md), captured through the control port into
-# logs/compare/x2/<view>.png. The game must be up in a campaign just made (tools/test/new-campaign.sh: the Avenger's
-# button has opened Mission Control, EW's screen over the Long War Geoscape): Mission Control is captured first as it
-# stands, then the hub is opened over it for the rest.
+# logs/compare/x2/<view>.png. The game must be up in a campaign begun (tools/test/new-campaign.sh 1 --begin: EW's hub is
+# the strategy layer's root). Mission Control is captured first if it is on top, then each view from the hub's base view.
 #   tools/compare/capture-x2.sh [view …]     (all views without arguments)
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -26,9 +25,13 @@ declare -A V=(
   [scr-satellite]='hub 4|sleep 2|hub option 0|sleep 5'
   [scr-sitroom]='hub 4|sleep 2|hub option 1|sleep 5'
   [scr-greymarket]='hub 4|sleep 2|hub option 2|sleep 5'
+  [scr-soldiers]='hub 2|sleep 2|hub option 0|sleep 4'
+  [soldier-summary]='open armory|sleep 5'
+  [soldier-loadout]='open loadout|sleep 5'
+  [soldier-promotion]='open promotion|sleep 5'
 )
 order=(base room-research room-engineering room-barracks room-hangar room-sitroom scr-research scr-builditems scr-facilities
-  scr-aircraft scr-satellite scr-sitroom scr-greymarket)
+  scr-aircraft scr-satellite scr-sitroom scr-greymarket scr-soldiers soldier-summary soldier-loadout soldier-promotion)
 [ $# -gt 0 ] && order=("$@")
 if [[ " ${order[*]} " == *" mission-control "* ]] || [ $# -eq 0 ]; then
   case "$(lw state)" in

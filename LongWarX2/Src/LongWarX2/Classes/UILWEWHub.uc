@@ -246,27 +246,13 @@ function LogQueuedPopups()
 		`log("LongWarX2: XCOM 2 popup queued, not shown:" @ XComHQ.QueuedDynamicPopups[i].PrimaryRoutingKey @ XComHQ.QueuedDynamicPopups[i].SecondaryRoutingKey, , 'LongWarX2');
 }
 
-/** Another screen over the hub: the Avenger back (the armory and squad select stand their soldiers in its rooms; EW's
- *  screens put their own backdrop over it); the base again when the hub has focus back. */
+/** Another screen over the hub: EW's base stays in view under it, as EW's rooms stay under EW's screens and dialogs (the
+ *  Avenger is not the strategy layer's world any more: features/strategy-flow.md); the hub's own timers stop. */
 simulated function OnLoseFocus()
 {
-	local UILWEWScreen Next;
-
 	super.OnLoseFocus();
 	ClearTimer(nameof(ShowBase));
 	ClearTimer(nameof(HoverOption));
-	// (A screen that shows the base itself, building in it, keeps it.)
-	Next = UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen());
-	if ((Next == none || (!Next.bShowsBase && Next.BaseCamera == '')) && UILWOfficers(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWPsiLabs(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
-		&& UIPersonnel_LWGene(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
-		&& !(class'LWX2EWBase'.static.ArmoryHere() && (UIPersonnel(Movie.Pres.ScreenStack.GetCurrentScreen()) != none || UIArmory(Movie.Pres.ScreenStack.GetCurrentScreen()) != none)))
-		class'LWX2EWBase'.static.Get(self).Hide();
-}
-
-simulated function OnRemoved()
-{
-	class'LWX2EWBase'.static.Get(self).Hide();
-	super.OnRemoved();
 }
 
 /** A room chosen from the top menu: the camera into it and its menu shown (chosen again: back to the base's view). */

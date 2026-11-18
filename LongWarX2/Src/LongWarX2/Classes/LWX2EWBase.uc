@@ -90,10 +90,16 @@ var config float SquadDistance, SquadSpacing, SquadFloorZ;
  *  there, facing it. Off: the Avenger's armory. */
 var config bool ArmoryInBase;
 var config float ArmoryDistance;
-/** The armory screens' display in EW's room (UIScreenListener_LWArmory): from the soldier, toward the camera, to the
- *  camera's right, up (units); its turn from facing the camera, its scale. */
-var config float ArmoryDisplayForward, ArmoryDisplaySide, ArmoryDisplayUp, ArmoryDisplayScale;
-var config int ArmoryDisplayYaw;
+/** XCOM 2's screens on EW's panels (the armory's in EW's armory: UIScreenListener_LWArmory). XCOM 2's 3D movie draws a
+ *  screen on the displays tagged as its DisplayTag (Screen): a display of ours with that tag stands on EW's panel (Panel,
+ *  Command1's tag), and the view goes through EW's camera for it (Camera). */
+struct LWX2ScreenDisplay
+{
+	var name Screen;
+	var name Panel;
+	var name Camera;
+};
+var config array<LWX2ScreenDisplay> ScreenDisplays;
 var LevelStreaming LightingLevel;
 /** The streamed levels hidden while the base is in view (HideWorld), to show again. */
 var array<name> HiddenLevels;
@@ -163,6 +169,8 @@ function Show()
 		FindGlobe();
 	}
 	PlacePeople();
+	// (The 3D panels too: XCOM 2's screens ask for their display as they open, before any listener of ours runs.)
+	PlaceDisplays();
 	Refresh();
 	LookAt(ViewTag, 0);
 }
@@ -354,8 +362,9 @@ function PlaceDisplays()
 {
 	local LWX2EWMapPieces.LWX2Display D;
 	local LWX2UIDisplay A;
-	local StaticMesh Mesh, EWMesh;
+	local StaticMesh Mesh;
 	local LWX2PlateDisplay P;
+	local LWX2ScreenDisplay S;
 	local MaterialInterface Mat;
 
 	if (!ScreensIn3D || Displays.Length > 0)
@@ -385,24 +394,45 @@ function PlaceDisplays()
 	{
 		if (PlateDisplays.Find('Tag', D.Tag) != INDEX_NONE)
 			continue;
-		// EW's own panel mesh, at EW's rotation and scale, where the converter found it; else XCOM 2's plate, turned and
-		// scaled to EW's panel.
-		EWMesh = D.Mesh != "" ? StaticMesh(DynamicLoadObject(D.Mesh, class'StaticMesh', true)) : none;
-		A = Spawn(class'LWX2UIDisplay', self, D.Tag, D.Loc + BaseOffset, EWMesh != none ? D.Rot : D.Rot + DisplayTurn);
-		if (A == none)
-			continue;
-		A.StaticMeshComponent.SetStaticMesh(EWMesh != none ? EWMesh : Mesh);
-		// (An instance: XCOM 2's 3D movie sets its Movie on the panel's instance, UIMovie_3D.ShowDisplayByInst.)
-		A.StaticMeshComponent.SetMaterial(0, Mat);
-		A.StaticMeshComponent.CreateAndSetMaterialInstanceConstant(0).SetScalarParameterValue('Visibility', 1.0);
-		A.SetDrawScale3D(EWMesh != none ? D.Scale : D.Scale * (DisplayScale > 0 ? DisplayScale : 1.0));
-		A.Tag = D.Tag;
-		A.bEWMesh = EWMesh != none;
-		// (The mesh hidden, not the actor: XCOM 2's 3D movie unhides the mesh, UIMovie_3D.ShowDisplayByInst.)
-		A.StaticMeshComponent.SetHidden(true);
-		Displays.AddItem(A);
+		PlaceDisplay(D, D.Tag, Mesh, Mat);
+		// (XCOM 2's screens drawn on this panel: one more display here, with the screen's tag.)
+		foreach ScreenDisplays(S)
+			if (S.Panel == D.Tag)
+				PlaceDisplay(D, S.Screen, Mesh, Mat);
 	}
 	`log("LongWarX2: EW base:" @ Displays.Length @ "3D panels placed", , 'LongWarX2');
+}
+
+/** A display of ours on EW's panel D, tagged Tag: EW's own panel mesh, at EW's rotation and scale, where the converter
+ *  found it; else XCOM 2's plate (Mesh), turned and scaled to EW's panel. */
+function PlaceDisplay(LWX2EWMapPieces.LWX2Display D, name Tag, StaticMesh Mesh, MaterialInterface Mat)
+{
+	local LWX2UIDisplay A;
+	local StaticMesh EWMesh;
+
+	EWMesh = D.Mesh != "" ? StaticMesh(DynamicLoadObject(D.Mesh, class'StaticMesh', true)) : none;
+	A = Spawn(class'LWX2UIDisplay', self, Tag, D.Loc + BaseOffset, EWMesh != none ? D.Rot : D.Rot + DisplayTurn);
+	if (A == none)
+		return;
+	A.StaticMeshComponent.SetStaticMesh(EWMesh != none ? EWMesh : Mesh);
+	// (An instance: XCOM 2's 3D movie sets its Movie on the panel's instance, UIMovie_3D.ShowDisplayByInst.)
+	A.StaticMeshComponent.SetMaterial(0, Mat);
+	A.StaticMeshComponent.CreateAndSetMaterialInstanceConstant(0).SetScalarParameterValue('Visibility', 1.0);
+	A.SetDrawScale3D(EWMesh != none ? D.Scale : D.Scale * (DisplayScale > 0 ? DisplayScale : 1.0));
+	A.Tag = Tag;
+	A.bEWMesh = EWMesh != none;
+	// (The mesh hidden, not the actor: XCOM 2's 3D movie unhides the mesh, UIMovie_3D.ShowDisplayByInst.)
+	A.StaticMeshComponent.SetHidden(true);
+	Displays.AddItem(A);
+}
+
+/** EW's camera for an XCOM 2 screen drawn on one of EW's panels (ScreenDisplays), by the screen's display tag; '' if none. */
+static function name ScreenCamera(name DisplayTag)
+{
+	local int k;
+
+	k = default.ScreenDisplays.Find('Screen', DisplayTag);
+	return k != INDEX_NONE ? default.ScreenDisplays[k].Camera : '';
 }
 
 /** The panel of this tag (the first). */

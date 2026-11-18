@@ -525,17 +525,6 @@ static function ForgetChosen(int MissionID)
 	class'XComGameState_LWStrategy'.static.MissionCancelled();
 }
 
-/** Another screen over this one: the Avenger back (squad select and the armory stand their soldiers in its rooms; EW's
- *  screens put their own backdrop over it). */
-simulated function OnLoseFocus()
-{
-	super.OnLoseFocus();
-	// (Squad select in EW's hangar keeps the base: hidden and shown again at once, the base took the Avenger's light.)
-	if (!(class'LWX2EWBase'.static.SquadHere() && UILWSquadSelect(Movie.Pres.ScreenStack.GetCurrentScreen()) != none)
-		&& !(UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen()) != none && UILWEWScreen(Movie.Pres.ScreenStack.GetCurrentScreen()).bShowsBase))
-		class'LWX2EWBase'.static.Get(self).Hide();
-}
-
 simulated function OnReceiveFocus()
 {
 	super.OnReceiveFocus();

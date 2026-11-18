@@ -104,6 +104,9 @@ export function peopleIn(meta: any, pkg: any): Person[] {
     const g = group ? groups.get(group) : undefined
     if (!g || !g.seqs.length) return
     const t = tagsAt(i, [26, 22, 30, 4, 8])
+    // (Hidden in the level: a scene's actor EW shows only while its matinee plays, as the armory's MEC suit and its weapons
+    // on the soldier's pad for a MEC conversion; left out.)
+    if ((t.find((x) => x.name === 'bHidden') as { boolValue?: number } | undefined)?.boolValue) return
     const comp = i32(t.find((x) => x.name === 'SkeletalMeshComponent'))
     let ct: Tag[] = []
     if (comp > 0) ct = tagsAt(comp - 1, [8, 12, 4, 16])
