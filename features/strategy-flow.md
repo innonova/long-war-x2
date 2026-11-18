@@ -433,3 +433,19 @@ surface detail and lighting, the soldier summary's right-hand header width, the 
   the positions after they are freed.
 - **The wall under the Situation Room's own screens, done:** the countries, the UFO and satellite counters, the objectives
   and the ticker hidden (and kept hidden through the wall's refresh), the map kept; back in full on leaving them.
+
+## Report (2026-11-18 evening, the campaign-start crash found and fixed)
+
+- **What it was:** the engine's runtime collision cooking. Its strings name the faulting function's caller:
+  `UStaticMeshComponent::InitComponentRBPhys` ("No Cached Per-Tri StaticMesh Physics Data Found Or Out Of Date (%s) (Owner:
+  %s) - Cooking …"); the faulting loop reads a mesh's vertex positions and scales them by the actor's 3D scale for the
+  physics engine. The converted EW meshes carry no cooked physics data, so each base piece's was cooked at runtime from
+  vertex data that was not always still held: a crash now and then at a campaign's start, every time with the base's rooms
+  placed at the main menu.
+- **The fix:** EW's base is placed as `LWX2BasePiece`, XCOM 2's spawnable mesh actor with `bDisableAllRigidBody` (and no
+  collision) in its component's defaults: no physics representation is ever made, so nothing is cooked. The base needs none
+  (the earlier tries turned blocking off at runtime, after the component's physics had been set up as it spawned).
+- **Checked:** the reproducer (`PlaceInShell`) from 0 of 3 starts to 3 of 3; ten ordinary campaign starts (below).
+- **Unblocked:** EW's main menu scene (the shell's base view), parked because placing the base in the shell crashed.
+- Ten ordinary campaign starts in a row reached the base (10 of 10); the base view, Build Facilities and engineering
+  look as before.

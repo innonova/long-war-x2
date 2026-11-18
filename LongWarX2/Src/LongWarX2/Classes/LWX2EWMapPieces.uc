@@ -473,7 +473,7 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 	{
 		if (Radius > 0 && VSize2D(P.Loc - Center) > Radius)
 			continue;
-		if (AllSkipped(P, D, ActorClass == class'DynamicSMActor_Spawnable'))
+		if (AllSkipped(P, D, ClassIsChildOf(ActorClass, class'DynamicSMActor_Spawnable')))
 		{
 			Skipped++;
 			continue;
@@ -520,13 +520,13 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 		for (i = 0; i < P.Materials.Length; i++)
 		{
 			M = none;
-			if (ActorClass == class'DynamicSMActor_Spawnable' && Matches(P.Materials[i], default.BaseBlackMaterials))
+			if (ClassIsChildOf(ActorClass, class'DynamicSMActor_Spawnable') && Matches(P.Materials[i], default.BaseBlackMaterials))
 			{
 				M = BlackStandin(A);
 				// (Known as a cut surface: hidden while a facility's own camera looks in, LWX2EWBase.ShowCutaway.)
 				A.Tag = 'LWX2BaseCutaway';
 			}
-			else if (P.LightMap.Color != "" && (ActorClass == class'DynamicSMActor_Spawnable' ? default.LightmapBase : default.LightmapMaps))
+			else if (P.LightMap.Color != "" && (ClassIsChildOf(ActorClass, class'DynamicSMActor_Spawnable') ? default.LightmapBase : default.LightmapMaps))
 				M = Lightmapped(P, P.Materials[i], A, D);
 			if (M == none)
 				M = MaterialFor(P.Materials[i], A, Standins, D);

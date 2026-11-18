@@ -146,13 +146,13 @@ function PlaceFixed()
 
 	if (Fixed.Length > 0)
 		return;
-	class'LWX2EWMapPieces'.static.PlaceOf(Data("Command1"), self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
+	class'LWX2EWMapPieces'.static.PlaceOf(Data("Command1"), self, vect(0, 0, 0), 0, BaseOffset, class'LWX2BasePiece', Fixed, false, true);
 	class'LWX2EWMapPieces'.static.PlaceLightsOf(Data("Command1"), self, BaseOffset, Fixed, true, BaseLightScale, true);
 	foreach FixedLevels(Level)
 	{
 		if (Data(Level).Pieces.Length == 0)
 			continue;
-		class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, BaseOffset, class'DynamicSMActor_Spawnable', Fixed, false, true);
+		class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, BaseOffset, class'LWX2BasePiece', Fixed, false, true);
 		class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, BaseOffset, Fixed, true, BaseLightScale, true);
 	}
 	`log("LongWarX2: EW base: the shell and" @ FixedLevels.Length @ "fixed rooms placed," @ Fixed.Length @ "actors", , 'LongWarX2');
@@ -871,7 +871,7 @@ function Refresh()
 			if (Level == "" || k == INDEX_NONE || Data(Level).Pieces.Length == 0)
 				continue;
 			Placed.Length = 0;
-			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, Command.Rooms[k].Loc + BaseOffset, class'DynamicSMActor_Spawnable', Placed, false, true);
+			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, Command.Rooms[k].Loc + BaseOffset, class'LWX2BasePiece', Placed, false, true);
 			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed, true, BaseLightScale, true);
 			// (The facility's people and animated props too: the Genetics Lab's scientists and tanks, the Foundry's workers.)
 			PlacePeopleOf(Level, Command.Rooms[k].Loc + BaseOffset, Placed);
@@ -1043,7 +1043,7 @@ function SetGlobeMarkers(array<float> Xs, array<float> Ys, array<LinearColor> Co
 	for (i = 0; i < Xs.Length; i++)
 	{
 		At = Centre + ((GlobeDir(Xs[i], Ys[i]) * R) >> Globe.Rotation);
-		M = Spawn(class'DynamicSMActor_Spawnable', self, , At);
+		M = Spawn(class'LWX2BasePiece', self, , At);
 		if (M == none)
 			continue;
 		M.SetStaticMesh(DynamicSMActor(Globe).StaticMeshComponent.StaticMesh);
