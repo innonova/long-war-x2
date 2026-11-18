@@ -42,3 +42,42 @@ through every room, menu, screen and dialog of EW's base, close to EW in look an
 - Strategy flow before the maps (the person, 2026-11-18). Mission lightmaps: the middle way, after this.
 - No opening Long War's screens over the Avenger by timer (tried, reverted): the Avenger is replaced, not covered.
 - The walk compares every screen and dialog with EW's, not only the 20 views of `ew-compare`.
+
+## Report (2026-11-18, the Avenger replaced at the root; the armory in EW's)
+
+- **The root** (`UILWFacilityGrid`, a ModClassOverride of XCOM 2's facility grid): it stays the bottom of XCOM 2's screen
+  stack, inert and invisible, and opens Long War's root above it once it is on top: the start screen in a campaign not
+  yet begun, else EW's hub. XCOM 2 finds its grid by exact class, so its "back to the base view" pops nothing now and its
+  popups that wait for an idle base view never show (logged by the hub as they queue: `XCOM 2 popup queued, not shown`).
+  The LONG WAR GEOSCAPE button is gone; Escape on the hub's base view opens the pause menu, as in EW.
+- **The world:** EW's base stays in view under every strategy screen; nothing of ours brings the Avenger back except the
+  fallback switches (`SquadInHangar`, `ArmoryInBase` off). The Avenger's levels are still loaded, hidden: XCOM 2's
+  strategy start waits for them (`XGStrategy`: `MinimumAvengerStreamedInAndVisible`).
+- **The armory in EW's armory room** (`ArmoryInBase=true`): XCOM 2's armory screens' menus drawn on EW's own soldier
+  panels (`LWX2EWBase.ScreenDisplays`: the screen's display tag, EW's panel and camera), the soldier on EW's pad. What
+  had stopped it on 2026-11-17: the panels were placed only when asked for, after XCOM 2's armory had asked for its
+  display (now placed with the base), and the pawn waited on the Avenger's placement point (now placed without it).
+- **EW's hidden actors left out** of the people (converter 23): EW's armory scene had a MEC suit and its weapons on the
+  soldier's pad, which EW shows only during a MEC conversion.
+- **Seen on wingpu:** new campaign → after-action → SELECT BASE LOCATION → Begin Game → EW's base; barracks → View
+  Soldiers → a soldier → Loadout → back, all in EW's rooms, no Avenger.
+
+## The list (2026-11-18, first walk: game creation and the barracks; worst first)
+
+Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not committed).
+
+1. **Game creation is XCOM 2's:** its main menu and difficulty screen, where EW has LONG WAR → SELECT LONG WAR
+   DIFFICULTY (Normal, Classic, Brutal, Impossible) with SECOND WAVE (EW's 22 options in two columns) and ADVANCED
+   OPTIONS (tutorial, Progeny, Slingshot, Ironman, beginner VO) (`menu-*`).
+2. **The soldier screens are XCOM 2's where EW has its own:** the soldier list (EW's: Long War's stats per soldier,
+   class counts in the title), the soldier's summary menu (EW: Abilities, Gene Mods, Loadout, Customize, Report for
+   Duty, Dismiss, and next/previous soldier buttons), the abilities tree (EW's: Long War's ranks as a vertical list
+   beside the soldier; XCOM 2's horizontal panel covers the soldier), Gene Mods.
+3. **The barracks lack EW's View the Memorial and Hire Soldiers** (EW's own hire dialog over the barracks).
+4. **The resource bar stays over the soldier screens**; EW shows none there (and Engineering's list of resources
+   shows only in Engineering).
+5. **The soldier stands without his armour** in the armory (Tac Armor equipped).
+6. **The barracks have no people;** EW's soldiers stand at the bar, train in the gym.
+7. **The start screen stands on black;** EW's (after the first mission) not captured yet.
+8. Still to walk: research, engineering and hangar second-level screens and their dialogs (EW's order interceptors and
+   transfer captured), the Situation Room's, Mission Control's events and dialogs, the post-mission screens.
