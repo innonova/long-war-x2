@@ -14,6 +14,7 @@ var localized string m_strScreenTitle, m_strEmptySlotLabel, m_strFullContinentLa
 	m_strColumnShipStatus;
 /** The cancel-order confirmation (XGHangarUI.ConfirmRemovalOfPendingShipOrder). */
 var localized string CancelOrderTitle, CancelOrderText;
+var localized string m_strConfirmTransferDialogTitle, m_strConfirmTransferDialogAcceptText, m_strConfirmTransferDialogText;
 
 /** For each continent's rows: the jet (its index in the air war), -1 an order, -2 the empty bay. */
 var array<int> Rows0, Rows1, Rows2, Rows3, Rows4;
@@ -58,9 +59,12 @@ simulated function OnRemoved()
 	super.OnRemoved();
 }
 
+/** EW's list stays in view under its dialogs (the order, the transfer and cancel confirmations: bHideOnLoseFocus off), not
+ *  under the ship's own screen (hidden as that opens, OnRow). */
 simulated function OnReceiveFocus()
 {
 	super.OnReceiveFocus();
+	Show();
 	if (bIsInited)
 		Fill();
 }
@@ -105,7 +109,8 @@ function Fill()
 		R.Length = 0;
 		for (i = 0; i < AirWar.Jets.Length; i++)
 		{
-			if (AirWar.Jets[i].Continent != c)
+			// (A craft in transit listed at its new home, as EW moves it there as it sets off: TransferInterceptor.)
+			if ((AirWar.Jets[i].Status == 6 ? AirWar.Jets[i].TransferTo : AirWar.Jets[i].Continent) != c)
 				continue;
 			RowState = AirWar.Jets[i].Status == 0 ? 0 : 1;
 			// (UIShipList.UpdateData: the row greyed and its status red while damaged (EW's statuses 3 to 5), yellow while
@@ -222,16 +227,15 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 function OnRow(int Row, bool bHelp)
 {
 	local XComGameState_LWAirWar AirWar;
-	local string Why;
 
 	AirWar = class'XComGameState_LWAirWar'.static.Get();
 	if (Transferring >= 0)
 	{
+		// (TRANSFER HERE: EW's confirmation first, UIShipList.TransferShip.)
 		if (Row == -2 && AirWar.Jets[Transferring].Continent != SelectedContinent)
 		{
-			if (!class'LWHangar'.static.Transfer(Transferring, SelectedContinent, Why))
-				`log("LongWarX2: EW hangar:" @ Why, , 'LongWarX2');
-			Movie.Pres.PlayUISound(eSUISound_MenuSelect);
+			ConfirmTransfer();
+			return;
 		}
 		Transferring = -1;
 		Fill();
@@ -245,13 +249,50 @@ function OnRow(int Row, bool bHelp)
 			Fill();
 		}
 		else if (!bHelp)
+		{
+			Hide();
 			class'UILWEWShipLoadout'.static.Open(XComHQPresentationLayer(Movie.Pres), Row);
+		}
 		return;
 	}
 	if (Row == -2)
 		class'UILWEWHiring'.static.OpenOrder(XComHQPresentationLayer(Movie.Pres), SelectedContinent);
 	if (Row == -3 && bHelp)
 		ConfirmCancel();
+}
+
+/** CONFIRM TRANSFER: "Do you want to transfer <ship> from <continent> to <continent>? Hours to complete: <n>". */
+function ConfirmTransfer()
+{
+	local XComGameState_LWAirWar AirWar;
+	local TDialogueBoxData Data;
+
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	Data.eType = eDialog_Normal;
+	Data.strTitle = Word(m_strConfirmTransferDialogTitle, "CONFIRM TRANSFER");
+	Data.strText = Repl(Repl(Repl(Repl(Word(m_strConfirmTransferDialogText, "Do you want to transfer <XGParam:StrValue0/> from <XGParam:StrValue1/> to <XGParam:StrValue2/>?<br><br>Hours to complete: <XGParam:IntValue0/>"),
+		"<XGParam:StrValue0/>", AirWar.Jets[Transferring].Callsign),
+		"<XGParam:StrValue1/>", class'LWStrategyRules'.static.ContinentName(AirWar.Jets[Transferring].Continent)),
+		"<XGParam:StrValue2/>", class'LWStrategyRules'.static.ContinentName(SelectedContinent)),
+		"<XGParam:IntValue0/>", string(class'LWBaseRules'.default.TransferHours));
+	Data.strAccept = Word(m_strConfirmTransferDialogAcceptText, "CONFIRM");
+	Data.strCancel = class'UIDialogueBox'.default.m_strDefaultCancelLabel;
+	Data.fnCallback = OnTransferDialog;
+	Movie.Pres.UIRaiseDialog(Data);
+}
+
+simulated function OnTransferDialog(Name Action)
+{
+	local string Why;
+
+	if (Action == 'eUIAction_Accept')
+	{
+		if (!class'LWHangar'.static.Transfer(Transferring, SelectedContinent, Why))
+			`log("LongWarX2: EW hangar:" @ Why, , 'LongWarX2');
+		PlaySound(SoundCue'SoundUI.MenuSelectCue', true);
+	}
+	Transferring = -1;
+	Fill();
 }
 
 /** CANCEL ORDER: EW's confirmation, then one interceptor of the continent's order cancelled, its price back. */
@@ -296,4 +337,5 @@ defaultproperties
 {
 	// (Over EW's the hangar, as EW shows it.)
 	BaseCamera = HANGAR
+	bHideOnLoseFocus = false
 }
