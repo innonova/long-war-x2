@@ -887,11 +887,11 @@ function vectorParam(r: number, name: string, depth = 0): number[] | undefined {
   const parent = tags.find((t) => t.name === 'Parent')
   return parent ? vectorParam(ref(parent), name, depth + 1) : undefined
 }
-/** EW's glowing materials (the base's light rings and strips, its consoles' and walls' screens): their own kind, with
- *  their colour and, for a screen, its picture. */
+/** EW's glowing materials (the base's light rings and strips, its consoles' and walls' screens, the custom screens: the
+ *  Genetics Lab's tank faces among them): their own kind, with their colour and, for a screen, its picture. */
 // (Not HQ_Master_EmissiveComboPallet: a lamp's housing and its light in one material, the light picked out by something
 // cooked away; glowing whole, a lamp seen close (the craft summary's) was a solid orange block.)
-const GLOW = /HQ_ColorizedLight|HQ_ConsoleScreen|HQ_EmissivePallete/i
+const GLOW = /HQ_ColorizedLight|HQ_ConsoleScreen|HQ_CustomScreens|HQ_EmissivePallete/i
 const looks = new Map<number, Look>()
 for (const p of [...pieces, ...doors]) for (const m of p.materials) if (m && !looks.has(m)) looks.set(m, lookOf(m))
 for (const [r, l] of looks) {
@@ -901,6 +901,12 @@ for (const [r, l] of looks) {
   l.kind = 'Glow'
   // (The palette lights take theirs in Colorize A.)
   l.tint = vectorParam(r, 'TintColor') ?? vectorParam(r, 'Colorize A')
+  // (A custom screen's colour is HDR over a picture of its own, which is cooked away: alone, it drew the screen white; its
+  // hue kept, brightest channel 1.)
+  if (l.tint && /HQ_CustomScreens/i.test(pathOf(r))) {
+    const m = Math.max(l.tint[0]!, l.tint[1]!, l.tint[2]!)
+    if (m > 1) l.tint = [l.tint[0]! / m, l.tint[1]! / m, l.tint[2]! / m, 1]
+  }
   // (A console's screen its picture; a light its colour alone.)
   l.diffuse = tex.get('StaticScreenTexture') ?? ''
   void root
