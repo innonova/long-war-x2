@@ -134,3 +134,20 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
 - **Seen on wingpu:** the soldier lost in the simulated first mission listed ("Operation Gatecrasher", XCOM 2's name for
   it). The date came out in XCOM 2's calendar (2035); it is now converted to Long War's (`LongWarDate`: XCOM 2's clock
   runs with Long War's hours from its own start), not yet seen (no one fell in the next campaign's first mission).
+
+## Report (2026-11-18, EW's soldier list)
+
+- **The barracks' View Soldiers opens Long War's soldier list** (its SoldierList movie, `UILWEWSoldierList`), driven as
+  Long War's `UISoldierListBase` / `UISoldierList_Barracks` drive it from `XGBarracksUI.BuildSoldierOption`: each row is
+  Long War's name line (`XGStrategySoldier.GetName` type 8, "RANK First 'Nick' Last|HP|Mobility|Will|Aim|Defense|
+  experience", which Long War's movie splits into its stat icons), the class in Long War's colour, the status in its
+  state's colour with the days left (Long War's statuses: wounded, gravely wounded, psionic training, Genetics Lab,
+  augmentation, covert operation, fatigued; `GetStatusString`), the rank's and class's frames and the flag. The title
+  carries Long War's tally: available of all, then per class with Long War's class icons. Hover selects, a click opens
+  the soldier's armory (XCOM 2's, in EW's armory room). EW's resource panel is hidden over it, as Long War hides it.
+- **Long War's own package converted** in the setup (`LongWar.upk`: its class icons and flags), for the tally's icons. It
+  was made with the UDK (licensee 0), whose textures lack two fields XCOM's have; XCOM 2 stopped with "Error detected
+  attempting load of package: LongWar" until the converter added them (`inline-textures.ts`, `padEnd`).
+- **Not as EW's yet:** the rows' class icons are EW's four base classes' (Long War's per-class icons show in Game 55's
+  rows; how Long War passes them is not found: its row does `classMC.gotoAndStop(label)` and EW's icon clip has only the
+  four); eight nationalities have no flag in EW's icon clip (EW's blank); the flag's medal badge shows a placeholder.

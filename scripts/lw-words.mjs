@@ -420,6 +420,23 @@ export function makeHubWords({ strategyLoc }) {
     ['EtaDay', inSection('XGFacility_Engineering', 'm_strETADay')?.replace('<XGParam:IntValue0/>', '%d')],
     ['DaysTitle', anywhere('m_strDays')],
   ].filter(([, v]) => v)
+  // EW's soldier list (UILWEWSoldierList: UISoldierListBase's labels, Long War's statuses from XGStrategySoldier).
+  const list = [
+    ['Title', inSection('UISoldierListBase', 'm_strSoldierListBaseTitle')],
+    ['ClassLabel', inSection('UISoldierListBase', 'm_strSoldierListBaseClassLabel')],
+    ['StatusLabel', inSection('UISoldierListBase', 'm_strSoldierListBaseStatusLabel')],
+    ['Active', inSection('XGStrategySoldier', 'm_arrSoldierStatus[eStatus_Active]')],
+    ['OnMission', inSection('XGStrategySoldier', 'm_arrSoldierStatus[eStatus_OnMission]')],
+    ['PsiTesting', inSection('XGStrategySoldier', 'm_arrSoldierStatus[eStatus_PsiTesting]')],
+    ['CovertOps', inSection('XGStrategySoldier', 'm_arrSoldierStatus[eStatus_CovertOps]')],
+    ['GeneMod', inSection('XGStrategySoldier', 'm_arrSoldierStatus[eStatus_GeneMod]')],
+    ['Augmenting', inSection('XGStrategySoldier', 'm_arrSoldierStatus[eStatus_Augmenting]')],
+    ['Healing', inSection('XGStrategySoldier', 'm_arrSoldierStatus[eStatus_Healing]')],
+    ['Fatigued', inSection('XGStrategySoldier', 'm_arrSoldierStatus[eStatus_Dead]')],
+    ['Wounded', inSection('XGStrategySoldier', 'm_strHumanWounded')],
+    ['GravelyWounded', inSection('XGStrategySoldier', 'm_strHumanGravelyWounded')],
+    ['Dead', inSection('XGStrategySoldier', 'm_strHumanDead')],
+  ].filter(([, v]) => v)
   // EW's hiring dialog (UILWEWHiring: UIHiring, XGBarracksUI's hiring view) and its event (XGMissionControlUI).
   const hire = [
     ['Title', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_Hire]')],
@@ -431,8 +448,8 @@ export function makeHubWords({ strategyLoc }) {
     ['Event', inSection('XGMissionControlUI', 'm_strNewSoldierEvent')],
   ].filter(([, v]) => v)
   return {
-    text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWStrategyHUD]', ...hud.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWHiring]', ...hire.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
-    named: words.length + hud.length + hire.length,
+    text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWStrategyHUD]', ...hud.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWHiring]', ...hire.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWSoldierList]', ...list.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
+    named: words.length + hud.length + hire.length + list.length,
   }
 }
 

@@ -33,6 +33,10 @@ export function inlineTextures(
   transform?: (e: Export, format: string, mip: Uint8Array, width: number, height: number) => Uint8Array | undefined,
   /** Bytes left off the end of a texture's data (a LightMapTexture2D made a Texture2D: its lightmap flags). */
   trimEnd: (e: Export) => number = () => 0,
+  /** Bytes added at the end of each texture's data (a package made with the UDK, licensee 0: XCOM's own two fields after
+   *  the cache's GUID and the mobile mips, which every XCOM texture has as 1 and 0; without them XCOM 2 read past the
+   *  texture: "Serial size mismatch", Long War's LongWar.upk). */
+  padEnd?: Uint8Array,
 ): { appended: Uint8Array; textures: number; mips: number } {
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   const caches = new Map<string, Uint8Array>()
@@ -123,6 +127,7 @@ export function inlineTextures(
       if (data) mipCount++
     }
     push(bytes.subarray(o, e.offset + e.size - trimEnd(e))) // the rest (the cache's GUID …) as it was
+    if (padEnd) push(padEnd)
     const blob = new Uint8Array(len)
     let p = 0
     for (const c of chunks) {

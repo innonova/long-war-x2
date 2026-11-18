@@ -423,7 +423,11 @@ function ChooseOption(int Option)
 		// own, UIScreenListener_LWArmory.)
 		if (!class'LWX2EWBase'.static.ArmoryHere())
 			class'LWX2EWBase'.static.Get(self).Hide();
-		HQPres.UIPersonnel_Armory(OnSoldierChosen);
+		// (EW's soldier list where EW's screens are converted; XCOM 2's otherwise.)
+		if (class'UILWEWScreen'.static.HasEWScreens())
+			class'UILWEWSoldierList'.static.Open(HQPres);
+		else
+			HQPres.UIPersonnel_Armory(OnSoldierChosen);
 		break;
 	case OPT_AIRCRAFT: class'UILWEWHangar'.static.Open(HQPres); break;
 	case OPT_HIRE: class'UILWEWHiring'.static.Open(HQPres); break;

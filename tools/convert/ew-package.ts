@@ -57,7 +57,10 @@ pkg.nameEntries.forEach((e: { name: string; offset: number }) => {
 const stubbed = stubMaterials(bytes)
 bytes = stubbed.bytes
 const quieted = quietParticleNotifies(bytes)
-const tex = inlineTextures(bytes, pkg.exports, pkg.names, dirname(src), bytes.length)
+// (A package made with the UDK rather than XCOM's editor, licensee version 0 in its header, as Long War's LongWar.upk: its
+// textures given XCOM's two closing fields, inline-textures.ts.)
+const udk = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint16(6, true) === 0
+const tex = inlineTextures(bytes, pkg.exports, pkg.names, dirname(src), bytes.length, undefined, undefined, undefined, udk ? new Uint8Array([1, 0, 0, 0, 0, 0, 0, 0]) : undefined)
 const outBytes = new Uint8Array(bytes.length + tex.appended.length)
 outBytes.set(bytes)
 outBytes.set(tex.appended, bytes.length)
