@@ -89,6 +89,10 @@ var config string LightmapParent;
 /** EW's glowing parts (Kind Glow): an XCOM 2 parent that glows in one colour parameter, that parameter, the colour where
  *  EW takes it from the mesh's vertices, and a scale on EW's colours. */
 var config string GlowParent;
+/** EW's light cards (Kind Glow, by material path): our additive material that takes the mesh's vertex colours. */
+var config string LightCardParent;
+var config array<string> LightCardMaterials;
+var config float LightCardScale;
 var config name GlowColorParam;
 var config LinearColor GlowDefault;
 var config float GlowScale;
@@ -743,6 +747,23 @@ static function MaterialInterface BlackStandin(Object InOuter)
 	return MIC;
 }
 
+/** A light card's stand-in: LightCardParent at LightCardScale (its colour and fade the mesh's vertex colours). */
+static function MaterialInterface LightCardStandin(Object InOuter)
+{
+	local MaterialInstanceConstant MIC;
+	local Material Parent;
+	local LinearColor C;
+
+	Parent = Material(DynamicLoadObject(default.LightCardParent, class'Material', true));
+	if (Parent == none)
+		return none;
+	MIC = new(InOuter) class'MaterialInstanceConstant';
+	MIC.SetParent(Parent);
+	C = MakeLinearColor(default.LightCardScale, default.LightCardScale, default.LightCardScale, 1);
+	MIC.SetVectorParameterValue('Tint', C);
+	return MIC;
+}
+
 /** A stand-in for one of EW's glowing parts: GlowParent in the look's colour (GlowDefault where EW colours it by vertex),
  *  over the screen's picture or plain white. */
 static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, optional bool bKeepDiffuse)
@@ -816,6 +837,17 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	if (k != INDEX_NONE && L.Diffuse != "" && default.GlowParent != "" && Matches(Path, default.UnlitMaterials))
 	{
 		S.Standin = GlowStandin(L, InOuter, true);
+		if (S.Standin != none)
+		{
+			Standins.AddItem(S);
+			return S.Standin;
+		}
+	}
+	// (EW's light cards, coloured and faded by the mesh's own vertex colours: our additive card material, LightCardParent,
+	// which reads them; the Genetics Lab's tanks' glow, the Psi Labs' lamps.)
+	if (k != INDEX_NONE && L.Kind == 'Glow' && default.LightCardParent != "" && Matches(Path, default.LightCardMaterials))
+	{
+		S.Standin = LightCardStandin(InOuter);
 		if (S.Standin != none)
 		{
 			Standins.AddItem(S);

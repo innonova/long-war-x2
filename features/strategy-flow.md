@@ -562,3 +562,14 @@ piece of 17 facility levels, is not found (an EW package the setup does not carr
 - **Editor session notes** (as the learnings have them): the mod's lines stripped from the SDK's `Manifest.txt` and the
   mod's SDK folder moved aside for the session, both restored after; the package saved from the Content Browser, the
   editor closed by its process once saved.
+
+## Report (2026-11-18 late, screens and light cards)
+
+- **EW's custom screens glow in their hue** (`HQ_CustomScreens`: the Genetics Lab's wall monitors among them): glowing
+  parts now, their HDR `TintColor` scaled to a brightest channel of 1, since the picture they tint is cooked away (whole,
+  they drew white). Seen on the Genetics Lab: the wall monitor blue, the hanging one amber, as EW's.
+- **EW's light cards** (`HQ_ColorizedLight_PureVertexColor`, coloured and faded by the mesh's vertex colours: the Genetics
+  Lab's yellow tank glow): a material of ours made in the SDK editor, `LWX2Lightmap.M_EWLightCard` (additive, unlit,
+  two-sided, vertex colour × alpha × `Tint`), given to them (`LightCardParent`). **Not seen working:** the tanks stay dark
+  even at 8× (`LightCardScale`). The mesh does carry vertex colours in EW (yellow, alpha 0/255 per card); whether XCOM 2
+  reads them from EW's mesh is the next thing to check.
