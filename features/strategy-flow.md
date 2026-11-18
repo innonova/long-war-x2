@@ -573,3 +573,7 @@ piece of 17 facility levels, is not found (an EW package the setup does not carr
   two-sided, vertex colour × alpha × `Tint`), given to them (`LightCardParent`). **Not seen working:** the tanks stay dark
   even at 8× (`LightCardScale`). The mesh does carry vertex colours in EW (yellow, alpha 0/255 per card); whether XCOM 2
   reads them from EW's mesh is the next thing to check.
+- **The resource lines** hide over the research list, the archives and reports, the Gene Lab and gene mods, as EW's
+  science HUD hides them for each of its views but the room's menu (`UIStrategyHUD_FSM_Science.GoToView`,
+  `UISoldierGeneMods`); back in the room they show again (the reviewer's round 4, #14, in part: EW's code hides nothing
+  over the Situation Room's screens or the Gray Market).

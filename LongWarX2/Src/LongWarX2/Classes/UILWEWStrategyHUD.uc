@@ -156,7 +156,8 @@ function AddResource(string Label, string Value, bool bGood)
 }
 
 /** EW's resource panel hidden while a soldier screen is on top (the barracks' soldier list, the armory and its screens,
- *  customization; the labs' soldier lists keep it) and over the memorial, as EW hides it there (AS_HideResourcesPanel);
+ *  customization; the labs' soldier lists keep it), over the memorial, the research room's screens and gene mods, as EW
+ *  hides it there (AS_HideResourcesPanel);
  *  the back arrow stays, as EW's does (ShowBackButton). */
 function ShowForTop()
 {
@@ -168,7 +169,11 @@ function ShowForTop()
 	class'UILWEWSituationRoom'.static.WallFor(XComHQPresentationLayer(Movie.Pres));
 	// (And over Officer Billets, EW's medals screen as Long War made it: UIMedals.OnInit hides it.)
 	bHide = UIPersonnel_Armory(Top) != none || UILWEWSoldierList(Top) != none || UILWEWSoldierSummary(Top) != none || UILWEWMemorial(Top) != none || UIArmory(Top) != none || UICustomize(Top) != none || UIMouseGuard_RotatePawn(Top) != none
-		|| UILWEWOfficers(Top) != none;
+		|| UILWEWOfficers(Top) != none
+		// (And over the research room's own screens, as EW's science HUD hides it for each of its views but the room's menu,
+		// UIStrategyHUD_FSM_Science.GoToView: the research list, the archives and reports, the credits, the Gene Lab; and
+		// over gene mods, UISoldierGeneMods.)
+		|| UILWEWResearch(Top) != none || UILWEWScienceLabs(Top) != none || UILWEWGeneLab(Top) != none || UILWEWGeneMods(Top) != none;
 	if (bHide == bResourcesHidden)
 		return;
 	bResourcesHidden = bHide;
