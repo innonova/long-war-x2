@@ -341,3 +341,52 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
 - **The Situation Room's wall** stays live under 2D screens (soldier list, hiring, building) and is hidden only while
   another screen is drawn in 3D (it had shown on the soldier summary's panel).
 - Seen on wingpu: Excavation, Xenobiology and the Council Report listed; the arrow clicked back to the hub.
+
+## Report (2026-11-18, the Situation Room's, research's and hangar's menus and screens)
+
+Each walked against EW's code (decompiled from stock Long War into scratch) and checked by clicks on wingpu; screenshots
+in `logs/` (`fin1`, `bonuses`, `pending`, `research`, `research_alert`, `report`, `archives`, `hangar`, `order`,
+`transfer`, `shipsummary2`, `shiploadout`).
+
+- **Situation Room menu** in EW's order (`XGSituationRoomUI.UpdateMainMenu`): Launch Satellite, **Bonuses** (EW's
+  satellite-bonus dialog: every bonus type held, its sum in its text, then EW's words on satellites), Covert Operations
+  (once EXALT is active), **View XCOM Finances** (EW's BaseFinances: gross, craft and facility maintenance, salaries,
+  net, from Long War's numbers), Visit the Gray Market, **Pending Requests (n)** (EW's list, EW's statuses; an item
+  request opens EW's request screen). The menu's extra "Situation Room" entry is gone (the wall is live behind it).
+- **Research room** (`XGResearchUI.UpdateMainMenu`): Start/Change Research Project (greyed with EW's "No new research
+  projects" when there are none), **Access Research Archives** (greyed until two techs are done; EW's ScienceLabs: the
+  list, then each tech's report: codename, month, Long War's text, what it opened, the credit it earned), Visit the Gene
+  Lab, **Review Research Credits** (EW's tech list in its credits mode).
+- **The research list** reads as EW's `UIChooseTech`: CHOOSE RESEARCH, Long War's order (`SortTechs`: priority first,
+  then by time, autopsies and interrogations last), `-**Priority**` on `IsPriorityTech`'s, FAST/NORMAL/SLOW with days,
+  REQUIREMENTS (red where short, EW's "Insufficient …" over the summary; such a tech refused), the credits that cut it,
+  BEGIN PROJECT. Long War's two story-objective priorities (Alien Propulsion while the Overseer is to be shot down,
+  Xenogenetics while an Outsider is to be captured) are left out: the port has no story objectives to ask.
+- **Research done, as EW** (decision, logged here): XCOM 2's popup no longer comes (Long War's techs carry
+  `bJumpToLabs`, the flag's only use being to skip that popup); EW's RESEARCH COMPLETE alert opens over Mission Control
+  (Assign New Research / Carry On, `XGMissionControlUI` alert 28), the report waits in the labs until read, and after
+  Assign New Research the research list follows it.
+- **A rule fix:** time stops at the hour XCOM 2's research project completes. Before, Mission Control's scan ran its whole
+  stretch first (the Long War clock, then XCOM 2's clock in one step), so research done early in a scan completed only at
+  its end and the scientists idled in between.
+- **Alerts over Mission Control:** a waiting alert opened over the Geoscape panel in the moment before Mission Control
+  came up (so over the base); it now opens over Mission Control.
+- **Engineering:** menu in EW's order (Repair Bay, then Augment Soldiers once Alien Biocybernetics is done, as
+  `XGEngineeringUI` gates it); Long War's FRAGMENTS line in its HUD.
+- **Hangar** (`UIShipList`): AIRCRAFT LIST in EW's words and colours, Long War's Raven/Firestorm icons before callsigns,
+  statuses as `GetStatusString`, mixed-case continents; ORDER INTERCEPTORS on EW's own order dialog (`UIHiring_Hangar`:
+  initial and monthly cost, hangar capacity, a count); CANCEL ORDER (Long War's refund, one at a time); EW's CONFIRM
+  TRANSFER; the list stays under its dialogs; a craft in transit listed at its new home; EW's notices when no hangar has
+  room or Long War's ferry restriction holds (`XGStrategyAI.CostAlienSquad`: no transfer or loadout change while a
+  retaliation UFO flies).
+- **The craft's own screens:** EW's `UIShipSummary` first (callsign, status, kills, weapon and picture, EDIT LOADOUT,
+  DISMISS SHIP with EW's confirmation, Long War's RENAME: a pilot from its list of 245), then EW's `UIShipLoadout`
+  (CHOOSE LOADOUT, stores counts, EW's ratings from Long War's numbers). Pilots are ranked by kills after each kill, as
+  `XGInterception` does (Lt., Capt. 3, Maj. 5, Col. 7, Cmdr. 10).
+
+**Still open from this batch:**
+- The hangar's craft in their bays (EW draws the jets and the Skyranger; ours are empty), and the summary's camera on the
+  craft (`Hangar_UIDisplayCam_Summary`).
+- The craft summary's WEAPON INFO / SHIP INFO item cards.
+- The back arrow under the craft summary and loadout (the HUD's help bar reports visible but draws nothing there).
+- EW's Situation Room research report also shows the tactical summary card for autopsies (`btxtInfo`); not done.
