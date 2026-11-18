@@ -329,3 +329,15 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   - Next: the faulting code's caller (`XCom2.exe+0x70eec8`, called from around `+0x7534c4`), to know who reads the positions
     and when they are freed; and whether XCOM 2 keeps a mesh's CPU copy of its vertices only when asked (EW's cooked meshes
     may not ask).
+
+## Report (2026-11-18, Mission Control's list and back arrow; the wall under 2D screens)
+
+- **Mission Control's UPCOMING EVENTS:** its movie's own event list (EW's `UIMissionControl.m_kEventList`, which we had
+  hidden), filled by the HUD: up to EW's ten, soonest at the top, growing upward from the bottom right as EW's does (EW's
+  default `m_iMaxEventsPerRow` 10, not expanding vertically). The base view keeps its single NEXT EVENT.
+- **Mission Control's back arrow:** in its movie's own help bar, as EW's `UpdateButtonHelp` puts it (the HUD's beneath
+  was covered by this movie; it is hidden there now); a click returns to the base. EW's hologlobe button beside it leads
+  to EW's space view of the earth, which the port does not have.
+- **The Situation Room's wall** stays live under 2D screens (soldier list, hiring, building) and is hidden only while
+  another screen is drawn in 3D (it had shown on the soldier summary's panel).
+- Seen on wingpu: Excavation, Xenobiology and the Council Report listed; the arrow clicked back to the hub.

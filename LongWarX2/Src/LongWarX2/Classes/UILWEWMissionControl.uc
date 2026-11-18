@@ -38,9 +38,12 @@ simulated function OnInit()
 	local array<ASValue> NoArgs;
 
 	super.OnInit();
-	// The clock and the event list are the strategy HUD's (beneath); the movie's own hidden.
+	// The clock is the strategy HUD's (beneath), the movie's own hidden; the event list is the movie's own, EW's UPCOMING
+	// EVENTS on the right (UIMissionControl's m_kEventList), filled by the HUD (UILWEWStrategyHUD.SetEvents).
 	Movie.SetVariableBool(MCPath $ ".clockMC._visible", false);
-	Movie.SetVariableBool(MCPath $ ".theEventList._visible", false);
+	// EW's back arrow in the movie's own help bar (UIMissionControl.UpdateButtonHelp: AddBackButton; its hologlobe button
+	// leads to EW's space view of the earth, which the port does not have). The HUD's beneath it was covered by this movie.
+	HelpButton("helpBarMC", false, 0, "4", "", "QComButtonIconPC");
 	Movie.Invoke(MCPath $ ".theMissionList.onLoad", NoArgs);
 	ListTarget = class'UILWEWAlertTarget'.static.At(self, MCPath $ ".theMissionList");
 	LookAtRoom();
@@ -314,6 +317,12 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		case class'UIUtilities_Input'.const.FXS_BUTTON_B:
 		case class'UIUtilities_Input'.const.FXS_KEY_ESCAPE:
 		case class'UIUtilities_Input'.const.FXS_R_MOUSE_DOWN:
+			Leave();
+			return true;
+		case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP:
+		case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED:
+			if (HelpButtonUnderMouse() == "")
+				break;
 			Leave();
 			return true;
 	}

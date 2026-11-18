@@ -415,6 +415,7 @@ export function makeHubWords({ strategyLoc }) {
     ['OneDay', inSection('XGFacility_Labs', 'm_strETADay')?.replace('<XGParam:IntValue0/>', '%d')],
     ['ManyDays', inSection('XGFacility_Labs', 'm_strETADays')?.replace('<XGParam:IntValue0/>', '%d')],
     ['NextEvent', anywhere('m_strSingleEventListTitle')],
+    ['UpcomingEvents', anywhere('m_strEventListTitle')],
     ['QueueTitle', inSection('XGEngineeringUI', 'm_strProjectsTitle')],
     ['QueueEmpty', inSection('XGEngineeringUI', 'm_strProjectsTitleEmpty')],
     ['EtaLabel', inSection('XGEngineeringUI', 'm_strEtaLabel')],

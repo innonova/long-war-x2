@@ -4,7 +4,7 @@
 class UILWEWStrategyHUD extends UILWEWScreen;
 
 /** EW's words (XGScreenMgr's resource names; the research panel's, XGResearchUI, XGFacility_Labs; the event list's). */
-var localized string ResourceNames[8], CurrentResearch, NoResearch, Speeds[3], OneDay, ManyDays, NextEvent, DaysTitle;
+var localized string ResourceNames[8], CurrentResearch, NoResearch, Speeds[3], OneDay, ManyDays, NextEvent, DaysTitle, UpcomingEvents;
 var localized string QueueTitle, QueueEmpty, EtaLabel, ProjectLabel, QtyLabel, FoundryPrefix, EtaHour, EtaDay;
 /** The engineering queue as last given (given again only when it changes). */
 var string QueueShown;
@@ -21,6 +21,11 @@ var UILWEWAlertTarget BackTarget, BarTarget;
 var string EventsShown;
 /** How many of them. */
 var int MaxEvents;
+/** In Mission Control, EW's list of what is coming (UIStrategyComponent_EventList's default: ten a column, UPCOMING
+ *  EVENTS), where the base's view shows the next one. */
+var int MissionControlEvents;
+/** The list last filled (the HUD's, or Mission Control's own). */
+var UIMCController EventsTarget;
 /** Whether EW's resource panel is hidden (ShowForTop). */
 var bool bResourcesHidden;
 /** Whether XCOM 2's navigation help is hidden (an EW screen on top, which has EW's own back arrow and help: ShowForTop). */
@@ -212,7 +217,7 @@ function Refresh()
 	// The clock and the event list on the base's view and in Mission Control only: EW's rooms and screens have their back
 	// arrow and their own panels there instead.
 	Movie.SetVariableBool(MCPath $ ".theClock._visible", Context <= 1);
-	Movie.SetVariableBool(MCPath $ ".theEventList._visible", Context <= 1);
+	Movie.SetVariableBool(MCPath $ ".theEventList._visible", Context == 0);
 	if (Context <= 1)
 		SetEvents(XComHQ, S);
 	SetPanels(XComHQ, S);
@@ -276,7 +281,8 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 
 	// (Shown before its button is added: XCOM 2's Flash does not advance a hidden clip, and the button waits for a
 	// frame to load. The bar is hidden until a back arrow is in it, as EW's ShowBackButton shows it.)
-	Movie.SetVariableBool(MCPath $ ".helpBar._visible", Context > 0);
+	// (Not under Mission Control itself, which has its own: UILWEWMissionControl.)
+	Movie.SetVariableBool(MCPath $ ".helpBar._visible", Context > 0 && UILWEWMissionControl(Movie.Pres.ScreenStack.GetCurrentScreen()) == none);
 	Ctx = Context $ Kind;
 	if (Ctx != ShownFor)
 	{
@@ -410,7 +416,8 @@ function SetEvents(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 	local array<string> Texts, Icons;
 	local array<int> Hours;
 	local string Shown;
-	local int i;
+	local int i, n;
+	local UIMCController Target;
 
 	Project = XComHQ.GetCurrentResearchProject();
 	Tech = Project != none ? XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(Project.ProjectFocus.ObjectID)) : none;
@@ -443,34 +450,42 @@ function SetEvents(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 		PutEvent(Texts, Hours, Icons, "Gene Mod:" @ (Unit != none ? Unit.GetFullName() : ""), class'XComGameState_LWStrategy'.static.GeneHoursLeft(S.GenePatients[i]), "_genemod");
 	}
 	PutEvent(Texts, Hours, Icons, "Council Report", S.HoursPerMonth() - S.Hours % S.HoursPerMonth(), "_endOfMonth");
-	// The soonest only: a second row reaches the screen's bottom edge.
-	if (Texts.Length > MaxEvents)
+	// The soonest only on the base's view (a second row reaches the screen's bottom edge); EW's ten in Mission Control.
+	n = Context == 1 ? MissionControlEvents : MaxEvents;
+	if (Texts.Length > n)
 	{
-		Texts.Length = MaxEvents;
-		Hours.Length = MaxEvents;
-		Icons.Length = MaxEvents;
+		Texts.Length = n;
+		Hours.Length = n;
+		Icons.Length = n;
 	}
 	for (i = 0; i < Texts.Length; i++)
 		Shown $= Texts[i] $ "|" $ Days(Hours[i]) $ "|";
-	if (Shown == EventsShown)
+	// (In Mission Control, its own movie's list: UIMissionControl's.)
+	Target = MC;
+	if (Context == 1 && UILWEWMissionControl(Movie.Pres.ScreenStack.GetCurrentScreen()) != none)
+		Target = UILWEWMissionControl(Movie.Pres.ScreenStack.GetCurrentScreen()).MC;
+	if (Shown == EventsShown && Target == EventsTarget)
 		return;
 	EventsShown = Shown;
-	MC.ChildFunctionVoid("theEventList", "clear");
-	MC.ChildFunctionNum("theEventList", "OverrideMaxItemsPerColumn", 1);
-	MC.ChildFunctionBool("theEventList", "ExpandListVertically", true);
-	MC.BeginChildFunctionOp("theEventList", "SetTitle");
-	// (EW's single-row list: NEXT EVENT, DAYS.)
-	MC.QueueString(NextEvent != "" ? NextEvent : "NEXT EVENT");
-	MC.QueueString(DaysTitle != "" ? DaysTitle : "DAYS");
-	MC.EndOp();
+	EventsTarget = Target;
+	Target.ChildFunctionVoid("theEventList", "clear");
+	Target.ChildFunctionNum("theEventList", "OverrideMaxItemsPerColumn", n);
+	// (EW's default for its event list, Mission Control's, is not to (UIStrategyComponent_EventList.m_bExpandListVertically);
+	// the base's single row is.)
+	Target.ChildFunctionBool("theEventList", "ExpandListVertically", n == 1);
+	Target.BeginChildFunctionOp("theEventList", "SetTitle");
+	// (EW's single-row list: NEXT EVENT, DAYS; its list in Mission Control: UPCOMING EVENTS.)
+	Target.QueueString(n > 1 ? (UpcomingEvents != "" ? UpcomingEvents : "UPCOMING EVENTS") : (NextEvent != "" ? NextEvent : "NEXT EVENT"));
+	Target.QueueString(DaysTitle != "" ? DaysTitle : "DAYS");
+	Target.EndOp();
 	for (i = 0; i < Texts.Length; i++)
 	{
-		MC.BeginChildFunctionOp("theEventList", "AddEvent");
-		MC.QueueString(Texts[i]);
-		MC.QueueString("DAYS");
-		MC.QueueString(string(Days(Hours[i])));
-		MC.QueueString(Icons[i]);
-		MC.EndOp();
+		Target.BeginChildFunctionOp("theEventList", "AddEvent");
+		Target.QueueString(Texts[i]);
+		Target.QueueString("DAYS");
+		Target.QueueString(string(Days(Hours[i])));
+		Target.QueueString(Icons[i]);
+		Target.EndOp();
 	}
 }
 
@@ -547,4 +562,5 @@ defaultproperties
 	// (Never focused, being off the stack: its back arrow's clicks taken all the same, UIMovie.FlashRaiseMouseEvent.)
 	bProcessMouseEventsIfNotFocused = true
 	MaxEvents = 1
+	MissionControlEvents = 10
 }
