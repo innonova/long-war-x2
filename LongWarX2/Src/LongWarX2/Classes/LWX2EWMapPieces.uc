@@ -124,6 +124,9 @@ var config array<string> SkipMaterials;
 /** In EW's base only: materials EW draws opaque and black there (DoNothing, no colour input: the cutaway's cut surfaces
  *  between the rooms and floors, ew-compare), drawn so (our lightmap material at no light) rather than skipped. */
 var config array<string> BaseBlackMaterials;
+/** EW materials drawn unlit with their own diffuse, glowing in a colour (the base's hologlobe: EW's holographic earth). */
+var config array<string> UnlitMaterials;
+var config LinearColor UnlitTint;
 var config array<string> GlassMaterials;
 var config string GlassParent;
 var config float GlassOpacity;
@@ -528,7 +531,7 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 	if (default.LightmapParent == "" || P.LightMap.UV != 1)
 		return none;
 	k = D.Looks.Find('Material', Path);
-	if (k == INDEX_NONE || D.Looks[k].Kind != 'Prop' || D.Looks[k].Diffuse == "" || Matches(Path, default.GlassMaterials))
+	if (k == INDEX_NONE || D.Looks[k].Kind != 'Prop' || D.Looks[k].Diffuse == "" || Matches(Path, default.GlassMaterials) || Matches(Path, default.UnlitMaterials))
 		return none;
 	Parent = Material(DynamicLoadObject(default.LightmapParent, class'Material', true));
 	Diffuse = Texture(DynamicLoadObject(D.Looks[k].Diffuse, class'Texture', true));
@@ -687,7 +690,7 @@ static function MaterialInterface BlackStandin(Object InOuter)
 
 /** A stand-in for one of EW's glowing parts: GlowParent in the look's colour (GlowDefault where EW colours it by vertex),
  *  over the screen's picture or plain white. */
-static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter)
+static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, optional bool bKeepDiffuse)
 {
 	local MaterialInstanceConstant MIC;
 	local Material Parent;
@@ -705,10 +708,10 @@ static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter)
 	White = Texture(DynamicLoadObject("EngineResources.WhiteSquareTexture", class'Texture', true));
 	// (A console's screen in EW's tint alone: EW's picture there, HQscreens_test, is a green pattern EW's material reads
 	// as a mask; multiplied by the tint, as ours does, it came out green.)
-	T = Texture(DynamicLoadObject((L.Diffuse != "" && !bOurs) ? L.Diffuse : "EngineResources.WhiteSquareTexture", class'Texture', true));
+	T = Texture(DynamicLoadObject((L.Diffuse != "" && (!bOurs || bKeepDiffuse)) ? L.Diffuse : "EngineResources.WhiteSquareTexture", class'Texture', true));
 	if (T != none)
 		MIC.SetTextureParameterValue('Diffuse', T);
-	C = (L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.GlowDefault;
+	C = bKeepDiffuse ? default.UnlitTint : ((L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.GlowDefault);
 	C.R *= default.GlowScale; C.G *= default.GlowScale; C.B *= default.GlowScale; C.A = 1;
 	if (bOurs)
 	{
@@ -754,6 +757,15 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 			L.Diffuse = default.LookOverrides[i].Diffuse;
 		}
 		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : ((L.Kind == 'Masked' && default.MaskedParent != "") ? default.MaskedParent : default.PropParent));
+	}
+	if (k != INDEX_NONE && L.Diffuse != "" && default.GlowParent != "" && Matches(Path, default.UnlitMaterials))
+	{
+		S.Standin = GlowStandin(L, InOuter, true);
+		if (S.Standin != none)
+		{
+			Standins.AddItem(S);
+			return S.Standin;
+		}
 	}
 	if (k != INDEX_NONE && L.Kind == 'Glow' && default.GlowParent != "")
 	{
