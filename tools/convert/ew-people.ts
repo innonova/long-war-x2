@@ -10,12 +10,16 @@ import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 
-export interface Person { group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean }
+export interface Person { group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
 
 export function peopleOf(file: string): Person[] {
   const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
-  const meta: any = new Package(bytes)
-  const pkg: any = openPackage(bytes)
+  return peopleIn(new Package(bytes), openPackage(bytes))
+}
+
+/** The people of a level already open (ew-map.ts: with its own readers of the same bytes). Material references: the
+ *  component's own, else its skeletal mesh's. */
+export function peopleIn(meta: any, pkg: any): Person[] {
   const exports = meta.exports as { type: string; fullName: string }[]
   const dv = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
   const path = (r: number) => (r > 0 ? exports[r - 1]!.fullName : r < 0 ? meta.imports[-r - 1].fullName : '')
@@ -43,11 +47,12 @@ export function peopleOf(file: string): Person[] {
   }
 
   // The groups: name, AnimSets, the anim track's sequences.
-  const groups = new Map<string, { animSets: string[]; seqs: string[] }>()
+  const groups = new Map<string, { animSets: string[]; seqs: string[]; animSetRefs: number[] }>()
   exports.forEach((e, i) => {
     if (e.type !== 'InterpGroup') return
     const t = tagsAt(i)
-    const g = { animSets: refs(t.find((x) => x.name === 'GroupAnimSets')).map(path).filter(Boolean), seqs: [] as string[] }
+    const setRefs = refs(t.find((x) => x.name === 'GroupAnimSets')).filter((r) => r !== 0)
+    const g = { animSets: setRefs.map(path), animSetRefs: setRefs, seqs: [] as string[] }
     for (const tr of refs(t.find((x) => x.name === 'InterpTracks'))) {
       if (tr <= 0 || exports[tr - 1]!.type !== 'InterpTrackAnimControl') continue
       const at = tagsAt(tr - 1).find((x) => x.name === 'AnimSeqs')
@@ -84,15 +89,37 @@ export function peopleOf(file: string): Person[] {
     const comp = i32(t.find((x) => x.name === 'SkeletalMeshComponent'))
     let ct: Tag[] = []
     if (comp > 0) ct = tagsAt(comp - 1, [8, 12, 4, 16])
-    const mesh = path(i32(ct.find((x) => x.name === 'SkeletalMesh')))
+    const meshRef = i32(ct.find((x) => x.name === 'SkeletalMesh'))
+    const mesh = path(meshRef)
     if (!mesh || /CineDummy/.test(mesh)) return
+    let materialRefs = refs(ct.find((x) => x.name === 'Materials'))
+    if (!materialRefs.length && meshRef > 0) {
+      // (The mesh's own: a SkeletalMesh keeps them in its native data, after its properties: its bounds, 28 bytes, then
+      // the materials' count and references.)
+      try {
+        const d: Uint8Array = pkg.data(meshRef)
+        const r = new Reader(d.subarray(4))
+        readTags(r, pkg)
+        const o = 4 + (r as unknown as { o: number }).o + 28
+        const n = dv(d).getInt32(o, true)
+        if (n > 0 && n < 16) {
+          const rs = Array.from({ length: n }, (_, k) => dv(d).getInt32(o + 4 + 4 * k, true))
+          if (rs.every((x) => /Material/.test(x > 0 ? exports[x - 1]!.type : x < 0 ? String(meta.imports[-x - 1].className) : ''))) materialRefs = rs
+        }
+      } catch {
+        // none read
+      }
+    }
     const loc = t.find((x) => x.name === 'Location')
     const rot = t.find((x) => x.name === 'Rotation')
     const ds = t.find((x) => x.name === 'DrawScale')
     out.push({
       group: group!,
       mesh,
-      materials: refs(ct.find((x) => x.name === 'Materials')).map(path),
+      materials: materialRefs.map(path),
+      meshRef,
+      materialRefs,
+      animSetRefs: g.animSetRefs,
       loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)],
       rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
       scale: ds ? f32(ds) : 1,
