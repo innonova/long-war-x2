@@ -53,6 +53,7 @@ const OPT_EXALT = 12;
 const OPT_SATELLITE = 14;
 const OPT_REPAIR = 15;
 const OPT_HIRE = 16;
+const OPT_MEMORIAL = 17;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
 const FACILITY_FOUNDRY = 11;
@@ -308,6 +309,7 @@ function EnterRoom(int i)
 		if (S != none && class'LWBase'.static.Count(S, 17) > 0)
 			RoomOptions.AddItem(OPT_PSI);
 		// (EW's order, XGBarracksUI: soldiers, the school, the Psi Labs, the memorial, hiring, officer promotions.)
+		RoomOptions.AddItem(OPT_MEMORIAL);
 		RoomOptions.AddItem(OPT_HIRE);
 		// (Officer promotions once a rank is open, as EW's once medals are.)
 		if (S != none && S.OfficerProjectsBought > 0)
@@ -359,6 +361,7 @@ function string OptionName(int Option)
 	case OPT_GREYMARKET: return Word(GreyMarket, "Grey market");
 	case OPT_OTS: return Word(OTS, "Officer Training School");
 	case OPT_HIRE: return Word(Hire, "Hire Soldiers");
+	case OPT_MEMORIAL: return Word(Memorial, "View the Memorial");
 	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
 	case OPT_AUGMENT: return Word(Augment, "Augment Soldiers");
 	case OPT_REPAIR: return Word(RepairBay, "Repair Bay");
@@ -382,6 +385,7 @@ function string OptionHelp(int Option)
 	case OPT_SATELLITE: return LaunchSatelliteHelp;
 	case OPT_OTS: return OTSHelp;
 	case OPT_HIRE: return HireHelp;
+	case OPT_MEMORIAL: return MemorialHelp;
 	case OPT_PSI: return PsiLabsHelp;
 	case OPT_RESEARCH:
 		return class'UIUtilities_Strategy'.static.GetXComHQ().GetCurrentResearchProject() != none ? ChangeResearchHelp : NewResearchHelp;
@@ -423,6 +427,7 @@ function ChooseOption(int Option)
 		break;
 	case OPT_AIRCRAFT: class'UILWEWHangar'.static.Open(HQPres); break;
 	case OPT_HIRE: class'UILWEWHiring'.static.Open(HQPres); break;
+	case OPT_MEMORIAL: class'UILWEWMemorial'.static.Open(HQPres); break;
 	case OPT_SITROOM: class'UILWEWSituationRoom'.static.Open(); break;
 	case OPT_EXALT: class'UILWEWSituationRoom'.static.Open(true); break;
 	case OPT_SATELLITE: class'UILWEWSituationRoom'.static.Open(false, true); break;

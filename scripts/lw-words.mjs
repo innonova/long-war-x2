@@ -802,10 +802,20 @@ export function makeSecondWaveWords({ loc }) {
  * classes, as they are.
  */
 export function makeShellWords({ loc }) {
+  return copySections(loc, [['UIShellDifficulty', 'UILWEWDifficulty'], ['UIGameplayToggles', 'UILWEWSecondWave']])
+}
+
+/** EW's memorial (UILWEWMemorial): its [UIMemorial] section of the strategy text, under the mod's class. */
+export function makeMemorialWords({ strategyLoc }) {
+  return copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial']])
+}
+
+/** Sections of an EW text file under the mod's classes, as they are ([from] → [to]). */
+function copySections(loc, pairs) {
   const text = loc.replace(/\r/g, '')
   const out = []
   let named = 0
-  for (const [from, to] of [['UIShellDifficulty', 'UILWEWDifficulty'], ['UIGameplayToggles', 'UILWEWSecondWave']]) {
+  for (const [from, to] of pairs) {
     const m = text.match(new RegExp(`^\\[${from}\\]\\n([\\s\\S]*?)(?=^\\[|(?![\\s\\S]))`, 'm'))
     if (!m) continue
     // (Keys by EW's enum names, [eGO_RandomDamage], made numbers: the option's own number in its title, "(#0)".)

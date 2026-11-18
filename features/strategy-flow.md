@@ -77,9 +77,11 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
    class counts in the title), the soldier's summary menu (EW: Abilities, Gene Mods, Loadout, Customize, Report for
    Duty, Dismiss, and next/previous soldier buttons), the abilities tree (EW's: Long War's ranks as a vertical list
    beside the soldier; XCOM 2's horizontal panel covers the soldier), Gene Mods.
-3. **The barracks lack EW's View the Memorial** (Hire Soldiers: done, report below).
-4. ~~The resource bar stays over the soldier screens~~: hidden over the barracks' list, the armory and customization
-   (`UILWEWStrategyHUD.ShowForTop`), as in EW.
+3. ~~The barracks lack EW's View the Memorial and Hire Soldiers~~: both in (reports below).
+4. ~~The resource bar stays over the soldier screens~~: EW's resource panel hidden over the barracks' list, the
+   armory, customization and the memorial, the back arrow kept (`UILWEWStrategyHUD.ShowForTop`), as in EW.
+6b. **Rookies are XCOM 2's "Rk. … (Rookie)"**; Long War's classless soldier is a "PFC … (Trooper)" (EW's
+   `SoldierClassNames[eSC_None]`), as its memorial shows.
 5. **XCOM 2's random looks include its DLC's bare-chested torsos and cargo shorts** (one soldier stood so in the armory;
    the armour itself shows: another stood in hers). EW's soldiers never look so; to decide which of XCOM 2's parts a
    Long War recruit may get.
@@ -121,3 +123,14 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
 - **Checked on wingpu:** three hired by clicks (§75; credits 500 → 425), shown in the event list at 9 days, arrived on
   day 10 at 00:00 (216 hours).
 - Not yet: EW's notice when they arrive (`PRES().Notify`), shown as an event-log line.
+
+## Report (2026-11-18, the memorial)
+
+- **EW's memorial** (its Memorial movie, `UILWEWMemorial`; clip `theScreen`, as EW's defaults name it) from the barracks'
+  menu (View the Memorial, in EW's place), through EW's `Memorial` camera onto the bar's memorial wall, EW's resource
+  panel hidden and its back arrow kept, as EW's UIMemorial does. The fallen are XCOM 2's (`DeadCrew`), each line as EW
+  writes it: rank and name (class), kills, missions, last operation, date, cause. EW's words copied from its
+  `[UIMemorial]` section.
+- **Seen on wingpu:** the soldier lost in the simulated first mission listed ("Operation Gatecrasher", XCOM 2's name for
+  it). The date came out in XCOM 2's calendar (2035); it is now converted to Long War's (`LongWarDate`: XCOM 2's clock
+  runs with Long War's hours from its own start), not yet seen (no one fell in the next campaign's first mission).

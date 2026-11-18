@@ -419,6 +419,14 @@ function string DateText()
 	return class'X2StrategyGameRulesetDataStructures'.static.GetDateString(T) @ (HourOfDay() < 10 ? "0" : "") $ HourOfDay() $ ":00";
 }
 
+/** An XCOM 2 date as Long War's calendar has it: XCOM 2's clock runs with Long War's hours (Run) from its own start
+ *  (START_YEAR, 2035), Long War's from 2015 on the same day. */
+static function TDateTime LongWarDate(TDateTime T)
+{
+	T.m_iYear += 2015 - class'X2StrategyGameRulesetDataStructures'.default.START_YEAR;
+	return T;
+}
+
 /**
  * Time runs hour by hour until the hours are up or something wants a decision (with bThrough, on
  * regardless: the player answering nothing, for development). Returns the hours that passed.

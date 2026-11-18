@@ -21,6 +21,8 @@ var UILWEWAlertTarget BackTarget, BarTarget;
 var string EventsShown;
 /** How many of them. */
 var int MaxEvents;
+/** Whether EW's resource panel is hidden (ShowForTop). */
+var bool bResourcesHidden;
 
 /**
  * The HUD shown over the Avenger, on top, when the converted package is there. It is loaded into the movie without
@@ -124,17 +126,20 @@ function AddResource(string Label, string Value, bool bGood)
 	MC.FunctionString("AddResource", class'UIUtilities_Text'.static.GetColoredText(Label $ ":" @ Value, bGood ? eUIState_Good : eUIState_Bad));
 }
 
-/** Hidden while one of XCOM 2's soldier screens is on top (the barracks' soldier list, the armory and its screens, customization; the labs' soldier lists keep it):
- *  EW shows no resource bar over its soldier screens (ew-compare, strategy-flow.md). */
+/** EW's resource panel hidden while a soldier screen is on top (the barracks' soldier list, the armory and its screens,
+ *  customization; the labs' soldier lists keep it) and over the memorial, as EW hides it there (AS_HideResourcesPanel);
+ *  the back arrow stays, as EW's does (ShowBackButton). */
 function ShowForTop()
 {
 	local UIScreen Top;
 	local bool bHide;
 
 	Top = Movie.Pres.ScreenStack.GetCurrentScreen();
-	bHide = UIPersonnel_Armory(Top) != none || UIArmory(Top) != none || UICustomize(Top) != none || UIMouseGuard_RotatePawn(Top) != none;
-	if (bHide == bIsVisible)
-		SetVisible(!bHide);
+	bHide = UIPersonnel_Armory(Top) != none || UILWEWMemorial(Top) != none || UIArmory(Top) != none || UICustomize(Top) != none || UIMouseGuard_RotatePawn(Top) != none;
+	if (bHide == bResourcesHidden)
+		return;
+	bResourcesHidden = bHide;
+	MC.FunctionVoid(bHide ? "HideResourcesPanel" : "ShowResourcesPanel");
 }
 
 function Refresh()
@@ -169,6 +174,9 @@ function Refresh()
 	}
 	if (Meld > 0 || bWide)
 		AddResource(Label(7, "MELD"), string(Meld), Meld > 0);
+	// (Added again each second: kept hidden where it is, ShowForTop.)
+	if (bResourcesHidden)
+		MC.FunctionVoid("HideResourcesPanel");
 	if (bWide && S.TileType.Length > 0)
 		AddResource(Label(5, "POWER"), class'LWBase'.static.PowerUsed(S) $ "/" $ class'LWBase'.static.PowerCapacity(S),
 			class'LWBase'.static.PowerUsed(S) <= class'LWBase'.static.PowerCapacity(S));
