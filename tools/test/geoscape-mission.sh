@@ -18,7 +18,7 @@ until_top() {
   echo "timeout waiting for $1"; return 1
 }
 
-tools/test/new-campaign.sh | tail -1 | cut -c1-120
+tools/test/new-campaign.sh 1 --begin | tail -1 | cut -c1-120
 for _ in $(seq 1 15); do
   lw decisions | grep -q 'abductions in' && break
   lw 'run 720' | grep '^event' | cut -c1-150

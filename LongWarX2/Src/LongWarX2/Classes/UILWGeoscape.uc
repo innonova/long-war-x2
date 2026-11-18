@@ -115,7 +115,6 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	// The Avenger's resource bar shows the money the Geoscape may just have set (Long War's starting cash).
 	if (XComHQPresentationLayer(Movie.Pres) != none && XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD != none)
 		XComHQPresentationLayer(Movie.Pres).m_kAvengerHUD.UpdateResources();
-	ShowAvengerButton(false);
 	// EW's base behind it, when converted on this machine (features/lw-base-view.md).
 	class'LWX2EWBase'.static.Get(self).Show();
 	`log("LongWarX2: Long War Geoscape shown", , 'LongWarX2');
@@ -136,7 +135,6 @@ simulated function OpenEWMissionControl()
 
 simulated function OnRemoved()
 {
-	ShowAvengerButton(true);
 	// The camera back to the Avenger, unless the hub is under this (it shows the base again as it gets the focus).
 	if (!Movie.Pres.ScreenStack.IsInStack(class'UILWEWHub'))
 		class'LWX2EWBase'.static.Get(self).Hide();
@@ -144,17 +142,6 @@ simulated function OnRemoved()
 }
 
 
-/** The Avenger's LONG WAR GEOSCAPE button (UIScreenListener_LongWarX2HQ) is drawn above this screen: hidden while it is up. */
-simulated function ShowAvengerButton(bool bShow)
-{
-	local UIScreen Hud;
-	local UIPanel Button;
-
-	Hud = Movie.Pres.ScreenStack.GetScreen(class'UIAvengerHUD');
-	Button = Hud != none ? Hud.GetChildByName('LWX2HQButton', false) : none;
-	if (Button != none)
-		Button.SetVisible(bShow);
-}
 
 /** A country's row: by continent, with a gap between continents. */
 simulated function int RowOf(int i)

@@ -184,7 +184,6 @@ simulated function OnInit()
 	// The view asked for again a moment later: a screen closed just before (the start screen) sends XCOM 2's camera back
 	// to the Avenger after this. And the HUD with the resources and clock over this.
 	SetTimer(0.6, false, nameof(ShowBase));
-	ShowAvengerButton(false);
 }
 
 static function string Word(string Localized, string Fallback)
@@ -210,17 +209,6 @@ function ShowBase()
 	class'UILWEWStrategyHUD'.static.ShowIfAvailable();
 }
 
-/** The Avenger's LONG WAR GEOSCAPE button (UIScreenListener_LongWarX2HQ) is drawn above this screen: hidden while it is up. */
-simulated function ShowAvengerButton(bool bShow)
-{
-	local UIScreen Hud;
-	local UIPanel Button;
-
-	Hud = Movie.Pres.ScreenStack.GetScreen(class'UIAvengerHUD');
-	Button = Hud != none ? Hud.GetChildByName('LWX2HQButton', false) : none;
-	if (Button != none)
-		Button.SetVisible(bShow);
-}
 
 function HideHUDParts()
 {
@@ -241,7 +229,21 @@ simulated function OnReceiveFocus()
 		SetTimer(0.15, true, nameof(HoverOption));
 	ShowBase();
 	SetTimer(0.6, false, nameof(ShowBase));
-	ShowAvengerButton(false);
+	LogQueuedPopups();
+}
+
+/** XCOM 2's popups queued for an idle base view (bDisplayOnAvengerSideViewIdle), which never show now that the hub
+ *  replaces its base view (UILWFacilityGrid): logged, to decide which of them Long War wants (features/strategy-flow.md). */
+function LogQueuedPopups()
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local int i;
+
+	XComHQ = XComGameState_HeadquartersXCom(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom', true));
+	if (XComHQ == none)
+		return;
+	for (i = 0; i < XComHQ.QueuedDynamicPopups.Length; i++)
+		`log("LongWarX2: XCOM 2 popup queued, not shown:" @ XComHQ.QueuedDynamicPopups[i].PrimaryRoutingKey @ XComHQ.QueuedDynamicPopups[i].SecondaryRoutingKey, , 'LongWarX2');
 }
 
 /** Another screen over the hub: the Avenger back (the armory and squad select stand their soldiers in its rooms; EW's
@@ -264,7 +266,6 @@ simulated function OnLoseFocus()
 simulated function OnRemoved()
 {
 	class'LWX2EWBase'.static.Get(self).Hide();
-	ShowAvengerButton(true);
 	super.OnRemoved();
 }
 
@@ -587,13 +588,14 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 				ChooseOption(RoomOptions[RoomSelected]);
 			return true;
 		}
-	// Escape: out of the room, back to the base's view; at the base's view, the hub closed, back to XCOM 2's Avenger.
+	// Escape: out of the room, back to the base's view; at the base's view, the pause menu, as in EW (the hub is the
+	// strategy layer's root: UILWFacilityGrid).
 	if (cmd == class'UIUtilities_Input'.const.FXS_KEY_ESCAPE || cmd == class'UIUtilities_Input'.const.FXS_BUTTON_B)
 	{
 		if (Room >= 0)
 			LeaveRoom();
 		else
-			CloseScreen();
+			XComHQPresentationLayer(Movie.Pres).UIPauseMenu();
 		return true;
 	}
 	return super.OnUnrealCommand(cmd, arg);

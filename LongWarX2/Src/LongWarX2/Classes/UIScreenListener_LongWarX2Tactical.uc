@@ -10,6 +10,8 @@ var config bool PlaceEWMapPart;
 var config bool PlaceEWMapWhole;
 /** Long War's squad written into XCOM 2's alien encounters before the map loads (LWMissionSquads.ApplyTo). */
 var config bool SquadsInEncounters;
+/** In a campaign's mission, a button that ends it as won (WIN THIS MISSION: to try the strategy layer without playing the mission). */
+var config bool ShowTestEndMission;
 /** The part of the EW map (its coordinates): the pieces within the radius of the centre. */
 var config vector PartCenter;
 var config float PartRadius;
@@ -38,7 +40,7 @@ event OnInit(UIScreen Screen)
 	class'LWX2PerkProbe'.static.Start(Screen);
 	// Damage Roulette (second wave #0): the weapons' spread as the campaign has it (LWX2SecondWave).
 	class'LWX2SecondWave'.static.ApplyDamageRoulette();
-	if (class'UIScreenListener_LongWarX2HQ'.default.ShowTestEndMission && XGBattle_SP(`BATTLE) != none && !`BATTLE.m_kDesc.bIsTacticalQuickLaunch)
+	if (default.ShowTestEndMission && XGBattle_SP(`BATTLE) != none && !`BATTLE.m_kDesc.bIsTacticalQuickLaunch)
 		AddEndButton(Screen);
 	// A mission of the Long War Geoscape is won when its aliens are all dead or taken (lw-missions.md); so is any mission
 	// on an EW map's own plot (the campaign's first did not count as one: its squad is not known yet when the HUD

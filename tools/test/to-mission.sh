@@ -6,7 +6,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 lw() { tools/test/lw.sh "$@" | grep -v '^> '; }
-tools/test/new-campaign.sh | tail -1 | cut -c1-60
+tools/test/new-campaign.sh 1 --begin | tail -1 | cut -c1-60
 lw 'arm now' >/dev/null
 for c in "$@"; do lw "$c"; done
 for _ in $(seq 1 10); do lw decisions | grep -q 'abductions in' && break; lw 'run 720' >/dev/null; done
