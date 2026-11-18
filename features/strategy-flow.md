@@ -294,3 +294,13 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   for all its panels): it is hidden while the hub is not on top. A camera test aid, `pov`.
 - **Not yet:** EW's X-ray look of the soldier in Gene Mods with the chosen part lit (`ShowXRayView`), its panels in 3D, its
   GO TO GENE LAB button and previous/next soldier.
+
+## Report (2026-11-18, the HUD's stray parts)
+
+- **XCOM 2's navigation help hidden under EW's screens:** its small back and geoscape icons sat over EW's back arrow
+  (the reviewer's facilities, engineering and soldier screens); hidden while an EW screen is on top, shown for XCOM 2's
+  own (the armory's loadout) (`UILWEWStrategyHUD.ShowNavHelpFor`).
+- **The line across the top is gone:** it was the room tabs' bracket in our strategy HUD's instance of EW's HUD movie,
+  whose tabs are empty there (the hub's instance has the tabs); it drew alone over every screen. Hidden in that instance;
+  the base view keeps the hub's tabs with their bracket.
+- Test aids: `ewset abs:<path>` sets a variable from the movie's root.

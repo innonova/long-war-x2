@@ -23,6 +23,8 @@ var string EventsShown;
 var int MaxEvents;
 /** Whether EW's resource panel is hidden (ShowForTop). */
 var bool bResourcesHidden;
+/** Whether XCOM 2's navigation help is hidden (an EW screen on top, which has EW's own back arrow and help: ShowForTop). */
+var bool bNavHelpHidden;
 
 /**
  * The HUD shown over the Avenger, on top, when the converted package is there. It is loaded into the movie without
@@ -57,6 +59,10 @@ simulated function OnInit()
 	// The ticker and the hotlink (EW's news line and its shortcut) are not used.
 	MC.FunctionVoid("HideTicker");
 	MC.FunctionVoid("HideHotlink");
+	// The room tabs are the hub's own (its instance of this movie): here their bracket would draw alone, a line across the
+	// top over every screen (the reviewer's "full-width rule"); EW's resource bracket stays.
+	Movie.SetVariableBool(MCPath $ ".theMenu.facilityHeaderBracket._visible", false);
+	Movie.SetVariableBool(MCPath $ ".theMenu.facilityMenu._visible", false);
 	Refresh();
 	SetTimer(1.0, true, nameof(Refresh));
 	SetTimer(0.1, true, nameof(ShowForTop));
@@ -135,11 +141,32 @@ function ShowForTop()
 	local bool bHide;
 
 	Top = Movie.Pres.ScreenStack.GetCurrentScreen();
+	ShowNavHelpFor(Top);
 	bHide = UIPersonnel_Armory(Top) != none || UILWEWSoldierList(Top) != none || UILWEWSoldierSummary(Top) != none || UILWEWMemorial(Top) != none || UIArmory(Top) != none || UICustomize(Top) != none || UIMouseGuard_RotatePawn(Top) != none;
 	if (bHide == bResourcesHidden)
 		return;
 	bResourcesHidden = bHide;
 	MC.FunctionVoid(bHide ? "HideResourcesPanel" : "ShowResourcesPanel");
+}
+
+/** XCOM 2's navigation help (its back and geoscape icons) hidden under EW's screens, which draw EW's back arrow: it sat
+ *  over EW's (the reviewer's facilities, engineering and soldier screens); shown again for XCOM 2's own (the armory's). */
+function ShowNavHelpFor(UIScreen Top)
+{
+	local XComHQPresentationLayer HQPres;
+	local bool bHide;
+
+	HQPres = XComHQPresentationLayer(Movie.Pres);
+	if (HQPres == none || HQPres.m_kAvengerHUD == none || HQPres.m_kAvengerHUD.NavHelp == none)
+		return;
+	bHide = UILWEWScreen(Top) != none || UILWEWHub(Top) != none;
+	if (bHide == bNavHelpHidden)
+		return;
+	bNavHelpHidden = bHide;
+	if (bHide)
+		HQPres.m_kAvengerHUD.NavHelp.Hide();
+	else
+		HQPres.m_kAvengerHUD.NavHelp.Show();
 }
 
 function Refresh()

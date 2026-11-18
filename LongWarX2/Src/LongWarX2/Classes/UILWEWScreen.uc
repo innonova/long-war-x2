@@ -159,6 +159,15 @@ static function string SetVar(string SubPath, string Value)
 	EWScreen = UILWEWScreen(AnyPres().ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
 	if (EWScreen == none || SubPath == "")
 		return "ERR no EW screen open, or no path";
+	// (abs:<path>: from the movie's root, as ReadVar's.)
+	if (Left(SubPath, 4) == "abs:")
+	{
+		if (Value ~= "true" || Value ~= "false")
+			EWScreen.Movie.SetVariableBool(Mid(SubPath, 4), Value ~= "true");
+		else
+			EWScreen.Movie.SetVariableNumber(Mid(SubPath, 4), float(Value));
+		return "ok" @ Mid(SubPath, 4) @ "=" @ Value;
+	}
 	if (Value ~= "true" || Value ~= "false")
 		EWScreen.Movie.SetVariableBool(EWScreen.MCPath $ "." $ SubPath, Value ~= "true");
 	else
