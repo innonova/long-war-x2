@@ -26,7 +26,7 @@ const out = [
   'FriendlySkiesAim=15',
 ]
 for (const w of air.weapons)
-  out.push(`+Weapons=(Id=${w.id}, Name=${q(w.name)}, FiringTime=${v(w.firing_time)}, Damage=${v(w.damage)}, DamagePerCategory=${per(w.damage)}, Ap=${v(w.ap)}, ToHit=${v(w.to_hit)}, ToHitPerCategory=${per(w.to_hit)})`)
+  out.push(`+Weapons=(Id=${w.id}, Name=${q(w.name)}, FiringTime=${v(w.firing_time)}, Damage=${v(w.damage)}, DamagePerCategory=${per(w.damage)}, Ap=${v(w.ap)}, ToHit=${v(w.to_hit)}, ToHitPerCategory=${per(w.to_hit)}, Range=${v(w.range)})`)
 for (const s of air.ships) {
   if (s.weapons.length === 0) continue // the Skyranger does not fight
   const k = air.destroy_divisor[String(s.id)] ?? 0

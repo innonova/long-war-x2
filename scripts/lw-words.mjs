@@ -966,6 +966,16 @@ export function makeResearchWords({ strategyLoc }) {
   return { text: ['[UILWEWResearch]', ...research.map(line), '', '[UILWEWScienceLabs]', ...labs.map(line), ''].join('\r\n'), named: research.length + labs.length }
 }
 
+/** EW's ship loadout (UILWEWShipLoadout): its [UIShipLoadout] words, and UIItemCards' labels and ratings (XComGame.int). */
+export function makeShipLoadoutWords({ strategyLoc, loc }) {
+  const copied = copySections(strategyLoc, [['UIShipLoadout', 'UILWEWShipLoadout']])
+  const cards = loc.replace(/\r/g, '').match(/^\[UIItemCards\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
+  const keys = ['m_strHitChanceLabel', 'm_strRangeLabel', 'm_strFireRateLabel', 'm_strDamageLabel', 'm_strArmorPenetrationLabel', 'm_strRangeShort', 'm_strRangeMedium', 'm_strRangeLong', 'm_strRateSlow', 'm_strRateMedium', 'm_strRateRapid', 'm_strGenericScaleLow', 'm_strGenericScaleMedium', 'm_strGenericScaleHigh']
+  const lines = keys.map((k) => [k, cards.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim() ?? '']).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`)
+  const text = copied.text.includes('[UILWEWShipLoadout]') ? copied.text.replace('[UILWEWShipLoadout]\r\n', `[UILWEWShipLoadout]\r\n${lines.map((l) => l + '\r\n').join('')}`) : ['[UILWEWShipLoadout]', ...lines, ''].join('\r\n')
+  return { text, named: copied.named + lines.length }
+}
+
 /** EW's finances (UILWEWFinances): XGFinanceUI's labels and the craft's names (ShipTypeNames). */
 export function makeFinanceWords({ strategyLoc }) {
   const text = strategyLoc.replace(/\r/g, '')

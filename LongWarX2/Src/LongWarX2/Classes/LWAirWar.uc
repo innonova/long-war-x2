@@ -25,6 +25,8 @@ struct LWWeaponDef
 	var int Ap;
 	var int ToHit;
 	var int ToHitPerCategory;
+	/** Its range (EW's TShipWeapon.iRange; the loadout screen's Short, Medium, Long). */
+	var int Range;
 };
 
 struct LWShipDef
