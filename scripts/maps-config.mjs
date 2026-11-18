@@ -107,7 +107,8 @@ console.log(
     'SquadDistance=600',
     'SquadSpacing=80',
     'SquadFloorZ=-1714',
-    ...['Static_SituationRoom', 'Static_Infirmary', 'Static_ScienceLabs', 'Static_Barracks', 'Static_Hangar', 'Static_Hangar_CAP', 'Static_MissionControl', 'Static_Armory', 'Static_Engineering'].map((l) => `+FixedLevels="${l}"`),
+    // (Not Static_Hangar_CAP: it covered the hangar's view with a dark beam where EW's is open; ew-compare, 2026-11-18.)
+    ...['Static_SituationRoom', 'Static_Infirmary', 'Static_ScienceLabs', 'Static_Barracks', 'Static_Hangar', 'Static_MissionControl', 'Static_Armory', 'Static_Engineering'].map((l) => `+FixedLevels="${l}"`),
     "; Every level of EW's base the setup converts (tools/convert/ew-maps.ts --base): Command1, its fixed rooms and each tile's",
     "; levels (LWX2EWBase.LevelFor). Not mission maps: no plots are written for them.",
     ...['Command1', 'Static_SituationRoom', 'Static_Infirmary', 'Static_ScienceLabs', 'Static_Barracks', 'Static_Hangar', 'Static_Hangar_CAP', 'Static_MissionControl', 'Static_Armory', 'Static_Engineering',
