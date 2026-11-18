@@ -24,7 +24,7 @@ var localized string NewResearch, NewResearchHelp, ChangeResearch, ChangeResearc
 var localized string ViewSoldiers, ViewSoldiersHelp, AircraftList, AircraftListHelp, SituationRoom, GreyMarket, GreyMarketHelp;
 var localized string LaunchSatellite, LaunchSatelliteHelp;
 var localized string RepairBay, RepairBayHelp;
-var localized string PsiLabs, PsiLabsHelp, OTS, OTSHelp, Augment, AugmentHelp;
+var localized string PsiLabs, PsiLabsHelp, OTS, OTSHelp, Augment, AugmentHelp, Hire, HireHelp, Memorial, MemorialHelp;
 
 /** Each room's camera in EW's base (Command1's, by tag), in the order of the top menu. */
 var array<name> RoomCameras;
@@ -52,6 +52,7 @@ const OPT_OFFICERS = 11;
 const OPT_EXALT = 12;
 const OPT_SATELLITE = 14;
 const OPT_REPAIR = 15;
+const OPT_HIRE = 16;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
 const FACILITY_FOUNDRY = 11;
@@ -304,11 +305,13 @@ function EnterRoom(int i)
 		S = class'XComGameState_LWStrategy'.static.Get();
 		if (S != none && class'LWBase'.static.Count(S, 12) > 0)
 			RoomOptions.AddItem(OPT_OTS);
+		if (S != none && class'LWBase'.static.Count(S, 17) > 0)
+			RoomOptions.AddItem(OPT_PSI);
+		// (EW's order, XGBarracksUI: soldiers, the school, the Psi Labs, the memorial, hiring, officer promotions.)
+		RoomOptions.AddItem(OPT_HIRE);
 		// (Officer promotions once a rank is open, as EW's once medals are.)
 		if (S != none && S.OfficerProjectsBought > 0)
 			RoomOptions.AddItem(OPT_OFFICERS);
-		if (S != none && class'LWBase'.static.Count(S, 17) > 0)
-			RoomOptions.AddItem(OPT_PSI);
 		break;
 	case 3:
 		RoomOptions.AddItem(OPT_AIRCRAFT);
@@ -355,6 +358,7 @@ function string OptionName(int Option)
 	case OPT_SATELLITE: return Word(LaunchSatellite, "Launch Satellite");
 	case OPT_GREYMARKET: return Word(GreyMarket, "Grey market");
 	case OPT_OTS: return Word(OTS, "Officer Training School");
+	case OPT_HIRE: return Word(Hire, "Hire Soldiers");
 	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
 	case OPT_AUGMENT: return Word(Augment, "Augment Soldiers");
 	case OPT_REPAIR: return Word(RepairBay, "Repair Bay");
@@ -377,6 +381,7 @@ function string OptionHelp(int Option)
 	case OPT_GREYMARKET: return GreyMarketHelp;
 	case OPT_SATELLITE: return LaunchSatelliteHelp;
 	case OPT_OTS: return OTSHelp;
+	case OPT_HIRE: return HireHelp;
 	case OPT_PSI: return PsiLabsHelp;
 	case OPT_RESEARCH:
 		return class'UIUtilities_Strategy'.static.GetXComHQ().GetCurrentResearchProject() != none ? ChangeResearchHelp : NewResearchHelp;
@@ -417,6 +422,7 @@ function ChooseOption(int Option)
 		HQPres.UIPersonnel_Armory(OnSoldierChosen);
 		break;
 	case OPT_AIRCRAFT: class'UILWEWHangar'.static.Open(HQPres); break;
+	case OPT_HIRE: class'UILWEWHiring'.static.Open(HQPres); break;
 	case OPT_SITROOM: class'UILWEWSituationRoom'.static.Open(); break;
 	case OPT_EXALT: class'UILWEWSituationRoom'.static.Open(true); break;
 	case OPT_SATELLITE: class'UILWEWSituationRoom'.static.Open(false, true); break;

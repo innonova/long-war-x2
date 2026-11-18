@@ -341,7 +341,7 @@ function float Progress(XComGameState_HeadquartersProjectResearch Project)
 /**
  * EW's event list (theEventList, one event a row as EW's HUD has it: UIStrategyComponent_EventList), whose title showed
  * its placeholders ("LALALAL") unfed: what Long War has coming, soonest first, the days to each. Its icons by EW's event
- * kinds (GetEventImageLabel).
+ * kinds (GetEventImageLabel), in EW's mixed case ("Advanced Repair", "Psi Training").
  */
 function SetEvents(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrategy S)
 {
@@ -358,31 +358,34 @@ function SetEvents(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 	Project = XComHQ.GetCurrentResearchProject();
 	Tech = Project != none ? XComGameState_Tech(`XCOMHISTORY.GetGameStateForObjectID(Project.ProjectFocus.ObjectID)) : none;
 	if (Tech != none)
-		PutEvent(Texts, Hours, Icons, Caps(Tech.GetDisplayName()), Project.GetCurrentNumHoursRemaining(), "_research");
+		PutEvent(Texts, Hours, Icons, Tech.GetDisplayName(), Project.GetCurrentNumHoursRemaining(), "_research");
 	for (i = 0; i < S.BaseJobs.Length; i++)
-		PutEvent(Texts, Hours, Icons, S.BaseJobs[i].Kind == 0 ? "EXCAVATION" : Caps(class'LWBase'.static.FacilityName(S.BaseJobs[i].Facility)), S.BaseJobs[i].HoursLeft, "_facility");
+		PutEvent(Texts, Hours, Icons, S.BaseJobs[i].Kind == 0 ? "Excavation" : class'LWBase'.static.FacilityName(S.BaseJobs[i].Facility), S.BaseJobs[i].HoursLeft, "_facility");
 	for (i = 0; i < S.Builds.Length; i++)
 	{
 		class'LWGearRules'.static.BuildFor(S.Builds[i].Item, B);
-		PutEvent(Texts, Hours, Icons, (S.Builds[i].Quantity > 1 ? S.Builds[i].Quantity $ "x " : "") $ Caps(class'LWEngineering'.static.ItemName(B.Template)), class'LWEngineering'.static.HoursFor(S.Builds[i].WorkLeft, S.Builds[i].Engineers, S.Engineers), "_itemProject");
+		PutEvent(Texts, Hours, Icons, (S.Builds[i].Quantity > 1 ? S.Builds[i].Quantity $ "x " : "") $ class'LWEngineering'.static.ItemName(B.Template), class'LWEngineering'.static.HoursFor(S.Builds[i].WorkLeft, S.Builds[i].Engineers, S.Engineers), "_itemProject");
 	}
 	for (i = 0; i < S.FoundryProjects.Length; i++)
-		PutEvent(Texts, Hours, Icons, Caps(class'LWEngineering'.static.FoundryName(S.FoundryProjects[i].Item)), class'LWEngineering'.static.HoursFor(S.FoundryProjects[i].WorkLeft, S.FoundryProjects[i].Engineers, S.Engineers), "_foundry");
+		PutEvent(Texts, Hours, Icons, class'LWEngineering'.static.FoundryName(S.FoundryProjects[i].Item), class'LWEngineering'.static.HoursFor(S.FoundryProjects[i].WorkLeft, S.FoundryProjects[i].Engineers, S.Engineers), "_foundry");
 	AirWar = class'XComGameState_LWAirWar'.static.Get();
 	if (AirWar != none)
 		for (i = 0; i < AirWar.Orders.Length; i++)
-			PutEvent(Texts, Hours, Icons, (AirWar.Orders[i].Count == 1 ? "INTERCEPTOR TO " : AirWar.Orders[i].Count @ "INTERCEPTORS TO ") $ Caps(class'LWStrategyRules'.static.ContinentName(AirWar.Orders[i].Continent)), AirWar.Orders[i].HoursLeft, "_interceptorOrdering");
+			PutEvent(Texts, Hours, Icons, (AirWar.Orders[i].Count == 1 ? "Interceptor to " : AirWar.Orders[i].Count @ "Interceptors to ") $ class'LWStrategyRules'.static.ContinentName(AirWar.Orders[i].Continent), AirWar.Orders[i].HoursLeft, "_interceptorOrdering");
+	// (Soldiers hired, as EW's event list shows them: XGMissionControlUI.m_strNewSoldierEvent, its hiring icon.)
+	for (i = 0; i < S.HiringOrders.Length; i++)
+		PutEvent(Texts, Hours, Icons, (class'UILWEWHiring'.default.Event != "" ? class'UILWEWHiring'.default.Event : "New Soldiers arrive at XCOM HQ"), S.HiringOrders[i].HoursLeft, "_hiring");
 	for (i = 0; i < S.PsiTrainees.Length; i++)
 	{
 		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(S.PsiTrainees[i].Unit));
-		PutEvent(Texts, Hours, Icons, "PSI TESTING:" @ (Unit != none ? Caps(Unit.GetFullName()) : ""), S.PsiTrainees[i].HoursLeft, "_psiTraining");
+		PutEvent(Texts, Hours, Icons, "Psi Testing:" @ (Unit != none ? Unit.GetFullName() : ""), S.PsiTrainees[i].HoursLeft, "_psiTraining");
 	}
 	for (i = 0; i < S.GenePatients.Length; i++)
 	{
 		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(S.GenePatients[i].Unit));
-		PutEvent(Texts, Hours, Icons, "GENE MOD:" @ (Unit != none ? Caps(Unit.GetFullName()) : ""), class'XComGameState_LWStrategy'.static.GeneHoursLeft(S.GenePatients[i]), "_genemod");
+		PutEvent(Texts, Hours, Icons, "Gene Mod:" @ (Unit != none ? Unit.GetFullName() : ""), class'XComGameState_LWStrategy'.static.GeneHoursLeft(S.GenePatients[i]), "_genemod");
 	}
-	PutEvent(Texts, Hours, Icons, "COUNCIL REPORT", S.HoursPerMonth() - S.Hours % S.HoursPerMonth(), "_endOfMonth");
+	PutEvent(Texts, Hours, Icons, "Council Report", S.HoursPerMonth() - S.Hours % S.HoursPerMonth(), "_endOfMonth");
 	// The soonest only: a second row reaches the screen's bottom edge.
 	if (Texts.Length > MaxEvents)
 	{

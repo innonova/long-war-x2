@@ -179,6 +179,13 @@ struct LWPsiTrainee
 	var int Chance;
 };
 var array<LWPsiTrainee> PsiTrainees;
+/** Soldiers hired and on their way (LWHiring): how many, the hours until they arrive. */
+struct LWHiringOrder
+{
+	var int Count;
+	var int HoursLeft;
+};
+var array<LWHiringOrder> HiringOrders;
 /** The Officer Training School's squad sizes bought (lw-missions.md). */
 var int SquadSizesBought;
 /** The Officer Training School's officer projects bought, and the officers each rank (lieutenant first) holds, open and
@@ -617,6 +624,7 @@ function Tick(XComGameState NewGameState)
 	class'LWFatigue'.static.Tick(NewGameState, self);
 	class'LWHangar'.static.Hour(NewGameState, self);
 	class'LWGearRepair'.static.Hour(NewGameState, self);
+	class'LWHiring'.static.Hour(NewGameState, self);
 	// Engineering: a project whose work is done delivers its items.
 	for (i = Builds.Length - 1; i >= 0; i--)
 	{

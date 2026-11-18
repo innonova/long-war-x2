@@ -140,6 +140,11 @@ const out = [
   `TerrorizeMostPanickedPct=${one('AI_TERRORIZE_MOST_PANICKED')}`,
   `SatelliteCost=${sat ? sat[1] : 200}`,
   `SatelliteDays=${sat ? sat[2] : 25}`,
+  // Hiring soldiers (LWHiring): each one's cost (XGItemTree.SetSoldierStaffCost: SOLDIER_COST, less bonus 38), the
+  // barracks' room (BARRACKS_CAPACITY), and how long they take to arrive (XGItemTree.BuildStaffTypes: 9 days, in its code).
+  `SoldierCost=${one('SOLDIER_COST')}`,
+  `BarracksCapacity=${one('BARRACKS_CAPACITY')}`,
+  'SoldierDeliveryHours=216',
 ]
 // What the aliens gain from a completed harvest and lose from a damaged UFO, by UFO type (Long War's
 // UFOAlloys list: 6 alloy values, 4 harvest values, then 11 resource values for UFO types 4 to 14).

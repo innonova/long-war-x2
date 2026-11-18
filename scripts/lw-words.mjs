@@ -378,6 +378,10 @@ export function makeHubWords({ strategyLoc }) {
     ['ViewSoldiersHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_SoldierList]')],
     ['PsiLabs', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_PsiLabs]')],
     ['PsiLabsHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_PsiLabs]')],
+    ['Hire', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_Hire]')],
+    ['HireHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_Hire]')],
+    ['Memorial', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_Morgue]')],
+    ['MemorialHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_Morgue]')],
     ['OTS', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_OTS]')],
     ['OTSHelp', inSection('XGBarracksUI', 'm_strBaseViewHelp[eBarracksView_OTS]')],
     ['AircraftList', inSection('XGHangarUI', 'm_strHeaderNames[eHangarView_ShipList]')],
@@ -416,9 +420,19 @@ export function makeHubWords({ strategyLoc }) {
     ['EtaDay', inSection('XGFacility_Engineering', 'm_strETADay')?.replace('<XGParam:IntValue0/>', '%d')],
     ['DaysTitle', anywhere('m_strDays')],
   ].filter(([, v]) => v)
+  // EW's hiring dialog (UILWEWHiring: UIHiring, XGBarracksUI's hiring view) and its event (XGMissionControlUI).
+  const hire = [
+    ['Title', inSection('XGBarracksUI', 'm_strBaseViewNames[eBarracksView_Hire]')],
+    ['CostLabel', inSection('XGBarracksUI', 'm_strLabelHiringCost')],
+    ['CapacityLabel', inSection('XGBarracksUI', 'm_strLabelBarracksCapacity')],
+    ['HireLabel', inSection('UIHiring', 'm_strHelpHire')],
+    ['NoMoney', inSection('XGBarracksUI', 'm_strErrNoMoneyForSoldiers')],
+    ['Full', inSection('XGBarracksUI', 'm_strErrOTRRequired')],
+    ['Event', inSection('XGMissionControlUI', 'm_strNewSoldierEvent')],
+  ].filter(([, v]) => v)
   return {
-    text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWStrategyHUD]', ...hud.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
-    named: words.length + hud.length,
+    text: ['[UILWEWHub]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWStrategyHUD]', ...hud.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWHiring]', ...hire.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'),
+    named: words.length + hud.length + hire.length,
   }
 }
 

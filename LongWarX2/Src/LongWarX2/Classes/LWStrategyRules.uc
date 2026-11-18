@@ -114,6 +114,8 @@ var config int UfoSecondPassFindStealthSatPct;
 /** The chance (%) a terror target is the most panicked candidate rather than one of the top three. */
 var config int TerrorizeMostPanickedPct;
 var config int SatelliteCost, SatelliteDays;
+/** Hiring soldiers (LWHiring): a soldier's cost, the barracks' room, the hours until hired soldiers arrive. */
+var config int SoldierCost, BarracksCapacity, SoldierDeliveryHours;
 var config array<LWUfoValue> Harvest;
 var config array<LWUfoValue> UfoWorth;
 var config array<LWPlanCell> Plan;

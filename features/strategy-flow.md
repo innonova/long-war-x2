@@ -77,7 +77,7 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
    class counts in the title), the soldier's summary menu (EW: Abilities, Gene Mods, Loadout, Customize, Report for
    Duty, Dismiss, and next/previous soldier buttons), the abilities tree (EW's: Long War's ranks as a vertical list
    beside the soldier; XCOM 2's horizontal panel covers the soldier), Gene Mods.
-3. **The barracks lack EW's View the Memorial and Hire Soldiers** (EW's own hire dialog over the barracks).
+3. **The barracks lack EW's View the Memorial** (Hire Soldiers: done, report below).
 4. ~~The resource bar stays over the soldier screens~~: hidden over the barracks' list, the armory and customization
    (`UILWEWStrategyHUD.ShowForTop`), as in EW.
 5. **XCOM 2's random looks include its DLC's bare-chested torsos and cargo shorts** (one soldier stood so in the armory;
@@ -105,3 +105,19 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   while attaching the same symbol works; the cause is not found). `UILWEWScreen.HelpButton` attaches EW's buttons into
   the bar's containers and lays them out as EW's bar does; their clicks are found by position.
 - **Not as EW's:** the background is XCOM 2's shell scene (EW's shows its base, dimmed).
+
+## Report (2026-11-18, hiring soldiers)
+
+- **The port had no way to hire soldiers.** Long War's hiring is in now (`LWHiring`, read from stock Long War's
+  `XGHeadQuarters.OrderStaff`, `UpdateHiringOrders`, `XGItemTree.SetSoldierStaffCost`, `BuildStaffTypes`,
+  `XGBarracksUI`'s hiring view): §25 a soldier (`SOLDIER_COST`, less country bonus 38, which no Long War country has),
+  paid at once; the barracks hold 100 (`BARRACKS_CAPACITY`) counting those on order; they arrive after 9 days (the staff
+  table in Long War's code), orders for the same arrival merged, as Long War's rookies (`LWBonusEffects.NewSoldier`),
+  and time stops for the news. The constants are in `XComLWStrategy.ini` (`strategy-config.mjs`).
+- **EW's Hire Soldiers dialog** (its Hiring movie, `UILWEWHiring`) from the barracks' menu, in EW's place in it: the
+  count on EW's spinner (its arrows report -1 and -2), the cost and the room in EW's colours, HIRE and CANCEL.
+- **The order in EW's event list** with EW's hiring icon and words ("New Soldiers arrive at XCOM HQ"). The event list
+  now writes its events in EW's mixed case, as EW's does ("Advanced Repair"), not in capitals.
+- **Checked on wingpu:** three hired by clicks (§75; credits 500 → 425), shown in the event list at 9 days, arrived on
+  day 10 at 00:00 (216 hours).
+- Not yet: EW's notice when they arrive (`PRES().Notify`), shown as an event-log line.
