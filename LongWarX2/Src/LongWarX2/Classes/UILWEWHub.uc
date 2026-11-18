@@ -22,7 +22,10 @@ var localized string RoomNames[5];
 var localized string MissionControlName;
 var localized string NewResearch, NewResearchHelp, ChangeResearch, ChangeResearchHelp, GeneLab, GeneLabHelp, BuildItems, BuildItemsHelp, BuildFacilities, BuildFacilitiesHelp, Foundry, FoundryHelp;
 var localized string ViewSoldiers, ViewSoldiersHelp, AircraftList, AircraftListHelp, SituationRoom, GreyMarket, GreyMarketHelp;
-var localized string LaunchSatellite, LaunchSatelliteHelp, Finances, FinancesHelp;
+var localized string LaunchSatellite, LaunchSatelliteHelp, Finances, FinancesHelp, Bonuses, BonusesHelp, Requests, RequestsHelp,
+	CovertOps, CovertOpsHelp;
+/** The Situation Room's Bonuses dialog (XGSatelliteSitRoomUI.UpdateHelp): its title, closing text and button. */
+var localized string BonusesTitle, BonusesBody, BonusesContinue;
 var localized string RepairBay, RepairBayHelp;
 var localized string PsiLabs, PsiLabsHelp, OTS, OTSHelp, Augment, AugmentHelp, Hire, HireHelp, Memorial, MemorialHelp;
 
@@ -55,6 +58,8 @@ const OPT_REPAIR = 15;
 const OPT_HIRE = 16;
 const OPT_MEMORIAL = 17;
 const OPT_FINANCES = 18;
+const OPT_BONUSES = 19;
+const OPT_REQUESTS = 20;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
 const FACILITY_FOUNDRY = 11;
@@ -329,18 +334,50 @@ function EnterRoom(int i)
 		RoomOptions.AddItem(OPT_AIRCRAFT);
 		break;
 	case 4:
-		// (EW's Situation Room menu: Launch Satellite first, XGSituationRoomUI.)
+		// (EW's Situation Room menu, XGSituationRoomUI.UpdateMainMenu: Launch Satellite, Bonuses, Covert Operations once EXALT
+		// is active (features/lw-exalt.md), View XCOM Finances, the grey market, Pending Requests. The room's wall is live
+		// behind it, so the menu has no option for the room itself.)
 		RoomOptions.AddItem(OPT_SATELLITE);
-		RoomOptions.AddItem(OPT_SITROOM);
-		// (EXALT's view once EXALT is active, features/lw-exalt.md.)
+		RoomOptions.AddItem(OPT_BONUSES);
 		S = class'XComGameState_LWStrategy'.static.Get();
 		if (S != none && S.ExaltState >= class'LWExalt'.const.ACTIVE)
 			RoomOptions.AddItem(OPT_EXALT);
 		RoomOptions.AddItem(OPT_FINANCES);
 		RoomOptions.AddItem(OPT_GREYMARKET);
+		RoomOptions.AddItem(OPT_REQUESTS);
 		break;
 	}
 	ShowRoomMenu();
+}
+
+/**
+ * The Situation Room's Bonuses (EW: UISituationRoom.HelpSatelliteDialogue over XGSatelliteSitRoomUI.UpdateHelp): every bonus
+ * type XCOM holds (Long War's HasBonus, summed over its start, satellite and continent bonuses), its name and its text with
+ * the sum in it, then EW's words on satellites, in EW's dialog.
+ */
+function ShowBonuses()
+{
+	local TDialogueBoxData D;
+	local XComGameState_LWStrategy S;
+	local string Body, Desc;
+	local int Type, n;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	for (Type = 0; S != none && Type < ArrayCount(class'LWBonuses'.default.Names); Type++)
+	{
+		n = class'LWBonuses'.static.Has(Type, S);
+		if (n <= 0)
+			continue;
+		Desc = Repl(Repl(class'LWBonuses'.default.Descs[Type], "<XGParam:IntValue0/>", string(n)), "<XGParam:IntValue0>", string(n));
+		Body $= class'UIUtilities_Text'.static.GetColoredText(class'LWBonuses'.default.Names[Type], eUIState_Warning, 18);
+		Body $= class'UIUtilities_Text'.static.GetColoredText(Desc, eUIState_Highlight, 18) $ "\n";
+	}
+	Body $= "\n" $ BonusesBody;
+	D.eType = eDialog_Normal;
+	D.strTitle = Word(BonusesTitle, "Satellite Bonuses and Deployment");
+	D.strText = Body;
+	D.strCancel = Word(BonusesContinue, "Continue");
+	Movie.Pres.UIRaiseDialog(D);
 }
 
 /** Back to the base's view. */
@@ -355,6 +392,8 @@ function LeaveRoom()
 
 function string OptionName(int Option)
 {
+	local XComGameState_LWStrategy S;
+
 	switch (Option)
 	{
 	case OPT_RESEARCH:
@@ -374,12 +413,16 @@ function string OptionName(int Option)
 	case OPT_HIRE: return Word(Hire, "Hire Soldiers");
 	case OPT_MEMORIAL: return Word(Memorial, "View the Memorial");
 	case OPT_FINANCES: return Word(Finances, "View XCOM Finances");
+	case OPT_BONUSES: return Word(Bonuses, "Bonuses");
+	case OPT_REQUESTS:
+		S = class'XComGameState_LWStrategy'.static.Get();
+		return Word(Requests, "Pending Requests") @ "(" $ (S != none ? S.Requests.Length : 0) $ ")";
 	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
 	case OPT_AUGMENT: return Word(Augment, "Augment Soldiers");
 	case OPT_REPAIR: return Word(RepairBay, "Repair Bay");
 	case OPT_GENE: return Word(GeneLab, class'LWBase'.static.FacilityName(23));
 	case OPT_OFFICERS: return Word(class'UILWOfficers'.default.Promotions, "Officer Promotions");
-	case OPT_EXALT: return "EXALT";
+	case OPT_EXALT: return Word(CovertOps, "Covert Operations");
 	}
 	return "";
 }
@@ -399,6 +442,8 @@ function string OptionHelp(int Option)
 	case OPT_HIRE: return HireHelp;
 	case OPT_MEMORIAL: return MemorialHelp;
 	case OPT_FINANCES: return FinancesHelp;
+	case OPT_BONUSES: return BonusesHelp;
+	case OPT_REQUESTS: return RequestsHelp;
 	case OPT_PSI: return PsiLabsHelp;
 	case OPT_RESEARCH:
 		return class'UIUtilities_Strategy'.static.GetXComHQ().GetCurrentResearchProject() != none ? ChangeResearchHelp : NewResearchHelp;
@@ -406,7 +451,7 @@ function string OptionHelp(int Option)
 	case OPT_AUGMENT: return AugmentHelp;
 	case OPT_REPAIR: return RepairBayHelp;
 	case OPT_OFFICERS: return class'UILWOfficers'.default.PromotionsHelp;
-	case OPT_EXALT: return class'UILWEWSituationRoom'.default.NotScanned;
+	case OPT_EXALT: return CovertOpsHelp != "" ? CovertOpsHelp : class'UILWEWSituationRoom'.default.NotScanned;
 	}
 	return "";
 }
@@ -446,6 +491,8 @@ function ChooseOption(int Option)
 	case OPT_HIRE: class'UILWEWHiring'.static.Open(HQPres); break;
 	case OPT_MEMORIAL: class'UILWEWMemorial'.static.Open(HQPres); break;
 	case OPT_FINANCES: class'UILWEWFinances'.static.Open(HQPres); break;
+	case OPT_BONUSES: ShowBonuses(); break;
+	case OPT_REQUESTS: class'UILWEWPendingRequests'.static.Open(HQPres); break;
 	case OPT_SITROOM: class'UILWEWSituationRoom'.static.Open(); break;
 	case OPT_EXALT: class'UILWEWSituationRoom'.static.Open(true); break;
 	case OPT_SATELLITE: class'UILWEWSituationRoom'.static.Open(false, true); break;

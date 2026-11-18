@@ -398,6 +398,15 @@ export function makeHubWords({ strategyLoc }) {
     ['LaunchSatelliteHelp', inSection('XGSituationRoomUI', 'm_strLabelMonitorUFO')],
     ['Finances', inSection('XGSituationRoomUI', 'm_strLabelViewFinances')],
     ['FinancesHelp', inSection('XGSituationRoomUI', 'm_strLabelViewExpenditures')],
+    ['Bonuses', inSection('XGSituationRoomUI', 'm_strLabelCodeDecryption')],
+    ['BonusesHelp', inSection('XGSituationRoomUI', 'm_strLabelCodeDecrypted')],
+    ['Requests', inSection('XGSituationRoomUI', 'm_strLabelPendingRequests')],
+    ['RequestsHelp', inSection('XGSituationRoomUI', 'm_strLabelPendingRequestsHelp')],
+    ['CovertOps', inSection('XGSituationRoomUI', 'm_strLabelInfiltratorMode')],
+    ['CovertOpsHelp', inSection('XGSituationRoomUI', 'm_strLabelInfiltratorHelp')],
+    ['BonusesTitle', inSection('XGSatelliteSitRoomUI', 'm_strLabelSatelliteTitle')],
+    ['BonusesBody', inSection('XGSatelliteSitRoomUI', 'm_strLabelSatelliteBody')],
+    ['BonusesContinue', inSection('XGSatelliteSitRoomUI', 'm_strLabelContinue')],
   ].filter(([, v]) => v)
   // EW's strategy HUD around the hub (UILWEWStrategyHUD): its resource labels, the research panel, the event list's title.
   const hud = [
@@ -919,7 +928,7 @@ export function makeFinanceWords({ strategyLoc }) {
 }
 
 export function makeMemorialWords({ strategyLoc }) {
-  return copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial']])
+  return copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial'], ['UIPendingRequests', 'UILWEWPendingRequests']])
 }
 
 /** Sections of an EW text file under the mod's classes, as they are ([from] → [to]). */
@@ -935,6 +944,8 @@ function copySections(loc, pairs) {
     for (const t of m[1].matchAll(/^\w+\[(\w+)\]="[^"]*\(#(\d+)\)"/gm)) num.set(t[1], t[2])
     const lines = m[1]
       .split('\n')
+      // (Some of EW's sections space their keys: "m_strX = …".)
+      .map((l) => l.replace(/^(\w+(?:\[\w+\])?)\s+=\s*/, '$1='))
       .map((l) => l.replace(/^(\w+)\[(\w+)\]=/, (all, k, i) => (/^\d+$/.test(i) ? all : num.has(i) ? `${k}[${num.get(i)}]=` : '')))
       .filter((l) => /^\w+(\[\d+\])?=/.test(l))
     named += lines.length

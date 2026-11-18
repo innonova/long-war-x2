@@ -19,12 +19,13 @@ var localized array<string> ArticleUpper, ArticleLower, Adjective, Possessive;
 var int Index;
 var UILWGeoscape Geo;
 
-static function bool Open(UILWGeoscape Geoscape, int RequestIndex)
+static function bool Open(UILWGeoscape Geoscape, int RequestIndex, optional XComHQPresentationLayer Pres)
 {
 	local XComHQPresentationLayer HQPres;
 	local UILWEWCouncilRequest EWScreen;
 
-	HQPres = XComHQPresentationLayer(Geoscape.Movie.Pres);
+	// (From Mission Control over the Geoscape, or from the Situation Room's Pending Requests: UILWEWPendingRequests.)
+	HQPres = Geoscape != none ? XComHQPresentationLayer(Geoscape.Movie.Pres) : Pres;
 	if (HQPres == none || !HasEWScreens() || HQPres.ScreenStack.GetFirstInstanceOf(class'UILWEWCouncilRequest') != none)
 		return false;
 	DynamicLoadObject(default.UIPackage $ ".ewxFundingCouncilRequests", class'Object', true);
