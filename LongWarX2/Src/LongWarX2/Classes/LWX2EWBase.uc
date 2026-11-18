@@ -542,6 +542,67 @@ function bool CameraOf(name CameraTag, out vector Loc, out rotator Rot)
 
 function ArmorySpot(name CameraTag, out vector Loc, out rotator Rot)
 {
+	// (Where EW stands the soldier for its armory screens: its plinth, XGStrategySoldier.PlaceOnPlinth.)
+	if (Left(string(CameraTag), 6) ~= "Armory" && SpotFor('ArmorySoldierPlinth', Loc, Rot))
+		return;
+	CameraSpot(CameraTag, Loc, Rot);
+}
+
+/** EW's plinth of this tag (its Spots: Command1's, else in the first facility level that has it, placed with it), the
+ *  base's offset added. False where the converted base has none. */
+function bool SpotFor(name Tag, out vector Loc, out rotator Rot)
+{
+	local XComGameState_LWStrategy S;
+	local LWX2EWMapData Command, D;
+	local string Level;
+	local int X, Y, i, k, Spot;
+
+	Command = Data("Command1");
+	// (The levels placed where they stand: Command1, the fixed rooms, EW's people's scenes, as the armory's Anim_Armory.)
+	if (SpotIn(Command, Tag, Loc, Rot))
+		return true;
+	foreach FixedLevels(Level)
+		if (SpotIn(Data(Level), Tag, Loc, Rot))
+			return true;
+	foreach PeopleLevels(Level)
+		if (SpotIn(Data(Level), Tag, Loc, Rot))
+			return true;
+	S = class'XComGameState_LWStrategy'.static.Get();
+	for (Y = 1; S != none && Y < class'LWBase'.const.H; Y++)
+		for (X = 0; X < class'LWBase'.const.W; X++)
+		{
+			i = Y * class'LWBase'.const.W + X;
+			if (i >= S.TileType.Length)
+				continue;
+			Level = LevelFor(S.TileType[i], S.TileFacility[i], X == class'LWBase'.const.SHAFT);
+			k = Command.Rooms.Find('Tag', name("R" $ Y $ "_C" $ (X + 1)));
+			D = (Level != "" && k != INDEX_NONE) ? Data(Level) : none;
+			Spot = D != none ? D.Spots.Find('Tag', Tag) : INDEX_NONE;
+			if (Spot == INDEX_NONE)
+				continue;
+			Loc = D.Spots[Spot].Loc + Command.Rooms[k].Loc + BaseOffset;
+			Rot = D.Spots[Spot].Rot;
+			return true;
+		}
+	return false;
+}
+
+/** A level's plinth of this tag, the base's offset added (the level placed where it stands). */
+function bool SpotIn(LWX2EWMapData D, name Tag, out vector Loc, out rotator Rot)
+{
+	local int Spot;
+
+	Spot = D != none ? D.Spots.Find('Tag', Tag) : INDEX_NONE;
+	if (Spot == INDEX_NONE)
+		return false;
+	Loc = D.Spots[Spot].Loc + BaseOffset;
+	Rot = D.Spots[Spot].Rot;
+	return true;
+}
+
+/** In front of an armory camera (ArmoryDistance), on the floor, facing it: where the converted base has no plinth. */
+function CameraSpot(name CameraTag, out vector Loc, out rotator Rot)
+{
 	local LWX2EWMapPieces.LWX2Camera C;
 	local LWX2EWMapData Command;
 	local vector Forward, HitLocation, HitNormal, Top, Bottom;

@@ -44,9 +44,15 @@ static function OpenWall(XComHQPresentationLayer HQPres)
 	local UILWEWSituationRoom EWScreen;
 	local UIScreen Top;
 
-	if (HQPres == none || !class'LWX2EWBase'.default.ScreensIn3D || class'LWX2EWBase'.static.DisplayFor(HQPres, default.EWDisplay) == none
-		|| HQPres.ScreenStack.GetScreen(class'UILWEWSituationRoom') != none)
+	if (HQPres == none || !class'LWX2EWBase'.default.ScreensIn3D || class'LWX2EWBase'.static.DisplayFor(HQPres, default.EWDisplay) == none)
 		return;
+	EWScreen = UILWEWSituationRoom(HQPres.ScreenStack.GetScreen(class'UILWEWSituationRoom'));
+	if (EWScreen != none)
+	{
+		if (EWScreen.bWall)
+			EWScreen.Show();
+		return;
+	}
 	Top = HQPres.ScreenStack.GetCurrentScreen();
 	DynamicLoadObject(default.UIPackage $ ".ewxSituationRoom", class'Object', true);
 	EWScreen = HQPres.Spawn(class'UILWEWSituationRoom', HQPres);
@@ -61,6 +67,17 @@ static function OpenWall(XComHQPresentationLayer HQPres)
 	// (Under the screen that was on top: the hub keeps the focus.)
 	if (Top != none)
 		HQPres.ScreenStack.MoveToTopOfStack(Top.Class);
+}
+
+/** The wall out of sight while another screen is up: XCOM 2's 3D movie is one picture for all its panels, so a wall left
+ *  drawn would show on the other screens' panels too (the soldier summary's). */
+static function HideWall(XComHQPresentationLayer HQPres)
+{
+	local UILWEWSituationRoom Wall;
+
+	Wall = HQPres != none ? UILWEWSituationRoom(HQPres.ScreenStack.GetScreen(class'UILWEWSituationRoom')) : none;
+	if (Wall != none && Wall.bWall)
+		Wall.Hide();
 }
 
 /** The wall taken down (the Situation Room itself opens on it). */

@@ -71,6 +71,11 @@ function Handle(string Line, out array<string> Out)
 	case "state":
 		Out.AddItem(GameState());
 		return;
+	case "pov":
+		// A test aid: where the camera is and its field of view now, nothing moved.
+		Out.AddItem("camera at" @ XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.Location @ "rot" @ XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.Rotation
+			@ "fov" @ XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.FOV);
+		return;
 	case "basecam":
 		// A test aid: EW's base view asked for again, and where the camera is (features/lw-base-view.md).
 		class'LWX2EWBase'.static.Get(Pres()).Show();

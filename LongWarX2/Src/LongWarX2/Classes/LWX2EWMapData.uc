@@ -18,6 +18,9 @@ var config array<LWX2EWMapPieces.LWX2Light> Lights;
 /** EW's base (Command1): its room locations and cameras (features/lw-base-view.md). */
 var config array<LWX2EWMapPieces.LWX2Room> Rooms;
 var config array<LWX2EWMapPieces.LWX2Camera> Cameras;
+/** EW's plinths, where it stands a soldier or MEC for a screen (ArmorySoldierPlinth …: XGStrategySoldier.PlaceOnPlinth);
+ *  a place and a rotation by tag (FOV unused). */
+var config array<LWX2EWMapPieces.LWX2Camera> Spots;
 /** EW's 3D UI panels (features/ew-3d-screens.md). */
 var config array<LWX2EWMapPieces.LWX2Display> Displays;
 /** EW's people (features/ew-base-people.md). */

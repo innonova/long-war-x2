@@ -264,6 +264,8 @@ simulated function OnLoseFocus()
 	super.OnLoseFocus();
 	ClearTimer(nameof(ShowBase));
 	ClearTimer(nameof(HoverOption));
+	// (EW's Situation Room wall out of sight under other screens: it would show on their 3D panels.)
+	class'UILWEWSituationRoom'.static.HideWall(XComHQPresentationLayer(Movie.Pres));
 }
 
 /** A room chosen from the top menu: the camera into it and its menu shown (chosen again: back to the base's view). */
