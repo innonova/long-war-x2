@@ -19,6 +19,9 @@ export function peopleOf(file: string): Person[] {
 
 /** The people of a level already open (ew-map.ts: with its own readers of the same bytes). Material references: the
  *  component's own, else its skeletal mesh's. */
+/** The cameras of EW's matinees that the port looks through (the hangar's craft view), from the last peopleIn. */
+export const cameras: { tag: string; loc: number[]; rot: number[]; fov: number }[] = []
+
 export function peopleIn(meta: any, pkg: any): Person[] {
   const exports = meta.exports as { type: string; fullName: string }[]
   const dv = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
@@ -47,14 +50,14 @@ export function peopleIn(meta: any, pkg: any): Person[] {
   }
 
   // The groups: name, AnimSets, the anim track's sequences.
-  type Group = { animSets: string[]; seqs: string[]; animSetRefs: number[]; key?: number[]; keyRot?: number[] }
+  type Group = { animSets: string[]; seqs: string[]; animSetRefs: number[]; key?: number[]; keyRot?: number[]; fov?: number }
   const groups = new Map<string, Group>()
   const groupAt = new Map<number, Group>()
   exports.forEach((e, i) => {
     if (e.type !== 'InterpGroup') return
     const t = tagsAt(i)
     const setRefs = refs(t.find((x) => x.name === 'GroupAnimSets')).filter((r) => r !== 0)
-    const g = { animSets: setRefs.map(path), animSetRefs: setRefs, seqs: [] as string[] }
+    const g: Group = { animSets: setRefs.map(path), animSetRefs: setRefs, seqs: [] as string[] }
     for (const tr of refs(t.find((x) => x.name === 'InterpTracks'))) {
       if (tr > 0 && exports[tr - 1]!.type === 'InterpTrackMove') {
         // (Its first key: where the matinee puts the actor, and its rotation.)
@@ -72,6 +75,20 @@ export function peopleIn(meta: any, pkg: any): Person[] {
           g.keyRot = first('EulerTrack')
         } catch {
           // none read
+        }
+      }
+      // (A camera's field of view by a float track on FOVAngle: its first key.)
+      if (tr > 0 && exports[tr - 1]!.type === 'InterpTrackFloatProp') {
+        const ft = tagsAt(tr - 1)
+        if (name(ft.find((x) => x.name === 'PropertyName')) === 'FOVAngle') {
+          try {
+            const c = ft.find((x) => x.name === 'FloatTrack')
+            const pts = c ? (readTags(new Reader(c.value), pkg) as Tag[]).find((x) => x.name === 'Points') : undefined
+            const ov = pts && dv(pts.value).getInt32(0, true) > 0 ? (readTags(new Reader(pts.value.subarray(4)), pkg) as Tag[]).find((x) => x.name === 'OutVal') : undefined
+            if (ov) g.fov = dv(ov.value).getFloat32(0, true)
+          } catch {
+            // none read
+          }
         }
       }
       if (tr <= 0 || exports[tr - 1]!.type !== 'InterpTrackAnimControl') continue
@@ -134,10 +151,11 @@ export function peopleIn(meta: any, pkg: any): Person[] {
   // its bay and state; their actors not people of the level.
   const bays: Person[] = []
   const inBays = new Set<number>()
+  cameras.length = 0
   exports.forEach((e, i) => {
     if (e.type !== 'SeqAct_Interp') return
     const t = tagsAt(i)
-    const m = /^Base_Bay(\d)_(Open|Repair|Closed)$/.exec(str(t.find((x) => x.name === 'ObjComment')))
+    const m = /^Base_Bay(\d)_(Open|Repair|Closed|ViewWeapons)$/.exec(str(t.find((x) => x.name === 'ObjComment')))
     const vl = t.find((x) => x.name === 'VariableLinks')
     if (!m || !vl) return
     const links = structs(vl.value).map((link) => ({ desc: str(link.find((x) => x.name === 'LinkDesc')), vars: refs(link.find((x) => x.name === 'LinkedVariables')).filter((v) => v > 0) }))
@@ -153,6 +171,15 @@ export function peopleIn(meta: any, pkg: any): Person[] {
     const groupOf = (a: number) => byName.get(descOf.get(a) ?? '')
     for (const l of links) {
       const g = byName.get(l.desc)
+      // (The craft summary's view, ViewWeapons: its camera, Cam01, where the matinee puts it, its field of view the
+      // camera's own; XGFacility_Hangar.SetupWeaponView plays it with the chosen craft in bay 1.)
+      for (const v of g && !g.seqs.length ? l.vars : []) {
+        const actor = exports[v - 1]!.type === 'SeqVar_Object' ? i32(tagsAt(v - 1).find((x) => x.name === 'ObjValue')) : 0
+        if (actor <= 0 || exports[actor - 1]!.type !== 'CameraActor') continue
+        const at = placed(actor, g!, groupOf)
+        const fov = actorAt(actor).t.find((x) => x.name === 'FOVAngle')
+        if (at) cameras.push({ tag: `Hangar_Bay${m[1]}_${m[2]}`, loc: at.loc, rot: at.rot, fov: g!.fov ?? (fov ? f32(fov) : 90) })
+      }
       if (!g || !g.seqs.length) continue
       for (const v of l.vars) {
         if (exports[v - 1]!.type !== 'SeqVar_Object') continue

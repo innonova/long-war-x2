@@ -23,7 +23,7 @@ import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, maskMip } from './mask-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
-import { peopleIn } from './ew-people.ts'
+import { cameras as matineeCameras, peopleIn } from './ew-people.ts'
 
 /** Raised when what a conversion writes changes so that maps converted before must be converted again
  *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods,
@@ -889,7 +889,9 @@ function vectorParam(r: number, name: string, depth = 0): number[] | undefined {
 }
 /** EW's glowing materials (the base's light rings and strips, its consoles' and walls' screens): their own kind, with
  *  their colour and, for a screen, its picture. */
-const GLOW = /HQ_ColorizedLight|HQ_ConsoleScreen|HQ_EmissivePallete|HQ_Master_EmissiveComboPallet/i
+// (Not HQ_Master_EmissiveComboPallet: a lamp's housing and its light in one material, the light picked out by something
+// cooked away; glowing whole, a lamp seen close (the craft summary's) was a solid orange block.)
+const GLOW = /HQ_ColorizedLight|HQ_ConsoleScreen|HQ_EmissivePallete/i
 const looks = new Map<number, Look>()
 for (const p of [...pieces, ...doors]) for (const m of p.materials) if (m && !looks.has(m)) looks.set(m, lookOf(m))
 for (const [r, l] of looks) {
@@ -897,7 +899,7 @@ for (const [r, l] of looks) {
   const tex = new Map<string, string>()
   const root = texturesOf(r, tex)
   l.kind = 'Glow'
-  // (The palette lights, the hangar's ramp strips among them, take theirs in Colorize A.)
+  // (The palette lights take theirs in Colorize A.)
   l.tint = vectorParam(r, 'TintColor') ?? vectorParam(r, 'Colorize A')
   // (A console's screen its picture; a light its colour alone.)
   l.diffuse = tex.get('StaticScreenTexture') ?? ''
@@ -913,6 +915,8 @@ const people = (() => {
   }
 })()
 const personSlots = people.map((p) => p.materialRefs.map((m) => (m ? lookOf(m) : undefined)))
+// (And the matinees' cameras the port looks through: the hangar's craft view.)
+cameras.push(...matineeCameras)
 
 // The cut-out looks' masks (mask-textures.ts): XCOM 2's cut-out parents read the opacity from Masks, not the diffuse.
 // Added now, while the package is small; their mips are made as the textures are inlined. Additions go at the tables'

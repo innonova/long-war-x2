@@ -3,7 +3,8 @@
 // weapon and its picture, and three buttons: EDIT LOADOUT (the loadout screen, UILWEWShipLoadout; Long War refuses it while
 // its ferry restriction holds), DISMISS SHIP (EW's confirmation; not while the craft is away) and Long War's RENAME (a
 // pilot from its list, XGLocalizedData.ShipWeaponFlavorTxt[11 + Rand(245)]: "F.O. 'Mad Dog' Wilson", ranked by kills
-// after its next kill). Seen through EW's camera on the hangar's summary display (Hangar_UIDisplayCam_Summary).
+// after its next kill). Seen as EW shows it (XGFacility_Hangar.SetupWeaponView): the craft alone in bay 1, through the
+// camera of bay 1's ViewWeapons matinee (Hangar_Bay1_ViewWeapons).
 class UILWEWShipSummary extends UILWEWScreen;
 
 var localized string m_strKillsLabel, m_strWeaponLabel, m_strEditLoadoutBtnHelp, m_strDismissShipBtnHelp, m_strWeaponInfoBtnHelp,
@@ -64,6 +65,19 @@ simulated function OnReceiveFocus()
 	super.OnReceiveFocus();
 	if (bIsInited)
 		Fill();
+}
+
+/** The craft in view, then the camera on it. */
+function ShowRoom()
+{
+	class'LWX2EWBase'.static.Get(self).ViewCraft(Jet);
+	super.ShowRoom();
+}
+
+simulated function OnRemoved()
+{
+	class'LWX2EWBase'.static.Get(self).ViewCraft(-1);
+	super.OnRemoved();
 }
 
 /** UpdateData and UpdateButtonHelp, every call at once (Movie.Invoke). */
@@ -276,5 +290,5 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 
 defaultproperties
 {
-	BaseCamera = HANGAR
+	BaseCamera = Hangar_Bay1_ViewWeapons
 }

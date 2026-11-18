@@ -73,6 +73,8 @@ var config string BaysLevel;
 var array<LWX2BasePerson> BayActors;
 var string BaysShown;
 var array<Object> BayAssets;
+/** The craft the craft summary shows (its jet's index + 1; 0: none): EW's SetupWeaponView, in bay 1's ViewWeapons pose. */
+var int ViewJet;
 
 /** EW's screens on their 3D panels in the rooms (features/ew-3d-screens.md), and the panel's mesh and material: XCOM 2's
  *  (its material takes the 3D movie in its Movie parameter), scaled from EW's. */
@@ -265,7 +267,8 @@ function LookAt(name Tag, optional float Interp)
 	if (k != INDEX_NONE)
 		C = Command.Cameras[k];
 	// (A facility's own camera, in its level: CyberneticsLab_UIDisplayCam …, where that facility stands.)
-	else if (!FacilityCameraOf(Tag, C))
+	// (A camera of a level placed where it stands: the hangar's craft view, Anim_Hangar_LaunchBays'.)
+	else if (!LevelCameraOf(Tag, C) && !FacilityCameraOf(Tag, C))
 	{
 		`log("LongWarX2: EW base: no camera" @ Tag, , 'LongWarX2');
 		return;
@@ -528,6 +531,7 @@ function RefreshBays()
 	local LWX2BasePerson A;
 	local XComGameState_LWAirWar.LWJet J;
 	local string Sig, Path;
+	local name ViewPart;
 	local int i, Home;
 
 	D = Data(BaysLevel);
@@ -552,6 +556,12 @@ function RefreshBays()
 		}
 	for (i = 0; i < 4; i++)
 		Sig $= States[i] $ Parts[i] $ ";";
+	// (The craft summary's view: every bay's craft away, bay 1's pad and the chosen craft in the ViewWeapons pose.)
+	if (ViewJet > 0 && AirWar != none && ViewJet <= AirWar.Jets.Length)
+	{
+		ViewPart = AirWar.Jets[ViewJet - 1].Type == 3 ? 'FireStorm' : 'Interceptor';
+		Sig $= "View" $ ViewPart;
+	}
 	if (Sig == BaysShown && BayActors.Length > 0)
 		return;
 	foreach BayActors(A)
@@ -573,7 +583,12 @@ function RefreshBays()
 			}
 	foreach D.People(P)
 	{
-		if (P.Bay < 1 || P.Bay > 4 || P.BayState != States[P.Bay - 1] || (P.BayPart != 'Track' && P.BayPart != Parts[P.Bay - 1]))
+		if (ViewPart != '')
+		{
+			if (P.BayState == "ViewWeapons" ? (P.BayPart != 'Track' && P.BayPart != ViewPart) : (P.BayPart != 'Track' || P.Bay == 1 || P.BayState != States[P.Bay - 1]))
+				continue;
+		}
+		else if (P.Bay < 1 || P.Bay > 4 || P.BayState != States[P.Bay - 1] || (P.BayPart != 'Track' && P.BayPart != Parts[P.Bay - 1]))
 			continue;
 		A = PlacePerson(P, BaysLevel, BaseOffset);
 		if (A == none)
@@ -581,6 +596,13 @@ function RefreshBays()
 		BayActors.AddItem(A);
 	}
 	`log("LongWarX2: EW base: hangar bays" @ Sig @ "(" $ BayActors.Length @ "placed)", , 'LongWarX2');
+}
+
+/** The craft summary's view of a craft (EW's XGFacility_Hangar.SetupWeaponView), or the bays as they are (-1). */
+function ViewCraft(int JetIndex)
+{
+	ViewJet = JetIndex + 1;
+	RefreshBays();
 }
 
 /** EW's 3D UI panels placed, once, hidden (XCOM 2's 3D movie shows the one a screen asks for). */
@@ -1048,6 +1070,26 @@ function ShowCutaway(bool bShow)
 /** A camera of a facility's level (EW's screens' m_strCameraTag: GeneLab_FacilityCamera, CyberneticsLab_UIDisplayCam …),
  *  where the first facility with that level stands: its place in the level and the tile's room (as PlaceTiles puts the
  *  level). False if no such facility is built. */
+/** A camera of one of the levels placed where they stand (the fixed rooms, EW's people's scenes). */
+function bool LevelCameraOf(name Tag, out LWX2EWMapPieces.LWX2Camera C)
+{
+	local string Level;
+	local LWX2EWMapData D;
+	local int k;
+
+	foreach PeopleLevels(Level)
+	{
+		D = Data(Level);
+		k = D != none ? D.Cameras.Find('Tag', Tag) : INDEX_NONE;
+		if (k != INDEX_NONE)
+		{
+			C = D.Cameras[k];
+			return true;
+		}
+	}
+	return false;
+}
+
 function bool FacilityCameraOf(name Tag, out LWX2EWMapPieces.LWX2Camera C)
 {
 	local XComGameState_LWStrategy S;

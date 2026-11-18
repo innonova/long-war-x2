@@ -537,3 +537,18 @@ piece of 17 facility levels, is not found (an EW package the setup does not carr
   lights, engineering's) are glowing parts now, in their `Colorize A`. The hangar ramps' long orange stripes
   (`HANGAR.StripeTest`, a material with no parameters) are still grey.
 - **Test aid:** `basenear <radius>`: the base's pieces and people near the camera, with their materials.
+
+## Report (2026-11-18 night, the craft summary's view)
+
+- **The craft summary shows the craft as EW does** (`XGFacility_Hangar.SetupWeaponView`; the reviewer's round 4, #2):
+  every bay's craft away, bay 1's pad open with the chosen craft on it in the pose of bay 1's `ViewWeapons` matinee,
+  through that matinee's camera (`Hangar_Bay1_ViewWeapons`: its place in its base's frame, its field of view 55 from the
+  camera's float track). The converter writes the matinee's camera into the level's cameras and its pad and craft as bay
+  records of the state `ViewWeapons`; `LWX2EWBase.ViewCraft` shows it, `LookAt` finds cameras of the people's levels too.
+  Back in the aircraft list, the bays are as they were. Seen side by side with EW's (`logs/compare/pairs/scr-shiploadout.png`).
+- **Lamps:** the combined palette lamps (`HQ_Master_EmissiveComboPallet`: housing and light in one material, the light
+  picked out by something cooked away) are lit surfaces again; glowing whole, the lamp over bay 1 was a solid orange block
+  in the craft view. The pure emissive palette lamps still glow.
+- **Still open:** the craft's weapon under its wing (EW's jet weapon meshes are in `StrategyResources_SF`, a package of
+  EW's whole strategy content that XCOM 2 cannot load as it is: the six meshes would need a package of their own); the
+  pad lit brighter than EW's.
