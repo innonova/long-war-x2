@@ -95,7 +95,7 @@ function Fill()
 			// leads to.)
 			Promote = Unit.ShowPromoteIcon() ? class'X2ExperienceConfig'.static.GetRankName(Min(Unit.GetRank() + 1, 7), Unit.GetSoldierClassTemplateName()) : "";
 			Params.AddItem(Str(""));
-			Params.AddItem(Str(class'UILWEWSoldierList'.static.FlagOf(Unit.GetCountry())));
+			Params.AddItem(Str(class'UILWEWSoldierSummary'.static.HeaderFlag(Unit.GetCountry())));
 			Params.AddItem(Str("rank" $ Clamp(Unit.GetRank(), 0, 7)));
 			Params.AddItem(Str(k != INDEX_NONE ? class'UILWEWSoldierList'.default.Classes[k].Frame : ""));
 			Params.AddItem(Str(Unit.GetName(eNameType_FullNick)));
