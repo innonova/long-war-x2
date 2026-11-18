@@ -346,6 +346,25 @@ function string SetLighting(string Level)
 /** EW's people placed, once (their levels converted with the base); shown and hidden with it. */
 function PlacePeople()
 {
+	local string Level;
+	local array<Actor> Placed;
+	local Actor A;
+
+	if (People.Length > 0)
+		return;
+	foreach PeopleLevels(Level)
+	{
+		Placed.Length = 0;
+		PlacePeopleOf(Level, BaseOffset, Placed);
+		foreach Placed(A)
+			People.AddItem(LWX2BasePerson(A));
+	}
+	`log("LongWarX2: EW base:" @ People.Length @ "people placed", , 'LongWarX2');
+}
+
+/** A level's people (and its animated props: the Genetics Lab's tanks …), placed with the level at Offset; added to Placed. */
+function PlacePeopleOf(string Level, vector Offset, out array<Actor> Placed)
+{
 	local LWX2EWMapPieces.LWX2Person P;
 	local LWX2EWMapPieces.LWX2PersonSlot S;
 	local LWX2EWMapData D;
@@ -355,75 +374,64 @@ function PlacePeople()
 	local array<MaterialInterface> Slots;
 	local AnimSet Set;
 	local LWX2EWBodies.LWX2Body B;
-	local string Level, Path;
+	local string Path;
 	local MaterialInterface Slot;
 	local MaterialInstanceConstant MIC;
 	local Texture T;
 	local int k;
 	local vector At;
 
-	if (People.Length > 0)
+	D = Data(Level);
+	if (D == none || D.People.Length == 0)
 		return;
-	foreach PeopleLevels(Level)
+	if (D.MapPackage != "")
+		DynamicLoadObject(D.MapPackage $ ".TheWorld", class'Object', true);
+	foreach D.People(P)
 	{
-		D = Data(Level);
-		if (D == none || D.People.Length == 0)
+		Mesh = SkeletalMesh(DynamicLoadObject(P.Mesh, class'SkeletalMesh', true));
+		if (Mesh == none)
 			continue;
-		`log("LongWarX2: EW base: people of" @ Level $ ": loading" @ D.MapPackage, , 'LongWarX2');
-		if (D.MapPackage != "")
-			DynamicLoadObject(D.MapPackage $ ".TheWorld", class'Object', true);
-		foreach D.People(P)
+		Sets.Length = 0;
+		foreach P.AnimSets(Path)
 		{
-			`log("LongWarX2: EW base: person" @ P.Mesh, , 'LongWarX2');
-			Mesh = SkeletalMesh(DynamicLoadObject(P.Mesh, class'SkeletalMesh', true));
-			`log("LongWarX2: EW base: mesh" @ (Mesh != none ? "loaded" : "not found"), , 'LongWarX2');
-			if (Mesh == none)
-				continue;
-			Sets.Length = 0;
-			foreach P.AnimSets(Path)
-			{
-				Set = AnimSet(DynamicLoadObject(Path, class'AnimSet', true));
-				if (Set != none)
-					Sets.AddItem(Set);
-			}
-			Slots.Length = 0;
-			foreach P.Slots(S)
-			{
-				B.Diffuse = S.Diffuse;
-				B.Normal = S.Normal;
-				// (A slot without a diffuse found, hair and lashes: unlit black rather than XCOM 2's checkerboard.)
-				// (A slot without a texture found, the eye lashes: the body's stand-in; our unlit material cannot go on a
-				// skeletal mesh.)
-				Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
-				// (The props' textures and scalars on it too: XCOM 2's placeholder Masks darkened the white coats.)
-				MIC = MaterialInstanceConstant(Slot);
-				if (MIC != none && S.Diffuse != "")
-				{
-					for (k = 0; k < class'LWX2EWMapPieces'.default.StandinTextures.Length; k++)
-					{
-						T = Texture(DynamicLoadObject(class'LWX2EWMapPieces'.default.StandinTextures[k].Path, class'Texture', true));
-						if (T != none)
-							MIC.SetTextureParameterValue(class'LWX2EWMapPieces'.default.StandinTextures[k].Name, T);
-					}
-					for (k = 0; k < class'LWX2EWMapPieces'.default.StandinScalars.Length; k++)
-						MIC.SetScalarParameterValue(class'LWX2EWMapPieces'.default.StandinScalars[k].Name, class'LWX2EWMapPieces'.default.StandinScalars[k].Value);
-				}
-				Slots.AddItem(Slot);
-			}
-			`log("LongWarX2: EW base: spawning", , 'LongWarX2');
-			k = PeopleFrames.Find('Level', Level);
-			At = (k != INDEX_NONE && VSize(P.Key) > 0) ? P.Key + PeopleFrames[k].Offset : P.Loc;
-			A = Spawn(class'LWX2BasePerson', self, , At + BaseOffset, P.Rot);
-			if (A == none)
-				continue;
-			A.SetDrawScale(P.Scale > 0 ? P.Scale : 1.0);
-			if (!PeopleAnimate)
-				Sets.Length = 0;
-			A.Setup(Mesh, Sets, (PeopleAnimate && P.Seqs.Length > 0) ? P.Seqs[0] : '', Slots);
-			People.AddItem(A);
+			Set = AnimSet(DynamicLoadObject(Path, class'AnimSet', true));
+			if (Set != none)
+				Sets.AddItem(Set);
 		}
+		Slots.Length = 0;
+		foreach P.Slots(S)
+		{
+			B.Diffuse = S.Diffuse;
+			B.Normal = S.Normal;
+			// (A slot without a texture found, the eye lashes: the body's stand-in; our unlit material cannot go on a
+			// skeletal mesh.)
+			Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
+			// (The props' textures and scalars on it too: XCOM 2's placeholder Masks darkened the white coats.)
+			MIC = MaterialInstanceConstant(Slot);
+			if (MIC != none && S.Diffuse != "")
+			{
+				for (k = 0; k < class'LWX2EWMapPieces'.default.StandinTextures.Length; k++)
+				{
+					T = Texture(DynamicLoadObject(class'LWX2EWMapPieces'.default.StandinTextures[k].Path, class'Texture', true));
+					if (T != none)
+						MIC.SetTextureParameterValue(class'LWX2EWMapPieces'.default.StandinTextures[k].Name, T);
+				}
+				for (k = 0; k < class'LWX2EWMapPieces'.default.StandinScalars.Length; k++)
+					MIC.SetScalarParameterValue(class'LWX2EWMapPieces'.default.StandinScalars[k].Name, class'LWX2EWMapPieces'.default.StandinScalars[k].Value);
+			}
+			Slots.AddItem(Slot);
+		}
+		k = PeopleFrames.Find('Level', Level);
+		At = (k != INDEX_NONE && VSize(P.Key) > 0) ? P.Key + PeopleFrames[k].Offset : P.Loc;
+		A = Spawn(class'LWX2BasePerson', self, , At + Offset, P.Rot);
+		if (A == none)
+			continue;
+		A.SetDrawScale(P.Scale > 0 ? P.Scale : 1.0);
+		if (!PeopleAnimate)
+			Sets.Length = 0;
+		A.Setup(Mesh, Sets, (PeopleAnimate && P.Seqs.Length > 0) ? P.Seqs[0] : '', Slots);
+		Placed.AddItem(A);
 	}
-	`log("LongWarX2: EW base:" @ People.Length @ "people placed", , 'LongWarX2');
 }
 
 /** EW's 3D UI panels placed, once, hidden (XCOM 2's 3D movie shows the one a screen asks for). */
@@ -830,6 +838,8 @@ function Refresh()
 			Placed.Length = 0;
 			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, Command.Rooms[k].Loc + BaseOffset, class'DynamicSMActor_Spawnable', Placed, false, true);
 			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed, true, BaseLightScale, true);
+			// (The facility's people and animated props too: the Genetics Lab's scientists and tanks, the Foundry's workers.)
+			PlacePeopleOf(Level, Command.Rooms[k].Loc + BaseOffset, Placed);
 			foreach Placed(A)
 			{
 				Tiles.AddItem(A);

@@ -71,3 +71,12 @@ than the actors' own places (first key minus actor's place):
   found in the SDK's Materials package): Vahlen's white coat, green collar and skin as in EW's capture, the engineers
   and clerks likewise.
 - **Still:** her hair draws dark (EW tints hair by a colour parameter it sets on the instance); Shen's place.
+
+## Report (2026-11-18, the facilities' people)
+
+- **The facilities' own people and animated props are placed with their tile** (`LWX2EWBase.PlacePeopleOf`, called for
+  each tile as `Refresh` places its level, and taken away with it): the converter had them all along (15 in the Genetics
+  Lab: scientists, clerks, the canisters; the Foundry, workshop, laboratory, radars, Cybernetics Lab). Seen: the Genetics
+  Lab's scientist and clerk where EW's capture has them.
+- **Not yet:** the Genetics Lab's three central tanks' glass (EW's `CIN_XEW_FX.GeneLabTankGlassMaster_Opaque`, a material
+  of a cinematic package the converter does not describe; the tank frames are there).
