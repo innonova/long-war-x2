@@ -15,6 +15,7 @@ var localized string m_strScreenTitle, m_strEmptySlotLabel, m_strFullContinentLa
 /** The cancel-order confirmation (XGHangarUI.ConfirmRemovalOfPendingShipOrder). */
 var localized string CancelOrderTitle, CancelOrderText;
 var localized string m_strConfirmTransferDialogTitle, m_strConfirmTransferDialogAcceptText, m_strConfirmTransferDialogText;
+var localized string m_strHangarsFullDialogTitle, m_strHangarsFullDialogText;
 
 /** For each continent's rows: the jet (its index in the air war), -1 an order, -2 the empty bay. */
 var array<int> Rows0, Rows1, Rows2, Rows3, Rows4;
@@ -245,13 +246,22 @@ function OnRow(int Row, bool bHelp)
 	{
 		if (bHelp && class'LWHangar'.static.IsReady(AirWar.Jets[Row]))
 		{
-			Transferring = Row;
-			Fill();
+			// (UIShipList.OnAccept: a transfer needs another hangar with room, and Long War lets no ferry fly while a
+			// retaliation is under way; EW's words for each.)
+			if (!FreeBayElsewhere(AirWar, AirWar.Jets[Row].Continent))
+				Notice(Word(m_strHangarsFullDialogText, "There are currently no slots available to which a ship can be transferred."));
+			else if (class'LWHangar'.static.FerryRestricted())
+				Notice(Word(m_strHangarsFullDialogTitle, "Ferry flights restricted due to heavy UFO activity."));
+			else
+			{
+				Transferring = Row;
+				Fill();
+			}
 		}
 		else if (!bHelp)
 		{
 			Hide();
-			class'UILWEWShipLoadout'.static.Open(XComHQPresentationLayer(Movie.Pres), Row);
+			class'UILWEWShipSummary'.static.Open(XComHQPresentationLayer(Movie.Pres), Row);
 		}
 		return;
 	}
@@ -259,6 +269,27 @@ function OnRow(int Row, bool bHelp)
 		class'UILWEWHiring'.static.OpenOrder(XComHQPresentationLayer(Movie.Pres), SelectedContinent);
 	if (Row == -3 && bHelp)
 		ConfirmCancel();
+}
+
+function bool FreeBayElsewhere(XComGameState_LWAirWar AirWar, int From)
+{
+	local int c;
+
+	for (c = 0; c < 5; c++)
+		if (c != From && class'LWHangar'.static.BaysTaken(AirWar, c) < class'LWBaseRules'.default.HangarBays)
+			return true;
+	return false;
+}
+
+/** EW's one-line notice (an untitled dialog with its OK). */
+function Notice(string Text)
+{
+	local TDialogueBoxData Data;
+
+	Data.eType = eDialog_Normal;
+	Data.strText = Text;
+	Data.strAccept = class'UIDialogueBox'.default.m_strDefaultAcceptLabel;
+	Movie.Pres.UIRaiseDialog(Data);
 }
 
 /** CONFIRM TRANSFER: "Do you want to transfer <ship> from <continent> to <continent>? Hours to complete: <n>". */

@@ -210,6 +210,65 @@ static function AddCraft(XComGameState NewGameState, int Type, int Count)
 }
 
 /** Interceptors ordered to a continent. Why says what stopped it. */
+/**
+ * Long War's ferry restriction (its XGStrategyAI.CostAlienSquad, asked before a transfer or a change of loadout): none while
+ * a UFO on a retaliation (Long War's objectives 9 and 10) is in flight, or an airbase defence waits (the port has none).
+ */
+static function bool FerryRestricted()
+{
+	local XComGameState_LWStrategy S;
+	local int i;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	for (i = 0; S != none && i < S.Ufos.Length; i++)
+		if (S.Ufos[i].Status == 1 && (S.Ufos[i].Objective == 9 || S.Ufos[i].Objective == 10))
+			return true;
+	return false;
+}
+
+/** A craft dismissed (XGFacility_Hangar.RemoveInterceptor): gone, its weapon back to the stores unless it was shot to
+ *  pieces. Not while it is in the air or transferring (UIShipSummary.OnDismissShip). */
+static function bool Dismiss(int Index, out string Why)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWAirWar AirWar;
+
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	if (AirWar == none || Index < 0 || Index >= AirWar.Jets.Length)
+	{
+		Why = "No such craft.";
+		return false;
+	}
+	if (AirWar.Jets[Index].Status == 1 || AirWar.Jets[Index].Status == 6)
+	{
+		Why = AirWar.Jets[Index].Callsign @ "is away.";
+		return false;
+	}
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a craft dismissed");
+	if (AirWar.Jets[Index].Hp > 0 && WeaponItem(AirWar.Jets[Index].Weapon) != '')
+		class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, WeaponItem(AirWar.Jets[Index].Weapon), 1);
+	AirWar = InState(NewGameState);
+	NoteIn(NewGameState, AirWar.Jets[Index].Callsign @ "was dismissed.");
+	AirWar.Jets.Remove(Index, 1);
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	return true;
+}
+
+/** A craft given one of Long War's pilots (UIShipSummary's RENAME: XGLocalizedData.ShipWeaponFlavorTxt[11 + Rand(245)]). */
+static function Rename(int Index, string Callsign)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWAirWar AirWar;
+
+	AirWar = class'XComGameState_LWAirWar'.static.Get();
+	if (AirWar == none || Index < 0 || Index >= AirWar.Jets.Length || Callsign == "")
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a craft renamed");
+	AirWar = InState(NewGameState);
+	AirWar.Jets[Index].Callsign = Callsign;
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+}
+
 /** One interceptor of a continent's order cancelled (XGHeadQuarters.ReduceInterceptorOrder): its price back, the order one
  *  smaller, gone at none. False if the continent has no order. */
 static function bool CancelOrder(int Continent)
@@ -284,6 +343,11 @@ static function bool Transfer(int Index, int Continent, out string Why)
 	if (AirWar == none || Index < 0 || Index >= AirWar.Jets.Length || Continent < 0 || Continent > 4)
 	{
 		Why = "No such jet or continent.";
+		return false;
+	}
+	if (FerryRestricted())
+	{
+		Why = "Ferry flights are restricted while a retaliation is under way.";
 		return false;
 	}
 	if (!IsReady(AirWar.Jets[Index]) || AirWar.Jets[Index].Continent == Continent)

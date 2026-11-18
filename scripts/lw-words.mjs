@@ -987,6 +987,12 @@ export function makeFinanceWords({ strategyLoc }) {
 
 export function makeMemorialWords({ strategyLoc }) {
   const copied = copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial'], ['UIPendingRequests', 'UILWEWPendingRequests'], ['UIShipList', 'UILWEWHangar']])
+  // (The craft summary: its words, and Long War's pilots for its RENAME, XGLocalizedData.ShipWeaponFlavorTxt[11..255].)
+  const summary = copySections(strategyLoc, [['UIShipSummary', 'UILWEWShipSummary']])
+  // (Indexed, as a localized array is written; the names keep EW's escaped quotes, "Mad Dog".)
+  const pilots = [...strategyLoc.replace(/\r/g, '').matchAll(/^ShipWeaponFlavorTxt\[(\d+)\]="(.*)"\s*$/gm)].filter((m) => Number(m[1]) >= 11 && Number(m[1]) <= 255).map((m, i) => `Pilots[${i}]="${m[2]}"`)
+  copied.text += '\r\n' + summary.text.replace(/\r\n$/, '') + '\r\n' + pilots.join('\r\n') + '\r\n'
+  copied.named += summary.named + pilots.length
   // (The hangar's cancel-order confirmation, XGHangarUI's, under the same section.)
   const hangar = strategyLoc.replace(/\r/g, '').match(/^\[XGHangarUI\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
   const key = (k) => hangar.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''

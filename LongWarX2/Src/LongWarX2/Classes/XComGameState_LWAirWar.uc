@@ -71,6 +71,12 @@ static function EnsureExists()
 	`XCOMHISTORY.AddGameStateToHistory(NewGameState);
 }
 
+/** Long War's pilot rank by confirmed kills (XGInterception): Cmdr. from 10, Col. from 7, Maj. from 5, Capt. from 3, Lt. */
+static function string PilotRank(int Kills)
+{
+	return Kills >= 10 ? "Cmdr." : (Kills >= 7 ? "Col." : (Kills >= 5 ? "Maj." : (Kills >= 3 ? "Capt." : "Lt.")));
+}
+
 /** A fight's result, committed: the jet's HP and kills; a damaged jet goes for repair, a destroyed one is lost (LWHangar). */
 static function Record(int Index, int Hp, bool Kill)
 {
@@ -84,7 +90,12 @@ static function Record(int Index, int Hp, bool Kill)
 	AirWar = XComGameState_LWAirWar(NewGameState.ModifyStateObject(class'XComGameState_LWAirWar', AirWar.ObjectID));
 	AirWar.Jets[Index].Hp = Max(0, Hp);
 	if (Kill)
+	{
 		AirWar.Jets[Index].Kills++;
+		// (A named pilot's rank by kills, XGInterception's end: the callsign's first word replaced, Lt. to Cmdr.)
+		if (AirWar.Jets[Index].Hp > 0 && InStr(AirWar.Jets[Index].Callsign, " ") >= 0)
+			AirWar.Jets[Index].Callsign = PilotRank(AirWar.Jets[Index].Kills) @ Split(AirWar.Jets[Index].Callsign, " ", true);
+	}
 	class'LWHangar'.static.AfterFight(AirWar, Index);
 	`GAMERULES.SubmitGameState(NewGameState);
 }
