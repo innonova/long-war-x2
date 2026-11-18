@@ -330,6 +330,11 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 	{
 		ShownFor = Ctx;
 		MC.ChildFunctionVoid("helpBar", "ClearButtonHelp");
+		// (EW's UINavigationHelp.Init: its containers' padding, the centre's wide enough to keep the soldier summary's
+		// previous and next soldier apart around the plinth.)
+		MC.ChildFunctionNum("helpBar", "SetLeftHelpPadding", 20);
+		MC.ChildFunctionNum("helpBar", "SetRightHelpPadding", 20);
+		MC.ChildFunctionNum("helpBar", "SetCenterHelpPadding", 60);
 		if (Context > 0)
 		{
 			// (EW's XComButtonIconPC, renamed with the other classes EW's movies compile in: tools/convert/ew-ui.ts.)
