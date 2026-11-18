@@ -396,6 +396,8 @@ export function makeHubWords({ strategyLoc }) {
     ['GreyMarketHelp', inSection('XGSituationRoomUI', 'm_stdLabelVisitGreyMarketHelp')],
     ['LaunchSatellite', inSection('XGSituationRoomUI', 'm_strLabelLaunchSatellite')],
     ['LaunchSatelliteHelp', inSection('XGSituationRoomUI', 'm_strLabelMonitorUFO')],
+    ['Finances', inSection('XGSituationRoomUI', 'm_strLabelViewFinances')],
+    ['FinancesHelp', inSection('XGSituationRoomUI', 'm_strLabelViewExpenditures')],
   ].filter(([, v]) => v)
   // EW's strategy HUD around the hub (UILWEWStrategyHUD): its resource labels, the research panel, the event list's title.
   const hud = [
@@ -895,6 +897,25 @@ export function makeLabWords({ strategyLoc }) {
 /** EW's operation names (LWOpNames: XGMission's two word lists, its "Operation …" and the story missions' own). */
 export function makeOpNameWords({ strategyLoc }) {
   return copySections(strategyLoc, [['XGMission', 'LWOpNames']])
+}
+
+/** EW's finances (UILWEWFinances): XGFinanceUI's labels and the craft's names (ShipTypeNames). */
+export function makeFinanceWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const section = text.match(/^\[XGFinanceUI\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
+  const value = (body, k) => body.match(new RegExp(`^${k.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''
+  const lines = [
+    ['Title', value(section, 'm_strLabelCashFlowTitle')],
+    ['Net', value(section, 'm_strLabelNet')],
+    ['Gross', value(section, 'm_strLabelMonthlyGross')],
+    ['Salary', value(section, 'm_strSalary')],
+    ['Craft', value(section, 'm_strCraftMaintenance')],
+    ['Facilities', value(section, 'm_strFacilityMaintenance')],
+    ['Interceptor', value(text, 'ShipTypeNames[eShip_Interceptor]')],
+    ['Firestorm', value(text, 'ShipTypeNames[eShip_Firestorm]')],
+    ['Skyranger', value(text, 'ShipTypeNames[eShip_Skyranger]')],
+  ].filter(([, v]) => v)
+  return { text: ['[UILWEWFinances]', ...lines.map(([k, v]) => `${k}="${v.replace(/"/g, "'")}"`), ''].join('\r\n'), named: lines.length }
 }
 
 export function makeMemorialWords({ strategyLoc }) {

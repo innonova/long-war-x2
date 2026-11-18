@@ -22,7 +22,7 @@ var localized string RoomNames[5];
 var localized string MissionControlName;
 var localized string NewResearch, NewResearchHelp, ChangeResearch, ChangeResearchHelp, GeneLab, GeneLabHelp, BuildItems, BuildItemsHelp, BuildFacilities, BuildFacilitiesHelp, Foundry, FoundryHelp;
 var localized string ViewSoldiers, ViewSoldiersHelp, AircraftList, AircraftListHelp, SituationRoom, GreyMarket, GreyMarketHelp;
-var localized string LaunchSatellite, LaunchSatelliteHelp;
+var localized string LaunchSatellite, LaunchSatelliteHelp, Finances, FinancesHelp;
 var localized string RepairBay, RepairBayHelp;
 var localized string PsiLabs, PsiLabsHelp, OTS, OTSHelp, Augment, AugmentHelp, Hire, HireHelp, Memorial, MemorialHelp;
 
@@ -54,6 +54,7 @@ const OPT_SATELLITE = 14;
 const OPT_REPAIR = 15;
 const OPT_HIRE = 16;
 const OPT_MEMORIAL = 17;
+const OPT_FINANCES = 18;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
 const FACILITY_FOUNDRY = 11;
@@ -335,6 +336,7 @@ function EnterRoom(int i)
 		S = class'XComGameState_LWStrategy'.static.Get();
 		if (S != none && S.ExaltState >= class'LWExalt'.const.ACTIVE)
 			RoomOptions.AddItem(OPT_EXALT);
+		RoomOptions.AddItem(OPT_FINANCES);
 		RoomOptions.AddItem(OPT_GREYMARKET);
 		break;
 	}
@@ -371,6 +373,7 @@ function string OptionName(int Option)
 	case OPT_OTS: return Word(OTS, "Officer Training School");
 	case OPT_HIRE: return Word(Hire, "Hire Soldiers");
 	case OPT_MEMORIAL: return Word(Memorial, "View the Memorial");
+	case OPT_FINANCES: return Word(Finances, "View XCOM Finances");
 	case OPT_PSI: return Word(PsiLabs, "Psi Labs");
 	case OPT_AUGMENT: return Word(Augment, "Augment Soldiers");
 	case OPT_REPAIR: return Word(RepairBay, "Repair Bay");
@@ -395,6 +398,7 @@ function string OptionHelp(int Option)
 	case OPT_OTS: return OTSHelp;
 	case OPT_HIRE: return HireHelp;
 	case OPT_MEMORIAL: return MemorialHelp;
+	case OPT_FINANCES: return FinancesHelp;
 	case OPT_PSI: return PsiLabsHelp;
 	case OPT_RESEARCH:
 		return class'UIUtilities_Strategy'.static.GetXComHQ().GetCurrentResearchProject() != none ? ChangeResearchHelp : NewResearchHelp;
@@ -441,6 +445,7 @@ function ChooseOption(int Option)
 	case OPT_AIRCRAFT: class'UILWEWHangar'.static.Open(HQPres); break;
 	case OPT_HIRE: class'UILWEWHiring'.static.Open(HQPres); break;
 	case OPT_MEMORIAL: class'UILWEWMemorial'.static.Open(HQPres); break;
+	case OPT_FINANCES: class'UILWEWFinances'.static.Open(HQPres); break;
 	case OPT_SITROOM: class'UILWEWSituationRoom'.static.Open(); break;
 	case OPT_EXALT: class'UILWEWSituationRoom'.static.Open(true); break;
 	case OPT_SATELLITE: class'UILWEWSituationRoom'.static.Open(false, true); break;
