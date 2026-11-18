@@ -94,5 +94,7 @@ where EW's country panels stand.
   that needs one).
 - **Seen on wingpu:** the room view, the base view, the Situation Room, and the satellites' view beside EW's own capture:
   the same layout, the HUD's lower panel below the last rows, a click on Canada on EW's left mesh choosing Canada.
-- **Still to do here:** the satellites' counters above the map (EW's "1 AVAILABLE · 16/16 IN ORBIT"), EW's objectives
+- **The satellites' counters** (EW's "AVAILABLE · IN ORBIT") show over the map's corner as in EW: our earth image in the
+  map area had covered them (`theUplinks` raised above it, as the UFO slots).
+- **Still to do here:** EW's objectives
   panel under the map, the ticker on the top mesh.

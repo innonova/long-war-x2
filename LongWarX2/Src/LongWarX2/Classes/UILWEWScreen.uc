@@ -186,6 +186,13 @@ static function string ReadVar(string SubPath)
 			return HUD.MCPath $ "." $ Mid(SubPath, 4) @ "=" @ HUD.Movie.GetVariableString(HUD.MCPath $ "." $ Mid(SubPath, 4));
 		return "ERR no EW strategy HUD up";
 	}
+	// (2nd:<path>: inside the screen under the top one, as the Situation Room under its HUD.)
+	if (Left(SubPath, 4) == "2nd:")
+	{
+		EWScreen = AnyPres().ScreenStack.Screens.Length > 1 ? UILWEWScreen(AnyPres().ScreenStack.Screens[1]) : none;
+		SubPath = Mid(SubPath, 4);
+		return EWScreen == none ? "ERR no EW screen second" : EWScreen.MCPath $ "." $ SubPath @ "=" @ EWScreen.Movie.GetVariableString(EWScreen.MCPath $ "." $ SubPath);
+	}
 	Top = AnyPres().ScreenStack.GetCurrentScreen();
 	EWScreen = UILWEWScreen(Top) != none ? UILWEWScreen(Top) : UILWEWScreen(AnyPres().ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
 	if (EWScreen == none)

@@ -168,6 +168,8 @@ function AddEarth()
 	// The UFO slots (the doom trackers, along the map's top edge) over it, as over EW's globe.
 	MC.ChildFunctionNum("theDoomTracker", "swapDepths", 16000);
 	MC.ChildFunctionNum("doomTracker2", "swapDepths", 16001);
+	// (The satellites' counters too, over the map's corner as over EW's globe.)
+	MC.ChildFunctionNum("theUplinks", "swapDepths", 16002);
 	if (H > 0 && FH > 0)
 		Area.MC.SetNum("_yscale", 100.0 * FH / H);
 	Earth = Spawn(class'UIImage', Area).InitImage('LWEWEarth', "img:///FX_Globe.T_Earth_Holo");
