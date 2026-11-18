@@ -552,3 +552,13 @@ piece of 17 facility levels, is not found (an EW package the setup does not carr
 - **Still open:** the craft's weapon under its wing (EW's jet weapon meshes are in `StrategyResources_SF`, a package of
   EW's whole strategy content that XCOM 2 cannot load as it is: the six meshes would need a package of their own); the
   pad lit brighter than EW's.
+
+## Report (2026-11-18 late, a glass material of our own)
+
+- **`LWX2Lightmap.M_EWGlass`**, made in the SDK editor beside `M_EWLightmapped`: unlit, translucent, two-sided, a `Tint`
+  (emissive) and an `Opacity`. EW's base's glass gets it where XCOM 2's translucent parent is not loaded (the strategy
+  layer): `GlassOwnParent`, `GlassTint` (a pale blue-grey), `GlassOwnOpacity` 0.12 in `XComLWEWMaps.ini`. The labs'
+  windows and guard rails are faint panes again, with the lit autopsy and weapons labs behind (`BaseGlass` back on).
+- **Editor session notes** (as the learnings have them): the mod's lines stripped from the SDK's `Manifest.txt` and the
+  mod's SDK folder moved aside for the session, both restored after; the package saved from the Content Browser, the
+  editor closed by its process once saved.

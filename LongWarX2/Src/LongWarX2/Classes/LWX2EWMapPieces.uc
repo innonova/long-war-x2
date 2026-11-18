@@ -130,8 +130,13 @@ var config LinearColor UnlitTint;
 var config array<string> GlassMaterials;
 var config string GlassParent;
 var config float GlassOpacity;
-/** EW's base's glass panes placed (as GlassParent); off: left out (the parent is not loaded in the strategy layer). */
+/** EW's base's glass panes placed; off: left out. */
 var config bool BaseGlass;
+/** Our own unlit translucent pane (LWX2Lightmap.M_EWGlass: Tint, Opacity) where GlassParent is not loaded, its colour and
+ *  opacity. */
+var config string GlassOwnParent;
+var config LinearColor GlassTint;
+var config float GlassOwnOpacity;
 var config LinearColor GreyTint;
 /** EW's alien pods (lw-missions.md, step 2): where its aliens stand, the commander's pod, how many. */
 /** A place of EW's meld canisters (XComMeldContainerSpawnPoint; lw-loot.md): its drop zone's group, the turn it is gone, hard or easy. */
@@ -670,6 +675,19 @@ static function MaterialInterface PlainStandin(string Path, Object InOuter)
 
 	bGlass = Matches(Path, default.GlassMaterials) && default.GlassParent != "";
 	Parent = Material(DynamicLoadObject(bGlass ? default.GlassParent : default.PropParent, class'Material', true));
+	// (Glass where XCOM 2's translucent parent is not loaded, EW's base: our own pane, GlassOwnParent, in GlassTint at
+	// GlassOwnOpacity; EW's own material had drawn opaque and blue.)
+	if (Parent == none && bGlass && default.GlassOwnParent != "")
+	{
+		Parent = Material(DynamicLoadObject(default.GlassOwnParent, class'Material', true));
+		if (Parent == none)
+			return none;
+		MIC = new(InOuter) class'MaterialInstanceConstant';
+		MIC.SetParent(Parent);
+		MIC.SetScalarParameterValue('Opacity', default.GlassOwnOpacity);
+		MIC.SetVectorParameterValue('Tint', default.GlassTint);
+		return MIC;
+	}
 	if (Parent == none)
 		return none;
 	MIC = new(InOuter) class'MaterialInstanceConstant';
