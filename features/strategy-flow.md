@@ -68,7 +68,9 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
 
 1. **Game creation is XCOM 2's:** its main menu and difficulty screen, where EW has LONG WAR → SELECT LONG WAR
    DIFFICULTY (Normal, Classic, Brutal, Impossible) with SECOND WAVE (EW's 22 options in two columns) and ADVANCED
-   OPTIONS (tutorial, Progeny, Slingshot, Ironman, beginner VO) (`menu-*`).
+   OPTIONS (tutorial, Progeny, Slingshot, Ironman, beginner VO) (`menu-*`). **Done for the new-game screens** (see the
+   report below); still XCOM 2's: the main menu, then after START GAME XCOM 2's ADVENT broadcast intro and its
+   Skyranger briefing "Operation Gatecrasher" ("Wilderness of South Africa", over an EW map) for the first mission.
 2. **The soldier screens are XCOM 2's where EW has its own:** the soldier list (EW's: Long War's stats per soldier,
    class counts in the title), the soldier's summary menu (EW: Abilities, Gene Mods, Loadout, Customize, Report for
    Duty, Dismiss, and next/previous soldier buttons), the abilities tree (EW's: Long War's ranks as a vertical list
@@ -81,3 +83,21 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
 7. **The start screen stands on black;** EW's (after the first mission) not captured yet.
 8. Still to walk: research, engineering and hangar second-level screens and their dialogs (EW's order interceptors and
    transfer captured), the Situation Room's, Mission Control's events and dialogs, the post-mission screens.
+
+## Report (2026-11-18, EW's new-game screens)
+
+- **EW's own screens for game creation:** NEW GAME opens EW's SELECT LONG WAR DIFFICULTY (its DifficultyMenu movie,
+  `UILWEWDifficulty`), with ADVANCED OPTIONS (Long War's "Disabled" tutorials, Operation Progeny, Operation Slingshot,
+  Ironman with EW's confirmation, Reduce Beginner VO) and SECOND WAVE (EW's GameplayToggles movie, `UILWEWSecondWave`:
+  Long War's 31 options in EW's two columns). Long War's words from the player's install (`makeShellWords`: EW's
+  sections under the mod's classes, the options' enum keys made numbers). The setup now converts EW's shell and common
+  UI packages too (`EWShellUI.upk`, `EWCommonUI.upk`). Captured beside EW's: the same layout, words and buttons.
+- **XCOM 2 still starts the campaign:** its new-campaign screen stays under EW's, hidden
+  (`UIScreenListener_LWEWShell`); START GAME sets its difficulty, Ironman and second-wave checkboxes and calls its
+  confirm. Checked: Save Scum ticked on EW's screen arrived in the campaign (`LWSW_05_SaveScum`).
+- **Progeny per campaign:** unticked, it is kept in the campaign's options (`LWX2_EWNoProgeny`; `LWCouncil.ProgenyOn`).
+  Slingshot's choice is kept too (`LWX2_EWNoSlingshot`), but Slingshot is not in the port.
+- **EW's help bars in the converted shell movies make no buttons** (their container's `add` makes nothing for any item,
+  while attaching the same symbol works; the cause is not found). `UILWEWScreen.HelpButton` attaches EW's buttons into
+  the bar's containers and lays them out as EW's bar does; their clicks are found by position.
+- **Not as EW's:** the background is XCOM 2's shell scene (EW's shows its base, dimmed).

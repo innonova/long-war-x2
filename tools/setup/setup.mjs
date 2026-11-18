@@ -264,6 +264,9 @@ async function convertEW(ew, target) {
   mkdirSync(content, { recursive: true })
   try {
     say(`Enemy Within's strategy screens: ${convertUI(join(cooked, 'UICollection_Strategy_SF.upk'), join(content, 'EWStrategyUI.upk'))}`)
+    // Its game creation (new game, Second Wave: features/strategy-flow.md), from its shell and common screens.
+    say(`Enemy Within's shell screens: ${convertUI(join(cooked, 'UICollection_Shell_SF.upk'), join(content, 'EWShellUI.upk'))}`)
+    say(`Enemy Within's common screens: ${convertUI(join(cooked, 'UICollection_Common_SF.upk'), join(content, 'EWCommonUI.upk'))}`)
     say(`Enemy Within's earth: ${convertPackage(join(cooked, 'Static_SituationRoom.upk'), join(content, 'EWSitRoomMap.upk'))}`)
     // In EW's teal, as EW's Situation Room material drew it (tools/convert/ew-earth.ts).
     const earth = new Uint8Array(readFileSync(join(content, 'EWSitRoomMap.upk')))

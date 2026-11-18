@@ -767,12 +767,44 @@ export function makeSecondWaveWords({ loc }) {
     lines.push(`SecondWaveTooltips[${n}]="${descs.get(key) ?? ''}"`)
     options++
   }
+  // (EW's new-game choices kept with the campaign, XComUI.ini's LWX2_EWNoProgeny and LWX2_EWNoSlingshot: not shown, EW's
+  // screen stands over XCOM 2's, but XCOM 2 wants a description for each option.)
+  for (const [n, key] of [[31, 'm_strDifficultyEnableProgeny'], [32, 'm_strDifficultyEnableSlingshot']]) {
+    const label = text.match(new RegExp(`^${key}="(.*)"\\s*$`, 'm'))?.[1] ?? ''
+    lines.push(`SecondWaveDescriptions[${n}]="${label} (off)"`)
+    lines.push(`SecondWaveTooltips[${n}]=""`)
+  }
   let difficulties = 0
   for (const m of text.matchAll(/^(m_arrDifficultyTypeStrings|m_arrDifficultyDescStrings)\[([0-3])\]="(.*)"\s*$/gm)) {
     lines.push(`${m[1]}[${m[2]}]="${m[3]}"`)
     if (m[1] === 'm_arrDifficultyTypeStrings') difficulties++
   }
   return { text: lines.length ? ['[UIShellDifficulty]', ...lines, ''].join('\r\n') : '', named: options, difficulties }
+}
+
+/**
+ * EW's game creation screens (UILWEWDifficulty, UILWEWSecondWave: EW's own movies, driven as EW drives them): EW's
+ * [UIShellDifficulty] and [UIGameplayToggles] sections of the player's XComGame.int, Long War's words, under the mod's
+ * classes, as they are.
+ */
+export function makeShellWords({ loc }) {
+  const text = loc.replace(/\r/g, '')
+  const out = []
+  let named = 0
+  for (const [from, to] of [['UIShellDifficulty', 'UILWEWDifficulty'], ['UIGameplayToggles', 'UILWEWSecondWave']]) {
+    const m = text.match(new RegExp(`^\\[${from}\\]\\n([\\s\\S]*?)(?=^\\[|(?![\\s\\S]))`, 'm'))
+    if (!m) continue
+    // (Keys by EW's enum names, [eGO_RandomDamage], made numbers: the option's own number in its title, "(#0)".)
+    const num = new Map()
+    for (const t of m[1].matchAll(/^\w+\[(\w+)\]="[^"]*\(#(\d+)\)"/gm)) num.set(t[1], t[2])
+    const lines = m[1]
+      .split('\n')
+      .map((l) => l.replace(/^(\w+)\[(\w+)\]=/, (all, k, i) => (/^\d+$/.test(i) ? all : num.has(i) ? `${k}[${num.get(i)}]=` : '')))
+      .filter((l) => /^\w+(\[\d+\])?=/.test(l))
+    named += lines.length
+    out.push(`[${to}]`, ...lines, '')
+  }
+  return { text: out.join('\r\n'), named }
 }
 
 /** Mobile cover's name on a shot's breakdown (X2Effect_LWMobileCover): Long War's for the Alloy SHIV's (m_strShivCoverName). */

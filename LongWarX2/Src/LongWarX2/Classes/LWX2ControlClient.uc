@@ -3158,7 +3158,7 @@ function Council(array<string> Args, out array<string> Out)
 		Out.AddItem("skyranger at" @ Tile.X @ Tile.Y @ Tile.Z @ "| objective:" @ class'LWX2CouncilVIP'.static.ObjectiveText());
 	}
 	Out.AddItem("council: next in" @ S.CouncilCountdown @ "hours; played" @ S.CouncilPlayed.Length @ "| Progeny next" @ class'LWCouncil'.static.NextProgeny(S)
-		@ (class'LWCouncil'.default.ProgenyEnabled ? "" : "(off)"));
+		@ (class'LWCouncil'.static.ProgenyOn() ? "" : "(off)"));
 	for (i = 0; i < S.Sites.Length; i++)
 		if (S.Sites[i].bCouncil)
 			Out.AddItem(i @ "mission" @ S.Sites[i].CouncilMission @ class'LWCouncil'.static.KindName(S.Sites[i].CouncilKind) @ "in" @ S.CountryName(S.Sites[i].Country)

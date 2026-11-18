@@ -31,6 +31,14 @@ var LWX2UIDisplay ShownOn;
  *  campaign's start ran one) purged it, and Mission Control came up empty and stayed so ("Failed to find object 'SwfMovie
  *  ewxMissionControl.missioncontrol'"; ew-compare, 2026-11-17). */
 var Object MovieObject;
+/** The help bar buttons attached (HelpButton), as <container>.<L|R>.<button>, for their layout. */
+var array<string> HelpButtons;
+
+/** The presentation layer up now (the strategy layer's, or the shell's for EW's game creation screens): the test aids'. */
+static function XComPresentationLayerBase AnyPres()
+{
+	return XComPlayerController(class'WorldInfo'.static.GetWorldInfo().GetALocalPlayerController()).Pres;
+}
 
 /** Whether the converted EW UI package is in the mod's Content (loading one of its objects loads it whole). */
 static function bool HasEWScreens()
@@ -66,7 +74,7 @@ static function string CallMovie(array<string> Args)
 	local UILWEWScreen EWScreen;
 	local int i;
 
-	EWScreen = UILWEWScreen(`HQPRES.ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
+	EWScreen = UILWEWScreen(AnyPres().ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
 	if (EWScreen == none || Args.Length < 2)
 		return "ERR no EW screen open (ewscreen <movie>), or no function given";
 	EWScreen.MC.BeginFunctionOp(Args[1]);
@@ -116,7 +124,7 @@ static function string InvokeMovie(array<string> Args)
 	local ASValue V, Result;
 	local int i;
 
-	EWScreen = UILWEWScreen(`HQPRES.ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
+	EWScreen = UILWEWScreen(AnyPres().ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
 	if (EWScreen == none || Args.Length < 2)
 		return "ERR no EW screen open, or no function given";
 	for (i = 2; i < Args.Length; i++)
@@ -148,7 +156,7 @@ static function string SetVar(string SubPath, string Value)
 {
 	local UILWEWScreen EWScreen;
 
-	EWScreen = UILWEWScreen(`HQPRES.ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
+	EWScreen = UILWEWScreen(AnyPres().ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
 	if (EWScreen == none || SubPath == "")
 		return "ERR no EW screen open, or no path";
 	if (Value ~= "true" || Value ~= "false")
@@ -165,6 +173,12 @@ static function string ReadVar(string SubPath)
 	local UILWEWStrategyHUD HUD;
 	local UIScreen Top;
 
+	// (abs:<path>: a path from the movie's root, _global.<Class> too, in the movie of the EW screen up.)
+	if (Left(SubPath, 4) == "abs:")
+	{
+		EWScreen = UILWEWScreen(AnyPres().ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
+		return EWScreen == none ? "ERR no EW screen" : Mid(SubPath, 4) @ "=" @ EWScreen.Movie.GetVariableString(Mid(SubPath, 4));
+	}
 	// (hud:<path>: inside EW's strategy HUD, which is not on the screen stack.)
 	if (Left(SubPath, 4) == "hud:")
 	{
@@ -172,8 +186,8 @@ static function string ReadVar(string SubPath)
 			return HUD.MCPath $ "." $ Mid(SubPath, 4) @ "=" @ HUD.Movie.GetVariableString(HUD.MCPath $ "." $ Mid(SubPath, 4));
 		return "ERR no EW strategy HUD up";
 	}
-	Top = `HQPRES.ScreenStack.GetCurrentScreen();
-	EWScreen = UILWEWScreen(Top) != none ? UILWEWScreen(Top) : UILWEWScreen(`HQPRES.ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
+	Top = AnyPres().ScreenStack.GetCurrentScreen();
+	EWScreen = UILWEWScreen(Top) != none ? UILWEWScreen(Top) : UILWEWScreen(AnyPres().ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
 	if (EWScreen == none)
 		return "ERR no EW screen";
 	return EWScreen.MCPath $ "." $ SubPath @ "=" @ EWScreen.Movie.GetVariableString(EWScreen.MCPath $ "." $ SubPath);
@@ -391,6 +405,112 @@ static function SetEWView(UIMovie TheMovie)
 	V.b = true;
 	Args.AddItem(V);
 	Env.Invoke("setMouseActive", Args);
+}
+
+/**
+ * A button of one of EW's help bars (XComHelpBar: SECOND WAVE, START GAME, BACK …), attached into the bar's left or right
+ * container as the bar's AddLeftButtonHelp/AddRightButtonHelp would (the button EW's: Type, as SetButtonType sets it;
+ * buttonHelp_<Index>, whose clicks name it; its label, icon and style in the init fields EW passes). In the converted
+ * shell movies the bar's own adding makes nothing (its container's add, for every kind of item; plain attaching works:
+ * strategy-flow.md), so the button is attached here and laid out as the bar would: left to right in the left container,
+ * right to left from the right container's place (LayOutHelpButtons, once they have their width).
+ */
+function HelpButton(string Bar, bool bRight, int Index, string Label, string Icon, optional string Type = "QComButton")
+{
+	local GFxObject Box, B;
+	local array<ASValue> Args;
+	local string Path;
+
+	Path = MCPath $ "." $ Bar;
+	Box = Movie.GetVariableObject(Path $ (bRight ? ".rightBtnHelpContainer" : ".leftBtnHelpContainer"));
+	if (Box == none)
+	{
+		`log("LongWarX2: EW screen: no help bar" @ Bar, , 'LongWarX2');
+		return;
+	}
+	B = Box.AttachMovie(Type, "buttonHelp_" $ Index);
+	if (B == none)
+		return;
+	B.SetString("initLabel", Label);
+	B.SetString("initIcon", Icon);
+	B.SetBool("initDisabled", false);
+	B.SetFloat("style", Movie.GetVariableNumber(Path $ (bRight ? ".rightContainerButtonStyle" : ".leftContainerButtonStyle")));
+	B.SetBool("isResizingToText", true);
+	// (Its own setters too: it read its init fields as it was made, before they were set here.)
+	Args.AddItem(Str(Label));
+	B.Invoke("setText", Args);
+	HelpButtons.AddItem(Path $ (bRight ? ".rightBtnHelpContainer.R." : ".leftBtnHelpContainer.L.") $ "buttonHelp_" $ Index);
+	SetTimer(0.1, false, nameof(LayOutHelpButtons));
+}
+
+/** The help bars' buttons laid out as EW's bar lays them out once they have loaded (XComHelpBar.onLeftButtonHelpLoaded,
+ *  onRightButtonHelpLoaded): side by side in their container, the container raised by the first button's height from
+ *  its start, and the right one moved left by its buttons' width from its start (its start is its right edge). */
+function LayOutHelpButtons()
+{
+	local array<string> Boxes;
+	local string P, Box, Bar, Side;
+	local float X, W, H;
+	local int k, b;
+
+	foreach HelpButtons(P)
+	{
+		k = InStr(P, ".R.") != INDEX_NONE ? InStr(P, ".R.") : InStr(P, ".L.");
+		if (Boxes.Find(Left(P, k)) == INDEX_NONE)
+			Boxes.AddItem(Left(P, k));
+		if (Movie.GetVariableNumber(Left(P, k) $ "." $ Mid(P, k + 3) $ "._width") <= 0)
+		{
+			SetTimer(0.1, false, nameof(LayOutHelpButtons));
+			return;
+		}
+	}
+	for (b = 0; b < Boxes.Length; b++)
+	{
+		Box = Boxes[b];
+		Side = InStr(Box, ".rightBtnHelpContainer") != INDEX_NONE ? "right" : "left";
+		Bar = Left(Box, InStr(Box, "." $ Side $ "BtnHelpContainer"));
+		X = 0;
+		H = 0;
+		foreach HelpButtons(P)
+		{
+			k = InStr(P, ".R.") != INDEX_NONE ? InStr(P, ".R.") : InStr(P, ".L.");
+			if (Left(P, k) != Box)
+				continue;
+			W = Movie.GetVariableNumber(Box $ "." $ Mid(P, k + 3) $ "._width");
+			if (H == 0)
+				H = Movie.GetVariableNumber(Box $ "." $ Mid(P, k + 3) $ "._height");
+			Movie.SetVariableNumber(Box $ "." $ Mid(P, k + 3) $ "._x", X);
+			X += W;
+		}
+		Movie.SetVariableNumber(Box $ "._y", Movie.GetVariableNumber(Bar $ "." $ Side $ "ContainerStartPos.y") - H);
+		if (Side == "right")
+			Movie.SetVariableNumber(Box $ "._x", Movie.GetVariableNumber(Bar $ ".rightContainerStartPos.x") - X);
+	}
+}
+
+/** The help bar button under the mouse (HelpButton's), as "<bar>.buttonHelp_<n>", or "". Their clicks are found so:
+ *  attached outside EW's container, they report none (the container relays them in EW). */
+function string HelpButtonUnderMouse()
+{
+	local string P, Clip, Bar;
+	local float MouseX, MouseY, W, H;
+	local int k;
+
+	foreach HelpButtons(P)
+	{
+		k = InStr(P, ".R.") != INDEX_NONE ? InStr(P, ".R.") : InStr(P, ".L.");
+		Clip = Left(P, k) $ "." $ Mid(P, k + 3);
+		W = Movie.GetVariableNumber(Clip $ "._width");
+		H = Movie.GetVariableNumber(Clip $ "._height");
+		MouseX = Movie.GetVariableNumber(Clip $ "._xmouse");
+		MouseY = Movie.GetVariableNumber(Clip $ "._ymouse");
+		if (W > 0 && MouseX >= 0 && MouseY >= 0 && MouseX <= W && MouseY <= H)
+		{
+			Bar = Left(P, InStr(P, InStr(P, ".rightBtnHelpContainer") != INDEX_NONE ? ".rightBtnHelpContainer" : ".leftBtnHelpContainer"));
+			return Mid(Bar, InStr(Bar, ".", true) + 1) $ "." $ Mid(P, k + 3);
+		}
+	}
+	return "";
 }
 
 /** What EW's movie reports when it is clicked (EW's movies call back as XCOM 2's do: FlashRaiseMouseEvent). */

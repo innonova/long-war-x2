@@ -188,6 +188,16 @@ static function bool HasPlayable(int Kind)
 	return false;
 }
 
+/** Progeny in this campaign: on in the config, and not unticked on EW's new-game screen (UILWEWDifficulty keeps that in the
+ *  campaign's options as LWX2_EWNoProgeny, as EW kept XGFundingCouncil.m_bProgenyEnabled). */
+static function bool ProgenyOn()
+{
+	local XComGameState_CampaignSettings Settings;
+
+	Settings = XComGameState_CampaignSettings(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_CampaignSettings', true));
+	return default.ProgenyEnabled && (Settings == none || !Settings.IsSecondWaveOptionEnabled('LWX2_EWNoProgeny'));
+}
+
 /** Progeny's next mission, when Long War would offer it instead of the month's (DetermineNewFCMission, IsProgenyActive):
  *  Portent from the second month; Deluge and Furies from the eighth, once the Psi Labs are built (PSILABS() != none,
  *  AI().GetMonth() > 6). */
@@ -196,7 +206,7 @@ static function bool ProgenyDue(XComGameState_LWStrategy S, out LWCouncilMission
 	local int Next;
 
 	Next = NextProgeny(S);
-	if (!default.ProgenyEnabled || Next >= 28)
+	if (!ProgenyOn() || Next >= 28)
 		return false;
 	if (!((Next == 25 && S.Month > 0) || (class'LWBase'.static.Count(S, 17) > 0 && S.Month > 6)))
 		return false;
