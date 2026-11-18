@@ -48,6 +48,14 @@ simulated function OnInit()
 	ListTarget = class'UILWEWAlertTarget'.static.At(self, MCPath $ ".theMissionList");
 	LookAtRoom();
 	SetTimer(0.2, false, nameof(Refresh));
+	// (The Geoscape beneath brought up to date once this is up: an alert that waited opens over Mission Control.)
+	SetTimer(0.3, false, nameof(RefreshGeoscape));
+}
+
+function RefreshGeoscape()
+{
+	if (Geo != none)
+		Geo.Refresh();
 }
 
 /** EW's Mission Control room behind the screen (its MissionControl camera in EW's base, as EW enters the room). */

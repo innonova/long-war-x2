@@ -222,8 +222,16 @@ function Refresh()
 	MissionControl = UILWEWMissionControl(Movie.Pres.ScreenStack.GetFirstInstanceOf(class'UILWEWMissionControl'));
 	if (MissionControl != none)
 		MissionControl.Refresh();
-	if (!S.bLost && S.PendingKind == 0 && (Movie.Pres.ScreenStack.GetCurrentScreen() == self || Movie.Pres.ScreenStack.GetCurrentScreen() == MissionControl))
+	// (Over EW's Mission Control where EW's screens are converted, as EW shows them: not over this panel in the moment before
+	// Mission Control opens over it.)
+	if (!S.bLost && S.PendingKind == 0 && (Movie.Pres.ScreenStack.GetCurrentScreen() == MissionControl
+		|| (Movie.Pres.ScreenStack.GetCurrentScreen() == self && !class'UILWEWScreen'.static.HasEWScreens())))
+	{
+		// (A research done: EW's research-complete alert first, as it stopped time.)
+		if (S.ResearchAlert > 0 && class'UILWEWAlert'.static.Open(self, 28, S.ResearchAlert))
+			return;
 		class'UILWEWAlert'.static.OpenNext(self, Kinds, Indexes);
+	}
 }
 
 simulated function int ActiveCount(XComGameState_LWStrategy S)

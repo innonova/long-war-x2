@@ -61,6 +61,19 @@ static function int DefOf(XComGameState_Tech Tech, out LWResearchRules.LWTechDef
 	return Id;
 }
 
+/** Long War's tech (by its number) as XCOM 2's tech state; none if it has none. */
+static function XComGameState_Tech TechOf(int Id)
+{
+	local XComGameState_Tech Tech;
+	local name Template;
+
+	Template = class'LWResearchRules'.static.TemplateForId(Id);
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Tech', Tech)
+		if (Tech.GetMyTemplateName() == Template)
+			return Tech;
+	return none;
+}
+
 /** How many of Long War's techs XCOM has researched (XGFacility_Labs.GetNumTechsResearched). */
 static function int NumResearched()
 {

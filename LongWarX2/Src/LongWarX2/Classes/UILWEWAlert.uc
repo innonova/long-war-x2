@@ -27,6 +27,8 @@ var localized string ObjectiveNames[11];
  *  after the weapon, the jets' statuses (XGLocalizedData.ShipStatusNames, by Long War's interceptor status) and their time
  *  (XGShip_Interceptor: hours, days). */
 var localized string LaunchStances, Kills, ValueHours, ValueDays;
+/** The research-complete alert (UIMissionControl_ScienceAlert, XGMissionControlUI). */
+var localized string ResearchCompleteSub, ResearchComplete, AssignResearch, CarryOn;
 /** Mission Control's list (UILWEWMissionControl): its title, the scan, the hours left, the missions' titles (XGMission_*). */
 var localized string MissionsTitle, ScanForActivity, HoursLeft, TitleAbductions, TitleTerror, TitleCrash, TitleLanded,
 	TitleAlienBase, TitleTempleShip, TitleHQ, TitleCovertExtraction, TitleDataRecovery, TitleExaltRaid;
@@ -52,7 +54,7 @@ var int ShipSel, StanceSel;
 /** Kinds this screen can show. */
 static function bool Handles(int K)
 {
-	return (K >= 1 && K <= 7) || K == 9 || K == 11;
+	return (K >= 1 && K <= 7) || K == 9 || K == 11 || K == 28;
 }
 
 /** The next decision not yet shown, opened over the Geoscape; false if none (or EW's screens are not converted). */
@@ -127,6 +129,7 @@ simulated function OnInit()
 		case 6: Load("AlienBaseAlert"); break;
 		case 7: Load("TempleShipAlert"); break;
 		case 9: Load("ExaltAlert"); break;
+		case 28: Load("ScienceAlert"); break;
 		default: Load("FundingCouncilAlert");
 	}
 	// (The alert's own onLoad hides its fields a frame after it is attached: filled after that.)
@@ -183,6 +186,11 @@ function Button(int i, string Text)
 }
 
 /** EW's alerts colour their title and labels (UIUtilities.GetHTMLColoredText: state 3 red EE1C25, 10 orange F78000). */
+static function string Word(string W, string Fallback)
+{
+	return W != "" ? W : Fallback;
+}
+
 static function string Coloured(string Text, string Colour)
 {
 	return "<font color='#" $ Colour $ "'>" $ Text $ "</font>";
@@ -218,6 +226,7 @@ function string Altitude(int Objective)
 
 function Fill()
 {
+	local XComGameState_Tech Tech;
 	local XComGameState_LWStrategy S;
 	local array<ASValue> Params, NoArgs;
 	local int Ufo, Country;
@@ -305,6 +314,18 @@ function Fill()
 		Button(0, Caps(ExaltSend));
 		Button(1, Caps(ExaltNotNow));
 		break;
+	case 28:
+		// eGA_ResearchCompleted (Long War's, at every research done: XGFacility_Labs.OnResearchCompleted), as
+		// UIMissionControl_ScienceAlert shows it: the tech's name, RESEARCH COMPLETE, "<tech>: Research project complete.",
+		// its picture; Assign New Research / Carry On.
+		Tech = class'UILWEWResearch'.static.TechOf(Index);
+		Call("SetTitle", Tech != none ? Caps(Tech.GetDisplayName()) : "");
+		Call("SetSubTitle", Word(ResearchCompleteSub, "RESEARCH COMPLETE"));
+		Call("SetText", EWColoured(Repl(Word(ResearchComplete, "<XGParam:StrValue0/>: Research project complete."), "<XGParam:StrValue0/>", Tech != none ? Tech.GetDisplayName() : ""), 5));
+		Call("SetImage", Tech != none ? class'LWX2Pictures'.static.Tech(Index, Tech.GetImage()) : "");
+		Button(0, Caps(Word(AssignResearch, "Assign New Research")));
+		Button(1, Caps(Word(CarryOn, "Carry On")));
+		break;
 	default:
 		// eGA_FCMission (a SimpleAlert, one button; Esc ignores): Council Mission: its name, Location: its place.
 		Call("SetTitle", Caps(FCMission @ class'LWCouncil'.static.KindName(S.Sites[Index].CouncilKind)));
@@ -356,6 +377,9 @@ function Leave()
 {
 	local LWX2EWBase B;
 
+	// (A research's alert answered either way: it does not come back; its report still waits in the labs.)
+	if (Kind == 28)
+		class'XComGameState_LWStrategy'.static.ResearchSeen(true, false);
 	DropClickTarget();
 	B = class'LWX2EWBase'.static.Get(self);
 	if (B != none)
@@ -394,6 +418,14 @@ function Accept()
 			Launch();
 		else
 			ShowShips();
+		return;
+	}
+	// Assign New Research (OnAlertInput, eGA_ResearchCompleted: LABS().m_bChooseTechAfterReport, JumpToFacility(LABS())): out
+	// of Mission Control to the base, into the labs, the report, then the research list.
+	if (Kind == 28)
+	{
+		Leave();
+		class'UILWEWHub'.static.JumpToLabs(XComHQPresentationLayer(Movie.Pres));
 		return;
 	}
 	G = Geo;

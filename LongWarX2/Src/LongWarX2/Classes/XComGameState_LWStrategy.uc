@@ -227,6 +227,9 @@ var array<string> Events;
 var int EventCount;
 /** Set when something wants the player's decision: the clock stops. */
 var bool bStop;
+/** The last tech researched (EW's XGFacility_Labs.m_eLastResearched): its report waits in the labs until read; and the one
+ *  whose research-complete alert waits on Mission Control (GEOSCAPE().Alert(eGA_ResearchCompleted)). Long War's numbers. */
+var int LastResearched, ResearchAlert;
 /** A mission sent from here and not yet come back: 1 crash site, 2 landed UFO, 3 abduction, 4 terror, 5 an alien base, 6 the
  *  Temple Ship, 7 the HQ assault, 8 a covert operation, 9 EXALT's base, 10 a council mission (LWCouncil). */
 var int PendingKind;
@@ -435,7 +438,7 @@ static function int Run(int MaxHours, optional bool bThrough)
 {
 	local XComGameState NewGameState;
 	local XComGameState_LWStrategy S;
-	local int n;
+	local int n, ToResearch;
 
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: time passes");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
@@ -443,7 +446,10 @@ static function int Run(int MaxHours, optional bool bThrough)
 	// A campaign begun before the base was ported gets Long War's starting base.
 	if (S.TileType.Length == 0)
 		class'LWBase'.static.Generate(S);
-	while (n < MaxHours && (bThrough || !S.bStop) && !S.bLost)
+	// (Time stops at the hour XCOM 2's research project is done, as EW's research alert stops it: XCOM 2's clock, which
+	// completes it, follows the Long War clock's hours after them.)
+	ToResearch = HoursToResearch();
+	while (n < MaxHours && (bThrough || !S.bStop) && !S.bLost && (bThrough || ToResearch < 0 || n < ToResearch))
 	{
 		S.Tick(NewGameState);
 		n++;
@@ -452,6 +458,17 @@ static function int Run(int MaxHours, optional bool bThrough)
 	XCom2TimePasses(n);
 	SyncResearch();
 	return n;
+}
+
+/** The hours until XCOM 2's research project is done (its completion passed: XCom2TimePasses' LessThan), -1 for none. */
+static function int HoursToResearch()
+{
+	local XComGameState_HeadquartersProjectResearch Project;
+
+	Project = class'UIUtilities_Strategy'.static.GetXComHQ().GetCurrentResearchProject();
+	if (Project == none || Project.bIncremental)
+		return -1;
+	return Max(1, class'X2StrategyGameRulesetDataStructures'.static.DifferenceInHours(Project.CompletionDateTime, `STRATEGYRULES.GameTime) + 1);
 }
 
 /**
@@ -519,6 +536,36 @@ static function CreditHeld(XComGameState NewGameState, int Credit)
 		S.Credits.AddItem(Credit);
 	S.Note("A research credit is held: research it covers will cost less.");
 	S.TechTimesIn(NewGameState);
+}
+
+/** A research done (XGFacility_Labs.OnResearchCompleted): its report waits in the labs, its alert on Mission Control. */
+static function ResearchDone(XComGameState NewGameState, int Id)
+{
+	local XComGameState_LWStrategy S;
+
+	if (Get() == none)
+		return;
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
+	S.LastResearched = Id;
+	S.ResearchAlert = Id;
+	S.bStop = true;
+}
+
+/** The research alert answered (0: none waits); and the report read in the labs (EW's OnLeaveReport). */
+static function ResearchSeen(bool bAlert, bool bReport)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+
+	if (Get() == none || (!(bAlert && Get().ResearchAlert != 0) && !(bReport && Get().LastResearched != 0)))
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a research's alert or report seen");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
+	if (bAlert)
+		S.ResearchAlert = 0;
+	if (bReport)
+		S.LastResearched = 0;
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 }
 
 /** A research done, counted for the council's report (on the home continent, as Long War counts it). */

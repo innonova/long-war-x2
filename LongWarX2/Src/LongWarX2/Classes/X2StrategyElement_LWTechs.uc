@@ -101,6 +101,9 @@ static function X2TechTemplate TechTemplate(LWResearchRules.LWTechDef T)
 		Template.Cost.ArtifactCosts.AddItem(Resource);
 	}
 	Template.ResearchCompletedFn = Researched;
+	// (No XCOM 2 popup when it is done (XComHQPresentationLayer.UIResearchComplete leaves alone the techs that jump to the
+	// labs, this flag's only use): Long War's is EW's research alert, then the report in the labs (UILWEWAlert, kind 28).)
+	Template.bJumpToLabs = true;
 	return Template;
 }
 
@@ -115,6 +118,7 @@ static function Researched(XComGameState NewGameState, XComGameState_Tech TechSt
 	{
 		if (class'LWResearchRules'.static.TemplateFor(T) == TechState.GetMyTemplateName())
 		{
+			class'XComGameState_LWStrategy'.static.ResearchDone(NewGameState, T.Id);
 			if (T.GrantsCredit > 0)
 				class'XComGameState_LWStrategy'.static.CreditHeld(NewGameState, T.GrantsCredit);
 			return;

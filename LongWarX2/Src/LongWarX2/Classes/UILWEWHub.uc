@@ -62,6 +62,8 @@ const OPT_FINANCES = 18;
 const OPT_BONUSES = 19;
 const OPT_REQUESTS = 20;
 const OPT_ARCHIVES = 21;
+/** The research alert's Assign New Research: the research list after the report (JumpToLabs). */
+var bool bChooseAfterReport;
 const OPT_CREDITS = 22;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
@@ -275,6 +277,21 @@ simulated function OnLoseFocus()
 	ClearTimer(nameof(HoverOption));
 }
 
+/** EW's JumpToFacility(LABS()) with m_bChooseTechAfterReport (the research alert's Assign New Research): every screen over
+ *  the hub closed (Mission Control, the Geoscape), the labs entered, the report shown, then the research list. */
+static function JumpToLabs(XComHQPresentationLayer HQPres)
+{
+	local UILWEWHub Hub;
+
+	Hub = UILWEWHub(HQPres.ScreenStack.GetFirstInstanceOf(class'UILWEWHub'));
+	if (Hub == none)
+		return;
+	HQPres.ScreenStack.PopUntil(Hub);
+	Hub.Room = -1;
+	Hub.bChooseAfterReport = true;
+	Hub.EnterRoom(0);
+}
+
 /** A room chosen from the top menu: the camera into it and its menu shown (chosen again: back to the base's view). */
 function EnterRoom(int i)
 {
@@ -296,6 +313,12 @@ function EnterRoom(int i)
 	switch (i)
 	{
 	case 0:
+		// (EW's labs show the last research's report first while it waits, XGResearchUI.Init: GoToView(3); after it, from
+		// the research alert, the research list: OnLeaveReport(true).)
+		S = class'XComGameState_LWStrategy'.static.Get();
+		if (S != none && S.LastResearched > 0)
+			class'UILWEWScienceLabs'.static.OpenReport(XComHQPresentationLayer(Movie.Pres), S.LastResearched, bChooseAfterReport);
+		bChooseAfterReport = false;
 		// (EW's research menu, XGResearchUI.UpdateMainMenu: the project, the archives (greyed until two techs are done), the
 		// Genetics Lab once it is built, the research credits once one is held.)
 		RoomOptions.AddItem(OPT_RESEARCH);

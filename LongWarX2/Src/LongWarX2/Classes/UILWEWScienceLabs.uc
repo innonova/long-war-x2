@@ -15,6 +15,10 @@ var array<XComGameState_Tech> Researched;
 var int Selected;
 /** Showing one report alone (EW's view 3), not the list beside it (view 2). */
 var bool bReportOnly;
+/** Opened for the last research's report (EW's labs entered while it waits: XGResearchUI.Init, view 3): that tech alone; on
+ *  leaving it the report counts as read and, after the research alert (bChooseAfter), the research list opens. */
+var int ReportTech;
+var bool bChooseAfter;
 
 static function Open(XComHQPresentationLayer HQPres)
 {
@@ -24,6 +28,19 @@ static function Open(XComHQPresentationLayer HQPres)
 	S = HQPres.Spawn(class'UILWEWScienceLabs', HQPres);
 	S.Package = name("/ package/ewxScienceLabs/ScienceLabs");
 	S.MCName = 'theScienceLabs';
+	Push3D(HQPres, S);
+}
+
+static function OpenReport(XComHQPresentationLayer HQPres, int Id, bool bChooseTech)
+{
+	local UILWEWScienceLabs S;
+
+	DynamicLoadObject(default.UIPackage $ ".ewxScienceLabs", class'Object', true);
+	S = HQPres.Spawn(class'UILWEWScienceLabs', HQPres);
+	S.Package = name("/ package/ewxScienceLabs/ScienceLabs");
+	S.MCName = 'theScienceLabs';
+	S.ReportTech = Id;
+	S.bChooseAfter = bChooseTech;
 	Push3D(HQPres, S);
 }
 
@@ -83,6 +100,29 @@ function Fill()
 	Params.AddItem(AsBool(true));
 	CallNow("EnableArchives", Params);
 	Choose(0);
+	if (ReportTech > 0)
+	{
+		Selected = Max(0, Researched.Find(class'UILWEWResearch'.static.TechOf(ReportTech)));
+		ShowReport(class'UILWEWResearch'.static.TechOf(ReportTech));
+		ReportOnly(true);
+	}
+}
+
+/** Out of the screen; a waiting report read (OnLeaveReport), the research list after it when the alert asked for it. */
+function LeaveScreen()
+{
+	local XComHQPresentationLayer HQPres;
+	local array<StateObjectReference> Available;
+	local bool bChoose;
+
+	HQPres = XComHQPresentationLayer(Movie.Pres);
+	bChoose = ReportTech > 0 && bChooseAfter;
+	if (ReportTech > 0)
+		class'XComGameState_LWStrategy'.static.ResearchSeen(false, true);
+	CloseScreen();
+	Available = class'UIUtilities_Strategy'.static.GetXComHQ().GetAvailableTechsForResearch();
+	if (bChoose && Available.Length > 0 && HQPres != none)
+		class'UILWEWResearch'.static.Open();
 }
 
 static function ASValue AsBool(bool V)
@@ -217,21 +257,20 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	{
 	case class'UIUtilities_Input'.const.FXS_KEY_ENTER:
 	case class'UIUtilities_Input'.const.FXS_BUTTON_A:
-		if (bReportOnly)
-			ReportOnly(false);
-		else
-			ReportOnly(true);
-		return true;
 	case class'UIUtilities_Input'.const.FXS_KEY_ESCAPE:
 	case class'UIUtilities_Input'.const.FXS_BUTTON_B:
 	case class'UIUtilities_Input'.const.FXS_R_MOUSE_DOWN:
-		// (OnCancel: from one report back to the list; from the list out.)
-		if (bReportOnly)
-		{
+		// (OnAccept: from the list to its report; OnCancel: from a report back to the list, or out of the list. The waiting
+		// report, opened alone, closes either way: OnLeaveReport.)
+		if (ReportTech > 0)
+			LeaveScreen();
+		else if (bReportOnly)
 			ReportOnly(false);
-			return true;
-		}
-		break;
+		else if (cmd == class'UIUtilities_Input'.const.FXS_KEY_ENTER || cmd == class'UIUtilities_Input'.const.FXS_BUTTON_A)
+			ReportOnly(true);
+		else
+			LeaveScreen();
+		return true;
 	case class'UIUtilities_Input'.const.FXS_ARROW_UP:
 	case class'UIUtilities_Input'.const.FXS_DPAD_UP:
 		if (!bReportOnly)

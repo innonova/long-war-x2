@@ -775,6 +775,8 @@ export function makeAlertWords({ strategyLoc }) {
     ['Confirm', one(sections('UIMissionControl_AbductionSelection'), 'm_strConfirmLabel')],
     ['UFOPrefix', mc('m_strLabelUFOPrefix')], ['SizeLabel', mc('m_strLabelSize')], ['ObjectiveLabel', mc('m_strLabelAlienObjective')],
     ['HyperwaveTitle', one(sections('UIMissionControl_UFOAlert'), 'm_strHyperwavePanelTitle')],
+    ['ResearchCompleteSub', one(sections('UIMissionControl_ScienceAlert'), 'm_strResearchCompleteSubTitle')],
+    ['ResearchComplete', mc('m_strLabelTechResearchComplete')], ['AssignResearch', mc('m_strLabelAssignNewResearch')], ['CarryOn', mc('m_strLabelCarryOn')],
     ...['Small', 'Medium', 'Large', 'VeryLarge'].map((k, i) => [`SizeNames[${i}]`, one(sections('XGItemTree'), `m_strSize${k}`)]),
     // (EW's altitudes begin with a space, " (NOE)": kept, as EW appends them to the country.)
     ...['Low', 'High', 'VeryHigh'].map((k, i) => [`AltitudeNames[${i}]`, one(sections('XGShip_UFO'), `m_strAltitude${k}`)]),
