@@ -74,8 +74,7 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
    South Africa", over an EW map) for the first mission, and every mission's briefing (EW's dropship screen is in
    EW's UICollection_Dropship_SF).
 2. **The soldier screens are XCOM 2's where EW has its own** (list and summary: done, reports below; still to do: the
-   abilities tree, Gene Mods, the summary's previous/next soldier buttons, Report for Duty, EW's icons for Long War's
-   perks): the soldier list (EW's: Long War's stats per soldier,
+   abilities tree, Gene Mods, Report for Duty, EW's icons for Long War's perks): the soldier list (EW's: Long War's stats per soldier,
    class counts in the title), the soldier's summary menu (EW: Abilities, Gene Mods, Loadout, Customize, Report for
    Duty, Dismiss, and next/previous soldier buttons), the abilities tree (EW's: Long War's ranks as a vertical list
    beside the soldier; XCOM 2's horizontal panel covers the soldier), Gene Mods.
@@ -164,5 +163,7 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   screen), Psi-Abilities for psionic soldiers, Loadout and Customize (XCOM 2's, in EW's armory), Dismiss (greyed while
   wounded, with Long War's question).
 - **Seen on wingpu:** list → summary → Loadout (XCOM 2's, in EW's armory) → back to the summary.
-- **Not yet as EW's:** the previous/next soldier buttons, Gene Mods (the mods a soldier has), Report for Duty, EW's
+- **Previous/next soldier:** EW's two buttons in the HUD's bar under it (and the arrow keys), cycling through the list
+  it was opened from.
+- **Not yet as EW's:** Gene Mods (the mods a soldier has), Report for Duty, EW's
   icons for Long War's perks (the port's perks wear XCOM 2's), the flag and medal badge beside the name.

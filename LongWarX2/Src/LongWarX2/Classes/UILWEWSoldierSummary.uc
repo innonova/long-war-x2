@@ -231,6 +231,27 @@ function FillAbilities(XComGameState_Unit U)
 	}
 }
 
+/** The previous (-1) or next (1) soldier of the list it was opened from (EW's PrevSoldier, NextSoldier). */
+function Cycle(int By)
+{
+	local UILWEWSoldierList L;
+	local int i;
+
+	L = UILWEWSoldierList(Movie.Pres.ScreenStack.GetFirstInstanceOf(class'UILWEWSoldierList'));
+	if (L == none || L.Soldiers.Length < 2)
+		return;
+	i = L.Soldiers.Find('ObjectID', UnitRef.ObjectID);
+	i = (i + By + L.Soldiers.Length) % L.Soldiers.Length;
+	if (Pawn != none)
+		Movie.Pres.GetUIPawnMgr().ReleasePawn(self, UnitRef.ObjectID);
+	Pawn = none;
+	UnitRef = L.Soldiers[i];
+	L.Select(i);
+	PlaySound(SoundCue'SoundUI.MenuScrollCue', true);
+	Fill();
+	PlacePawn();
+}
+
 static function string Word(string W, string Fallback)
 {
 	return W != "" ? W : Fallback;
@@ -279,6 +300,14 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		case class'UIUtilities_Input'.const.FXS_KEY_ENTER:
 		case class'UIUtilities_Input'.const.FXS_BUTTON_A:
 			Choose(Selected);
+			return true;
+		case class'UIUtilities_Input'.const.FXS_ARROW_LEFT:
+		case class'UIUtilities_Input'.const.FXS_BUTTON_LBUMPER:
+			Cycle(-1);
+			return true;
+		case class'UIUtilities_Input'.const.FXS_ARROW_RIGHT:
+		case class'UIUtilities_Input'.const.FXS_BUTTON_RBUMPER:
+			Cycle(1);
 			return true;
 		}
 	}

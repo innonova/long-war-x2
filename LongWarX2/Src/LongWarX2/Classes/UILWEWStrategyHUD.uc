@@ -228,6 +228,8 @@ function FindContext()
 			Kind = 'Engineering';
 		else if (UILWEWBuildFacilities(Top) != none || UILWEWChooseFacility(Top) != none)
 			Kind = 'Facilities';
+		else if (UILWEWSoldierSummary(Top) != none)
+			Kind = 'Soldier';
 	}
 }
 
@@ -261,6 +263,24 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 			MC.QueueString("");
 			MC.QueueBoolean(false);
 			MC.EndOp();
+			// (The soldier summary's previous and next soldier, EW's icon buttons 0 and 1 in the bar's middle:
+			// UISoldierSummary.UpdateButtonHelp.)
+			if (Kind == 'Soldier')
+			{
+				MC.BeginChildFunctionOp("helpBar", "AddCenterButtonHelp");
+				MC.QueueNumber(1);
+				MC.QueueString("0");
+				MC.QueueString("");
+				MC.QueueBoolean(false);
+				MC.EndOp();
+				MC.BeginChildFunctionOp("helpBar", "AddCenterButtonHelp");
+				MC.QueueNumber(2);
+				MC.QueueString("1");
+				MC.QueueString("");
+				MC.QueueBoolean(false);
+				MC.EndOp();
+				MC.ChildFunctionVoid("helpBar", "onCenterButtonHelpLoaded");
+			}
 			MC.ChildFunctionString("helpBar", "SetButtonType", "");
 			// (The bar hides itself until its button reports loaded, which takes a frame of the hidden clip that XCOM 2's
 			// Flash never gives: told at once, as the hub's submenu is shown.)
@@ -481,6 +501,12 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 	if (cmd != class'UIUtilities_Input'.const.FXS_L_MOUSE_UP)
 		return;
 	Top = Movie.Pres.ScreenStack.GetCurrentScreen();
+	// (The soldier summary's previous and next soldier, buttons 1 and 2.)
+	if (UILWEWSoldierSummary(Top) != none && args.Length > 0 && (args[args.Length - 1] == "buttonHelp_1" || args[args.Length - 1] == "buttonHelp_2"))
+	{
+		UILWEWSoldierSummary(Top).Cycle(args[args.Length - 1] == "buttonHelp_1" ? -1 : 1);
+		return;
+	}
 	if (Top != none)
 		Top.OnUnrealCommand(class'UIUtilities_Input'.const.FXS_KEY_ESCAPE, class'UIUtilities_Input'.const.FXS_ACTION_RELEASE);
 }
