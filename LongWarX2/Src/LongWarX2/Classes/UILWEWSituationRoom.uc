@@ -17,6 +17,9 @@ var localized string SatEngineer, SatEngineers, SatConfirmTitle, SatCountry, Sat
 
 /** The satellites' view (EW's SatelliteState): a country chosen, the HUD's panels, a satellite launched there. */
 var bool bSatellite;
+/** The wall showing only its map (Bare). */
+var bool bIsBare;
+
 /** The wall as EW always shows it (EW's UISituationRoom stays on the room's wall while at the base): the countries, the map
  *  and the earth, under the hub, taking no input (OpenWall); out of the way while the Situation Room itself is open. */
 var bool bWall;
@@ -80,10 +83,37 @@ static function WallFor(XComHQPresentationLayer HQPres)
 	foreach HQPres.ScreenStack.Screens(S)
 		if (S != Wall && S.bIsIn3D && S.bIsVisible)
 			bOther3D = true;
+	// (Under the Situation Room's own screens, opened from its menu, EW's room screen hides as it loses the focus
+	// (UISituationRoom's MainSituationViewState.OnLoseFocus) and the wall shows its bare map, a 3D material in EW: here the
+	// countries, the UFO and satellite counters, the objectives and the ticker are hidden and the map stays.)
+	S = HQPres.ScreenStack.GetCurrentScreen();
+	Wall.Bare(UILWEWGreyMarket(S) != none || UILWEWPendingRequests(S) != none || UILWEWFinances(S) != none || UILWEWCouncilRequest(S) != none);
 	if (bOther3D && Wall.bIsVisible)
 		Wall.Hide();
 	else if (!bOther3D && !Wall.bIsVisible)
 		Wall.Show();
+}
+
+/** The wall's bare map (bBare), or all of it. */
+function Bare(bool bBare)
+{
+	if (bBare == bIsBare || !bIsInited)
+		return;
+	bIsBare = bBare;
+	ApplyBare(bBare);
+}
+
+function ApplyBare(bool bBare)
+{
+	local int i;
+
+	for (i = 0; i < 16; i++)
+		MC.ChildSetBool("country" $ i, "_visible", !bBare);
+	MC.ChildSetBool("theDoomTracker", "_visible", !bBare);
+	MC.ChildSetBool("doomTracker2", "_visible", !bBare);
+	MC.ChildSetBool("theUplinks", "_visible", !bBare);
+	MC.ChildSetBool("theObjectivesPanel", "_visible", !bBare);
+	MC.ChildSetBool("theTicker", "_visible", !bBare);
 }
 
 /** The wall taken down (the Situation Room itself opens on it). */
@@ -253,6 +283,9 @@ function Refresh()
 		MC.FunctionNum("SetSelected", SatSlot);
 		UpdateSatelliteHUD();
 	}
+	// (The refresh shows the country slots again: the bare map kept, Bare.)
+	if (bIsBare)
+		ApplyBare(true);
 }
 
 /** The first council country without a satellite (EW's SatelliteState starts on its manager's country). */

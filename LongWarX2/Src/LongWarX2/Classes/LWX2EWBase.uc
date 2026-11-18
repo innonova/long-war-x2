@@ -48,6 +48,9 @@ var array<LightComponent> WorldLights;
  *  the world's). "": none, the base lit by EW's own lights alone (dark: EW baked most of its light). */
 /** EW's people in its base (features/ew-base-people.md): the Anim_ levels whose people stand in the fixed rooms. */
 var config array<string> PeopleLevels;
+/** A test aid (off): the fixed rooms placed at the main menu (UIScreenListener_LongWarX2Shell), the campaign start's crash
+ *  reproduced at every start (features/strategy-flow.md). */
+var config bool PlaceInShell;
 /** The parent of EW's people's stand-ins (XCOM 2's material for its own base's staff); empty: the bodies' (LWX2EWBodies). */
 var config string PeopleMaterialParent;
 /** Whether they play EW's animations (false: they stand in their reference pose; a test switch). */

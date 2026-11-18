@@ -17,6 +17,10 @@ event OnInit(UIScreen Screen)
 		return;
 	if ((UIShell(Screen) == none && UILWEWMainMenu(Screen) == none) || Screen.GetChildByName('LWX2AirWarDemo', false) != none)
 		return;
+	// (A test aid: EW's base's fixed rooms placed at the main menu first, LWX2EWBase.PlaceInShell, which made the crash at a
+	// campaign's start happen every time: features/strategy-flow.md.)
+	if (class'LWX2EWBase'.default.PlaceInShell && class'LWX2EWBase'.static.Converted())
+		class'LWX2EWBase'.static.Get(Screen).PlaceFixed();
 	// (The test scripts wait for this line: tools/test/start-game.ps1.)
 	`log("LongWarX2: main menu up on" @ Screen.Class.Name, , 'LongWarX2');
 	if (!default.ShowTestCampaign)

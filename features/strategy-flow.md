@@ -420,3 +420,13 @@ The reviewer's round 3 (33 pairs, `logs/compare/review/_summary.md`) and what ca
 **Still open from round 3:** the soldier loadout (XCOM 2's, by decision), the craft in the hangar's bays, the front end's
 scenes (EW's shell; waits on the crash below), Shen and the dark staff, the Gene Lab's tanks, monitors and globe effects,
 surface detail and lighting, the soldier summary's right-hand header width, the Gray Market's second portrait.
+
+## Report (2026-11-18 evening, the campaign-start crash: two hypotheses ruled out)
+
+- **A reproducer kept as a test aid:** `PlaceInShell` (`XComLWEWMaps.ini`, off) places the base's fixed rooms at the main
+  menu; with it on, 0 of 3 starts reach the menu, each an access violation right after the rooms are placed.
+- **Not collision:** the base's pieces made with rigid-body, actor and trace blocking off before their mesh was set (so no
+  PhysX collision is built from their vertices): still 0 of 3.
+- **Not dynamic shadows:** the pieces made without shadow casting: still 0 of 3.
+- Both changes reverted. Next remains the engine's own code at the faulting address and its caller, to learn who reads
+  the positions after they are freed.
