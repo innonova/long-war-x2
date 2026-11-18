@@ -295,6 +295,19 @@ function HoldMovie()
 		`log("LongWarX2: EW screen: no movie" @ Left(P, i) $ "." $ Mid(P, i + 1), , 'LongWarX2');
 }
 
+/** EW's camera into the first facility of a kind (EW's Base.LookAtFacility: the add-on camera of its tile), '' if none. */
+static function name FacilityCamera(int Facility)
+{
+	local XComGameState_LWStrategy S;
+	local int i;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	for (i = 0; S != none && i < S.TileFacility.Length; i++)
+		if (S.TileFacility[i] == Facility)
+			return name("AddonCam_R" $ (i / class'LWBase'.const.W) $ "_C" $ (i % class'LWBase'.const.W + 1));
+	return '';
+}
+
 /** EW's base behind the screen, through its room's camera (BaseCamera). */
 function ShowRoom()
 {

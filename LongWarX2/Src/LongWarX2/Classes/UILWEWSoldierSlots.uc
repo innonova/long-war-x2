@@ -10,8 +10,10 @@ class UILWEWSoldierSlots extends UILWEWScreen;
  *  makeLabWords). */
 var localized string Title, StatusLabel, Empty, AddSoldier, RemoveSoldier, Days, Hours, RemoveTitle, RemoveText, RemoveAccept;
 
-/** The lab's facility (EW's number: 17 the Psi Labs, 23 the Genetics Lab, 22 the Cybernetics Lab). */
+/** The lab's facility (EW's number: 17 the Psi Labs, 23 the Genetics Lab, 22 the Cybernetics Lab), and EW's camera for
+ *  the lab's screen (its m_strCameraTag; none: the facility's tile, as XGPsiLabsUI's LookAtFacility). */
 var int Facility;
+var name LabCamera;
 
 struct LabRow
 {
@@ -51,24 +53,19 @@ simulated function OnReceiveFocus()
 	Fill();
 }
 
-/** EW's base behind it, the camera in the (first) lab of its kind. */
+/** EW's base behind it, the camera in the (first) lab of its kind (XGPsiLabsUI: LookAtFacility). */
 function ShowLab()
 {
-	local XComGameState_LWStrategy S;
 	local LWX2EWBase B;
-	local int i;
 
 	if (!class'LWX2EWBase'.static.Converted())
 		return;
 	B = class'LWX2EWBase'.static.Get(self);
 	B.Show();
-	S = class'XComGameState_LWStrategy'.static.Get();
-	for (i = 0; S != none && i < S.TileFacility.Length; i++)
-		if (S.TileFacility[i] == Facility)
-		{
-			B.LookAt(name("AddonCam_R" $ (i / class'LWBase'.const.W) $ "_C" $ (i % class'LWBase'.const.W + 1)), 1.0);
-			return;
-		}
+	if (LabCamera != '')
+		B.LookAt(LabCamera, 1.0);
+	else if (FacilityCamera(Facility) != '')
+		B.LookAt(FacilityCamera(Facility), 1.0);
 }
 
 static function string Word(string W, string Fallback)

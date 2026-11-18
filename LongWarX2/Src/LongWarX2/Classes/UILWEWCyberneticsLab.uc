@@ -85,5 +85,7 @@ simulated function AugmentAnswered(Name Action)
 
 defaultproperties
 {
+	// (EW's UICyberneticsLab.m_strCameraTag.)
+	LabCamera = CyberneticsLab_FacilityCamera
 	Facility = 22
 }

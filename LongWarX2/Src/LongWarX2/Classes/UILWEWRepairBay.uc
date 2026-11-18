@@ -358,6 +358,6 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 
 defaultproperties
 {
-	// (Over EW's engineering (the Repair Bay is its lab), as EW shows it.)
-	BaseCamera = ENGINEERING
+	// (EW's UIMECInventory.m_strCameraTag: the Cybernetics Lab's MEC plinth, which this screen needs built.)
+	BaseCamera = CyberneticsLab_UIDisplayCam
 }

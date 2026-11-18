@@ -46,5 +46,7 @@ function Chosen(StateObjectReference UnitRef)
 
 defaultproperties
 {
+	// (EW's UIGeneLab.m_strCameraTag.)
+	LabCamera = GeneLab_FacilityCamera
 	Facility = 23
 }

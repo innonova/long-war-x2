@@ -265,3 +265,18 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   satellite view's wall screen and its country columns, the Situation Room's blank wall map, the soldier too large in
   the armory's frame, the OTS's and officers' cameras, Vahlen's untextured look and Shen's absence, blank monitors, the
   Repair Bay's room, and smaller layout overlaps.
+
+## Report (2026-11-18, EW's cameras for the facilities' screens)
+
+- **Each screen through EW's own camera**, read from EW's screens' `m_strCameraTag` defaults and its `LookAtFacility`
+  calls: the Officer Training School into the school (`XGOTSUI.Init`: its tile's camera), the Psi Labs into theirs, the
+  Genetics Lab through `GeneLab_FacilityCamera`, the Cybernetics Lab through `CyberneticsLab_FacilityCamera`, the Repair
+  Bay (EW's MEC inventory) at the Cybernetics Lab's MEC plinth (`CyberneticsLab_UIDisplayCam`). Long War's officer screen
+  looks at the barracks, as `XGMedalsUI` does (the reviewer's EW capture of it had kept the previous camera).
+- **Facility cameras:** they are in the facility levels, not Command1; `LWX2EWBase.LookAt` now finds them in the level of
+  the first facility of their kind and places them with it (`FacilityCameraOf`).
+- **EW's cut surfaces out of their way:** the Genetics Lab's camera looks from behind the base's black cut surfaces and
+  drew black. They are now hidden while a facility's own camera is used and shown again for the base and room views
+  (`ShowCutaway`). Seen on wingpu: the Genetics Lab as in EW's capture, then the base view's black between the rooms back.
+- **Not yet:** EW's holographic MEC on the plinth (`XGCyberneticsUI.PutMecOnPlinth`); the Gene Mods screen in the armory
+  (EW's `UISoldierGeneMods` uses `Armory_UIDisplayCam_Promote`, the soldier on the pad).

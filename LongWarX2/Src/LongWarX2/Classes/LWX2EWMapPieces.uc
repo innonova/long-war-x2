@@ -521,7 +521,11 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 		{
 			M = none;
 			if (ActorClass == class'DynamicSMActor_Spawnable' && Matches(P.Materials[i], default.BaseBlackMaterials))
+			{
 				M = BlackStandin(A);
+				// (Known as a cut surface: hidden while a facility's own camera looks in, LWX2EWBase.ShowCutaway.)
+				A.Tag = 'LWX2BaseCutaway';
+			}
 			else if (P.LightMap.Color != "" && (ActorClass == class'DynamicSMActor_Spawnable' ? default.LightmapBase : default.LightmapMaps))
 				M = Lightmapped(P, P.Materials[i], A, D);
 			if (M == none)

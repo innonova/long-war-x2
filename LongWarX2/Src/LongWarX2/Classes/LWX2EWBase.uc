@@ -194,12 +194,17 @@ function LookAt(name Tag, optional float Interp)
 
 	Command = Data("Command1");
 	k = Command.Cameras.Find('Tag', Tag);
-	if (k == INDEX_NONE)
+	if (k != INDEX_NONE)
+		C = Command.Cameras[k];
+	// (A facility's own camera, in its level: CyberneticsLab_UIDisplayCam …, where that facility stands.)
+	else if (!FacilityCameraOf(Tag, C))
 	{
 		`log("LongWarX2: EW base: no camera" @ Tag, , 'LongWarX2');
 		return;
 	}
-	C = Command.Cameras[k];
+	// (EW's cut surfaces drawn for its base and room views; out of the way of a facility's own camera, which looks from
+	// behind them: the Genetics Lab's showed black.)
+	ShowCutaway(k != INDEX_NONE);
 	if (Tag == 'Base' && ViewFOV > 0)
 	{
 		C.Loc = ViewLoc;
@@ -700,6 +705,49 @@ function Refresh()
 	}
 	if (n > 0)
 		`log("LongWarX2: EW base:" @ n @ "tiles placed," @ Tiles.Length @ "actors in all", , 'LongWarX2');
+}
+
+/** EW's cut surfaces between the rooms and floors (the base's black, LWX2EWMapPieces' BaseBlackMaterials) shown or hidden. */
+function ShowCutaway(bool bShow)
+{
+	local DynamicSMActor_Spawnable A;
+
+	foreach DynamicActors(class'DynamicSMActor_Spawnable', A)
+		if (A.Tag == 'LWX2BaseCutaway')
+			A.SetHidden(!bShow);
+}
+
+/** A camera of a facility's level (EW's screens' m_strCameraTag: GeneLab_FacilityCamera, CyberneticsLab_UIDisplayCam …),
+ *  where the first facility with that level stands: its place in the level and the tile's room (as PlaceTiles puts the
+ *  level). False if no such facility is built. */
+function bool FacilityCameraOf(name Tag, out LWX2EWMapPieces.LWX2Camera C)
+{
+	local XComGameState_LWStrategy S;
+	local LWX2EWMapData Command, D;
+	local string Level;
+	local int X, Y, i, k, Cam;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Command = Data("Command1");
+	for (Y = 1; S != none && Y < class'LWBase'.const.H; Y++)
+		for (X = 0; X < class'LWBase'.const.W; X++)
+		{
+			i = Y * class'LWBase'.const.W + X;
+			if (i >= S.TileType.Length)
+				continue;
+			Level = LevelFor(S.TileType[i], S.TileFacility[i], X == class'LWBase'.const.SHAFT);
+			k = Command.Rooms.Find('Tag', name("R" $ Y $ "_C" $ (X + 1)));
+			if (Level == "" || k == INDEX_NONE)
+				continue;
+			D = Data(Level);
+			Cam = D != none ? D.Cameras.Find('Tag', Tag) : INDEX_NONE;
+			if (Cam == INDEX_NONE)
+				continue;
+			C = D.Cameras[Cam];
+			C.Loc += Command.Rooms[k].Loc;
+			return true;
+		}
+	return false;
 }
 
 /**

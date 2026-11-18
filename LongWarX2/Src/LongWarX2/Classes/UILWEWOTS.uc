@@ -20,6 +20,9 @@ static function Open(XComHQPresentationLayer HQPres)
 	EWScreen = HQPres.Spawn(class'UILWEWOTS', HQPres);
 	EWScreen.Package = name("/ package/ewxOfficerTrainingSchool/OfficerTrainingSchool");
 	EWScreen.MCName = 'theOTS';
+	// (EW's XGOTSUI.Init: the camera into the school, LookAtFacility.)
+	if (FacilityCamera(12) != '')
+		EWScreen.BaseCamera = FacilityCamera(12);
 	HQPres.ScreenStack.Push(EWScreen);
 }
 
