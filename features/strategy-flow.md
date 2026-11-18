@@ -410,6 +410,7 @@ The reviewer's round 3 (33 pairs, `logs/compare/review/_summary.md`) and what ca
   EW capture's school view was left from an earlier visit. EW hides the resource lines there; so do we now.
 - **The soldier summary's previous/next buttons** (part of its #15): EW's navigation help pads its containers (left 20,
   right 20, centre 60); ours now does too.
+- **Tried, reverted, then done properly (the wall):** see the next report.
 - **Tried and reverted:**
   - Hiding the Situation Room's wall under its own screens (Gray Market, Pending Requests, Finances), as EW's room screen
     hides on losing focus. In EW the map stays (a 3D material); ours is drawn by the movie, so the wall went blank. The
@@ -430,3 +431,5 @@ surface detail and lighting, the soldier summary's right-hand header width, the 
 - **Not dynamic shadows:** the pieces made without shadow casting: still 0 of 3.
 - Both changes reverted. Next remains the engine's own code at the faulting address and its caller, to learn who reads
   the positions after they are freed.
+- **The wall under the Situation Room's own screens, done:** the countries, the UFO and satellite counters, the objectives
+  and the ticker hidden (and kept hidden through the wall's refresh), the map kept; back in full on leaving them.
