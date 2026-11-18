@@ -36,6 +36,23 @@ var bool bNavHelpHidden;
  * joining the screen stack: pushed, it took the focus, and XCOM 2's screens hide when they lose it. A movie is drawn
  * over those loaded before it, so a HUD already up is taken down and loaded again above the screen just opened.
  */
+/**
+ * The help bar laid out again (its back arrow re-added). An EW screen's movie brings its own copy of EW's layout classes,
+ * and the view they place the bar by is set again as it opens (UILWEWScreen.SetEWView); the bar lays itself out only as
+ * its buttons are added, which the HUD does when the kind of screen changes, so a second screen of the same kind over the
+ * first (the craft summary over the aircraft list) left the arrow where the view had briefly put it, below the screen.
+ */
+static function RelayHelpBar(UIScreen Screen)
+{
+	local UILWEWStrategyHUD HUD;
+
+	foreach Screen.AllActors(class'UILWEWStrategyHUD', HUD)
+	{
+		HUD.ShownFor = "";
+		HUD.Refresh();
+	}
+}
+
 static function ShowIfAvailable()
 {
 	local XComHQPresentationLayer HQPres;

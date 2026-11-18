@@ -246,6 +246,7 @@ simulated function OnInit()
 	SetEWView(Movie);
 	ShowRoom();
 	ShowOnPanel();
+	class'UILWEWStrategyHUD'.static.RelayHelpBar(self);
 	`log("LongWarX2: EW screen" @ Package @ "inited", , 'LongWarX2');
 }
 
