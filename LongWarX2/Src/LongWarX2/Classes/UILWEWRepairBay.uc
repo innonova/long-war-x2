@@ -31,7 +31,7 @@ static function Open(XComHQPresentationLayer HQPres)
 	EWScreen = HQPres.Spawn(class'UILWEWRepairBay', HQPres);
 	EWScreen.Package = name("/ package/ewxMECInventory/MECInventory");
 	EWScreen.MCName = 'theScreen';
-	HQPres.ScreenStack.Push(EWScreen);
+	Push3D(HQPres, EWScreen);
 }
 
 simulated function OnInit()
@@ -360,4 +360,7 @@ defaultproperties
 {
 	// (EW's UIMECInventory.m_strCameraTag: the Cybernetics Lab's MEC plinth, which this screen needs built.)
 	BaseCamera = CyberneticsLab_UIDisplayCam
+	// (On EW's panel in the lab, as UIMECInventory is: DisplayTag UIDisplay_CyberneticsLab.)
+	EWDisplay = UIDisplay_CyberneticsLab
+	EWDisplayCamera = CyberneticsLab_UIDisplayCam
 }

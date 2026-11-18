@@ -482,15 +482,15 @@ function PlaceDisplays()
 
 /** A display of ours on EW's panel D, tagged Tag: EW's own panel mesh, at EW's rotation and scale, where the converter
  *  found it; else XCOM 2's plate (Mesh), turned and scaled to EW's panel. */
-function PlaceDisplay(LWX2EWMapPieces.LWX2Display D, name Tag, StaticMesh Mesh, MaterialInterface Mat)
+function LWX2UIDisplay PlaceDisplay(LWX2EWMapPieces.LWX2Display D, name Tag, StaticMesh Mesh, MaterialInterface Mat, optional bool bAt, optional vector At)
 {
 	local LWX2UIDisplay A;
 	local StaticMesh EWMesh;
 
 	EWMesh = D.Mesh != "" ? StaticMesh(DynamicLoadObject(D.Mesh, class'StaticMesh', true)) : none;
-	A = Spawn(class'LWX2UIDisplay', self, Tag, D.Loc + BaseOffset, EWMesh != none ? D.Rot : D.Rot + DisplayTurn);
+	A = Spawn(class'LWX2UIDisplay', self, Tag, D.Loc + (bAt ? At : BaseOffset), EWMesh != none ? D.Rot : D.Rot + DisplayTurn);
 	if (A == none)
-		return;
+		return none;
 	A.StaticMeshComponent.SetStaticMesh(EWMesh != none ? EWMesh : Mesh);
 	// (An instance: XCOM 2's 3D movie sets its Movie on the panel's instance, UIMovie_3D.ShowDisplayByInst.)
 	A.StaticMeshComponent.SetMaterial(0, Mat);
@@ -501,6 +501,34 @@ function PlaceDisplay(LWX2EWMapPieces.LWX2Display D, name Tag, StaticMesh Mesh, 
 	// (The mesh hidden, not the actor: XCOM 2's 3D movie unhides the mesh, UIMovie_3D.ShowDisplayByInst.)
 	A.StaticMeshComponent.SetHidden(true);
 	Displays.AddItem(A);
+	return A;
+}
+
+/**
+ * A facility level's own panels (the Cybernetics Lab's, on which EW draws its MEC inventory; the Genetics Lab's), placed
+ * with its tile at the tile's place, and taken away with it (Placed: the tile's actors).
+ */
+function PlaceDisplaysOf(string Level, vector At, out array<Actor> Placed)
+{
+	local LWX2EWMapPieces.LWX2Display D;
+	local LWX2UIDisplay A;
+	local StaticMesh Mesh;
+	local MaterialInterface Mat;
+
+	if (!ScreensIn3D || Data(Level).Displays.Length == 0)
+		return;
+	// (Those of tiles changed since: gone with their tile.)
+	Displays.RemoveItem(none);
+	Mesh = StaticMesh(DynamicLoadObject(DisplayMesh, class'StaticMesh', true));
+	Mat = MaterialInterface(DynamicLoadObject(DisplayMaterial, class'MaterialInterface', true));
+	if (Mesh == none || Mat == none)
+		return;
+	foreach Data(Level).Displays(D)
+	{
+		A = PlaceDisplay(D, D.Tag, Mesh, Mat, true, At);
+		if (A != none)
+			Placed.AddItem(A);
+	}
 }
 
 /** EW's camera for an XCOM 2 screen drawn on one of EW's panels (ScreenDisplays), by the screen's display tag; '' if none. */
@@ -522,8 +550,12 @@ static function LWX2UIDisplay DisplayFor(Actor Finder, name Tag)
 	if (B == none)
 		return none;
 	B.PlaceDisplays();
+	// (The tiles brought up to date first: a facility's panels come with its tile, which a screen opened right after the
+	// facility was built would otherwise look for before the base has placed it.)
+	B.Refresh();
+	// (A facility's panels go with its tile: none once it is gone.)
 	foreach B.Displays(A)
-		if (A.Tag == Tag)
+		if (A != none && A.Tag == Tag)
 			return A;
 	return none;
 }
@@ -840,6 +872,7 @@ function Refresh()
 			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed, true, BaseLightScale, true);
 			// (The facility's people and animated props too: the Genetics Lab's scientists and tanks, the Foundry's workers.)
 			PlacePeopleOf(Level, Command.Rooms[k].Loc + BaseOffset, Placed);
+			PlaceDisplaysOf(Level, Command.Rooms[k].Loc + BaseOffset, Placed);
 			foreach Placed(A)
 			{
 				Tiles.AddItem(A);

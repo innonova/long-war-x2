@@ -11,7 +11,8 @@ var string QueueShown;
 /** Where the player is, as EW's HUD changes with it (UIStrategyHUD and its rooms' UIStrategyHUD_FSM_*): 0 the base's view,
  *  1 Mission Control, 2 a room of the base, 3 a screen over the base. */
 var int Context;
-/** What the room or screen is about, for its panels and resource line: 'Research', 'Engineering', 'Facilities' or none. */
+/** What the room or screen is about, for its panels and resource line: 'Research', 'Engineering', 'Facilities', 'RepairBay',
+ *  'Soldier' or none. */
 var name Kind;
 /** The context the back arrow and panels were last set for ("": not yet). */
 var string ShownFor;
@@ -165,7 +166,9 @@ function ShowForTop()
 	Top = Movie.Pres.ScreenStack.GetCurrentScreen();
 	ShowNavHelpFor(Top);
 	class'UILWEWSituationRoom'.static.WallFor(XComHQPresentationLayer(Movie.Pres));
-	bHide = UIPersonnel_Armory(Top) != none || UILWEWSoldierList(Top) != none || UILWEWSoldierSummary(Top) != none || UILWEWMemorial(Top) != none || UIArmory(Top) != none || UICustomize(Top) != none || UIMouseGuard_RotatePawn(Top) != none;
+	// (And over Officer Billets, EW's medals screen as Long War made it: UIMedals.OnInit hides it.)
+	bHide = UIPersonnel_Armory(Top) != none || UILWEWSoldierList(Top) != none || UILWEWSoldierSummary(Top) != none || UILWEWMemorial(Top) != none || UIArmory(Top) != none || UICustomize(Top) != none || UIMouseGuard_RotatePawn(Top) != none
+		|| UILWEWOfficers(Top) != none;
 	if (bHide == bResourcesHidden)
 		return;
 	bResourcesHidden = bHide;
@@ -220,7 +223,14 @@ function Refresh()
 	// facilities' (UIBuildFacilities.UpdateResources) credits, the month's net, elerium, alloys, meld, power.
 	bWide = Kind == 'Engineering' || Kind == 'Facilities';
 	AddResource(Label(0, "CREDITS"), class'LWStrategyRules'.static.Money(Cash), Cash > 0);
-	if (Kind != 'Engineering')
+	// (The Repair Bay's: credits, meld, elerium, alloys.)
+	if (Kind == 'RepairBay')
+	{
+		AddResource(Label(7, "MELD"), string(Meld), Meld > 0);
+		AddResource(Label(1, "ELERIUM"), string(XComHQ.GetResourceAmount('EleriumDust')), true);
+		AddResource(Label(2, "ALLOYS"), string(XComHQ.GetResourceAmount('AlienAlloy')), true);
+	}
+	else if (Kind != 'Engineering')
 	{
 		Net = S.MonthlyNet();
 		AddResource(Label(6, "MONTHLY"), (Net > 0 ? "+" : "") $ class'LWStrategyRules'.static.Money(Net), Net > 0);
@@ -234,7 +244,7 @@ function Refresh()
 		if (Kind == 'Engineering')
 			AddResource(Repl(Caps(FragmentsName()), "WEAPON ", ""), string(XComHQ.GetResourceAmount(class'X2Item_LWArtifacts'.static.ItemFor('WeaponFragment'))), true);
 	}
-	if (Meld > 0 || bWide)
+	if ((Meld > 0 || bWide) && Kind != 'RepairBay')
 		AddResource(Label(7, "MELD"), string(Meld), Meld > 0);
 	// (Added again each second: kept hidden where it is, ShowForTop.)
 	if (bResourcesHidden)
@@ -287,8 +297,11 @@ function FindContext()
 		if (UILWEWResearch(Top) != none)
 			Kind = 'Research';
 		// (And the Repair Bay, EW's MEC inventory: engineering's lines and its engineers, as EW's capture shows.)
-		else if (UILWEWEngineering(Top) != none || UILWEWManufacturing(Top) != none || UILWEWRepairBay(Top) != none)
+		else if (UILWEWEngineering(Top) != none || UILWEWManufacturing(Top) != none)
 			Kind = 'Engineering';
+		// (The Repair Bay, EW's MEC inventory: its own lines, UIMECInventory.UpdateResources, and the engineers.)
+		else if (UILWEWRepairBay(Top) != none)
+			Kind = 'RepairBay';
 		else if (UILWEWBuildFacilities(Top) != none || UILWEWChooseFacility(Top) != none)
 			Kind = 'Facilities';
 		else if (UILWEWSoldierSummary(Top) != none)
@@ -367,7 +380,7 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 		MC.QueueString(Label(4, "SCIENTISTS"));
 		MC.QueueString(string(S.Scientists));
 	}
-	else if (Kind == 'Engineering')
+	else if (Kind == 'Engineering' || Kind == 'RepairBay')
 	{
 		MC.QueueString(Label(3, "ENGINEERS"));
 		MC.QueueString(string(S.Engineers));

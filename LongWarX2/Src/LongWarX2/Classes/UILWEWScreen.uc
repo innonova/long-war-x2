@@ -278,7 +278,7 @@ function ShowOnPanel()
 		return;
 	B = class'LWX2EWBase'.static.Get(self);
 	foreach B.Displays(D)
-		if (D.Tag == EWDisplay && D.bEWMesh)
+		if (D != none && D.Tag == EWDisplay && D.bEWMesh)
 		{
 			ShownOn = D;
 			break;
@@ -287,7 +287,7 @@ function ShowOnPanel()
 	B = class'LWX2EWBase'.static.Get(self);
 	// (Of a tag with several panels, those with EW's own mesh only: its UVs take each panel's part of the movie.)
 	foreach B.Displays(D)
-		if (D.Tag == EWDisplay && D != ShownOn && (D.bEWMesh || !ShownOn.bEWMesh))
+		if (D != none && D.Tag == EWDisplay && D != ShownOn && (D.bEWMesh || !ShownOn.bEWMesh))
 			UIMovie_3D(Movie).ShowDisplayByInst(D);
 }
 
@@ -300,7 +300,7 @@ simulated function OnRemoved()
 	{
 		B = class'LWX2EWBase'.static.Get(self);
 		foreach B.Displays(D)
-			if (D.Tag == EWDisplay)
+			if (D != none && D.Tag == EWDisplay)
 				UIMovie_3D(Movie).HideDisplayByInst(D);
 	}
 	super.OnRemoved();
