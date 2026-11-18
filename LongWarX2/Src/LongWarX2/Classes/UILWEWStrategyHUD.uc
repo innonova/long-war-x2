@@ -57,6 +57,7 @@ simulated function OnInit()
 	MC.FunctionVoid("HideHotlink");
 	Refresh();
 	SetTimer(1.0, true, nameof(Refresh));
+	SetTimer(0.1, true, nameof(ShowForTop));
 }
 
 /** EW's engineering queue (XGEngineeringUI.BuildQueueItem): each build "Item (n)" with done/n and its ETA, each Foundry
@@ -121,6 +122,19 @@ function string Eta(int Hours, int Engineers)
 function AddResource(string Label, string Value, bool bGood)
 {
 	MC.FunctionString("AddResource", class'UIUtilities_Text'.static.GetColoredText(Label $ ":" @ Value, bGood ? eUIState_Good : eUIState_Bad));
+}
+
+/** Hidden while one of XCOM 2's soldier screens is on top (the barracks' soldier list, the armory and its screens, customization; the labs' soldier lists keep it):
+ *  EW shows no resource bar over its soldier screens (ew-compare, strategy-flow.md). */
+function ShowForTop()
+{
+	local UIScreen Top;
+	local bool bHide;
+
+	Top = Movie.Pres.ScreenStack.GetCurrentScreen();
+	bHide = UIPersonnel_Armory(Top) != none || UIArmory(Top) != none || UICustomize(Top) != none || UIMouseGuard_RotatePawn(Top) != none;
+	if (bHide == bIsVisible)
+		SetVisible(!bHide);
 }
 
 function Refresh()

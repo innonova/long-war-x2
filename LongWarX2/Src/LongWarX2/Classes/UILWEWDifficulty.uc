@@ -343,6 +343,9 @@ function Start()
 	}
 	`log("LongWarX2: EW new-game screen: campaign started through XCOM 2's (difficulty" @ Difficulty $ ", Ironman" @ Advanced[OPT_IRONMAN] $ ")", , 'LongWarX2');
 	Under.OnDifficultyConfirm(none);
+	// (Not XCOM 2's story: its ADVENT broadcast, which it plays as the strategy map loads, is cancelled; the map opens by a
+	// timer of its own. EW's intro is a Bink 1 film XCOM 2 cannot play.)
+	Under.ClearTimer('StartIntroMovie');
 }
 
 defaultproperties

@@ -1724,6 +1724,7 @@ function string Standable(string Part)
 function ArmoryPawn(out array<string> Out)
 {
 	local UIArmory Armory;
+	local XComGameState_Unit Unit;
 	local Actor A, Place;
 	local int i;
 
@@ -1742,6 +1743,13 @@ function ArmoryPawn(out array<string> Out)
 	Place = Armory.GetPlacementActor();
 	Out.AddItem(Armory.Class.Name @ "pawn" @ (A != none ? A.Name @ "at" @ A.Location @ "hidden" @ A.bHidden : "none")
 		@ "placement" @ Armory.PawnLocationTag @ (Place != none ? string(Place.Location) : "none"));
+	// (Its look: the unit's armour and the body parts it wears, and whether it wears its underlay.)
+	Unit = Armory.GetUnit();
+	if (Unit != none)
+		Out.AddItem("armour" @ (Unit.GetItemInSlot(eInvSlot_Armor) != none ? string(Unit.GetItemInSlot(eInvSlot_Armor).GetMyTemplateName()) : "none")
+			@ "torso" @ Unit.kAppearance.nmTorso @ "arms" @ Unit.kAppearance.nmArms @ "legs" @ Unit.kAppearance.nmLegs
+			@ "underlay" @ (XComHumanPawn(A) != none ? string(XComHumanPawn(A).bShouldUseUnderlay) : "-")
+			@ "pawn torso" @ (XComHumanPawn(A) != none ? string(XComHumanPawn(A).m_kAppearance.nmTorso) : "-"));
 }
 
 function UI3D(name Tag, bool bShow, out array<string> Out)

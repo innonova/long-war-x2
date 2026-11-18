@@ -69,16 +69,20 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
 1. **Game creation is XCOM 2's:** its main menu and difficulty screen, where EW has LONG WAR → SELECT LONG WAR
    DIFFICULTY (Normal, Classic, Brutal, Impossible) with SECOND WAVE (EW's 22 options in two columns) and ADVANCED
    OPTIONS (tutorial, Progeny, Slingshot, Ironman, beginner VO) (`menu-*`). **Done for the new-game screens** (see the
-   report below); still XCOM 2's: the main menu, then after START GAME XCOM 2's ADVENT broadcast intro and its
-   Skyranger briefing "Operation Gatecrasher" ("Wilderness of South Africa", over an EW map) for the first mission.
+   report below); XCOM 2's ADVENT broadcast intro after START GAME is gone (EW's own intro is a Bink 1 film XCOM 2
+   cannot play). Still XCOM 2's: the main menu, and the Skyranger briefing "Operation Gatecrasher" ("Wilderness of
+   South Africa", over an EW map) for the first mission, and every mission's briefing (EW's dropship screen is in
+   EW's UICollection_Dropship_SF).
 2. **The soldier screens are XCOM 2's where EW has its own:** the soldier list (EW's: Long War's stats per soldier,
    class counts in the title), the soldier's summary menu (EW: Abilities, Gene Mods, Loadout, Customize, Report for
    Duty, Dismiss, and next/previous soldier buttons), the abilities tree (EW's: Long War's ranks as a vertical list
    beside the soldier; XCOM 2's horizontal panel covers the soldier), Gene Mods.
 3. **The barracks lack EW's View the Memorial and Hire Soldiers** (EW's own hire dialog over the barracks).
-4. **The resource bar stays over the soldier screens**; EW shows none there (and Engineering's list of resources
-   shows only in Engineering).
-5. **The soldier stands without his armour** in the armory (Tac Armor equipped).
+4. ~~The resource bar stays over the soldier screens~~: hidden over the barracks' list, the armory and customization
+   (`UILWEWStrategyHUD.ShowForTop`), as in EW.
+5. **XCOM 2's random looks include its DLC's bare-chested torsos and cargo shorts** (one soldier stood so in the armory;
+   the armour itself shows: another stood in hers). EW's soldiers never look so; to decide which of XCOM 2's parts a
+   Long War recruit may get.
 6. **The barracks have no people;** EW's soldiers stand at the bar, train in the gym.
 7. **The start screen stands on black;** EW's (after the first mission) not captured yet.
 8. Still to walk: research, engineering and hangar second-level screens and their dialogs (EW's order interceptors and
