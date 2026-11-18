@@ -186,6 +186,13 @@ simulated function OnInit()
 	// The view asked for again a moment later: a screen closed just before (the start screen) sends XCOM 2's camera back
 	// to the Avenger after this. And the HUD with the resources and clock over this.
 	SetTimer(0.6, false, nameof(ShowBase));
+	// (EW's Situation Room wall, live from the start: after the base and its panels are in place.)
+	SetTimer(1.2, false, nameof(OpenWall));
+}
+
+function OpenWall()
+{
+	class'UILWEWSituationRoom'.static.OpenWall(XComHQPresentationLayer(Movie.Pres));
 }
 
 static function string Word(string Localized, string Fallback)
@@ -230,6 +237,8 @@ simulated function OnReceiveFocus()
 	if (Room >= 0)
 		SetTimer(0.15, true, nameof(HoverOption));
 	ShowBase();
+	// (EW's Situation Room wall, live again once its own screen has closed.)
+	class'UILWEWSituationRoom'.static.OpenWall(XComHQPresentationLayer(Movie.Pres));
 	SetTimer(0.6, false, nameof(ShowBase));
 	LogQueuedPopups();
 }

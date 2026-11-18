@@ -126,6 +126,7 @@ console.log(
     "; EW's screens on their 3D panels in the rooms (features/ew-3d-screens.md): the panels' mesh and material (XCOM 2's,",
     "; whose material takes the 3D movie in its Movie parameter), scaled from EW's.",
     "ScreensIn3D=true",
+    "SatellitesOnWall=true",
     "DisplayMesh=\"Strat_Overworld.Meshes.UI_Plate_A\"",
     "DisplayMaterial=\"Strat_Overworld.Materials.UIDisplayMaterial_Overworld\"",
     "DisplayScale=155.0",

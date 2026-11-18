@@ -60,6 +60,8 @@ var array<LWX2BasePerson> People;
 /** EW's screens on their 3D panels in the rooms (features/ew-3d-screens.md), and the panel's mesh and material: XCOM 2's
  *  (its material takes the 3D movie in its Movie parameter), scaled from EW's. */
 var config bool ScreensIn3D;
+/** The satellites' view on the Situation Room's wall too, its HUD over it (features/ew-3d-screens.md). */
+var config bool SatellitesOnWall;
 var config string DisplayMesh, DisplayMaterial;
 var config float DisplayScale;
 /** XCOM 2's plate turned to face as EW's panel mesh faces (added to EW's rotation). */

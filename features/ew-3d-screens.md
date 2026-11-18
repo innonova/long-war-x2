@@ -66,3 +66,20 @@ where EW's country panels stand.
   clicks meant for the wall's countries (XCOM 2 gives a click to the 3D movie only when no 2D Flash is under the mouse,
   `XComHeadquartersInput.LMouse`). Choosing a country works flat. To put it on the wall, the HUD's movie must stop
   catching clicks outside its panels.
+
+## Report (2026-11-18, the wall live; the satellites' view on it)
+
+- **The Situation Room's wall is live, as in EW:** EW keeps its UISituationRoom on the room's wall while at the base; the
+  port's wall was blank until the Situation Room was opened (the reviewer's third item). The hub now opens it on the
+  wall under itself (`UILWEWSituationRoom.OpenWall`, bWall: the countries, funding, the earth; no input, no camera of its
+  own, kept drawn when it loses the focus), from the start and again whenever the hub has the focus back. The Situation
+  Room itself, EXALT's view and the satellites' view take its place on the wall while open (`CloseWall`). Seen on wingpu:
+  the wall in the room view and, small, from the base view; the Situation Room and the satellites' view opened and
+  closed over it, the wall back after.
+- **The satellites' view on the wall too** (`SatellitesOnWall`): clicks on the wall's countries now reach it under the
+  HUD (a click on Canada chose Canada), so the earlier reason to keep it flat is gone.
+- **Still not as EW:** EW's wall is curved panels each showing its slice of the movie (the lists narrow at the sides, the
+  map wide in the middle: about 59 % of the wall against our single plate's 37 %), and its satellites' camera
+  (`SituationRoom_UIDisplayCam_MainScreen`, read from EW's code) frames it closer. With our flat plate that camera cuts
+  the lists, and `Cam_SituationRoom` leaves the HUD's lower panel over the last rows. Next: EW's own wall meshes and their
+  UV slices (why they showed only slivers), then its camera.

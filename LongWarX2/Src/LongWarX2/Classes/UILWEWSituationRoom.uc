@@ -17,6 +17,9 @@ var localized string SatEngineer, SatEngineers, SatConfirmTitle, SatCountry, Sat
 
 /** The satellites' view (EW's SatelliteState): a country chosen, the HUD's panels, a satellite launched there. */
 var bool bSatellite;
+/** The wall as EW always shows it (EW's UISituationRoom stays on the room's wall while at the base): the countries, the map
+ *  and the earth, under the hub, taking no input (OpenWall); out of the way while the Situation Room itself is open. */
+var bool bWall;
 var int SatSlot;
 var UILWEWSituationRoomHUD SatHUD;
 
@@ -35,6 +38,43 @@ var array<name> Order;
 /** The earth's texture, held: Flash fetches it a frame later, by its path, and found nothing once it had been collected. */
 var Texture2D EarthTexture;
 
+/** EW's wall, live, under the hub (bWall): once, while the base is in view; where 3D screens are on. */
+static function OpenWall(XComHQPresentationLayer HQPres)
+{
+	local UILWEWSituationRoom EWScreen;
+	local UIScreen Top;
+
+	if (HQPres == none || !class'LWX2EWBase'.default.ScreensIn3D || class'LWX2EWBase'.static.DisplayFor(HQPres, default.EWDisplay) == none
+		|| HQPres.ScreenStack.GetScreen(class'UILWEWSituationRoom') != none)
+		return;
+	Top = HQPres.ScreenStack.GetCurrentScreen();
+	DynamicLoadObject(default.UIPackage $ ".ewxSituationRoom", class'Object', true);
+	EWScreen = HQPres.Spawn(class'UILWEWSituationRoom', HQPres);
+	EWScreen.Package = name("/ package/ewxSituationRoom/SituationRoom");
+	EWScreen.MCName = 'theScreen';
+	EWScreen.bWall = true;
+	EWScreen.bHideOnLoseFocus = false;
+	// (No camera of its own: the hub's room or base view stays.)
+	EWScreen.EWDisplayCamera = '';
+	EWScreen.BaseCamera = '';
+	Push3D(HQPres, EWScreen);
+	// (Under the screen that was on top: the hub keeps the focus.)
+	if (Top != none)
+		HQPres.ScreenStack.MoveToTopOfStack(Top.Class);
+}
+
+/** The wall taken down (the Situation Room itself opens on it). */
+static function CloseWall(XComHQPresentationLayer HQPres)
+{
+	local UILWEWSituationRoom Wall;
+
+	Wall = HQPres != none ? UILWEWSituationRoom(HQPres.ScreenStack.GetScreen(class'UILWEWSituationRoom')) : none;
+	if (Wall != none && Wall.bWall)
+	{
+		HQPres.ScreenStack.Pop(Wall, false);
+	}
+}
+
 static function string Open(optional bool bCovertOps, optional bool bSatellites)
 {
 	local XComHQPresentationLayer HQPres;
@@ -43,11 +83,12 @@ static function string Open(optional bool bCovertOps, optional bool bSatellites)
 	HQPres = `HQPRES;
 	if (HQPres == none)
 		return "ERR not on the Avenger";
+	CloseWall(HQPres);
 	DynamicLoadObject(default.UIPackage $ ".ewxSituationRoom", class'Object', true);
 	EWScreen = HQPres.Spawn(class'UILWEWSituationRoom', HQPres);
 	// (The satellites' view flat, not on the wall: EW's HUD over it is a 2D screen, whose movie took the clicks meant for
 	// the wall's countries before XCOM 2 passed them to the 3D movie, XComHeadquartersInput.LMouse.)
-	if (bSatellites && !bCovertOps)
+	if (bSatellites && !bCovertOps && !class'LWX2EWBase'.default.SatellitesOnWall)
 		EWScreen.EWDisplay = '';
 	// A black background under it (EW's earth goes into its map area: OnInit); on EW's wall in 3D, the room itself.
 	if (!(class'LWX2EWBase'.default.ScreensIn3D && class'LWX2EWBase'.static.DisplayFor(HQPres, EWScreen.EWDisplay) != none))
@@ -520,6 +561,9 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 	local string Target, Joined;
 	local int i;
 
+	// (The wall takes no input.)
+	if (bWall)
+		return;
 	if ((bCovert || bSatellite) && cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP && args.Length > 0)
 	{
 		Target = args[args.Length - 1];
@@ -567,6 +611,8 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 {
 	local int i;
 
+	if (bWall)
+		return false;
 	if ((bCovert || bSatellite) && (arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0
 		&& (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP || cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED))
 	{
