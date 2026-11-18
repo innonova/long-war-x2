@@ -390,3 +390,33 @@ in `logs/` (`fin1`, `bonuses`, `pending`, `research`, `research_alert`, `report`
 - The craft summary's WEAPON INFO / SHIP INFO item cards.
 - The back arrow under the craft summary and loadout (the HUD's help bar reports visible but draws nothing there).
 - EW's Situation Room research report also shows the tactical summary card for autopsies (`btxtInfo`); not done.
+
+## Report (2026-11-18 evening, the reviewer's third round)
+
+The reviewer's round 3 (33 pairs, `logs/compare/review/_summary.md`) and what came of it:
+
+- **Back arrows** (its #7): under a second EW screen of the same kind (the craft summary over the aircraft list, the order
+  dialog, the satellite view over the Situation Room) the HUD's arrow sat below the screen's edge. The HUD lays its help
+  bar out only as its buttons are added (when the kind of screen changes), and an opening EW movie moves the view the bar
+  is placed by; the bar is now laid out again as each EW screen opens. Checked on all five views.
+- **WEAPON INFO / SHIP INFO** (its #13): EW's item cards (`UIItemCards`, a new `UILWEWItemCard`) for a craft weapon (to
+  hit at D/B/A, range, fire rate, damage, armour penetration, its tactical info and picture) and for a craft (Long War's
+  text about interceptors or Firestorms), opened from the craft summary's help bar where EW has the two buttons.
+- **The Repair Bay** (its #12): on EW's panel in the Cybernetics Lab (`UIDisplay_CyberneticsLab`, as `UIMECInventory`),
+  with EW's lines (credits, meld, elerium, alloys) and the engineers, no engineering queue. Facility levels' own panels
+  are now placed with their tiles (they had been looked for only in the main level), and the tiles are brought up to date
+  before a panel is looked for.
+- **Officer Billets** (its #4): EW's code moves no camera for it (`XGBarracksUI` → `UIMedals`), so the room stays; the
+  EW capture's school view was left from an earlier visit. EW hides the resource lines there; so do we now.
+- **The soldier summary's previous/next buttons** (part of its #15): EW's navigation help pads its containers (left 20,
+  right 20, centre 60); ours now does too.
+- **Tried and reverted:**
+  - Hiding the Situation Room's wall under its own screens (Gray Market, Pending Requests, Finances), as EW's room screen
+    hides on losing focus. In EW the map stays (a 3D material); ours is drawn by the movie, so the wall went blank. The
+    proper fix: hide only the country panels, the panic bar and the objectives there.
+  - Placing Anim_Hangar's one static piece (a grounded Skyranger): wrong place and no body texture; EW's visible craft
+    are the hangar's matinee-driven ships (`XGFacility_Hangar.SetHangarShipsForKismet`, `SeqEvent_ShipToKismet`).
+
+**Still open from round 3:** the soldier loadout (XCOM 2's, by decision), the craft in the hangar's bays, the front end's
+scenes (EW's shell; waits on the crash below), Shen and the dark staff, the Gene Lab's tanks, monitors and globe effects,
+surface detail and lighting, the soldier summary's right-hand header width, the Gray Market's second portrait.
