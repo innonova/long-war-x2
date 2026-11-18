@@ -580,3 +580,7 @@ piece of 17 facility levels, is not found (an EW package the setup does not carr
 - **The Situation Room's wall is bare everywhere but in the room** (its satellite view included): from the base's view,
   Mission Control and the barracks it shows the map alone, its side panels dark, as EW's (the reviewer's round 4, #11:
   the country columns at Mission Control's edge are gone).
+- **Looked at and left:** the Gray Market's Sectoid Corpse shows EW's own picture for it, by Long War's table (two figures
+  in one picture; not a mix-up of ours). Pending Requests' map ends above EW's (black below): our wall's map is the room
+  movie's clip, shorter than EW's 3D map material; the soldier summary's right-hand panels are as wide as their content
+  ("MASTER SERGEANT"), as EW's ResizeContents makes them, their right-hand outline not closing (art detail, open).
