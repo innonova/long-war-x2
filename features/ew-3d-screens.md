@@ -83,3 +83,16 @@ where EW's country panels stand.
   (`SituationRoom_UIDisplayCam_MainScreen`, read from EW's code) frames it closer. With our flat plate that camera cuts
   the lists, and `Cam_SituationRoom` leaves the HUD's lower panel over the last rows. Next: EW's own wall meshes and their
   UV slices (why they showed only slivers), then its camera.
+
+## Report (2026-11-18, EW's own wall)
+
+- **The Situation Room is on EW's own wall meshes now** (`UI_situationroom_left`, `_center`, `_right`, `_top`,
+  `_objectives`), each taking its slice of the movie as in EW: the lists on the side panels, the map large in the middle.
+  Their UVs, read from EW's Command1 (left U 0–0.31, centre U 0.3123–0.6875 and V from 0.1327, right from U 0.6929),
+  match the movie's own layout at EW's 1280 × 720 (the map area at x 400–880, y 95.55): the slivers seen before came from
+  the movie drawn at 2/3 of EW's size, fixed on 2026-11-17. The single plate is gone (`PlateDisplays` kept for any tag
+  that needs one).
+- **Seen on wingpu:** the room view, the base view, the Situation Room, and the satellites' view beside EW's own capture:
+  the same layout, the HUD's lower panel below the last rows, a click on Canada on EW's left mesh choosing Canada.
+- **Still to do here:** the satellites' counters above the map (EW's "1 AVAILABLE · 16/16 IN ORBIT"), EW's objectives
+  panel under the map, the ticker on the top mesh.
