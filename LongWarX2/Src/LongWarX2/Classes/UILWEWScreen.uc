@@ -203,6 +203,9 @@ static function Push3D(XComHQPresentationLayer HQPres, UILWEWScreen S)
 	if (S.EWDisplay != '' && class'LWX2EWBase'.default.ScreensIn3D && class'LWX2EWBase'.static.DisplayFor(HQPres, S.EWDisplay) != none)
 	{
 		S.BaseCamera = S.EWDisplayCamera != '' ? S.EWDisplayCamera : S.BaseCamera;
+		// (Its clicks taken under a 2D screen of its own too, as the Situation Room's HUD over its satellites' view:
+		// XCOM 2 hands mouse events only to a focused screen, UIMovie.FlashRaiseMouseEvent.)
+		S.bProcessMouseEventsIfNotFocused = true;
 		HQPres.ScreenStack.Push(S, HQPres.Get3DMovie());
 		return;
 	}

@@ -45,6 +45,10 @@ static function string Open(optional bool bCovertOps, optional bool bSatellites)
 		return "ERR not on the Avenger";
 	DynamicLoadObject(default.UIPackage $ ".ewxSituationRoom", class'Object', true);
 	EWScreen = HQPres.Spawn(class'UILWEWSituationRoom', HQPres);
+	// (The satellites' view flat, not on the wall: EW's HUD over it is a 2D screen, whose movie took the clicks meant for
+	// the wall's countries before XCOM 2 passed them to the 3D movie, XComHeadquartersInput.LMouse.)
+	if (bSatellites && !bCovertOps)
+		EWScreen.EWDisplay = '';
 	// A black background under it (EW's earth goes into its map area: OnInit); on EW's wall in 3D, the room itself.
 	if (!(class'LWX2EWBase'.default.ScreensIn3D && class'LWX2EWBase'.static.DisplayFor(HQPres, EWScreen.EWDisplay) != none))
 		class'UILWEWMapBackdrop'.static.ShowIfAvailable();

@@ -62,3 +62,7 @@ where EW's country panels stand.
   onto it through EW's `Cam_SituationRoom`: the countries, funding, the earth on the room's wall as in EW.
 - **Clicks work there:** in EXALT's view a click on a country with an exposed cell opened the covert operative list.
 - **Not as EW's:** EW's wall is curved and in panels, ours one flat plate; EW's objectives panel below it is not shown.
+- **The satellites' view stays flat:** EW's Situation Room HUD over it is a 2D screen, as in EW, and its movie took the
+  clicks meant for the wall's countries (XCOM 2 gives a click to the 3D movie only when no 2D Flash is under the mouse,
+  `XComHeadquartersInput.LMouse`). Choosing a country works flat. To put it on the wall, the HUD's movie must stop
+  catching clicks outside its panels.
