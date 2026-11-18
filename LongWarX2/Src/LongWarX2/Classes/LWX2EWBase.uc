@@ -273,6 +273,7 @@ function PlaceDisplays()
 		A.StaticMeshComponent.CreateAndSetMaterialInstanceConstant(0).SetScalarParameterValue('Visibility', 1.0);
 		A.SetDrawScale3D(EWMesh != none ? D.Scale : D.Scale * (DisplayScale > 0 ? DisplayScale : 1.0));
 		A.Tag = D.Tag;
+		A.bEWMesh = EWMesh != none;
 		// (The mesh hidden, not the actor: XCOM 2's 3D movie unhides the mesh, UIMovie_3D.ShowDisplayByInst.)
 		A.StaticMeshComponent.SetHidden(true);
 		Displays.AddItem(A);

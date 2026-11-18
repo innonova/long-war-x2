@@ -643,8 +643,8 @@ function AddMapItem(string Label, float MapX, float MapY)
 
 defaultproperties
 {
-	// (EW's wall, UIDisplay_CountryPanels through Cam_SituationRoom, not yet: only strips of the movie showed on EW's wall
-	// panels, features/ew-3d-screens.md.)
+	// (EW's wall, UIDisplay_CountryPanels through Cam_SituationRoom, not yet: EW's wall meshes showed only slivers of the
+	// movie, small regions of it, its layout in XCOM 2's 3D render target not EW's: features/ew-3d-screens.md.)
 	Order(0) = USA
 	Order(1) = Canada
 	Order(2) = Mexico

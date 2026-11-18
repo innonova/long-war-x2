@@ -220,10 +220,18 @@ function ShowOnPanel()
 	ShownOn = class'LWX2EWBase'.static.DisplayFor(self, EWDisplay);
 	if (ShownOn == none)
 		return;
-	UIMovie_3D(Movie).ShowDisplay(EWDisplay, ShownOn);
 	B = class'LWX2EWBase'.static.Get(self);
 	foreach B.Displays(D)
-		if (D.Tag == EWDisplay && D != ShownOn)
+		if (D.Tag == EWDisplay && D.bEWMesh)
+		{
+			ShownOn = D;
+			break;
+		}
+	UIMovie_3D(Movie).ShowDisplay(EWDisplay, ShownOn);
+	B = class'LWX2EWBase'.static.Get(self);
+	// (Of a tag with several panels, those with EW's own mesh only: its UVs take each panel's part of the movie.)
+	foreach B.Displays(D)
+		if (D.Tag == EWDisplay && D != ShownOn && (D.bEWMesh || !ShownOn.bEWMesh))
 			UIMovie_3D(Movie).ShowDisplayByInst(D);
 }
 
