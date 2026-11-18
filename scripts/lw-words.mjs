@@ -131,6 +131,11 @@ export function makeWords({ plan, core, loc, consts }) {
       `RightAbilityTreeTitle=${q('')}`,
       ...rankNames.flatMap(([n, abbr], k) => [`RankNames[${k}]=${q(n)}`, `ShortNames[${k}]=${q(abbr)}`]),
     ]),
+    // XCOM 2's classless soldier as Long War names it: its class (m_aSoldierClassNames[eSC_None]) and ranks ("PFC").
+    '',
+    '[Rookie X2SoldierClassTemplate]',
+    ...(loc.match(/^m_aSoldierClassNames\[eSC_None\]="(.*)"/m) ? [`DisplayName=${q(loc.match(/^m_aSoldierClassNames\[eSC_None\]="(.*)"/m)[1])}`] : []),
+    ...rankNames.flatMap(([n, abbr], k) => [`RankNames[${k}]=${q(n)}`, `ShortNames[${k}]=${q(abbr)}`]),
     ...plan.standins.flatMap(({ name, perk }) => {
       const title = clean(titleOf(perk))
       const text = clean(fill(locOf('m_strPassiveTxt', perk)))
@@ -864,6 +869,11 @@ export function makeMainMenuWords({ shellLoc }) {
 }
 
 /** EW's memorial (UILWEWMemorial): its [UIMemorial] section of the strategy text, under the mod's class. */
+/** EW's operation names (LWOpNames: XGMission's two word lists, its "Operation …" and the story missions' own). */
+export function makeOpNameWords({ strategyLoc }) {
+  return copySections(strategyLoc, [['XGMission', 'LWOpNames']])
+}
+
 export function makeMemorialWords({ strategyLoc }) {
   return copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial']])
 }

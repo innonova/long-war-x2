@@ -182,6 +182,8 @@ function int PrepareMission()
 	local XComGameState_HeadquartersResistance ResHQ;
 	local XComGameState_MissionSite Mission;
 	local XComGameState_WorldRegion Region;
+	local XComGameState_LWStrategy LWNow;
+	local string OpName;
 	local XComGameState_Reward Reward;
 	local array<XComGameState_Reward> Rewards;
 	local X2StrategyElementTemplateManager Strategy;
@@ -249,6 +251,11 @@ function int PrepareMission()
 		Mission.BuildMission(X2MissionSourceTemplate(Strategy.FindStrategyElementTemplate(Source)), Where, Region.GetReference(), Rewards, true, false);
 		Mission.GeneratedMission.SitReps.Length = 0;
 		Mission.TacticalGameplayTags.Length = 0;
+		// EW's operation name (LWOpNames), where the player's EW words are written.
+		LWNow = class'XComGameState_LWStrategy'.static.Get();
+		OpName = class'LWOpNames'.static.For(Kind, (Kind == 10 && LWNow != none && LWNow.PendingIndex >= 0 && LWNow.PendingIndex < LWNow.Sites.Length) ? LWNow.Sites[LWNow.PendingIndex].CouncilMission : -1);
+		if (OpName != "")
+			Mission.GeneratedMission.BattleOpName = OpName;
 		if (EWMap == "" || UseEWPlot(Mission, true, EWMap, Kind == 10 ? Council.Level : class'LWX2EWMapPieces'.static.LevelOf(EWMap, class'LWX2EWMapPieces'.static.KindFor(Kind))) || PreferOutdoorPlot(Mission) || Attempt == 7)
 			break;
 		History.CleanupPendingGameState(NewGameState);

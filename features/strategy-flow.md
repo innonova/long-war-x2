@@ -81,14 +81,14 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
 3. ~~The barracks lack EW's View the Memorial and Hire Soldiers~~: both in (reports below).
 4. ~~The resource bar stays over the soldier screens~~: EW's resource panel hidden over the barracks' list, the
    armory, customization and the memorial, the back arrow kept (`UILWEWStrategyHUD.ShowForTop`), as in EW.
-6b. **Rookies are XCOM 2's "Rk. … (Rookie)"**; Long War's classless soldier is a "PFC … (Trooper)" (EW's
+6b. ~~**Rookies are XCOM 2's "Rk. … (Rookie)"**~~ (done, below); Long War's classless soldier is a "PFC … (Trooper)" (EW's
    `SoldierClassNames[eSC_None]`), as its memorial shows.
 5. **XCOM 2's random looks include its DLC's bare-chested torsos and cargo shorts** (one soldier stood so in the armory;
    the armour itself shows: another stood in hers). EW's soldiers never look so; to decide which of XCOM 2's parts a
    Long War recruit may get.
 6. **The barracks have no people;** EW's soldiers stand at the bar, train in the gym. They are the roster's own soldiers,
    placed by EW's HQ units event (`SeqEvent_HQUnits`), not scenery: `Anim_Barracks`' own 15 actors are a hidden cinematic.
-6c. **Operation names are XCOM 2's** ("Operation Gatecrasher" for the first mission). XCOM 2 draws them from the same two
+6c. ~~**Operation names are XCOM 2's**~~ (done, below) ("Operation Gatecrasher" for the first mission). XCOM 2 draws them from the same two
    word lists EW does (`XGMission.m_aFirstOpName`, `m_aSecondOpName`): EW's words written over them would give EW's
    names.
 7. **The start screen stands on black;** EW's (after the first mission) not captured yet.
@@ -232,3 +232,14 @@ Captures in `logs/compare/ew/` and `x2/`, pairs in `logs/compare/pairs/` (not co
   ranks (`features/lw-psi.md`, left open).
 - **Open:** an intermittent crash at campaign start while EW's base levels stream in (1 start in 13 today, crash handler
   at "GettingNameData"; the dump kept on wingpu, `XCom-HTPC-NUC-CL469133-2026.11.18-11.26.52-Crash`).
+
+## Report (2026-11-18, rookies' ranks, operation names)
+
+- **Rookies in Long War's words:** XCOM 2's classless soldier (its Rookie class) gets Long War's rank names (PFC, Private
+  1st Class, then Long War's ranks) and its class name for it (`m_aSoldierClassNames[eSC_None]`, "Rookie": the list's
+  6b had "Trooper", which is not Long War's), written by `lw-words.mjs` with the classes' words.
+- **EW's operation names** for every mission the Long War headquarters makes (`LWOpNames`, as `XGMission.GenerateOpName`:
+  "Operation" with one of EW's 53 first and 76 second words; the Temple Ship Operation Avenger, the HQ assault Operation
+  Ashes and Temples, the meld tutorial council mission its own pair). EW's `[XGMission]` words are copied from the
+  player's install (`makeOpNameWords`). Seen on wingpu: the first abduction was "Operation Rotting Crown", both EW's
+  words. The briefing that shows it is still XCOM 2's (item 1).
