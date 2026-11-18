@@ -833,10 +833,10 @@ function lookOf(r: number): Look {
   const pick = (params: string[], re: RegExp) =>
     params.map((p) => tex.get(p)).find(Boolean)
     ?? [...tex].find(([param, p]) => !/^Damage/i.test(param) && re.test(p.split('.').pop()!))?.[1] ?? ''
-  const diffuse = pick(['Diffuse', 'Diffuse_Base', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock'], /(_DIFF?|_D|Diffuse|_Dif)\d*$/i)
+  const diffuse = pick(['Diffuse', 'Diffuse_Base', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock', 'Hairstyle Texture'], /(_DIFF?|_D|Diffuse|_Dif)\d*$/i)
   return {
     diffuse,
-    normal: pick(['Normal', 'Normal_Base', 'Leaves_Normal', 'Dirt_Normal', 'Rock_Normal'], /(_NRM|_NORM|_N|Normal|_Nrm)\d*$/i),
+    normal: pick(['Normal', 'Normal_Base', 'Leaves_Normal', 'Dirt_Normal', 'Rock_Normal', 'Normal Map'], /(_NRM|_NORM|_N|Normal|_Nrm)\d*$/i),
     // Masked: cut out by the diffuse's alpha (tree cards, signs, fences: PROP_DifOpc, PROP_OpacityMask_Tile; and a
     // translucent parent's, as the road paint's, whose diffuse alpha holds the paint).
     kind: /Foliage|Grass|Veget/i.test(root) ? 'Foliage' : /DifOpc|OpacityMask/i.test(root) || (translucent.has(root) && diffuse) ? 'Masked' : /ALIEN/i.test(root) ? 'Alien' : 'Prop',

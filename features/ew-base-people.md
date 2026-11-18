@@ -30,3 +30,20 @@ research panel, Shen beside the build panel, clerks and engineers work in the ro
 2. **The setup converts the `Anim_` levels** with the base (the meshes and AnimSets load in XCOM 2 as EW's units' do).
 3. **The base spawns them** as skeletal mesh actors with EW's meshes, materials and a looping sequence, lit like the room.
 4. **Checked** against EW's captures: the lab with Vahlen, engineering with Shen, then the other rooms.
+
+## Report (2026-11-18, the people in)
+
+- **The converter** (`ew-people.ts`, called by `ew-map.ts` for a level with people): each person's mesh, place, the
+  AnimSets and loops of its matinee group (bound through the level's `SeqAct_Interp`), and each material slot's diffuse
+  and normal (the component's slots, else the skeletal mesh's native list), as `+People=` lines. In such a package:
+  the skeletal meshes' own material and FaceFX references cleared, EW's FaceFX, cinematic anim tree and IK notifies made
+  inert, the sequences' notifies cleared. Each of these crashed XCOM 2 as the level loaded, a person was spawned, or an
+  animation played; a native crash at each step, found by logging each step.
+- **At run time** (`LWX2EWBase.PlacePeople`, `LWX2BasePerson`): 59 people in the fixed rooms' six `Anim_` levels
+  (`PeopleLevels`), each looping EW's first sequence; XCOM 2's skeletal stand-in (`AlienUnit_TC`) per slot, with the
+  props' white `Masks` (the placeholder had darkened the white coats). Hair takes EW's hair mask (grey: EW tints it by a
+  colour parameter).
+- **Seen on wingpu:** Vahlen beside the research panel holding her tablet, the clerks at the lab's consoles, the
+  engineers and the welding robots working in engineering.
+- **Not yet:** Shen is not visible beside the build panel (a robot arm shows where EW has him); hair colour; only the
+  first of each person's sequences plays; the facility rooms' own `Anim_` levels (laboratory, workshop …).

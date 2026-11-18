@@ -272,6 +272,10 @@ function PlacePeople()
 	local AnimSet Set;
 	local LWX2EWBodies.LWX2Body B;
 	local string Level, Path;
+	local MaterialInterface Slot;
+	local MaterialInstanceConstant MIC;
+	local Texture T;
+	local int k;
 
 	if (People.Length > 0)
 		return;
@@ -303,7 +307,23 @@ function PlacePeople()
 				B.Diffuse = S.Diffuse;
 				B.Normal = S.Normal;
 				// (A slot without a diffuse found, hair and lashes: unlit black rather than XCOM 2's checkerboard.)
-				Slots.AddItem(S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B) : class'LWX2EWMapPieces'.static.BlackStandin(self));
+				// (A slot without a texture found, the eye lashes: the body's stand-in; our unlit material cannot go on a
+				// skeletal mesh.)
+				Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B) : (Slots.Length > 0 ? Slots[0] : none);
+				// (The props' textures and scalars on it too: XCOM 2's placeholder Masks darkened the white coats.)
+				MIC = MaterialInstanceConstant(Slot);
+				if (MIC != none && S.Diffuse != "")
+				{
+					for (k = 0; k < class'LWX2EWMapPieces'.default.StandinTextures.Length; k++)
+					{
+						T = Texture(DynamicLoadObject(class'LWX2EWMapPieces'.default.StandinTextures[k].Path, class'Texture', true));
+						if (T != none)
+							MIC.SetTextureParameterValue(class'LWX2EWMapPieces'.default.StandinTextures[k].Name, T);
+					}
+					for (k = 0; k < class'LWX2EWMapPieces'.default.StandinScalars.Length; k++)
+						MIC.SetScalarParameterValue(class'LWX2EWMapPieces'.default.StandinScalars[k].Name, class'LWX2EWMapPieces'.default.StandinScalars[k].Value);
+				}
+				Slots.AddItem(Slot);
 			}
 			`log("LongWarX2: EW base: spawning", , 'LongWarX2');
 			A = Spawn(class'LWX2BasePerson', self, , P.Loc + BaseOffset, P.Rot);

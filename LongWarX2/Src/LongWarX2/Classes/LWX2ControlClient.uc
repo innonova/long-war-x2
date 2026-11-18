@@ -104,6 +104,10 @@ function Handle(string Line, out array<string> Out)
 		GetALocalPlayerController().ClientUpdateLevelStreamingStatus(name(Args[1]), true, Args.Length < 3 || Args[2] != "false", false);
 		Out.AddItem("ok" @ Args[1]);
 		return;
+	case "people":
+		// A test aid: EW's people's light, live: people glow <v> (their light environment's ambient glow) | le on|off.
+		Out.AddItem(PeopleLight(Args));
+		return;
 	case "ewdisplay":
 		// A test aid: one of EW's 3D panels changed live: ewdisplay <tag> scale <s> | yaw <add> | pitch <add> | roll <add>.
 		Out.AddItem(EWDisplay(Args));
@@ -4345,6 +4349,29 @@ function Dump(XComGameState_LWStrategy S, out array<string> Out)
 }
 
 /** ewmat: a scalar (a number) or texture (a path) parameter set on every stand-in material of the EW map's pieces. */
+function string PeopleLight(array<string> Args)
+{
+	local LWX2BasePerson P;
+	local DynamicLightEnvironmentComponent LE;
+	local LinearColor C;
+	local int n;
+
+	foreach WorldInfo.AllActors(class'LWX2BasePerson', P)
+	{
+		LE = P.LightEnvironment;
+		if (Args.Length > 2 && Args[1] ~= "glow" && LE != none)
+		{
+			C.R = float(Args[2]); C.G = C.R; C.B = C.R; C.A = 1;
+			LE.AmbientGlow = C;
+			LE.ResetEnvironment();
+		}
+		else if (Args.Length > 2 && Args[1] ~= "le")
+			P.SkeletalMeshComponent.SetLightEnvironment(Args[2] ~= "on" ? P.LightEnvironment : none);
+		n++;
+	}
+	return "ok" @ n @ "people";
+}
+
 function string EWDisplay(array<string> Args)
 {
 	local LWX2UIDisplay D;
