@@ -124,6 +124,11 @@ function Handle(string Line, out array<string> Out)
 		// set on an instance of it: basemat <text> <material> [<scalar> <value> | <vector> <r>,<g>,<b>,<a>]…
 		Out.AddItem(BaseMat(Args));
 		return;
+	case "movie3d":
+		// A test aid: XCOM 2's 3D movie as it renders EW's 3D screens: its render target's size, and a panel's (by tag)
+		// material: its UV adjustment (UIMovie_3D.ScaleUVs).
+		Out.AddItem(Movie3D(Args.Length > 1 ? name(Args[1]) : ''));
+		return;
 	case "basehide":
 		// A test aid: EW's base's pieces and people whose mesh's path holds <text> hidden, or shown again: basehide <text> [show];
 		// or the people among them turned or moved, live: basehide <text> yaw|z <add>; or posed: basehide <text> pose <seconds>.
@@ -4742,6 +4747,32 @@ function string BaseHide(string Text, bool bShow, optional string Move, optional
 			Where $= " [" $ Person.Location @ Person.Rotation.Yaw $ "]";
 		}
 	return "ok" @ n @ (Move != "" ? Move @ By : (bShow ? "shown" : "hidden")) $ Where;
+}
+
+/** A test aid: XCOM 2's 3D movie and a panel's UV adjustment (movie3d). */
+function string Movie3D(name Tag)
+{
+	local UIMovie_3D M;
+	local LWX2UIDisplay D;
+	local MaterialInstance MI;
+	local LinearColor C;
+	local string S;
+
+	M = XComHQPresentationLayer(Pres()).Get3DMovie();
+	if (M == none)
+		return "no 3D movie";
+	S = "render target" @ (M.RenderTexture != none ? (M.RenderTexture.SizeX $ "x" $ M.RenderTexture.SizeY) : "none");
+	foreach AllActors(class'LWX2UIDisplay', D)
+		if (Tag == '' || D.Tag == Tag)
+		{
+			MI = MaterialInstance(D.StaticMeshComponent.GetMaterial(0));
+			if (MI != none && MI.GetVectorParameterValue('UVAdjust', C))
+				S $= ";" @ D.Tag @ "UVAdjust" @ C.R $ "," $ C.G $ "," $ C.B $ "," $ C.A;
+			else
+				S $= ";" @ D.Tag @ "no UVAdjust";
+			S @= PathName(D.StaticMeshComponent.StaticMesh) @ "scale" @ D.DrawScale3D;
+		}
+	return S;
 }
 
 /** A test aid: EW's base's pieces' material swapped, live (basemat). */
