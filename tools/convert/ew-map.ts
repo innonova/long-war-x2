@@ -49,8 +49,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  a look's tiling (Tile: EW's MainTile_U).; 34: the tinted copies named without a trailing "_<digits>".; 35: the colour
  *  mods twice as bright.; 36: EW's emitters and their sprites (Emitters, ParticleLooks).; 37: EW's lens flares (Flares,
  *  FlareLooks).; 38: emitters EW keeps still or off left out, their draw distance kept.; 39: their time dilation.; 40:
- *  the console screens' picture made white for our glow to tint (whiteMip). */
-export const CONVERTER_VERSION = 40
+ *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE). */
+export const CONVERTER_VERSION = 41
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1157,6 +1157,10 @@ for (const l of looks.values())
 // Spc_Ems_Ref_Opc mask; the slot takes the copy.
 /** How much brighter EW's hair draws than its hairstyle texture (APPROXIMATION, by eye against EW's capture of Vahlen). */
 const HAIR_SCALE = 2.6
+/** How much brighter EW draws its people than their diffuse (its character lighting, which XCOM 2's staff material does
+ *  not answer: ambient and light environments changed nothing): every person's diffuse brightened by it, colour-modded
+ *  parts included (APPROXIMATION, by eye against EW's captures of the labs' clerks and Vahlen; converter 41). */
+const PEOPLE_SCALE = 1.6
 const tints: { slot: Look; diffuse: number; mask: number; tint: number[]; name: string; scale?: boolean }[] = []
 people.forEach((p, k) =>
   p.materialRefs.forEach((m, j) => {
@@ -1174,7 +1178,11 @@ people.forEach((p, k) =>
     const maskPath = tex.get('Spc_Ems_Ref_Opc')
     const d = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
     const mk = maskPath ? exports.findIndex((e) => e.fullName === maskPath && e.type === 'Texture2D') : -1
-    if (!cmod || d < 0 || mk < 0) return
+    if (!cmod || d < 0 || mk < 0) {
+      // (No colour mod: the diffuse brightened alone.)
+      if (d >= 0) tints.push({ slot: l, diffuse: d + 1, mask: 0, tint: [PEOPLE_SCALE], name: `${exports[d]!.name}_LWX2Lit`, scale: true })
+      return
+    }
     // (No "_<digits>" at the end: the engine reads that as an instance number, and the name looked up never matched: the
     // clerks drew with no material at all until converter 34.)
     const key = cmod.slice(0, 3).map((c) => Math.round(c * 100)).join('x')
@@ -1209,7 +1217,7 @@ if (screenLooks.length) {
   }
 }
 const tintOf = new Map<string, { mask: string; tint: number[]; scale?: boolean }>()
-for (const t of tints) if (/_LWX2(Tint|Bright)/.test(t.slot.diffuse)) tintOf.set(t.slot.diffuse, { mask: t.mask ? exports[t.mask - 1]!.fullName : '', tint: t.tint, scale: t.scale })
+for (const t of tints) if (/_LWX2(Tint|Bright|Lit)/.test(t.slot.diffuse)) tintOf.set(t.slot.diffuse, { mask: t.mask ? exports[t.mask - 1]!.fullName : '', tint: t.tint, scale: t.scale })
 const masked = addMaskTextures(bytes, [...cutOut.values()])
 for (const l of looks.values()) if (masked.masks.has(cutOut.get(l.diffuse) ?? 0)) l.mask = l.diffuse + '_LWX2Mask'
 bytes = masked.bytes
@@ -1365,7 +1373,7 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
     if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
     const tm = tinted && format === 'PF_DXT1' ? dirMips.get(`${tinted.mask}:${w}x${h}`) : undefined
-    if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint)
+    if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint, PEOPLE_SCALE)
     const dir = lmPairs.get(e)
     const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${w}x${h}`) : undefined
     return d ? combineLightmapMip(mip, d, w, h) : undefined

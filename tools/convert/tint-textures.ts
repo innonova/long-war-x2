@@ -39,7 +39,7 @@ export function decodeDXT5Alpha(data: Uint8Array, w: number, h: number): Uint8Ar
 }
 
 /** A tinted mip: the diffuse's (DXT1) recoloured with Tint (0-1 RGB) where the mask (DXT5, its alpha) is, the same size. */
-export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[]): Uint8Array {
+export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1): Uint8Array {
   const rgba = decodeDXT1(diffuse, w, h)
   const a = decodeDXT5Alpha(mask, w, h)
   const lum = (k: number) => (0.299 * rgba[4 * k]! + 0.587 * rgba[4 * k + 1]! + 0.114 * rgba[4 * k + 2]!) / 255
@@ -52,12 +52,16 @@ export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: num
   const mean = weight > 0 ? sum / weight : 1
   for (let k = 0; k < w * h; k++) {
     const m = a[k]! / 255
-    if (m <= 0) continue
+    // (The part the mask leaves, brightened as EW's people draw: bright.)
+    if (m <= 0) {
+      if (bright !== 1) for (let c = 0; c < 3; c++) rgba[4 * k + c] = Math.min(255, Math.round(rgba[4 * k + c]! * bright))
+      continue
+    }
     const shade = Math.min(2, mean > 0 ? lum(k) / mean : 1)
     for (let c = 0; c < 3; c++) {
       // (× 2: EW's labs' grey colour mod, 0.48, draws the vests near white in EW's captures; APPROXIMATION.)
       const t = Math.min(255, 255 * 2 * tint[c]! * shade)
-      rgba[4 * k + c] = Math.round(rgba[4 * k + c]! * (1 - m) + t * m)
+      rgba[4 * k + c] = Math.round(Math.min(255, rgba[4 * k + c]! * bright) * (1 - m) + t * m)
     }
   }
   return encodeDXT1(rgba, w, h)
