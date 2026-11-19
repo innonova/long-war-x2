@@ -48,6 +48,9 @@ var array<LightComponent> WorldLights;
  *  the world's). "": none, the base lit by EW's own lights alone (dark: EW baked most of its light). */
 /** EW's people in its base (features/ew-base-people.md): the Anim_ levels whose people stand in the fixed rooms. */
 var config array<string> PeopleLevels;
+/** Scene props not placed: EW shows them only while its own animation plays (the armory's grapple rope, with a soldier's
+ *  grapple; left standing, it hung in front of the Situation Room's view). */
+var config array<string> PeopleSkipMeshes;
 /** A test aid (off): the fixed rooms placed at the main menu (UIScreenListener_LongWarX2Shell), the campaign start's crash
  *  reproduced at every start (features/strategy-flow.md). */
 var config bool PlaceInShell;
@@ -451,6 +454,8 @@ function PlacePeopleOf(string Level, vector Offset, out array<Actor> Placed)
 	{
 		// (A hangar bay's pad or craft: placed by the hangar's state, RefreshBays.)
 		if (P.Bay > 0)
+			continue;
+		if (class'LWX2EWMapPieces'.static.Matches(P.Mesh, PeopleSkipMeshes))
 			continue;
 		A = PlacePerson(P, Level, Offset);
 		if (A != none)

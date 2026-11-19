@@ -19,7 +19,7 @@ var config bool Enabled;
 
 /** EW's words, written from the player's install (scripts/lw-words.mjs, makeHubWords). */
 var localized string RoomNames[5];
-var localized string MissionControlName;
+var localized string MissionControlName, GreyMarketTitle;
 var localized string NewResearch, NewResearchHelp, ChangeResearch, ChangeResearchHelp, GeneLab, GeneLabHelp, BuildItems, BuildItemsHelp, BuildFacilities, BuildFacilitiesHelp, Foundry, FoundryHelp;
 var localized string ViewSoldiers, ViewSoldiersHelp, AircraftList, AircraftListHelp, SituationRoom, GreyMarket, GreyMarketHelp;
 var localized string Archives, ArchivesHelp, Credits, CreditsHelp, NoProjectsHelp;

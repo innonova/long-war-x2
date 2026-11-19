@@ -32,7 +32,8 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 simulated function OnInit()
 {
 	super.OnInit();
-	MC.FunctionString("SetTitle", "GREY MARKET");
+	// (EW's title, its facility's name: UIGreyMarket, m_aFacilityNamesCaps[eFacility_GreyMarket].)
+	MC.FunctionString("SetTitle", class'UILWEWHub'.static.Word(class'UILWEWHub'.default.GreyMarketTitle, "GRAY MARKET"));
 	Header(0, "IN STORAGE");
 	Header(1, "");
 	Header(2, "SELL");
@@ -83,7 +84,8 @@ function Fill(bool bReset)
 		MC.QueueBoolean(class'LWGreyMarket'.static.CanSell(k));
 		MC.EndOp();
 	}
-	Header(3, class'UIUtilities_Text'.static.GetColoredText("TOTAL" @ class'LWStrategyRules'.static.Money(Total), eUIState_Cash));
+	// (EW's total, the sum alone: XGGreyMarketUI's txtTotalCredits.)
+	Header(3, class'UIUtilities_Text'.static.GetColoredText(class'LWStrategyRules'.static.Money(Total), eUIState_Cash));
 	ShowSelected();
 	SellButton.SetDisabled(Total == 0);
 }

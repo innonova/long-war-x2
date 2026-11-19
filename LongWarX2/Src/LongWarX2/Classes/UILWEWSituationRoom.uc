@@ -42,7 +42,10 @@ var array<name> Order;
 var Texture2D EarthTexture;
 /** The news ticker (XCOM 2's scrolling text over EW's map's foot), and how far above the map's foot it stands. */
 var UIScrollingText NewsTicker;
+/** How far above EW's ticker strip (theTicker's top) the scrolling text stands. */
 var float NewsTickerRise;
+/** The ticker's type size (EW's is small, the map's strip). */
+var int NewsTickerFontSize;
 
 /** EW's wall, live, under the hub (bWall): once, while the base is in view; where 3D screens are on. */
 static function OpenWall(XComHQPresentationLayer HQPres)
@@ -242,7 +245,7 @@ function AddEarth()
 {
 	local UIPanel Area;
 	local UIImage Earth;
-	local float W, H, X, Y, FH;
+	local float W, H, X, Y, FH, TY;
 
 	EarthTexture = Texture2D(DynamicLoadObject("FX_Globe.T_Earth_Holo", class'Texture2D', true));
 	if (EarthTexture == none)
@@ -271,7 +274,9 @@ function AddEarth()
 	`log("LongWarX2: EW screen: the earth in the Situation Room's map area," @ W @ "x" @ H, , 'LongWarX2');
 	// The world's news (LWTicker) along the map's foot, in XCOM 2's scrolling text: EW's own ticker builds its lines from a
 	// library clip whose font does not draw in XCOM 2 (its text fields stay 4 high, nothing shows).
-	NewsTicker = Spawn(class'UIScrollingText', self).InitScrollingText('LWNewsTicker', "", W > 0 ? W : 480.0, X, Y + (FH > 0 ? FH : H) - NewsTickerRise);
+	// (On EW's own strip, theTicker, below the map; else at the map's foot.)
+	TY = MC.GetNum("theTicker._y");
+	NewsTicker = Spawn(class'UIScrollingText', self).InitScrollingText('LWNewsTicker', "", W > 0 ? W : 480.0, X, TY > 0 ? TY - NewsTickerRise : Y + (FH > 0 ? FH : H) - 30);
 }
 
 function Refresh()
@@ -316,7 +321,7 @@ function Refresh()
 	// The world's news (LWTicker; EW's UISituationRoom.UpdateTicker: SetTickerText(title, headlines)).
 	MC.FunctionVoid("HideTicker");
 	if (NewsTicker != none && class'LWTicker'.default.Lines.Length > 0)
-		NewsTicker.SetHTMLText(class'UIUtilities_Text'.static.GetColoredText(class'LWTicker'.default.Title $ ":", eUIState_Normal) @ Repl(class'LWTicker'.static.Text(S), "//", "  //  "));
+		NewsTicker.SetHTMLText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(class'LWTicker'.default.Title $ ":", eUIState_Normal) @ Repl(class'LWTicker'.static.Text(S), "//", "  //  "), false, false, false, NewsTickerFontSize));
 	if (bSatellite)
 	{
 		MC.BeginFunctionOp("SetSatellites");
@@ -800,7 +805,8 @@ defaultproperties
 	// (EW's: UISituationRoom on the room's wall, UIDisplay_CountryPanels through Cam_SituationRoom; here one plate across
 	// the wall, LWX2EWBase.PlateDisplays: EW's wall meshes showed only slivers of the movie.)
 	EWDisplay = UIDisplay_CountryPanels
-	NewsTickerRise = 30
+	NewsTickerRise = 6
+	NewsTickerFontSize = 16
 	EWDisplayCamera = Cam_SituationRoom
 	Order(0) = USA
 	Order(1) = Canada

@@ -237,7 +237,7 @@ function Refresh()
 		AddResource(Label(1, "ELERIUM"), string(XComHQ.GetResourceAmount('EleriumDust')), true);
 		AddResource(Label(2, "ALLOYS"), string(XComHQ.GetResourceAmount('AlienAlloy')), true);
 	}
-	else if (Kind != 'Engineering')
+	else if (Kind != 'Engineering' && Kind != 'GreyMarket')
 	{
 		Net = S.MonthlyNet();
 		AddResource(Label(6, "MONTHLY"), (Net > 0 ? "+" : "") $ class'LWStrategyRules'.static.Money(Net), Net > 0);
@@ -251,7 +251,7 @@ function Refresh()
 		if (Kind == 'Engineering')
 			AddResource(Repl(Caps(FragmentsName()), "WEAPON ", ""), string(XComHQ.GetResourceAmount(class'X2Item_LWArtifacts'.static.ItemFor('WeaponFragment'))), true);
 	}
-	if ((Meld > 0 || bWide) && Kind != 'RepairBay')
+	if ((Meld > 0 || bWide) && Kind != 'RepairBay' && Kind != 'SitRoom' && Kind != 'GreyMarket')
 		AddResource(Label(7, "MELD"), string(Meld), Meld > 0);
 	// (Added again each second: kept hidden where it is, ShowForTop.)
 	if (bResourcesHidden)
@@ -295,6 +295,8 @@ function FindContext()
 			Kind = 'Research';
 		else if (Hub.Room == 1)
 			Kind = 'Engineering';
+		else if (Hub.Room == 4)
+			Kind = 'SitRoom';
 	}
 	else if (UILWEWMissionControl(Top) != none || UILWGeoscape(Top) != none || UILWEWAlert(Top) != none)
 		Context = 1;
@@ -313,6 +315,12 @@ function FindContext()
 			Kind = 'Facilities';
 		else if (UILWEWSoldierSummary(Top) != none)
 			Kind = 'Soldier';
+		// (The Situation Room's own screens: its FSM's header, credits and the month's net, UIStrategyHUD_FSM_SituationRoom.
+		// UpdateHeader; the Grey Market's: credits alone, UIGreyMarket.)
+		else if (UILWEWSituationRoomHUD(Top) != none || UILWEWPendingRequests(Top) != none || UILWEWFinances(Top) != none)
+			Kind = 'SitRoom';
+		else if (UILWEWGreyMarket(Top) != none)
+			Kind = 'GreyMarket';
 	}
 }
 

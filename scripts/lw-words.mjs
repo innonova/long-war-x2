@@ -363,6 +363,7 @@ export function makeHubWords({ strategyLoc }) {
     ['RoomNames[3]', anywhere('m_aFacilityNamesCaps[eFacility_Hangar]')],
     ['RoomNames[4]', anywhere('m_aFacilityNamesCaps[eFacility_SitRoom]')],
     ['MissionControlName', anywhere('m_aFacilityNamesCaps[eFacility_MissionControl]')],
+    ['GreyMarketTitle', anywhere('m_aFacilityNamesCaps[eFacility_GreyMarket]')],
     ['NewResearch', inSection('XGResearchUI', 'm_strLabelNewProject')],
     ['NewResearchHelp', inSection('XGResearchUI', 'm_strHelpNewProject')],
     ['ChangeResearch', inSection('XGResearchUI', 'm_strLabelChangeProject')],

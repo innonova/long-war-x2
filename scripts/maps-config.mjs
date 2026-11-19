@@ -193,6 +193,8 @@ console.log(
     "; Its globe turns once in this many seconds, westward (EW's shell matinee).",
     'ShellGlobeSeconds=200',
     ...PEOPLE_LEVELS.map((l) => `+PeopleLevels="${l}"`),
+    "; Scene props not placed: EW shows them only while its own animation plays (the armory's grapple rope).",
+    '+PeopleSkipMeshes="SM_GrappelArmoryRope"',
     "; Their stand-ins' parent: XCOM 2's material for its own base's staff (the aliens' parent turned them blue-grey).",
     'PeopleMaterialParent="Materials.Approved.AvengerStaff_SD"',
     '',
