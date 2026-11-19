@@ -46,6 +46,7 @@ export function plotSettings(mod: string): PlotSettings {
       brightness: Number(/^LightmapBrightness=([\d.]+)/m.exec(ini)?.[1] ?? 1) || 1,
       interiors: !/^PlotLightmapInteriors=false/m.test(ini),
       nightMaps: [...ini.matchAll(/^\+Maps=\(Name="([^"]+)"[^\n]*Night=true/gm)].map((m) => m[1]!),
+      onlyMaps: [...ini.matchAll(/^\+PlotLightmapMaps="([^"]+)"/gm)].map((m) => m[1]!),
     } : undefined,
   }
 }
