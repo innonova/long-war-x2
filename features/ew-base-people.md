@@ -151,3 +151,12 @@ stand-in (`AvengerStaff_SD`) takes the diffuse only. The fix is a stand-in that 
   it), or the station of EW's first gene mod scene (`CIN_XEW_1stGeneMod`, `SM_GeneLab_Station` with the yellow
   `GeneLabTankGlassMaster`: one tank, raised into the column over its 21 s; tried placed with the lab and taken out
   again). Next: what EW's code puts there (XGFacility_GeneLabs / the gene lab's 3D UI), or another streamed level.
+
+## Notes (2026-11-19 evening, hair and skin)
+
+- **Hair** (round 6 #5): Vahlen's is olive-blonde in EW, near black in the port. Her hair slot is `HeadSci_HAIR` on
+  `CHH_MaleHairTemplates.Materials.CHH_HairMaskNrm`, whose only colour parameter, `ColorMod`, is white by default and not
+  set by the instance; so the colour is not a tint of ours to apply, and the "Hairstyle Texture" is likely a packed mask
+  (the parent's name: mask and normal). Next: decode that texture's channels and read the parent's expressions.
+- **Skin:** the head's `SkinColor` (1, 0.77, 0.55 for Vahlen) tints the skin mask (`Spc_dNrm_Skn_iBrw`, by its name the
+  blue channel); not applied yet; the faces read a little dark.
