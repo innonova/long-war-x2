@@ -7,7 +7,16 @@
 // NewMecButtonSelected / Deselected, UpdateInfo, SetBuildInfo, SetSoldier, SetConfirmButtonHelp; clicks 392 (over) and
 // 391 / 398 (chosen) on option0 (the button) or option1 (the list, args[6] the row). Long War's words in LongWarX2.int
 // (scripts/lw-words.mjs makeRepairWords, the player's machine). The rules are LWGearRepair's.
-class UILWEWRepairBay extends UILWEWScreen dependson(XComGameState_LWStrategy);
+class UILWEWRepairBay extends UILWEWScreen dependson(XComGameState_LWStrategy) config(LWEWMaps);
+
+/** EW's empty MEC in its preview hologram on the plinth (PlaceHologram): its material's parent, colour and opacity. */
+var config string HologramParent;
+var config LinearColor HologramTint;
+var config float HologramOpacity;
+/** EW stands the pawn by its middle (a pawn's location): the mesh lowered by this, and turned by this yaw. */
+var config float HologramDrop;
+var config int HologramYaw;
+var LWX2BasePerson Hologram;
 
 var localized string Title, SubTitle, RepairItem, Description, RepairsNeeded, Damaged, Repairing, RepairAll, RepairTitle,
 	RepairCost, RepairWarning, Confirm, NotNow, CostLabel, StartedTitle, StartedText;
@@ -41,10 +50,59 @@ simulated function OnInit()
 	MC.FunctionString("SetSubTitle", W(SubTitle, "MANIFEST"));
 	Selected = -1;
 	Fill();
+	PlaceHologram();
+}
+
+/**
+ * EW's empty MEC on the Cybernetics Lab's plinth in its preview hologram, as EW's MEC inventory stands it there
+ * (XGCyberneticsUI.PutMecOnPlinth(0, true): a Mark I suit, XComEmptyMecPawn.SetUsePreviewMaterial). EW's Mark I body as
+ * the setup converted it (LWX2EWBodies), in its idle, in a translucent blue of ours (HologramParent: EW's preview
+ * material is its own shader).
+ */
+function PlaceHologram()
+{
+	local LWX2EWBodies.LWX2Body B;
+	local SkeletalMesh Mesh;
+	local AnimSet Set;
+	local array<AnimSet> Sets;
+	local array<MaterialInterface> Slots;
+	local MaterialInstanceConstant MIC;
+	local Material Parent;
+	local vector Loc;
+	local rotator Rot;
+	local int i;
+
+	if (Hologram != none || !class'LWX2EWBase'.static.Get(self).SpotFor('CyberneticsLabMecPlinth', Loc, Rot))
+		return;
+	foreach class'LWX2EWBodies'.default.Bodies(B)
+		if (B.Template == 'LWMEC')
+			break;
+	Mesh = B.Template == 'LWMEC' ? SkeletalMesh(DynamicLoadObject(B.Mesh, class'SkeletalMesh', true)) : none;
+	Set = B.Template == 'LWMEC' ? AnimSet(DynamicLoadObject(B.AnimSet, class'AnimSet', true)) : none;
+	Parent = Material(DynamicLoadObject(HologramParent, class'Material', true));
+	if (Mesh == none || Parent == none)
+	{
+		`log("LongWarX2: Repair Bay: no hologram (" $ B.Mesh @ HologramParent $ ")", , 'LongWarX2');
+		return;
+	}
+	MIC = new(self) class'MaterialInstanceConstant';
+	MIC.SetParent(Parent);
+	MIC.SetVectorParameterValue('Tint', HologramTint);
+	MIC.SetScalarParameterValue('Opacity', HologramOpacity);
+	for (i = 0; i < Mesh.Materials.Length || i < 1; i++)
+		Slots.AddItem(MIC);
+	if (Set != none)
+		Sets.AddItem(Set);
+	Rot.Yaw += HologramYaw;
+	Hologram = Spawn(class'LWX2BasePerson', self, , Loc - vect(0, 0, 1) * HologramDrop, Rot, , true);
+	if (Hologram != none)
+		Hologram.Setup(Mesh, Sets, Set != none ? 'NO_IdleGunDwnA' : '', Slots);
 }
 
 simulated function OnRemoved()
 {
+	if (Hologram != none)
+		Hologram.Destroy();
 	class'UILWEWMapBackdrop'.static.HideAll();
 	super.OnRemoved();
 }
