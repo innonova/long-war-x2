@@ -22,7 +22,7 @@ import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, addTextureCopies, maskMip } from './mask-textures.ts'
-import { scaleMip, tintMip } from './tint-textures.ts'
+import { scaleMip, tintMip, whiteMip } from './tint-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
 import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-people.ts'
 
@@ -48,8 +48,9 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  (the plots import them).; 32: EW's hair brightened (its hair parent's lightening, baked: tint-textures.ts scaleMip).; 33:
  *  a look's tiling (Tile: EW's MainTile_U).; 34: the tinted copies named without a trailing "_<digits>".; 35: the colour
  *  mods twice as bright.; 36: EW's emitters and their sprites (Emitters, ParticleLooks).; 37: EW's lens flares (Flares,
- *  FlareLooks).; 38: emitters EW keeps still or off left out, their draw distance kept.; 39: their time dilation. */
-export const CONVERTER_VERSION = 39
+ *  FlareLooks).; 38: emitters EW keeps still or off left out, their draw distance kept.; 39: their time dilation.; 40:
+ *  the console screens' picture made white for our glow to tint (whiteMip). */
+export const CONVERTER_VERSION = 40
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1191,6 +1192,22 @@ if (tints.length) {
     if (r) t.slot.diffuse = exports[r - 1]!.fullName
   }
 }
+// EW's console screens' picture (HQscreens_test: UI panels in its green channel) made white, for our glow to tint
+// (converter 40): a copy per screen texture, its looks pointed at it.
+const screenLooks = [...looks.values()].filter((l) => l.kind === 'Glow' && /HQscreens/i.test(l.diffuse))
+if (screenLooks.length) {
+  const refsOf = [...new Set(screenLooks.map((l) => l.diffuse))].map((d) => ({ d, k: exports.findIndex((e) => e.fullName === d && e.type === 'Texture2D') })).filter((x) => x.k >= 0)
+  const made = addTextureCopies(bytes, refsOf.map((x) => ({ ref: x.k + 1, name: `${exports[x.k]!.name}_LWX2White` })))
+  bytes = made.bytes
+  meta = new Package(bytes)
+  pkg = openPackage(bytes)
+  exports = meta.exports as any[]
+  for (const l of screenLooks) {
+    const x = refsOf.find((y) => y.d === l.diffuse)
+    const r = x ? made.refs.get(`${l.diffuse.split('.').pop()}_LWX2White`) : undefined
+    if (r) l.diffuse = exports[r - 1]!.fullName
+  }
+}
 const tintOf = new Map<string, { mask: string; tint: number[]; scale?: boolean }>()
 for (const t of tints) if (/_LWX2(Tint|Bright)/.test(t.slot.diffuse)) tintOf.set(t.slot.diffuse, { mask: t.mask ? exports[t.mask - 1]!.fullName : '', tint: t.tint, scale: t.scale })
 const masked = addMaskTextures(bytes, [...cutOut.values()])
@@ -1346,6 +1363,7 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     if (maskExports.has(e)) return maskMip(format, mip)
     const tinted = tintOf.get(e.fullName)
     if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
+    if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
     const tm = tinted && format === 'PF_DXT1' ? dirMips.get(`${tinted.mask}:${w}x${h}`) : undefined
     if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint)
     const dir = lmPairs.get(e)

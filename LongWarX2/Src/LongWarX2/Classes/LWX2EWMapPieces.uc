@@ -986,7 +986,8 @@ static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, option
 	White = Texture(DynamicLoadObject("EngineResources.WhiteSquareTexture", class'Texture', true));
 	// (A console's screen in EW's tint alone: EW's picture there, HQscreens_test, is a green pattern EW's material reads
 	// as a mask; multiplied by the tint, as ours does, it came out green.)
-	T = Texture(DynamicLoadObject((L.Diffuse != "" && (!bOurs || bKeepDiffuse)) ? L.Diffuse : "EngineResources.WhiteSquareTexture", class'Texture', true));
+	// (Since converter 40 the converter whitens it, _LWX2White: tinted, EW's UI panels in EW's colour.)
+	T = Texture(DynamicLoadObject((L.Diffuse != "" && (!bOurs || bKeepDiffuse || InStr(L.Diffuse, "_LWX2White") != INDEX_NONE)) ? L.Diffuse : "EngineResources.WhiteSquareTexture", class'Texture', true));
 	if (T != none)
 		MIC.SetTextureParameterValue('Diffuse', T);
 	C = bKeepDiffuse ? default.UnlitTint : ((L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.GlowDefault);

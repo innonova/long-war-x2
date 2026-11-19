@@ -88,3 +88,24 @@ export function scaleMip(mip: Uint8Array, format: string, k: number): Uint8Array
   }
   return out
 }
+
+/** A mip made white where it has any colour (DXT1 or DXT5, the same size): each texel's brightest channel in all three.
+ *  EW's console screens (HQscreens_test): a sheet of UI panels drawn in its green channel, accents in red and blue, which
+ *  EW's material tints; tinted as a picture by ours, it came out green. */
+export function whiteMip(mip: Uint8Array, format: string, w: number, h: number): Uint8Array {
+  const block = format === 'PF_DXT5' ? 16 : 8
+  const colour = new Uint8Array((mip.length / block) * 8)
+  for (let b = 0; b < mip.length / block; b++) colour.set(mip.subarray(block * b + block - 8, block * b + block), 8 * b)
+  const rgba = decodeDXT1(colour, w, h)
+  for (let k = 0; k < w * h; k++) {
+    const m = Math.max(rgba[4 * k]!, rgba[4 * k + 1]!, rgba[4 * k + 2]!)
+    rgba[4 * k] = m
+    rgba[4 * k + 1] = m
+    rgba[4 * k + 2] = m
+  }
+  const enc = encodeDXT1(rgba, w, h)
+  if (block === 8) return enc
+  const out = mip.slice()
+  for (let b = 0; b < mip.length / block; b++) out.set(enc.subarray(8 * b, 8 * b + 8), block * b + 8)
+  return out
+}
