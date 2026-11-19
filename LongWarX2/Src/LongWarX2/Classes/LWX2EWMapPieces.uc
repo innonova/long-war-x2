@@ -97,6 +97,9 @@ var config string LightCardParent;
 var config string ParticleParent, ParticleAddParent;
 /** How opaque EW's blended sprites draw on ours (their opacity scaled: OpacityScale), and its additive ones. */
 var config float ParticleOpacity, ParticleAddOpacity;
+/** EW's lens flares' stand-in material (additive, ours) and how strong. */
+var config string FlareParent;
+var config float FlareOpacity;
 
 var config array<string> LightCardMaterials;
 var config float LightCardScale;
@@ -230,6 +233,21 @@ struct LWX2ParticleLook
 	var string Texture;
 	var bool Additive;
 	var int SubX, SubY;
+};
+
+/** One of EW's lens flares (features/ew-emitters.md): its flare, where it stands. */
+struct LWX2Flare
+{
+	var string Template;
+	var vector Loc;
+};
+
+/** One of a lens flare's elements' texture: Element -1 its source, 0… its reflections. */
+struct LWX2FlareLook
+{
+	var string Template;
+	var int Element;
+	var string Texture;
 };
 
 /** One of EW's people in its base (an Anim_ level's, features/ew-base-people.md). */
@@ -500,6 +518,75 @@ static function bool ParticleStandins(LWX2EWMapData D, string Template, Particle
 		for (k = 0; k < PS.Emitters[L.Emitter].LODLevels.Length; k++)
 			if (PS.Emitters[L.Emitter].LODLevels[k] != none && PS.Emitters[L.Emitter].LODLevels[k].RequiredModule != none)
 				PS.Emitters[L.Emitter].LODLevels[k].RequiredModule.Material = MIC;
+		n++;
+	}
+	return n > 0;
+}
+
+/**
+ * EW's lens flares of a converted level (features/ew-emitters.md), moved by Shift: EW's flares, each element's material
+ * (EW's, which XCOM 2 cannot draw) replaced by an instance of our flare material (FlareParent) with its texture.
+ */
+static function int PlaceFlaresOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed)
+{
+	local LWX2Flare F;
+	local LensFlare LF;
+	local LensFlareSource A;
+	local int n;
+
+	if (default.FlareParent == "" || D == none)
+		return 0;
+	foreach D.Flares(F)
+	{
+		LF = LensFlare(DynamicLoadObject(F.Template, class'LensFlare', true));
+		if (LF == none || !FlareStandins(D, F.Template, LF))
+			continue;
+		A = Spawner.Spawn(class'LensFlareSource', Spawner, , F.Loc + Shift);
+		if (A == none)
+			continue;
+		A.SetTemplate(LF);
+		Placed.AddItem(A);
+		n++;
+	}
+	return n;
+}
+
+/** A lens flare's elements given our material, once; false if none of its textures is known. */
+static function bool FlareStandins(LWX2EWMapData D, string Template, LensFlare LF)
+{
+	local LWX2FlareLook L;
+	local MaterialInstanceConstant MIC;
+	local Material Parent;
+	local Texture T;
+	local int n;
+
+	Parent = Material(DynamicLoadObject(default.FlareParent, class'Material', true));
+	if (Parent == none)
+		return false;
+	if (LF.SourceElement.LFMaterials.Length > 0 && MaterialInstanceConstant(LF.SourceElement.LFMaterials[0]) != none
+		&& MaterialInstanceConstant(LF.SourceElement.LFMaterials[0]).Parent == Parent)
+		return true;
+	foreach D.FlareLooks(L)
+	{
+		if (L.Template != Template || L.Element >= LF.Reflections.Length)
+			continue;
+		T = Texture(DynamicLoadObject(L.Texture, class'Texture', true));
+		if (T == none)
+			continue;
+		MIC = new(LF) class'MaterialInstanceConstant';
+		MIC.SetParent(Parent);
+		MIC.SetTextureParameterValue('Texture', T);
+		MIC.SetScalarParameterValue('OpacityScale', default.FlareOpacity > 0 ? default.FlareOpacity : 1.0);
+		if (L.Element < 0)
+		{
+			LF.SourceElement.LFMaterials.Length = 1;
+			LF.SourceElement.LFMaterials[0] = MIC;
+		}
+		else
+		{
+			LF.Reflections[L.Element].LFMaterials.Length = 1;
+			LF.Reflections[L.Element].LFMaterials[0] = MIC;
+		}
 		n++;
 	}
 	return n > 0;

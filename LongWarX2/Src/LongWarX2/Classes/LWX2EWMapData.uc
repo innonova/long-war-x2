@@ -28,3 +28,6 @@ var config array<LWX2EWMapPieces.LWX2Person> People;
 /** EW's emitters and their sprites (features/ew-emitters.md). */
 var config array<LWX2EWMapPieces.LWX2Emitter> Emitters;
 var config array<LWX2EWMapPieces.LWX2ParticleLook> ParticleLooks;
+/** EW's lens flares and their elements' textures (features/ew-emitters.md). */
+var config array<LWX2EWMapPieces.LWX2Flare> Flares;
+var config array<LWX2EWMapPieces.LWX2FlareLook> FlareLooks;

@@ -176,6 +176,7 @@ function PlaceFixed()
 		class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, BaseOffset, Fixed, true, BaseLightScale, true);
 		// (Its steam, mist, beams and blinking lights: features/ew-emitters.md.)
 		class'LWX2EWMapPieces'.static.PlaceEmittersOf(Data(Level), self, BaseOffset, Fixed);
+		class'LWX2EWMapPieces'.static.PlaceFlaresOf(Data(Level), self, BaseOffset, Fixed);
 	}
 	`log("LongWarX2: EW base: the shell and" @ FixedLevels.Length @ "fixed rooms placed," @ Fixed.Length @ "actors", , 'LongWarX2');
 	FindGlobe();
@@ -1079,6 +1080,7 @@ function Refresh()
 			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, Command.Rooms[k].Loc + BaseOffset, class'LWX2BasePiece', Placed, false, true);
 			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed, true, BaseLightScale, true);
 			class'LWX2EWMapPieces'.static.PlaceEmittersOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed);
+			class'LWX2EWMapPieces'.static.PlaceFlaresOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed);
 			// (The facility's people and animated props too: the Genetics Lab's scientists and tanks, the Foundry's workers.)
 			PlacePeopleOf(Level, Command.Rooms[k].Loc + BaseOffset, Placed);
 			PlaceDisplaysOf(Level, Command.Rooms[k].Loc + BaseOffset, Placed);

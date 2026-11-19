@@ -47,8 +47,9 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  (the main menu's).; 30: pieces whose component EW hides in play (HiddenGame) left out.; 31: the lightmap atlases public
  *  (the plots import them).; 32: EW's hair brightened (its hair parent's lightening, baked: tint-textures.ts scaleMip).; 33:
  *  a look's tiling (Tile: EW's MainTile_U).; 34: the tinted copies named without a trailing "_<digits>".; 35: the colour
- *  mods twice as bright.; 36: EW's emitters and their sprites (Emitters, ParticleLooks). */
-export const CONVERTER_VERSION = 36
+ *  mods twice as bright.; 36: EW's emitters and their sprites (Emitters, ParticleLooks).; 37: EW's lens flares (Flares,
+ *  FlareLooks). */
+export const CONVERTER_VERSION = 37
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -406,6 +407,21 @@ exports.forEach((e, i) => {
   const rot = inherited(i, tags, 'Rotation', 26)
   const ds = inherited(i, tags, 'DrawScale', 26)
   emitterPlaces.push({ template, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)], rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)], scale: ds ? f32(ds, 0) : 1 })
+})
+
+/** EW's lens flares (the autopsy lamp's glow, the labs' lamp streaks: features/ew-emitters.md): each placed
+ *  LensFlareSource's flare, where it stands; its elements' textures are read later (flareLooks). */
+interface FlarePlace { template: number; loc: number[] }
+const flarePlaces: FlarePlace[] = []
+exports.forEach((e, i) => {
+  if (e.type !== 'LensFlareSource' || !e.fullName.startsWith('TheWorld.PersistentLevel.') || e.fullName.split('.').length !== 3) return
+  const tags = actorTags(i)
+  if (!tags) return
+  const comp = inherited(i, tags, 'LensFlareComp', 26)
+  const template = comp && ref(comp) > 0 ? componentObject(ref(comp) - 1, 'Template') : 0
+  if (!template) return
+  const loc = inherited(i, tags, 'Location', 26)
+  flarePlaces.push({ template, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)] })
 })
 
 /**
@@ -1074,6 +1090,35 @@ for (const template of new Set(emitterPlaces.map((p) => p.template))) {
   })
 }
 
+// EW's lens flares' elements (features/ew-emitters.md): each flare's source element (-1) and reflections (0…), the
+// texture of each one's first material.
+interface FlareLook { template: number; element: number; texture: string }
+const flareLooks: FlareLook[] = []
+for (const template of new Set(flarePlaces.map((p) => p.template))) {
+  if (template <= 0) continue
+  try {
+    const t = tagsOf(template - 1, 4)
+    const lookOfElement = (st: Tag[], element: number) => {
+      const lm = st.find((x) => x.name === 'LFMaterials')
+      const mat = lm ? refs(lm)[0] ?? 0 : 0
+      const tex = new Map<string, string>()
+      if (mat) texturesOf(mat, tex)
+      const texture = tex.get('Texture') ?? tex.get('Diffuse') ?? [...tex.values()][0] ?? ''
+      if (texture) flareLooks.push({ template, element, texture })
+    }
+    const src = t.find((x) => x.name === 'SourceElement')
+    if (src) lookOfElement(readTags(new Reader(src.value), pkg), -1)
+    const re = t.find((x) => x.name === 'Reflections')
+    if (re) {
+      const r = new Reader(re.value.subarray(4))
+      const n = new DataView(re.value.buffer, re.value.byteOffset).getInt32(0, true)
+      for (let k = 0; k < n; k++) lookOfElement(readTags(r, pkg), k)
+    }
+  } catch {
+    // a flare not read: left out
+  }
+}
+
 // The cut-out looks' masks (mask-textures.ts): XCOM 2's cut-out parents read the opacity from Masks, not the diffuse.
 // Added now, while the package is small; their mips are made as the textures are inlined. Additions go at the tables'
 // ends, so every reference read so far stays good.
@@ -1364,6 +1409,8 @@ const lines = [
   "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
   "; EW's emitters (features/ew-emitters.md): each placed particle system, and each of its emitters' sprite texture.",
   ...emitterPlaces.map((e) => `+Emitters=(Template="${rename(pathOf(e.template))}",Loc=(X=${n(e.loc[0]!)},Y=${n(e.loc[1]!)},Z=${n(e.loc[2]!)}),Rot=(Pitch=${e.rot[0]},Yaw=${e.rot[1]},Roll=${e.rot[2]}),Scale=${n(e.scale)})`),
+  ...flarePlaces.map((f) => `+Flares=(Template="${rename(pathOf(f.template))}",Loc=(X=${n(f.loc[0]!)},Y=${n(f.loc[1]!)},Z=${n(f.loc[2]!)}))`),
+  ...flareLooks.map((l) => `+FlareLooks=(Template="${rename(pathOf(l.template))}",Element=${l.element},Texture="${rename(l.texture)}")`),
   ...particleLooks.map((l) => `+ParticleLooks=(Template="${rename(pathOf(l.template))}",Emitter=${l.emitter},Texture="${rename(l.texture)}"${l.additive ? ',Additive=true' : ''}${l.subX * l.subY > 1 ? `,SubX=${l.subX},SubY=${l.subY}` : ''})`),
   ...displays.map((d) => `+Displays=(${d.mesh ? `Mesh="${rename(d.mesh)}",` : ''}Tag=${d.tag || 'None'},Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}))`),
   "; EW's people (an Anim_ level's: its matinee's loops; features/ew-base-people.md).",
