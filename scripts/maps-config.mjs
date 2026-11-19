@@ -190,6 +190,8 @@ console.log(
     "; EW's main menu scene: its shell map placed far below the shell's own world, seen through its camera (LWX2EWBase.ShowShell).",
     'ShellScene=true',
     'ShellOffset=(X=0, Y=0, Z=-90000)',
+    "; Its globe turns once in this many seconds, westward (EW's shell matinee).",
+    'ShellGlobeSeconds=200',
     ...PEOPLE_LEVELS.map((l) => `+PeopleLevels="${l}"`),
     "; Their stand-ins' parent: XCOM 2's material for its own base's staff (the aliens' parent turned them blue-grey).",
     'PeopleMaterialParent="Materials.Approved.AvengerStaff_SD"',

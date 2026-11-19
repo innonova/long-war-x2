@@ -611,5 +611,5 @@ remains is how EW's 3D movie maps its 1280 x 720 stage onto its render target (E
   CameraActor_0 by separate axes (`InterpTrackMoveAxis`) to (2389.5, 812.8, -1626.9), yaw -72.1°, pitch 8.7°, roll 3.9°
   (the actor stands at yaw -62.4°). The converter now reads such matinees and writes a camera where its matinee leaves it
   (`ew-people.ts matineeAxisPoses`, converter 29). The main menu now frames as EW's: the globe right of centre, the
-  monitors on the left (`logs/compare/x2/menu-main.png` beside EW's). `ShellCamera` (`XComLWEWMaps.ini`, 0) picks the
+  monitors on the left (`logs/compare/x2/menu-main.png` beside EW's); its globe turns once in 200 seconds, westward, as EW's matinee turns it (`ShellGlobeSeconds`). `ShellCamera` (`XComLWEWMaps.ini`, 0) picks the
   shell's camera. Still: EW's glow and lens flare on the globe.

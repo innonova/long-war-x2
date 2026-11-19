@@ -56,6 +56,9 @@ var config bool ShellScene;
 var config vector ShellOffset;
 /** Which of the shell level's cameras the main menu looks through (its matinees' LeftShoulder, 0, and RightShoulder, 1). */
 var config int ShellCamera;
+/** The main menu scene's globe, and the seconds it takes to turn once (EW's shell matinee: 200, westward). */
+var Actor ShellGlobe;
+var config float ShellGlobeSeconds;
 var array<Actor> ShellPlaced;
 var LevelStreaming ShellLighting;
 /** The parent of EW's people's stand-ins (XCOM 2's material for its own base's staff); empty: the bodies' (LWX2EWBodies). */
@@ -186,6 +189,7 @@ function ShowShell()
 	local XComPresentationLayerBase Pres;
 	local name CamName;
 	local int k;
+	local Actor A;
 
 	D = Data("XComShell");
 	if (D.Pieces.Length == 0 || D.Cameras.Length == 0)
@@ -197,6 +201,11 @@ function ShowShell()
 		class'LWX2EWMapPieces'.static.PlaceLightsOf(D, self, ShellOffset, ShellPlaced, true, BaseLightScale, true);
 		PlacePeopleOf("XComShell", ShellOffset, ShellPlaced);
 		`log("LongWarX2: EW shell scene:" @ ShellPlaced.Length @ "actors placed", , 'LongWarX2');
+		// (Its globe turns as EW's shell matinee turns it: once round, westward, in 200 seconds.)
+		foreach ShellPlaced(A)
+			if (DynamicSMActor(A) != none && DynamicSMActor(A).StaticMeshComponent.StaticMesh != none
+				&& DynamicSMActor(A).StaticMeshComponent.StaticMesh.Name == 'Globe')
+				ShellGlobe = A;
 	}
 	CamName = 'LWX2EWShell';
 	k = Clamp(ShellCamera, 0, D.Cameras.Length - 1);
@@ -1194,6 +1203,12 @@ event Tick(float DeltaTime)
 	local int Step;
 
 	super.Tick(DeltaTime);
+	if (ShellGlobe != none && ShellGlobeSeconds > 0)
+	{
+		R = ShellGlobe.Rotation;
+		R.Yaw -= int(65536.0 * DeltaTime / ShellGlobeSeconds);
+		ShellGlobe.SetRotation(R);
+	}
 	if (Globe == none)
 		return;
 	R = Globe.Rotation;
