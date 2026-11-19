@@ -162,3 +162,15 @@ stand-in (`AvengerStaff_SD`) takes the diffuse only. The fix is a stand-in that 
   factor by eye against EW's capture). Vahlen's hair now reads olive-blonde as in EW.
 - **Skin:** the head's `SkinColor` (1, 0.77, 0.55 for Vahlen) tints the skin mask (`Spc_dNrm_Skn_iBrw`, by its name the
   blue channel); not applied yet; the faces read a little dark.
+
+## Report (2026-11-19 night, the clerks for real; their chairs)
+
+- **The clerks had no material at all.** The tinted copies were named `<diffuse>_LWX2Tint48_50_54`; Unreal reads a
+  trailing `_<digits>` as an instance number, so the name the mod looked up never matched, the stand-in was not made and
+  the engine drew its default material (the saturated blue the reviewer saw, and "black" before). Seen with `basenear`,
+  which now lists the people's materials and diffuses. Named `..._LWX2Tint48x50x54` now (converter 34). The earlier
+  report's "no longer black" was a misreading of that default material.
+- **The colour mod twice as bright** (converter 35, APPROXIMATION): the labs' grey (0.48) draws the vests near white in
+  EW's captures. The research room's clerks now wear EW's olive jacket and light grey vest.
+- **Their chairs:** InterpActors of the people's scene (`Anim_ScienceLabs`), converted as pieces but never placed: the
+  base now places a people scene's own pieces too (not those already placed as a fixed room). The clerks sit on chairs.
