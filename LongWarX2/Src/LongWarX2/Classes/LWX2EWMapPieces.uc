@@ -223,6 +223,8 @@ struct LWX2Emitter
 	var vector Loc;
 	var rotator Rot;
 	var float Scale;
+	/** How far away EW still draws it (its component's MaxDrawDistance); 0: always. */
+	var float MaxDraw;
 };
 
 /** One of a particle system's emitters' sprite: its texture, whether it adds, its sub-image grid. */
@@ -480,6 +482,8 @@ static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift
 			continue;
 		A.SetDrawScale(E.Scale > 0 ? E.Scale : 1.0);
 		A.SetTemplate(PS, false);
+		if (E.MaxDraw > 0)
+			A.ParticleSystemComponent.SetCullDistance(E.MaxDraw);
 		A.ParticleSystemComponent.ActivateSystem();
 		Placed.AddItem(A);
 		n++;
