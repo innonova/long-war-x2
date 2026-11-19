@@ -44,6 +44,8 @@ var Texture2D EarthTexture;
 var UIScrollingText NewsTicker;
 /** How far above EW's ticker strip (theTicker's top) the scrolling text stands. */
 var float NewsTickerRise;
+/** The satellites' counters shown (the satellite view). */
+var bool bUplinksShown;
 /** The ticker's type size (EW's is small, the map's strip). */
 var int NewsTickerFontSize;
 
@@ -125,6 +127,8 @@ function ShowUplinks(bool bShow)
 	MC.FunctionVoid(bShow ? "ShowUplinks" : "HideUplinks");
 	if (!bIsBare)
 		MC.ChildSetBool("theUplinks", "_visible", bShow);
+	bUplinksShown = bShow;
+	ShowTicker();
 }
 
 /** The wall's bare map (bBare), or all of it. */
@@ -147,13 +151,19 @@ function ApplyBare(bool bBare)
 	MC.ChildSetBool("theUplinks", "_visible", !bBare);
 	MC.ChildSetBool("theObjectivesPanel", "_visible", !bBare);
 	MC.ChildSetBool("theTicker", "_visible", false);
-	if (NewsTicker != none)
-	{
-		if (bBare)
-			NewsTicker.Hide();
-		else
-			NewsTicker.Show();
-	}
+	ShowTicker();
+}
+
+/** The news ticker, in the room's main view only: not on the bare wall, nor in the satellite view (its counters there,
+ *  as EW's GoToView). */
+function ShowTicker()
+{
+	if (NewsTicker == none)
+		return;
+	if (bIsBare || bUplinksShown)
+		NewsTicker.Hide();
+	else
+		NewsTicker.Show();
 }
 
 /** The wall taken down (the Situation Room itself opens on it). */
@@ -225,6 +235,9 @@ simulated function OnInit()
 		// (DISPLAY_MODE_SATELLITE: EW's satellites' view, its uplinks shown; the HUD over it.)
 		MC.FunctionNum("SetDisplayMode", 0);
 		MC.FunctionVoid("ShowUplinks");
+		// (Its counters, not the ticker: ShowTicker.)
+		bUplinksShown = true;
+		ShowTicker();
 		SatSlot = FirstSlotWithout();
 		// (The HUD over it takes the focus: the room stays drawn under it.)
 		bHideOnLoseFocus = false;
