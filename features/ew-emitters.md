@@ -37,5 +37,8 @@ actors in its base's levels; the port placed none.
   LensFlareSource, as Unreal's is bNoDelete), each element on our additive material (now usable with lens flares). They
   draw, but at full strength they washed the room white: EW gives each element its own colour, alpha and distance
   maps (`Color`, `Alpha`, `DistMap_*`), which our flat material ignores. At `FlareOpacity` 0.08 they are a faint haze,
-  not EW's warm autopsy lamp. Next: the elements' colours and alphas from the converter onto each instance.
+  not EW's warm autopsy lamp. The elements' colours and alphas are EW's own distributions, kept in the flare and
+  handed to the material as the vertex colour (which ours uses); what ours lacks are EW's flare materials' intensity
+  terms (`MI_Dot_Glow_*`: the source's distance and occlusion, Unreal's LensFlareIntensity/RadialDistance
+  expressions). Next: a flare material of ours with those (SDK editor), then `FlareOpacity` back towards 1.
 - **The mission maps:** the plot writer could place the same (rain, smoke, fires); not yet.
