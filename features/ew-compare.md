@@ -84,3 +84,12 @@ so the fixes are driven by evidence and the person is not needed on every round.
 4. **Blank monitors and unlit lamps** (EW's `HQ_ConsoleScreen`, `HQ_CustomScreens`, `HQ_ColorizedLight_*`).
 5. Smaller: the grey market's picture cropped; the satellite view's country columns too large; EW's Research Archives
    and Research Credits screens not in the port.
+
+## Notes (2026-11-19, round 6)
+
+- **menu-advanced, menu-secondwave** (round 6 #1): the port's captures were from 2026-11-18 07:59, before EW's menu
+  scene; captured again by clicks, both now stand in EW's room (and EW's Advanced Options also reads "Disabled" for the
+  first two rows).
+- **scr-officers** (round 6 #2): not a difference to fix. Long War's Officer Billets (UIMedals, opened by
+  XGBarracksUI.OnChooseMainMenuOption) moves no camera; EW's capture shows the Psi Labs' room only because
+  `capture-ew.sh` opens it right after `scr-psilabs`. From the barracks menu the camera is the barracks', as the port has.
