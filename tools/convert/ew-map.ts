@@ -44,8 +44,9 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  (an actor's Base: the scene's CineDummy, itself placed by its key); 27: people's glowing slots (Glow, Tint: the Genetics
  *  Lab's tank glass).; 28: people's colour mods baked into tinted diffuses (tint-textures.ts:
  *  the clerks' uniforms).; 29: cameras where a matinee leaves them by axes
- *  (the main menu's).; 30: pieces whose component EW hides in play (HiddenGame) left out. */
-export const CONVERTER_VERSION = 30
+ *  (the main menu's).; 30: pieces whose component EW hides in play (HiddenGame) left out.; 31: the lightmap atlases public
+ *  (the plots import them). */
+export const CONVERTER_VERSION = 31
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1137,6 +1138,10 @@ if (lmDirs.size || tintMasks.size)
 // material as LightMapTexture2D, XCOM 2 crashed (heap corruption) as the base came into view.
 const tex2dClass = exports.find((e) => e.type === 'Texture2D')
 if (tex2dClass) for (const e of lmPairs.keys()) v.setInt32(e.entryOffset + 0, v.getInt32(tex2dClass.entryOffset + 0, true), true)
+// (And public, as EW's other textures are: a mission's plot, another package, imports them for its pieces' baked lighting;
+// private, the plot failed to load, "Can't import private object". The object flags' low half is the entry's second
+// dword; RF_Public 0x4. Converter 31.)
+for (const e of lmPairs.keys()) v.setUint32(e.entryOffset + 28, v.getUint32(e.entryOffset + 28, true) | 4, true)
 const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'),
   (e, format, mip, w, h) => {
     if (maskExports.has(e)) return maskMip(format, mip)
