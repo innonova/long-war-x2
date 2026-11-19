@@ -48,8 +48,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  (the plots import them).; 32: EW's hair brightened (its hair parent's lightening, baked: tint-textures.ts scaleMip).; 33:
  *  a look's tiling (Tile: EW's MainTile_U).; 34: the tinted copies named without a trailing "_<digits>".; 35: the colour
  *  mods twice as bright.; 36: EW's emitters and their sprites (Emitters, ParticleLooks).; 37: EW's lens flares (Flares,
- *  FlareLooks).; 38: emitters EW keeps still or off left out, their draw distance kept. */
-export const CONVERTER_VERSION = 38
+ *  FlareLooks).; 38: emitters EW keeps still or off left out, their draw distance kept.; 39: their time dilation. */
+export const CONVERTER_VERSION = 39
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -376,7 +376,7 @@ exports.forEach((e, i) => {
 
 /** EW's emitters (steam, mist, light beams, blinking lights: features/ew-emitters.md): each placed Emitter's particle
  *  system, where it stands; the systems' sprites' textures are read later (particleLooks), with the materials. */
-interface EmitterPlace { template: number; loc: number[]; rot: number[]; scale: number; maxDraw: number }
+interface EmitterPlace { template: number; loc: number[]; rot: number[]; scale: number; maxDraw: number; dilation: number }
 const emitterPlaces: EmitterPlace[] = []
 /** A component's property, its own or its archetype's (placed components store only what differs). */
 function componentTag(index: number, name: string): Tag | undefined {
@@ -430,7 +430,7 @@ exports.forEach((e, i) => {
   const loc = inherited(i, tags, 'Location', 26)
   const rot = inherited(i, tags, 'Rotation', 26)
   const ds = inherited(i, tags, 'DrawScale', 26)
-  emitterPlaces.push({ template, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)], rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)], scale: ds ? f32(ds, 0) : 1, maxDraw: md ? f32(md, 0) : 0 })
+  emitterPlaces.push({ template, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)], rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)], scale: ds ? f32(ds, 0) : 1, maxDraw: md ? f32(md, 0) : 0, dilation: dil ? f32(dil, 0) : 1 })
 })
 
 /** EW's lens flares (the autopsy lamp's glow, the labs' lamp streaks: features/ew-emitters.md): each placed
@@ -1432,7 +1432,7 @@ const lines = [
   ),
   "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
   "; EW's emitters (features/ew-emitters.md): each placed particle system, and each of its emitters' sprite texture.",
-  ...emitterPlaces.map((e) => `+Emitters=(Template="${rename(pathOf(e.template))}",Loc=(X=${n(e.loc[0]!)},Y=${n(e.loc[1]!)},Z=${n(e.loc[2]!)}),Rot=(Pitch=${e.rot[0]},Yaw=${e.rot[1]},Roll=${e.rot[2]}),Scale=${n(e.scale)}${e.maxDraw ? `,MaxDraw=${n(e.maxDraw)}` : ''})`),
+  ...emitterPlaces.map((e) => `+Emitters=(Template="${rename(pathOf(e.template))}",Loc=(X=${n(e.loc[0]!)},Y=${n(e.loc[1]!)},Z=${n(e.loc[2]!)}),Rot=(Pitch=${e.rot[0]},Yaw=${e.rot[1]},Roll=${e.rot[2]}),Scale=${n(e.scale)}${e.maxDraw ? `,MaxDraw=${n(e.maxDraw)}` : ''}${e.dilation !== 1 ? `,Dilation=${n(e.dilation)}` : ''})`),
   ...flarePlaces.map((f) => `+Flares=(Template="${rename(pathOf(f.template))}",Loc=(X=${n(f.loc[0]!)},Y=${n(f.loc[1]!)},Z=${n(f.loc[2]!)}))`),
   ...flareLooks.map((l) => `+FlareLooks=(Template="${rename(pathOf(l.template))}",Element=${l.element},Texture="${rename(l.texture)}")`),
   ...particleLooks.map((l) => `+ParticleLooks=(Template="${rename(pathOf(l.template))}",Emitter=${l.emitter},Texture="${rename(l.texture)}"${l.additive ? ',Additive=true' : ''}${l.subX * l.subY > 1 ? `,SubX=${l.subX},SubY=${l.subY}` : ''})`),
