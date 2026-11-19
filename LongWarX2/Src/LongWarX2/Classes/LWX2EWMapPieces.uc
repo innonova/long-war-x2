@@ -93,6 +93,9 @@ var config string LightmapParent;
 var config string GlowParent;
 /** EW's light cards (Kind Glow, by material path): our additive material that takes the mesh's vertex colours. */
 var config string LightCardParent;
+/** EW's emitters' stand-in materials (features/ew-emitters.md): blended and additive, our own (SDK editor). */
+var config string ParticleParent, ParticleAddParent;
+
 var config array<string> LightCardMaterials;
 var config float LightCardScale;
 /** Its opacity where the parent has one (our glass: the cards as faint panes when the mesh's vertex colours do not reach). */
@@ -206,6 +209,25 @@ struct LWX2PersonSlot
 	/** One of EW's unlit glowing materials (the Genetics Lab's tank glass): a glow in Tint. */
 	var bool Glow;
 	var LinearColor Tint;
+};
+
+/** One of EW's emitters (features/ew-emitters.md): its particle system, where it stands. */
+struct LWX2Emitter
+{
+	var string Template;
+	var vector Loc;
+	var rotator Rot;
+	var float Scale;
+};
+
+/** One of a particle system's emitters' sprite: its texture, whether it adds, its sub-image grid. */
+struct LWX2ParticleLook
+{
+	var string Template;
+	var int Emitter;
+	var string Texture;
+	var bool Additive;
+	var int SubX, SubY;
 };
 
 /** One of EW's people in its base (an Anim_ level's, features/ew-base-people.md). */
@@ -414,6 +436,72 @@ static function int PlaceLights(Actor Spawner, vector Shift)
 }
 
 /** A converted map's lights (those of LightKinds), moved by Shift; returns how many, and adds them to Placed. */
+/**
+ * EW's emitters of a converted level (features/ew-emitters.md), where they stand, moved by Shift: EW's particle systems,
+ * each emitter's material (EW's, which XCOM 2 cannot draw) replaced by an instance of our particle material
+ * (ParticleParent, ParticleAddParent: made in the SDK editor) with the emitter's sprite. Returns how many.
+ */
+static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed)
+{
+	local LWX2Emitter E;
+	local ParticleSystem PS;
+	local EmitterSpawnable A;
+	local int n;
+
+	if (default.ParticleParent == "" || D == none)
+		return 0;
+	foreach D.Emitters(E)
+	{
+		PS = ParticleSystem(DynamicLoadObject(E.Template, class'ParticleSystem', true));
+		if (PS == none || !ParticleStandins(D, E.Template, PS))
+			continue;
+		A = Spawner.Spawn(class'EmitterSpawnable', Spawner, , E.Loc + Shift, E.Rot);
+		if (A == none)
+			continue;
+		A.SetDrawScale(E.Scale > 0 ? E.Scale : 1.0);
+		A.SetTemplate(PS, false);
+		A.ParticleSystemComponent.ActivateSystem();
+		Placed.AddItem(A);
+		n++;
+	}
+	return n;
+}
+
+/** A particle system's emitters given our materials, once (the system is shared by all its emitters); false if none of
+ *  its sprites is known. */
+static function bool ParticleStandins(LWX2EWMapData D, string Template, ParticleSystem PS)
+{
+	local LWX2ParticleLook L;
+	local MaterialInstanceConstant MIC;
+	local Material Parent;
+	local Texture T;
+	local int k, n;
+
+	// (Done already: its first emitter's material is one of ours.)
+	if (PS.Emitters.Length > 0 && PS.Emitters[0] != none && PS.Emitters[0].LODLevels.Length > 0 && PS.Emitters[0].LODLevels[0] != none
+		&& PS.Emitters[0].LODLevels[0].RequiredModule != none && MaterialInstanceConstant(PS.Emitters[0].LODLevels[0].RequiredModule.Material) != none
+		&& MaterialInstanceConstant(PS.Emitters[0].LODLevels[0].RequiredModule.Material).Parent != none
+		&& InStr(PathName(MaterialInstanceConstant(PS.Emitters[0].LODLevels[0].RequiredModule.Material).Parent), "LWX2") != INDEX_NONE)
+		return true;
+	foreach D.ParticleLooks(L)
+	{
+		if (L.Template != Template || L.Emitter >= PS.Emitters.Length || PS.Emitters[L.Emitter] == none)
+			continue;
+		Parent = Material(DynamicLoadObject(L.Additive ? default.ParticleAddParent : default.ParticleParent, class'Material', true));
+		T = Texture(DynamicLoadObject(L.Texture, class'Texture', true));
+		if (Parent == none || T == none)
+			continue;
+		MIC = new(PS) class'MaterialInstanceConstant';
+		MIC.SetParent(Parent);
+		MIC.SetTextureParameterValue('Texture', T);
+		for (k = 0; k < PS.Emitters[L.Emitter].LODLevels.Length; k++)
+			if (PS.Emitters[L.Emitter].LODLevels[k] != none && PS.Emitters[L.Emitter].LODLevels[k].RequiredModule != none)
+				PS.Emitters[L.Emitter].LODLevels[k].RequiredModule.Material = MIC;
+		n++;
+	}
+	return n > 0;
+}
+
 static function int PlaceLightsOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed, optional bool bNoShadows, optional float Scale, optional bool bNoSky)
 {
 	local LWX2Light L;

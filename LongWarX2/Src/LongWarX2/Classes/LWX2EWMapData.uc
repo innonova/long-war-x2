@@ -25,3 +25,6 @@ var config array<LWX2EWMapPieces.LWX2Camera> Spots;
 var config array<LWX2EWMapPieces.LWX2Display> Displays;
 /** EW's people (features/ew-base-people.md). */
 var config array<LWX2EWMapPieces.LWX2Person> People;
+/** EW's emitters and their sprites (features/ew-emitters.md). */
+var config array<LWX2EWMapPieces.LWX2Emitter> Emitters;
+var config array<LWX2EWMapPieces.LWX2ParticleLook> ParticleLooks;
