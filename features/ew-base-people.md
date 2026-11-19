@@ -124,7 +124,10 @@ stand-in (`AvengerStaff_SD`) takes the diffuse only. The fix is a stand-in that 
   translucent (our glass, opacity 0.8) or our additive vertex-colour material (`M_EWLightCard`) on it, nothing shows. The
   same likely holds for the research room's light beam and the Psi Labs' and hangar's light cards. Next: what in the light
   cards' mesh XCOM 2 rejects (its vertex colour buffer, its UV sets), by comparing a light-card mesh's data with a lamp's
-  (`HQ_Light_LO_A` also has vertex colours and draws).
+  (`HQ_Light_LO_A` also has vertex colours and draws). Compared since: the same vertex layout (two UV sets, the same
+  strides), the same property tags but for the light cards having no lightmap UV set; the glowing light rings (also
+  vertex-coloured, Kind Glow) draw. The research room's light beam and the other rooms' light cards are missing the same
+  way. Still open.
 - The canisters (the yellow row along the top, Anim and Addon people records) draw, and their fluid slot is a glow.
 - `M_EWLightmapped` lacks *Used with Skeletal Mesh* (the log warns once per prop); glowing slots on skeletal props draw
   with the engine's default material until it is ticked in the SDK editor.
