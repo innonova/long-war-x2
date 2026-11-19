@@ -27,10 +27,10 @@ actors in its base's levels; the port placed none.
 
 ## Open
 
-- **Too dense:** the mist reads thicker and greyer than EW's. EW's cooked mist material keeps no expressions to read
-  which channel its opacity takes (its "3Channel" textures pack three masks); ours takes red. Next editor session: an
-  `OpacityScale` scalar on our particle materials, the converter writing one per sprite (by comparing against EW's
-  captures), and the channel by the texture's name.
+- **Density:** EW's cooked mist material keeps no expressions to read which channel its opacity takes (its
+  "3Channel" textures pack three masks); ours takes red. Our particle materials now have an `OpacityScale` (SDK editor),
+  set from `ParticleOpacity` (0.35, by eye against EW's capture) and `ParticleAddOpacity` (1): the mist now drifts in
+  wisps as EW's. Still: the channel per texture.
 - **Mesh emitters** (the Gene Lab's light cones, `Fog_Cones.HeadLight_Beam_NorDepth`) need a material for meshes, not
   sprites; not drawn yet.
 - **Lens flares** (`LensFlareSource`, 4 in each lab) not placed yet.

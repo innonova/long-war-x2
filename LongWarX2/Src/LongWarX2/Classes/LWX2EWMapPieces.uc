@@ -95,6 +95,8 @@ var config string GlowParent;
 var config string LightCardParent;
 /** EW's emitters' stand-in materials (features/ew-emitters.md): blended and additive, our own (SDK editor). */
 var config string ParticleParent, ParticleAddParent;
+/** How opaque EW's blended sprites draw on ours (their opacity scaled: OpacityScale), and its additive ones. */
+var config float ParticleOpacity, ParticleAddOpacity;
 
 var config array<string> LightCardMaterials;
 var config float LightCardScale;
@@ -494,6 +496,7 @@ static function bool ParticleStandins(LWX2EWMapData D, string Template, Particle
 		MIC = new(PS) class'MaterialInstanceConstant';
 		MIC.SetParent(Parent);
 		MIC.SetTextureParameterValue('Texture', T);
+		MIC.SetScalarParameterValue('OpacityScale', L.Additive ? (default.ParticleAddOpacity > 0 ? default.ParticleAddOpacity : 1.0) : (default.ParticleOpacity > 0 ? default.ParticleOpacity : 1.0));
 		for (k = 0; k < PS.Emitters[L.Emitter].LODLevels.Length; k++)
 			if (PS.Emitters[L.Emitter].LODLevels[k] != none && PS.Emitters[L.Emitter].LODLevels[k].RequiredModule != none)
 				PS.Emitters[L.Emitter].LODLevels[k].RequiredModule.Material = MIC;
