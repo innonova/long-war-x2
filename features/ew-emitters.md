@@ -25,6 +25,14 @@ actors in its base's levels; the port placed none.
   (`LWX2EWMapPieces.PlaceEmittersOf`), each emitter's material replaced by an instance of ours with its sprite.
 - **Seen on wingpu:** the autopsy room's mist behind the research room's windows; the Gene Lab's mist and steam.
 
+## Report (2026-11-19 night, round 7's spill)
+
+- The reviewer's round 7 (#3): mist patches over the base's black cutaway and a column of steam veiling the armory. Now:
+  EW's emitters it keeps off or still are left out, their draw distance (`MaxDrawDistance`, 6000 where set) and time
+  dilation (its slow steam, 0.3) kept (converters 38, 39); the armory's veil was one of those. From the base's whole
+  view (its Base and Expansion cameras) the room effects are hidden, as EW shows none there; a room's view shows them
+  (`LWX2EWBase.ShowRoomEffects`). A cull distance alone did not do it: the particle systems' bounds are large.
+
 ## Open
 
 - **Density:** EW's cooked mist material keeps no expressions to read which channel its opacity takes (its

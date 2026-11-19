@@ -295,6 +295,7 @@ function LookAt(name Tag, optional float Interp)
 	// (EW's cut surfaces drawn for its base and room views; out of the way of a facility's own camera, which looks from
 	// behind them: the Genetics Lab's showed black.)
 	ShowCutaway(k != INDEX_NONE);
+	ShowRoomEffects(Tag != 'Base' && Tag != 'Expansion');
 	if (Tag == 'Base' && ViewFOV > 0)
 	{
 		C.Loc = ViewLoc;
@@ -1105,6 +1106,21 @@ function ShowCutaway(bool bShow)
 	foreach DynamicActors(class'DynamicSMActor_Spawnable', A)
 		if (A.Tag == 'LWX2BaseCutaway')
 			A.SetHidden(!bShow);
+}
+
+/** EW's room effects, its steam, mist and lamp flares, shown or hidden: from the base's whole view (its Base and
+ *  Expansion cameras) EW shows none over the cutaway; features/ew-emitters.md. */
+function ShowRoomEffects(bool bShow)
+{
+	local EmitterSpawnable E;
+	local LWX2LensFlare F;
+
+	foreach DynamicActors(class'EmitterSpawnable', E)
+		if (E.Owner == self)
+			E.SetHidden(!bShow);
+	foreach DynamicActors(class'LWX2LensFlare', F)
+		if (F.Owner == self)
+			F.SetHidden(!bShow);
 }
 
 /** A camera of a facility's level (EW's screens' m_strCameraTag: GeneLab_FacilityCamera, CyberneticsLab_UIDisplayCam …),

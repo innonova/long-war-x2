@@ -97,6 +97,8 @@ var config string LightCardParent;
 var config string ParticleParent, ParticleAddParent;
 /** How opaque EW's blended sprites draw on ours (their opacity scaled: OpacityScale), and its additive ones. */
 var config float ParticleOpacity, ParticleAddOpacity;
+/** The draw distance of EW's emitters that set none (EW's others: 6000). */
+var config float EmitterMaxDraw;
 /** EW's lens flares' stand-in material (additive, ours) and how strong. */
 var config string FlareParent;
 var config float FlareOpacity;
@@ -484,8 +486,9 @@ static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift
 			continue;
 		A.SetDrawScale(E.Scale > 0 ? E.Scale : 1.0);
 		A.SetTemplate(PS, false);
-		if (E.MaxDraw > 0)
-			A.ParticleSystemComponent.SetCullDistance(E.MaxDraw);
+		// (Those without their own, the distance EW gives its others: in a room's view, not over the base's cutaway.)
+		if (E.MaxDraw > 0 || default.EmitterMaxDraw > 0)
+			A.ParticleSystemComponent.SetCullDistance(E.MaxDraw > 0 ? E.MaxDraw : default.EmitterMaxDraw);
 		if (E.Dilation > 0)
 			A.CustomTimeDilation = E.Dilation;
 		A.ParticleSystemComponent.ActivateSystem();
