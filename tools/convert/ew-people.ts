@@ -278,3 +278,89 @@ export function peopleIn(meta: any, pkg: any): Person[] {
 if (/ew-people\.ts$/.test(process.argv[1] ?? '')) {
   for (const f of process.argv.slice(2).filter((a) => a !== '--')) for (const p of peopleOf(f)) console.log(JSON.stringify(p))
 }
+
+/**
+ * Where EW's matinees leave the actors they move by separate axes (InterpTrackMove's SubTracks, InterpTrackMoveAxis: the
+ * main menu's camera, XComShell's LeftShoulder): each axis's last key, for each actor a SeqAct_Interp binds to such a group
+ * (by its variable link named as the group). Translation as given; rotation in degrees (X roll, Y pitch, Z yaw) made
+ * rotator units. An axis without keys leaves the actor's own value (undefined here).
+ */
+export function matineeAxisPoses(meta: any, pkg: any): Map<number, { loc: (number | undefined)[]; rot: (number | undefined)[] }> {
+  const exports = meta.exports as { type: string; fullName: string }[]
+  const dv = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
+  const nameAt = (i: number) => String(pkg.names[i]?.name ?? '')
+  const tagsAt = (i: number) => {
+    for (const s of [4, 8]) {
+      try {
+        const t = readTags(new Reader(pkg.data(i + 1).subarray(s)), pkg) as Tag[]
+        if (t.length) return t
+      } catch {
+        // not here
+      }
+    }
+    return [] as Tag[]
+  }
+  const refs = (t: Tag | undefined) => (t ? Array.from({ length: dv(t.value).getInt32(0, true) }, (_, k) => dv(t.value).getInt32(4 + 4 * k, true)) : [])
+  const structs = (v: Uint8Array): Tag[][] => {
+    const n = dv(v).getInt32(0, true)
+    const r = new Reader(v.subarray(4))
+    return Array.from({ length: n }, () => readTags(r, pkg) as Tag[])
+  }
+  const str = (t: Tag | undefined) => (t ? new TextDecoder('latin1').decode(t.value.subarray(4)).replace(/\0/g, '') : '')
+  const AXES = ['AXIS_TranslationX', 'AXIS_TranslationY', 'AXIS_TranslationZ', 'AXIS_RotationX', 'AXIS_RotationY', 'AXIS_RotationZ']
+  // A group's axes' last keys.
+  const groupAxes = (g: number): (number | undefined)[] | undefined => {
+    let out: (number | undefined)[] | undefined
+    for (const tr of refs(tagsAt(g - 1).find((x) => x.name === 'InterpTracks'))) {
+      if (tr <= 0 || exports[tr - 1]!.type !== 'InterpTrackMove') continue
+      for (const sub of refs(tagsAt(tr - 1).find((x) => x.name === 'SubTracks'))) {
+        if (sub <= 0 || exports[sub - 1]!.type !== 'InterpTrackMoveAxis') continue
+        const st = tagsAt(sub - 1)
+        const ax = st.find((x) => x.name === 'MoveAxis')
+        const k = AXES.indexOf(ax ? nameAt(dv(ax.value).getInt32(0, true)) : 'AXIS_TranslationX')
+        const ft = st.find((x) => x.name === 'FloatTrack')
+        if (k < 0 || !ft) continue
+        const pts = (readTags(new Reader(ft.value), pkg) as Tag[]).find((x) => x.name === 'Points')
+        if (!pts) continue
+        const keys = structs(pts.value)
+        const last = keys[keys.length - 1]?.find((x) => x.name === 'OutVal')
+        if (!last) continue
+        out ??= [undefined, undefined, undefined, undefined, undefined, undefined]
+        out[k] = dv(last.value).getFloat32(0, true)
+      }
+    }
+    return out
+  }
+  const poses = new Map<number, { loc: (number | undefined)[]; rot: (number | undefined)[] }>()
+  exports.forEach((e, i) => {
+    if (e.type !== 'SeqAct_Interp') return
+    const vl = tagsAt(i).find((x) => x.name === 'VariableLinks')
+    if (!vl) return
+    const links = structs(vl.value).map((l) => ({ desc: str(l.find((x) => x.name === 'LinkDesc')), vars: refs(l.find((x) => x.name === 'LinkedVariables')).filter((v) => v > 0) }))
+    const data = links.flatMap((l) => l.vars).find((v) => exports[v - 1]!.type === 'InterpData')
+    if (!data) return
+    const byName = new Map<string, number>()
+    for (const g of refs(tagsAt(data - 1).find((x) => x.name === 'InterpGroups'))) {
+      const gn = tagsAt(g - 1).find((x) => x.name === 'GroupName')
+      if (gn) byName.set(nameAt(dv(gn.value).getInt32(0, true)), g)
+    }
+    for (const l of links) {
+      const g = byName.get(l.desc)
+      const axes = g ? groupAxes(g) : undefined
+      if (!axes) continue
+      for (const v of l.vars) {
+        if (exports[v - 1]!.type !== 'SeqVar_Object') continue
+        const o = tagsAt(v - 1).find((x) => x.name === 'ObjValue')
+        const actor = o ? dv(o.value).getInt32(0, true) : 0
+        if (actor <= 0) continue
+        const deg = 65536 / 360
+        poses.set(actor, {
+          loc: [axes[0], axes[1], axes[2]],
+          // (Rotator order: pitch, yaw, roll.)
+          rot: [axes[4] !== undefined ? Math.round(axes[4] * deg) : undefined, axes[5] !== undefined ? Math.round(axes[5] * deg) : undefined, axes[3] !== undefined ? Math.round(axes[3] * deg) : undefined],
+        })
+      }
+    }
+  })
+  return poses
+}

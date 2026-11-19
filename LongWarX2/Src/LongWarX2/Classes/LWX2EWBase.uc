@@ -54,6 +54,8 @@ var config bool PlaceInShell;
 /** EW's main menu scene (ShowShell): on, and where it is placed. */
 var config bool ShellScene;
 var config vector ShellOffset;
+/** Which of the shell level's cameras the main menu looks through (its matinees' LeftShoulder, 0, and RightShoulder, 1). */
+var config int ShellCamera;
 var array<Actor> ShellPlaced;
 var LevelStreaming ShellLighting;
 /** The parent of EW's people's stand-ins (XCOM 2's material for its own base's staff); empty: the bodies' (LWX2EWBodies). */
@@ -183,6 +185,7 @@ function ShowShell()
 	local CameraActor Cam;
 	local XComPresentationLayerBase Pres;
 	local name CamName;
+	local int k;
 
 	D = Data("XComShell");
 	if (D.Pieces.Length == 0 || D.Cameras.Length == 0)
@@ -196,10 +199,11 @@ function ShowShell()
 		`log("LongWarX2: EW shell scene:" @ ShellPlaced.Length @ "actors placed", , 'LongWarX2');
 	}
 	CamName = 'LWX2EWShell';
-	Cam = Spawn(class'DynamicCameraActor', self, CamName, D.Cameras[0].Loc + ShellOffset, D.Cameras[0].Rot);
+	k = Clamp(ShellCamera, 0, D.Cameras.Length - 1);
+	Cam = Spawn(class'DynamicCameraActor', self, CamName, D.Cameras[k].Loc + ShellOffset, D.Cameras[k].Rot);
 	if (Cam == none)
 		return;
-	Cam.FOVAngle = D.Cameras[0].FOV;
+	Cam.FOVAngle = D.Cameras[k].FOV;
 	Cam.bConstrainAspectRatio = false;
 	Pres = XComPlayerController(GetALocalPlayerController()) != none ? XComPlayerController(GetALocalPlayerController()).Pres : none;
 	if (Pres != none)

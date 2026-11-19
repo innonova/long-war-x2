@@ -604,3 +604,12 @@ default in `HQ_UI.Materials.UIDisplayMaterial`, which the summary's panel uses (
 replaces with XCOM 2's. Read since (it is in EW's XComStrategyGame.upk): `UVAdjust` defaults to (1, 1), so not that. What
 remains is how EW's 3D movie maps its 1280 x 720 stage onto its render target (EW sets SetViewScaleMode(2) on it,
 `UIDisplayMovie.InitMovie`) against XCOM 2's 1920 x 1080 exact fit. Open.
+
+## Report (2026-11-19, the main menu's framing)
+
+- **EW's main menu camera is posed by its matinee**, not where its camera actor stands: XComShell's LeftShoulder moves
+  CameraActor_0 by separate axes (`InterpTrackMoveAxis`) to (2389.5, 812.8, -1626.9), yaw -72.1°, pitch 8.7°, roll 3.9°
+  (the actor stands at yaw -62.4°). The converter now reads such matinees and writes a camera where its matinee leaves it
+  (`ew-people.ts matineeAxisPoses`, converter 29). The main menu now frames as EW's: the globe right of centre, the
+  monitors on the left (`logs/compare/x2/menu-main.png` beside EW's). `ShellCamera` (`XComLWEWMaps.ini`, 0) picks the
+  shell's camera. Still: EW's glow and lens flare on the globe.

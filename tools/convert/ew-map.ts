@@ -24,7 +24,7 @@ import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, addTextureCopies, maskMip } from './mask-textures.ts'
 import { tintMip } from './tint-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
-import { cameras as matineeCameras, peopleIn } from './ew-people.ts'
+import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-people.ts'
 
 /** Raised when what a conversion writes changes so that maps converted before must be converted again
  *  (2: carried packages nested in the map's package, for its plot; 3: its building volumes and floors; 4: terror pods,
@@ -43,8 +43,9 @@ import { cameras as matineeCameras, peopleIn } from './ew-people.ts'
  *  Bay, BayState, BayPart: Anim_Hangar_LaunchBays' launch pads and craft), a diffuse named plain "diff" (the Skyranger's); 26: EW's people where their matinee puts them, in their base's frame
  *  (an actor's Base: the scene's CineDummy, itself placed by its key); 27: people's glowing slots (Glow, Tint: the Genetics
  *  Lab's tank glass).; 28: people's colour mods baked into tinted diffuses (tint-textures.ts:
- *  the clerks' uniforms). */
-export const CONVERTER_VERSION = 28
+ *  the clerks' uniforms).; 29: cameras where a matinee leaves them by axes
+ *  (the main menu's). */
+export const CONVERTER_VERSION = 29
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -597,6 +598,13 @@ function componentTags(r: number): Tag[] {
   }
   return []
 }
+const axisPoses = (() => {
+  try {
+    return matineeAxisPoses(meta, pkg)
+  } catch {
+    return new Map<number, { loc: (number | undefined)[]; rot: (number | undefined)[] }>()
+  }
+})()
 exports.forEach((e, i) => {
   const parts = e.fullName.split('.')
   if (parts[0] !== 'TheWorld' || parts.length !== 3) return
@@ -625,7 +633,11 @@ exports.forEach((e, i) => {
     else {
       const rot = t!.find((x) => x.name === 'Rotation')
       const fov = t!.find((x) => x.name === 'FOVAngle')
-      cameras.push({ tag: name, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)], rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)], fov: fov ? f32(fov, 0) : 90 })
+      // (Where a matinee leaves it, by axes, if one moves it: the main menu's camera, XComShell's LeftShoulder.)
+      const pose = axisPoses.get(i + 1)
+      const at = [f32(loc, 0), f32(loc, 1), f32(loc, 2)].map((x, k) => pose?.loc[k] ?? x)
+      const turn = [i32(rot, 0), i32(rot, 1), i32(rot, 2)].map((x, k) => pose?.rot[k] ?? x)
+      cameras.push({ tag: name, loc: at, rot: turn, fov: fov ? f32(fov, 0) : 90 })
     }
   }
   if (e.type === 'XComAlienPod' || e.type === 'XComAlienPod_Abduction' || e.type === 'XComAlienPod_Terror' || e.type === 'XComSpawnPoint') {
