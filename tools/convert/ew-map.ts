@@ -46,8 +46,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the clerks' uniforms).; 29: cameras where a matinee leaves them by axes
  *  (the main menu's).; 30: pieces whose component EW hides in play (HiddenGame) left out.; 31: the lightmap atlases public
  *  (the plots import them).; 32: EW's hair brightened (its hair parent's lightening, baked: tint-textures.ts scaleMip).; 33:
- *  a look's tiling (Tile: EW's MainTile_U). */
-export const CONVERTER_VERSION = 33
+ *  a look's tiling (Tile: EW's MainTile_U).; 34: the tinted copies named without a trailing "_<digits>". */
+export const CONVERTER_VERSION = 34
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1032,7 +1032,9 @@ people.forEach((p, k) =>
     const d = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
     const mk = maskPath ? exports.findIndex((e) => e.fullName === maskPath && e.type === 'Texture2D') : -1
     if (!cmod || d < 0 || mk < 0) return
-    const key = cmod.slice(0, 3).map((c) => Math.round(c * 100)).join('_')
+    // (No "_<digits>" at the end: the engine reads that as an instance number, and the name looked up never matched: the
+    // clerks drew with no material at all until converter 34.)
+    const key = cmod.slice(0, 3).map((c) => Math.round(c * 100)).join('x')
     tints.push({ slot: l, diffuse: d + 1, mask: mk + 1, tint: cmod, name: `${exports[d]!.name}_LWX2Tint${key}` })
   }),
 )

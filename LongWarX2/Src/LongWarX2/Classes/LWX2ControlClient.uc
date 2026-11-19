@@ -4843,6 +4843,7 @@ function BaseNear(float Radius, out array<string> Out)
 	local float D;
 	local string Mats;
 	local int k;
+	local Texture Tex;
 
 	At = XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.Location;
 	foreach AllActors(class'DynamicSMActor_Spawnable', Piece)
@@ -4860,7 +4861,16 @@ function BaseNear(float Radius, out array<string> Out)
 	{
 		D = VSize(Person.Location - At);
 		if (D <= Radius && !Person.bHidden)
-			Out.AddItem(int(D) @ PathName(Person.SkeletalMeshComponent.SkeletalMesh) @ Person.Location);
+		{
+			Mats = "";
+			for (k = 0; k < Person.SkeletalMeshComponent.GetNumElements(); k++)
+			{
+				Mats @= "[" $ k $ "]" $ PathName(MaterialInstance(Person.SkeletalMeshComponent.GetMaterial(k)) != none ? MaterialInstance(Person.SkeletalMeshComponent.GetMaterial(k)).Parent : Person.SkeletalMeshComponent.GetMaterial(k));
+				if (MaterialInstance(Person.SkeletalMeshComponent.GetMaterial(k)) != none && MaterialInstance(Person.SkeletalMeshComponent.GetMaterial(k)).GetTextureParameterValue('Diffuse', Tex))
+					Mats @= "diffuse" @ PathName(Tex);
+			}
+			Out.AddItem(int(D) @ PathName(Person.SkeletalMeshComponent.SkeletalMesh) @ Person.Location @ "materials" $ Mats);
+		}
 	}
 	Out.AddItem("camera at" @ At);
 }
