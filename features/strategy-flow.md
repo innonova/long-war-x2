@@ -601,4 +601,6 @@ it is spread about 1/0.878 wider than EW's (the options list further left, the h
 screen). The 3D movie's stage is 1920 x 1080, exact fit; nothing in the movie lays out by stage width. EW's 3D display
 material has a `UVAdjust` parameter (`UIDisplayMovie.ScaleUVs`; no screen calls it), so the difference is likely its
 default in `HQ_UI.Materials.UIDisplayMaterial`, which the summary's panel uses (no instance of its own) and the port
-replaces with XCOM 2's. That material is an import of Command1 from a package not yet found. Open.
+replaces with XCOM 2's. Read since (it is in EW's XComStrategyGame.upk): `UVAdjust` defaults to (1, 1), so not that. What
+remains is how EW's 3D movie maps its 1280 x 720 stage onto its render target (EW sets SetViewScaleMode(2) on it,
+`UIDisplayMovie.InitMovie`) against XCOM 2's 1920 x 1080 exact fit. Open.
