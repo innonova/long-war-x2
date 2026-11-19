@@ -592,3 +592,13 @@ piece of 17 facility levels, is not found (an EW package the setup does not carr
 - **Mission Control without the resource lines:** EW's Mission Control hides the whole strategy HUD
   (`UIMissionControl.GoToView`); ours hides the resource lines (the HUD carries our back arrow there) (round 5, #12, in part).
 - Still from round 5: the room's objectives panel and ticker in the Situation Room's main view (EW shows them there).
+
+## Notes (2026-11-19, the soldier summary's right-hand panels)
+
+The reviewer's "open right borders": the panels run off the screen's right edge. The summary is on EW's 3D panel
+(`UIDisplay_SoldierSummary`, EW's own mesh at EW's scale, through EW's camera; the soldier is EW's size), but the movie on
+it is spread about 1/0.878 wider than EW's (the options list further left, the header's right edge, its origin, past the
+screen). The 3D movie's stage is 1920 x 1080, exact fit; nothing in the movie lays out by stage width. EW's 3D display
+material has a `UVAdjust` parameter (`UIDisplayMovie.ScaleUVs`; no screen calls it), so the difference is likely its
+default in `HQ_UI.Materials.UIDisplayMaterial`, which the summary's panel uses (no instance of its own) and the port
+replaces with XCOM 2's. That material is an import of Command1 from a package not yet found. Open.

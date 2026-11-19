@@ -41,6 +41,7 @@ function Handle(string Line, out array<string> Out)
 	local int Before;
 	local Color AmbientColour;
 	local LevelStreaming Streamed;
+	local UIScreen Scr;
 
 	ParseStringIntoArray(Line, Args, " ", true);
 	if (Args.Length == 0)
@@ -431,6 +432,12 @@ function Handle(string Line, out array<string> Out)
 		// 90°E/0° (yellow), 0°/45°N (cyan), 90°W/0° (magenta) and 90°W/45°N (white), for placing EW's flat earth on it (a
 		// test aid: LWX2EWBase.GlobeLonOffset).
 		Out.AddItem(GlobeTest(Args));
+		return;
+	case "ew3d":
+		// A test aid: each EW screen on the stack, whether it is in the 3D movie and on which panel.
+		foreach Pres().ScreenStack.Screens(Scr)
+			if (UILWEWScreen(Scr) != none)
+				Out.AddItem(Scr.Name @ "3D" @ Scr.bIsIn3D @ "display" @ UILWEWScreen(Scr).EWDisplay @ "on" @ UILWEWScreen(Scr).ShownOn @ "found" @ class'LWX2EWBase'.static.DisplayFor(Pres(), UILWEWScreen(Scr).EWDisplay));
 		return;
 	case "ewscreen":
 		Out.AddItem(Args.Length > 1 ? class'UILWEWScreen'.static.ShowMovie(Args[1], Args.Length > 2 ? Args[2] : "") : "ERR ewscreen <EW movie: MissionControl, StrategyHUD …>");
