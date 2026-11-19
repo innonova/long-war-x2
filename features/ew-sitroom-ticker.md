@@ -35,3 +35,6 @@ map; the port shows neither. The reviewer's rounds 4 and 5 list both.
   Tweener; its title field stayed empty. Next: whether the sliders are made (the renamed classes, `ew-ui.ts`) and where
   EW's wall meshes show that part of the movie (`UI_situationroom_center`'s UVs).
 - **Not yet:** the council's headlines; the objectives panel.
+- **Probed further:** the five sliders are made and carry the headlines (`txtField`), and Tweener moves them; the
+  ticker clip is now above the map area (which had covered it), but nothing shows, even moved into the map's middle on the
+  wall. Next: whether its text renders in the 3D movie at all (fonts, colour), by a test clip of ours beside it.
