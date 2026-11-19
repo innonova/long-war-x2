@@ -55,7 +55,8 @@ export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: num
     if (m <= 0) continue
     const shade = Math.min(2, mean > 0 ? lum(k) / mean : 1)
     for (let c = 0; c < 3; c++) {
-      const t = Math.min(255, 255 * tint[c]! * shade)
+      // (× 2: EW's labs' grey colour mod, 0.48, draws the vests near white in EW's captures; APPROXIMATION.)
+      const t = Math.min(255, 255 * 2 * tint[c]! * shade)
       rgba[4 * k + c] = Math.round(rgba[4 * k + c]! * (1 - m) + t * m)
     }
   }

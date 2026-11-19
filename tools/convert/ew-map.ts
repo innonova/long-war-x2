@@ -46,8 +46,9 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the clerks' uniforms).; 29: cameras where a matinee leaves them by axes
  *  (the main menu's).; 30: pieces whose component EW hides in play (HiddenGame) left out.; 31: the lightmap atlases public
  *  (the plots import them).; 32: EW's hair brightened (its hair parent's lightening, baked: tint-textures.ts scaleMip).; 33:
- *  a look's tiling (Tile: EW's MainTile_U).; 34: the tinted copies named without a trailing "_<digits>". */
-export const CONVERTER_VERSION = 34
+ *  a look's tiling (Tile: EW's MainTile_U).; 34: the tinted copies named without a trailing "_<digits>".; 35: the colour
+ *  mods twice as bright. */
+export const CONVERTER_VERSION = 35
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
