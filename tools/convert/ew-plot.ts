@@ -136,7 +136,7 @@ export interface PlotSettings {
   /** EW's baked lighting on the mission maps, the middle way (features/ew-lightmaps.md): pieces inside EW's buildings, and
    *  every piece of a night map, get an instance each of this parent (XCOM 2's lit prop material with EW's lightmap
    *  added, made in the SDK editor) with their lightmap; "" none. */
-  lightmap?: { parent: string; brightness: number; interiors: boolean; nightMaps: string[]; onlyMaps: string[] }
+  lightmap?: { parent: string; brightness: number; interiors: boolean; nightMaps: string[]; onlyMaps: string[]; everywhere?: boolean }
 }
 
 /**
@@ -394,7 +394,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   // not glowing or see-through kinds.
   // (Only the maps listed, while it is tried out: PlotLightmapMaps; none listed, every map.)
   const lm = settings.lightmap?.parent && (!settings.lightmap.onlyMaps.length || settings.lightmap.onlyMaps.includes(map.name)) ? settings.lightmap : undefined
-  const night = !!lm && lm.nightMaps.includes(map.name)
+  const night = !!lm && (lm.everywhere || lm.nightMaps.includes(map.name))
   const lightmapMIC = (path: string, l: PieceLightmap): number => {
     const look = map.looks.get(path)
     if (!lm || l.uv !== 1 || !look || look.kind !== 'Prop' || !look.diffuse || GLASS_MATERIAL.test(path)) return 0
