@@ -4710,6 +4710,12 @@ function string BaseHide(string Text, bool bShow, optional string Move, optional
 
 	if (Text == "")
 		return "ERR basehide <text> [show]";
+	// (basehide cutaway [show]: the base's black cut surfaces, as a facility's camera hides them.)
+	if (Text == "cutaway")
+	{
+		class'LWX2EWBase'.static.Get(Pres()).ShowCutaway(bShow);
+		return "ok cutaway" @ (bShow ? "shown" : "hidden");
+	}
 	foreach AllActors(class'DynamicSMActor_Spawnable', Piece)
 		if (Move == "" && InStr(PathName(Piece.StaticMeshComponent.StaticMesh), Text, , true) != INDEX_NONE)
 		{

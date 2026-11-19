@@ -44,8 +44,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  (an actor's Base: the scene's CineDummy, itself placed by its key); 27: people's glowing slots (Glow, Tint: the Genetics
  *  Lab's tank glass).; 28: people's colour mods baked into tinted diffuses (tint-textures.ts:
  *  the clerks' uniforms).; 29: cameras where a matinee leaves them by axes
- *  (the main menu's). */
-export const CONVERTER_VERSION = 29
+ *  (the main menu's).; 30: pieces whose component EW hides in play (HiddenGame) left out. */
+export const CONVERTER_VERSION = 30
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -313,6 +313,8 @@ exports.forEach((e, i) => {
   if (!mesh) return
   const hidden = tags.find((t) => t.name === 'bHidden')
   if (hidden?.boolValue) return
+  // (Nor one whose mesh EW keeps hidden in play: Command1's stray sidewalk tile in front of the hangar; converter 30.)
+  if ((ctags.find((t) => t.name === 'HiddenGame') as { boolValue?: number } | undefined)?.boolValue) return
   const lightmap = lightmapOf(ref(comp), mesh)
   // (A placed actor stores only what differs from its archetype: one standing where its archetype stands has no Location
   // of its own, and was put at the origin until converter 18: Street Hurricane's storefront row then covered its drop zone.)
