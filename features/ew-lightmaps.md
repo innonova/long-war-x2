@@ -154,3 +154,11 @@ daylight exteriors; two maps tried first, with screenshots, before it goes into 
   translucent, used with particle sprites) stands in, its instances given each emitter's texture by the converter
   rewriting the emitters' material references; the base spawns them. Lens flares likewise (XCOM 2 has
   `LensFlareSource`). A feature of its own; planned.
+
+## Report (2026-11-19 night, the monitors)
+
+- **EW's console screens** (round 7 #2): their picture `HQscreens_test` is a sheet of UI panels drawn in its green
+  channel (accents in red and blue) that EW's material tints; tinted as a picture it came out green, so the port had
+  drawn the screens in the tint alone, blank. The converter now adds a whitened copy (`_LWX2White`: each texel's
+  brightest channel, `tint-textures.ts whiteMip`; converter 40) and our glow tints it: the research room's monitors show
+  EW's UI panels in their cyan. `basenear` lists each slot's picture now.

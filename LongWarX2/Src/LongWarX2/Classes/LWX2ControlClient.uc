@@ -4853,7 +4853,11 @@ function BaseNear(float Radius, out array<string> Out)
 		{
 			Mats = "";
 			for (k = 0; k < Piece.StaticMeshComponent.GetNumElements(); k++)
+			{
 				Mats @= "[" $ k $ "]" $ PathName(MaterialInstance(Piece.StaticMeshComponent.GetMaterial(k)) != none ? MaterialInstance(Piece.StaticMeshComponent.GetMaterial(k)).Parent : Piece.StaticMeshComponent.GetMaterial(k));
+				if (MaterialInstance(Piece.StaticMeshComponent.GetMaterial(k)) != none && MaterialInstance(Piece.StaticMeshComponent.GetMaterial(k)).GetTextureParameterValue('Diffuse', Tex))
+					Mats @= "(" $ Tex.Name $ ")";
+			}
 			Out.AddItem(int(D) @ PathName(Piece.StaticMeshComponent.StaticMesh) @ Piece.Location @ "radius" @ int(Piece.StaticMeshComponent.Bounds.SphereRadius) @ "materials" $ Mats);
 		}
 	}
