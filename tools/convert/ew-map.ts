@@ -22,7 +22,7 @@ import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, addTextureCopies, maskMip } from './mask-textures.ts'
-import { tintMip } from './tint-textures.ts'
+import { scaleMip, tintMip } from './tint-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
 import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-people.ts'
 
@@ -45,8 +45,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  Lab's tank glass).; 28: people's colour mods baked into tinted diffuses (tint-textures.ts:
  *  the clerks' uniforms).; 29: cameras where a matinee leaves them by axes
  *  (the main menu's).; 30: pieces whose component EW hides in play (HiddenGame) left out.; 31: the lightmap atlases public
- *  (the plots import them). */
-export const CONVERTER_VERSION = 31
+ *  (the plots import them).; 32: EW's hair brightened (its hair parent's lightening, baked: tint-textures.ts scaleMip). */
+export const CONVERTER_VERSION = 32
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -965,14 +965,22 @@ for (const l of looks.values())
   }
 // EW's people's colour mods (tint-textures.ts): a tinted copy of the diffuse for each slot whose material sets CMOD over a
 // Spc_Ems_Ref_Opc mask; the slot takes the copy.
-const tints: { slot: Look; diffuse: number; mask: number; tint: number[]; name: string }[] = []
+/** How much brighter EW's hair draws than its hairstyle texture (APPROXIMATION, by eye against EW's capture of Vahlen). */
+const HAIR_SCALE = 2.6
+const tints: { slot: Look; diffuse: number; mask: number; tint: number[]; name: string; scale?: boolean }[] = []
 people.forEach((p, k) =>
   p.materialRefs.forEach((m, j) => {
     const l = personSlots[k]![j]
     if (!m || !l || l.kind === 'Glow' || !l.diffuse) return
     const cmod = vectorParam(m, 'CMOD')
     const tex = new Map<string, string>()
-    texturesOf(m, tex)
+    const root = texturesOf(m, tex)
+    // (EW's hair: its parent lightens the dark hairstyle texture, ColorMod white; a brightened copy, HAIR_SCALE.)
+    if (/HairMaskNrm/.test(root)) {
+      const hd = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
+      if (hd >= 0) tints.push({ slot: l, diffuse: hd + 1, mask: 0, tint: [HAIR_SCALE], name: `${exports[hd]!.name}_LWX2Bright`, scale: true })
+      return
+    }
     const maskPath = tex.get('Spc_Ems_Ref_Opc')
     const d = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
     const mk = maskPath ? exports.findIndex((e) => e.fullName === maskPath && e.type === 'Texture2D') : -1
@@ -992,8 +1000,8 @@ if (tints.length) {
     if (r) t.slot.diffuse = exports[r - 1]!.fullName
   }
 }
-const tintOf = new Map<string, { mask: string; tint: number[] }>()
-for (const t of tints) if (t.slot.diffuse.includes('_LWX2Tint')) tintOf.set(t.slot.diffuse, { mask: exports[t.mask - 1]!.fullName, tint: t.tint })
+const tintOf = new Map<string, { mask: string; tint: number[]; scale?: boolean }>()
+for (const t of tints) if (/_LWX2(Tint|Bright)/.test(t.slot.diffuse)) tintOf.set(t.slot.diffuse, { mask: t.mask ? exports[t.mask - 1]!.fullName : '', tint: t.tint, scale: t.scale })
 const masked = addMaskTextures(bytes, [...cutOut.values()])
 for (const l of looks.values()) if (masked.masks.has(cutOut.get(l.diffuse) ?? 0)) l.mask = l.diffuse + '_LWX2Mask'
 bytes = masked.bytes
@@ -1146,6 +1154,7 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
   (e, format, mip, w, h) => {
     if (maskExports.has(e)) return maskMip(format, mip)
     const tinted = tintOf.get(e.fullName)
+    if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
     const tm = tinted && format === 'PF_DXT1' ? dirMips.get(`${tinted.mask}:${w}x${h}`) : undefined
     if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint)
     const dir = lmPairs.get(e)

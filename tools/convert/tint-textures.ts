@@ -61,3 +61,29 @@ export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: num
   }
   return encodeDXT1(rgba, w, h)
 }
+
+/** A mip brightened by a factor (DXT1 or DXT5, the same size): each block's two colour endpoints scaled, the alpha and
+ *  the indices as they were. EW's hair (its hair parent lightens the dark hairstyle texture, ColorMod white). */
+export function scaleMip(mip: Uint8Array, format: string, k: number): Uint8Array {
+  const out = mip.slice()
+  const stride = format === 'PF_DXT5' ? 16 : 8
+  const at = format === 'PF_DXT5' ? 8 : 0
+  const v = new DataView(out.buffer, out.byteOffset, out.byteLength)
+  const scale = (c: number) => {
+    const r = Math.min(31, Math.round(((c >> 11) & 31) * k))
+    const g = Math.min(63, Math.round(((c >> 5) & 63) * k))
+    const b = Math.min(31, Math.round((c & 31) * k))
+    return (r << 11) | (g << 5) | b
+  }
+  for (let p = 0; p + stride <= out.length; p += stride) {
+    const c0 = v.getUint16(p + at, true)
+    const c1 = v.getUint16(p + at + 2, true)
+    let s0 = scale(c0)
+    let s1 = scale(c1)
+    // (DXT1's four-colour blocks keep c0 > c1, its three-colour ones c0 <= c1: scaled and clamped, the order kept.)
+    if (stride === 8 && (c0 > c1) !== (s0 > s1)) [s0, s1] = c0 > c1 ? [Math.max(s0, s1 + 1), s1] : [s0, Math.max(s1, s0)]
+    v.setUint16(p + at, s0 & 0xffff, true)
+    v.setUint16(p + at + 2, s1 & 0xffff, true)
+  }
+  return out
+}
