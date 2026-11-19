@@ -181,9 +181,7 @@ console.log(
       // EW's people in its fixed rooms (features/ew-base-people.md): converted with the base, placed by PeopleLevels.
       ...PEOPLE_LEVELS,
       // (EW's main menu scene: its shell map, its own room, seen through its Shell camera.)
-      'XComShell',
-      // (EW's first gene mod scene: the Genetics Lab's station, its four tanks, placed with the lab by RoomScenes.)
-      'CIN_XEW_1stGeneMod'].map((l) => `+BaseLevels="${l}"`),
+      'XComShell'].map((l) => `+BaseLevels="${l}"`),
     'PeopleAnimate=true',
     "; EW's hangar bays: their launch pads and craft by the hangar's state (LWX2EWBase.RefreshBays).",
     'BaysLevel="Anim_Hangar_LaunchBays"',
@@ -195,9 +193,6 @@ console.log(
     "; Its globe turns once in this many seconds, westward (EW's shell matinee).",
     'ShellGlobeSeconds=200',
     ...PEOPLE_LEVELS.map((l) => `+PeopleLevels="${l}"`),
-    "; A facility's props EW keeps in another level of its room: the Genetics Lab's station (its four tanks), in EW's first",
-    '; gene mod scene, held where that scene leaves it (LWX2EWBase.RoomScenes).',
-    '+RoomScenes=(Level="Addon_Genelab", Scene="CIN_XEW_1stGeneMod", Meshes=("SM_GeneLab_Station"))',
     "; Their stand-ins' parent: XCOM 2's material for its own base's staff (the aliens' parent turned them blue-grey).",
     'PeopleMaterialParent="Materials.Approved.AvengerStaff_SD"',
     '',

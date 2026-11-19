@@ -224,8 +224,6 @@ struct LWX2Person
 	var int Bay;
 	var string BayState;
 	var name BayPart;
-	/** Its scene plays once (no looping matinee: EW's first gene mod's): its animation held at its last pose. */
-	var bool Hold;
 };
 
 struct LWX2Camera

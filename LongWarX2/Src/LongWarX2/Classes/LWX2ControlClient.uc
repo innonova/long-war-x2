@@ -126,7 +126,7 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "basehide":
 		// A test aid: EW's base's pieces and people whose mesh's path holds <text> hidden, or shown again: basehide <text> [show];
-		// or the people among them turned or moved, live: basehide <text> yaw|z <add>.
+		// or the people among them turned or moved, live: basehide <text> yaw|z <add>; or posed: basehide <text> pose <seconds>.
 		Out.AddItem(BaseHide(Args.Length > 1 ? Args[1] : "", Args.Length > 2 && Args[2] == "show", Args.Length > 3 ? Args[2] : "", Args.Length > 3 ? float(Args[3]) : 0.0));
 		return;
 	case "people":
@@ -4723,6 +4723,13 @@ function string BaseHide(string Text, bool bShow, optional string Move, optional
 				Person.SetRotation(Person.Rotation + rot(0, 1, 0) * By);
 			else if (Move == "z")
 				Person.SetLocation(Person.Location + vect(0, 0, 1) * By);
+			else if (Move == "pose" && AnimNodeSequence(Person.SkeletalMeshComponent.Animations) != none)
+			{
+				// (Its animation stopped at this many seconds; the sequence's length reported.)
+				AnimNodeSequence(Person.SkeletalMeshComponent.Animations).StopAnim();
+				AnimNodeSequence(Person.SkeletalMeshComponent.Animations).SetPosition(By, false);
+				Where $= " length" @ AnimNodeSequence(Person.SkeletalMeshComponent.Animations).AnimSeq.SequenceLength;
+			}
 			else
 				Person.SetHidden(!bShow);
 			n++;

@@ -140,3 +140,14 @@ stand-in (`AvengerStaff_SD`) takes the diffuse only. The fix is a stand-in that 
   `<diffuse>_LWX2Tint<r>_<g>_<b>`, converter 28): where the mask is, the mod's colour shaded by the texture's own brightness
   (APPROXIMATION of EW's blend). Seen on wingpu: the lab's clerks in grey-blue uniforms, no longer black
   (`logs/compare/pairs/room-research.png`).
+
+## Notes (2026-11-19 evening, the Genetics Lab's tanks again)
+
+- **The light cards draw** (`basemesh`: rendered every frame; `basemat`: magenta when given another material) and glow
+  as EW's with `M_EWLightCard`: the white ring over the column and the porthole's yellow crescents. They were never
+  the missing part.
+- **EW's four yellow tanks around the central column** are still missing, and are none of: the lab's static pieces
+  (no tank material on any), the nine canisters (`SM_Canister`, a rack behind the wall; their scene slides them along
+  it), or the station of EW's first gene mod scene (`CIN_XEW_1stGeneMod`, `SM_GeneLab_Station` with the yellow
+  `GeneLabTankGlassMaster`: one tank, raised into the column over its 21 s; tried placed with the lab and taken out
+  again). Next: what EW's code puts there (XGFacility_GeneLabs / the gene lab's 3D UI), or another streamed level.
