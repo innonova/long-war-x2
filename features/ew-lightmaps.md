@@ -137,4 +137,7 @@ daylight exteriors; two maps tried first, with screenshots, before it goes into 
   draws the texture once, so the base's rock reads twice as coarse. The fix: a `DiffuseScaleBias` parameter on our
   materials (UV0 × .xy + .zw, as the lightmap's UV1 already is), set from EW's tiling by the converter. It needs the
   material editor; a first try at copying the lightmap's UV nodes lost the graph's view (panning in that editor) and was
-  left unsaved. Next editor session.
+  left unsaved. **Done:** `DiffuseTile` (a scalar, UV0 × it) on both lightmap materials (SDK editor), the converter
+  writes a look's `Tile` from EW's `MainTile_U` (or its parent's default; converter 33), the base and the plots set it.
+  The hangar's rock now has EW's grain (`logs/compare/x2/room-hangar.png`). Not carried: EW's detail layer (×6) and its
+  sparkle (specular), which our unlit stand-in has no input for.
