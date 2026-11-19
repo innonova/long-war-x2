@@ -12,6 +12,10 @@ import { Reader, Writer } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { writePackage } from '@innonova/upkit/writer'
 
+/** A piece's baked lighting as ew-map.ts writes it (features/ew-lightmaps.md): its colour atlas (combined with the
+ *  directional one), the two coefficients' scales, its place in the atlas, and the mesh's UV set it is laid out on. */
+export interface PieceLightmap { color: string; s0: number[]; s1: number[]; scale: number[]; bias: number[]; uv: number }
+
 /** One converted EW map's section (LWX2EWMapData, as ew-map.ts writes it). */
 export interface EWMap {
   name: string
@@ -19,7 +23,7 @@ export interface EWMap {
   playCenter: number[]
   playExtent: number[]
   dropZones: number[][]
-  pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean; fractured: boolean; cover: string[]; frac?: { indices: number; minZ: number; maxZ: number; toughness: string } }[]
+  pieces: { mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: string[]; backdrop: boolean; fractured: boolean; cover: string[]; frac?: { indices: number; minZ: number; maxZ: number; toughness: string }; lightmap?: PieceLightmap }[]
   /** EW's doors (ew-map.ts): mesh, AnimTree, AnimSets, physics, where, the idle animation, the interaction points. */
   doors: { mesh: string; materials: string[]; tree: string; physics: string; sets: string[]; loc: number[]; rot: number[]; scale: number[]; idle: string; blocksSight: boolean; window: boolean; points: Record<string, string>[] }[]
   looks: Map<string, { kind: string; diffuse: string; normal: string; mask: string }>
@@ -84,6 +88,10 @@ export function readSection(text: string): EWMap {
           const f = /Frac=\(Indices=(\d+),MinZ=([-\d.]+),MaxZ=([-\d.]+),Toughness=(\w+)\)/.exec(line)
           return f ? { indices: Number(f[1]), minZ: Number(f[2]), maxZ: Number(f[3]), toughness: f[4]! } : undefined
         })(),
+        lightmap: (() => {
+          const l = /LightMap=\(Color="([^"]*)",Dir="[^"]*",S0=\(([^()]*)\),S1=\(([^()]*)\),ScaleX=([-\d.e]+),ScaleY=([-\d.e]+),BiasX=([-\d.e]+),BiasY=([-\d.e]+),UV=(\d+)\)/.exec(line)
+          return l ? { color: l[1]!, s0: vec(l[2]!), s1: vec(l[3]!), scale: [Number(l[4]), Number(l[5])], bias: [Number(l[6]), Number(l[7])], uv: Number(l[8]) } : undefined
+        })(),
         // Its cover flags where they differ from an XComLevelActor's (ew-map.ts: ClimbOnto=false, CoverForce=…).
         cover: [...line.matchAll(/,(ClimbOnto|ClimbOver|Destination|IgnoreForCover|CoverForce|BlocksSight|Window|Floor)=(\w+)/g)].map((m) => `${m[1]}=${m[2]}`),
       })
@@ -125,6 +133,10 @@ export interface PlotSettings {
   /** EW's light brightness scale, and the kinds placed. */
   lightScale: number
   lightKinds: string[]
+  /** EW's baked lighting on the mission maps, the middle way (features/ew-lightmaps.md): pieces inside EW's buildings, and
+   *  every piece of a night map, get an instance each of this parent (XCOM 2's lit prop material with EW's lightmap
+   *  added, made in the SDK editor) with their lightmap; "" none. */
+  lightmap?: { parent: string; brightness: number; interiors: boolean; nightMaps: string[] }
 }
 
 /**
@@ -375,6 +387,35 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     return ref
   }
 
+  // --- EW's baked lighting on a piece (the middle way, features/ew-lightmaps.md) -------------------------------------
+  // An instance of the lightmap parent per piece and material (each piece has its own place in the atlas): EW's diffuse
+  // and normal, its lightmap atlas on the mesh's second UV set (LMScaleBias), and one brightness from its scales (as
+  // LWX2EWMapPieces.Lightmapped: the colour's mean × the directions' mean × √3). Only EW's plain lit looks: not glass,
+  // not glowing or see-through kinds.
+  const lm = settings.lightmap?.parent ? settings.lightmap : undefined
+  const night = !!lm && lm.nightMaps.includes(map.name)
+  const lightmapMIC = (path: string, l: PieceLightmap): number => {
+    const look = map.looks.get(path)
+    if (!lm || l.uv !== 1 || !look || look.kind !== 'Prop' || !look.diffuse || GLASS_MATERIAL.test(path)) return 0
+    const p = parse(pkg.data(sampleMIC), 4)
+    const name = (n: string) => bin((x) => { const r = objName(n); x.i32(r.index).i32(r.number) })
+    const param = (n: string, value: T) => serialize({ head: new Uint8Array(0), tags: [{ name: 'ParameterName', type: 'NameProperty', arrayIndex: 0, value: name(n) }, value], tail: new Uint8Array(0) })
+    const textures: [string, number][] = [['Diffuse', importRef(look.diffuse, 'Texture2D')], ['LightMap', importRef(l.color, 'Texture2D')]]
+    if (look.normal) textures.push(['Normal', importRef(look.normal, 'Texture2D')])
+    for (const [n, t] of settings.textures) textures.push([n, importRef(t, 'Texture2D')])
+    const mean = (v: number[]) => (v[0]! + v[1]! + v[2]!) / 3
+    const scalars: [string, number][] = [...settings.scalars, ['LMBrightness', mean(l.s0) * mean(l.s1) * 1.732 * lm.brightness]]
+    const tags: T[] = [
+      tObj('Parent', importRef(lm.parent, 'Material')),
+      tGuid('LightingGuid'),
+      { name: 'TextureParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(textures.length); for (const [n, t] of textures) w.bytes(param(n, tObj('ParameterValue', t))) }) },
+      { name: 'ScalarParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(scalars.length); for (const [n, v] of scalars) w.bytes(param(n, tFloat('ParameterValue', v))) }) },
+      { name: 'VectorParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(1); w.bytes(param('LMScaleBias', { name: 'ParameterValue', type: 'StructProperty', struct: 'LinearColor', arrayIndex: 0, value: bin((x) => [l.scale[0]!, l.scale[1]!, l.bias[0]!, l.bias[1]!].forEach((c) => x.f32(c))) })) }) },
+    ]
+    return addExport(sampleMIC, nextName('LWX2Lightmapped'), level, serialize({ head: objectHead(), tags, tail: p.tail }))
+  }
+  let lightmapped = 0
+
   // --- The pieces ------------------------------------------------------------------------------------------------
   const actorSample = parse(pkg.data(sampleActor), 26)
   const meshSample = parse(pkg.data(sampleMesh), 8)
@@ -398,7 +439,9 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   for (const piece of pieces) {
     // Its stand-ins first: they are exports too, and the actor's component must come right after the actor.
     const inBuilding = map.buildings.some((b) => [0, 1, 2].every((c) => Math.abs(piece.loc[c]! - b.center[c]!) <= b.extent[c]! + 16))
-    const mats = debug.includes('nomats') ? [] : piece.materials.map((m) => micFor(m, inBuilding))
+    const baked = !!lm && !!piece.lightmap && !piece.backdrop && (night || (lm.interiors && inBuilding))
+    const mats = debug.includes('nomats') ? [] : piece.materials.map((m) => (baked && lightmapMIC(m, piece.lightmap!)) || micFor(m, inBuilding))
+    if (baked) lightmapped++
     // A wall that breaks: XCOM 2's fracturable actor with its own class defaults as archetype, EW's fracture data on the
     // component, EW's toughness in its Tag (LWX2T_MASONRY …) for the mod to give it XCOM 2's at the battle's start.
     const frac = settings.fracWalls && piece.fractured && piece.frac ? piece.frac : undefined
@@ -695,7 +738,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const tiles = [Math.round((max[0]! - min[0]!) / TILE), Math.round((max[1]! - min[1]!) / TILE), Math.round((max[2]! - min[2]!) / FLOOR)]
   return {
     bytes,
-    report: `${map.name}: ${pieces.length} pieces, ${[...mics.values()].filter((r) => r > 0).length} stand-in materials, ${doorCount} doors, ${fracCount} breakable walls, ${lightCount} lights, ${map.dropZones.length} drop zones, ${map.buildings.length} buildings (${floorCount} floors); level volume ${tiles.join(' x ')} tiles; ${(bytes.length / 1024).toFixed(0)} KB`,
+    report: `${map.name}: ${pieces.length} pieces, ${[...mics.values()].filter((r) => r > 0).length} stand-in materials, ${doorCount} doors, ${fracCount} breakable walls, ${lightCount} lights, ${map.dropZones.length} drop zones, ${map.buildings.length} buildings (${floorCount} floors)${lm ? `, ${lightmapped} pieces with EW's baked lighting${night ? ' (a night map)' : ''}` : ''}; level volume ${tiles.join(' x ')} tiles; ${(bytes.length / 1024).toFixed(0)} KB`,
   }
 }
 

@@ -40,6 +40,13 @@ export function plotSettings(mod: string): PlotSettings {
     lightKinds: [...ini.matchAll(/^\+LightKinds=(\w+)/gm)].map((m) => m[1]!),
     buildings: /^PlotBuildings=true/m.test(ini),
     fracWalls: /^PlotFracWalls=true/m.test(ini),
+    // (EW's baked lighting on interiors and night maps: PlotLightmapParent, features/ew-lightmaps.md.)
+    lightmap: str('PlotLightmapParent') ? {
+      parent: str('PlotLightmapParent'),
+      brightness: Number(/^LightmapBrightness=([\d.]+)/m.exec(ini)?.[1] ?? 1) || 1,
+      interiors: !/^PlotLightmapInteriors=false/m.test(ini),
+      nightMaps: [...ini.matchAll(/^\+Maps=\(Name="([^"]+)"[^\n]*Night=true/gm)].map((m) => m[1]!),
+    } : undefined,
   }
 }
 
