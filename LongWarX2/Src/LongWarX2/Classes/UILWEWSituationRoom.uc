@@ -40,6 +40,9 @@ var UIButton SweepButtonWidget;
 var array<name> Order;
 /** The earth's texture, held: Flash fetches it a frame later, by its path, and found nothing once it had been collected. */
 var Texture2D EarthTexture;
+/** The news ticker (XCOM 2's scrolling text over EW's map's foot), and how far above the map's foot it stands. */
+var UIScrollingText NewsTicker;
+var float NewsTickerRise;
 
 /** EW's wall, live, under the hub (bWall): once, while the base is in view; where 3D screens are on. */
 static function OpenWall(XComHQPresentationLayer HQPres)
@@ -140,7 +143,14 @@ function ApplyBare(bool bBare)
 	MC.ChildSetBool("doomTracker2", "_visible", !bBare);
 	MC.ChildSetBool("theUplinks", "_visible", !bBare);
 	MC.ChildSetBool("theObjectivesPanel", "_visible", !bBare);
-	MC.ChildSetBool("theTicker", "_visible", !bBare);
+	MC.ChildSetBool("theTicker", "_visible", false);
+	if (NewsTicker != none)
+	{
+		if (bBare)
+			NewsTicker.Hide();
+		else
+			NewsTicker.Show();
+	}
 }
 
 /** The wall taken down (the Situation Room itself opens on it). */
@@ -259,6 +269,9 @@ function AddEarth()
 	Earth.SetSize(W > 0 ? W : 750.0, H > 0 ? H : 498.0);
 	Earth.MC.FunctionNum("swapDepths", -16000);
 	`log("LongWarX2: EW screen: the earth in the Situation Room's map area," @ W @ "x" @ H, , 'LongWarX2');
+	// The world's news (LWTicker) along the map's foot, in XCOM 2's scrolling text: EW's own ticker builds its lines from a
+	// library clip whose font does not draw in XCOM 2 (its text fields stay 4 high, nothing shows).
+	NewsTicker = Spawn(class'UIScrollingText', self).InitScrollingText('LWNewsTicker', "", W > 0 ? W : 480.0, X, Y + (FH > 0 ? FH : H) - NewsTickerRise);
 }
 
 function Refresh()
@@ -301,16 +314,9 @@ function Refresh()
 	RealizeMap(S);
 	MC.FunctionNum("SetDoomLevel", Left);
 	// The world's news (LWTicker; EW's UISituationRoom.UpdateTicker: SetTickerText(title, headlines)).
-	if (class'LWTicker'.default.Lines.Length > 0)
-	{
-		MC.BeginFunctionOp("SetTickerText");
-		MC.QueueString(class'LWTicker'.default.Title);
-		MC.QueueString(class'LWTicker'.static.Text(S));
-		MC.EndOp();
-		if (!bIsBare)
-			MC.FunctionVoid("ShowTicker");
-		`log("LongWarX2: EW Situation Room: ticker" @ S.Ticker.Length @ "headlines", , 'LongWarX2');
-	}
+	MC.FunctionVoid("HideTicker");
+	if (NewsTicker != none && class'LWTicker'.default.Lines.Length > 0)
+		NewsTicker.SetHTMLText(class'UIUtilities_Text'.static.GetColoredText(class'LWTicker'.default.Title $ ":", eUIState_Normal) @ Repl(class'LWTicker'.static.Text(S), "//", "  //  "));
 	if (bSatellite)
 	{
 		MC.BeginFunctionOp("SetSatellites");
@@ -794,6 +800,7 @@ defaultproperties
 	// (EW's: UISituationRoom on the room's wall, UIDisplay_CountryPanels through Cam_SituationRoom; here one plate across
 	// the wall, LWX2EWBase.PlateDisplays: EW's wall meshes showed only slivers of the movie.)
 	EWDisplay = UIDisplay_CountryPanels
+	NewsTickerRise = 30
 	EWDisplayCamera = Cam_SituationRoom
 	Order(0) = USA
 	Order(1) = Canada

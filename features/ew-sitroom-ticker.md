@@ -38,3 +38,12 @@ map; the port shows neither. The reviewer's rounds 4 and 5 list both.
 - **Probed further:** the five sliders are made and carry the headlines (`txtField`), and Tweener moves them; the
   ticker clip is now above the map area (which had covered it), but nothing shows, even moved into the map's middle on the
   wall. Next: whether its text renders in the 3D movie at all (fonts, colour), by a test clip of ours beside it.
+
+## Report (2026-11-19 morning, the ticker drawn)
+
+- **Why nothing showed:** EW's ticker builds its scrolling lines from a library clip whose text fields stay 4 pixels
+  high in XCOM 2 (its font does not draw), and its mask stood far off the lines' path. The headlines now scroll in XCOM 2's
+  own scrolling text (`UIScrollingText`) along the map's foot, where EW's run, WORLD NEWS first, each in its colour, "//"
+  between; EW's own ticker is hidden. Seen on wingpu in the Situation Room ("WORLD NEWS: Economist says future markets
+  unpredictable if major tech…", scrolling); hidden where the wall is bare.
+- **Still:** the council's headlines; the objectives panel.
