@@ -69,6 +69,8 @@ struct LWX2Look
 	var string Mask;
 	/** EW's glowing parts' colour (Kind Glow: light rings and strips, consoles' screens; HDR, above 1 brighter). */
 	var LinearColor Tint;
+	/** How often EW's material tiles its main texture (its MainTile_U: the base's cave rock twice); 0: once. */
+	var float Tile;
 };
 
 struct LWX2Standin
@@ -589,6 +591,8 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 	MIC = new(InOuter) class'MaterialInstanceConstant';
 	MIC.SetParent(Parent);
 	MIC.SetTextureParameterValue('Diffuse', Diffuse);
+	if (D.Looks[k].Tile > 0)
+		MIC.SetScalarParameterValue('DiffuseTile', D.Looks[k].Tile);
 	MIC.SetTextureParameterValue('LightMap', LM);
 	V.R = P.LightMap.ScaleX; V.G = P.LightMap.ScaleY; V.B = P.LightMap.BiasX; V.A = P.LightMap.BiasY;
 	MIC.SetVectorParameterValue('LMScaleBias', V);

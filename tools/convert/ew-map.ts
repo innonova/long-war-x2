@@ -45,8 +45,9 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  Lab's tank glass).; 28: people's colour mods baked into tinted diffuses (tint-textures.ts:
  *  the clerks' uniforms).; 29: cameras where a matinee leaves them by axes
  *  (the main menu's).; 30: pieces whose component EW hides in play (HiddenGame) left out.; 31: the lightmap atlases public
- *  (the plots import them).; 32: EW's hair brightened (its hair parent's lightening, baked: tint-textures.ts scaleMip). */
-export const CONVERTER_VERSION = 32
+ *  (the plots import them).; 32: EW's hair brightened (its hair parent's lightening, baked: tint-textures.ts scaleMip).; 33:
+ *  a look's tiling (Tile: EW's MainTile_U). */
+export const CONVERTER_VERSION = 33
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -781,7 +782,7 @@ for (const level of ['Stream', 'EWI', 'CNH']) {
 // not compile any), so the mod replaces each with an instance of an XCOM 2 parent given
 // the EW material's diffuse and normal maps. Read here: an instance's texture parameters
 // (its parents' for those it does not set), a material's texture expressions.
-interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[] }
+interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number }
 const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
 /** Root materials drawn see-through (EW's BlendMode BLEND_Translucent: road paint, decals), by name. */
 const translucent = new Set<string>()
@@ -874,7 +875,53 @@ function lookOf(r: number): Look {
     // Masked: cut out by the diffuse's alpha (tree cards, signs, fences: PROP_DifOpc, PROP_OpacityMask_Tile; and a
     // translucent parent's, as the road paint's, whose diffuse alpha holds the paint).
     kind: /Foliage|Grass|Veget/i.test(root) ? 'Foliage' : /DifOpc|OpacityMask/i.test(root) || (translucent.has(root) && diffuse) ? 'Masked' : /ALIEN/i.test(root) ? 'Alien' : 'Prop',
+    // (How often EW's material tiles its main texture, where it says: the base's cave rock twice, MainTile_U; converter 33.)
+    tile: (() => { const t = scalarParam(r, 'MainTile_U'); return t && t > 0 && t !== 1 ? t : undefined })(),
   }
+}
+/**
+ * A material's scalar parameter: its own or a parent instance's value, else its root material's default (the
+ * parameter expression's DefaultValue). EW's cave rock tiles by MainTile_U (2).
+ */
+function scalarParam(r: number, name: string, depth = 0): number | undefined {
+  if (r <= 0 || depth > 8) return undefined
+  let tags: Tag[]
+  try {
+    tags = tagsOf(r - 1, 4)
+  } catch {
+    return undefined
+  }
+  const sp = tags.find((t) => t.name === 'ScalarParameterValues')
+  if (sp) {
+    const rd = new Reader(sp.value.subarray(4))
+    const count = new DataView(sp.value.buffer, sp.value.byteOffset).getInt32(0, true)
+    for (let k = 0; k < count; k++) {
+      const st = readTags(rd, pkg)
+      const pn = st.find((t) => t.name === 'ParameterName')
+      const pv = st.find((t) => t.name === 'ParameterValue')
+      if (pn && pv && nameOf(pn) === name) return new DataView(pv.value.buffer, pv.value.byteOffset).getFloat32(0, true)
+    }
+  }
+  const parent = tags.find((t) => t.name === 'Parent')
+  if (parent) return scalarParam(ref(parent), name, depth + 1)
+  // (The root material: its parameter expression's default.)
+  const root = exports[r - 1]
+  if (!root) return undefined
+  for (let k = 0; k < exports.length; k++) {
+    const e = exports[k]!
+    if (e.type !== 'MaterialExpressionScalarParameter' || !e.fullName.startsWith(root.fullName + '.')) continue
+    try {
+      const et = tagsOf(k, 4)
+      const pn = et.find((t) => t.name === 'ParameterName')
+      if (pn && nameOf(pn) === name) {
+        const dv = et.find((t) => t.name === 'DefaultValue')
+        return dv ? new DataView(dv.value.buffer, dv.value.byteOffset).getFloat32(0, true) : 0
+      }
+    } catch {
+      // (an expression not read)
+    }
+  }
+  return undefined
 }
 /**
  * A material's colour parameter (a vector parameter of this name on it or a parent instance): EW's glowing parts, light
@@ -1245,7 +1292,7 @@ const lines = [
   ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}"${l?.kind === 'Glow' ? `,Glow=true${l.tint ? `,Tint=(R=${n(l.tint[0]!)},G=${n(l.tint[1]!)},B=${n(l.tint[2]!)},A=1)` : ''}` : ''})`).join(',')}))`),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
-    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''})`,
+    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''}${l.tile ? `,Tile=${l.tile}` : ''})`,
   ),
   ...pieces.map(
     (p) =>
