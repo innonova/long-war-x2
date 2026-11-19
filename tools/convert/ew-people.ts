@@ -226,7 +226,8 @@ export function peopleIn(meta: any, pkg: any): Person[] {
         const n = dv(d).getInt32(o, true)
         if (n > 0 && n < 16) {
           const rs = Array.from({ length: n }, (_, k) => dv(d).getInt32(o + 4 + 4 * k, true))
-          if (rs.every((x) => /Material/.test(x > 0 ? exports[x - 1]!.type : x < 0 ? String(meta.imports[-x - 1].className) : ''))) materialRefs = rs
+          // (Empty slots allowed: the Genetics Lab's station has two.)
+          if (rs.some((x) => x !== 0) && rs.every((x) => x === 0 || /Material/.test(x > 0 ? exports[x - 1]!.type : String(meta.imports[-x - 1].className)))) materialRefs = rs
         }
       } catch {
         // none read
