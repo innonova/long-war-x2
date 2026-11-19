@@ -202,6 +202,15 @@ function ShowNavHelpFor(UIScreen Top)
 		HQPres.m_kAvengerHUD.NavHelp.Show();
 }
 
+/** Whether XCOM 2's own navigation help is the one shown (an XCOM 2 screen on top: ShowNavHelpFor). */
+function bool bNavHelpShown()
+{
+	local UIScreen Top;
+
+	Top = Movie.Pres.ScreenStack.GetCurrentScreen();
+	return Top != none && UILWEWScreen(Top) == none && UILWEWHub(Top) == none && UIArmory(Top) != none;
+}
+
 static function string FragmentsName()
 {
 	local X2ItemTemplate T;
@@ -339,7 +348,9 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 	// (Shown before its button is added: XCOM 2's Flash does not advance a hidden clip, and the button waits for a
 	// frame to load. The bar is hidden until a back arrow is in it, as EW's ShowBackButton shows it.)
 	// (Not under Mission Control itself, which has its own: UILWEWMissionControl.)
-	Movie.SetVariableBool(MCPath $ ".helpBar._visible", Context > 0 && UILWEWMissionControl(Movie.Pres.ScreenStack.GetCurrentScreen()) == none);
+	// (Nor under XCOM 2's own screens, the loadout and customization, whose own back button takes the screen back: two
+	// back buttons sat over each other there, round 6.)
+	Movie.SetVariableBool(MCPath $ ".helpBar._visible", Context > 0 && UILWEWMissionControl(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && !bNavHelpShown());
 	Ctx = Context $ Kind;
 	if (Ctx != ShownFor)
 	{
