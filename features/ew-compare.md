@@ -93,3 +93,11 @@ so the fixes are driven by evidence and the person is not needed on every round.
 - **scr-officers** (round 6 #2): not a difference to fix. Long War's Officer Billets (UIMedals, opened by
   XGBarracksUI.OnChooseMainMenuOption) moves no camera; EW's capture shows the Psi Labs' room only because
   `capture-ew.sh` opens it right after `scr-psilabs`. From the barracks menu the camera is the barracks', as the port has.
+- **Round 6, fixed:** the Situation Room's ticker on EW's strip below the map, in EW's small type; the armory scene's
+  grapple rope (EW shows it only with its animation) no longer hanging across the Situation Room's view
+  (`PeopleSkipMeshes`); the Situation Room's screens with credits and the month's net only, the Grey Market with credits
+  only, its title and total EW's; Command1's stray sidewalk tile, hidden in EW (its component's HiddenGame), no longer a
+  black block over the hangar's bridge (converter 30); the wall's map behind other 3D screens (EW's map plane with its
+  holographic earth; its council video plane and dark overlay, grey slabs over it, left out).
+- **Round 6, open:** the soldier list's frame is about 8% narrower than EW's, while the summary's right panels are wider
+  than EW's: not one cause. The Genetics Lab's four tanks (features/ew-base-people.md).
