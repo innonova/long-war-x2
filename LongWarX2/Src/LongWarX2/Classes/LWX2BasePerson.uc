@@ -3,7 +3,7 @@
 class LWX2BasePerson extends SkeletalMeshActor;
 
 /** EW's mesh, AnimSets, the loop, and its slots' stand-ins. */
-function Setup(SkeletalMesh Mesh, array<AnimSet> Sets, name Loop, array<MaterialInterface> Slots)
+function Setup(SkeletalMesh Mesh, array<AnimSet> Sets, name Loop, array<MaterialInterface> Slots, optional bool bHold)
 {
 	local AnimNodeSequence Seq;
 	local int i;
@@ -18,7 +18,11 @@ function Setup(SkeletalMesh Mesh, array<AnimSet> Sets, name Loop, array<Material
 	if (Seq != none && Loop != '')
 	{
 		Seq.SetAnim(Loop);
-		Seq.PlayAnim(true, 1.0, FRand());
+		// (A scene that plays once: where it ends, as EW leaves it.)
+		if (bHold && Seq.AnimSeq != none)
+			Seq.SetPosition(Seq.AnimSeq.SequenceLength, false);
+		else
+			Seq.PlayAnim(true, 1.0, FRand());
 	}
 }
 

@@ -96,3 +96,19 @@ the rooms go black: all their light is those lights.
 - **The consoles' screens** in EW's tint alone: EW's picture for them (`HQscreens_test`) is a green pattern EW's material
   uses as a mask; multiplied by the tint, as ours does, it came out green dots.
 - **Hangar:** `Static_Hangar_CAP` left out of the fixed rooms: its dark beam crossed the hangar's view, open in EW's.
+
+## Plan (2026-11-19, the mission maps: the middle way)
+
+The person chose the middle way (2026-11-18): EW's baked lighting on interiors and on night maps, XCOM 2's lighting on
+daylight exteriors; two maps tried first, with screenshots, before it goes into a download.
+
+- **Not the base's material.** `M_EWLightmapped` is unlit: on a mission it would take no flashlight, explosion or
+  unit shadow, and none of XCOM 2's building visibility (the roofs cut away) or fog, which its own parents' shaders
+  carry. Interiors and night maps are exactly where those matter.
+- **A lit stand-in with EW's light in it:** a copy of XCOM 2's `Props_SD` made in the SDK editor (so its building
+  visibility and fog stay), with EW's lightmap (UV1 × `LMScaleBias`) added: emissive = diffuse × lightmap ×
+  `LMBrightness`, the lit diffuse kept (dimmed by a scalar), so dynamic lights still add to it.
+- **The plot** (`ew-plot.ts`) writes one instance per lightmapped piece where the middle way applies (a piece inside
+  an EW building volume, or every piece on a night map), each with its atlas and placement; EW's placed lights stay
+  for dynamic light, at a lower scale where the lightmaps carry the light.
+- **First maps:** a night town map and a daylight one with interiors; captured beside EW's in the harness.

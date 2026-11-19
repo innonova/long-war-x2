@@ -114,6 +114,16 @@ function Handle(string Line, out array<string> Out)
 		// A test aid: EW's base's pieces and people within <radius> of the camera, nearest first: basenear <radius>.
 		BaseNear(Args.Length > 1 ? float(Args[1]) : 1500.0, Out);
 		return;
+	case "basemesh":
+		// A test aid: EW's base's pieces whose mesh's path holds <text>: their component's bounds, flags, scale and when the
+		// engine last drew them (LastRenderTime against now), to tell a culled piece from one drawn invisibly.
+		BaseMesh(Args.Length > 1 ? Args[1] : "", Out);
+		return;
+	case "basemat":
+		// A test aid: EW's base's pieces whose mesh's path holds <text> given another material, live, with scalars and colours
+		// set on an instance of it: basemat <text> <material> [<scalar> <value> | <vector> <r>,<g>,<b>,<a>]…
+		Out.AddItem(BaseMat(Args));
+		return;
 	case "basehide":
 		// A test aid: EW's base's pieces and people whose mesh's path holds <text> hidden, or shown again: basehide <text> [show];
 		// or the people among them turned or moved, live: basehide <text> yaw|z <add>.
@@ -4719,6 +4729,65 @@ function string BaseHide(string Text, bool bShow, optional string Move, optional
 			Where $= " [" $ Person.Location @ Person.Rotation.Yaw $ "]";
 		}
 	return "ok" @ n @ (Move != "" ? Move @ By : (bShow ? "shown" : "hidden")) $ Where;
+}
+
+/** A test aid: EW's base's pieces' material swapped, live (basemat). */
+function string BaseMat(array<string> Args)
+{
+	local DynamicSMActor_Spawnable Piece;
+	local MaterialInterface M;
+	local MaterialInstanceConstant MIC;
+	local array<string> V;
+	local LinearColor C;
+	local int n, k, i;
+
+	if (Args.Length < 3)
+		return "ERR basemat <text> <material> [<param> <value>]...";
+	M = MaterialInterface(DynamicLoadObject(Args[2], class'MaterialInterface', true));
+	if (M == none)
+		return "ERR no material" @ Args[2];
+	foreach AllActors(class'DynamicSMActor_Spawnable', Piece)
+	{
+		if (InStr(PathName(Piece.StaticMeshComponent.StaticMesh), Args[1], , true) == INDEX_NONE)
+			continue;
+		MIC = new(Piece) class'MaterialInstanceConstant';
+		MIC.SetParent(M);
+		for (i = 3; i + 1 < Args.Length; i += 2)
+		{
+			V = SplitString(Args[i + 1], ",");
+			if (V.Length >= 3)
+			{
+				C = MakeLinearColor(float(V[0]), float(V[1]), float(V[2]), V.Length > 3 ? float(V[3]) : 1.0);
+				MIC.SetVectorParameterValue(name(Args[i]), C);
+			}
+			else
+				MIC.SetScalarParameterValue(name(Args[i]), float(Args[i + 1]));
+		}
+		for (k = 0; k < Piece.StaticMeshComponent.GetNumElements(); k++)
+			Piece.StaticMeshComponent.SetMaterial(k, MIC);
+		n++;
+	}
+	return "ok" @ n @ "pieces given" @ PathName(M);
+}
+
+/** A test aid: EW's base's pieces by their mesh's path, as the engine has them (basemesh). */
+function BaseMesh(string Text, out array<string> Out)
+{
+	local DynamicSMActor_Spawnable Piece;
+	local StaticMeshComponent C;
+
+	foreach AllActors(class'DynamicSMActor_Spawnable', Piece)
+	{
+		C = Piece.StaticMeshComponent;
+		if (Text == "" || InStr(PathName(C.StaticMesh), Text, , true) == INDEX_NONE)
+			continue;
+		Out.AddItem(PathName(C.StaticMesh) @ "at" @ Piece.Location @ "rot" @ Piece.Rotation @ "scale" @ Piece.DrawScale @ Piece.DrawScale3D
+			@ "bounds" @ C.Bounds.Origin @ "extent" @ C.Bounds.BoxExtent @ "r" @ int(C.Bounds.SphereRadius)
+			@ "hidden" @ Piece.bHidden @ C.HiddenGame @ "attached" @ C.bAttached @ "maxdraw" @ C.CachedMaxDrawDistance
+			@ "depth" @ C.DepthPriorityGroup @ "drawn" @ (WorldInfo.TimeSeconds - C.LastRenderTime) @ "s ago" @ "owner-only" @ C.bOnlyOwnerSee
+			@ "translation" @ C.Translation @ "scale3d" @ C.Scale3D @ "elements" @ C.GetNumElements());
+	}
+	Out.AddItem("now" @ WorldInfo.TimeSeconds);
 }
 
 /** A test aid: what of EW's base stands near the camera (basenear). */

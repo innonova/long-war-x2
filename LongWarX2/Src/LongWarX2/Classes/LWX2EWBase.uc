@@ -48,6 +48,15 @@ var array<LightComponent> WorldLights;
  *  the world's). "": none, the base lit by EW's own lights alone (dark: EW baked most of its light). */
 /** EW's people in its base (features/ew-base-people.md): the Anim_ levels whose people stand in the fixed rooms. */
 var config array<string> PeopleLevels;
+
+/** A facility's props that EW keeps in another level of its room (features/ew-base-people.md): the Genetics Lab's station,
+ *  its four tanks, in EW's first gene mod scene (CIN_XEW_1stGeneMod), placed with the room; only the meshes named. */
+struct LWX2RoomScene
+{
+	var string Level, Scene;
+	var array<string> Meshes;
+};
+var config array<LWX2RoomScene> RoomScenes;
 /** A test aid (off): the fixed rooms placed at the main menu (UIScreenListener_LongWarX2Shell), the campaign start's crash
  *  reproduced at every start (features/strategy-flow.md). */
 var config bool PlaceInShell;
@@ -436,7 +445,7 @@ function PlacePeople()
 }
 
 /** A level's people (and its animated props: the Genetics Lab's tanks …), placed with the level at Offset; added to Placed. */
-function PlacePeopleOf(string Level, vector Offset, out array<Actor> Placed)
+function PlacePeopleOf(string Level, vector Offset, out array<Actor> Placed, optional array<string> Meshes)
 {
 	local LWX2EWMapPieces.LWX2Person P;
 	local LWX2EWMapData D;
@@ -451,6 +460,9 @@ function PlacePeopleOf(string Level, vector Offset, out array<Actor> Placed)
 	{
 		// (A hangar bay's pad or craft: placed by the hangar's state, RefreshBays.)
 		if (P.Bay > 0)
+			continue;
+		// (A scene's chosen props only, RoomScenes.)
+		if (Meshes.Length > 0 && !class'LWX2EWMapPieces'.static.Matches(P.Mesh, Meshes))
 			continue;
 		A = PlacePerson(P, Level, Offset);
 		if (A != none)
@@ -531,7 +543,7 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 	A.SetDrawScale(P.Scale > 0 ? P.Scale : 1.0);
 	if (!PeopleAnimate)
 		Sets.Length = 0;
-	A.Setup(Mesh, Sets, (PeopleAnimate && P.Seqs.Length > 0) ? P.Seqs[0] : '', Slots);
+	A.Setup(Mesh, Sets, (PeopleAnimate && P.Seqs.Length > 0) ? P.Seqs[0] : '', Slots, P.Hold);
 	return A;
 }
 
@@ -1015,6 +1027,7 @@ function Refresh()
 	local Actor A;
 	local int X, Y, i, k, Type, Facility, n;
 	local string Level;
+	local LWX2RoomScene Scene;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
 	if (S == none || S.TileType.Length < class'LWBase'.const.W * class'LWBase'.const.H)
@@ -1064,6 +1077,9 @@ function Refresh()
 			class'LWX2EWMapPieces'.static.PlaceLightsOf(Data(Level), self, Command.Rooms[k].Loc + BaseOffset, Placed, true, BaseLightScale, true);
 			// (The facility's people and animated props too: the Genetics Lab's scientists and tanks, the Foundry's workers.)
 			PlacePeopleOf(Level, Command.Rooms[k].Loc + BaseOffset, Placed);
+			foreach RoomScenes(Scene)
+				if (Scene.Level ~= Level)
+					PlacePeopleOf(Scene.Scene, Command.Rooms[k].Loc + BaseOffset, Placed, Scene.Meshes);
 			PlaceDisplaysOf(Level, Command.Rooms[k].Loc + BaseOffset, Placed);
 			foreach Placed(A)
 			{

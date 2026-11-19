@@ -44,8 +44,9 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  (an actor's Base: the scene's CineDummy, itself placed by its key); 27: people's glowing slots (Glow, Tint: the Genetics
  *  Lab's tank glass).; 28: people's colour mods baked into tinted diffuses (tint-textures.ts:
  *  the clerks' uniforms).; 29: cameras where a matinee leaves them by axes
- *  (the main menu's). */
-export const CONVERTER_VERSION = 29
+ *  (the main menu's).; 30: people of a scene that plays once (no looping matinee: Hold, its last pose held; the Genetics
+ *  Lab's station in EW's first gene mod scene). */
+export const CONVERTER_VERSION = 30
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1226,7 +1227,7 @@ const lines = [
   "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
   ...displays.map((d) => `+Displays=(${d.mesh ? `Mesh="${rename(d.mesh)}",` : ''}Tag=${d.tag || 'None'},Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}))`),
   "; EW's people (an Anim_ level's: its matinee's loops; features/ew-base-people.md).",
-  ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}"${l?.kind === 'Glow' ? `,Glow=true${l.tint ? `,Tint=(R=${n(l.tint[0]!)},G=${n(l.tint[1]!)},B=${n(l.tint[2]!)},A=1)` : ''}` : ''})`).join(',')}))`),
+  ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}${p.loop ? '' : 'Hold=true,'}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}"${l?.kind === 'Glow' ? `,Glow=true${l.tint ? `,Tint=(R=${n(l.tint[0]!)},G=${n(l.tint[1]!)},B=${n(l.tint[2]!)},A=1)` : ''}` : ''})`).join(',')}))`),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
     ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''})`,
