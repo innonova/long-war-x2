@@ -156,7 +156,9 @@ stand-in (`AvengerStaff_SD`) takes the diffuse only. The fix is a stand-in that 
 
 - **Hair** (round 6 #5): Vahlen's is olive-blonde in EW, near black in the port. Her hair slot is `HeadSci_HAIR` on
   `CHH_MaleHairTemplates.Materials.CHH_HairMaskNrm`, whose only colour parameter, `ColorMod`, is white by default and not
-  set by the instance; so the colour is not a tint of ours to apply, and the "Hairstyle Texture" is likely a packed mask
-  (the parent's name: mask and normal). Next: decode that texture's channels and read the parent's expressions.
+  set by the instance. Decoded: the hairstyle texture is plain dark brown (its colour channels about a quarter of full,
+  its alpha the strands' cut-out), so EW's parent lightens it. **Done (converter 32):** a brightened copy of each hair
+  slot's texture (`tint-textures.ts scaleMip`: each DXT block's colour endpoints × 2.6, alpha kept; APPROXIMATION, the
+  factor by eye against EW's capture). Vahlen's hair now reads olive-blonde as in EW.
 - **Skin:** the head's `SkinColor` (1, 0.77, 0.55 for Vahlen) tints the skin mask (`Spc_dNrm_Skn_iBrw`, by its name the
   blue channel); not applied yet; the faces read a little dark.
