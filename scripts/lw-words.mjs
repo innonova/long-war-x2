@@ -840,6 +840,30 @@ export function makeRequestWords({ strategyLoc, countryIds }) {
   return { text: ['[UILWEWCouncilRequest]', ...found.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: found.length }
 }
 
+/** The Situation Room's news ticker (features/ew-sitroom-ticker.md): EW's headlines ([XGFacility_SituationRoom] Ticker*, the
+ *  title [UISituationRoom] m_strTickerTitle) as one list, each line its family and its text: "Panic:<country id>:<level>",
+ *  "Ambient:<act>", "AbductionWon" …, "Narrative:<name>"; read by LWTicker. */
+export function makeTickerWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const at = text.indexOf('\n[XGFacility_SituationRoom]')
+  if (at < 0) return { text: '', named: 0 }
+  const end = text.indexOf('\n[', at + 2)
+  const body = text.slice(at, end < 0 ? undefined : end)
+  const lines = []
+  for (const m of body.matchAll(/^Ticker(\w+?)\[(\w+)\]="(.*)"\s*$/gm)) {
+    const [, name, index, value] = m
+    let family = name
+    const panic = /^(\w+)Panic(\d)$/.exec(name)
+    const ambient = /^AmbientAct(\d)$/.exec(name)
+    if (panic) family = `Panic:${panic[1]}:${panic[2]}`
+    else if (ambient) family = `Ambient:${ambient[1]}`
+    else if (name === 'Narratives') family = `Narrative:${index.replace(/^eTickerNarrative_/, '')}`
+    lines.push(`Lines[${lines.length}]="${family}|${value}"`)
+  }
+  const title = text.match(/^\[UISituationRoom\][\s\S]*?^m_strTickerTitle=(.*)$/m)?.[1]?.trim().replace(/^"(.*)"$/, '$1')
+  return { text: ['[LWTicker]', ...(title ? [`Title="${title}"`] : []), ...lines, ''].join('\r\n'), named: lines.length }
+}
+
 /** XCOM 2's new-campaign screen (UIShellDifficulty) in Long War's words: its difficulties' names and texts (Long War's
  *  own [UIShellDifficulty], the same fields: Normal, Classic, Brutal, Impossible, which the port's four are), and Long War's
  *  second-wave options (features/lw-second-wave.md; XComUI.ini sets the screen's list to Long War's 31 in its order): each

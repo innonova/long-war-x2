@@ -345,9 +345,9 @@ static function PerformRandomOperation(XComGameState NewGameState, XComGameState
 	}
 	switch (Kinds[Rand(Kinds.Length)])
 	{
-	case 1: Sabotage(NewGameState, S, Country); break;
-	case 2: Propaganda(S, Country); break;
-	case 3: ResearchHack(NewGameState, S, Country); break;
+	case 1: Sabotage(NewGameState, S, Country); class'LWTicker'.static.Push(S, "ExaltSabotage", Country, class'LWTicker'.const.BAD); break;
+	case 2: Propaganda(S, Country); class'LWTicker'.static.Push(S, "ExaltPropaganda", Country, class'LWTicker'.const.BAD); break;
+	case 3: ResearchHack(NewGameState, S, Country); class'LWTicker'.static.Push(S, "ExaltResearchHack", Country, class'LWTicker'.const.BAD); break;
 	}
 }
 

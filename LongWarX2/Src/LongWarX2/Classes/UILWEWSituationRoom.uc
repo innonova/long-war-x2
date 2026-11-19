@@ -298,6 +298,17 @@ function Refresh()
 	}
 	RealizeMap(S);
 	MC.FunctionNum("SetDoomLevel", Left);
+	// The world's news (LWTicker; EW's UISituationRoom.UpdateTicker: SetTickerText(title, headlines)).
+	if (class'LWTicker'.default.Lines.Length > 0)
+	{
+		MC.BeginFunctionOp("SetTickerText");
+		MC.QueueString(class'LWTicker'.default.Title);
+		MC.QueueString(class'LWTicker'.static.Text(S));
+		MC.EndOp();
+		if (!bIsBare)
+			MC.FunctionVoid("ShowTicker");
+		`log("LongWarX2: EW Situation Room: ticker" @ S.Ticker.Length @ "headlines", , 'LongWarX2');
+	}
 	if (bSatellite)
 	{
 		MC.BeginFunctionOp("SetSatellites");

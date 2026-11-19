@@ -314,6 +314,20 @@ var int ReportGrade, ReportFunding, ReportScientists, ReportEngineers, ReportHou
 var bool bReportMismanaged;
 var int ReportMoney;
 var array<int> ReportLeaving;
+
+/** The Situation Room's news ticker (LWTicker, XGFacility_SituationRoom's m_arrTickerItems): five headlines, newest
+ *  first, each a line of LWTicker.Lines, its country (-1 none) and colour; the lines used, the narratives told, the hours
+ *  until an ambient headline. */
+struct LWTickerItem
+{
+	var int Line;
+	var int Country;
+	var int State;
+};
+var array<LWTickerItem> Ticker;
+var array<int> TickerUsed;
+var array<string> TickerNarratives;
+var int TickerQuiet;
 var bool bReportDue;
 /** The UFOs XCOM has taken, by class (Long War's m_arrCraftEncounters: a crash site or a landed UFO won): a class once
  *  taken is known when seen again (Identified). */
@@ -678,6 +692,7 @@ function Tick(XComGameState NewGameState)
 	class'LWBase'.static.Tick(self);
 	class'LWFatigue'.static.Tick(NewGameState, self);
 	class'LWHangar'.static.Hour(NewGameState, self);
+	class'LWTicker'.static.Hour(self);
 	class'LWGearRepair'.static.Hour(NewGameState, self);
 	class'LWHiring'.static.Hour(NewGameState, self);
 	// Engineering: a project whose work is done delivers its items.
@@ -1550,6 +1565,8 @@ static function Intercepted(int i, int Outcome, int UfoHp)
 	S.AlienResources -= Round(class'LWX2SecondWave'.static.War(class'LWStrategyRules'.static.WorthOf(U.Ufo)) * (1.0 - float(U.Hp) / float(Max(1, U.MaxHp))));
 	if (Outcome == 0 || Outcome == 1) // crashed or destroyed
 	{
+		// (XGStrategyAI: a UFO shot down makes the news once, PushNarrativeHeadline(UFOShotDown).)
+		class'LWTicker'.static.Narrative(S, "UFOShotDown");
 		// (XGAlienObjective.NotifyOfCrash: shot down, and detected.)
 		S.Tally(S.CountryContinent(U.Country), T_UFOS_SHOT_DOWN);
 		S.Tally(S.CountryContinent(U.Country), T_UFOS_DETECTED);
@@ -1864,13 +1881,17 @@ static function MissionBack(bool bWon)
 	local XComGameState NewGameState;
 	local XComGameState_LWStrategy S;
 	local LWUfo U;
-	local int Country;
+	local int Country, GeneModded, Mecs;
 	local array<int> Squad;
 
 	if (Get() == none || Get().PendingKind == 0)
 		return;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a mission back");
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
+	// The world's news of it (features/ew-sitroom-ticker.md).
+	class'LWTicker'.static.SquadCounts(GeneModded, Mecs);
+	class'LWTicker'.static.Mission(S, S.PendingKind, S.PendingKind == 8 ? S.ExaltOperativeCountry
+		: (S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Country : ((S.PendingKind <= 4 || S.PendingKind == 7) ? S.Sites[S.PendingIndex].Country : -1)), bWon, GeneModded, Mecs);
 	if (S.PendingKind == 8)
 	{
 		// EXALT's covert operation (Long War's PostCombat): its cell cleared or moved; the operative back.
@@ -2477,6 +2498,7 @@ function EndMonth()
 	{
 		Leave(Leaving[i]);
 		Report @= CountryName(Leaving[i]) @ "has left the council.";
+		class'LWTicker'.static.Push(self, "CountryWithdraw", Leaving[i], class'LWTicker'.const.BAD);
 	}
 	ReportLeaving = Leaving;
 	NotHelped.Length = 0;
@@ -2593,6 +2615,8 @@ function bool HasAbductions(int k)
 
 function AddPanic(int Country, int Amount)
 {
+	local int Before;
+
 	if (Country < 0 || Country >= Countries.Length || Countries[Country].bLeft)
 		return;
 	// Dynamic War (second wave #9, XGCountry.AddPanic): ÷ SW_MARATHON after the first day.
@@ -2600,7 +2624,11 @@ function AddPanic(int Country, int Amount)
 		Amount = class'LWX2SecondWave'.static.War(Amount);
 	// (Long War's XGCountry.AddPanic: EXALT's hidden cells on the continent add to a rise.)
 	Amount += class'LWExalt'.static.PanicMod(self, Country, Amount);
+	Before = Countries[Country].Panic;
 	Countries[Country].Panic = Clamp(Countries[Country].Panic + Amount, 0, 99);
+	// (Its news, as XGCountry.AddPanic pushes a panic headline whenever the panic changes.)
+	if (Countries[Country].Panic != Before)
+		class'LWTicker'.static.Panic(self, Country);
 }
 
 function AddContinentPanic(int Continent, int Amount)
