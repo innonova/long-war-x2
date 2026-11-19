@@ -39,6 +39,7 @@ var array<string> FallbackRooms;
 var int Room;
 var array<int> RoomOptions;
 var int RoomSelected;
+var UILWEWObjectives Objectives;
 
 const OPT_RESEARCH = 0;
 const OPT_ITEMS = 1;
@@ -242,6 +243,7 @@ function HideHUDParts()
 simulated function OnReceiveFocus()
 {
 	super.OnReceiveFocus();
+	ShowObjectives(Room == 4);
 	if (!bIsInited)
 		return;
 	MC.ChildFunctionVoid("theMenu.facilityMenu", "onReceiveFocus");
@@ -273,6 +275,7 @@ function LogQueuedPopups()
 simulated function OnLoseFocus()
 {
 	super.OnLoseFocus();
+	ShowObjectives(false);
 	ClearTimer(nameof(ShowBase));
 	ClearTimer(nameof(HoverOption));
 }
@@ -305,6 +308,7 @@ function EnterRoom(int i)
 	}
 	`log("LongWarX2: Long War hub: room" @ RoomName(i), , 'LongWarX2');
 	Room = i;
+	ShowObjectives(Room == 4);
 	Params.AddItem(Str(string(i)));
 	CallNow("theMenu.facilityMenu.setFocus", Params);
 	CallNow("theMenu.facilityMenu.DimAllUnselectedMenuOptions");
@@ -412,9 +416,29 @@ function ShowBonuses()
 }
 
 /** Back to the base's view. */
+/** EW's objectives panel over the Situation Room's main view (UISituationRoom: ShowObjectives in its main view, hidden in
+ *  its others, UILWEWObjectives). */
+function ShowObjectives(bool bShow)
+{
+	if (bShow && Objectives == none)
+		Objectives = class'UILWEWObjectives'.static.Make(self);
+	else if (bShow)
+		Objectives.Refresh();
+	else if (Objectives != none)
+		Objectives.Hide();
+}
+
+simulated function OnRemoved()
+{
+	if (Objectives != none)
+		Objectives.Remove();
+	super.OnRemoved();
+}
+
 function LeaveRoom()
 {
 	Room = -1;
+	ShowObjectives(false);
 	ClearTimer(nameof(HoverOption));
 	CallNow("subMenuMC.Hide");
 	CallNow("theMenu.facilityMenu.RestoreOpacityToAllMenuOptions");

@@ -47,3 +47,18 @@ map; the port shows neither. The reviewer's rounds 4 and 5 list both.
   between; EW's own ticker is hidden. Seen on wingpu in the Situation Room ("WORLD NEWS: Economist says future markets
   unpredictable if major tech…", scrolling); hidden where the wall is bare.
 - **Still:** the council's headlines; the objectives panel.
+
+## Report (2026-11-19 morning, the objectives)
+
+- **Long War's objective** (`LWObjectives`, the state's `Objective`; EW's `XGObjectiveManager`): one at a time, only ever
+  forward, cleared once its steps are done (hourly). Set as Long War sets it: Xenobiology researched → capture a live alien;
+  an interrogation while that stands → capture an Outsider; Alien Operations → recon an occupied country; then the alien
+  base's assault (APPROXIMATION: Long War cracks the aliens' code with a satellite over a country that signed their pact,
+  which the port does not allow; an alien base known stands for it); the Hyperwave Beacon brought home → build the
+  Hyperwave Relay; the Psi Link → use the device. Each step's state read from the campaign (facilities built or being
+  built, research done or under way, items held or being made, the interrogation, psi soldiers, the story missions), as
+  `BuildSubObjective` reads it. (The Overseer's objective, set in EW as the first Overseer is seen, is not yet hooked.)
+- **Shown in EW's ObjectivesScreen** (`UILWEWObjectives`) over the Situation Room's main view, as EW's: OBJECTIVES and the
+  steps in brief, each coloured by its state with EW's "(In Progress)" / "- Completed!", and MORE INFO for each step's
+  explanation (BACK again). Opened by the hub, outside the screen stack, so the hub keeps the keys. Words from the player's
+  install (`makeObjectiveWords`). Seen on wingpu: "Capture a Live Alien" after Xenobiology, its four steps, MORE INFO's text.

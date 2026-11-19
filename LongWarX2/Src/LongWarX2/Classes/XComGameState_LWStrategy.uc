@@ -328,6 +328,9 @@ var array<LWTickerItem> Ticker;
 var array<int> TickerUsed;
 var array<string> TickerNarratives;
 var int TickerQuiet;
+/** The campaign's objective (LWObjectives, EW's EGameObjective), and whether a soldier has ever shown the psi gift. */
+var int Objective;
+var bool bHadPsiSoldier;
 var bool bReportDue;
 /** The UFOs XCOM has taken, by class (Long War's m_arrCraftEncounters: a crash site or a landed UFO won): a class once
  *  taken is known when seen again (Identified). */
@@ -563,6 +566,8 @@ static function ResearchDone(XComGameState NewGameState, int Id)
 	S.LastResearched = Id;
 	S.ResearchAlert = Id;
 	S.bStop = true;
+	// (Long War's objective, as the research report closes: XGResearchUI.)
+	class'LWObjectives'.static.Researched(S, Id);
 }
 
 /** The research alert answered (0: none waits); and the report read in the labs (EW's OnLeaveReport). */
@@ -693,6 +698,7 @@ function Tick(XComGameState NewGameState)
 	class'LWFatigue'.static.Tick(NewGameState, self);
 	class'LWHangar'.static.Hour(NewGameState, self);
 	class'LWTicker'.static.Hour(self);
+	class'LWObjectives'.static.Hour(self);
 	class'LWGearRepair'.static.Hour(NewGameState, self);
 	class'LWHiring'.static.Hour(NewGameState, self);
 	// Engineering: a project whose work is done delivers its items.
@@ -2076,6 +2082,8 @@ function StoryMissionBack(XComGameState NewGameState, bool bSuccess, int Country
 	{
 		class'X2Item_LWArtifacts'.static.Give(NewGameState, 'HyperwaveBeacon', 1);
 		bHadHyperwaveBeacon = true;
+		// (Long War's objective: build the Hyperwave Relay, XGDebriefUI.PostHyperwaveMatinee.)
+		class'LWObjectives'.static.Advance(self, class'LWObjectives'.const.OBJ_BUILD_HYPERWAVE);
 		Note("In the alien base: a Hyperwave Beacon.");
 	}
 	AlienBases.RemoveItem(Country);
@@ -2137,6 +2145,8 @@ function GiveSalvage(XComGameState NewGameState, int Ufo, bool bCrashed)
 		class'X2Item_LWArtifacts'.static.Give(NewGameState, Item.Item, Cargo(Item.Item, Count));
 		if (Item.Item == 'PsiLink' && Count > 0)
 			bHadPsiLink = true;
+			// (Long War's objective: use the device, XGDebriefUI.PostPsiLinkMatinee.)
+			class'LWObjectives'.static.Advance(self, class'LWObjectives'.const.OBJ_USE_DEVICE);
 		if (Count > 0)
 			Got $= "," @ Count @ class'X2Item_LWArtifacts'.static.DisplayName(Item.Item);
 	}
@@ -2993,6 +3003,7 @@ function PsiTrainingDone(XComGameState NewGameState, LWPsiTrainee T)
 		return;
 	}
 	Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+	bHadPsiSoldier = true;
 	Power.AbilityType.AbilityName = Ability;
 	// Bound to the soldier's weapon, as XCOM 2's psi powers are to the psi amp: its range is the power's reach.
 	Power.AbilityType.ApplyToWeaponSlot = eInvSlot_PrimaryWeapon;

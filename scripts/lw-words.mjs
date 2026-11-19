@@ -864,6 +864,26 @@ export function makeTickerWords({ strategyLoc }) {
   return { text: ['[LWTicker]', ...(title ? [`Title="${title}"`] : []), ...lines, ''].join('\r\n'), named: lines.length }
 }
 
+/** The Situation Room's objectives (features/ew-sitroom-ticker.md): EW's story objectives and their steps, by name
+ *  ("Obj|CaptureAlien|…", "Sub|BuildAlienContainment|…", "Deep|…"), and [XGSituationRoomUI]'s labels; read by LWObjectives. */
+export function makeObjectiveWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const lines = []
+  for (const m of text.matchAll(/^(GameObjectiveNames|SubObjectiveNames|SubObjectiveInDepth)\[e(?:Sub)?Obj_(\w+)\]="(.*)"\s*$/gm)) {
+    const kind = m[1] === 'GameObjectiveNames' ? 'Obj' : m[1] === 'SubObjectiveNames' ? 'Sub' : 'Deep'
+    lines.push(`Lines[${lines.length}]="${kind}|${m[2]}|${m[3]}"`)
+  }
+  const at = text.indexOf('\n[XGSituationRoomUI]')
+  const ui = at < 0 ? '' : text.slice(at, text.indexOf('\n[', at + 2))
+  const one = (k) => ui.match(new RegExp(`^${k}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const at2 = text.indexOf('\n[UIObjectivesScreen]')
+  const screen = at2 < 0 ? '' : text.slice(at2, text.indexOf('\n[', at2 + 2))
+  const two = (k) => screen.match(new RegExp(`^${k}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const words = [['Title', one('m_strLabelObjectives')], ['Complete', one('m_strComplete')], ['InProgress', one('m_strInProgress')],
+    ['Header', two('m_strObjectives')], ['MoreInfo', two('m_strMoreInfo')], ['Back', two('m_strBack')]].filter(([, v]) => v)
+  return { text: ['[LWObjectives]', ...words.map(([k, v]) => `${k}="${v}"`), ...lines, ''].join('\r\n'), named: lines.length }
+}
+
 /** XCOM 2's new-campaign screen (UIShellDifficulty) in Long War's words: its difficulties' names and texts (Long War's
  *  own [UIShellDifficulty], the same fields: Normal, Classic, Brutal, Impossible, which the port's four are), and Long War's
  *  second-wave options (features/lw-second-wave.md; XComUI.ini sets the screen's list to Long War's 31 in its order): each
