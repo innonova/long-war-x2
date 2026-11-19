@@ -1402,6 +1402,9 @@ function bool Seen(LWUfo U)
 function Detected(int i)
 {
 	Ufos[i].bDetected = true;
+	// (The first Overseer seen: Long War's objective to shoot it down, XGMissionControlUI.PostOverseerMatinee.)
+	if (Ufos[i].Ufo == 9)
+		class'LWObjectives'.static.Advance(self, class'LWObjectives'.const.OBJ_SHOOT_DOWN_OVERSEER);
 	Note("UFO detected over" @ CountryName(Ufos[i].Country) $ ":" @ UfoLabel(Ufos[i].Ufo) $ (Hyperwave() ? "," @ class'LWStrategyRules'.static.ObjectiveName(Ufos[i].Objective) : "") $ ".");
 	bStop = true;
 }
@@ -1719,6 +1722,7 @@ function SiteIgnored(int i)
 	}
 	if (Sites[i].bCouncil)
 	{
+		class'LWTicker'.static.CouncilMission(self, i, "Ignore");
 		class'LWCouncil'.static.Failed(self, i);
 		return;
 	}
@@ -1896,7 +1900,7 @@ static function MissionBack(bool bWon)
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	// The world's news of it (features/ew-sitroom-ticker.md).
 	class'LWTicker'.static.SquadCounts(GeneModded, Mecs);
-	class'LWTicker'.static.Mission(S, S.PendingKind, S.PendingKind == 8 ? S.ExaltOperativeCountry
+	class'LWTicker'.static.Mission(S, S.PendingKind, S.PendingKind == 10 ? S.PendingIndex : S.PendingKind == 8 ? S.ExaltOperativeCountry
 		: (S.PendingKind <= 2 ? S.Ufos[S.PendingIndex].Country : ((S.PendingKind <= 4 || S.PendingKind == 7) ? S.Sites[S.PendingIndex].Country : -1)), bWon, GeneModded, Mecs);
 	if (S.PendingKind == 8)
 	{

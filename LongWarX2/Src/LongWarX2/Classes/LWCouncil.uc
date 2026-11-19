@@ -20,8 +20,9 @@ struct LWCouncilRewardDef
 
 struct LWCouncilMission
 {
-	/** Long War's EFCMission. */
+	/** Long War's EFCMission, and its name (the news ticker's lines are by it, LWTicker). */
 	var int Id;
+	var name Enum;
 	/** 1 assault, 2 bomb, 3 extraction, 4 rescue. */
 	var int Kind;
 	/** Its EW map (XComLWEWMaps.ini's name), and the streamed level with its variant (Long War's DefaultMaps.ini): the mission

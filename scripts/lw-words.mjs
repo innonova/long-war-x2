@@ -860,6 +860,10 @@ export function makeTickerWords({ strategyLoc }) {
     else if (name === 'Narratives') family = `Narrative:${index.replace(/^eTickerNarrative_/, '')}`
     lines.push(`Lines[${lines.length}]="${family}|${value}"`)
   }
+  // The council's (XGFundingCouncil: a request met or ignored, by its number; a council mission won, failed or ignored, by
+  // its EFCMission name): "Request:<n>:Success" …, "Mission:<eFCM_…>:Fail" ….
+  for (const m of text.matchAll(/^m_strRequest(Success|Ignore)\[(\d+)\]="(.*)"\s*$/gm)) lines.push(`Lines[${lines.length}]="Request:${m[2]}:${m[1]}|${m[3]}"`)
+  for (const m of text.matchAll(/^m_strMission(Success|Fail|Ignore)\[(eFCM_\w+)\]="(.*)"\s*$/gm)) lines.push(`Lines[${lines.length}]="Mission:${m[2]}:${m[1]}|${m[3]}"`)
   const title = text.match(/^\[UISituationRoom\][\s\S]*?^m_strTickerTitle=(.*)$/m)?.[1]?.trim().replace(/^"(.*)"$/, '$1')
   return { text: ['[LWTicker]', ...(title ? [`Title="${title}"`] : []), ...lines, ''].join('\r\n'), named: lines.length }
 }

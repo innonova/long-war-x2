@@ -88,6 +88,7 @@ static function Hour(XComGameState_LWStrategy S)
 		if (S.Requests[i].bPending || --S.Requests[i].HoursLeft > 0)
 			continue;
 		S.Note(S.CountryName(S.Requests[i].Country) $ "'s request (" $ Words(S.Requests[i]) $ ") went unanswered.");
+		class'LWTicker'.static.Request(S, S.Requests[i].Id, S.Requests[i].Country, false);
 		S.Requests.Remove(i, 1);
 	}
 	if (--S.RequestCountdown > 0)
@@ -331,6 +332,7 @@ static function bool Answer(int Index, bool bGive)
 	else
 	{
 		S.Note(S.CountryName(R.Country) $ "'s request (" $ Words(R) $ ") was refused.");
+		class'LWTicker'.static.Request(S, R.Id, R.Country, false);
 		S.Requests.Remove(Index, 1);
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
@@ -353,6 +355,7 @@ static function Complete(XComGameState NewGameState, XComGameState_LWStrategy S,
 		S.CountryScience.Length = S.Countries.Length;
 	S.CountryScience[R.Country] = Clamp(S.CountryScience[R.Country] + Up, 0, 100);
 	S.Note(S.CountryName(R.Country) $ "'s request met (" $ Words(R) $ "):" @ class'LWCouncil'.static.RewardsText(R.Rewards) $ ".");
+	class'LWTicker'.static.Request(S, R.Id, R.Country, true);
 	S.Requests.Remove(Index, 1);
 	S.bStop = true;
 }

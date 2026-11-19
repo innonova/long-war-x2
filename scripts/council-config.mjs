@@ -74,7 +74,7 @@ const out = [
   "; Chryssalid hive: after day 35 once a Chryssalid corpse was ever held, once); Country: its own country.",
   '; Map: its EW map, Level: the streamed level with its variant (DefaultMaps.ini).',
   ...(unmapped.length ? [`; Not in DefaultMaps.ini, so never offered: ${unmapped.map((m) => `${m.id} (${m.variant})`).join(', ')}.`] : []),
-  ...missions.map((m) => `+Missions=(Id=${m.id}, Kind=${m.kind}, Map="${entry(m).map}", Level="${entry(m).level ?? ''}", PanicOnFailure=${m.panicOnFailure ?? 0}, ` +
+  ...missions.map((m) => `+Missions=(Id=${m.id}, Enum=${m.enum}, Kind=${m.kind}, Map="${entry(m).map}", Level="${entry(m).level ?? ''}", PanicOnFailure=${m.panicOnFailure ?? 0}, ` +
     `${SPECIAL.includes(m.id) ? `Special=true, Country=${COUNTRY[m.country]}, ` : ''}Rewards=(${rewardsOf(m).map(reward).join(', ')}))`),
 ]
 console.log(out.join('\r\n'))

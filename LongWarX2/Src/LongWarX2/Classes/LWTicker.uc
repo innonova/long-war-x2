@@ -138,12 +138,32 @@ static function Mission(XComGameState_LWStrategy S, int Kind, int Country, bool 
 		if (bWon)
 			Narrative(S, "EXALTRaid");
 		return;
+	case 10:
+		CouncilMission(S, Country, bWon ? "Success" : "Fail");
+		return;
 	default:
 		return;
 	}
 	if (Right(Family, 8) != "GeneMods" && Right(Family, 4) != "Mecs")
 		Family $= bWon ? "Won" : "Lost";
 	Push(S, Family, Country, bWon ? GOOD : BAD);
+}
+
+/** The council's news (XGFundingCouncil.OnRequestCompleted, OnRequestExpired: PushFundingCouncilHeadline with the
+ *  request's own line): a request met (Success) or left (Ignore). */
+static function Request(XComGameState_LWStrategy S, int Id, int Country, bool bMet)
+{
+	Push(S, "Request:" $ Id $ ":" $ (bMet ? "Success" : "Ignore"), Country, bMet ? GOOD : BAD);
+}
+
+/** A council mission's news (its Success, Fail or Ignore line, by its EFCMission name). */
+static function CouncilMission(XComGameState_LWStrategy S, int SiteIndex, string Outcome)
+{
+	local LWCouncil.LWCouncilMission M;
+
+	if (SiteIndex < 0 || SiteIndex >= S.Sites.Length || !class'LWCouncil'.static.MissionById(S.Sites[SiteIndex].CouncilMission, M) || M.Enum == '')
+		return;
+	Push(S, "Mission:" $ M.Enum $ ":" $ Outcome, S.Sites[SiteIndex].Country, Outcome == "Success" ? GOOD : BAD);
 }
 
 /** The squad's gene-modded soldiers and MECs (XGFundingCouncil counts them for the abduction lines). */

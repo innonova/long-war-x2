@@ -1,6 +1,6 @@
 ---
 title: The Situation Room's news ticker and objectives (EW's, by Long War's rules)
-status: in-progress
+status: review
 priority: 3
 dependsOn: [strategy-flow]
 ---
@@ -57,8 +57,15 @@ map; the port shows neither. The reviewer's rounds 4 and 5 list both.
   which the port does not allow; an alien base known stands for it); the Hyperwave Beacon brought home → build the
   Hyperwave Relay; the Psi Link → use the device. Each step's state read from the campaign (facilities built or being
   built, research done or under way, items held or being made, the interrogation, psi soldiers, the story missions), as
-  `BuildSubObjective` reads it. (The Overseer's objective, set in EW as the first Overseer is seen, is not yet hooked.)
+  `BuildSubObjective` reads it. The first Overseer seen sets the objective to shoot one down, as `PostOverseerMatinee`.
 - **Shown in EW's ObjectivesScreen** (`UILWEWObjectives`) over the Situation Room's main view, as EW's: OBJECTIVES and the
   steps in brief, each coloured by its state with EW's "(In Progress)" / "- Completed!", and MORE INFO for each step's
   explanation (BACK again). Opened by the hub, outside the screen stack, so the hub keeps the keys. Words from the player's
   install (`makeObjectiveWords`). Seen on wingpu: "Capture a Live Alien" after Xenobiology, its four steps, MORE INFO's text.
+
+## Report (2026-11-19 morning, the council's headlines)
+
+- **The council's news** in the ticker, as `XGFundingCouncil` pushes it: a request met (its success line) or refused or
+  gone unanswered (its ignore line), by the request's number; a council mission won, failed or left (its success, fail or
+  ignore line, by its EFCMission name, now carried in `XComLWCouncil.ini` as `Enum`). 651 lines in all from the player's
+  install. The panic headlines seen on wingpu; the council's lines not yet seen in play (they need a request answered).
