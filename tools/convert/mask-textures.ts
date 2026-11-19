@@ -12,37 +12,51 @@ import { Package } from '@innonova/upkit/upk'
 /** The package with a copy of each texture (export references) added as its mask; the masks' references by texture. */
 export function addMaskTextures(bytes: Uint8Array, textures: number[]): { bytes: Uint8Array; masks: Map<number, number> } {
   const pkg = new Package(bytes)
-  const before = pkg.exports.map((e) => e.offset)
-  const masks = new Map<number, number>()
-  const view = () => new DataView(pkg.bytes.buffer, pkg.bytes.byteOffset, pkg.bytes.byteLength)
   const wanted = [...new Set(textures)].filter((ref) => pkg.exports[ref - 1]?.type === 'Texture2D')
+  const made = addTextureCopies(bytes, wanted.map((ref) => ({ ref, name: maskName(pkg.exports[ref - 1]!.name) })))
+  const masks = new Map<number, number>()
+  wanted.forEach((ref) => {
+    const r = made.refs.get(maskName(pkg.exports[ref - 1]!.name))
+    if (r) masks.set(ref, r)
+  })
+  return { bytes: made.bytes, masks }
+}
+
+/** The package with copies of textures (export references) added under new names; the copies' references by name. Their
+ *  data is the texture's as it is (its mips are read from where it says, by inline-textures.ts, and made then). */
+export function addTextureCopies(bytes: Uint8Array, copies: { ref: number; name: string }[]): { bytes: Uint8Array; refs: Map<string, number> } {
+  const pkg = new Package(bytes)
+  const before = pkg.exports.map((e) => e.offset)
+  const refs = new Map<string, number>()
+  const view = () => new DataView(pkg.bytes.buffer, pkg.bytes.byteOffset, pkg.bytes.byteLength)
+  const wanted = copies.filter((c) => pkg.exports[c.ref - 1]?.type === 'Texture2D')
   // The names first (each moves every offset after the name table), then the exports.
-  for (const ref of wanted) {
-    const name = maskName(pkg.exports[ref - 1]!.name)
+  for (const { ref, name } of wanted) {
     if (pkg.findName(name) >= 0) continue
     // The texture's own name entry's flags (its entry points at it: an export's name may carry a number, Leaves_2).
     const n = pkg.nameEntries[view().getInt32(pkg.exports[ref - 1]!.entryOffset + 12, true)]!
     pkg.addName(nameEntry(name, pkg.bytes.slice(n.offset + n.size - 8, n.offset + n.size)))
   }
-  for (const ref of wanted) {
+  for (const { ref, name } of wanted) {
+    if (refs.has(name)) continue
     const e = pkg.exports[ref - 1]!
     const data = pkg.exportData(ref).slice()
     const entry = pkg.bytes.slice(e.entryOffset, e.entryOffset + 68)
     const ev = new DataView(entry.buffer)
-    ev.setInt32(12, pkg.findName(maskName(e.name)), true) // object name
+    ev.setInt32(12, pkg.findName(name), true) // object name
     ev.setInt32(16, 0, true) // its number
     ev.setInt32(32, data.length, true) // serial size
     ev.setInt32(36, 0, true) // serial offset (the end of the file)
     ev.setInt32(44, 0, true) // no net objects
     const added = pkg.addExport(entry)
     const x = pkg.exports[added - 1]!
-    // The diffuse's data as it is (its mips are read from where it says, by inline-textures.ts), with its own net index.
+    // With its own net index.
     new DataView(data.buffer).setInt32(0, view().getInt32(x.offset, true), true)
     pkg.write(x.offset, data)
-    masks.set(ref, added)
+    refs.set(name, added)
   }
-  if (masks.size) followBulkData(pkg, before)
-  return { bytes: pkg.bytes, masks }
+  if (refs.size) followBulkData(pkg, before)
+  return { bytes: pkg.bytes, refs }
 }
 
 /**

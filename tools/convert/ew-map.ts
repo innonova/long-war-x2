@@ -21,7 +21,8 @@ import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
-import { addMaskTextures, maskMip } from './mask-textures.ts'
+import { addMaskTextures, addTextureCopies, maskMip } from './mask-textures.ts'
+import { tintMip } from './tint-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
 import { cameras as matineeCameras, peopleIn } from './ew-people.ts'
 
@@ -41,8 +42,9 @@ import { cameras as matineeCameras, peopleIn } from './ew-people.ts'
  *  (Spots: EW's SkeletalMeshActors tagged …Plinth, XGStrategySoldier.PlaceOnPlinth); 25: the hangar's bays (People with
  *  Bay, BayState, BayPart: Anim_Hangar_LaunchBays' launch pads and craft), a diffuse named plain "diff" (the Skyranger's); 26: EW's people where their matinee puts them, in their base's frame
  *  (an actor's Base: the scene's CineDummy, itself placed by its key); 27: people's glowing slots (Glow, Tint: the Genetics
- *  Lab's tank glass). */
-export const CONVERTER_VERSION = 27
+ *  Lab's tank glass).; 28: people's colour mods baked into tinted diffuses (tint-textures.ts:
+ *  the clerks' uniforms). */
+export const CONVERTER_VERSION = 28
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -946,6 +948,37 @@ for (const l of looks.values())
     const k = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
     if (k >= 0) cutOut.set(l.diffuse, k + 1)
   }
+// EW's people's colour mods (tint-textures.ts): a tinted copy of the diffuse for each slot whose material sets CMOD over a
+// Spc_Ems_Ref_Opc mask; the slot takes the copy.
+const tints: { slot: Look; diffuse: number; mask: number; tint: number[]; name: string }[] = []
+people.forEach((p, k) =>
+  p.materialRefs.forEach((m, j) => {
+    const l = personSlots[k]![j]
+    if (!m || !l || l.kind === 'Glow' || !l.diffuse) return
+    const cmod = vectorParam(m, 'CMOD')
+    const tex = new Map<string, string>()
+    texturesOf(m, tex)
+    const maskPath = tex.get('Spc_Ems_Ref_Opc')
+    const d = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
+    const mk = maskPath ? exports.findIndex((e) => e.fullName === maskPath && e.type === 'Texture2D') : -1
+    if (!cmod || d < 0 || mk < 0) return
+    const key = cmod.slice(0, 3).map((c) => Math.round(c * 100)).join('_')
+    tints.push({ slot: l, diffuse: d + 1, mask: mk + 1, tint: cmod, name: `${exports[d]!.name}_LWX2Tint${key}` })
+  }),
+)
+if (tints.length) {
+  const made = addTextureCopies(bytes, tints.map((t) => ({ ref: t.diffuse, name: t.name })))
+  bytes = made.bytes
+  meta = new Package(bytes)
+  pkg = openPackage(bytes)
+  exports = meta.exports as any[]
+  for (const t of tints) {
+    const r = made.refs.get(t.name)
+    if (r) t.slot.diffuse = exports[r - 1]!.fullName
+  }
+}
+const tintOf = new Map<string, { mask: string; tint: number[] }>()
+for (const t of tints) if (t.slot.diffuse.includes('_LWX2Tint')) tintOf.set(t.slot.diffuse, { mask: exports[t.mask - 1]!.fullName, tint: t.tint })
 const masked = addMaskTextures(bytes, [...cutOut.values()])
 for (const l of looks.values()) if (masked.masks.has(cutOut.get(l.diffuse) ?? 0)) l.mask = l.diffuse + '_LWX2Mask'
 bytes = masked.bytes
@@ -1079,10 +1112,11 @@ exports.forEach((e) => {
 const lmPairs = new Map<(typeof exports)[number], (typeof exports)[number]>()
 for (const p of pieces) if (p.lightmap) lmPairs.set(exports[p.lightmap.color - 1]!, exports[p.lightmap.dir - 1]!)
 const lmDirs = new Set(lmPairs.values())
+const tintMasks = new Set([...tintOf.values()].map((t) => t.mask))
 const dirMips = new Map<string, Uint8Array>()
-if (lmDirs.size)
-  inlineTextures(bytes.slice(), exports, meta.names, dirname(src), stubAt + stub.length, (e) => !lmDirs.has(e), (e, _format, mip, w, h) => {
-    dirMips.set(`${e.fullName}:${w}x${h}`, mip.slice())
+if (lmDirs.size || tintMasks.size)
+  inlineTextures(bytes.slice(), exports, meta.names, dirname(src), stubAt + stub.length, (e) => !lmDirs.has(e) && !tintMasks.has(e.fullName), (e, format, mip, w, h) => {
+    if (lmDirs.has(e) || format === 'PF_DXT5') dirMips.set(`${e.fullName}:${w}x${h}`, mip.slice())
     return undefined
   })
 // The combined atlases made plain textures (Texture2D's class, the lightmap's flags at the end left off): bound to our
@@ -1092,6 +1126,9 @@ if (tex2dClass) for (const e of lmPairs.keys()) v.setInt32(e.entryOffset + 0, v.
 const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'),
   (e, format, mip, w, h) => {
     if (maskExports.has(e)) return maskMip(format, mip)
+    const tinted = tintOf.get(e.fullName)
+    const tm = tinted && format === 'PF_DXT1' ? dirMips.get(`${tinted.mask}:${w}x${h}`) : undefined
+    if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint)
     const dir = lmPairs.get(e)
     const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${w}x${h}`) : undefined
     return d ? combineLightmapMip(mip, d, w, h) : undefined

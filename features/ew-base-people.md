@@ -128,3 +128,12 @@ stand-in (`AvengerStaff_SD`) takes the diffuse only. The fix is a stand-in that 
 - The canisters (the yellow row along the top, Anim and Addon people records) draw, and their fluid slot is a glow.
 - `M_EWLightmapped` lacks *Used with Skeletal Mesh* (the log warns once per prop); glowing slots on skeletal props draw
   with the engine's default material until it is ticked in the SDK editor.
+
+## Report (2026-11-19, the clerks' colours)
+
+- **The black clerks:** EW's character parent recolours the part of a body its `Spc_Ems_Ref_Opc` texture's alpha marks
+  (the uniform) with the instance's `CMOD` (light grey in the labs, dark green in engineering); the stand-in took the bare
+  diffuse, dark olive there. The converter now bakes a tinted copy of the diffuse per colour mod (`tint-textures.ts`,
+  `<diffuse>_LWX2Tint<r>_<g>_<b>`, converter 28): where the mask is, the mod's colour shaded by the texture's own brightness
+  (APPROXIMATION of EW's blend). Seen on wingpu: the lab's clerks in grey-blue uniforms, no longer black
+  (`logs/compare/pairs/room-research.png`).
