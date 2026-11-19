@@ -151,6 +151,10 @@ function ApplyBare(bool bBare)
 	MC.ChildSetBool("theUplinks", "_visible", !bBare);
 	MC.ChildSetBool("theObjectivesPanel", "_visible", !bBare);
 	MC.ChildSetBool("theTicker", "_visible", false);
+	// (And the movie's own map: the bare wall is EW's map plane, SituationRm_WorldMapPlane, its holographic earth filling
+	// the wall's middle, as EW's shows under its screens and from outside the room.)
+	if (bWall)
+		MC.ChildSetBool("theMapArea", "_visible", !bBare);
 	ShowTicker();
 }
 
