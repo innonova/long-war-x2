@@ -434,6 +434,15 @@ function PlacePeople()
 		PlacePeopleOf(Level, BaseOffset, Placed);
 		foreach Placed(A)
 			People.AddItem(LWX2BasePerson(A));
+		// (And the scene's own props, where it is not placed as a fixed room already: the lab clerks' chairs, InterpActors
+		// of Anim_ScienceLabs.)
+		if (FixedLevels.Find(Level) == INDEX_NONE && Data(Level) != none && Data(Level).Pieces.Length > 0)
+		{
+			Placed.Length = 0;
+			class'LWX2EWMapPieces'.static.PlaceOf(Data(Level), self, vect(0, 0, 0), 0, BaseOffset, class'LWX2BasePiece', Placed, false, true);
+			foreach Placed(A)
+				Fixed.AddItem(A);
+		}
 	}
 	`log("LongWarX2: EW base:" @ People.Length @ "people placed", , 'LongWarX2');
 }
