@@ -531,7 +531,7 @@ static function int PlaceFlaresOf(LWX2EWMapData D, Actor Spawner, vector Shift, 
 {
 	local LWX2Flare F;
 	local LensFlare LF;
-	local LensFlareSource A;
+	local LWX2LensFlare A;
 	local int n;
 
 	if (default.FlareParent == "" || D == none)
@@ -541,13 +541,15 @@ static function int PlaceFlaresOf(LWX2EWMapData D, Actor Spawner, vector Shift, 
 		LF = LensFlare(DynamicLoadObject(F.Template, class'LensFlare', true));
 		if (LF == none || !FlareStandins(D, F.Template, LF))
 			continue;
-		A = Spawner.Spawn(class'LensFlareSource', Spawner, , F.Loc + Shift);
+		A = Spawner.Spawn(class'LWX2LensFlare', Spawner, , F.Loc + Shift);
 		if (A == none)
 			continue;
 		A.SetTemplate(LF);
 		Placed.AddItem(A);
 		n++;
 	}
+	if (D.Flares.Length > 0)
+		`log("LongWarX2: EW base:" @ n @ "of" @ D.Flares.Length @ "lens flares placed (" $ D.FlareLooks.Length @ "elements known)", , 'LongWarX2');
 	return n;
 }
 

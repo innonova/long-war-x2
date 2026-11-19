@@ -86,7 +86,7 @@ console.log(
     'ParticleAddOpacity=1.0',
     "; EW's lens flares (the autopsy lamp's glow): our additive particle material stands in (its elements are sprites).",
     'FlareParent="LWX2Lightmap.M_EWParticleAdd"',
-    'FlareOpacity=1.0',
+    'FlareOpacity=0.08',
     '+LightCardMaterials="PureVertexColor"',
     'LightCardScale=1.0',
     "GlowScale=1.0",

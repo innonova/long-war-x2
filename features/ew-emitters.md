@@ -33,9 +33,9 @@ actors in its base's levels; the port placed none.
   wisps as EW's. Still: the channel per texture.
 - **Mesh emitters** (the Gene Lab's light cones, `Fog_Cones.HeadLight_Beam_NorDepth`) need a material for meshes, not
   sprites; not drawn yet.
-- **Lens flares** (`LensFlareSource`, 4 in each lab) not placed yet. The research room's warm autopsy lamp is one
-  (`FX_Lens_Flares.LF_Alien_Autopsy`: a source element and 15 reflections, each with EW's `MI_Dot_Glow_*` materials,
-  `LFMaterials`). Same way as the particles: the converter lists each source (template, place) and each element's
-  texture; a lens-flare material of ours (SDK editor, used with lens flares) stands in, set on each element's
-  `LFMaterials` at run time; the base spawns `LensFlareSource` actors.
+- **Lens flares:** placed (converter 37 lists each source and its elements' textures; `LWX2LensFlare`, a spawnable
+  LensFlareSource, as Unreal's is bNoDelete), each element on our additive material (now usable with lens flares). They
+  draw, but at full strength they washed the room white: EW gives each element its own colour, alpha and distance
+  maps (`Color`, `Alpha`, `DistMap_*`), which our flat material ignores. At `FlareOpacity` 0.08 they are a faint haze,
+  not EW's warm autopsy lamp. Next: the elements' colours and alphas from the converter onto each instance.
 - **The mission maps:** the plot writer could place the same (rain, smoke, fires); not yet.
