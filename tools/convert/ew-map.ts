@@ -47,8 +47,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  (the main menu's).; 30: pieces whose component EW hides in play (HiddenGame) left out.; 31: the lightmap atlases public
  *  (the plots import them).; 32: EW's hair brightened (its hair parent's lightening, baked: tint-textures.ts scaleMip).; 33:
  *  a look's tiling (Tile: EW's MainTile_U).; 34: the tinted copies named without a trailing "_<digits>".; 35: the colour
- *  mods twice as bright. */
-export const CONVERTER_VERSION = 35
+ *  mods twice as bright.; 36: EW's emitters and their sprites (Emitters, ParticleLooks). */
+export const CONVERTER_VERSION = 36
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -371,6 +371,41 @@ exports.forEach((e, i) => {
     rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)],
     scale: ds3 ? [f32(ds3, 0) * s1, f32(ds3, 1) * s1, f32(ds3, 2) * s1] : [s1, s1, s1],
   })
+})
+
+/** EW's emitters (steam, mist, light beams, blinking lights: features/ew-emitters.md): each placed Emitter's particle
+ *  system, where it stands; the systems' sprites' textures are read later (particleLooks), with the materials. */
+interface EmitterPlace { template: number; loc: number[]; rot: number[]; scale: number }
+const emitterPlaces: EmitterPlace[] = []
+/** An object property of a component, its own or its archetype's (placed components store only what differs). */
+function componentObject(index: number, name: string): number {
+  for (let depth = 0; depth < 8 && index >= 0; depth++) {
+    for (const start of [8, 4, 12, 16]) {
+      try {
+        const t = tagsOf(index, start).find((x) => x.name === name)
+        if (t) return ref(t)
+        break
+      } catch {
+        // not from here
+      }
+    }
+    const arch = archetypeOf(index)
+    if (arch <= 0) return 0
+    index = arch - 1
+  }
+  return 0
+}
+exports.forEach((e, i) => {
+  if (e.type !== 'Emitter' || !e.fullName.startsWith('TheWorld.PersistentLevel.') || e.fullName.split('.').length !== 3) return
+  const tags = actorTags(i)
+  if (!tags || (tags.find((t) => t.name === 'bHidden') as { boolValue?: number } | undefined)?.boolValue) return
+  const comp = inherited(i, tags, 'ParticleSystemComponent', 26)
+  const template = comp && ref(comp) > 0 ? componentObject(ref(comp) - 1, 'Template') : 0
+  if (!template) return
+  const loc = inherited(i, tags, 'Location', 26)
+  const rot = inherited(i, tags, 'Rotation', 26)
+  const ds = inherited(i, tags, 'DrawScale', 26)
+  emitterPlaces.push({ template, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)], rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)], scale: ds ? f32(ds, 0) : 1 })
 })
 
 /**
@@ -1002,6 +1037,43 @@ const personSlots = people.map((p) =>
 // (And the matinees' cameras the port looks through: the hangar's craft view.)
 cameras.push(...matineeCameras)
 
+// EW's emitters' sprites (features/ew-emitters.md): for each particle system placed, each of its emitters' material's
+// texture, whether it adds (BLEND_Additive) or blends, and its sub-image grid (an animated sheet), from its first LOD.
+interface ParticleLook { template: number; emitter: number; texture: string; additive: boolean; subX: number; subY: number }
+const particleLooks: ParticleLook[] = []
+for (const template of new Set(emitterPlaces.map((p) => p.template))) {
+  if (template <= 0) continue
+  let ems: number[] = []
+  try {
+    const em = tagsOf(template - 1, 4).find((t) => t.name === 'Emitters')
+    ems = em ? refs(em) : []
+  } catch {
+    continue
+  }
+  ems.forEach((em, k) => {
+    if (em <= 0) return
+    try {
+      const lod = refs(tagsOf(em - 1, 4).find((t) => t.name === 'LODLevels')!)[0]!
+      const rq = ref(tagsOf(lod - 1, 4).find((t) => t.name === 'RequiredModule'))
+      const rt = tagsOf(rq - 1, 4)
+      const mat = ref(rt.find((t) => t.name === 'Material'))
+      const tex = new Map<string, string>()
+      const root = mat ? texturesOf(mat, tex) : ''
+      const texture = tex.get('Texture') ?? tex.get('Diffuse') ?? [...tex.values()][0] ?? ''
+      let additive = false
+      const rootIndex = exports.findIndex((x) => x.fullName === root && x.type === 'Material')
+      if (rootIndex >= 0) {
+        const b = tagsOf(rootIndex, 4).find((t) => t.name === 'BlendMode')
+        additive = !!b && nameOf(b) === 'BLEND_Additive'
+      }
+      const int = (n: string) => { const t = rt.find((x) => x.name === n); return t ? new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true) : 1 }
+      if (texture) particleLooks.push({ template, emitter: k, texture, additive, subX: int('SubImages_Horizontal'), subY: int('SubImages_Vertical') })
+    } catch {
+      // an emitter not read: left as it is
+    }
+  })
+}
+
 // The cut-out looks' masks (mask-textures.ts): XCOM 2's cut-out parents read the opacity from Masks, not the diffuse.
 // Added now, while the package is small; their mips are made as the textures are inlined. Additions go at the tables'
 // ends, so every reference read so far stays good.
@@ -1290,6 +1362,9 @@ const lines = [
       `Falloff=${n(l.falloff)},Inner=${n(l.inner)},Outer=${n(l.outer)},Lower=${n(l.lower)})`,
   ),
   "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
+  "; EW's emitters (features/ew-emitters.md): each placed particle system, and each of its emitters' sprite texture.",
+  ...emitterPlaces.map((e) => `+Emitters=(Template="${rename(pathOf(e.template))}",Loc=(X=${n(e.loc[0]!)},Y=${n(e.loc[1]!)},Z=${n(e.loc[2]!)}),Rot=(Pitch=${e.rot[0]},Yaw=${e.rot[1]},Roll=${e.rot[2]}),Scale=${n(e.scale)})`),
+  ...particleLooks.map((l) => `+ParticleLooks=(Template="${rename(pathOf(l.template))}",Emitter=${l.emitter},Texture="${rename(l.texture)}"${l.additive ? ',Additive=true' : ''}${l.subX * l.subY > 1 ? `,SubX=${l.subX},SubY=${l.subY}` : ''})`),
   ...displays.map((d) => `+Displays=(${d.mesh ? `Mesh="${rename(d.mesh)}",` : ''}Tag=${d.tag || 'None'},Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}))`),
   "; EW's people (an Anim_ level's: its matinee's loops; features/ew-base-people.md).",
   ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}"${l?.kind === 'Glow' ? `,Glow=true${l.tint ? `,Tint=(R=${n(l.tint[0]!)},G=${n(l.tint[1]!)},B=${n(l.tint[2]!)},A=1)` : ''}` : ''})`).join(',')}))`),
