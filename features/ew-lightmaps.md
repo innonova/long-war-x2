@@ -141,3 +141,16 @@ daylight exteriors; two maps tried first, with screenshots, before it goes into 
   writes a look's `Tile` from EW's `MainTile_U` (or its parent's default; converter 33), the base and the plots set it.
   The hangar's rock now has EW's grain (`logs/compare/x2/room-hangar.png`). Not carried: EW's detail layer (×6) and its
   sparkle (specular), which our unlit stand-in has no input for.
+
+## Notes (2026-11-19, the base's haze, beams and flares)
+
+- **What the research room lacks against EW** (round 6 #7 and #12): the autopsy room's warm lamp, its beam and the haze
+  behind the windows. These are not glass (hidden live, nothing changed) nor lightmaps: they are EW's level effects, 8
+  emitters (`FX_SmokeB.Misc.Freezer_Mist`, `Steam_Small_*`, `FX_Environmental.P_Blinking_Light`) and 4
+  `LensFlareSource`s in `Static_ScienceLabs`, which the converter does not list and the base does not place.
+- **The way to bring them:** EW's particle systems load in XCOM 2 (the units' do), but their materials are EW's, which
+  XCOM 2 cannot draw (`stub-materials.ts`). So: the converter lists each level's emitters (template, place, scale) and
+  their sprites' textures; one additive particle material of ours (SDK editor: texture × particle colour, unlit,
+  translucent, used with particle sprites) stands in, its instances given each emitter's texture by the converter
+  rewriting the emitters' material references; the base spawns them. Lens flares likewise (XCOM 2 has
+  `LensFlareSource`). A feature of its own; planned.
