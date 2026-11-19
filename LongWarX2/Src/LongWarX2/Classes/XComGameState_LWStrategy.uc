@@ -361,6 +361,8 @@ static function XComGameState_LWStrategy GetOrCreate(optional int Home = -1, opt
 	S.HomeIndex = Home >= 0 ? Home : 0;
 	S.StartChoice = Choice;
 	S.Begin();
+	// (The world's first news, InitTickerItems, at the campaign's start.)
+	class'LWTicker'.static.Fill(S);
 	S.SyncResearchIn(NewGameState);
 	// Long War's campaign begins with its first mission won: what its aliens left (XCOM 2's first
 	// mission, played or skipped, leaves nothing of Long War's).
