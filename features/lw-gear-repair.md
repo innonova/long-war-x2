@@ -116,3 +116,13 @@ Repair Bay. EW only damaged MEC suits. Three second-wave options change this sys
 - **Checked on wingpu** (test aid `repair dead <soldier>`: the soldier's items put into storage, as a recovered body's are,
   the soldier dead, the pass run): three dead soldiers in Carapace (95%), each Carapace damaged and out of storage (held 0),
   noted. Found on the way: in strategy a soldier has no team, and the item taken off has no slot; both now handled.
+
+## Report (2026-11-19, the plinth's hologram)
+
+- **EW's empty MEC on the plinth:** EW's MEC inventory, which Long War's Repair Bay is, stands an empty Mark I suit on
+  the Cybernetics Lab's plinth in a preview hologram (`XGCyberneticsUI.PutMecOnPlinth(0, true)`,
+  `XComEmptyMecPawn.SetUsePreviewMaterial`). The port now does: EW's Mark I body as the setup converts it, at the lab's
+  `CyberneticsLabMecPlinth` spot, in its idle, in our translucent glass material in blue (`UILWEWRepairBay.PlaceHologram`,
+  `HologramTint`, `HologramOpacity`, lowered by EW's pawn's half height and turned to face the camera). APPROXIMATION:
+  EW's preview shader has scan lines; ours is a plain translucent blue. The glass material is now usable on skeletal
+  meshes (SDK editor). Compared with EW's capture (`logs/compare/pairs/scr-repairbay.png`, not committed).
