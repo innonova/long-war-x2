@@ -149,10 +149,24 @@ function string Eta(int Hours, int Engineers)
 	return Repl(EtaDay != "" ? EtaDay : "%dd", "%d", string((Hours + 23) / 24));
 }
 
-/** One entry of the bar, as EW colours it (good when there is some, bad when none). */
+/** One entry of the bar, in EW's colours (UIUtilities.GetHTMLColoredText: good 5CD16C, bad EE1C25). */
 function AddResource(string Label, string Value, bool bGood)
 {
-	MC.FunctionString("AddResource", class'UIUtilities_Text'.static.GetColoredText(Label $ ":" @ Value, bGood ? eUIState_Good : eUIState_Bad));
+	MC.FunctionString("AddResource", EWColored(Label $ ":" @ Value, bGood ? "5CD16C" : "EE1C25"));
+}
+
+/** EW's meld line (UIStrategyHUD.UpdateMeld, UIUtilities.HTMLFormatMeld): orange with EW's orange meld symbol when there
+ *  is some, red with its red one when none. */
+function AddMeld(string Label, int Meld)
+{
+	MC.FunctionString("AddResource", EWColored(Label $ ":", Meld > 0 ? "F78000" : "EE1C25") @ EWColored(string(Meld), Meld > 0 ? "F78000" : "EE1C25")
+		@ "<img src='" $ (Meld > 0 ? "meld_orange" : "meld_red") $ "' width='25' height='20' vspace='-2'>");
+}
+
+/** A line in one of EW's HTML colours. */
+static function string EWColored(string Text, string Hex)
+{
+	return "<font color='#" $ Hex $ "'>" $ Text $ "</font>";
 }
 
 /** EW's resource panel hidden while a soldier screen is on top (the barracks' soldier list, the armory and its screens,
@@ -242,9 +256,9 @@ function Refresh()
 	// (The Repair Bay's: credits, meld, elerium, alloys.)
 	if (Kind == 'RepairBay')
 	{
-		AddResource(Label(7, "MELD"), string(Meld), Meld > 0);
-		AddResource(Label(1, "ELERIUM"), string(XComHQ.GetResourceAmount('EleriumDust')), true);
-		AddResource(Label(2, "ALLOYS"), string(XComHQ.GetResourceAmount('AlienAlloy')), true);
+		AddMeld(Label(7, "MELD"), Meld);
+		MC.FunctionString("AddResource", EWColored(Label(1, "ELERIUM") $ ":" @ XComHQ.GetResourceAmount('EleriumDust'), "67E8ED"));
+		MC.FunctionString("AddResource", EWColored(Label(2, "ALLOYS") $ ":" @ XComHQ.GetResourceAmount('AlienAlloy'), "67E8ED"));
 	}
 	else if (Kind != 'Engineering' && Kind != 'GreyMarket')
 	{
@@ -253,21 +267,22 @@ function Refresh()
 	}
 	if (bWide)
 	{
-		AddResource(Label(1, "ELERIUM"), string(XComHQ.GetResourceAmount('EleriumDust')), true);
-		AddResource(Label(2, "ALLOYS"), string(XComHQ.GetResourceAmount('AlienAlloy')), true);
+		MC.FunctionString("AddResource", EWColored(Label(1, "ELERIUM") $ ":" @ XComHQ.GetResourceAmount('EleriumDust'), "67E8ED"));
+		MC.FunctionString("AddResource", EWColored(Label(2, "ALLOYS") $ ":" @ XComHQ.GetResourceAmount('AlienAlloy'), "67E8ED"));
 		// (Long War's line in engineering, UIStrategyHUD_FSM_Engineering.UpdateResources: its fragments, named by the item's
 		// plural without "WEAPON ".)
 		if (Kind == 'Engineering')
-			AddResource(Repl(Caps(FragmentsName()), "WEAPON ", ""), string(XComHQ.GetResourceAmount(class'X2Item_LWArtifacts'.static.ItemFor('WeaponFragment'))), true);
+			MC.FunctionString("AddResource", EWColored(Repl(Caps(FragmentsName()), "WEAPON ", "") $ ":" @ XComHQ.GetResourceAmount(class'X2Item_LWArtifacts'.static.ItemFor('WeaponFragment')), "67E8ED"));
 	}
 	if ((Meld > 0 || bWide) && Kind != 'RepairBay' && Kind != 'SitRoom' && Kind != 'GreyMarket')
-		AddResource(Label(7, "MELD"), string(Meld), Meld > 0);
+		AddMeld(Label(7, "MELD"), Meld);
 	// (Added again each second: kept hidden where it is, ShowForTop.)
 	if (bResourcesHidden)
 		MC.FunctionVoid("HideResourcesPanel");
 	if (bWide && S.TileType.Length > 0)
-		AddResource(Label(5, "POWER"), class'LWBase'.static.PowerUsed(S) $ "/" $ class'LWBase'.static.PowerCapacity(S),
-			class'LWBase'.static.PowerUsed(S) <= class'LWBase'.static.PowerCapacity(S));
+		// (EW's: yellow, red when more is used than made.)
+		MC.FunctionString("AddResource", EWColored(Label(5, "POWER") $ ":" @ class'LWBase'.static.PowerUsed(S) $ "/" $ class'LWBase'.static.PowerCapacity(S),
+			class'LWBase'.static.PowerUsed(S) <= class'LWBase'.static.PowerCapacity(S) ? "FFD038" : "EE1C25"));
 	SetClock(S);
 	// The clock and the event list on the base's view and in Mission Control only: EW's rooms and screens have their back
 	// arrow and their own panels there instead.
