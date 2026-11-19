@@ -115,3 +115,16 @@ stand-in (`AvengerStaff_SD`) takes the diffuse only. The fix is a stand-in that 
   placed as a glow in that colour (`LWX2EWMapPieces.GlowStandin`), not as a body stand-in with EW's hex pattern for a
   diffuse. The canisters' rack is not in the Genetics Lab's screen view, so this is not yet seen; the lab's yellow tank
   faces are something else again (still dark).
+
+## Notes (2026-11-19, the Genetics Lab's tanks)
+
+- EW's yellow tank faces are its light cards (`GeneLab_Lightcards`, `HQ_ColorizedLight_PureVertexColor`: the cards' vertex
+  colour 253, 172, 30 is the faces' yellow). **XCOM 2 draws that mesh not at all:** placed, not hidden, one element, its
+  vertices inside the room (x 96-1575, y -1220 to -393, z 312-530); with the room's walls hidden, and with an opaque, a
+  translucent (our glass, opacity 0.8) or our additive vertex-colour material (`M_EWLightCard`) on it, nothing shows. The
+  same likely holds for the research room's light beam and the Psi Labs' and hangar's light cards. Next: what in the light
+  cards' mesh XCOM 2 rejects (its vertex colour buffer, its UV sets), by comparing a light-card mesh's data with a lamp's
+  (`HQ_Light_LO_A` also has vertex colours and draws).
+- The canisters (the yellow row along the top, Anim and Addon people records) draw, and their fluid slot is a glow.
+- `M_EWLightmapped` lacks *Used with Skeletal Mesh* (the log warns once per prop); glowing slots on skeletal props draw
+  with the engine's default material until it is ticked in the SDK editor.

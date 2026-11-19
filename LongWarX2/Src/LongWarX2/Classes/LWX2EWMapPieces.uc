@@ -93,6 +93,8 @@ var config string GlowParent;
 var config string LightCardParent;
 var config array<string> LightCardMaterials;
 var config float LightCardScale;
+/** Its opacity where the parent has one (our glass: the cards as faint panes when the mesh's vertex colours do not reach). */
+var config float LightCardOpacity;
 var config name GlowColorParam;
 var config LinearColor GlowDefault;
 var config float GlowScale;
@@ -764,6 +766,8 @@ static function MaterialInterface LightCardStandin(Object InOuter)
 	MIC.SetParent(Parent);
 	C = MakeLinearColor(default.LightCardScale, default.LightCardScale, default.LightCardScale, 1);
 	MIC.SetVectorParameterValue('Tint', C);
+	if (default.LightCardOpacity > 0)
+		MIC.SetScalarParameterValue('Opacity', default.LightCardOpacity);
 	return MIC;
 }
 

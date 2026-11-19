@@ -4721,14 +4721,20 @@ function BaseNear(float Radius, out array<string> Out)
 	local LWX2BasePerson Person;
 	local vector At;
 	local float D;
+	local string Mats;
+	local int k;
 
 	At = XComHeadquartersController(Pres().Owner).PlayerCamera.CameraCache.POV.Location;
 	foreach AllActors(class'DynamicSMActor_Spawnable', Piece)
 	{
 		D = VSize(Piece.Location - At);
 		if (D <= Radius && !Piece.bHidden)
-			Out.AddItem(int(D) @ PathName(Piece.StaticMeshComponent.StaticMesh) @ Piece.Location @ "radius" @ int(Piece.StaticMeshComponent.Bounds.SphereRadius)
-				@ "material" @ PathName(Piece.StaticMeshComponent.GetMaterial(0)) @ PathName(MaterialInstance(Piece.StaticMeshComponent.GetMaterial(0)) != none ? MaterialInstance(Piece.StaticMeshComponent.GetMaterial(0)).Parent : none));
+		{
+			Mats = "";
+			for (k = 0; k < Piece.StaticMeshComponent.GetNumElements(); k++)
+				Mats @= "[" $ k $ "]" $ PathName(MaterialInstance(Piece.StaticMeshComponent.GetMaterial(k)) != none ? MaterialInstance(Piece.StaticMeshComponent.GetMaterial(k)).Parent : Piece.StaticMeshComponent.GetMaterial(k));
+			Out.AddItem(int(D) @ PathName(Piece.StaticMeshComponent.StaticMesh) @ Piece.Location @ "radius" @ int(Piece.StaticMeshComponent.Bounds.SphereRadius) @ "materials" $ Mats);
+		}
 	}
 	foreach AllActors(class'LWX2BasePerson', Person)
 	{
