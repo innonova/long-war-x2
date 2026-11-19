@@ -112,3 +112,20 @@ daylight exteriors; two maps tried first, with screenshots, before it goes into 
   an EW building volume, or every piece on a night map), each with its atlas and placement; EW's placed lights stay
   for dynamic light, at a lower scale where the lightmaps carry the light.
 - **First maps:** a night town map and a daylight one with interiors; captured beside EW's in the harness.
+
+## Report (2026-11-19, the middle way tried on two maps)
+
+- **Our lit material** (`LWX2Lightmap.M_EWLightmappedLit`, made in the SDK editor from `M_EWLightmapped`): lit, EW's
+  diffuse into Diffuse (dynamic lights still add to it), EW's diffuse × lightmap × `LMBrightness` into Emissive; also
+  usable on fractured meshes (the plots' breakable walls).
+- **The plot writer** gives each lightmapped piece inside an EW building, and every piece of a night map, its own
+  instance (`ew-plot.ts`, `PlotLightmapParent`), for the maps listed in `PlotLightmapMaps` while it is tried out:
+  URB_Bar (night; 923 pieces) and URB_ConvienienceStore_EWI (day; its interiors).
+- **Found on the way:** EW's lightmap atlases are private objects; the plots could not import them ("Can't import
+  private object", the map failed to load). The converter now makes them public (converter 31).
+- **Seen on wingpu** (`logs/compare/bar-lightmapped-*.png`, `store-lightmapped-*.png`, not committed): the bar's warm
+  pools of light inside, the neon's red on the pavement, the roofs still cut away by XCOM 2's building visibility, the
+  squad's flashlights still lighting the ground; the store's interior with EW's baked shadows. Daylight exteriors keep
+  XCOM 2's sun. Bright white surfaces (the van's roof, the cars) read hot: lit and baked light add up there.
+- **Waiting on the person:** whether this goes to every map (`PlotLightmapMaps` emptied), and whether the lit share
+  should be lowered.
