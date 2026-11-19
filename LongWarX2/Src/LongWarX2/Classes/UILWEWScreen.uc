@@ -179,6 +179,12 @@ static function string SetVar(string SubPath, string Value)
 	local UILWEWScreen EWScreen;
 
 	EWScreen = UILWEWScreen(AnyPres().ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
+	// (2nd:<path>: inside the screen under the top one, as ReadVar's.)
+	if (Left(SubPath, 4) == "2nd:")
+	{
+		EWScreen = AnyPres().ScreenStack.Screens.Length > 1 ? UILWEWScreen(AnyPres().ScreenStack.Screens[1]) : none;
+		SubPath = Mid(SubPath, 4);
+	}
 	if (EWScreen == none || SubPath == "")
 		return "ERR no EW screen open, or no path";
 	// (abs:<path>: from the movie's root, as ReadVar's.)
