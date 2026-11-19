@@ -129,3 +129,12 @@ daylight exteriors; two maps tried first, with screenshots, before it goes into 
   XCOM 2's sun. Bright white surfaces (the van's roof, the cars) read hot: lit and baked light add up there.
 - **Waiting on the person:** whether this goes to every map (`PlotLightmapMaps` emptied), and whether the lit share
   should be lowered.
+
+## Notes (2026-11-19, the rock's tiling)
+
+- **The reviewer's "coarse, stretched rock"** (round 6 #6): EW's cave material (`HQ_Caves_Simple`) tiles its texture
+  twice (`MainTile_U/V` 2, with `MainOffset` and `MainRotation`) and a detail layer six times; our lightmapped stand-in
+  draws the texture once, so the base's rock reads twice as coarse. The fix: a `DiffuseScaleBias` parameter on our
+  materials (UV0 × .xy + .zw, as the lightmap's UV1 already is), set from EW's tiling by the converter. It needs the
+  material editor; a first try at copying the lightmap's UV nodes lost the graph's view (panning in that editor) and was
+  left unsaved. Next editor session.
