@@ -613,3 +613,17 @@ remains is how EW's 3D movie maps its 1280 x 720 stage onto its render target (E
   (`ew-people.ts matineeAxisPoses`, converter 29). The main menu now frames as EW's: the globe right of centre, the
   monitors on the left (`logs/compare/x2/menu-main.png` beside EW's); its globe turns once in 200 seconds, westward, as EW's matinee turns it (`ShellGlobeSeconds`). `ShellCamera` (`XComLWEWMaps.ini`, 0) picks the
   shell's camera. Still: EW's glow and lens flare on the globe.
+
+## Report (2026-11-20, the soldier summary's right-hand borders)
+
+- **Found and fixed:** the summary's movie came up with its root at x 993.65 of the 1920 stage (at 150%, 1909 wide),
+  so its right edge reached 1947: the right-hand panels' closing borders were past the stage, cut off. Centred on the
+  stage (`UILWEWSoldierSummary.Centre`), every border closes and the layout matches EW's capture. The earlier note's
+  "spread 1/0.878" was this shift.
+- **The promotion screen** (it inherits the centring) still runs off on the right: its movie places the soldier's
+  panels about 80 units further right than the summary's (`soldierInfoMC._x` 694 against 612.75, `soldierStatsMC._x`
+  875 against 795), where EW's capture shows them in the summary's place. EW's promote camera and panel both hang on a
+  rig (`UICameraRig_SoldierPromote`), the camera 133 to the side of the panel's centre (the summary's 13): EW looks at
+  that panel from aside, which may be what keeps its panels in view. `sumvar <path> [value]` reads and sets the
+  summary's or promotion's movie variables. Open.
+

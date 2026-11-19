@@ -475,6 +475,10 @@ function Handle(string Line, out array<string> Out)
 		// A variable inside the open EW movie: ewvar <path below the screen's clip>.
 		Out.AddItem(class'UILWEWScreen'.static.ReadVar(Args.Length > 1 ? Args[1] : ""));
 		return;
+	case "sumvar":
+		// A test aid: a variable of the soldier summary's movie (in XCOM 2's 3D movie), read or set: sumvar <path> [number].
+		Out.AddItem(SummaryVar(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? Args[2] : ""));
+		return;
 	case "ewset":
 		// A variable inside the open EW movie set: ewset <path below the screen's clip> <true|false|number>.
 		Out.AddItem(class'UILWEWScreen'.static.SetVar(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? Args[2] : ""));
@@ -4747,6 +4751,21 @@ function string BaseHide(string Text, bool bShow, optional string Move, optional
 			Where $= " [" $ Person.Location @ Person.Rotation.Yaw $ "]";
 		}
 	return "ok" @ n @ (Move != "" ? Move @ By : (bShow ? "shown" : "hidden")) $ Where;
+}
+
+/** A test aid: the soldier summary's movie variables (sumvar). */
+function string SummaryVar(string Path, string Value)
+{
+	local UILWEWSoldierSummary S;
+
+	S = UILWEWSoldierSummary(Pres().ScreenStack.GetCurrentScreen());
+	if (S == none)
+		S = UILWEWSoldierSummary(Pres().ScreenStack.GetScreen(class'UILWEWSoldierSummary'));
+	if (S == none)
+		return "no soldier summary";
+	if (Value != "")
+		S.Movie.SetVariableNumber(S.MCPath $ "." $ Path, float(Value));
+	return S.MCPath $ "." $ Path @ "=" @ S.Movie.GetVariableNumber(S.MCPath $ "." $ Path) @ "(stage" @ S.Movie.GetVariableNumber("Stage.width") @ "x" @ S.Movie.GetVariableNumber("Stage.height") $ ")";
 }
 
 /** A test aid: XCOM 2's 3D movie and a panel's UV adjustment (movie3d). */

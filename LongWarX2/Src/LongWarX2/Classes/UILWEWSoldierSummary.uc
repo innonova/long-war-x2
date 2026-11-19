@@ -34,6 +34,7 @@ static function Open(XComHQPresentationLayer HQPres, StateObjectReference Unit)
 simulated function OnInit()
 {
 	super.OnInit();
+	Centre();
 	Fill();
 	PlacePawn();
 }
@@ -43,8 +44,20 @@ simulated function OnReceiveFocus()
 	super.OnReceiveFocus();
 	if (!bIsInited)
 		return;
+	Centre();
 	Fill();
 	PlacePawn();
+}
+
+/** The movie centred on its stage, as EW's sits on its panel: it came up 33 to the right (its root at 993.65 of 1920, at
+ *  150%), its right-hand panels' closing borders past the stage's edge, cut off (the reviewer's open right borders). */
+function Centre()
+{
+	local float W;
+
+	W = Movie.GetVariableNumber("Stage.width");
+	if (W > 0)
+		Movie.SetVariableNumber(MCPath $ "._x", W / 2);
 }
 
 simulated function OnRemoved()
