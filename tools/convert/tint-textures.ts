@@ -39,7 +39,7 @@ export function decodeDXT5Alpha(data: Uint8Array, w: number, h: number): Uint8Ar
 }
 
 /** A tinted mip: the diffuse's (DXT1) recoloured with Tint (0-1 RGB) where the mask (DXT5, its alpha) is, the same size. */
-const SKIN_WARMTH = [1.15, 0.95, 0.9]
+const SKIN_WARMTH = [1.07, 0.98, 0.95]
 function tintMipDXT1(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha', linear = false, multiply = false, mw = w, mh = h): Uint8Array {
   // (multiply: the texture × the tint in linear light, as EW's skin material colours a face by its SkinColor; else the
   // tint replaces the colour, shaded by the texture's brightness, as for a uniform's or a car's paint.)
