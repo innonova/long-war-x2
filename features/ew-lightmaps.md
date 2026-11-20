@@ -162,3 +162,22 @@ daylight exteriors; two maps tried first, with screenshots, before it goes into 
   drawn the screens in the tint alone, blank. The converter now adds a whitened copy (`_LWX2White`: each texel's
   brightest channel, `tint-textures.ts whiteMip`; converter 40) and our glow tints it: the research room's monitors show
   EW's UI panels in their cyan. `basenear` lists each slot's picture now.
+
+## Decision (2026-11-20): lightmaps everywhere
+
+The person found the road right only in "everywhere" (the store) and in the bar's middle way (a night map: there the
+middle way is everywhere), and could not weigh the rest: decided on their behalf (chat decision #527),
+`PlotLightmapEverywhere=true`, every piece of every mission map in EW's lightmaps, XCOM 2's dynamic lights still adding.
+All 169 maps converted with it on wingpu.
+
+**EW originals** (`logs/compare/lm-ew/`, not committed): two of the person's Long War missions loaded in EW on wingpu
+(save314, Game 28, `URB_ConvienienceStore_EWI`; save1475, Game 55, `URB_Bar_Terror`; the other saves held aside and put
+back), four camera turns each, and the port at the same spots (its pieces' places in `BuildCache\ewmaps\<map>.ini`;
+`ForceMap`; the control port's new `yaw`): `pair-store.png`, `pair-bar.png`.
+
+**What they show:** the biggest difference is not the lightmaps at all. The port is bright, white and blue in all three
+modes alike; EW is darker and warm, its terror bar under a brown-orange smoke haze by day where the port shows a blue
+night. Also: the store's SUV red in EW (an instance colour), white in the port; the wall by the bench tan stucco in EW,
+blue-grey brick in the port. Next: EW's own atmosphere on its maps (its sun's colour and strength, its sky light, height
+fog and post-process, from each level) in place of XCOM 2's.
+
