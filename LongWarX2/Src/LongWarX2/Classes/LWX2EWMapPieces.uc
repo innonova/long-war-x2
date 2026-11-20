@@ -517,7 +517,10 @@ static function string UseEWAtmosphere(Actor Spawner)
 	local LWX2EWMapData D;
 	local WorldInfo WI;
 	local string FogNote;
-	local int Suns, Off;
+	local EmitterSpawnable Em;
+	local array<Actor> Placed;
+	local Actor A;
+	local int Suns, Off, Emitters;
 
 	if (!default.EWAtmosphere || !OnOwnPlot())
 		return "XCOM 2's environment kept";
@@ -591,7 +594,19 @@ static function string UseEWAtmosphere(Actor Spawner)
 			Sun.ReattachComponent(Sun.LightComponent);
 			Suns++;
 		}
-	return "EW's atmosphere: XCOM 2's" @ Off @ "suns, fog and environment light off, EW's" @ Suns @ "sun(s) placed;" $ FogNote;
+	// EW's level's own emitters (its fires, smoke, sparks: the terror bar's 87), as in the base; once (a loaded battle comes
+	// here again).
+	foreach Spawner.AllActors(class'EmitterSpawnable', Em)
+		if (Em.Tag == 'LWX2EWMission')
+			Emitters++;
+	if (Emitters == 0)
+	{
+		PlaceEmittersOf(D, Spawner, vect(0, 0, 0), Placed);
+		foreach Placed(A)
+			A.Tag = 'LWX2EWMission';
+		Emitters = Placed.Length;
+	}
+	return "EW's atmosphere: XCOM 2's" @ Off @ "suns, fog and environment light off, EW's" @ Suns @ "sun(s) placed;" $ FogNote $ ";" @ Emitters @ "of EW's" @ D.Emitters.Length @ "emitters";
 }
 
 /** Spawns EW's lights (of LightKinds) moved by Shift; returns how many were placed. */
