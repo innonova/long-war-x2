@@ -120,6 +120,11 @@ function Handle(string Line, out array<string> Out)
 		// engine last drew them (LastRenderTime against now), to tell a culled piece from one drawn invisibly.
 		BaseMesh(Args.Length > 1 ? Args[1] : "", Out);
 		return;
+	case "persontex":
+		// A test aid: persontex <mesh text> <slot> <texture path>: that slot of EW's base people whose mesh holds the text
+		// given that texture as its Diffuse, live.
+		Out.AddItem(PersonTex(Args));
+		return;
 	case "basemat":
 		// A test aid: EW's base's pieces whose mesh's path holds <text> given another material, live, with scalars and colours
 		// set on an instance of it: basemat <text> <material> [<scalar> <value> | <vector> <r>,<g>,<b>,<a>]…
@@ -4970,6 +4975,32 @@ function BaseMesh(string Text, out array<string> Out)
 			@ "translation" @ C.Translation @ "scale3d" @ C.Scale3D @ "elements" @ C.GetNumElements());
 	}
 	Out.AddItem("now" @ WorldInfo.TimeSeconds);
+}
+
+/** A test aid (persontex): a slot of EW's base people given a texture as its Diffuse. */
+function string PersonTex(array<string> Args)
+{
+	local LWX2BasePerson P;
+	local MaterialInstanceConstant MIC;
+	local Texture T;
+	local int n;
+
+	if (Args.Length < 4)
+		return "ERR persontex <mesh text> <slot> <texture path>";
+	T = Texture(DynamicLoadObject(Args[3], class'Texture', true));
+	if (T == none)
+		return "ERR no texture" @ Args[3];
+	foreach AllActors(class'LWX2BasePerson', P)
+	{
+		if (InStr(PathName(P.SkeletalMeshComponent.SkeletalMesh), Args[1]) == INDEX_NONE)
+			continue;
+		MIC = new class'MaterialInstanceConstant';
+		MIC.SetParent(P.SkeletalMeshComponent.GetMaterial(int(Args[2])));
+		MIC.SetTextureParameterValue('Diffuse', T);
+		P.SkeletalMeshComponent.SetMaterial(int(Args[2]), MIC);
+		n++;
+	}
+	return "ok" @ n @ "people";
 }
 
 /** A test aid: what of EW's base stands near the camera (basenear). */
