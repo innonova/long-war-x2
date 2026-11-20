@@ -342,12 +342,13 @@ its converted package (`AS_SoldierRifle_LWX2<kind>`, `renameAnims`' `setName`).
 
 **Checked on wingpu** (dev build, a campaign's first mission, `spawn` with species 24, 26, 31): EW's meshes on the
 three, each slot textured (the Operative's white shirt, tie and harness; the elite Medic's grey suit and kit),
-standing and in cover animated with the ADVENT rifle in their hands, whole bodies; one shot dead, the death played.
+standing and in cover animated with the ADVENT rifle in their hands, whole bodies; one shot dead, the death played. On their turn (a second mission) the Operative and the Heavy ran to cover
+(the bus stop, behind a car) and one fired (missed), bodies whole all through.
 
 ### Left open
 
 - Their names on the field are XCOM 2's templates' ("ADVENT Trooper was killed!"), as for every Long War species
   fighting under an XCOM 2 template.
-- Not yet seen: their move, their shot, their hunker, a grenade; nor the setup on a fresh install (the dev build was
+- Not yet seen: their hunker, a grenade, a Medic's heal; nor the setup on a fresh install (the dev build was
   converted by hand on wingpu).
 
