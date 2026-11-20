@@ -126,3 +126,11 @@ Repair Bay. EW only damaged MEC suits. Three second-wave options change this sys
   `HologramTint`, `HologramOpacity`, lowered by EW's pawn's half height and turned to face the camera). APPROXIMATION:
   EW's preview shader has scan lines; ours is a plain translucent blue. The glass material is now usable on skeletal
   meshes (SDK editor). Compared with EW's capture (`logs/compare/pairs/scr-repairbay.png`, not committed).
+
+## Notes (2026-11-20, the hologram's scan lines; round 9 #3)
+
+EW draws the Repair Bay's empty MEC with one material on every slot (`XComEmptyMecPawn.ApplyPreviewMaterial`:
+`XComHeadquartersGame.MECPreviewMaterialName` = `GEN_MaterialParents.Master_Materials.MEC_Upgrade_Active`, loaded by
+name). That material is in none of the packages the setup converts (searched: the base's levels, the unit and weapon
+packages, `Startup.upk`), so its scan-line texture is not yet known. Next: find the package that holds it, then its
+textures, and a scan-line panner on our `M_EWGlass` (SDK editor).
