@@ -22,14 +22,20 @@ static function NameCopies()
 	Manager = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager();
 	foreach class'LWStrategyRules'.default.FightAs(F)
 	{
-		if (F.Char >= default.Names.Length || default.Names[F.Char] == "")
+		if (F.Char >= default.Names.Length)
 			continue;
 		Templates.Length = 0;
 		Manager.FindDataTemplateAllDifficulties(CopyName(F.Char), Templates);
 		foreach Templates(T)
 			if (X2CharacterTemplate(T) != none)
 			{
-				X2CharacterTemplate(T).strCharacterName = default.Names[F.Char];
+				if (default.Names[F.Char] != "")
+					X2CharacterTemplate(T).strCharacterName = default.Names[F.Char];
+				// (No XCOM 2 loot: Long War gives its own corpses and artifacts after the mission, by species; XCOM 2's
+				// corpse of the template, "ADVENT Trooper Corpse dropped" for an EXALT soldier, is not Long War's.)
+				X2CharacterTemplate(T).Loot.LootReferences.Length = 0;
+				X2CharacterTemplate(T).TimedLoot.LootReferences.Length = 0;
+				X2CharacterTemplate(T).VultureLoot.LootReferences.Length = 0;
 				n++;
 			}
 	}
