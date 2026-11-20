@@ -1540,7 +1540,7 @@ function EnvLights(out array<string> Out, string Mode)
 	{
 		if (DirectionalLight(L) == none && SkyLight(L) == none)
 			continue;
-		if (L.LightComponent != none && Mode != "")
+		if (L.LightComponent != none && (Mode == "on" || Mode == "off"))
 			L.LightComponent.SetEnabled(Mode == "on" || LWX2SunLight(L) != none || LWX2SkyLight(L) != none);
 		Out.AddItem(PathName(L) @ L.Class.Name @ (L.LightComponent != none ? ("brightness" @ L.LightComponent.Brightness @ "colour" @ L.LightComponent.LightColor.R $ "," $ L.LightComponent.LightColor.G $ "," $ L.LightComponent.LightColor.B @ "on" @ L.LightComponent.bEnabled) : "no component"));
 	}
@@ -1548,20 +1548,28 @@ function EnvLights(out array<string> Out, string Mode)
 	{
 		if (ExponentialHeightFog(A) != none && ExponentialHeightFog(A).Component != none)
 		{
-			if (Mode != "")
+			if (Mode == "on" || Mode == "off")
 				ExponentialHeightFog(A).Component.SetEnabled(Mode == "on");
 			Out.AddItem(PathName(A) @ "exponential height fog density" @ ExponentialHeightFog(A).Component.FogDensity @ "on" @ ExponentialHeightFog(A).Component.bEnabled);
 		}
 		if (HeightFog(A) != none && HeightFog(A).Component != none)
 		{
-			if (Mode != "")
+			if (Mode == "on" || Mode == "off")
 				HeightFog(A).Component.SetEnabled(Mode == "on");
 			Out.AddItem(PathName(A) @ "height fog density" @ HeightFog(A).Component.Density @ "on" @ HeightFog(A).Component.bEnabled);
 		}
 	}
+	// (env all: every actor of XCOM 2's environment levels, by class, counted.)
+	if (Mode == "all")
+	{
+		foreach AllActors(class'Actor', A)
+			if (InStr(PathName(A), "EnvLighting") != INDEX_NONE || InStr(PathName(A), "Env_") != INDEX_NONE)
+				Out.AddItem(PathName(A) @ A.Class.Name);
+		return;
+	}
 	foreach AllActors(class'PostProcessVolume', V)
 	{
-		if (Mode != "")
+		if (Mode == "on" || Mode == "off")
 			V.bEnabled = Mode == "on";
 		Out.AddItem(PathName(V) @ "post-process volume priority" @ V.Priority @ "on" @ V.bEnabled @ "colorize" @ V.Settings.Scene_Colorize);
 	}
