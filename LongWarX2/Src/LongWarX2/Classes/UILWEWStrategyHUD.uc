@@ -367,7 +367,9 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 	// (Not under Mission Control itself, which has its own: UILWEWMissionControl.)
 	// (Nor under XCOM 2's own screens, the loadout and customization, whose own back button takes the screen back: two
 	// back buttons sat over each other there, round 6.)
-	Movie.SetVariableBool(MCPath $ ".helpBar._visible", Context > 0 && UILWEWMissionControl(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && !bNavHelpShown());
+	// (Nor over EW's screens with their own Cancel, as EW shows them: hiring and the pending requests; round 9 #13.)
+	Movie.SetVariableBool(MCPath $ ".helpBar._visible", Context > 0 && UILWEWMissionControl(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && !bNavHelpShown()
+		&& UILWEWHiring(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWEWPendingRequests(Movie.Pres.ScreenStack.GetCurrentScreen()) == none);
 	// (EW's build screen's "?" beside the back arrow, UIBuildItem: its item card.)
 	bCardHelp = UILWEWEngineering(Movie.Pres.ScreenStack.GetCurrentScreen()) != none && !UILWEWEngineering(Movie.Pres.ScreenStack.GetCurrentScreen()).bFoundry;
 	Ctx = Context $ Kind $ bCardHelp;
