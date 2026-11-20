@@ -578,6 +578,12 @@ function Handle(string Line, out array<string> Out)
 	case "emitters":
 		// emitters [filter]: the EW map's own emitters placed now (a test aid): those whose template's path holds filter,
 		// "!filter" those that do not.
+		// (emitters list: every EW emitter in the world, by template, counted.)
+		if (Args.Length > 1 && Args[1] == "list")
+		{
+			EmitterList(Out);
+			return;
+		}
 		Out.AddItem(class'LWX2EWMapPieces'.static.PlaceEmittersOf(class'LWX2EWMapPieces'.static.Map(), self, vect(0, 0, 0), Placed, Args.Length > 1 ? Args[1] : "") @ "emitters placed");
 		return;
 	case "yaw":
@@ -1535,6 +1541,32 @@ function string CaptureNearest()
 
 /** In a mission: an alien dropped on the aliens' team a few tiles from the first soldier (a test aid, XCOM 2's cheat). */
 /** The tactical camera to a place on the placed EW map for 20 seconds, fog of war off (a test aid: its lights, its pods). */
+/** The spawned emitters in the world (EW's, placed by the mod), by template, counted (emitters list). */
+function EmitterList(out array<string> Out)
+{
+	local EmitterSpawnable E;
+	local array<string> Names;
+	local array<int> Counts;
+	local string T;
+	local int i;
+
+	foreach AllActors(class'EmitterSpawnable', E)
+	{
+		T = E.ParticleSystemComponent != none ? PathName(E.ParticleSystemComponent.Template) : "none";
+		T $= " tag " $ E.Tag;
+		i = Names.Find(T);
+		if (i == INDEX_NONE)
+		{
+			Names.AddItem(T);
+			Counts.AddItem(1);
+		}
+		else
+			Counts[i]++;
+	}
+	for (i = 0; i < Names.Length; i++)
+		Out.AddItem(Counts[i] @ Names[i]);
+}
+
 /** XCOM 2's environment lighting on a mission (env): the lights, fogs and post-process volumes not of the EW map. */
 function EnvLights(out array<string> Out, string Mode)
 {
