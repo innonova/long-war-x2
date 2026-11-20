@@ -347,7 +347,7 @@ standing and in cover animated with the ADVENT rifle in their hands, whole bodie
 
 ### Left open
 
-- Their names on the field are XCOM 2's templates' ("ADVENT Trooper was killed!"), as for every Long War species
+- Their names on the field are XCOM 2's templates' ("ADVENT Trooper was killed!"), as for every Long War species (`lw-species-names`, planned)
   fighting under an XCOM 2 template.
 - Not yet seen: their hunker, a grenade, a Medic's heal; nor the setup on a fresh install (the dev build was
   converted by hand on wingpu).
