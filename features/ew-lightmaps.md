@@ -197,6 +197,14 @@ ambient`): the port's blue-white was XCOM 2's environment, not EW's lightmaps.
   `EWSunScale` 2.2, measured on the store's sidewalk against EW (158,151,109 against 138,127,92).
 
 Seen on wingpu (`logs/compare/lm-ew/pair-store-ew-atmosphere.png`, `pair-bar-ew-atmosphere.png`): both maps in EW's
-tones. **Left:** EW's height fog and post-process (the terror bar's smoky haze; colour grading per map); the cars' own
-colours; EW's camera stands higher and farther than the port's.
+tones. **Left:** the cars' own colours; EW's camera stands higher and farther than the port's.
+
+**EW's fog and colour grading** (converter 50): each level's WorldInfo's `XComHeightFog` and default post-process
+(`Scene_Colorize`, `_Shadows`, `_HighLights`, `_MidTones`, `_Desaturation`) written per map (`Fog=`, `Grade=`); at the
+battle's start EW's fog on XCOM 2's height fog (its properties are const to script: set as the console's `set` does, the
+fog switched off and on so the renderer takes them; density × `EWFogScale` 1) and the grading on the world's default
+post-process (`EWGrade`). Seen on the terror bar (`logs/compare/lm-ew/pair-bar-fog-grade.png`): a slight change only.
+EW's terror bar's fog is a thin dark blue-grey; its brown haze is its brown sun and its own smoke, and it is darker
+than the port's (by eye, about half). Still open: that darkness (per map, or EW's night and terror lighting as a kind),
+and EW's smoke emitters on mission maps.
 
