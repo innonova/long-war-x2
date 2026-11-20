@@ -7,6 +7,8 @@ class UILWEWItemCard extends UILWEWScreen;
 
 /** EW's card words (UIItemCards). */
 var localized string m_strTacticalInfoHeader, m_strCloseCardLabel;
+var localized string m_strEffectiveRangeLabel, m_strBaseDamageLabel, m_strBaseCriticalDamageLabel, m_strCriticalDamageLabel,
+	m_strChargesLabel, m_strHealthBonusLabel, m_strRangeShort, m_strRangeMedium, m_strRangeLong;
 /** Craft weapons' and craft types' texts (XGItemTree.ShipWeaponFlavorTxt by EShipWeapon, ShipTypeFlavorTxt by EShipType)
  *  and the craft types' names. */
 var localized string WeaponText[8], CraftText[4], CraftName[4];
@@ -23,6 +25,25 @@ static function OpenShipWeapon(XComHQPresentationLayer HQPres, int Weapon)
 static function OpenCraft(XComHQPresentationLayer HQPres, int Type)
 {
 	Open(HQPres, 8, Type);
+}
+
+/** A soldier item's card, by Long War's item number, as engineering's "?" opens it (XGEngineeringUI.ENGINEERINGUIGetItemCard,
+ *  XGItemCards.BuildItemCard): a weapon's (eItemCard_SoldierWeapon, 2), an armour's (eItemCard_Armor, 1), a small item's
+ *  (eItemCard_EquippableItem, 4). False if it is none of these. */
+static function bool OpenGear(XComHQPresentationLayer HQPres, int Item)
+{
+	local int k;
+
+	if (class'LWGearRules'.default.Weapons.Find('Item', Item) != INDEX_NONE)
+		k = 2;
+	else if (class'LWGearRules'.default.Armors.Find('Item', Item) != INDEX_NONE)
+		k = 1;
+	else if (class'LWGearRules'.default.SmallItems.Find('Item', Item) != INDEX_NONE)
+		k = 4;
+	else
+		return false;
+	Open(HQPres, k, Item);
+	return true;
 }
 
 static function Open(XComHQPresentationLayer HQPres, int Card, int Which)
@@ -60,7 +81,9 @@ function Fill()
 	Params.AddItem(Str(Word(m_strCloseCardLabel, "CLOSE")));
 	Params.AddItem(Str(""));
 	CallNow("SetHelp", Params);
-	if (CardType == 3)
+	if (CardType == 1 || CardType == 2 || CardType == 4)
+		FillGear();
+	else if (CardType == 3)
 	{
 		foreach class'LWAirWar'.default.Weapons(W)
 			if (W.Id == What)
@@ -88,6 +111,61 @@ function Fill()
 		Image(class'LWX2Pictures'.static.Item(i == 3 ? 104 : 103, ""));
 	}
 	CallNow("InitializationComplete", NoArgs);
+}
+
+/** A soldier item's card (XGItemCards.BuildWeaponCard, BuildArmorCard, BuildEquippableItemCard; UIItemCards.UpdateData):
+ *  a weapon's range and Long War's damage and crit ranges, an armour's HP bonus, a small item's charges; the item's text;
+ *  its picture. */
+function FillGear()
+{
+	local LWGearRules.LWWeaponDef W;
+	local LWGearRules.LWArmorDef A;
+	local X2ItemTemplate T;
+	local array<ASValue> Params;
+	local string Name, Text;
+	local int k, D, Lo, Hi, CLo, CHi;
+	local bool bRoulette;
+
+	Name = class'LWEngineering'.static.ItemName(class'LWGearRules'.static.TemplateFor(What));
+	T = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(class'LWGearRules'.static.TemplateFor(What));
+	Title(Caps(Name));
+	if (CardType == 2)
+	{
+		k = class'LWGearRules'.default.Weapons.Find('Item', What);
+		W = class'LWGearRules'.default.Weapons[k];
+		StatLine(0, Word(m_strEffectiveRangeLabel, "Effective Range:"), W.Range == 'SHORT' ? Word(m_strRangeShort, "Short") : (W.Range == 'LONG' ? Word(m_strRangeLong, "Long") : Word(m_strRangeMedium, "Medium")));
+		// (Long War's ranges from the weapon's damage D: (3D + 1) / 4 to (5D + 2) / 4, a crit (5D + 1) / 4 to (7D + 2) / 4;
+		// with Damage Roulette (2D + 1) / 4 to (6D + 2) / 4, a crit (6D + 1) / 4 to (10D + 2) / 4.)
+		D = W.Damage;
+		bRoulette = class'LWX2SecondWave'.static.On(0);
+		Lo = bRoulette ? (2 * D + 1) / 4 : (3 * D + 1) / 4;
+		Hi = bRoulette ? (6 * D + 2) / 4 : (5 * D + 2) / 4;
+		CLo = Max(bRoulette ? (6 * D + 1) / 4 : (5 * D + 1) / 4, Hi);
+		CHi = bRoulette ? (10 * D + 2) / 4 : (7 * D + 2) / 4;
+		StatLine(1, Word(m_strBaseDamageLabel, "Base Damage:"), Lo == Hi ? string(Lo) : Lo @ "-" @ Hi);
+		StatLine(2, Word(m_strBaseCriticalDamageLabel, "Critical Chance:"), W.Crit $ "%");
+		StatLine(3, Word(m_strCriticalDamageLabel, "Critical Damage:"), CLo == CHi ? string(CLo) : CLo @ "-" @ CHi);
+	}
+	else if (CardType == 1)
+	{
+		k = class'LWGearRules'.default.Armors.Find('Item', What);
+		A = class'LWGearRules'.default.Armors[k];
+		StatLine(0, Word(m_strHealthBonusLabel, "Health Bonus:"), string(A.HP));
+	}
+	else
+	{
+		// (Its charges: the item's uses a mission, its template's clip; none for a passive item.)
+		k = X2WeaponTemplate(T) != none ? X2WeaponTemplate(T).iClipSize : 0;
+		StatLine(0, k > 0 ? Word(m_strChargesLabel, "Charges:") : "", k > 0 ? string(k) : "");
+	}
+	Text = T != none ? (T.GetItemTacticalText() != "" ? T.GetItemTacticalText() : T.GetItemBriefSummary()) : "";
+	if (Text != "")
+	{
+		Params.AddItem(Str(Word(m_strTacticalInfoHeader, "TACTICAL INFO")));
+		Params.AddItem(Str(Repl(Text, "<Bullet/>", Chr(8226))));
+		CallNow("AddTacticalInfoCardData", Params);
+	}
+	Image(class'LWX2Pictures'.static.Item(What, T != none ? T.strImage : ""));
 }
 
 function Title(string T)

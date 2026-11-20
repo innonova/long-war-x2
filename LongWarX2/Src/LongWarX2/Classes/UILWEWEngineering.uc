@@ -229,6 +229,15 @@ function Select(int Index)
 	MC.EndOp();
 }
 
+/** The selected item's card (EW's "?" beside the back arrow: UIBuildItem.OnMouseAccept, XGItemCards.BuildItemCard). */
+function ShowCard()
+{
+	if (Items.Length == 0 || Selected < 0 || Selected >= Items.Length)
+		return;
+	if (!class'UILWEWItemCard'.static.OpenGear(XComHQPresentationLayer(Movie.Pres), Items[Selected]))
+		`log("LongWarX2: no item card for item" @ Items[Selected], , 'LongWarX2');
+}
+
 /** The selected item to the Manufacturing screen, where its quantity is chosen. */
 function Accept()
 {

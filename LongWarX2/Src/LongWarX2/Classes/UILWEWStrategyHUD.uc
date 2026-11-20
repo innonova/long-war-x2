@@ -31,6 +31,8 @@ var UIMCController EventsTarget;
 var bool bResourcesHidden;
 /** Whether XCOM 2's navigation help is hidden (an EW screen on top, which has EW's own back arrow and help: ShowForTop). */
 var bool bNavHelpHidden;
+/** EW's build screen's item card button shown in the bar. */
+var bool bCardHelp;
 
 /**
  * The HUD shown over the Avenger, on top, when the converted package is there. It is loaded into the movie without
@@ -366,7 +368,9 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 	// (Nor under XCOM 2's own screens, the loadout and customization, whose own back button takes the screen back: two
 	// back buttons sat over each other there, round 6.)
 	Movie.SetVariableBool(MCPath $ ".helpBar._visible", Context > 0 && UILWEWMissionControl(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && !bNavHelpShown());
-	Ctx = Context $ Kind;
+	// (EW's build screen's "?" beside the back arrow, UIBuildItem: its item card.)
+	bCardHelp = UILWEWEngineering(Movie.Pres.ScreenStack.GetCurrentScreen()) != none && !UILWEWEngineering(Movie.Pres.ScreenStack.GetCurrentScreen()).bFoundry;
+	Ctx = Context $ Kind $ bCardHelp;
 	if (Ctx != ShownFor)
 	{
 		ShownFor = Ctx;
@@ -386,6 +390,15 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 			MC.QueueString("");
 			MC.QueueBoolean(false);
 			MC.EndOp();
+			if (bCardHelp)
+			{
+				MC.BeginChildFunctionOp("helpBar", "AddLeftButtonHelp");
+				MC.QueueNumber(3);
+				MC.QueueString("3");
+				MC.QueueString("");
+				MC.QueueBoolean(false);
+				MC.EndOp();
+			}
 			// (The soldier summary's previous and next soldier, EW's icon buttons 0 and 1 in the bar's middle:
 			// UISoldierSummary.UpdateButtonHelp.)
 			if (Kind == 'Soldier')
@@ -637,6 +650,12 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 	if (UILWEWSoldierSummary(Top) != none && args.Length > 0 && (args[args.Length - 1] == "buttonHelp_1" || args[args.Length - 1] == "buttonHelp_2"))
 	{
 		UILWEWSoldierSummary(Top).Cycle(args[args.Length - 1] == "buttonHelp_1" ? -1 : 1);
+		return;
+	}
+	// (The build screen's "?": the selected item's card, UIBuildItem.OnMouseAccept.)
+	if (UILWEWEngineering(Top) != none && args.Length > 0 && args[args.Length - 1] == "buttonHelp_3")
+	{
+		UILWEWEngineering(Top).ShowCard();
 		return;
 	}
 	if (Top != none)

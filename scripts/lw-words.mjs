@@ -1028,7 +1028,7 @@ export function makeShipLoadoutWords({ strategyLoc, loc }) {
   const one = (k) => tree.match(new RegExp(`^${k.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1]?.trim() ?? ''
   const weapons = ['None', 'Cannon', 'Stingray', 'Avalanche', 'Laser', 'Plasma', 'EMP', 'Fusion']
   const card = [
-    ...['m_strTacticalInfoHeader', 'm_strCloseCardLabel'].map((k) => [k, cards.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim() ?? '']),
+    ...['m_strTacticalInfoHeader', 'm_strCloseCardLabel', 'm_strEffectiveRangeLabel', 'm_strBaseDamageLabel', 'm_strBaseCriticalDamageLabel', 'm_strCriticalDamageLabel', 'm_strChargesLabel', 'm_strHealthBonusLabel', 'm_strRangeShort', 'm_strRangeMedium', 'm_strRangeLong'].map((k) => [k, cards.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim() ?? '']),
     ...weapons.map((w, i) => [`WeaponText[${i}]`, one(`ShipWeaponFlavorTxt[eShipWeapon_${w}]`)]),
     ...[[1, 'Interceptor'], [3, 'Firestorm']].flatMap(([i, t]) => [[`CraftName[${i}]`, one(`ShipTypeNames[eShip_${t}]`)], [`CraftText[${i}]`, one(`ShipTypeFlavorTxt[eShip_${t}]`)]]),
   ].filter(([, v]) => v).map(([k, v]) => `${k}=${v}`)
