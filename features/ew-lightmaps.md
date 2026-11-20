@@ -181,3 +181,22 @@ night. Also: the store's SUV red in EW (an instance colour), white in the port; 
 blue-grey brick in the port. Next: EW's own atmosphere on its maps (its sun's colour and strength, its sky light, height
 fog and post-process, from each level) in place of XCOM 2's.
 
+## Report (2026-11-20, EW's atmosphere on its maps)
+
+Found by switching XCOM 2's environment off piece by piece on the store map (the control port's new `env`, `env
+ambient`): the port's blue-white was XCOM 2's environment, not EW's lightmaps.
+- **The blue:** XCOM 2's environment level (`EnvLighting_Day_Arid*`) has an environment map capture
+  (`X2EnvMapCaptureActor`) whose diffuse light, its sky's blue, falls on every lit surface; and its white sun at
+  brightness 8, and its height fog.
+- **EW's lightmaps are right:** with all of XCOM 2's off, the store's sidewalk is EW's warm hue (65,59,50) at half EW's
+  brightness (138,127,92); EW's lightmap atlases are neutral to warm (decoded). The other half is EW's sun: UE3 never
+  baked a dominant light into the lightmaps, it drew it live over them with baked shadows.
+- **Now** (`LWX2EWMapPieces.UseEWAtmosphere`, at the battle's start on an EW map's own plot, `EWAtmosphere=true`): XCOM 2's
+  sun and fog off, its environment light's diffuse 0 and specular 0.3, EW's own sun placed (each map's colour and
+  direction: the store's warm, the terror bar's dim smoky brown, the night bar's blue moon), its brightness ×
+  `EWSunScale` 2.2, measured on the store's sidewalk against EW (158,151,109 against 138,127,92).
+
+Seen on wingpu (`logs/compare/lm-ew/pair-store-ew-atmosphere.png`, `pair-bar-ew-atmosphere.png`): both maps in EW's
+tones. **Left:** EW's height fog and post-process (the terror bar's smoky haze; colour grading per map); the cars' own
+colours; EW's camera stands higher and farther than the port's.
+
