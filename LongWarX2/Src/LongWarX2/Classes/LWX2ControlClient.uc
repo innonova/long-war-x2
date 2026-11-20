@@ -4953,7 +4953,10 @@ function string BaseMat(array<string> Args)
 		for (i = 3; i + 1 < Args.Length; i += 2)
 		{
 			V = SplitString(Args[i + 1], ",");
-			if (V.Length >= 3)
+			// (A value with a dot and letters, a texture's path: set as a texture parameter.)
+			if (InStr(Args[i + 1], ".") != INDEX_NONE && Texture(DynamicLoadObject(Args[i + 1], class'Texture', true)) != none)
+				MIC.SetTextureParameterValue(name(Args[i]), Texture(DynamicLoadObject(Args[i + 1], class'Texture', true)));
+			else if (V.Length >= 3)
 			{
 				C = MakeLinearColor(float(V[0]), float(V[1]), float(V[2]), V.Length > 3 ? float(V[3]) : 1.0);
 				MIC.SetVectorParameterValue(name(Args[i]), C);
