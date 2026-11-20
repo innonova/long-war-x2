@@ -223,5 +223,6 @@ material also pans and layers hexes and a fresnel), and the tanks' caps beige wh
 - **Same evening:** the emissive share was limited to EW's characters (`PeopleLitMeshes`) after round 9 found the
   hangar's craft and engineering's robots pale white; the first pattern, `CHH_`, matched nobody (converted packages
   read `QHH_`), now `HH_`. Faces get a small warm bias for EW's skin material's subsurface red (`SKIN_WARMTH`, converter
-  64; Shen read yellow). **Open:** Vahlen's eyelids show cyan patches (the eyelash slot, `EyeShadeLash_INST`), and the
-  redness around her eyes and nose reads stronger than EW's under the flat share of colour.
+  64; Shen read yellow). The eyelash and eye-shade slot (`EyeShadeLash_INST`, no texture of its own) had taken the coat's
+  texture, cyan patches on Vahlen's eyelids; it is now a faint dark translucent shading (`EmptySlotParent`, our glass).
+  **Open:** her hair a warmer orange than EW's olive-blonde, and redness around her eyes a little stronger than EW's.
