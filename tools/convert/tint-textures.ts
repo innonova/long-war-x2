@@ -39,6 +39,7 @@ export function decodeDXT5Alpha(data: Uint8Array, w: number, h: number): Uint8Ar
 }
 
 /** A tinted mip: the diffuse's (DXT1) recoloured with Tint (0-1 RGB) where the mask (DXT5, its alpha) is, the same size. */
+const SKIN_WARMTH = [1.15, 0.95, 0.9]
 function tintMipDXT1(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha', linear = false, multiply = false, mw = w, mh = h): Uint8Array {
   // (multiply: the texture × the tint in linear light, as EW's skin material colours a face by its SkinColor; else the
   // tint replaces the colour, shaded by the texture's brightness, as for a uniform's or a car's paint.)
@@ -79,7 +80,9 @@ function tintMipDXT1(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number
     for (let c = 0; c < 3; c++) {
       // (× 2: EW's labs' grey colour mod, 0.48, draws the vests near white in EW's captures; APPROXIMATION.)
       const t = multiply
-        ? Math.min(255, 255 * srgb(Math.min(1, toLinear(rgba[4 * k + c]! / 255) * tint[c]! * bright * bright)))
+        // (× SKIN_WARMTH: EW's skin material's subsurface red, which ours has not; Shen's face read yellow, red/green 1.06
+        // against EW's 1.32. APPROXIMATION, by eye and that ratio.)
+        ? Math.min(255, 255 * srgb(Math.min(1, toLinear(rgba[4 * k + c]! / 255) * tint[c]! * bright * bright * SKIN_WARMTH[c]!)))
         : Math.min(255, linear ? 255 * srgb(tint[c]!) * shade : 255 * 2 * tint[c]! * shade)
       rgba[4 * k + c] = Math.round(Math.min(255, rgba[4 * k + c]! * bright) * (1 - m) + t * m)
     }
