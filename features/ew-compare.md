@@ -153,3 +153,9 @@ so the fixes are driven by evidence and the person is not needed on every round.
   (#6), exposure (#7), lamps (#8), Shen's skin and Vahlen's flat coat (#9), the menu's rear openings (#10), the
   Memorial's wall colour and glasses (#11, #12), the hangar rock's blotches (#13), the research veil (#14), Mission
   Control's globe button (#15).
+- **Round 10 #3, the bare wall map** (partly): the map plane had drawn EW's raw hologram texture (red borders, blue
+  land, grey sea), so its land read darker than its sea; a copy in EW's wall colours is now made for it (converter 66,
+  `earthWallMip`): land lighter than sea, light borders. It stays dimmer than EW's: raising its colour live (the
+  control port's `basemat`, now with texture parameters) brightened it only toward a mid grey, with our unlit and our
+  additive material alike, and hiding the wall's own 3D screen (`wall hide`) changed nothing. Likely the strategy view's
+  tone mapping and exposure (round 10 #7), not the plane; to be taken up with that.
