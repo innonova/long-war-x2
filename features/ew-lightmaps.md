@@ -217,3 +217,14 @@ looked at again with this.
 - Fog tried live on the terror bar (density 0.015 to 1.5, `set`): it only touches the far distance at the port's camera
   height; it does not give EW's grey haze. The terror bar stays pinker than EW's grey-brown; not pursued further for now.
 
+
+## Notes (2026-11-20, the base's palette materials; round 9 #6)
+
+EW's base pieces mostly use `HQ_Master` instances per room (`HQ_Master_HangarPalette`, `_EngPalette`, `_SciencePalette`
+…) with four colours, `Colorize A` … `D` (the hangar's also a `TintColor`, cyan), over the shared
+`HQ_MasterMaterial_DIFF`. That texture is greyscale (mean saturation 6 of 255), its alpha continuous (a mask, not a
+palette index: no steps in its histogram). `HQ_Master` cooked keeps only its parameters (no graph) and has no emissive
+input: EW's lamps glow through the lightmaps and light cards, not through it. Where the colours go is likely the
+meshes' vertex colours (the HQ meshes have them) weighting A-D. The port draws the grey diffuse × EW's lightmap, which
+already carries the rooms' warm and orange light; whether the palette adds much is not established. Next, if pursued:
+a mesh's vertex colours read, then `Colorize` × vertex colour in our lightmapped material (SDK editor).
