@@ -123,3 +123,13 @@ so the fixes are driven by evidence and the person is not needed on every round.
   (3D+1)/4 to (5D+2)/4, crit (5D+1)/4 to (7D+2)/4, Damage Roulette's wider), armour (HP bonus) or small item (charges),
   its text and picture (`UILWEWItemCard.FillGear`). Tried and taken back: the custom screens' decal sheet (the whole
   sheet showed; converter 45).
+- **Round 9** (2026-11-20 evening): fixed since round 8 by its account: Vahlen's black squares, the promotion screen's
+  panels, Build Items' "?"; partly: the Gene Lab's tanks, the people's colours, the mist, the ticker. Its new #1 was
+  mine: the people's emissive share had also gone onto EW's animated props (the hangar's craft and pads,
+  engineering's robots), pale white; now characters only (`PeopleLitMeshes`). Also done after it: the ticker in EW's
+  green (measured: 87 183 106 against EW's 91 183 105); no separate back arrow over hiring and the pending requests
+  (their own Cancel, as EW); the tank glass dimmed and greyed toward EW's olive (81 75 40). **Open from round 9:**
+  coarse metal and grilles (#2), the Repair Bay hologram (#3), blank or indistinct screens and the globe's halo (#5),
+  room exposure and lamp colours (#6), the bare map (#7), the Repair Bay mist (#8), the menu's pale rear openings
+  (#10), the research veil and Memorial glasses (#11), the transfer row's chevrons (#14), the main menu's buttons (#15).
+
