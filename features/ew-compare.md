@@ -101,3 +101,9 @@ so the fixes are driven by evidence and the person is not needed on every round.
   holographic earth; its council video plane and dark overlay, grey slabs over it, left out).
 - **Round 6, open:** the soldier list's frame is about 8% narrower than EW's, while the summary's right panels are wider
   than EW's: not one cause. The Genetics Lab's four tanks (features/ew-base-people.md).
+- **Round 7, fixed** (2026-11-19 night): room effects off the base's cutaway and out of the armory (emitters' off and
+  frozen state, draw distances; effects only in a room's view); monitors with EW's UI panels; the soldier summary
+  centred, its borders closed; no ticker in the satellite view; the bare wall as EW's map plane; resource lines in EW's
+  colours with its meld symbol; people baked brighter; more of EW's texture tiling. **Open:** the promotion screen's
+  right panels (its movie places them 80 units further right; notes in strategy-flow.md); the Genetics Lab's tanks;
+  the roster frame's width (EW widens it for its medals column); a soldier item card for engineering's "?".
