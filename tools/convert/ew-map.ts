@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 54
+export const CONVERTER_VERSION = 55
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1267,6 +1267,19 @@ people.forEach((p, k) =>
       const hd = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
       if (hd >= 0) tints.push({ slot: l, diffuse: hd + 1, mask: 0, tint: [HAIR_SCALE], name: `${exports[hd]!.name}_LWX2Bright`, scale: true })
       return
+    }
+    // (A head: EW's skin material colours the skin its Spc_dNrm_Skn_iBrw's blue marks with the instance's SkinColor, a
+    // linear colour; the rest brightened as the people's. Shen's face had been pale green-grey for EW's peach. Converter 55.)
+    const skin = vectorParam(m, 'SkinColor')
+    const skinMaskPath = tex.get('Spc_dNrm_Skn_iBrw')
+    if (skin && skinMaskPath) {
+      const hd = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
+      const sk = exports.findIndex((e) => e.fullName === skinMaskPath && e.type === 'Texture2D')
+      if (hd >= 0 && sk >= 0) {
+        const key = skin.slice(0, 3).map((c) => Math.round(c * 100)).join('x')
+        tints.push({ slot: l, diffuse: hd + 1, mask: sk + 1, tint: skin, name: `${exports[hd]!.name}_LWX2Tint${key}`, channel: 'blue', bright: PEOPLE_SCALE })
+        return
+      }
     }
     const maskPath = tex.get('Spc_Ems_Ref_Opc')
     const d = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
