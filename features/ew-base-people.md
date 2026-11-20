@@ -214,7 +214,9 @@ material also pans and layers hexes and a fresnel), and the tanks' caps beige wh
 - **Vahlen's face** has EW's tinted texture now (checked decoded: 235 170 144 on average), but draws pale yellow-green
   in the research room, where EW's is pale peach: with a white texture live (`persontex`, a new aid) her face is a pale
   blue-grey. So it is the room's light on XCOM 2's staff material (the research room's cyan), not the texture; EW lights
-  its people with its own character lighting (`CharacterLitIndirectBrightness` 2). **Open:** the people's lighting
-  (round 8's #10, "harsh yellow-green faces"): next to try, a light environment of our own for the people, or the staff
-  material's emissive share raised for them.
+  its people with its own character lighting (`CharacterLitIndirectBrightness` 2). **Done the same day:** the people
+  now stand in on our lit material (`M_EWLightmappedLit`, already usable on skeletal meshes) with a white light map,
+  so a share of their own colour (`PeopleEmissive` 0.3) shows whatever the room's light, as EW's character lighting
+  does; lit by the room as before for the rest (`PeopleLitParent`). Seen on wingpu (`logs/compare/people-sheet-emissive.png`):
+  Vahlen's face warm and her coat white, Shen's jacket and face EW's, the labs' clerks no longer glowing; round 8's #10.
 
