@@ -626,15 +626,18 @@ static function int PlaceLights(Actor Spawner, vector Shift)
  * (ParticleParent, ParticleAddParent: made in the SDK editor) with the emitter's sprite. Returns how many.
  */
 /**
- * Whether a particle system has an emitter whose sprites lock their orientation to an axis (ParticleModuleOrientationAxisLock):
- * XCOM 2 died a second after drawing one (the terror bar's P_Fire_Area_Cheap; found placing the bar's emitters by kind
- * and template, the only one of its 87 with the module). Left out.
+ * Whether a particle system has an emitter XCOM 2 dies drawing as we place it: one whose sprites lock their orientation to
+ * an axis (ParticleModuleOrientationAxisLock), or a mesh emitter (ParticleModuleTypeDataMesh) whose colour changes over
+ * its life (ParticleModuleColorOverLife). Found on the terror bar, placing its 87 emitters by kind and template: its
+ * P_Fire_Area_Cheap (both), P_Rats_Scrambling and P_Trash_Blowing_Constant_Burning (the second) each crashed the game
+ * within a second, alone; its other fires, smoke and sparks did not. Left out.
  */
 static function bool AxisLocked(ParticleSystem PS)
 {
 	local ParticleEmitter Em;
 	local ParticleLODLevel LOD;
 	local ParticleModule Module;
+	local bool bMesh, bColourOverLife;
 
 	foreach PS.Emitters(Em)
 	{
@@ -644,9 +647,19 @@ static function bool AxisLocked(ParticleSystem PS)
 		{
 			if (LOD == none)
 				continue;
+			bMesh = ParticleModuleTypeDataMesh(LOD.TypeDataModule) != none;
+			bColourOverLife = false;
 			foreach LOD.Modules(Module)
+			{
 				if (ParticleModuleOrientationAxisLock(Module) != none)
 					return true;
+				if (ParticleModuleTypeDataMesh(Module) != none)
+					bMesh = true;
+				if (ParticleModuleColorOverLife(Module) != none)
+					bColourOverLife = true;
+			}
+			if (bMesh && bColourOverLife)
+				return true;
 		}
 	}
 	return false;
