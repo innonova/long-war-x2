@@ -15,12 +15,13 @@ const ZoneTiles = 16;
 /** The most aliens one of XCOM 2's encounters is given (its spawner crashed on 9 and more: EXALT's raid, 33 in 4). */
 const MaxEncounterPod = 5;
 
+/** The template a species is spawned as: its own copy (named as EW names it, LWX2Species), else the XCOM 2 one. */
 static function name TemplateFor(int Char)
 {
-	local int k;
+	local name T;
 
-	k = class'LWStrategyRules'.default.FightAs.Find('Char', Char);
-	return k == INDEX_NONE ? 'Sectoid' : class'LWStrategyRules'.default.FightAs[k].Template;
+	T = class'LWX2Species'.static.SpawnTemplate(Char);
+	return T == '' ? 'Sectoid' : T;
 }
 
 /** The mission's pods given Long War's squad (the mission site in the change being built, its pods cached first). */

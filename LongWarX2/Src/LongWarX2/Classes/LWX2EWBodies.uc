@@ -48,6 +48,8 @@ static function AddAnimSets()
 	local X2DataTemplate T;
 	local AnimSet Set;
 	local LWX2Body B;
+	local name Each;
+	local array<name> Names;
 	local int n;
 
 	Manager = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager();
@@ -60,7 +62,10 @@ static function AddAnimSets()
 			continue;
 		}
 		Templates.Length = 0;
-		Manager.FindDataTemplateAllDifficulties(B.Template, Templates);
+		// (The species' own template where the body is a species', else the template and its species' copies: LWX2Species.)
+		Names = class'LWX2Species'.static.TemplatesFor(B.Template, B.Species);
+		foreach Names(Each)
+			Manager.FindDataTemplateAllDifficulties(Each, Templates);
 		foreach Templates(T)
 			if (X2CharacterTemplate(T) != none && X2CharacterTemplate(T).AdditionalAnimSets.Find(Set) == INDEX_NONE)
 			{
@@ -129,7 +134,15 @@ static function bool ApplyToPawn(XComUnitPawn Pawn, name Template, optional name
 /** The body for a template: its species' own before the template's, the one its armour brings before one for any armour. */
 static function int PickFor(name Template, int Species, name Armor)
 {
-	local int i, Pick, Best, Score;
+	local int i, Pick, Best, Score, Char;
+
+	// (A species' own template: the XCOM 2 template it was made from, its species.)
+	if (class'LWX2Species'.static.IsCopy(Template, Char))
+	{
+		Template = class'LWX2Species'.static.SourceOf(Char);
+		if (Species == 0)
+			Species = Char;
+	}
 
 	Pick = INDEX_NONE;
 	Best = -1;

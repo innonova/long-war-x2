@@ -200,6 +200,8 @@ static function AddAbilities()
 	{
 		Templates.Length = 0;
 		Manager.FindDataTemplateAllDifficulties(F.Template, Templates);
+		// (And the species' own copy of it, LWX2Species.)
+		Manager.FindDataTemplateAllDifficulties(class'LWX2Species'.static.CopyName(F.Char), Templates);
 		foreach Templates(T)
 			if (X2CharacterTemplate(T) != none && X2CharacterTemplate(T).Abilities.Find('LWX2_AlienDamage') == INDEX_NONE)
 				X2CharacterTemplate(T).Abilities.AddItem('LWX2_AlienDamage');

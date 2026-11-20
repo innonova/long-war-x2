@@ -1244,3 +1244,16 @@ export function makeSHIVWords({ loc, strategyLoc, shivsIni }) {
   if (shiv) out.push('[LWS_SHIV X2SoldierClassTemplate]', `DisplayName="${shiv}"`, ...[0, 1].flatMap((k) => [`RankNames[${k}]="${shiv}"`, `ShortNames[${k}]="${shiv}"`]), '')
   return { text: out.join('\r\n'), named }
 }
+
+/** EW's species' names (features/lw-species-names.md): XLocalizedData.m_aCharacterName[eChar_…], by ECharacter number, for
+ *  LWX2Species.Names (each species' own template's name on the field). */
+export const ECHARACTER = ['None', 'Civilian', 'Soldier', 'Tank', 'Sectoid', 'Floater', 'Thinman', 'Muton', 'Cyberdisc', 'SectoidCommander', 'FloaterHeavy', 'MutonElite', 'Ethereal', 'Chryssalid', 'Zombie', 'MutonBerserker', 'Sectopod', 'Drone', 'Outsider', 'EtherealUber', 'BattleScanner', 'Mechtoid', 'Mechtoid_Alt', 'Seeker', 'ExaltOperative', 'ExaltSniper', 'ExaltHeavy', 'ExaltMedic', 'ExaltEliteOperative', 'ExaltEliteSniper', 'ExaltEliteHeavy', 'ExaltEliteMedic']
+export function makeSpeciesWords({ loc }) {
+  const lines = []
+  ECHARACTER.forEach((e, k) => {
+    const m = new RegExp(`^m_aCharacterName\\[eChar_${e}\\]="(.*)"\\s*$`, 'm').exec(loc)
+    if (m && k >= 4) lines.push(`Names[${k}]="${m[1]}"`)
+  })
+  return { text: ['[LWX2Species]', ...lines, ''].join('\r\n'), named: lines.length }
+}
+
