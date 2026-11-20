@@ -26,9 +26,9 @@ export interface EWWeapon { pkg: string; mesh: string; diffuse: RegExp; normal: 
 /** setsPkg: the package holding its AnimSet, where it is not the unit's (EW's MECs keep theirs with the MEC Minigun); armor:
  *  the armour that brings this body (a MEC's suit), for a template with several. */
 /** ownAnimsOnly: the pawn plays EW's animations only (LWX2EWBodies.OwnAnimsOnly). */
-/** keepWeapon: XCOM 2's weapon kept in its hands (no EW weapon for it). slots: its mesh's material slots each with its own diffuse and normal (EXALT's soldiers: body, head and arms, kit), read
+/** setName: its AnimSet's own name in the converted package (renameAnims). keepWeapon: XCOM 2's weapon kept in its hands (no EW weapon for it). slots: its mesh's material slots each with its own diffuse and normal (EXALT's soldiers: body, head and arms, kit), read
  *  from the mesh's materials. */
-export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean; animsAs?: string; setsPkg?: string; armor?: string; ownAnimsOnly?: boolean; slots?: boolean; keepWeapon?: boolean }
+export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean; animsAs?: string; setsPkg?: string; armor?: string; ownAnimsOnly?: boolean; slots?: boolean; keepWeapon?: boolean; setName?: string }
 const SHIV_MINIGUN: EWWeapon = { pkg: 'Weapon_ShivMinigun_SF', mesh: 'SM_ShivGatGun', diffuse: /^ShivGatlingGun_DIF$/, normal: /^ShivGatlingGun_NRM$/ }
 const PLASMA_LIGHT: EWWeapon = { pkg: 'Weapon_PlasmaRifle_ThinMan_SF', mesh: 'SM_LightPlasmaRifle', diffuse: /^LightAssaultRiflePlasma_DIF$/, normal: /^LightAssaultRiflePlasma_NRM$/ }
 export const EW_UNITS: EWUnit[] = [
@@ -62,7 +62,7 @@ export const EW_UNITS: EWUnit[] = [
     ['AdvStunLancerM1', 'Medic', 'SM_ExaltSoldierMedic'], ['AdvTrooperM3', 'EliteOperative', 'SM_ExaltEliteOperative'], ['AdvCaptainM3', 'EliteSniper', 'SM_ExaltEliteSniper'],
     ['AdvShieldBearerM3', 'EliteHeavy', 'SM_ExaltEliteHeavy'], ['AdvStunLancerM3', 'EliteMedic', 'SM_ExaltEliteMedic']] as const).map(([template, kind, mesh], k, all): EWUnit => ({
     // (The elites' templates play the same pawns' animations as the first four's.)
-    template, species: 24 + k, animsAs: all[k % 4]![0], pkg: `Unit_Exalt${kind}_SF`, mesh, sets: ['AS_SoldierRifle'], ownAnimsOnly: true, slots: true, keepWeapon: true, diffuse: /^ExaltSoldiers_DIF$/, normal: /^ExaltSoldiers_NRM$/,
+    template, species: 24 + k, animsAs: all[k % 4]![0], setName: `AS_SoldierRifle_LWX2${kind}`, pkg: `Unit_Exalt${kind}_SF`, mesh, sets: ['AS_SoldierRifle'], ownAnimsOnly: true, slots: true, keepWeapon: true, diffuse: /^ExaltSoldiers_DIF$/, normal: /^ExaltSoldiers_NRM$/,
   })),
   { template: 'LWSHIV', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank_SF', mesh: 'SM_Shiv_L1', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv1Shiv_DIF$/, normal: /^Lv1Shiv_NRM$/, weapon: SHIV_MINIGUN },
   { template: 'LWSHIV_Alloy', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank2_SF', mesh: 'SM_Shiv_L2', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv2Shiv_DIF$/, normal: /^Lv2Shiv_NRM$/, weapon: SHIV_MINIGUN },
@@ -190,7 +190,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
       let found = find(decompressPackage(new Uint8Array(readFileSync(src))), u)
       if (u.setsPkg) found = { ...found, sets: find(decompressPackage(new Uint8Array(readFileSync(setsSrc))), u).sets }
       if (!found.mesh || !found.sets.length) { say(`${u.pkg}: no ${u.mesh} or ${u.sets.join('/')}, XCOM 2's ${u.template} kept`); continue }
-      const rename = (bytes: Uint8Array) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.animsAs ?? u.template] ?? []), ...(ABILITY_ANIMS[u.animsAs ?? u.template] ?? []), ...(u.ownAnimsOnly ? STRATEGY_IDLES : [])], u.reencode)
+      const rename = (bytes: Uint8Array) => renameAnims(bytes, found.sets, [...(X2_ANIM_NAMES[u.animsAs ?? u.template] ?? []), ...(ABILITY_ANIMS[u.animsAs ?? u.template] ?? []), ...(u.ownAnimsOnly ? STRATEGY_IDLES : [])], u.reencode, u.setName)
       // (Where the AnimSet's package is its weapon's too, the weapon's left-hand socket goes in the same pass.)
       const setsTransform = u.weapon?.pkg === setsPkg
         ? (bytes: Uint8Array) => { const r = rename(bytes); const w2 = noLeftHandIK(r.bytes); return { bytes: w2.bytes, report: `${r.report}; ${w2.report}` } }
@@ -213,7 +213,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
           weapon = `, WeaponMesh="${leaf(wf.mesh, w.pkg)}", WeaponDiffuse="${leaf(wf.diffuse, w.pkg)}", WeaponNormal="${leaf(wf.normal, w.pkg)}"`
         }
       }
-      lines.push(`+Bodies=(Template=${u.template},${u.species ? ` Species=${u.species},` : ''}${u.armor ? ` Armor=${u.armor},` : ''}${u.ownAnimsOnly ? ' OwnAnimsOnly=true,' : ''} Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!, setsPkg)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon}${found.slots.length ? `, Slots=(${found.slots.map((sl) => `(Diffuse="${leaf(sl.diffuse)}", Normal="${leaf(sl.normal)}")`).join(',')})` : ''})`)
+      lines.push(`+Bodies=(Template=${u.template},${u.species ? ` Species=${u.species},` : ''}${u.armor ? ` Armor=${u.armor},` : ''}${u.ownAnimsOnly ? ' OwnAnimsOnly=true,' : ''} Mesh="${leaf(found.mesh)}", AnimSet="${u.setName ? `${setsPkg}.${u.setName}` : leaf(found.sets[0]!, setsPkg)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon}${found.slots.length ? `, Slots=(${found.slots.map((sl) => `(Diffuse="${leaf(sl.diffuse)}", Normal="${leaf(sl.normal)}")`).join(',')})` : ''})`)
       say(`${u.template} as Enemy Within's (${u.pkg}): ${report.split('; ').slice(-1)[0]}`)
       n++
     } catch (e: any) {

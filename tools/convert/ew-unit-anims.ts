@@ -158,7 +158,9 @@ function hasAnimationData(d: Uint8Array, propsEnd: number): boolean {
 }
 
 /** The converted unit package with the AnimSet's sequences also under XCOM 2's names; returns its bytes and a report. */
-export function renameAnims(source: Uint8Array, animSetPaths: string | string[], x2Names: string[], reencode = false): { bytes: Uint8Array; report: string } {
+/** setName: the AnimSet renamed (its sequences with it), where other converted packages carry a set of the same path without
+ *  these copies (EW's soldiers' AS_SoldierRifle: EXALT's eight and the Outsider's): the first loaded would serve them all. */
+export function renameAnims(source: Uint8Array, animSetPaths: string | string[], x2Names: string[], reencode = false, setName?: string): { bytes: Uint8Array; report: string } {
   // The copies go into the first set; the EW animations they copy may be in any of them.
   const paths = typeof animSetPaths === 'string' ? [animSetPaths] : animSetPaths
   const animSetPath = paths[0]!
@@ -357,6 +359,7 @@ export function renameAnims(source: Uint8Array, animSetPaths: string | string[],
   nr('None')
   w.bytes(setData.subarray(4 + (setReader as any).o))
   data.set(setRef, w.done())
+  if (setName) pkg.exports[setRef - 1].objectName = { index: nameIndex(setName), number: 0 }
 
   const bytes = writePackage(pkg, { data, names, imports: [], exports: added })
   return { bytes, report: `${animSetPath}: ${seqs.length} sequences (${empty} without animation data, ${shared} sharing another's), ${copies.length} copies under XCOM 2's names (${mirrorCount} mirrored${rewriteCount ? `, ${rewriteCount} written again per track` : ""}), ${unmatched.length} XCOM 2 names without an EW animation${unmatched.length ? ` (${unmatched.join(' ')})` : ''}` }
