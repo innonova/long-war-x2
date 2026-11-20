@@ -62,4 +62,11 @@ colour changes over their life) killed it; both kinds are now left out (`AxisLoc
 while in smaller groups earlier they had not: likely a crash on drawing some emitter once in view, so which are safe is not
 settled by placing them near the squad. **Off for now** (`MissionEmitters=false`); next: the crash's cause (our particle
 materials on mesh emitters, `M_EWParticle` without mesh-particle use, is the first suspect), with the camera on each.
+- **Tried next (same day):** every emitter left with EW's own material (no look from the converter; a mesh emitter's
+  mesh keeps EW's materials) is now switched off, not drawn (`ParticleStandins`; the bar's 76 had 30 such emitters). The
+  76 placed together still killed the game a second later. In smaller groups (the fires alone, all 79; smoke,
+  environment, the wreck and the Skyranger's dust, 17) they had not, in other sessions. So the crash depends on what is
+  placed together or in which order, or on something other than the materials; not found. `MissionEmitters` stays off.
+  Next tries, when this comes up again: the 76 in halves in one session, and with the switching-off kept but the
+  `AxisLocked` rule dropped.
 
