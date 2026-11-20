@@ -1563,7 +1563,7 @@ function EnvLights(out array<string> Out, string Mode)
 	{
 		if (Mode != "")
 			V.bEnabled = Mode == "on";
-		Out.AddItem(PathName(V) @ "post-process volume priority" @ V.Priority @ "unbound" @ V.bUnbound @ "on" @ V.bEnabled @ "colorize" @ V.Settings.Scene_Colorize);
+		Out.AddItem(PathName(V) @ "post-process volume priority" @ V.Priority @ "on" @ V.bEnabled @ "colorize" @ V.Settings.Scene_Colorize);
 	}
 }
 
