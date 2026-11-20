@@ -7,13 +7,17 @@ static function array<X2DataTemplate> CreateTemplates()
 {
 	local array<X2DataTemplate> Templates;
 	local LWStrategyRules.LWFightAs F;
-	local X2CharacterTemplate T;
+	local X2CharacterTemplate T, Src;
 
 	foreach class'LWStrategyRules'.default.FightAs(F)
 	{
-		T = Source(F.Template);
-		if (T == none)
+		Src = Source(F.Template);
+		if (Src == none)
 			continue;
+		// (Copied into an object of its own name: XCOM 2's function makes its template under the template's own object
+		// name, so what it returns is XCOM 2's own object made again; renamed, XCOM 2's own ADVENT troopers had become
+		// EXALT, and two species of one template, the Sectoid and its Commander, had been the same object.)
+		T = new(None, string(class'LWX2Species'.static.CopyName(F.Char))) class'X2CharacterTemplate'(Src);
 		T.SetTemplateName(class'LWX2Species'.static.CopyName(F.Char));
 		if (F.Char < class'LWX2Species'.default.Names.Length && class'LWX2Species'.default.Names[F.Char] != "")
 			T.strCharacterName = class'LWX2Species'.default.Names[F.Char];
