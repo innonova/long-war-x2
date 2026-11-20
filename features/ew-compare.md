@@ -146,3 +146,10 @@ so the fixes are driven by evidence and the person is not needed on every round.
   given our glass pane by config (`GlassSlots`: `CoffeeTable_B:1`, `QabBeaker_A:1`). Other pieces with an empty slot
   (concrete piles, chairs, banners) are left as they are: not glass. Also fixed after round 9: the Repair Bay's
   freezer mist left out (`SkipEmitters`, #8); Vahlen's eye shade and hair.
+- **Round 10** (2026-11-20 night): of round 9's top 15, fixed or withdrawn: the Repair Bay mist, hiring's and the
+  requests' back arrow, the transfer chevrons (capture state); partly: the hangar whitening, the Gene Lab's tanks, the
+  people, the ticker. Its new top 15 is mostly the long-standing material and lighting gaps: coarse metal (#1), the
+  Repair Bay hologram (#2), the bare map (#3), blank and blurred screens (#4), the globe's halo (#5), the tanks' depth
+  (#6), exposure (#7), lamps (#8), Shen's skin and Vahlen's flat coat (#9), the menu's rear openings (#10), the
+  Memorial's wall colour and glasses (#11, #12), the hangar rock's blotches (#13), the research veil (#14), Mission
+  Control's globe button (#15).
