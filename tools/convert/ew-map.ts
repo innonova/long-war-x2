@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 53
+export const CONVERTER_VERSION = 54
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1046,7 +1046,10 @@ function scalarParam(r: number, name: string, depth = 0): number | undefined {
  * A material's colour parameter (a vector parameter of this name on it or a parent instance): EW's glowing parts, light
  * strips and screens, carry theirs in TintColor (HDR: above 1 is brighter).
  */
-function vectorParam(r: number, name: string, depth = 0): number[] | undefined {
+/** A material instance's vector parameter, its own or its parents'; with withDefault, else the material's expression
+ *  default (EW draws that where no instance sets one: the tank glass's olive, a car's paint). Without it, as before: the
+ *  people's CMOD is only a colour mod where an instance sets one (with the default, Shen's jacket came out green). */
+function vectorParam(r: number, name: string, depth = 0, withDefault = false): number[] | undefined {
   if (r <= 0 || depth > 8) return undefined
   let tags: Tag[]
   try {
@@ -1069,7 +1072,8 @@ function vectorParam(r: number, name: string, depth = 0): number[] | undefined {
     }
   }
   const parent = tags.find((t) => t.name === 'Parent')
-  if (parent) return vectorParam(ref(parent), name, depth + 1)
+  if (parent) return vectorParam(ref(parent), name, depth + 1, withDefault)
+  if (!withDefault) return undefined
   // (The material at the chain's end: its parameter expression's default, where no instance sets it.)
   const ex = tags.find((t) => t.name === 'Expressions')
   for (const x of ex ? refs(ex) : []) {
@@ -1156,7 +1160,7 @@ const personSlots = people.map((p) =>
       // (EW's tank glass: its body is the material's olive, wer (its Color, orange, is the rim's), through its froth
       // texture; the tanks had been flat orange-yellow. Converter 48.)
       if (/TankGlassMaster/i.test(pathOf(m))) {
-        l.tint = vectorParam(m, 'wer') ?? l.tint
+        l.tint = vectorParam(m, 'wer', 0, true) ?? l.tint
         l.diffuse = materialTexture(m, /Froth/i) ?? ''
       }
     }
@@ -1286,7 +1290,7 @@ for (const [r, l] of looks) {
   const tex = new Map<string, string>()
   texturesOf(r, tex)
   const maskPath = tex.get('Spc_Ems_Mod_Ref')
-  const tint = maskPath ? vectorParam(r, 'TintColor') : undefined
+  const tint = maskPath ? vectorParam(r, 'TintColor', 0, true) : undefined
   if (!tint || !maskPath) continue
   const d = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
   const mk = exports.findIndex((e) => e.fullName === maskPath && e.type === 'Texture2D')
