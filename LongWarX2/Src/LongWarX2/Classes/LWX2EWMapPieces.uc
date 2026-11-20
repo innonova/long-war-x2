@@ -528,7 +528,12 @@ static function bool ParticleStandins(LWX2EWMapData D, string Template, Particle
 		MIC.SetScalarParameterValue('OpacityScale', L.Additive ? (default.ParticleAddOpacity > 0 ? default.ParticleAddOpacity : 1.0) : (default.ParticleOpacity > 0 ? default.ParticleOpacity : 1.0));
 		for (k = 0; k < PS.Emitters[L.Emitter].LODLevels.Length; k++)
 			if (PS.Emitters[L.Emitter].LODLevels[k] != none && PS.Emitters[L.Emitter].LODLevels[k].RequiredModule != none)
+			{
 				PS.Emitters[L.Emitter].LODLevels[k].RequiredModule.Material = MIC;
+				// (A mesh emitter, EW's light cones: its mesh drawn with the emitter's material, ours, not the mesh's own.)
+				if (ParticleModuleTypeDataMesh(PS.Emitters[L.Emitter].LODLevels[k].TypeDataModule) != none)
+					ParticleModuleTypeDataMesh(PS.Emitters[L.Emitter].LODLevels[k].TypeDataModule).bOverrideMaterial = true;
+			}
 		n++;
 	}
 	return n > 0;
