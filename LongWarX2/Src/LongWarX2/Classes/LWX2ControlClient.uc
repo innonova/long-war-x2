@@ -1621,6 +1621,17 @@ function EnvLights(out array<string> Out, string Mode)
 		}
 		return;
 	}
+	// (env sky off|on: the environment level's own meshes, its sky dome, hidden or shown.)
+	if (Left(Mode, 4) == "sky ")
+	{
+		foreach AllActors(class'Actor', A)
+			if (XComLevelActor(A) != none && InStr(PathName(A), "EnvLighting") != INDEX_NONE)
+			{
+				A.SetHidden(Mode == "sky off");
+				Out.AddItem(PathName(A) @ "hidden" @ A.bHidden @ (XComLevelActor(A).StaticMeshComponent != none ? PathName(XComLevelActor(A).StaticMeshComponent.StaticMesh) : ""));
+			}
+		return;
+	}
 	// (env all: every actor of XCOM 2's environment levels, by class, counted.)
 	if (Mode == "all")
 	{
