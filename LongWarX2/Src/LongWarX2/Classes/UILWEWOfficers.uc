@@ -14,6 +14,19 @@ var StateObjectReference ChosenUnit;
 /** Each officer rank's insignia: the medal frames of EW's icon movie (Long War's UIUtilities.GetMedalLabel). */
 var array<string> RankLabels;
 
+/** An officer's insignia as EW lists them (UIUtilities.GetMedalLabels: a medal frame for each rank reached, comma
+ *  separated); none for a soldier who is no officer. */
+static function string Insignia(XComGameState_Unit Unit)
+{
+	local string S;
+	local int r, n;
+
+	n = Min(class'LWOfficers'.static.Rank(Unit), default.RankLabels.Length);
+	for (r = 0; r < n; r++)
+		S $= (S != "" ? "," : "") $ default.RankLabels[r];
+	return S;
+}
+
 static function Open(XComHQPresentationLayer HQPres)
 {
 	local UILWEWOfficers EWScreen;

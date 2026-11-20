@@ -117,7 +117,9 @@ function Fill()
 		MC.QueueString("rank" $ Clamp(Unit.GetRank(), 0, 7));
 		MC.QueueString(k != INDEX_NONE ? Classes[k].Frame : "");
 		MC.QueueString(FlagOf(Unit.GetCountry()));
-		MC.QueueString("");
+		// (An officer's insignia, one a rank reached: EW's medals, as Long War keeps its officer ranks in them,
+		// UIUtilities.GetMedalLabels.)
+		MC.QueueString(class'UILWEWOfficers'.static.Insignia(Unit));
 		MC.EndOp();
 		// (Available: active or ready, Long War's states 2 and 0.)
 		if (UIState == 2 || UIState == 0)

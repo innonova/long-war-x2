@@ -187,6 +187,8 @@ function FillInfo(XComGameState_Unit U, XComGameState_LWStrategy S)
 	MC.QueueString(class'UIUtilities_Text'.static.GetColoredText(Word(MissionsLabel, "MISSIONS:") @ U.GetNumMissions(), eUIState_Normal));
 	MC.QueueString(class'UIUtilities_Text'.static.GetColoredText(Word(KillsLabel, "KILLS:") @ U.GetNumKills(), eUIState_Normal));
 	MC.EndOp();
+	// (An officer's insignia under the class, EW's medals: UIStrategyComponent_SoldierInfo.AS_SetMedals.)
+	MC.ChildFunctionString("soldierInfoMC", "SetMedals", class'UILWEWOfficers'.static.Insignia(U));
 }
 
 /** The header's flag: a frame of EW's flag clip there (XComIcons' larger set, which has Belgium, the Netherlands, Norway,

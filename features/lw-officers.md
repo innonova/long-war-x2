@@ -280,3 +280,11 @@ officer ranks 1, 3 and 5; everyone else LCPL.
   else in the header is XCOM 2's.
 - **Seen on wingpu:** the hub's Barracks → View Soldiers → a captain: the armory's header as above
   (`logs/wingpu_armory_officer_header.png`).
+
+## Report (2026-11-20, the insignia)
+
+- **EW's insignia** shown as EW shows them: Long War keeps an officer's ranks in EW's medals, and EW lists a medal frame
+  for each rank reached (`UIUtilities.GetMedalLabels`) in the roster's row (`AddSoldierWithNickname`'s medals) and under
+  the class in the soldier summary (`UIStrategyComponent_SoldierInfo.SetMedals`). The port now passes the same frames
+  (`UILWEWOfficers.Insignia`: urbancombat, defender, international, honor, starofterra, one per rank). Seen on wingpu: a
+  Major with three insignia in both places, as EW's capture of its Major.
