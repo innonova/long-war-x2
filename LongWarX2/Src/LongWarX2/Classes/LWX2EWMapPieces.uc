@@ -157,6 +157,9 @@ var config bool BaseGlass;
 /** Our own unlit translucent pane (LWX2Lightmap.M_EWGlass: Tint, Opacity) where GlassParent is not loaded, its colour and
  *  opacity. */
 var config string GlassOwnParent;
+/** Mesh slots EW leaves to the mesh's own glass material, which the converted mesh does not carry (drawn with the engine's
+ *  default, white): "<a part of the mesh's path>:<slot>", given our pane (the barracks' coffee tables' glasses). */
+var config array<string> GlassSlots;
 var config LinearColor GlassTint;
 var config float GlassOwnOpacity;
 var config LinearColor GreyTint;
@@ -634,6 +637,16 @@ static function int PlaceLights(Actor Spawner, vector Shift)
  * P_Fire_Area_Cheap (both), P_Rats_Scrambling and P_Trash_Blowing_Constant_Burning (the second) each crashed the game
  * within a second, alone; its other fires, smoke and sparks did not. Left out.
  */
+static function bool IsGlassSlot(string Mesh, int Slot)
+{
+	local string S;
+
+	foreach default.GlassSlots(S)
+		if (InStr(S, ":") != INDEX_NONE && InStr(Mesh, Left(S, InStr(S, ":"))) != INDEX_NONE && int(Mid(S, InStr(S, ":") + 1)) == Slot)
+			return true;
+	return false;
+}
+
 static function bool Skipped(string Template)
 {
 	local string S;
@@ -992,6 +1005,9 @@ static function PlaceOf(LWX2EWMapData D, Actor Spawner, vector Center, float Rad
 			if (M != none)
 				Comp.SetMaterial(i, M);
 		}
+		for (i = 0; i < Comp.GetNumElements(); i++)
+			if ((i >= P.Materials.Length || P.Materials[i] == "") && IsGlassSlot(P.Mesh, i) && default.GlassOwnParent != "")
+				Comp.SetMaterial(i, class'LWX2BodyShade'.static.Make(default.GlassOwnParent, default.GlassTint, default.GlassOwnOpacity, A));
 		Placed.AddItem(A);
 	}
 	`log("LongWarX2: EW map:" @ Placed.Length @ "pieces placed as" @ ActorClass.Name $ "," @ Missing @ "meshes not found;" @ Standins.Length @ "materials" $ ";" @ Backdrop @ "backdrop pieces without collision;" @ Skipped @ "skipped (markers, skies, decals)", , 'LongWarX2');
