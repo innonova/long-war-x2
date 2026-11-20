@@ -22,7 +22,7 @@ import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, addTextureCopies, maskMip } from './mask-textures.ts'
-import { scaleMip, tintMip, whiteMip, hairMip } from './tint-textures.ts'
+import { scaleMip, tintMip, whiteMip, hairMip, earthWallMip } from './tint-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
 import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-people.ts'
 
@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 65
+export const CONVERTER_VERSION = 66
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1343,6 +1343,17 @@ if (tints.length) {
 // (converter 40): a copy per screen texture, its looks pointed at it.
 // (And the Genetics Lab's tank glass's froth, which EW's material reads as a mask: its colours had come out green.
 // Converter 49.)
+// EW's hologram earth in its wall colours, a copy for the Situation Room's map plane (earthWallMip, converter 66).
+{
+  const k = exports.findIndex((e) => e.fullName === 'FX_Globe.T_Earth_Holo' && e.type === 'Texture2D')
+  if (k >= 0) {
+    const made = addTextureCopies(bytes, [{ ref: k + 1, name: 'T_Earth_Holo_LWX2Wall' }])
+    bytes = made.bytes
+    meta = new Package(bytes)
+    pkg = openPackage(bytes)
+    exports = meta.exports as any[]
+  }
+}
 const screenLooks = [...new Set([...looks.values(), ...personSlots.flat()])].filter((l): l is Look => !!l && l.kind === 'Glow' && /HQscreens|Froth|Meld_Hexes/i.test(l.diffuse))
 if (screenLooks.length) {
   const refsOf = [...new Set(screenLooks.map((l) => l.diffuse))].map((d) => ({ d, k: exports.findIndex((e) => e.fullName === d && e.type === 'Texture2D') })).filter((x) => x.k >= 0)
@@ -1515,6 +1526,7 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     if (tinted?.scale && /HeadSci_HAIR_LWX2Bright$/.test(e.fullName)) return hairMip(mip, format, tinted.tint[0]! * 1.15, HAIR_COLOUR)
     if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
     if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
+    if (e.fullName.endsWith('T_Earth_Holo_LWX2Wall') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return earthWallMip(mip, format, w, h)
     // (The mask's mip of the same size, else its largest: masks are often smaller than their diffuse.)
     let tm = tinted && (format === 'PF_DXT1' || format === 'PF_DXT5') ? dirMips.get(`${tinted.mask}:${w}x${h}`) : undefined
     let mw = w, mh = h

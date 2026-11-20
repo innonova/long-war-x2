@@ -171,3 +171,30 @@ export function hairMip(mip: Uint8Array, format: string, k: number, colour: numb
   return out
 }
 
+/**
+ * EW's hologram earth (FX_Globe.T_Earth_Holo: land in its blue, about 128-200 against the sea's 32-64; borders in its red)
+ * in EW's Situation Room wall colours, for the wall's 3D plane: sea dark teal, land bright cyan, borders near white
+ * (sampled by eye from EW's capture; APPROXIMATION). DXT1 or DXT5 colour; converter 66.
+ */
+export function earthWallMip(mip: Uint8Array, format: string, w: number, h: number): Uint8Array {
+  const block = format === 'PF_DXT5' ? 16 : 8
+  const blocks = mip.length / block
+  const col = new Uint8Array(blocks * 8)
+  for (let b = 0; b < blocks; b++) col.set(mip.subarray(block * b + block - 8, block * b + block), 8 * b)
+  const rgba = decodeDXT1(col, w, h)
+  const sea = [28, 75, 82], land = [95, 190, 200], border = [210, 250, 255]
+  for (let p = 0; p < rgba.length; p += 4) {
+    const t = Math.max(0, Math.min(1, (rgba[p + 2]! - 70) / 80))
+    const e = Math.max(0, Math.min(1, rgba[p]! / 160))
+    for (let c = 0; c < 3; c++) {
+      const base = sea[c]! + (land[c]! - sea[c]!) * t
+      rgba[p + c] = Math.round(base + (border[c]! - base) * e)
+    }
+  }
+  const enc = encodeDXT1(rgba, w, h)
+  if (block === 8) return enc
+  const out = mip.slice()
+  for (let b = 0; b < blocks; b++) out.set(enc.subarray(8 * b, 8 * b + 8), block * b + 8)
+  return out
+}
+
