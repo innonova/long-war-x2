@@ -220,3 +220,8 @@ material also pans and layers hexes and a fresnel), and the tanks' caps beige wh
   does; lit by the room as before for the rest (`PeopleLitParent`). Seen on wingpu (`logs/compare/people-sheet-emissive.png`):
   Vahlen's face warm and her coat white, Shen's jacket and face EW's, the labs' clerks no longer glowing; round 8's #10.
 
+- **Same evening:** the emissive share was limited to EW's characters (`PeopleLitMeshes`) after round 9 found the
+  hangar's craft and engineering's robots pale white; the first pattern, `CHH_`, matched nobody (converted packages
+  read `QHH_`), now `HH_`. Faces get a small warm bias for EW's skin material's subsurface red (`SKIN_WARMTH`, converter
+  64; Shen read yellow). **Open:** Vahlen's eyelids show cyan patches (the eyelash slot, `EyeShadeLash_INST`), and the
+  redness around her eyes and nose reads stronger than EW's under the flat share of colour.
