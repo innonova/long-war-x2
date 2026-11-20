@@ -112,6 +112,9 @@ so the fixes are driven by evidence and the person is not needed on every round.
   shown, the class text, with `SoldierList` taking the largest per compartment), and the frame follows. EW's capture
   has long nicknamed Master Sergeants with psi icons; the port's test campaign has Lance Corporals without nicknames or
   psi, so the same movie lays itself out narrower. A campaign-content difference, as the reviewer's exclusions have it.
+- **Grey Market's Sectoid Corpse picture, settled 2026-11-20 (not a defect):** the yellow-suited figure beside the
+  Sectoid is in EW's own picture for that item (Long War's table, item 134: EW's `CorpseIcons.Corpse_Sectoid`, from the
+  player's converted base); the round had no EW shot of the same item to compare with.
 - **Round 8, fixed** (2026-11-20 night): Vahlen's black squares (converter 43: the brightened textures re-encoded); the
   mist fainter (0.2); the ticker in the strip below the map, EW's map plane only on the bare wall; the bare wall map
   brighter; engineering's "?" opens EW's item card for the selected weapon (range, Long War's damage and crit ranges:
