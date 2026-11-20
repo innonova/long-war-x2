@@ -234,7 +234,7 @@ console.log(
     "; Or our lit material with a share of the texture's own colour (EW's character lighting; a room's coloured light had",
     "; turned faces yellow-green), the share PeopleEmissive.",
     'PeopleLitParent="LWX2Lightmap.M_EWLightmappedLit"',
-    'PeopleEmissive=0.5',
+    'PeopleEmissive=0.3',
     '',
     "; The Long War hub (UILWEWHub: EW's base, its rooms and Mission Control) as the strategy layer's root in place of the",
     "; Geoscape, where EW's base is converted (the setup does it); false: the Geoscape (features/lw-base-view.md).",
