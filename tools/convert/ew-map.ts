@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 48
+export const CONVERTER_VERSION = 49
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1251,7 +1251,9 @@ if (tints.length) {
 }
 // EW's console screens' picture (HQscreens_test: UI panels in its green channel) made white, for our glow to tint
 // (converter 40): a copy per screen texture, its looks pointed at it.
-const screenLooks = [...looks.values()].filter((l) => l.kind === 'Glow' && /HQscreens/i.test(l.diffuse))
+// (And the Genetics Lab's tank glass's froth, which EW's material reads as a mask: its colours had come out green.
+// Converter 49.)
+const screenLooks = [...new Set([...looks.values(), ...personSlots.flat()])].filter((l): l is Look => !!l && l.kind === 'Glow' && /HQscreens|Froth/i.test(l.diffuse))
 if (screenLooks.length) {
   const refsOf = [...new Set(screenLooks.map((l) => l.diffuse))].map((d) => ({ d, k: exports.findIndex((e) => e.fullName === d && e.type === 'Texture2D') })).filter((x) => x.k >= 0)
   const made = addTextureCopies(bytes, refsOf.map((x) => ({ ref: x.k + 1, name: `${exports[x.k]!.name}_LWX2White` })))
@@ -1513,7 +1515,7 @@ const lines = [
   ...particleLooks.map((l) => `+ParticleLooks=(Template="${rename(pathOf(l.template))}",Emitter=${l.emitter},Texture="${rename(l.texture)}"${l.additive ? ',Additive=true' : ''}${l.subX * l.subY > 1 ? `,SubX=${l.subX},SubY=${l.subY}` : ''})`),
   ...displays.map((d) => `+Displays=(${d.mesh ? `Mesh="${rename(d.mesh)}",` : ''}Tag=${d.tag || 'None'},Loc=(X=${n(d.loc[0]!)},Y=${n(d.loc[1]!)},Z=${n(d.loc[2]!)}),Rot=(Pitch=${d.rot[0]},Yaw=${d.rot[1]},Roll=${d.rot[2]}),Scale=(X=${n(d.scale[0]!)},Y=${n(d.scale[1]!)},Z=${n(d.scale[2]!)}))`),
   "; EW's people (an Anim_ level's: its matinee's loops; features/ew-base-people.md).",
-  ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),${p.physicsAsset ? `PhysicsAsset="${rename(p.physicsAsset)}",` : ''}${p.start ? `Start=${n(p.start)},` : ''}${p.rate ? `Rate=${n(p.rate)},` : ''}Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}"${l?.kind === 'Glow' ? `,Glow=true${l.tint ? `,Tint=(R=${n(l.tint[0]!)},G=${n(l.tint[1]!)},B=${n(l.tint[2]!)},A=1)` : ''}` : ''})`).join(',')}))`),
+  ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),${p.physicsAsset ? `PhysicsAsset="${rename(p.physicsAsset)}",` : ''}${p.start ? `Start=${n(p.start)},` : ''}${p.rate ? `Rate=${n(p.rate)},` : ''}${p.window ? `Window=${n(p.window)},` : ''}${p.keys?.length ? `Keys=(${p.keys.map((k) => `(Time=${n(k.time)},From=${n(k.from)},End=${n(k.end)}${k.reverse ? ',Reverse=true' : ''})`).join(',')}),` : ''}Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}"${l?.kind === 'Glow' ? `,Glow=true${l.tint ? `,Tint=(R=${n(l.tint[0]!)},G=${n(l.tint[1]!)},B=${n(l.tint[2]!)},A=1)` : ''}` : ''})`).join(',')}))`),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
     ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''}${l.tile ? `,Tile=${l.tile}` : ''})`,

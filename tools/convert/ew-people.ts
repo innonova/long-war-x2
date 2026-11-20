@@ -10,7 +10,10 @@ import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 
-export interface Person { bay?: number; bayState?: string; key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; physicsAsset?: string; start?: number; rate?: number; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
+/** A key of a matinee's animation track (InterpTrackAnimControl's AnimSeqs): from its time on, the animation from `from`
+ *  seconds to its length less `end`, forwards or (reverse) backwards, held at the stretch's end. */
+export interface AnimKey { time: number; from: number; end: number; reverse: boolean }
+export interface Person { bay?: number; bayState?: string; key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; physicsAsset?: string; start?: number; rate?: number; window?: number; keys?: AnimKey[]; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
 
 export function peopleOf(file: string): Person[] {
   const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
@@ -111,6 +114,9 @@ export function peopleIn(meta: any, pkg: any): Person[] {
   const bound = new Map<number, string>()
   // (The play rate of the looping matinee an actor is in: the Genetics Lab's base loop runs at half speed.)
   const rateOf = new Map<number, number>()
+  // (And its length: EW's base loop replays that much of each canister's animation from its place, then starts over.)
+  const windowOf = new Map<number, number>()
+  const keysOf = new Map<number, AnimKey[]>()
   let loop = false
   exports.forEach((e, i) => {
     if (e.type !== 'SeqAct_Interp') return
@@ -125,7 +131,31 @@ export function peopleIn(meta: any, pkg: any): Person[] {
         const actor = i32(tagsAt(v - 1).find((x) => x.name === 'ObjValue'))
         if (actor > 0) bound.set(actor, desc)
         const pr = t.find((x) => x.name === 'PlayRate')
-        if (actor > 0 && pr && t.some((x) => x.name === 'bLooping')) rateOf.set(actor, f32(pr))
+        if (actor > 0 && pr && t.some((x) => x.name === 'bLooping')) {
+          rateOf.set(actor, f32(pr))
+          for (const l2 of structs(vl.value))
+            for (const d of refs(l2.find((x) => x.name === 'LinkedVariables'))) {
+              if (d <= 0 || exports[d - 1]!.type !== 'InterpData') continue
+              windowOf.set(actor, f32(tagsAt(d - 1).find((x) => x.name === 'InterpLength')))
+              // (Its animation keys in that matinee: where each starts, the stretch of the animation it plays, forwards or
+              // back. The canisters' base loop steps them along the belt and back, six keys each.)
+              for (const gr of refs(tagsAt(d - 1).find((x) => x.name === 'InterpGroups'))) {
+                const gt = tagsAt(gr - 1)
+                if (name(gt.find((x) => x.name === 'GroupName')) !== desc) continue
+                for (const tr of refs(gt.find((x) => x.name === 'InterpTracks'))) {
+                  if (tr <= 0 || exports[tr - 1]!.type !== 'InterpTrackAnimControl') continue
+                  const ak = tagsAt(tr - 1).find((x) => x.name === 'AnimSeqs')
+                  if (ak)
+                    keysOf.set(actor, structs(ak.value).map((k) => ({
+                      time: f32(k.find((x) => x.name === 'StartTime')),
+                      from: f32(k.find((x) => x.name === 'AnimStartOffset')),
+                      end: f32(k.find((x) => x.name === 'AnimEndOffset')),
+                      reverse: !!(k.find((x) => x.name === 'bReverse') as { boolValue?: number } | undefined)?.boolValue,
+                    })))
+                }
+              }
+            }
+        }
       }
     }
   })
@@ -270,6 +300,8 @@ export function peopleIn(meta: any, pkg: any): Person[] {
       seqs: [...g.seqs],
       start: g.start || undefined,
       rate: rateOf.get(i + 1),
+      window: windowOf.get(i + 1) || undefined,
+      keys: keysOf.get(i + 1),
       loop,
     }
   }

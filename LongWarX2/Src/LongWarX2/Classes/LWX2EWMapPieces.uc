@@ -259,6 +259,14 @@ struct LWX2FlareLook
 };
 
 /** One of EW's people in its base (an Anim_ level's, features/ew-base-people.md). */
+/** A key of an EW matinee's animation track: from Time on, the animation from From seconds to its length less End,
+ *  forwards or (Reverse) backwards, held at that stretch's end. */
+struct LWX2AnimKey
+{
+	var float Time, From, End;
+	var bool Reverse;
+};
+
 struct LWX2Person
 {
 	var string Mesh;
@@ -278,6 +286,11 @@ struct LWX2Person
 	 *  0: a random start, the normal rate. */
 	var float Start;
 	var float Rate;
+	/** The looping matinee's length: EW replays that much of the animation from Start, holding at its end, then starts
+	 *  over (the canisters' base loop); 0: the animation itself loops. */
+	var float Window;
+	/** Its keys in that matinee (the canisters' steps along the belt and back); none: from Start on. */
+	var array<LWX2AnimKey> Keys;
 	/** EW's hangar bays (Anim_Hangar_LaunchBays, features/strategy-flow.md): a bay's (1-4) launch pad or craft for one of
 	 *  its states (Open: a craft ready; Repair: a craft down; Closed: empty), its part (Track: the pad; Interceptor;
 	 *  FireStorm); placed by the hangar's state, not with the level's people. */

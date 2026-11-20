@@ -2,9 +2,14 @@
 // the animation EW's matinee plays on it (SkeletalMeshActor's own AnimNodeSequence), placed by LWX2EWBase.PlacePeople.
 class LWX2BasePerson extends SkeletalMeshActor;
 
+/** A window of its animation replayed as EW's looping matinee does (Setup's Window), else none. */
+var AnimNodeSequence LoopSeq;
+var float LoopStart, LoopRate, LoopWindow;
+var array<LWX2EWMapPieces.LWX2AnimKey> LoopKeys;
+
 /** EW's mesh, AnimSets, the loop, and its slots' stand-ins. */
 function Setup(SkeletalMesh Mesh, array<AnimSet> Sets, name Loop, array<MaterialInterface> Slots, optional PhysicsAsset Bodies,
-	optional float Start, optional float Rate)
+	optional float Start, optional float Rate, optional float Window, optional array<LWX2EWMapPieces.LWX2AnimKey> Keys)
 {
 	local AnimNodeSequence Seq;
 	local float Length;
@@ -35,8 +40,46 @@ function Setup(SkeletalMesh Mesh, array<AnimSet> Sets, name Loop, array<Material
 			Start = Start - Length * float(FFloor(Start / Length));
 		else
 			Start = FRand();
+		// (A window of a longer animation, as EW's looping matinee plays it: posed each tick, Tick.)
+		if (Window > 0)
+		{
+			LoopStart = Start;
+			LoopRate = Rate > 0 ? Rate : 1.0;
+			LoopWindow = Window;
+			LoopKeys = Keys;
+			LoopSeq = Seq;
+			Seq.StopAnim();
+			return;
+		}
 		Seq.PlayAnim(true, Rate > 0 ? Rate : 1.0, Start);
 	}
+}
+
+/** The window's pose now: the matinee's time in its loop (at its rate) from Start, held at the animation's end. */
+event Tick(float DeltaTime)
+{
+	local float T, Length, Hi;
+	local int i, k;
+
+	super.Tick(DeltaTime);
+	if (LoopSeq == none || LoopWindow <= 0)
+		return;
+	T = WorldInfo.TimeSeconds * LoopRate;
+	T = T - LoopWindow * float(FFloor(T / LoopWindow));
+	Length = LoopSeq.GetAnimPlaybackLength();
+	if (LoopKeys.Length == 0)
+	{
+		LoopSeq.SetPosition(FClamp(LoopStart + T, 0, Length), false);
+		return;
+	}
+	// (UE3's animation track: the last key begun, else the first, its stretch from its own time.)
+	k = 0;
+	for (i = 0; i < LoopKeys.Length; i++)
+		if (LoopKeys[i].Time <= T)
+			k = i;
+	Hi = Length - LoopKeys[k].End;
+	T = FMax(0, T - LoopKeys[k].Time);
+	LoopSeq.SetPosition(FClamp(LoopKeys[k].Reverse ? Hi - T : LoopKeys[k].From + T, LoopKeys[k].From, Hi), false);
 }
 
 defaultproperties
