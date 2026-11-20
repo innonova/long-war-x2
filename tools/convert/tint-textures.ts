@@ -147,3 +147,27 @@ export function whiteMip(mip: Uint8Array, format: string, w: number, h: number):
   for (let b = 0; b < mip.length / block; b++) out.set(enc.subarray(8 * b, 8 * b + 8), block * b + 8)
   return out
 }
+
+/**
+ * A hair mip: each texel's brightness × k in the colour hue (EW's hair material lightens the dark hairstyle texture to its
+ * own colour: Vahlen's olive-blonde, 84 82 58 in EW's capture, where the texture's brown, brightened, read orange). DXT1 or
+ * DXT5 (alpha, the strands' cut-out, kept).
+ */
+export function hairMip(mip: Uint8Array, format: string, k: number, colour: number[]): Uint8Array {
+  const block = format === 'PF_DXT5' ? 16 : 8
+  const blocks = mip.length / block
+  const col = new Uint8Array(blocks * 8)
+  for (let b = 0; b < blocks; b++) col.set(mip.subarray(block * b + block - 8, block * b + block), 8 * b)
+  const rgba = decodeDXT1(col, 4, 4 * blocks)
+  const cl = 0.299 * colour[0]! + 0.587 * colour[1]! + 0.114 * colour[2]!
+  for (let p = 0; p < rgba.length; p += 4) {
+    const l = (0.299 * rgba[p]! + 0.587 * rgba[p + 1]! + 0.114 * rgba[p + 2]!) * k
+    for (let c = 0; c < 3; c++) rgba[p + c] = Math.min(255, Math.round((l * colour[c]!) / cl))
+  }
+  const enc = encodeDXT1(rgba, 4, 4 * blocks)
+  if (block === 8) return enc
+  const out = mip.slice()
+  for (let b = 0; b < blocks; b++) out.set(enc.subarray(8 * b, 8 * b + 8), block * b + 8)
+  return out
+}
+

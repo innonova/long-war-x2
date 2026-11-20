@@ -22,7 +22,7 @@ import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, addTextureCopies, maskMip } from './mask-textures.ts'
-import { scaleMip, tintMip, whiteMip } from './tint-textures.ts'
+import { scaleMip, tintMip, whiteMip, hairMip } from './tint-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
 import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-people.ts'
 
@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 64
+export const CONVERTER_VERSION = 65
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1255,6 +1255,9 @@ for (const l of looks.values())
 // Spc_Ems_Ref_Opc mask; the slot takes the copy.
 /** How much brighter EW's hair draws than its hairstyle texture (APPROXIMATION, by eye against EW's capture of Vahlen). */
 const HAIR_SCALE = 2.6
+/** Vahlen's hair colour (olive-blonde, measured in EW's capture), the hue her hair copy takes (others keep their own
+ *  brightened); EW's hairstyle texture is plain dark brown. APPROXIMATION. */
+const HAIR_COLOUR = [84, 82, 58]
 /** How much brighter EW draws its people than their diffuse (its character lighting, which XCOM 2's staff material does
  *  not answer: ambient and light environments changed nothing): every person's diffuse brightened by it, colour-modded
  *  parts included (APPROXIMATION, by eye against EW's captures of the labs' clerks and Vahlen; converter 41). */
@@ -1508,6 +1511,8 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
   (e, format, mip, w, h) => {
     if (maskExports.has(e)) return maskMip(format, mip)
     const tinted = tintOf.get(e.fullName)
+    // (Hair in EW's hair colour, its brightness the texture's × HAIR_SCALE; converter 65.)
+    if (tinted?.scale && /HeadSci_HAIR_LWX2Bright$/.test(e.fullName)) return hairMip(mip, format, tinted.tint[0]! * 1.15, HAIR_COLOUR)
     if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
     if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
     // (The mask's mip of the same size, else its largest: masks are often smaller than their diffuse.)
