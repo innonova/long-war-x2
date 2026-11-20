@@ -4893,6 +4893,9 @@ function BaseNear(float Radius, out array<string> Out)
 					Mats @= "diffuse" @ PathName(Tex);
 			}
 			Out.AddItem(int(D) @ PathName(Person.SkeletalMeshComponent.SkeletalMesh) @ Person.Location @ "materials" $ Mats);
+			// (Where its animation has its last bone, its bounds, its physics asset: a canister on the Genetics Lab's conveyor.)
+			if (Person.SkeletalMeshComponent.PhysicsAsset != none)
+				Out.AddItem("    bone" @ Person.SkeletalMeshComponent.GetBoneName(Person.SkeletalMeshComponent.GetNumBones() - 1) @ "at" @ Person.SkeletalMeshComponent.GetBoneLocation(Person.SkeletalMeshComponent.GetBoneName(Person.SkeletalMeshComponent.GetNumBones() - 1)) @ "bounds" @ Person.SkeletalMeshComponent.Bounds.Origin @ "r" @ int(Person.SkeletalMeshComponent.Bounds.SphereRadius) @ "anim" @ (AnimNodeSequence(Person.SkeletalMeshComponent.Animations) != none ? string(AnimNodeSequence(Person.SkeletalMeshComponent.Animations).AnimSeqName) @ AnimNodeSequence(Person.SkeletalMeshComponent.Animations).CurrentTime @ "of" @ AnimNodeSequence(Person.SkeletalMeshComponent.Animations).GetAnimPlaybackLength() @ (AnimNodeSequence(Person.SkeletalMeshComponent.Animations).AnimSeq != none ? "found" : "MISSING") : "no node") @ PathName(Person.SkeletalMeshComponent.PhysicsAsset));
 		}
 	}
 	Out.AddItem("camera at" @ At);
