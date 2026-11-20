@@ -6,6 +6,9 @@ var LWX2EWMapData Data;
 var int Next;
 /** How many each tick. */
 var int PerTick;
+/** Seconds after the battle's start before the first (placed at once at the start, the game died; placed minutes in,
+ *  all of them, it did not). */
+var float Delay;
 
 function Begin(LWX2EWMapData D)
 {
@@ -19,6 +22,11 @@ event Tick(float DeltaTime)
 	local Actor A;
 
 	super.Tick(DeltaTime);
+	if (Delay > 0)
+	{
+		Delay -= DeltaTime;
+		return;
+	}
 	if (Data == none || Next >= Data.Emitters.Length)
 	{
 		if (Data != none)
@@ -35,4 +43,5 @@ event Tick(float DeltaTime)
 defaultproperties
 {
 	PerTick = 2
+	Delay = 20
 }
