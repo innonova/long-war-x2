@@ -154,8 +154,22 @@ function ApplyBare(bool bBare)
 	// (And the movie's own map: the bare wall is EW's map plane, SituationRm_WorldMapPlane, its holographic earth filling
 	// the wall's middle, as EW's shows under its screens and from outside the room.)
 	if (bWall)
+	{
 		MC.ChildSetBool("theMapArea", "_visible", !bBare);
+		ShowMapPlane(bBare);
+	}
 	ShowTicker();
+}
+
+/** EW's map plane on the wall (SituationRm_WorldMapPlane) only as the bare wall: under the room's own movie it showed
+ *  through below the movie's map, past the ticker's strip. */
+function ShowMapPlane(bool bShow)
+{
+	local DynamicSMActor_Spawnable A;
+
+	foreach DynamicActors(class'DynamicSMActor_Spawnable', A)
+		if (A.StaticMeshComponent.StaticMesh != none && A.StaticMeshComponent.StaticMesh.Name == 'SituationRm_WorldMapPlane')
+			A.SetHidden(!bShow);
 }
 
 /** The news ticker, in the room's main view only: not on the bare wall, nor in the satellite view (its counters there,
@@ -822,7 +836,7 @@ defaultproperties
 	// (EW's: UISituationRoom on the room's wall, UIDisplay_CountryPanels through Cam_SituationRoom; here one plate across
 	// the wall, LWX2EWBase.PlateDisplays: EW's wall meshes showed only slivers of the movie.)
 	EWDisplay = UIDisplay_CountryPanels
-	NewsTickerRise = 6
+	NewsTickerRise = -10
 	NewsTickerFontSize = 16
 	EWDisplayCamera = Cam_SituationRoom
 	Order(0) = USA
