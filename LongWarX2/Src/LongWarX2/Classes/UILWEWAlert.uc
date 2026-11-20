@@ -68,6 +68,17 @@ static function bool OpenNext(UILWGeoscape Geoscape, array<int> Kinds, array<int
 		return false;
 	for (i = 0; i < Kinds.Length; i++)
 	{
+		// (A new council request: EW opens its request screen at once, Mission Control's eMCView_FCRequest; once a request,
+		// its kind 20 and up by what it asks, counted as one.)
+		if (Kinds[i] >= 20)
+		{
+			if (Geoscape.AlertsShown.Find(2000000 + Indexes[i]) != INDEX_NONE)
+				continue;
+			Geoscape.AlertsShown.AddItem(2000000 + Indexes[i]);
+			if (class'UILWEWCouncilRequest'.static.Open(Geoscape, Indexes[i]))
+				return true;
+			continue;
+		}
 		// (Each decision once while the Geoscape is open.)
 		if (!Handles(Kinds[i]) || Geoscape.AlertsShown.Find(Kinds[i] * 100000 + Indexes[i]) != INDEX_NONE)
 			continue;

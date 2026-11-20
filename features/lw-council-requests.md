@@ -81,3 +81,11 @@ order works for you".
   Control.
 - **Open:** EW's Situation Room's pending-request list, and the "Incoming Council Communication" alert as a request comes;
   satellite and jet requests on this screen (EW's Transfer Satellite sends the player to the Situation Room).
+
+## Report (2026-11-20, the incoming request)
+
+- **A request XCOM can meet opens EW's request screen at once** over Mission Control, as EW's does
+  (`XGFundingCouncil.OnValidRequestAdded` → Mission Control's `eMCView_FCRequest` → `UIFundingCouncilRequest`): the
+  country's request, what is asked and held, the time limit, the rewards, DISPATCH ITEMS / NOT NOW
+  (`UILWEWAlert.OpenNext`, once a request). Requests XCOM cannot meet yet stay notices, as EW's delayed ones. Seen on
+  wingpu: Russia's 12 alloys, opened by itself an hour after it came.
