@@ -48,8 +48,9 @@ static function int Raise(X2Effect Effect)
 	Poison = X2Effect_ParthenogenicPoison(Effect);
 	if (Poison == none)
 		return 0;
-	Poison.UnitToSpawnName = 'PsiZombie';
-	Poison.AltUnitToSpawnName = 'PsiZombieHuman';
+	// (Long War's Zombie, species 14, its own template where it was made, named as EW names it: LWX2Species.)
+	Poison.UnitToSpawnName = class'LWX2Species'.static.SpawnTemplate(14) != '' ? class'LWX2Species'.static.SpawnTemplate(14) : 'PsiZombie';
+	Poison.AltUnitToSpawnName = Poison.UnitToSpawnName;
 	return 1;
 }
 
