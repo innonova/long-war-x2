@@ -50,3 +50,16 @@ actors in its base's levels; the port placed none.
   terms (`MI_Dot_Glow_*`: the source's distance and occlusion, Unreal's LensFlareIntensity/RadialDistance
   expressions). Next: a flare material of ours with those (SDK editor), then `FlareOpacity` back towards 1.
 - **The mission maps:** the plot writer could place the same (rain, smoke, fires); not yet.
+
+## Notes (2026-11-20, EW's emitters on mission maps)
+
+Each converted mission map lists its EW emitters (`+Emitters=`; the terror bar's 87: fires, embers, smoke, sparks, a
+blinking light, rats, blowing trash, the Skyranger's dust). Placed on the map's own plot at the battle's start
+(`LWX2EWMapPieces.UseEWAtmosphere`, `MissionEmitters`), the game died within a second or two. Placed by hand in groups
+(the control port's `emitters [filter]`, `emitters list`), alone each of `P_Fire_Area_Cheap` (an axis-locked emitter,
+`ParticleModuleOrientationAxisLock`), `P_Rats_Scrambling` and `P_Trash_Blowing_Constant_Burning` (mesh emitters whose
+colour changes over their life) killed it; both kinds are now left out (`AxisLocked`). The other 76 together still did,
+while in smaller groups earlier they had not: likely a crash on drawing some emitter once in view, so which are safe is not
+settled by placing them near the squad. **Off for now** (`MissionEmitters=false`); next: the crash's cause (our particle
+materials on mesh emitters, `M_EWParticle` without mesh-particle use, is the first suspect), with the camera on each.
+
