@@ -60,8 +60,9 @@ export const EW_UNITS: EWUnit[] = [
   // Species given, so ADVENT's own (XCOM 2's spawns of these templates) keep theirs.
   ...([['AdvTrooperM1', 'Operative', 'SM_ExaltSoldierOperative'], ['AdvCaptainM1', 'Sniper', 'SM_ExaltSoldierSniper'], ['AdvShieldBearerM2', 'Heavy', 'SM_ExaltSoldierHeavy'],
     ['AdvStunLancerM1', 'Medic', 'SM_ExaltSoldierMedic'], ['AdvTrooperM3', 'EliteOperative', 'SM_ExaltEliteOperative'], ['AdvCaptainM3', 'EliteSniper', 'SM_ExaltEliteSniper'],
-    ['AdvShieldBearerM3', 'EliteHeavy', 'SM_ExaltEliteHeavy'], ['AdvStunLancerM3', 'EliteMedic', 'SM_ExaltEliteMedic']] as const).map(([template, kind, mesh], k): EWUnit => ({
-    template, species: 24 + k, pkg: `Unit_Exalt${kind}_SF`, mesh, sets: ['AS_SoldierRifle'], ownAnimsOnly: true, slots: true, keepWeapon: true, diffuse: /^ExaltSoldiers_DIF$/, normal: /^ExaltSoldiers_NRM$/,
+    ['AdvShieldBearerM3', 'EliteHeavy', 'SM_ExaltEliteHeavy'], ['AdvStunLancerM3', 'EliteMedic', 'SM_ExaltEliteMedic']] as const).map(([template, kind, mesh], k, all): EWUnit => ({
+    // (The elites' templates play the same pawns' animations as the first four's.)
+    template, species: 24 + k, animsAs: all[k % 4]![0], pkg: `Unit_Exalt${kind}_SF`, mesh, sets: ['AS_SoldierRifle'], ownAnimsOnly: true, slots: true, keepWeapon: true, diffuse: /^ExaltSoldiers_DIF$/, normal: /^ExaltSoldiers_NRM$/,
   })),
   { template: 'LWSHIV', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank_SF', mesh: 'SM_Shiv_L1', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv1Shiv_DIF$/, normal: /^Lv1Shiv_NRM$/, weapon: SHIV_MINIGUN },
   { template: 'LWSHIV_Alloy', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank2_SF', mesh: 'SM_Shiv_L2', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv2Shiv_DIF$/, normal: /^Lv2Shiv_NRM$/, weapon: SHIV_MINIGUN },
