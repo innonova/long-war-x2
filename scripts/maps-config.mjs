@@ -57,7 +57,7 @@ console.log(
     "; And EW's atmosphere with them (LWX2EWMapPieces.EWAtmosphere): XCOM 2's sun, fog and environment light off, EW's",
     "; sun in their place at its brightness × EWSunScale; EnvAmbient: what is left of XCOM 2's environment light.",
     'EWAtmosphere=true',
-    'EWSunScale=6',
+    'EWSunScale=3.2',
     'EnvAmbientDiffuse=0',
     'EnvAmbientSpecular=0.3',
     "; EW's walls as XCOM 2's breakable walls (its fracturable actors, EW's toughness as XCOM 2's): explosions break them.",
