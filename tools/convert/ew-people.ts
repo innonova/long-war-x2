@@ -10,7 +10,7 @@ import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 
-export interface Person { bay?: number; bayState?: string; key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
+export interface Person { bay?: number; bayState?: string; key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; physicsAsset?: string; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
 
 export function peopleOf(file: string): Person[] {
   const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
@@ -236,7 +236,12 @@ export function peopleIn(meta: any, pkg: any): Person[] {
     const loc = t.find((x) => x.name === 'Location')
     const rot = t.find((x) => x.name === 'Rotation')
     const ds = t.find((x) => x.name === 'DrawScale')
+    // (Its physics asset: the Genetics Lab's canisters ride a conveyor their animation drives a bone along, from the rack
+    // under the ceiling down to the column; their bounds follow the bodies of PHYS_Canister. Without it the bounds stayed
+    // the mesh's at the rack, and the canisters were never drawn at the column.)
+    const physicsAsset = path(i32(ct.find((x) => x.name === 'PhysicsAsset'))) || undefined
     return {
+      physicsAsset,
       group,
       key: g.key,
       keyRot: g.keyRot,

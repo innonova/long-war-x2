@@ -270,6 +270,9 @@ struct LWX2Person
 	var array<string> AnimSets;
 	var array<name> Seqs;
 	var array<LWX2PersonSlot> Slots;
+	/** Its component's physics asset (the Genetics Lab's canisters, whose animation carries them far from where they
+	 *  stand): its bounds follow the bodies, so it is drawn where its animation takes it. */
+	var string PhysicsAsset;
 	/** EW's hangar bays (Anim_Hangar_LaunchBays, features/strategy-flow.md): a bay's (1-4) launch pad or craft for one of
 	 *  its states (Open: a craft ready; Repair: a craft down; Closed: empty), its part (Track: the pad; Interceptor;
 	 *  FireStorm); placed by the hangar's state, not with the level's people. */
