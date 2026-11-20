@@ -195,4 +195,11 @@ static pieces. Three things kept them away in the port:
   material; the instance's `Color`, orange, is the rim's) through panning froth: the glow stand-in now takes that olive
   and EW's froth texture (converter 48).
 
-Seen on wingpu (converter 47): the tanks move round the column as in EW, three or four in the lab's view.
+- **Their steps.** The lab's base loop is the 30.7 s matinee (played looping at half speed), in which each canister has
+  six keys: stretches of its conveyor animation, forwards and back, each held at its end. Each person in a looping
+  matinee now carries its keys there (`Window=`, `Keys=`), and the stand-in poses itself each tick as UE3's animation
+  track does (`LWX2BasePerson.Tick`). The froth texture is whitened as EW's material reads it, a mask (converter 49).
+
+Seen on wingpu (converter 49, `logs/gl-cmp2.png`): four tanks round the column in EW's places, stepping along the belt.
+**Left:** ours are a brighter, more saturated yellow than EW's dark olive, the froth coarser than EW's pattern (EW's
+material also pans and layers hexes and a fresnel), and the tanks' caps beige where EW's are dark.
