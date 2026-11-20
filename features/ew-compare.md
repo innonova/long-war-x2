@@ -107,3 +107,9 @@ so the fixes are driven by evidence and the person is not needed on every round.
   colours with its meld symbol; people baked brighter; more of EW's texture tiling. **Open:** the promotion screen's
   right panels (its movie places them 80 units further right; notes in strategy-flow.md); the Genetics Lab's tanks;
   the roster frame's width (EW widens it for its medals column); a soldier item card for engineering's "?".
+- **Round 8, fixed** (2026-11-20 night): Vahlen's black squares (converter 43: the brightened textures re-encoded); the
+  mist fainter (0.2); the ticker in the strip below the map, EW's map plane only on the bare wall; the bare wall map
+  brighter; engineering's "?" opens EW's item card for the selected weapon (range, Long War's damage and crit ranges:
+  (3D+1)/4 to (5D+2)/4, crit (5D+1)/4 to (7D+2)/4, Damage Roulette's wider), armour (HP bonus) or small item (charges),
+  its text and picture (`UILWEWItemCard.FillGear`). Tried and taken back: the custom screens' decal sheet (the whole
+  sheet showed; converter 45).
