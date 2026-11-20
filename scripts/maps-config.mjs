@@ -63,6 +63,8 @@ console.log(
     "; EW's height fog on XCOM 2's (its density × EWFogScale) and EW's colour grading on the world's post-process.",
     'EWFogScale=1',
     'EWGrade=true',
+    "; EW's level emitters on its maps (fires, smoke, sparks): off while the one that crashed the game is found.",
+    'MissionEmitters=false',
     "; EW's walls as XCOM 2's breakable walls (its fracturable actors, EW's toughness as XCOM 2's): explosions break them.",
     'PlotFracWalls=true',
     '+LightKinds=Point',

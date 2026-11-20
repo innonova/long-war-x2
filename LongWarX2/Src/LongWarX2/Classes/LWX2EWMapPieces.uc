@@ -338,6 +338,8 @@ var config float EnvAmbientDiffuse, EnvAmbientSpecular;
 var config float EWFogScale;
 /** EW's colour grading put on the world's post-process. */
 var config bool EWGrade;
+/** EW's level emitters on its maps' own plots (its fires, smoke, sparks; off while one of them crashed the game). */
+var config bool MissionEmitters;
 /** Which kinds are placed (the mission's own sun and sky light the map too). */
 var config array<name> LightKinds;
 
@@ -599,7 +601,7 @@ static function string UseEWAtmosphere(Actor Spawner)
 	foreach Spawner.AllActors(class'EmitterSpawnable', Em)
 		if (Em.Tag == 'LWX2EWMission')
 			Emitters++;
-	if (Emitters == 0)
+	if (Emitters == 0 && default.MissionEmitters)
 	{
 		PlaceEmittersOf(D, Spawner, vect(0, 0, 0), Placed);
 		foreach Placed(A)
@@ -623,7 +625,7 @@ static function int PlaceLights(Actor Spawner, vector Shift)
  * each emitter's material (EW's, which XCOM 2 cannot draw) replaced by an instance of our particle material
  * (ParticleParent, ParticleAddParent: made in the SDK editor) with the emitter's sprite. Returns how many.
  */
-static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed)
+static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed, optional string Filter)
 {
 	local LWX2Emitter E;
 	local ParticleSystem PS;
@@ -634,6 +636,9 @@ static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift
 		return 0;
 	foreach D.Emitters(E)
 	{
+		// (Filter: only templates whose path holds it; "!…": those that do not. A test aid.)
+		if (Filter != "" && (Left(Filter, 1) == "!" ? InStr(E.Template, Mid(Filter, 1)) != INDEX_NONE : InStr(E.Template, Filter) == INDEX_NONE))
+			continue;
 		PS = ParticleSystem(DynamicLoadObject(E.Template, class'ParticleSystem', true));
 		if (PS == none || !ParticleStandins(D, E.Template, PS))
 			continue;

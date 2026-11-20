@@ -42,6 +42,7 @@ function Handle(string Line, out array<string> Out)
 	local Color AmbientColour;
 	local LevelStreaming Streamed;
 	local UIScreen Scr;
+	local array<Actor> Placed;
 
 	ParseStringIntoArray(Line, Args, " ", true);
 	if (Args.Length == 0)
@@ -573,6 +574,11 @@ function Handle(string Line, out array<string> Out)
 		// env [off|on]: XCOM 2's own environment on a mission (its suns, sky lights, height fogs, post-process volumes, not
 		// the EW map's): listed, or switched off or on (a test aid, features/ew-lightmaps.md: EW's atmosphere in its place).
 		EnvLights(Out, Args.Length > 1 ? (Args[1] $ (Args.Length > 2 ? " " $ Args[2] : "") $ (Args.Length > 3 ? " " $ Args[3] : "")) : "");
+		return;
+	case "emitters":
+		// emitters [filter]: the EW map's own emitters placed now (a test aid): those whose template's path holds filter,
+		// "!filter" those that do not.
+		Out.AddItem(class'LWX2EWMapPieces'.static.PlaceEmittersOf(class'LWX2EWMapPieces'.static.Map(), self, vect(0, 0, 0), Placed, Args.Length > 1 ? Args[1] : "") @ "emitters placed");
 		return;
 	case "yaw":
 		// yaw <degrees>: the tactical camera turned as the player's Q/E turn it (X2CameraStack.YawCameras), without keys to
