@@ -50,8 +50,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  mods twice as bright.; 36: EW's emitters and their sprites (Emitters, ParticleLooks).; 37: EW's lens flares (Flares,
  *  FlareLooks).; 38: emitters EW keeps still or off left out, their draw distance kept.; 39: their time dilation.; 40:
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
- *  42: the props' tiling (Tile U) too. */
-export const CONVERTER_VERSION = 42
+ *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks). */
+export const CONVERTER_VERSION = 43
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
