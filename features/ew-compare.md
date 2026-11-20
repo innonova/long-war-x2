@@ -137,3 +137,7 @@ so the fixes are driven by evidence and the person is not needed on every round.
   room. Hiding the environment level's sky dome (`sm_sky_latlong`, the control port's `env sky off`) changed nothing.
   EW's own shell emitters (the globe's projection cones and haze) and its lens flares, placed with the scene, drew as
   large dark translucent panels across the view, so both are left out again. Open.
+- **Round 9 #14, the transfer row's chevrons:** likely a capture-state difference. EW's capture shows the row focused
+  before TRANSFER is pressed (its button reads TRANSFER, the chevron strip is the focused row's highlight); the port's
+  capture is one step later (CANCEL TRANSFER). The rows' states sent to EW's movie match EW's (`AddShip`'s ship state:
+  0 ready, 1 down, as `UIShipList.UpdateData`). To recapture both at the same step before changing anything.
