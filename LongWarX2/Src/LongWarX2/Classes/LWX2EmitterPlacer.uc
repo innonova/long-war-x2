@@ -43,5 +43,5 @@ event Tick(float DeltaTime)
 defaultproperties
 {
 	PerTick = 2
-	Delay = 20
+	Delay = 0
 }

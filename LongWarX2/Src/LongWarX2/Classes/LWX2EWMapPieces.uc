@@ -651,7 +651,9 @@ static function bool AxisLocked(ParticleSystem PS)
 			bColourOverLife = false;
 			foreach LOD.Modules(Module)
 			{
-				if (ParticleModuleOrientationAxisLock(Module) != none)
+				// (Or a mesh emitter with its own materials, ParticleModuleMeshMaterial: EW's, which XCOM 2 has no shaders
+				// for; the terror bar's rats. Found with the camera on each emitter in turn, one session.)
+				if (ParticleModuleOrientationAxisLock(Module) != none || ParticleModuleMeshMaterial(Module) != none)
 					return true;
 				if (ParticleModuleTypeDataMesh(Module) != none)
 					bMesh = true;
