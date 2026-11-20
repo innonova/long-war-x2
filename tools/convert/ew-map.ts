@@ -49,8 +49,9 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  a look's tiling (Tile: EW's MainTile_U).; 34: the tinted copies named without a trailing "_<digits>".; 35: the colour
  *  mods twice as bright.; 36: EW's emitters and their sprites (Emitters, ParticleLooks).; 37: EW's lens flares (Flares,
  *  FlareLooks).; 38: emitters EW keeps still or off left out, their draw distance kept.; 39: their time dilation.; 40:
- *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE). */
-export const CONVERTER_VERSION = 41
+ *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
+ *  42: the props' tiling (Tile U) too. */
+export const CONVERTER_VERSION = 42
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -953,7 +954,8 @@ function lookOf(r: number): Look {
     // translucent parent's, as the road paint's, whose diffuse alpha holds the paint).
     kind: /Foliage|Grass|Veget/i.test(root) ? 'Foliage' : /DifOpc|OpacityMask/i.test(root) || (translucent.has(root) && diffuse) ? 'Masked' : /ALIEN/i.test(root) ? 'Alien' : 'Prop',
     // (How often EW's material tiles its main texture, where it says: the base's cave rock twice, MainTile_U; converter 33.)
-    tile: (() => { const t = scalarParam(r, 'MainTile_U'); return t && t > 0 && t !== 1 ? t : undefined })(),
+    // (And EW's props' Tile U, the grilles' and panels' 2 and 4; converter 42.)
+    tile: (() => { const t = scalarParam(r, 'MainTile_U') ?? scalarParam(r, 'Tile U'); return t && t > 0 && t !== 1 ? t : undefined })(),
   }
 }
 /**
