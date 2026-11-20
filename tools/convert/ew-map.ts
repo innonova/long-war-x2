@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 47
+export const CONVERTER_VERSION = 48
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1030,7 +1030,45 @@ function vectorParam(r: number, name: string, depth = 0): number[] | undefined {
     }
   }
   const parent = tags.find((t) => t.name === 'Parent')
-  return parent ? vectorParam(ref(parent), name, depth + 1) : undefined
+  if (parent) return vectorParam(ref(parent), name, depth + 1)
+  // (The material at the chain's end: its parameter expression's default, where no instance sets it.)
+  const ex = tags.find((t) => t.name === 'Expressions')
+  for (const x of ex ? refs(ex) : []) {
+    if (x <= 0 || exports[x - 1]!.type !== 'MaterialExpressionVectorParameter') continue
+    let xt: Tag[]
+    try {
+      xt = tagsOf(x - 1, 4)
+    } catch {
+      continue
+    }
+    const pn = xt.find((t) => t.name === 'ParameterName')
+    const dvl = xt.find((t) => t.name === 'DefaultValue')
+    if (pn && nameOf(pn) === name && dvl && dvl.value.length >= 16) {
+      const d = new DataView(dvl.value.buffer, dvl.value.byteOffset)
+      return [0, 4, 8, 12].map((o) => d.getFloat32(o, true))
+    }
+  }
+  return undefined
+}
+
+/** The textures a material instance's chain ends on: its material's references (its compiled expressions'), by name. */
+function materialTexture(r: number, test: RegExp, depth = 0): string | undefined {
+  if (r <= 0 || depth > 8) return undefined
+  let tags: Tag[]
+  try {
+    tags = tagsOf(r - 1, 4)
+  } catch {
+    return undefined
+  }
+  const parent = tags.find((t) => t.name === 'Parent')
+  if (parent) return materialTexture(ref(parent), test, depth + 1)
+  const d: Uint8Array = pkg.data(r)
+  const v = new DataView(d.buffer, d.byteOffset, d.byteLength)
+  for (let o = 0; o + 4 <= d.length; o++) {
+    const x = v.getInt32(o, true)
+    if (x > 0 && x <= exports.length && exports[x - 1]!.type === 'Texture2D' && test.test(exports[x - 1]!.fullName)) return exports[x - 1]!.fullName
+  }
+  return undefined
 }
 /** EW's glowing materials (the base's light rings and strips, its consoles' and walls' screens, the custom screens: the
  *  Genetics Lab's tank faces among them): their own kind, with their colour and, for a screen, its picture. */
@@ -1076,6 +1114,12 @@ const personSlots = people.map((p) =>
     if (PERSON_GLOW.test(pathOf(m))) {
       l.kind = 'Glow'
       l.tint = vectorParam(m, 'Color') ?? vectorParam(m, 'TintColor')
+      // (EW's tank glass: its body is the material's olive, wer (its Color, orange, is the rim's), through its froth
+      // texture; the tanks had been flat orange-yellow. Converter 48.)
+      if (/TankGlassMaster/i.test(pathOf(m))) {
+        l.tint = vectorParam(m, 'wer') ?? l.tint
+        l.diffuse = materialTexture(m, /Froth/i) ?? ''
+      }
     }
     return l
   }),

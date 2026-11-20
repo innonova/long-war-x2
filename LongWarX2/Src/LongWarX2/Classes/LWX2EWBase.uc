@@ -516,9 +516,10 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 		// skeletal mesh.)
 		if (S.Glow)
 		{
-			GlowLook.Diffuse = "";
+			// (Its texture where the converter gives one: the Genetics Lab's tank glass, EW's froth in EW's olive.)
+			GlowLook.Diffuse = S.Diffuse;
 			GlowLook.Tint = S.Tint;
-			Slots.AddItem(class'LWX2EWMapPieces'.static.GlowStandin(GlowLook, self));
+			Slots.AddItem(class'LWX2EWMapPieces'.static.GlowStandin(GlowLook, self, S.Diffuse != ""));
 			continue;
 		}
 		Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
