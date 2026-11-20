@@ -218,8 +218,8 @@ function ShowShell()
 		class'LWX2EWMapPieces'.static.PlaceOf(D, self, vect(0, 0, 0), 0, ShellOffset, class'LWX2BasePiece', ShellPlaced, false, true);
 		class'LWX2EWMapPieces'.static.PlaceLightsOf(D, self, ShellOffset, ShellPlaced, true, BaseLightScale, true);
 		PlacePeopleOf("XComShell", ShellOffset, ShellPlaced);
-		// (Its projector beams, haze and lamp flares, as the base's rooms have theirs: round 9's menu.)
-		class'LWX2EWMapPieces'.static.PlaceEmittersOf(D, self, ShellOffset, ShellPlaced);
+		// (Its lamp flares, as the base's rooms have theirs. Not its emitters: its globe's projection cones, drawn with our
+		// particle material, came out as large dark translucent panels across the view.)
 		class'LWX2EWMapPieces'.static.PlaceFlaresOf(D, self, ShellOffset, ShellPlaced);
 		`log("LongWarX2: EW shell scene:" @ ShellPlaced.Length @ "actors placed", , 'LongWarX2');
 		// (Its globe turns as EW's shell matinee turns it: once round, westward, in 200 seconds.)
