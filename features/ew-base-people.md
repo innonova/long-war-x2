@@ -225,4 +225,5 @@ material also pans and layers hexes and a fresnel), and the tanks' caps beige wh
   read `QHH_`), now `HH_`. Faces get a small warm bias for EW's skin material's subsurface red (`SKIN_WARMTH`, converter
   64; Shen read yellow). The eyelash and eye-shade slot (`EyeShadeLash_INST`, no texture of its own) had taken the coat's
   texture, cyan patches on Vahlen's eyelids; it is now a faint dark translucent shading (`EmptySlotParent`, our glass).
-  **Open:** her hair a warmer orange than EW's olive-blonde, and redness around her eyes a little stronger than EW's.
+  Her hair takes EW's olive-blonde (converter 65; 85 86 53 against EW's 84 82 58). **Open:** redness around her
+  eyes a little stronger than EW's.
