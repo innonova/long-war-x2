@@ -235,6 +235,8 @@ console.log(
     "; turned faces yellow-green), the share PeopleEmissive.",
     'PeopleLitParent="LWX2Lightmap.M_EWLightmappedLit"',
     'PeopleEmissive=0.3',
+    "; Only EW's characters (CHH_…): its animated props (craft, pads, robots) keep XCOM 2's staff material.",
+    '+PeopleLitMeshes="CHH_"',
     '',
     "; The Long War hub (UILWEWHub: EW's base, its rooms and Mission Control) as the strategy layer's root in place of the",
     "; Geoscape, where EW's base is converted (the setup does it); false: the Geoscape (features/lw-base-view.md).",

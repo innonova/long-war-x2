@@ -75,6 +75,9 @@ var config string PeopleMaterialParent;
  */
 var config string PeopleLitParent;
 var config float PeopleEmissive;
+/** Only meshes whose path holds one of these (EW's characters, CHH_…): the hangar's craft and pads and engineering's
+ *  robots, placed the same way, came out pale white with it (round 9 #1). */
+var config array<string> PeopleLitMeshes;
 /** Whether they play EW's animations (false: they stand in their reference pose; a test switch). */
 var config bool PeopleAnimate;
 /** A level's people placed at their matinee's first key plus this, where set (features/ew-base-people.md). */
@@ -485,11 +488,25 @@ function PlacePeopleOf(string Level, vector Offset, out array<Actor> Placed)
 	}
 }
 
+/** Whether a person's mesh takes PeopleLitParent (PeopleLitMeshes; none listed: every one). */
+function bool IsLitPerson(string Mesh)
+{
+	local string M;
+
+	if (PeopleLitMeshes.Length == 0)
+		return true;
+	foreach PeopleLitMeshes(M)
+		if (InStr(Mesh, M) != INDEX_NONE)
+			return true;
+	return false;
+}
+
 /** One of a level's people (or animated props) spawned at Offset, posed and animated. */
 function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, vector Offset)
 {
 	local MaterialInstanceConstant LitMIC;
 	local LinearColor LitBias;
+	local bool bLitPerson;
 	local LWX2EWMapPieces.LWX2PersonSlot S;
 	local LWX2EWMapPieces.LWX2Look GlowLook;
 	local LWX2BasePerson A;
@@ -533,8 +550,9 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 			Slots.AddItem(class'LWX2EWMapPieces'.static.GlowStandin(GlowLook, self, S.Diffuse != ""));
 			continue;
 		}
-		Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, PeopleLitParent != "" ? PeopleLitParent : PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
-		if (PeopleLitParent != "" && MaterialInstanceConstant(Slot) != none && S.Diffuse != "")
+		bLitPerson = PeopleLitParent != "" && IsLitPerson(P.Mesh);
+		Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, bLitPerson ? PeopleLitParent : PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
+		if (bLitPerson && MaterialInstanceConstant(Slot) != none && S.Diffuse != "")
 		{
 			LitMIC = MaterialInstanceConstant(Slot);
 			LitMIC.SetTextureParameterValue('LightMap', Texture(DynamicLoadObject("EngineResources.WhiteSquareTexture", class'Texture', true)));
