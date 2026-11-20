@@ -569,6 +569,11 @@ function Handle(string Line, out array<string> Out)
 		// How many placed pieces units see through (EW's windows, foliage, cars), and how many are windows.
 		Out.AddItem(SeeThrough());
 		return;
+	case "env":
+		// env [off|on]: XCOM 2's own environment on a mission (its suns, sky lights, height fogs, post-process volumes, not
+		// the EW map's): listed, or switched off or on (a test aid, features/ew-lightmaps.md: EW's atmosphere in its place).
+		EnvLights(Out, Args.Length > 1 ? Args[1] : "");
+		return;
 	case "yaw":
 		// yaw <degrees>: the tactical camera turned as the player's Q/E turn it (X2CameraStack.YawCameras), without keys to
 		// the window (bringing the game's window forward to send them left its world black).
@@ -1524,6 +1529,44 @@ function string CaptureNearest()
 
 /** In a mission: an alien dropped on the aliens' team a few tiles from the first soldier (a test aid, XCOM 2's cheat). */
 /** The tactical camera to a place on the placed EW map for 20 seconds, fog of war off (a test aid: its lights, its pods). */
+/** XCOM 2's environment lighting on a mission (env): the lights, fogs and post-process volumes not of the EW map. */
+function EnvLights(out array<string> Out, string Mode)
+{
+	local Light L;
+	local Actor A;
+	local PostProcessVolume V;
+
+	foreach AllActors(class'Light', L)
+	{
+		if (DirectionalLight(L) == none && SkyLight(L) == none)
+			continue;
+		if (L.LightComponent != none && Mode != "")
+			L.LightComponent.SetEnabled(Mode == "on" || LWX2SunLight(L) != none || LWX2SkyLight(L) != none);
+		Out.AddItem(PathName(L) @ L.Class.Name @ (L.LightComponent != none ? ("brightness" @ L.LightComponent.Brightness @ "colour" @ L.LightComponent.LightColor.R $ "," $ L.LightComponent.LightColor.G $ "," $ L.LightComponent.LightColor.B @ "on" @ L.LightComponent.bEnabled) : "no component"));
+	}
+	foreach AllActors(class'Actor', A)
+	{
+		if (ExponentialHeightFog(A) != none && ExponentialHeightFog(A).Component != none)
+		{
+			if (Mode != "")
+				ExponentialHeightFog(A).Component.SetEnabled(Mode == "on");
+			Out.AddItem(PathName(A) @ "exponential height fog density" @ ExponentialHeightFog(A).Component.FogDensity @ "on" @ ExponentialHeightFog(A).Component.bEnabled);
+		}
+		if (HeightFog(A) != none && HeightFog(A).Component != none)
+		{
+			if (Mode != "")
+				HeightFog(A).Component.SetEnabled(Mode == "on");
+			Out.AddItem(PathName(A) @ "height fog density" @ HeightFog(A).Component.Density @ "on" @ HeightFog(A).Component.bEnabled);
+		}
+	}
+	foreach AllActors(class'PostProcessVolume', V)
+	{
+		if (Mode != "")
+			V.bEnabled = Mode == "on";
+		Out.AddItem(PathName(V) @ "post-process volume priority" @ V.Priority @ "unbound" @ V.bUnbound @ "on" @ V.bEnabled @ "colorize" @ V.Settings.Scene_Colorize);
+	}
+}
+
 function string Look(array<string> Args)
 {
 	local X2Camera_LookAtLocationTimed Camera;
