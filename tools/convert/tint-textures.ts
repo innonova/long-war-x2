@@ -39,9 +39,10 @@ export function decodeDXT5Alpha(data: Uint8Array, w: number, h: number): Uint8Ar
 }
 
 /** A tinted mip: the diffuse's (DXT1) recoloured with Tint (0-1 RGB) where the mask (DXT5, its alpha) is, the same size. */
-export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1): Uint8Array {
+export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha'): Uint8Array {
   const rgba = decodeDXT1(diffuse, w, h)
-  const a = decodeDXT5Alpha(mask, w, h)
+  // (The mask in a DXT5's alpha (people's Spc_Ems_Ref_Opc), or in a DXT1's blue (vehicles' Spc_Ems_Mod_Ref: its "Mod").)
+  const a = channel === 'blue' ? (() => { const c = decodeDXT1(mask, w, h); return Uint8Array.from({ length: w * h }, (_, k) => c[4 * k + 2]!) })() : decodeDXT5Alpha(mask, w, h)
   const lum = (k: number) => (0.299 * rgba[4 * k]! + 0.587 * rgba[4 * k + 1]! + 0.114 * rgba[4 * k + 2]!) / 255
   let sum = 0
   let weight = 0

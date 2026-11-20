@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 50
+export const CONVERTER_VERSION = 51
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1249,7 +1249,8 @@ const HAIR_SCALE = 2.6
  *  not answer: ambient and light environments changed nothing): every person's diffuse brightened by it, colour-modded
  *  parts included (APPROXIMATION, by eye against EW's captures of the labs' clerks and Vahlen; converter 41). */
 const PEOPLE_SCALE = 1.6
-const tints: { slot: Look; diffuse: number; mask: number; tint: number[]; name: string; scale?: boolean }[] = []
+const tints: { slot: Look; diffuse: number; mask: number; tint: number[]; name: string; scale?: boolean; channel?: 'alpha' | 'blue'; bright?: number }[] = []
+const lookAlso: { slot: Look; name: string }[] = []
 people.forEach((p, k) =>
   p.materialRefs.forEach((m, j) => {
     const l = personSlots[k]![j]
@@ -1277,6 +1278,26 @@ people.forEach((p, k) =>
     tints.push({ slot: l, diffuse: d + 1, mask: mk + 1, tint: cmod, name: `${exports[d]!.name}_LWX2Tint${key}` })
   }),
 )
+// EW's vehicles' paint (converter 51): a car's material sets TintColor (its own per car: the store's red SUV) over the
+// paint its Spc_Ems_Mod_Ref's blue marks; a tinted copy of the diffuse per colour, as the people's (the master's default
+// colour where a car sets none, as EW draws it). They had all been white.
+for (const [r, l] of looks) {
+  if (l.kind !== 'Prop' || !l.diffuse || r <= 0) continue
+  const tex = new Map<string, string>()
+  texturesOf(r, tex)
+  const maskPath = tex.get('Spc_Ems_Mod_Ref')
+  const tint = maskPath ? vectorParam(r, 'TintColor') : undefined
+  if (!tint || !maskPath) continue
+  const d = exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D')
+  const mk = exports.findIndex((e) => e.fullName === maskPath && e.type === 'Texture2D')
+  if (d < 0 || mk < 0) continue
+  const key = tint.slice(0, 3).map((c) => Math.round(c * 100)).join('x')
+  const name = `${exports[d]!.name}_LWX2Tint${key}`
+  // (One copy per diffuse and colour, shared by the looks that ask for it.)
+  const same = tints.find((t) => t.name === name)
+  if (same) { lookAlso.push({ slot: l, name }); continue }
+  tints.push({ slot: l, diffuse: d + 1, mask: mk + 1, tint, name, channel: 'blue', bright: 1 })
+}
 if (tints.length) {
   const made = addTextureCopies(bytes, tints.map((t) => ({ ref: t.diffuse, name: t.name })))
   bytes = made.bytes
@@ -1284,6 +1305,10 @@ if (tints.length) {
   pkg = openPackage(bytes)
   exports = meta.exports as any[]
   for (const t of tints) {
+    const r = made.refs.get(t.name)
+    if (r) t.slot.diffuse = exports[r - 1]!.fullName
+  }
+  for (const t of lookAlso) {
     const r = made.refs.get(t.name)
     if (r) t.slot.diffuse = exports[r - 1]!.fullName
   }
@@ -1306,8 +1331,8 @@ if (screenLooks.length) {
     if (r) l.diffuse = exports[r - 1]!.fullName
   }
 }
-const tintOf = new Map<string, { mask: string; tint: number[]; scale?: boolean }>()
-for (const t of tints) if (/_LWX2(Tint|Bright|Lit)/.test(t.slot.diffuse)) tintOf.set(t.slot.diffuse, { mask: t.mask ? exports[t.mask - 1]!.fullName : '', tint: t.tint, scale: t.scale })
+const tintOf = new Map<string, { mask: string; tint: number[]; scale?: boolean; channel?: 'alpha' | 'blue'; bright?: number }>()
+for (const t of tints) if (/_LWX2(Tint|Bright|Lit)/.test(t.slot.diffuse)) tintOf.set(t.slot.diffuse, { mask: t.mask ? exports[t.mask - 1]!.fullName : '', tint: t.tint, scale: t.scale, channel: t.channel, bright: t.bright })
 const masked = addMaskTextures(bytes, [...cutOut.values()])
 for (const l of looks.values()) if (masked.masks.has(cutOut.get(l.diffuse) ?? 0)) l.mask = l.diffuse + '_LWX2Mask'
 bytes = masked.bytes
@@ -1445,7 +1470,7 @@ const tintMasks = new Set([...tintOf.values()].map((t) => t.mask))
 const dirMips = new Map<string, Uint8Array>()
 if (lmDirs.size || tintMasks.size)
   inlineTextures(bytes.slice(), exports, meta.names, dirname(src), stubAt + stub.length, (e) => !lmDirs.has(e) && !tintMasks.has(e.fullName), (e, format, mip, w, h) => {
-    if (lmDirs.has(e) || format === 'PF_DXT5') dirMips.set(`${e.fullName}:${w}x${h}`, mip.slice())
+    if (lmDirs.has(e) || tintMasks.has(e.fullName) || format === 'PF_DXT5') dirMips.set(`${e.fullName}:${w}x${h}`, mip.slice())
     return undefined
   })
 // The combined atlases made plain textures (Texture2D's class, the lightmap's flags at the end left off): bound to our
@@ -1463,7 +1488,7 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
     if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
     const tm = tinted && format === 'PF_DXT1' ? dirMips.get(`${tinted.mask}:${w}x${h}`) : undefined
-    if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint, PEOPLE_SCALE)
+    if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint, tinted.bright ?? PEOPLE_SCALE, tinted.channel ?? 'alpha')
     const dir = lmPairs.get(e)
     const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${w}x${h}`) : undefined
     return d ? combineLightmapMip(mip, d, w, h) : undefined
