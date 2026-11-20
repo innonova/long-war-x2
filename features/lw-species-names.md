@@ -1,6 +1,6 @@
 ---
 title: Long War's species by their own names on the field
-status: planned
+status: in-progress
 priority: 6
 dependsOn: [lw-aliens, lw-exalt]
 ---
@@ -28,3 +28,22 @@ Templates two species share today (the Sectoid and the Sectoid Commander; the Mu
 so their stats and leaders can also be told apart by template rather than by the `LWX2Species` unit value.
 
 Found while giving EXALT its own bodies (lw-exalt, report of 2026-11-20).
+
+## Report (2026-11-20, first cut)
+
+- **The copies** (`X2Character_LWSpecies`): for each `FightAs` entry, XCOM 2's own creation function for the template
+  it fights as (`X2Character_DefaultCharacters.CreateTemplate_*`, so its config stats, abilities, pawn, loot and AI are
+  that template's), renamed `LWX2Char_<species>` and given EW's name. Made as XCOM 2 makes its own, per difficulty.
+- **The names** (`LWX2Species.Names`): EW's `m_aCharacterName[eChar_…]` by `ECharacter` number, written into the mod's
+  `LongWarX2.int` by the setup (`makeSpeciesWords`); Long War's text stays on the player's machine.
+- **Following the copies:** the missions spawn each species as its copy (`LWMissionSquads.TemplateFor`); the aliens'
+  passives go on the copies too (`LWAlienStats.AddAbilities`); the EW bodies find their template through the copy
+  (`LWX2EWBodies.PickFor`, `AddAnimSets`: a species' body on its copy only, which also keeps EXALT's animations off
+  XCOM 2's own ADVENT).
+- `Codex` in `FightAs` is not one of XCOM 2's template names (the Codex is `Cyberus`); the Outsider's copy is made
+  from `Cyberus`.
+
+### Left open
+
+- Seen in the game: not yet (built and checked next, after the release install on wingpu).
+
