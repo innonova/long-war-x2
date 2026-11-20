@@ -236,7 +236,7 @@ the rest come beside them at the battle's start, as those whose pods found no ro
 
 - The covert missions' and the raid's own objectives and maps (EW's EXALT HQ is a skyscraper):
   XCOM 2's guerrilla ops stand in.
-- EXALT's soldiers stand in as ADVENT's (their bodies are not EW's EXALT yet).
+- ~~EXALT's soldiers stand in as ADVENT's (their bodies are not EW's EXALT yet).~~ Done 2026-11-20: EW's bodies (report below).
 
 ## Report (2026-11-16, step 3 of the council missions' plan: EXALT's covert extraction)
 
@@ -318,3 +318,36 @@ pods. Its objective is still "kill all"; EW's level has its own scripted waves, 
 
 EXALT's HQ level has no wave system and its Kismet is narration and holograms only (read with `ew-kismet.ts`): the raid is
 "kill every EXALT operative", which is what the port plays. STATUS no longer lists scripted waves for it.
+
+## Report (2026-11-20, EXALT's own bodies)
+
+EXALT's eight soldiers now fight in EW's EXALT bodies, drawn from the player's own EW install by the setup's unit
+conversion (`tools/convert/ew-units.ts`), as the aliens' are (`lw-ew-units`):
+- **Which:** Long War's species 24-31 (Operative, Sniper, Heavy, Medic and their elites) on the ADVENT templates they
+  fight as (`FightAs`), each with its EW package's mesh (`Unit_Exalt<kind>_SF`: `SM_ExaltSoldier<kind>`,
+  `SM_ExaltElite<kind>`). The body is picked by species, so XCOM 2's own spawns of those templates keep ADVENT's.
+- **Looks:** EW's EXALT meshes have two or three material slots (the suit, the head and arms, the kit), each with its own
+  textures. The setup reads each slot's Diffuse and Normal from the mesh's materials (through their parents) and writes
+  them as `Slots`. The mod gives each slot its own stand-in material (`LWX2EWBodies.SlotStandin`).
+- **Animations:** EW's soldier animations (`AS_SoldierRifle`) under XCOM 2's names: ADVENT's pawns play the human
+  soldier's sets, whose names are now in `x2-anim-names.ts` (`sdk-anim-names.ts` reads several SDK packages). 304
+  copies (310 for the Stun Lancer's); about a hundred rare actions (photobooth poses, Chosen effects, looting) fall
+  back to the idle, as they do for the aliens. EW's animations only (`OwnAnimsOnly`), as for EW's MECs.
+- **Its weapon:** XCOM 2's ADVENT weapon is kept in its hands (EW's EXALT carried EW's ballistic guns; Long War
+  gives them ADVENT's gear here).
+
+**Fixed on the way:** EW's Outsider package carries EW's soldier AnimSet at the same object path, without the copies,
+and whichever loaded first served every body: EXALT stood in its reference pose. Each EXALT AnimSet is now renamed in
+its converted package (`AS_SoldierRifle_LWX2<kind>`, `renameAnims`' `setName`).
+
+**Checked on wingpu** (dev build, a campaign's first mission, `spawn` with species 24, 26, 31): EW's meshes on the
+three, each slot textured (the Operative's white shirt, tie and harness; the elite Medic's grey suit and kit),
+standing and in cover animated with the ADVENT rifle in their hands, whole bodies; one shot dead, the death played.
+
+### Left open
+
+- Their names on the field are XCOM 2's templates' ("ADVENT Trooper was killed!"), as for every Long War species
+  fighting under an XCOM 2 template.
+- Not yet seen: their move, their shot, their hunker, a grenade; nor the setup on a fresh install (the dev build was
+  converted by hand on wingpu).
+
