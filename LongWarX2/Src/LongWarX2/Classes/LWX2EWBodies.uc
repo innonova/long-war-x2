@@ -5,6 +5,13 @@
 // written by the setup: tools/convert/ew-units.ts); a body whose package is not there is left out.
 class LWX2EWBodies extends Object config(LWX2EWUnits);
 
+/** One of a body's material slots: its own diffuse and normal (EXALT's soldiers: body, head and arms, kit). */
+struct LWX2BodySlot
+{
+	var string Diffuse;
+	var string Normal;
+};
+
 struct LWX2Body
 {
 	var name Template;
@@ -23,6 +30,8 @@ struct LWX2Body
 	/** EW's animations only, XCOM 2's pawn's own taken off: where they share bone names with EW's skeleton but not its
 	 *  poses (EW's MECs on the ADVENT MEC's pawn came out torn into spikes with both). */
 	var bool OwnAnimsOnly;
+	/** Each material slot's textures, where they differ (else Diffuse and Normal on every slot). */
+	var array<LWX2BodySlot> Slots;
 };
 
 var config array<LWX2Body> Bodies;
@@ -154,7 +163,7 @@ static function name ArmorOf(XComGameState_Unit Unit)
 static function bool ApplyBody(XComUnitPawn Pawn, LWX2Body B, optional out int AnimsChanged)
 {
 	local SkeletalMesh Mesh;
-	local MaterialInterface Material;
+	local MaterialInterface Material, Slot;
 	local int i;
 
 	// Given already (asked every two seconds in a mission: a load each time would read the package again).
@@ -171,9 +180,15 @@ static function bool ApplyBody(XComUnitPawn Pawn, LWX2Body B, optional out int A
 		return false;
 	Pawn.Mesh.SetSkeletalMesh(Mesh);
 	Material = Standin(B);
-	if (Material != none)
-		for (i = 0; i < Mesh.Materials.Length; i++)
+	for (i = 0; i < Mesh.Materials.Length; i++)
+	{
+		// A slot of its own textures (EXALT's head and arms, its kit) its own material; the others the body's.
+		Slot = i < B.Slots.Length ? SlotStandin(B, i) : none;
+		if (Slot != none)
+			Pawn.Mesh.SetMaterial(i, Slot);
+		else if (Material != none)
 			Pawn.Mesh.SetMaterial(i, Material);
+	}
 	Pawn.UpdateAnimations();
 	QuietControls(Pawn);
 	FixMasks(Pawn);
@@ -454,6 +469,18 @@ static function Scale(XComGameState_Unit Unit)
 	S = FClamp(1.0 + V.fValue / 100.0, 0.2, 10.0);
 	if (Pawn != none && Pawn.Mesh != none && Abs(Pawn.Mesh.Scale - S) > 0.001)
 		Pawn.Mesh.SetScale(S);
+}
+
+/** The stand-in for one of a body's slots, from that slot's textures (none when they are the body's or missing). */
+static function MaterialInterface SlotStandin(LWX2Body B, int i)
+{
+	local LWX2Body Look;
+
+	if (B.Slots[i].Diffuse == "" || B.Slots[i].Diffuse == B.Diffuse)
+		return none;
+	Look.Diffuse = B.Slots[i].Diffuse;
+	Look.Normal = B.Slots[i].Normal;
+	return Standin(Look);
 }
 
 /** An instance of MaterialParent with the body's diffuse and normal maps (none when the parent or a map is missing). */

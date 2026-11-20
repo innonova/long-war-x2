@@ -8,6 +8,9 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
+import { openPackage } from '@innonova/upkit/package'
+import { Reader } from '@innonova/upkit/bytes'
+import { readTags } from '@innonova/upkit/objects'
 import { convertPackage } from './ew-package.ts'
 import { ABILITY_ANIMS, renameAnims } from './ew-unit-anims.ts'
 import { X2_ANIM_NAMES } from './x2-anim-names.ts'
@@ -23,7 +26,9 @@ export interface EWWeapon { pkg: string; mesh: string; diffuse: RegExp; normal: 
 /** setsPkg: the package holding its AnimSet, where it is not the unit's (EW's MECs keep theirs with the MEC Minigun); armor:
  *  the armour that brings this body (a MEC's suit), for a template with several. */
 /** ownAnimsOnly: the pawn plays EW's animations only (LWX2EWBodies.OwnAnimsOnly). */
-export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean; animsAs?: string; setsPkg?: string; armor?: string; ownAnimsOnly?: boolean }
+/** keepWeapon: XCOM 2's weapon kept in its hands (no EW weapon for it). slots: its mesh's material slots each with its own diffuse and normal (EXALT's soldiers: body, head and arms, kit), read
+ *  from the mesh's materials. */
+export interface EWUnit { template: string; species?: number; pkg: string; mesh: string; sets: string[]; diffuse: RegExp; normal: RegExp; weapon?: EWWeapon; reencode?: boolean; animsAs?: string; setsPkg?: string; armor?: string; ownAnimsOnly?: boolean; slots?: boolean; keepWeapon?: boolean }
 const SHIV_MINIGUN: EWWeapon = { pkg: 'Weapon_ShivMinigun_SF', mesh: 'SM_ShivGatGun', diffuse: /^ShivGatlingGun_DIF$/, normal: /^ShivGatlingGun_NRM$/ }
 const PLASMA_LIGHT: EWWeapon = { pkg: 'Weapon_PlasmaRifle_ThinMan_SF', mesh: 'SM_LightPlasmaRifle', diffuse: /^LightAssaultRiflePlasma_DIF$/, normal: /^LightAssaultRiflePlasma_NRM$/ }
 export const EW_UNITS: EWUnit[] = [
@@ -50,6 +55,14 @@ export const EW_UNITS: EWUnit[] = [
   { template: 'AdvMEC_M1', pkg: 'GameUnit_XComSectopodDrone_SF', mesh: 'SM_Drone', sets: ['AS_DroneDefault'], diffuse: /^Drone_DIF1$/, normal: /^Drone_NRM1$/ },
   { template: 'AdvMEC_M2', pkg: 'GameUnit_XComMechtoid_SF', mesh: 'SM_Mechtoid', sets: ['AS_Mechtoid'], diffuse: /^Mechtoid_DIF/, normal: /^Mechtoid_NRM/ },
   // Long War's SHIVs (features/lw-shivs-mecs.md): the mod's own templates, on the ADVENT MEC's pawn.
+  // EXALT's soldiers (features/lw-exalt.md): Long War's species 24-31, fighting as ADVENT's templates (XComLWStrategy.ini,
+  // FightAs), each in its EW body, EW's soldier animations (in its own package) alone; their gear XCOM 2's ADVENT's.
+  // Species given, so ADVENT's own (XCOM 2's spawns of these templates) keep theirs.
+  ...([['AdvTrooperM1', 'Operative', 'SM_ExaltSoldierOperative'], ['AdvCaptainM1', 'Sniper', 'SM_ExaltSoldierSniper'], ['AdvShieldBearerM2', 'Heavy', 'SM_ExaltSoldierHeavy'],
+    ['AdvStunLancerM1', 'Medic', 'SM_ExaltSoldierMedic'], ['AdvTrooperM3', 'EliteOperative', 'SM_ExaltEliteOperative'], ['AdvCaptainM3', 'EliteSniper', 'SM_ExaltEliteSniper'],
+    ['AdvShieldBearerM3', 'EliteHeavy', 'SM_ExaltEliteHeavy'], ['AdvStunLancerM3', 'EliteMedic', 'SM_ExaltEliteMedic']] as const).map(([template, kind, mesh], k): EWUnit => ({
+    template, species: 24 + k, pkg: `Unit_Exalt${kind}_SF`, mesh, sets: ['AS_SoldierRifle'], ownAnimsOnly: true, slots: true, keepWeapon: true, diffuse: /^ExaltSoldiers_DIF$/, normal: /^ExaltSoldiers_NRM$/,
+  })),
   { template: 'LWSHIV', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank_SF', mesh: 'SM_Shiv_L1', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv1Shiv_DIF$/, normal: /^Lv1Shiv_NRM$/, weapon: SHIV_MINIGUN },
   { template: 'LWSHIV_Alloy', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank2_SF', mesh: 'SM_Shiv_L2', sets: ['AS_Lv1ShivMiniDefault'], diffuse: /^Lv2Shiv_DIF$/, normal: /^Lv2Shiv_NRM$/, weapon: SHIV_MINIGUN },
   { template: 'LWSHIV_Hover', animsAs: 'AdvMEC_M1', pkg: 'Unit_XComTank3_SF', mesh: 'SM_Lv3Shiv', sets: ['Default', 'Mini'], diffuse: /^VEH_Lv3Shiv_DIF$/, normal: /^VEH_Lv3Shiv_NRM$/, weapon: SHIV_MINIGUN },
@@ -81,16 +94,61 @@ export const EW_MEC_SUITS: EWUnit[] = [
 ]
 
 /** An EW unit package's objects by name: its mesh's, its sets' and its textures' full paths (forced exports). */
-function find(bytes: Uint8Array, u: EWUnit): { mesh: string; sets: string[]; diffuse: string; normal: string } {
+function find(bytes: Uint8Array, u: EWUnit): { mesh: string; sets: string[]; diffuse: string; normal: string; slots: { diffuse: string; normal: string }[] } {
   const meta: any = new Package(bytes)
   const byType = (type: string, test: (name: string) => boolean) =>
     meta.exports.find((e: any) => e.type === type && test(e.fullName.split('.').pop()))?.fullName ?? ''
+  const mesh = byType('SkeletalMesh', (n) => n === u.mesh)
   return {
-    mesh: byType('SkeletalMesh', (n) => n === u.mesh),
+    mesh,
     sets: u.sets.map((s) => byType('AnimSet', (n) => n === s)).filter(Boolean),
     diffuse: byType('Texture2D', (n) => u.diffuse.test(n)),
     normal: byType('Texture2D', (n) => u.normal.test(n)),
+    slots: u.slots && mesh ? slotsOf(bytes, meta, mesh) : [],
   }
+}
+
+/** A skeletal mesh's material slots' diffuse and normal (each material's Diffuse and Normal parameters, its own or its
+ *  parents'): after the mesh's properties, its bounds (28 bytes), then the materials' count and references. */
+function slotsOf(bytes: Uint8Array, meta: any, mesh: string): { diffuse: string; normal: string }[] {
+  const pkg: any = openPackage(bytes)
+  const dv = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
+  const path = (r: number) => (r > 0 ? meta.exports[r - 1].fullName : r < 0 ? meta.imports[-r - 1].fullName : '')
+  const i = meta.exports.findIndex((e: any) => e.fullName === mesh)
+  const d: Uint8Array = pkg.data(i + 1)
+  const r = new Reader(d.subarray(4))
+  readTags(r, pkg)
+  const o = 4 + (r as unknown as { o: number }).o + 28
+  const n = dv(d).getInt32(o, true)
+  const out: { diffuse: string; normal: string }[] = []
+  for (let k = 0; k < n && k < 16; k++) {
+    const tex = new Map<string, string>()
+    let cur = dv(d).getInt32(o + 4 + 4 * k, true)
+    for (let depth = 0; depth < 6 && cur > 0; depth++) {
+      let t: any[]
+      try {
+        t = readTags(new Reader(pkg.data(cur).subarray(4)), pkg)
+      } catch {
+        break
+      }
+      const tp = t.find((x) => x.name === 'TextureParameterValues')
+      if (tp) {
+        const c = dv(tp.value).getInt32(0, true)
+        const rr = new Reader(tp.value.subarray(4))
+        for (let j = 0; j < c; j++) {
+          const st: any[] = readTags(rr, pkg)
+          const pn = st.find((x) => x.name === 'ParameterName')
+          const pv = st.find((x) => x.name === 'ParameterValue')
+          const name = pn ? meta.names[dv(pn.value).getInt32(0, true)] : ''
+          if (pv && name && !tex.has(name)) tex.set(name, path(dv(pv.value).getInt32(0, true)))
+        }
+      }
+      const p = t.find((x) => x.name === 'Parent')
+      cur = p ? dv(p.value).getInt32(0, true) : 0
+    }
+    out.push({ diffuse: tex.get('Diffuse') ?? '', normal: tex.get('Normal') ?? '' })
+  }
+  return out
 }
 
 /**
@@ -144,7 +202,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
       const leaf = (p: string, pkg = u.pkg) => (p ? `${pkg}.${p.split('.').pop()}` : '')
       // Its weapon: EW's, converted as it is (textures inlined), in place of the XCOM 2 weapon's mesh; a species with none in
       // its hands (the Drone, the Seeker, the Cyberdisc …) has the XCOM 2 weapon hidden (WeaponMesh="none").
-      let weapon = ', WeaponMesh="none"'
+      let weapon = u.keepWeapon ? '' : ', WeaponMesh="none"'
       const w = u.weapon
       if (w && existsSync(join(cooked, `${w.pkg}.upk`))) {
         const wb = decompressPackage(new Uint8Array(readFileSync(join(cooked, `${w.pkg}.upk`))))
@@ -154,7 +212,7 @@ export function convertUnits(cooked: string, mod: string, content: string, say: 
           weapon = `, WeaponMesh="${leaf(wf.mesh, w.pkg)}", WeaponDiffuse="${leaf(wf.diffuse, w.pkg)}", WeaponNormal="${leaf(wf.normal, w.pkg)}"`
         }
       }
-      lines.push(`+Bodies=(Template=${u.template},${u.species ? ` Species=${u.species},` : ''}${u.armor ? ` Armor=${u.armor},` : ''}${u.ownAnimsOnly ? ' OwnAnimsOnly=true,' : ''} Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!, setsPkg)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon})`)
+      lines.push(`+Bodies=(Template=${u.template},${u.species ? ` Species=${u.species},` : ''}${u.armor ? ` Armor=${u.armor},` : ''}${u.ownAnimsOnly ? ' OwnAnimsOnly=true,' : ''} Mesh="${leaf(found.mesh)}", AnimSet="${leaf(found.sets[0]!, setsPkg)}", Diffuse="${leaf(found.diffuse)}", Normal="${leaf(found.normal)}"${weapon}${found.slots.length ? `, Slots=(${found.slots.map((sl) => `(Diffuse="${leaf(sl.diffuse)}", Normal="${leaf(sl.normal)}")`).join(',')})` : ''})`)
       say(`${u.template} as Enemy Within's (${u.pkg}): ${report.split('; ').slice(-1)[0]}`)
       n++
     } catch (e: any) {
