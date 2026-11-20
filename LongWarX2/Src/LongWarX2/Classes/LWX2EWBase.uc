@@ -78,6 +78,10 @@ var config float PeopleEmissive;
 /** Only meshes whose path holds one of these (EW's characters, CHH_…): the hangar's craft and pads and engineering's
  *  robots, placed the same way, came out pale white with it (round 9 #1). */
 var config array<string> PeopleLitMeshes;
+/** A person's slot without a texture (eye lashes, eye shade): our translucent material in a faint dark tint. */
+var config string EmptySlotParent;
+var config LinearColor EmptySlotTint;
+var config float EmptySlotOpacity;
 /** Whether they play EW's animations (false: they stand in their reference pose; a test switch). */
 var config bool PeopleAnimate;
 /** A level's people placed at their matinee's first key plus this, where set (features/ew-base-people.md). */
@@ -508,6 +512,7 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 	local MaterialInstanceConstant LitMIC;
 	local LinearColor LitBias;
 	local bool bLitPerson;
+	local MaterialInstanceConstant Shade;
 	local LWX2EWMapPieces.LWX2PersonSlot S;
 	local LWX2EWMapPieces.LWX2Look GlowLook;
 	local LWX2BasePerson A;
@@ -550,6 +555,17 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 			GlowLook.Tint = S.Tint;
 			Slots.AddItem(class'LWX2EWMapPieces'.static.GlowStandin(GlowLook, self, S.Diffuse != ""));
 			continue;
+		}
+		// (A slot without a texture, the eye lashes and eye shade: EW's is a faint dark translucent shading; with the body's
+		// stand-in it drew the coat's texture, cyan patches on Vahlen's eyelids.)
+		if (S.Diffuse == "" && EmptySlotParent != "")
+		{
+			Shade = MaterialInstanceConstant(class'LWX2BodyShade'.static.Make(EmptySlotParent, EmptySlotTint, EmptySlotOpacity, self));
+			if (Shade != none)
+			{
+				Slots.AddItem(Shade);
+				continue;
+			}
 		}
 		bLitPerson = PeopleLitParent != "" && IsLitPerson(P.Mesh);
 		Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, bLitPerson ? PeopleLitParent : PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
