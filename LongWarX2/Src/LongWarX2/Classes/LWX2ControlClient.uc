@@ -577,7 +577,7 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem("ERR no tactical camera");
 			return;
 		}
-		XComCamera(GetALocalPlayerController().PlayerCamera).CameraStack.YawCameras(Args.Length > 1 ? float(Args[1]) : 90);
+		XComCamera(GetALocalPlayerController().PlayerCamera).CameraStack.YawCameras(Args.Length > 1 ? float(Args[1]) : 90.0);
 		Out.AddItem("ok yawed" @ (Args.Length > 1 ? Args[1] : "90"));
 		return;
 	case "look":
