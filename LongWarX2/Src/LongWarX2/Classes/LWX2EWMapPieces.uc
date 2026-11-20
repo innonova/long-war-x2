@@ -625,6 +625,33 @@ static function int PlaceLights(Actor Spawner, vector Shift)
  * each emitter's material (EW's, which XCOM 2 cannot draw) replaced by an instance of our particle material
  * (ParticleParent, ParticleAddParent: made in the SDK editor) with the emitter's sprite. Returns how many.
  */
+/**
+ * Whether a particle system has an emitter whose sprites lock their orientation to an axis (ParticleModuleOrientationAxisLock):
+ * XCOM 2 died a second after drawing one (the terror bar's P_Fire_Area_Cheap; found placing the bar's emitters by kind
+ * and template, the only one of its 87 with the module). Left out.
+ */
+static function bool AxisLocked(ParticleSystem PS)
+{
+	local ParticleEmitter Em;
+	local ParticleLODLevel LOD;
+	local ParticleModule Module;
+
+	foreach PS.Emitters(Em)
+	{
+		if (Em == none)
+			continue;
+		foreach Em.LODLevels(LOD)
+		{
+			if (LOD == none)
+				continue;
+			foreach LOD.Modules(Module)
+				if (ParticleModuleOrientationAxisLock(Module) != none)
+					return true;
+		}
+	}
+	return false;
+}
+
 static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed, optional string Filter)
 {
 	local LWX2Emitter E;
@@ -640,7 +667,7 @@ static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift
 		if (Filter != "" && (Left(Filter, 1) == "!" ? InStr(E.Template, Mid(Filter, 1)) != INDEX_NONE : InStr(E.Template, Filter) == INDEX_NONE))
 			continue;
 		PS = ParticleSystem(DynamicLoadObject(E.Template, class'ParticleSystem', true));
-		if (PS == none || !ParticleStandins(D, E.Template, PS))
+		if (PS == none || AxisLocked(PS) || !ParticleStandins(D, E.Template, PS))
 			continue;
 		A = Spawner.Spawn(class'EmitterSpawnable', Spawner, , E.Loc + Shift, E.Rot);
 		if (A == none)
