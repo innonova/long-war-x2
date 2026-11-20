@@ -601,12 +601,12 @@ static function string UseEWAtmosphere(Actor Spawner)
 	foreach Spawner.AllActors(class'EmitterSpawnable', Em)
 		if (Em.Tag == 'LWX2EWMission')
 			Emitters++;
+	// (A few each tick, LWX2EmitterPlacer: the terror bar's 76 started in one frame killed the game a second later; one
+	// by one, all of them, viewed, did not.)
 	if (Emitters == 0 && default.MissionEmitters)
 	{
-		PlaceEmittersOf(D, Spawner, vect(0, 0, 0), Placed);
-		foreach Placed(A)
-			A.Tag = 'LWX2EWMission';
-		Emitters = Placed.Length;
+		Spawner.Spawn(class'LWX2EmitterPlacer').Begin(D);
+		Emitters = D.Emitters.Length;
 	}
 	return "EW's atmosphere: XCOM 2's" @ Off @ "suns, fog and environment light off, EW's" @ Suns @ "sun(s) placed;" $ FogNote $ ";" @ Emitters @ "of EW's" @ D.Emitters.Length @ "emitters";
 }
@@ -665,17 +665,21 @@ static function bool AxisLocked(ParticleSystem PS)
 	return false;
 }
 
-static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed, optional string Filter)
+static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed, optional string Filter,
+	optional int From, optional int Most)
 {
 	local LWX2Emitter E;
 	local ParticleSystem PS;
 	local EmitterSpawnable A;
-	local int n;
+	local int n, Index;
 
 	if (default.ParticleParent == "" || D == none)
 		return 0;
-	foreach D.Emitters(E)
+	foreach D.Emitters(E, Index)
 	{
+		// (From, Most: only that stretch of the list, so many are not started in one frame.)
+		if (Index < From || (Most > 0 && Index >= From + Most))
+			continue;
 		// (Filter: only templates whose path holds it; "!…": those that do not. A test aid.)
 		if (Filter != "" && (Left(Filter, 1) == "!" ? InStr(E.Template, Mid(Filter, 1)) != INDEX_NONE : InStr(E.Template, Filter) == INDEX_NONE))
 			continue;
