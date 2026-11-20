@@ -118,7 +118,7 @@ console.log(
     "+LookOverrides=(Material=\"XComShell.QX_Globe.M_Globe_Holo\", Diffuse=\"FX_Globe.T_Earth_Holo\", Load=\"EWSitRoomMap.TheWorld\")",
     "; (And the Situation Room's wall map, EW's bare map behind its 3D screen, SituationRm_WorldMapPlane: what the wall shows",
     '; while another 3D screen is up, as the soldier list, the hire dialog, building facilities.)',
-    "+LookOverrides=(Material=\"Static_SituationRoom.QX_Globe.M_Globe_Holo\", Diffuse=\"Static_SituationRoom.QX_Globe.T_Earth_Holo_LWX2Wall\", Tint=(R=1.6,G=1.6,B=1.6,A=1))",
+    "+LookOverrides=(Material=\"Static_SituationRoom.QX_Globe.M_Globe_Holo\", Diffuse=\"Static_SituationRoom.QX_Globe.T_Earth_Holo_LWX2Wall\", Tint=(R=2.4,G=2.4,B=2.4,A=1))",
     "; The kinds cut out by the diffuse's alpha (Masked: EW's tree cards, signs, fences) take the diffuse as their Masks too:",
     "; XCOM 2's masked parents read the opacity from one of the two, and the white placeholder made them solid.",
     'DiffuseMasks="Foliage,Masked"',
