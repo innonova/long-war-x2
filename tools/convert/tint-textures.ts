@@ -81,7 +81,13 @@ export function scaleMip(mip: Uint8Array, format: string, k: number): Uint8Array
   const colour = new Uint8Array(blocks * 8)
   for (let b = 0; b < blocks; b++) colour.set(mip.subarray(block * b + block - 8, block * b + block), 8 * b)
   const rgba = decodeDXT1(colour, w, 4 * blocks)
-  for (let p = 0; p < rgba.length; p += 4) for (let c = 0; c < 3; c++) rgba[p + c] = Math.min(255, Math.round(rgba[p + c]! * k))
+  // (Each texel's hue kept: where its brightest channel would pass 255, all three scaled by as much as that one can take.
+  // Clipped channel by channel, skin's red saturated first and the people drew yellow-green; converter 53.)
+  for (let p = 0; p < rgba.length; p += 4) {
+    const m = Math.max(rgba[p]!, rgba[p + 1]!, rgba[p + 2]!)
+    const kk = m > 0 ? Math.min(k, 255 / m) : k
+    for (let c = 0; c < 3; c++) rgba[p + c] = Math.min(255, Math.round(rgba[p + c]! * kk))
+  }
   const enc = encodeDXT1(rgba, w, 4 * blocks)
   if (block === 8) return enc
   const out = mip.slice()
