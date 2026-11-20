@@ -125,6 +125,8 @@ struct LWX2LookOverride
 	var string Diffuse;
 	/** An object of the package the texture is in, loaded first (the package is loaded with it). */
 	var string Load;
+	/** Its glow's colour, where it should differ from UnlitTint (the Situation Room's wall map, brighter than the globe). */
+	var LinearColor Tint;
 };
 var config array<LWX2LookOverride> LookOverrides;
 var config string AlienParent;
@@ -995,7 +997,7 @@ static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, option
 	T = Texture(DynamicLoadObject((L.Diffuse != "" && (!bOurs || bKeepDiffuse || InStr(L.Diffuse, "_LWX2White") != INDEX_NONE)) ? L.Diffuse : "EngineResources.WhiteSquareTexture", class'Texture', true));
 	if (T != none)
 		MIC.SetTextureParameterValue('Diffuse', T);
-	C = bKeepDiffuse ? default.UnlitTint : ((L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.GlowDefault);
+	C = bKeepDiffuse ? ((L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.UnlitTint) : ((L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.GlowDefault);
 	C.R *= default.GlowScale; C.G *= default.GlowScale; C.B *= default.GlowScale; C.A = 1;
 	if (bOurs)
 	{
@@ -1039,6 +1041,7 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 			if (default.LookOverrides[i].Load != "")
 				DynamicLoadObject(default.LookOverrides[i].Load, class'Object', true);
 			L.Diffuse = default.LookOverrides[i].Diffuse;
+			L.Tint = default.LookOverrides[i].Tint;
 		}
 		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : ((L.Kind == 'Masked' && default.MaskedParent != "") ? default.MaskedParent : default.PropParent));
 	}
