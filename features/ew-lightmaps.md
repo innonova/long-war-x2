@@ -214,4 +214,6 @@ the people, the tint taken as a linear colour made sRGB (EW's red SUV, 0.49 0.08
 195 88 57). A car without its own colour takes the master's default, as in EW. Seen on the store
 (`logs/compare/lm-ew/pair-store-cars.png`). The people's colour mods use ×2 for the same conversion, by eye; to be
 looked at again with this.
+- Fog tried live on the terror bar (density 0.015 to 1.5, `set`): it only touches the far distance at the port's camera
+  height; it does not give EW's grey haze. The terror bar stays pinker than EW's grey-brown; not pursued further for now.
 
