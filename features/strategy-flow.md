@@ -625,5 +625,7 @@ remains is how EW's 3D movie maps its 1280 x 720 stage onto its render target (E
   875 against 795), where EW's capture shows them in the summary's place. EW's promote camera and panel both hang on a
   rig (`UICameraRig_SoldierPromote`), the camera 133 to the side of the panel's centre (the summary's 13): EW looks at
   that panel from aside, which may be what keeps its panels in view. `sumvar <path> [value]` reads and sets the
-  summary's or promotion's movie variables. Open.
+  summary's or promotion's movie variables. **Done:** the promotion's root 35 left of the stage's centre and its two
+  soldier panels at the summary's places (`UILWEWSoldierPromotion.Centre`), measured against EW's capture: the tree, the
+  header and the stats now stand where EW's do, every border closed.
 

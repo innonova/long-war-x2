@@ -38,6 +38,22 @@ static function Open(XComHQPresentationLayer HQPres, StateObjectReference Unit)
 	Push3D(HQPres, S);
 }
 
+/** As EW's capture shows it: its movie places the tree 35 and the soldier's panels about 80 further right than EW draws
+ *  them on its panel (EW looks at that panel from aside, its camera 133 off the panel's centre; the port's view lands
+ *  elsewhere), so their right edges ran off the stage. The root at EW's place, the panels where the summary has them,
+ *  measured against EW's capture (features/strategy-flow.md). */
+function Centre()
+{
+	local float W;
+
+	W = Movie.GetVariableNumber("Stage.width");
+	if (W <= 0)
+		return;
+	Movie.SetVariableNumber(MCPath $ "._x", W / 2 - 35);
+	Movie.SetVariableNumber(MCPath $ ".soldierInfoMC._x", 612.75);
+	Movie.SetVariableNumber(MCPath $ ".soldierStatsMC._x", 795);
+}
+
 /** EW's InitializeTree, UpdateAbilityData, ShowAbilityTree; the soldier's panels. */
 function Fill()
 {
