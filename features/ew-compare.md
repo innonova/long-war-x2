@@ -141,3 +141,8 @@ so the fixes are driven by evidence and the person is not needed on every round.
   before TRANSFER is pressed (its button reads TRANSFER, the chevron strip is the focused row's highlight); the port's
   capture is one step later (CANCEL TRANSFER). The rows' states sent to EW's movie match EW's (`AddShip`'s ship state:
   0 ready, 1 down, as `UIShipList.UpdateData`). To recapture both at the same step before changing anything.
+- **Round 9 #11, the Memorial's glasses** (fixed): the coffee tables' second slot is left by EW to the mesh's own glass
+  material, which the converted mesh does not carry, so XCOM 2 drew it with its default, white. Such slots are now
+  given our glass pane by config (`GlassSlots`: `CoffeeTable_B:1`, `QabBeaker_A:1`). Other pieces with an empty slot
+  (concrete piles, chairs, banners) are left as they are: not glass. Also fixed after round 9: the Repair Bay's
+  freezer mist left out (`SkipEmitters`, #8); Vahlen's eye shade and hair.
