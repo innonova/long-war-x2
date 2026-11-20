@@ -99,6 +99,8 @@ var config string ParticleParent, ParticleAddParent;
 var config float ParticleOpacity, ParticleAddOpacity;
 /** The draw distance of EW's emitters that set none (EW's others: 6000). */
 var config float EmitterMaxDraw;
+/** EW's emitters left out, by a part of their template's path (the Repair Bay's freezer mist, not seen in EW's view of it). */
+var config array<string> SkipEmitters;
 /** EW's lens flares' stand-in material (additive, ours) and how strong. */
 var config string FlareParent;
 var config float FlareOpacity;
@@ -632,6 +634,16 @@ static function int PlaceLights(Actor Spawner, vector Shift)
  * P_Fire_Area_Cheap (both), P_Rats_Scrambling and P_Trash_Blowing_Constant_Burning (the second) each crashed the game
  * within a second, alone; its other fires, smoke and sparks did not. Left out.
  */
+static function bool Skipped(string Template)
+{
+	local string S;
+
+	foreach default.SkipEmitters(S)
+		if (InStr(Template, S) != INDEX_NONE)
+			return true;
+	return false;
+}
+
 static function bool AxisLocked(ParticleSystem PS)
 {
 	local ParticleEmitter Em;
@@ -684,6 +696,8 @@ static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift
 			continue;
 		// (Filter: only templates whose path holds it; "!…": those that do not. A test aid.)
 		if (Filter != "" && (Left(Filter, 1) == "!" ? InStr(E.Template, Mid(Filter, 1)) != INDEX_NONE : InStr(E.Template, Filter) == INDEX_NONE))
+			continue;
+		if (Skipped(E.Template))
 			continue;
 		PS = ParticleSystem(DynamicLoadObject(E.Template, class'ParticleSystem', true));
 		if (PS == none || AxisLocked(PS) || !ParticleStandins(D, E.Template, PS))
