@@ -572,7 +572,7 @@ function Handle(string Line, out array<string> Out)
 	case "env":
 		// env [off|on]: XCOM 2's own environment on a mission (its suns, sky lights, height fogs, post-process volumes, not
 		// the EW map's): listed, or switched off or on (a test aid, features/ew-lightmaps.md: EW's atmosphere in its place).
-		EnvLights(Out, Args.Length > 1 ? Args[1] : "");
+		EnvLights(Out, Args.Length > 1 ? (Args[1] $ (Args.Length > 2 ? " " $ Args[2] : "") $ (Args.Length > 3 ? " " $ Args[3] : "")) : "");
 		return;
 	case "yaw":
 		// yaw <degrees>: the tactical camera turned as the player's Q/E turn it (X2CameraStack.YawCameras), without keys to
@@ -1535,6 +1535,7 @@ function EnvLights(out array<string> Out, string Mode)
 	local Light L;
 	local Actor A;
 	local PostProcessVolume V;
+	local X2EnvMapCaptureActor Cap;
 
 	foreach AllActors(class'Light', L)
 	{
@@ -1558,6 +1559,24 @@ function EnvLights(out array<string> Out, string Mode)
 				HeightFog(A).Component.SetEnabled(Mode == "on");
 			Out.AddItem(PathName(A) @ "height fog density" @ HeightFog(A).Component.Density @ "on" @ HeightFog(A).Component.bEnabled);
 		}
+	}
+	// (env ambient <diffuse> [specular]: XCOM 2's environment map's light on lit surfaces, its sky's blue among it.)
+	if (Left(Mode, 8) == "ambient ")
+	{
+		foreach AllActors(class'X2EnvMapCaptureActor', Cap)
+		{
+			if (Cap.EnvMapSceneCapture == none)
+				continue;
+			Cap.EnvMapSceneCapture.fDiffuseIntensity = float(Split(Mode, " ", true));
+			if (InStr(Split(Mode, " ", true), " ") != INDEX_NONE)
+			{
+				Cap.EnvMapSceneCapture.fDiffuseIntensity = float(Left(Split(Mode, " ", true), InStr(Split(Mode, " ", true), " ")));
+				Cap.EnvMapSceneCapture.fSpecularIntensity = float(Split(Split(Mode, " ", true), " ", true));
+			}
+			Cap.ReattachComponent(Cap.EnvMapSceneCapture);
+			Out.AddItem(PathName(Cap) @ "diffuse" @ Cap.EnvMapSceneCapture.fDiffuseIntensity @ "specular" @ Cap.EnvMapSceneCapture.fSpecularIntensity @ "world ambient" @ Cap.EnvMapSceneCapture.bUseAsWorldAmbient);
+		}
+		return;
 	}
 	// (env all: every actor of XCOM 2's environment levels, by class, counted.)
 	if (Mode == "all")
