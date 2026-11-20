@@ -707,7 +707,8 @@ static function bool ParticleStandins(LWX2EWMapData D, string Template, Particle
 	local MaterialInstanceConstant MIC;
 	local Material Parent;
 	local Texture T;
-	local int k, n;
+	local array<int> Ours;
+	local int j, k, n, Off;
 
 	// (Done already: its first emitter's material is one of ours.)
 	if (PS.Emitters.Length > 0 && PS.Emitters[0] != none && PS.Emitters[0].LODLevels.Length > 0 && PS.Emitters[0].LODLevels[0] != none
@@ -736,7 +737,23 @@ static function bool ParticleStandins(LWX2EWMapData D, string Template, Particle
 					ParticleModuleTypeDataMesh(PS.Emitters[L.Emitter].LODLevels[k].TypeDataModule).bOverrideMaterial = true;
 			}
 		n++;
+		Ours.AddItem(L.Emitter);
 	}
+	// (An emitter left with EW's own material, which XCOM 2 has no shaders for, switched off rather than drawn: a mesh
+	// emitter's mesh keeps EW's materials too. On mission maps, EW's rats, blowing trash and some fires' chunks killed the
+	// game a second after they came into view.)
+	if (n > 0)
+		for (j = 0; j < PS.Emitters.Length; j++)
+		{
+			if (PS.Emitters[j] == none || Ours.Find(j) != INDEX_NONE)
+				continue;
+			for (k = 0; k < PS.Emitters[j].LODLevels.Length; k++)
+				if (PS.Emitters[j].LODLevels[k] != none)
+					PS.Emitters[j].LODLevels[k].bEnabled = false;
+			Off++;
+		}
+	if (Off > 0)
+		`log("LongWarX2: EW emitters:" @ PathName(PS) @ "-" @ Off @ "of its" @ PS.Emitters.Length @ "emitters without our material switched off", , 'LongWarX2');
 	return n > 0;
 }
 
