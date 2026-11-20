@@ -273,6 +273,11 @@ struct LWX2Person
 	/** Its component's physics asset (the Genetics Lab's canisters, whose animation carries them far from where they
 	 *  stand): its bounds follow the bodies, so it is drawn where its animation takes it. */
 	var string PhysicsAsset;
+	/** Where in its loop EW's matinee has it at the matinee's start (seconds; before the loop's start, from its end), and
+	 *  the looping matinee's play rate: the Genetics Lab's canisters, each at its place on the conveyor, at half speed.
+	 *  0: a random start, the normal rate. */
+	var float Start;
+	var float Rate;
 	/** EW's hangar bays (Anim_Hangar_LaunchBays, features/strategy-flow.md): a bay's (1-4) launch pad or craft for one of
 	 *  its states (Open: a craft ready; Repair: a craft down; Closed: empty), its part (Track: the pad; Interceptor;
 	 *  FireStorm); placed by the hangar's state, not with the level's people. */

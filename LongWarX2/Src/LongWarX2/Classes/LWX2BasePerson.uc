@@ -3,9 +3,11 @@
 class LWX2BasePerson extends SkeletalMeshActor;
 
 /** EW's mesh, AnimSets, the loop, and its slots' stand-ins. */
-function Setup(SkeletalMesh Mesh, array<AnimSet> Sets, name Loop, array<MaterialInterface> Slots, optional PhysicsAsset Bodies)
+function Setup(SkeletalMesh Mesh, array<AnimSet> Sets, name Loop, array<MaterialInterface> Slots, optional PhysicsAsset Bodies,
+	optional float Start, optional float Rate)
 {
 	local AnimNodeSequence Seq;
+	local float Length;
 	local int i;
 
 	SkeletalMeshComponent.SetSkeletalMesh(Mesh);
@@ -26,7 +28,14 @@ function Setup(SkeletalMesh Mesh, array<AnimSet> Sets, name Loop, array<Material
 	if (Seq != none && Loop != '')
 	{
 		Seq.SetAnim(Loop);
-		Seq.PlayAnim(true, 1.0, FRand());
+		// (EW's own place in the loop where its matinee says, a start before the loop's taken from its end; else a random
+		// second, so a room's people do not move in step.)
+		Length = Seq.GetAnimPlaybackLength();
+		if (Start != 0 && Length > 0)
+			Start = Start - Length * float(FFloor(Start / Length));
+		else
+			Start = FRand();
+		Seq.PlayAnim(true, Rate > 0 ? Rate : 1.0, Start);
 	}
 }
 

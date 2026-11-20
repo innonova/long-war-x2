@@ -10,7 +10,7 @@ import { openPackage } from '@innonova/upkit/package'
 import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 
-export interface Person { bay?: number; bayState?: string; key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; physicsAsset?: string; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
+export interface Person { bay?: number; bayState?: string; key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; physicsAsset?: string; start?: number; rate?: number; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
 
 export function peopleOf(file: string): Person[] {
   const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
@@ -50,7 +50,7 @@ export function peopleIn(meta: any, pkg: any): Person[] {
   }
 
   // The groups: name, AnimSets, the anim track's sequences.
-  type Group = { animSets: string[]; seqs: string[]; animSetRefs: number[]; key?: number[]; keyRot?: number[]; fov?: number }
+  type Group = { animSets: string[]; seqs: string[]; animSetRefs: number[]; key?: number[]; keyRot?: number[]; fov?: number; start?: number }
   const groups = new Map<string, Group>()
   const groupAt = new Map<number, Group>()
   exports.forEach((e, i) => {
@@ -67,8 +67,10 @@ export function peopleIn(meta: any, pkg: any): Person[] {
           if (!c) return undefined
           const pts = (readTags(new Reader(c.value), pkg) as Tag[]).find((x) => x.name === 'Points')
           if (!pts || dv(pts.value).getInt32(0, true) < 1) return undefined
+          // (A key whose value is the default, (0,0,0), has no OutVal tag: a key all the same, at the origin. The Genetics
+          // Lab's canisters stand there, their conveyor animation taking them out along the room.)
           const ov = (readTags(new Reader(pts.value.subarray(4)), pkg) as Tag[]).find((x) => x.name === 'OutVal')
-          return ov ? [0, 1, 2].map((k) => dv(ov.value).getFloat32(4 * k, true)) : undefined
+          return ov ? [0, 1, 2].map((k) => dv(ov.value).getFloat32(4 * k, true)) : [0, 0, 0]
         }
         try {
           g.key = first('PosTrack')
@@ -93,13 +95,22 @@ export function peopleIn(meta: any, pkg: any): Person[] {
       }
       if (tr <= 0 || exports[tr - 1]!.type !== 'InterpTrackAnimControl') continue
       const at = tagsAt(tr - 1).find((x) => x.name === 'AnimSeqs')
-      if (at) for (const k of structs(at.value)) g.seqs.push(name(k.find((x) => x.name === 'AnimSeqName')))
+      if (at)
+        for (const k of structs(at.value)) {
+          g.seqs.push(name(k.find((x) => x.name === 'AnimSeqName')))
+          // (Where in it the matinee has it at its own start: the key's start offset, plus how long it has played already where
+          // the key starts before the matinee does. The Genetics Lab's canisters share one conveyor animation, each keyed
+          // 1.667 s after the next in the lab's base loop, so each rides at its own place on the belt.)
+          if (g.start === undefined) g.start = f32(k.find((x) => x.name === 'AnimStartOffset')) - f32(k.find((x) => x.name === 'StartTime'))
+        }
     }
     groups.set(name(t.find((x) => x.name === 'GroupName')), g)
     groupAt.set(i + 1, g)
   })
   // The matinee's bindings: group name → actor (through its SeqVar_Object).
   const bound = new Map<number, string>()
+  // (The play rate of the looping matinee an actor is in: the Genetics Lab's base loop runs at half speed.)
+  const rateOf = new Map<number, number>()
   let loop = false
   exports.forEach((e, i) => {
     if (e.type !== 'SeqAct_Interp') return
@@ -113,6 +124,8 @@ export function peopleIn(meta: any, pkg: any): Person[] {
         if (v <= 0) continue
         const actor = i32(tagsAt(v - 1).find((x) => x.name === 'ObjValue'))
         if (actor > 0) bound.set(actor, desc)
+        const pr = t.find((x) => x.name === 'PlayRate')
+        if (actor > 0 && pr && t.some((x) => x.name === 'bLooping')) rateOf.set(actor, f32(pr))
       }
     }
   })
@@ -255,6 +268,8 @@ export function peopleIn(meta: any, pkg: any): Person[] {
       scale: ds ? f32(ds) : 1,
       animSets: g.animSets,
       seqs: [...g.seqs],
+      start: g.start || undefined,
+      rate: rateOf.get(i + 1),
       loop,
     }
   }

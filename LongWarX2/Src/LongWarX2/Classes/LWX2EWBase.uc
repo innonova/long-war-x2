@@ -550,7 +550,7 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 	if (!PeopleAnimate)
 		Sets.Length = 0;
 	A.Setup(Mesh, Sets, (PeopleAnimate && P.Seqs.Length > 0) ? P.Seqs[0] : '', Slots,
-		P.PhysicsAsset != "" ? PhysicsAsset(DynamicLoadObject(P.PhysicsAsset, class'PhysicsAsset', true)) : none);
+		P.PhysicsAsset != "" ? PhysicsAsset(DynamicLoadObject(P.PhysicsAsset, class'PhysicsAsset', true)) : none, P.Start, P.Rate);
 	return A;
 }
 
