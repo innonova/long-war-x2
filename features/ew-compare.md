@@ -133,3 +133,7 @@ so the fixes are driven by evidence and the person is not needed on every round.
   room exposure and lamp colours (#6), the bare map (#7), the Repair Bay mist (#8), the menu's pale rear openings
   (#10), the research veil and Memorial glasses (#11), the transfer row's chevrons (#14), the main menu's buttons (#15).
 
+- **Round 9 #10, the menu's pale rear openings** (tried, not fixed): they are bright sky through gaps in EW's shell
+  room. Hiding the environment level's sky dome (`sm_sky_latlong`, the control port's `env sky off`) changed nothing.
+  EW's own shell emitters (the globe's projection cones and haze) and its lens flares, placed with the scene, drew as
+  large dark translucent panels across the view, so both are left out again. Open.
