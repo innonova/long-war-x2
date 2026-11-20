@@ -203,3 +203,18 @@ static pieces. Three things kept them away in the port:
 Seen on wingpu (converter 49, `logs/gl-cmp2.png`): four tanks round the column in EW's places, stepping along the belt.
 **Left:** ours are a brighter, more saturated yellow than EW's dark olive, the froth coarser than EW's pattern (EW's
 material also pans and layers hexes and a fresnel), and the tanks' caps beige where EW's are dark.
+
+## Report (2026-11-20, faces and colours)
+
+- **Shen's jacket and face** had gone green (converter 48 read material parameter defaults everywhere, so the people's
+  `CMOD` became a colour mod where EW has none): defaults now only where asked (converter 54). His face is now EW's
+  peach: EW's skin material multiplies the face texture by the instance's `SkinColor` where its `Spc_dNrm_Skn_iBrw`'s
+  blue marks skin; the converter does the same in linear light (converters 55-58, also from DXT5 textures and from masks
+  of another size). The brightening keeps each texel's hue (converter 53).
+- **Vahlen's face** has EW's tinted texture now (checked decoded: 235 170 144 on average), but draws pale yellow-green
+  in the research room, where EW's is pale peach: with a white texture live (`persontex`, a new aid) her face is a pale
+  blue-grey. So it is the room's light on XCOM 2's staff material (the research room's cyan), not the texture; EW lights
+  its people with its own character lighting (`CharacterLitIndirectBrightness` 2). **Open:** the people's lighting
+  (round 8's #10, "harsh yellow-green faces"): next to try, a light environment of our own for the people, or the staff
+  material's emissive share raised for them.
+
