@@ -39,7 +39,7 @@ export function decodeDXT5Alpha(data: Uint8Array, w: number, h: number): Uint8Ar
 }
 
 /** A tinted mip: the diffuse's (DXT1) recoloured with Tint (0-1 RGB) where the mask (DXT5, its alpha) is, the same size. */
-function tintMipDXT1(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha', linear = false, multiply = false): Uint8Array {
+function tintMipDXT1(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha', linear = false, multiply = false, mw = w, mh = h): Uint8Array {
   // (multiply: the texture × the tint in linear light, as EW's skin material colours a face by its SkinColor; else the
   // tint replaces the colour, shaded by the texture's brightness, as for a uniform's or a car's paint.)
   const toLinear = (v: number) => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))
@@ -50,13 +50,16 @@ function tintMipDXT1(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number
   // (The mask in a DXT5's alpha (people's Spc_Ems_Ref_Opc), or in a DXT1's blue (vehicles' Spc_Ems_Mod_Ref: its "Mod").)
   // (A blue mask from a DXT1, or from a DXT5's colour blocks: twice the DXT1's size, the colour in each block's second half.)
   const colourOf = (m: Uint8Array) => {
-    const dxt1 = 8 * Math.max(1, Math.ceil(w / 4)) * Math.max(1, Math.ceil(h / 4))
+    const dxt1 = 8 * Math.max(1, Math.ceil(mw / 4)) * Math.max(1, Math.ceil(mh / 4))
     if (m.length !== 2 * dxt1) return m
     const c = new Uint8Array(dxt1)
     for (let b = 0; b < dxt1 / 8; b++) c.set(m.subarray(16 * b + 8, 16 * b + 16), 8 * b)
     return c
   }
-  const a = channel === 'blue' ? (() => { const c = decodeDXT1(colourOf(mask), w, h); return Uint8Array.from({ length: w * h }, (_, k) => c[4 * k + 2]!) })() : decodeDXT5Alpha(mask, w, h)
+  // (The mask at its own size, sampled at the diffuse's: Vahlen's skin mask is smaller than her face's texture, and the
+  // face's larger mips had been left untinted, green-grey.)
+  const am = channel === 'blue' ? (() => { const c = decodeDXT1(colourOf(mask), mw, mh); return Uint8Array.from({ length: mw * mh }, (_, k) => c[4 * k + 2]!) })() : decodeDXT5Alpha(mask, mw, mh)
+  const a = mw === w && mh === h ? am : Uint8Array.from({ length: w * h }, (_, k) => am[Math.min(mh - 1, Math.floor(((Math.floor(k / w) + 0.5) * mh) / h)) * mw + Math.min(mw - 1, Math.floor((((k % w) + 0.5) * mw) / w))]!)
   const lum = (k: number) => (0.299 * rgba[4 * k]! + 0.587 * rgba[4 * k + 1]! + 0.114 * rgba[4 * k + 2]!) / 255
   let sum = 0
   let weight = 0
@@ -86,12 +89,12 @@ function tintMipDXT1(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number
 
 /** tintMipDXT1 on a DXT1 mip, or on a DXT5's colour blocks with its alpha kept (Vahlen's face is DXT5: untinted, it drew
  *  raw, dark with cyan patches). */
-export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha', linear = false, multiply = false): Uint8Array {
+export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha', linear = false, multiply = false, mw = w, mh = h): Uint8Array {
   const dxt1 = 8 * Math.max(1, Math.ceil(w / 4)) * Math.max(1, Math.ceil(h / 4))
-  if (diffuse.length !== 2 * dxt1) return tintMipDXT1(diffuse, mask, w, h, tint, bright, channel, linear, multiply)
+  if (diffuse.length !== 2 * dxt1) return tintMipDXT1(diffuse, mask, w, h, tint, bright, channel, linear, multiply, mw, mh)
   const colour = new Uint8Array(dxt1)
   for (let b = 0; b < dxt1 / 8; b++) colour.set(diffuse.subarray(16 * b + 8, 16 * b + 16), 8 * b)
-  const done = tintMipDXT1(colour, mask, w, h, tint, bright, channel, linear, multiply)
+  const done = tintMipDXT1(colour, mask, w, h, tint, bright, channel, linear, multiply, mw, mh)
   const out = diffuse.slice()
   for (let b = 0; b < dxt1 / 8; b++) out.set(done.subarray(8 * b, 8 * b + 8), 16 * b + 8)
   return out

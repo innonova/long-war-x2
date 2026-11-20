@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 57
+export const CONVERTER_VERSION = 58
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1504,8 +1504,21 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     const tinted = tintOf.get(e.fullName)
     if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
     if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
-    const tm = tinted && (format === 'PF_DXT1' || format === 'PF_DXT5') ? dirMips.get(`${tinted.mask}:${w}x${h}`) : undefined
-    if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint, tinted.bright ?? PEOPLE_SCALE, tinted.channel ?? 'alpha', tinted.channel === 'blue', tinted.multiply)
+    // (The mask's mip of the same size, else its largest: masks are often smaller than their diffuse.)
+    let tm = tinted && (format === 'PF_DXT1' || format === 'PF_DXT5') ? dirMips.get(`${tinted.mask}:${w}x${h}`) : undefined
+    let mw = w, mh = h
+    if (tinted && !tm && tinted.mask && (format === 'PF_DXT1' || format === 'PF_DXT5')) {
+      let best = 0
+      for (const [key, m] of dirMips) {
+        const km = /^(.*):(\d+)x(\d+)$/.exec(key)
+        if (!km || km[1] !== tinted.mask || Number(km[2]) * Number(km[3]) <= best) continue
+        best = Number(km[2]) * Number(km[3])
+        tm = m
+        mw = Number(km[2])
+        mh = Number(km[3])
+      }
+    }
+    if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint, tinted.bright ?? PEOPLE_SCALE, tinted.channel ?? 'alpha', tinted.channel === 'blue', tinted.multiply, mw, mh)
     const dir = lmPairs.get(e)
     const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${w}x${h}`) : undefined
     return d ? combineLightmapMip(mip, d, w, h) : undefined
