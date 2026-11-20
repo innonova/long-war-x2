@@ -569,6 +569,17 @@ function Handle(string Line, out array<string> Out)
 		// How many placed pieces units see through (EW's windows, foliage, cars), and how many are windows.
 		Out.AddItem(SeeThrough());
 		return;
+	case "yaw":
+		// yaw <degrees>: the tactical camera turned as the player's Q/E turn it (X2CameraStack.YawCameras), without keys to
+		// the window (bringing the game's window forward to send them left its world black).
+		if (XComCamera(GetALocalPlayerController().PlayerCamera) == none || XComCamera(GetALocalPlayerController().PlayerCamera).CameraStack == none)
+		{
+			Out.AddItem("ERR no tactical camera");
+			return;
+		}
+		XComCamera(GetALocalPlayerController().PlayerCamera).CameraStack.YawCameras(Args.Length > 1 ? float(Args[1]) : 90);
+		Out.AddItem("ok yawed" @ (Args.Length > 1 ? Args[1] : "90"));
+		return;
 	case "look":
 		if (Args.Length < 3 && !(Args.Length == 2 && Args[1] == "unit"))
 		{
