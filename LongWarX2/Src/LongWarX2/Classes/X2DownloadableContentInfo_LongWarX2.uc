@@ -114,6 +114,7 @@ static event OnPostTemplatesCreated()
 {
 	class'LWX2SkirmishWeapons'.static.AddClasses();
 	class'LWX2EWBodies'.static.AddAnimSets();
+	class'LWX2Species'.static.NameCopies();
 	class'LWAlienStats'.static.AddAbilities();
 	class'LWOfficers'.static.AddAbilities();
 	class'X2Ability_LWDamageReduction'.static.AddAbilities();

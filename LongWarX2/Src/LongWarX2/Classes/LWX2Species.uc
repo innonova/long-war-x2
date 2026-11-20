@@ -7,6 +7,35 @@ class LWX2Species extends Object;
 /** EW's name for each species, by its ECharacter number (empty: the template's own name kept). */
 var localized array<string> Names;
 
+/**
+ * Each species' copy named as EW names it, on every difficulty's (OnPostTemplatesCreated: the mod's localization is not
+ * read yet when the templates are made, X2Character_LWSpecies).
+ */
+static function NameCopies()
+{
+	local X2CharacterTemplateManager Manager;
+	local array<X2DataTemplate> Templates;
+	local X2DataTemplate T;
+	local LWStrategyRules.LWFightAs F;
+	local int n;
+
+	Manager = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager();
+	foreach class'LWStrategyRules'.default.FightAs(F)
+	{
+		if (F.Char >= default.Names.Length || default.Names[F.Char] == "")
+			continue;
+		Templates.Length = 0;
+		Manager.FindDataTemplateAllDifficulties(CopyName(F.Char), Templates);
+		foreach Templates(T)
+			if (X2CharacterTemplate(T) != none)
+			{
+				X2CharacterTemplate(T).strCharacterName = default.Names[F.Char];
+				n++;
+			}
+	}
+	`log("LongWarX2: species:" @ n @ "templates named as Enemy Within's species (" $ default.Names.Length @ "names)", , 'LongWarX2');
+}
+
 /** A species' own template's name. */
 static function name CopyName(int Char)
 {
