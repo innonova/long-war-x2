@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 51
+export const CONVERTER_VERSION = 52
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1488,7 +1488,7 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
     if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
     const tm = tinted && format === 'PF_DXT1' ? dirMips.get(`${tinted.mask}:${w}x${h}`) : undefined
-    if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint, tinted.bright ?? PEOPLE_SCALE, tinted.channel ?? 'alpha')
+    if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint, tinted.bright ?? PEOPLE_SCALE, tinted.channel ?? 'alpha', tinted.channel === 'blue')
     const dir = lmPairs.get(e)
     const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${w}x${h}`) : undefined
     return d ? combineLightmapMip(mip, d, w, h) : undefined

@@ -39,7 +39,10 @@ export function decodeDXT5Alpha(data: Uint8Array, w: number, h: number): Uint8Ar
 }
 
 /** A tinted mip: the diffuse's (DXT1) recoloured with Tint (0-1 RGB) where the mask (DXT5, its alpha) is, the same size. */
-export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha'): Uint8Array {
+export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha', linear = false): Uint8Array {
+  // (linear: the tint a linear colour, as EW's vehicles' TintColor is, made sRGB: the store's red SUV, 0.49 0.08 0.08,
+  // draws 171 82 68 in EW, its sRGB 186 79 79. The people's ×2 below stands in for that, by eye.)
+  const srgb = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055)
   const rgba = decodeDXT1(diffuse, w, h)
   // (The mask in a DXT5's alpha (people's Spc_Ems_Ref_Opc), or in a DXT1's blue (vehicles' Spc_Ems_Mod_Ref: its "Mod").)
   const a = channel === 'blue' ? (() => { const c = decodeDXT1(mask, w, h); return Uint8Array.from({ length: w * h }, (_, k) => c[4 * k + 2]!) })() : decodeDXT5Alpha(mask, w, h)
@@ -61,7 +64,7 @@ export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: num
     const shade = Math.min(2, mean > 0 ? lum(k) / mean : 1)
     for (let c = 0; c < 3; c++) {
       // (× 2: EW's labs' grey colour mod, 0.48, draws the vests near white in EW's captures; APPROXIMATION.)
-      const t = Math.min(255, 255 * 2 * tint[c]! * shade)
+      const t = Math.min(255, linear ? 255 * srgb(tint[c]!) * shade : 255 * 2 * tint[c]! * shade)
       rgba[4 * k + c] = Math.round(Math.min(255, rgba[4 * k + c]! * bright) * (1 - m) + t * m)
     }
   }
