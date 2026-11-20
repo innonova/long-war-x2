@@ -66,6 +66,15 @@ var array<Actor> ShellPlaced;
 var LevelStreaming ShellLighting;
 /** The parent of EW's people's stand-ins (XCOM 2's material for its own base's staff); empty: the bodies' (LWX2EWBodies). */
 var config string PeopleMaterialParent;
+/**
+ * EW's people lit partly by their own colour (features/ew-base-people.md): EW lights its people with its own character
+ * lighting, and on XCOM 2's staff material a room's coloured light (the research room's cyan) turned Vahlen's face
+ * yellow-green. With PeopleLitParent (our lit material, LWX2Lightmap.M_EWLightmappedLit: lit diffuse plus diffuse ×
+ * LightMap × LMBrightness as emissive), a white light map and PeopleEmissive as LMBrightness: that share of the texture's
+ * own colour whatever the room's light. Empty: PeopleMaterialParent alone.
+ */
+var config string PeopleLitParent;
+var config float PeopleEmissive;
 /** Whether they play EW's animations (false: they stand in their reference pose; a test switch). */
 var config bool PeopleAnimate;
 /** A level's people placed at their matinee's first key plus this, where set (features/ew-base-people.md). */
@@ -479,6 +488,8 @@ function PlacePeopleOf(string Level, vector Offset, out array<Actor> Placed)
 /** One of a level's people (or animated props) spawned at Offset, posed and animated. */
 function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, vector Offset)
 {
+	local MaterialInstanceConstant LitMIC;
+	local LinearColor LitBias;
 	local LWX2EWMapPieces.LWX2PersonSlot S;
 	local LWX2EWMapPieces.LWX2Look GlowLook;
 	local LWX2BasePerson A;
@@ -522,7 +533,18 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 			Slots.AddItem(class'LWX2EWMapPieces'.static.GlowStandin(GlowLook, self, S.Diffuse != ""));
 			continue;
 		}
-		Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
+		Slot = S.Diffuse != "" ? class'LWX2EWBodies'.static.Standin(B, PeopleLitParent != "" ? PeopleLitParent : PeopleMaterialParent) : (Slots.Length > 0 ? Slots[0] : none);
+		if (PeopleLitParent != "" && MaterialInstanceConstant(Slot) != none && S.Diffuse != "")
+		{
+			LitMIC = MaterialInstanceConstant(Slot);
+			LitMIC.SetTextureParameterValue('LightMap', Texture(DynamicLoadObject("EngineResources.WhiteSquareTexture", class'Texture', true)));
+			LitBias.R = 1; LitBias.G = 1; LitBias.B = 0; LitBias.A = 0;
+			LitMIC.SetVectorParameterValue('LMScaleBias', LitBias);
+			LitMIC.SetScalarParameterValue('LMBrightness', PeopleEmissive);
+			LitBias.R = 1; LitBias.G = 1; LitBias.B = 1; LitBias.A = 1;
+			LitMIC.SetVectorParameterValue('Tint', LitBias);
+			LitMIC.SetScalarParameterValue('DiffuseTile', 1);
+		}
 		// (The props' textures and scalars on it too: XCOM 2's placeholder Masks darkened the white coats.)
 		MIC = MaterialInstanceConstant(Slot);
 		if (MIC != none && S.Diffuse != "")
