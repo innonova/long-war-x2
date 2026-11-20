@@ -70,3 +70,14 @@ materials on mesh emitters, `M_EWParticle` without mesh-particle use, is the fir
   Next tries, when this comes up again: the 76 in halves in one session, and with the switching-off kept but the
   `AxisLocked` rule dropped.
 
+## Report (2026-11-20 evening, EW's emitters on mission maps, found)
+
+The crash was one template: the terror bar's rats, `P_Rats_Scrambling`, a mesh emitter with its own mesh materials
+(`ParticleModuleMeshMaterial`: EW's, which XCOM 2 has no shaders for). Found by placing the bar's templates one at a
+time in a single mission with the camera taken to each instance (all 14 other kinds, 132 emitters, fine; through an
+alien turn too); the earlier runs had counted 76 placed of 87 and assumed the rats were among the 11 left out. Such
+emitters are now left out with the axis-locked ones (`AxisLocked`); the rest go on a mission map's own plot at the
+battle's start, a few each tick (`LWX2EmitterPlacer`), and `MissionEmitters` is on again. Seen on wingpu: the terror
+bar with 77 of EW's emitters, its fires glowing, stable through an alien turn
+(`logs/compare/lm-ew/pair-bar-emitters.png`).
+
