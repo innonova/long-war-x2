@@ -39,7 +39,7 @@ export function decodeDXT5Alpha(data: Uint8Array, w: number, h: number): Uint8Ar
 }
 
 /** A tinted mip: the diffuse's (DXT1) recoloured with Tint (0-1 RGB) where the mask (DXT5, its alpha) is, the same size. */
-export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha', linear = false, multiply = false): Uint8Array {
+function tintMipDXT1(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha', linear = false, multiply = false): Uint8Array {
   // (multiply: the texture × the tint in linear light, as EW's skin material colours a face by its SkinColor; else the
   // tint replaces the colour, shaded by the texture's brightness, as for a uniform's or a car's paint.)
   const toLinear = (v: number) => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))
@@ -82,6 +82,19 @@ export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: num
     }
   }
   return encodeDXT1(rgba, w, h)
+}
+
+/** tintMipDXT1 on a DXT1 mip, or on a DXT5's colour blocks with its alpha kept (Vahlen's face is DXT5: untinted, it drew
+ *  raw, dark with cyan patches). */
+export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: number, tint: number[], bright = 1, channel: 'alpha' | 'blue' = 'alpha', linear = false, multiply = false): Uint8Array {
+  const dxt1 = 8 * Math.max(1, Math.ceil(w / 4)) * Math.max(1, Math.ceil(h / 4))
+  if (diffuse.length !== 2 * dxt1) return tintMipDXT1(diffuse, mask, w, h, tint, bright, channel, linear, multiply)
+  const colour = new Uint8Array(dxt1)
+  for (let b = 0; b < dxt1 / 8; b++) colour.set(diffuse.subarray(16 * b + 8, 16 * b + 16), 8 * b)
+  const done = tintMipDXT1(colour, mask, w, h, tint, bright, channel, linear, multiply)
+  const out = diffuse.slice()
+  for (let b = 0; b < dxt1 / 8; b++) out.set(done.subarray(8 * b, 8 * b + 8), 16 * b + 8)
+  return out
 }
 
 /** A mip brightened by a factor (DXT1 or DXT5, the same size): its colour decoded, scaled and encoded again, the alpha
