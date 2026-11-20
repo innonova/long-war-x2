@@ -174,3 +174,25 @@ stand-in (`AvengerStaff_SD`) takes the diffuse only. The fix is a stand-in that 
   EW's captures. The research room's clerks now wear EW's olive jacket and light grey vest.
 - **Their chairs:** InterpActors of the people's scene (`Anim_ScienceLabs`), converted as pieces but never placed: the
   base now places a people scene's own pieces too (not those already placed as a fixed room). The clerks sit on chairs.
+
+## Report (2026-11-20, the Genetics Lab's tanks)
+
+EW's yellow tanks around the column are its ten canisters (`SM_Canister`, `CanisterA` … `J`) on a conveyor, not
+static pieces. Three things kept them away in the port:
+- **Their bounds.** The conveyor animation (`10_CanisterB`) carries each canister's one bone over a thousand units from
+  where the actor stands. EW's components have a physics asset (`PHYS_Canister`), so their bounds follow the bodies; the
+  port's stand-ins had none, their bounds stayed the reference pose's, and they were culled away from it. Each person's
+  physics asset is now carried (`PhysicsAsset=`, converter 46), and such a person keeps its skeleton updated out of view.
+- **Their place.** Their matinee puts each at the level's origin, turned 90°: a move key whose value is the default,
+  (0,0,0), which the package leaves without an `OutVal` tag, and the reader had taken as no key (they stood at their
+  actors' own spots at the rack). A key without a value is now a key at the origin. Over EW's 44 base levels only the
+  ten canisters move with this (`/tmp` comparison of every person's place before and after).
+- **Their places on the belt.** The lab's base loop (a looping matinee at half speed) keys each canister's animation
+  1.667 s after the next; each person's place in its loop (`Start=`, the key's start offset less its start time) and the
+  looping matinee's rate (`Rate=`) are carried (converter 47). The base's other people now start their loops where EW's
+  matinees have them too, no longer at a random second.
+- **Their glass.** EW's tank glass is unlit, its body the material's olive (`wer`, a parameter default of the parent
+  material; the instance's `Color`, orange, is the rim's) through panning froth: the glow stand-in now takes that olive
+  and EW's froth texture (converter 48).
+
+Seen on wingpu (converter 47): the tanks move round the column as in EW, three or four in the lab's view.
