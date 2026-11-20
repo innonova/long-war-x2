@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 61
+export const CONVERTER_VERSION = 62
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -1166,9 +1166,8 @@ const personSlots = people.map((p) =>
         // (And partly greyed: EW's glass over the dark tank reads olive, 81 75 40, where the bare colour had no blue at all.)
         const mean = wer ? ((wer[0]! + wer[1]! + wer[2]!) / 3) * 0.45 : 0
         l.tint = wer ? wer.map((c, k) => (k < 3 ? 0.6 * c * 0.45 + 0.4 * mean : c)) : l.tint
-        // (Its meld hexes, the fine organic pattern EW's tanks show, over its panning froth: the hexes alone read closer than
-        // the froth's soft clouds; converter 61.)
-        l.diffuse = materialTexture(m, /Meld_Hexes/i) ?? materialTexture(m, /Froth/i) ?? ''
+        // (Its froth: EW's meld hexes, tried alone, are an overlay, mostly dark, and the tanks came out black; converter 62.)
+        l.diffuse = materialTexture(m, /Froth/i) ?? ''
       }
     }
     return l
