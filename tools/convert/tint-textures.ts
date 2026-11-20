@@ -45,7 +45,15 @@ export function tintMip(diffuse: Uint8Array, mask: Uint8Array, w: number, h: num
   const srgb = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055)
   const rgba = decodeDXT1(diffuse, w, h)
   // (The mask in a DXT5's alpha (people's Spc_Ems_Ref_Opc), or in a DXT1's blue (vehicles' Spc_Ems_Mod_Ref: its "Mod").)
-  const a = channel === 'blue' ? (() => { const c = decodeDXT1(mask, w, h); return Uint8Array.from({ length: w * h }, (_, k) => c[4 * k + 2]!) })() : decodeDXT5Alpha(mask, w, h)
+  // (A blue mask from a DXT1, or from a DXT5's colour blocks: twice the DXT1's size, the colour in each block's second half.)
+  const colourOf = (m: Uint8Array) => {
+    const dxt1 = 8 * Math.max(1, Math.ceil(w / 4)) * Math.max(1, Math.ceil(h / 4))
+    if (m.length !== 2 * dxt1) return m
+    const c = new Uint8Array(dxt1)
+    for (let b = 0; b < dxt1 / 8; b++) c.set(m.subarray(16 * b + 8, 16 * b + 16), 8 * b)
+    return c
+  }
+  const a = channel === 'blue' ? (() => { const c = decodeDXT1(colourOf(mask), w, h); return Uint8Array.from({ length: w * h }, (_, k) => c[4 * k + 2]!) })() : decodeDXT5Alpha(mask, w, h)
   const lum = (k: number) => (0.299 * rgba[4 * k]! + 0.587 * rgba[4 * k + 1]! + 0.114 * rgba[4 * k + 2]!) / 255
   let sum = 0
   let weight = 0
