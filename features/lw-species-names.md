@@ -1,6 +1,6 @@
 ---
 title: Long War's species by their own names on the field
-status: in-progress
+status: review
 priority: 6
 dependsOn: [lw-aliens, lw-exalt]
 ---
@@ -43,7 +43,21 @@ Found while giving EXALT its own bodies (lw-exalt, report of 2026-11-20).
 - `Codex` in `FightAs` is not one of XCOM 2's template names (the Codex is `Cyberus`); the Outsider's copy is made
   from `Cyberus`.
 
+**Fixed on the way:** XCOM 2's creation functions make each template under the template's own object name, so calling
+one again remade XCOM 2's own object; renamed, it renamed XCOM 2's template (its own ADVENT troopers came out as EXALT),
+and two species of one template (the Sectoid and its Commander) were one object. Each copy is now a new object of its
+own name made from the remade one. The names: a localized array read with gaps (indices from 4) came out empty; every
+index is written now (`Names[0]=""` …), and the copies are named in `OnPostTemplatesCreated` (and again at the battle's
+start).
+
+**Checked on wingpu** (a campaign's first mission; the control port's `enemies` now shows each unit's name as the game
+shows it): the pods spawn as `LWX2Char_4` "Sectoid"; spawned copies "EXALT Operative" (in its EW body), "EXALT Elite
+Medic", a Drone "Drone", the Sectoid Commander in its EW body; XCOM 2's own `AdvTrooperM1` stays "ADVENT Trooper" in
+ADVENT's body. 130 templates named (every difficulty's copy).
+
 ### Left open
 
-- Seen in the game: not yet (built and checked next, after the release install on wingpu).
+- Loot and corpses are still the XCOM 2 template's ("ADVENT Trooper Corpse dropped" for an EXALT soldier), as before.
+- Not checked: a captured alien's and the Chryssalid hive's and Progeny's spawns through the copies (they use
+  `LWMissionSquads.TemplateFor` too).
 
