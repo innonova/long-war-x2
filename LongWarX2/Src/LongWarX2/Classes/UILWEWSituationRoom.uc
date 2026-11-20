@@ -352,7 +352,8 @@ function Refresh()
 	// The world's news (LWTicker; EW's UISituationRoom.UpdateTicker: SetTickerText(title, headlines)).
 	MC.FunctionVoid("HideTicker");
 	if (NewsTicker != none && class'LWTicker'.default.Lines.Length > 0)
-		NewsTicker.SetHTMLText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(class'LWTicker'.default.Title $ ":", eUIState_Normal) @ Repl(class'LWTicker'.static.Text(S), "//", "  //  "), false, false, false, NewsTickerFontSize));
+		// (In EW's green, as its ticker draws: 5CD16C; round 9 #12.)
+		NewsTicker.SetHTMLText(class'UIUtilities_Text'.static.AddFontInfo("<font color='#5CD16C'>" $ class'LWTicker'.default.Title $ ":" @ Repl(class'LWTicker'.static.Text(S), "//", "  //  ") $ "</font>", false, false, false, NewsTickerFontSize));
 	if (bSatellite)
 	{
 		MC.BeginFunctionOp("SetSatellites");
