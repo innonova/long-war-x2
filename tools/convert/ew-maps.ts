@@ -41,9 +41,10 @@ export function plotSettings(mod: string): PlotSettings {
     buildings: /^PlotBuildings=true/m.test(ini),
     fracWalls: /^PlotFracWalls=true/m.test(ini),
     // (EW's baked lighting on interiors and night maps: PlotLightmapParent, features/ew-lightmaps.md.)
-    // (A test switch, LWX2_PLOT_LIGHTMAP: off, or all for every piece of every map, the middle way's comparisons.)
+    // (Every piece of every map with PlotLightmapEverywhere, else the middle way; a test switch, LWX2_PLOT_LIGHTMAP: off,
+    // or all, or middle.)
     lightmap: str('PlotLightmapParent') && process.env.LWX2_PLOT_LIGHTMAP !== 'off' ? {
-      everywhere: process.env.LWX2_PLOT_LIGHTMAP === 'all',
+      everywhere: process.env.LWX2_PLOT_LIGHTMAP === 'all' || (process.env.LWX2_PLOT_LIGHTMAP !== 'middle' && /^PlotLightmapEverywhere=true/m.test(ini)),
       parent: str('PlotLightmapParent'),
       brightness: Number(/^LightmapBrightness=([\d.]+)/m.exec(ini)?.[1] ?? 1) || 1,
       interiors: !/^PlotLightmapInteriors=false/m.test(ini),
