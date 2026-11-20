@@ -591,6 +591,11 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(class'LWX2EWMapPieces'.static.PlaceEmittersOf(class'LWX2EWMapPieces'.static.Map(), self, vect(0, 0, 0), Placed, Args.Length > 1 ? Args[1] : "") @ "emitters placed");
 		return;
+	case "wall":
+		// wall hide|show|alpha <0-100>: the Situation Room's wall screen (its 3D movie) hidden, shown, or its root's alpha
+		// set (a test aid: what lies over EW's map plane on the bare wall).
+		Out.AddItem(WallScreen(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? int(Args[2]) : 100));
+		return;
 	case "yaw":
 		// yaw <degrees>: the tactical camera turned as the player's Q/E turn it (X2CameraStack.YawCameras), without keys to
 		// the window (bringing the game's window forward to send them left its world black).
@@ -1546,6 +1551,23 @@ function string CaptureNearest()
 
 /** In a mission: an alien dropped on the aliens' team a few tiles from the first soldier (a test aid, XCOM 2's cheat). */
 /** The tactical camera to a place on the placed EW map for 20 seconds, fog of war off (a test aid: its lights, its pods). */
+/** A test aid (wall): the wall's screen hidden, shown or faded. */
+function string WallScreen(string Mode, int Alpha)
+{
+	local UILWEWSituationRoom W;
+
+	W = UILWEWSituationRoom(Pres().ScreenStack.GetScreen(class'UILWEWSituationRoom'));
+	if (W == none)
+		return "ERR no wall screen";
+	if (Mode == "hide")
+		W.Hide();
+	else if (Mode == "show")
+		W.Show();
+	else if (Mode == "alpha")
+		W.MC.SetNum("_alpha", Alpha);
+	return "ok wall" @ Mode @ "bWall" @ W.bWall @ "visible" @ W.bIsVisible;
+}
+
 /** The spawned emitters in the world (EW's, placed by the mod), by template, counted (emitters list). */
 function EmitterList(out array<string> Out)
 {
