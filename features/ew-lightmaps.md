@@ -208,3 +208,10 @@ EW's terror bar's fog is a thin dark blue-grey; its brown haze is its brown sun 
 than the port's (by eye, about half). Still open: that darkness (per map, or EW's night and terror lighting as a kind),
 and EW's smoke emitters on mission maps.
 
+**The cars' colours** (converters 51, 52): EW's vehicles' master material paints a car's `TintColor` (its own per car)
+over the part its `Spc_Ems_Mod_Ref`'s blue marks; the converter bakes a tinted copy of the diffuse per colour, as for
+the people, the tint taken as a linear colour made sRGB (EW's red SUV, 0.49 0.08 0.08, draws 171 82 68 in EW; ours now
+195 88 57). A car without its own colour takes the master's default, as in EW. Seen on the store
+(`logs/compare/lm-ew/pair-store-cars.png`). The people's colour mods use ×2 for the same conversion, by eye; to be
+looked at again with this.
+
