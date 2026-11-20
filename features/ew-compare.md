@@ -107,6 +107,11 @@ so the fixes are driven by evidence and the person is not needed on every round.
   colours with its meld symbol; people baked brighter; more of EW's texture tiling. **Open:** the promotion screen's
   right panels (its movie places them 80 units further right; notes in strategy-flow.md); the Genetics Lab's tanks;
   the roster frame's width (EW widens it for its medals column); a soldier item card for engineering's "?".
+- **Roster width, settled 2026-11-20 (not a defect):** EW's soldier list sizes each of its compartments to the widest
+  row's content (`SoldierListItem`: the name and nickname's text width, the promotion and psi-promotion icons where
+  shown, the class text, with `SoldierList` taking the largest per compartment), and the frame follows. EW's capture
+  has long nicknamed Master Sergeants with psi icons; the port's test campaign has Lance Corporals without nicknames or
+  psi, so the same movie lays itself out narrower. A campaign-content difference, as the reviewer's exclusions have it.
 - **Round 8, fixed** (2026-11-20 night): Vahlen's black squares (converter 43: the brightened textures re-encoded); the
   mist fainter (0.2); the ticker in the strip below the map, EW's map plane only on the bare wall; the bare wall map
   brighter; engineering's "?" opens EW's item card for the selected weapon (range, Long War's damage and crit ranges:
