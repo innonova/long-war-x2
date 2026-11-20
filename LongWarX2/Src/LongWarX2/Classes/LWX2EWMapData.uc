@@ -5,6 +5,9 @@ class LWX2EWMapData extends Object config(LWX2EWMap) perobjectconfig dependson(L
 
 /** The converted map package: loaded first, so its meshes exist (they live in the packages it carries). */
 var config string MapPackage;
+/** EW's atmosphere (features/ew-lightmaps.md): its height fog and colour grading, as its level's WorldInfo has them. */
+var config LWX2EWMapPieces.LWX2Fog Fog;
+var config LWX2EWMapPieces.LWX2Grade Grade;
 var config array<LWX2EWMapPieces.LWX2Look> Looks;
 var config array<LWX2EWMapPieces.LWX2Piece> Pieces;
 /** EW's play area (its level volume: centre and half sizes) and drop zones (its player starts). */

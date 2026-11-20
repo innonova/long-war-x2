@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 49
+export const CONVERTER_VERSION = 50
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -654,6 +654,45 @@ interface EWLight {
   lower: number
 }
 const lights: EWLight[] = []
+// EW's atmosphere (features/ew-lightmaps.md): its WorldInfo's height fog (XComHeightFog) and its default post-process's
+// colour grading (Scene_Colorize, _Shadows, _HighLights, _MidTones, _Desaturation), where the level sets them.
+const atmosphere: { fog?: Record<string, number | number[]>; grade: Record<string, number | number[]> } = { grade: {} }
+exports.forEach((e, i) => {
+  if (e.type !== 'WorldInfo' || !e.fullName.startsWith('TheWorld.PersistentLevel.')) return
+  let t: Tag[] = []
+  for (const start of [26, ...Array.from({ length: 81 }, (_, k) => k)]) {
+    try {
+      t = readTags(new Reader(pkg.data(i + 1).subarray(start)), pkg)
+      if (t.some((x) => x.name === 'DefaultPostProcessSettings' || x.name === 'XComHeightFog')) break
+    } catch {
+      t = []
+    }
+  }
+  const inner = (name: string) => {
+    const s = t.find((x) => x.name === name)
+    try {
+      return s ? (readTags(new Reader(s.value), pkg) as Tag[]) : []
+    } catch {
+      return []
+    }
+  }
+  const value = (x: Tag): number | number[] | undefined =>
+    x.type === 'FloatProperty' ? new DataView(x.value.buffer, x.value.byteOffset).getFloat32(0, true)
+    : x.type === 'BoolProperty' ? (x as { boolValue?: number }).boolValue ?? 0
+    : x.type === 'StructProperty' && (x as { structName?: string }).structName === 'Color' ? [...x.value.slice(0, 4)]
+    : x.type === 'StructProperty' && x.value.length === 12 ? [0, 1, 2].map((k) => new DataView(x.value.buffer, x.value.byteOffset).getFloat32(4 * k, true))
+    : undefined
+  const fog = inner('XComHeightFog')
+  if (fog.length) {
+    atmosphere.fog = {}
+    for (const x of fog) { const v = value(x); if (v !== undefined) atmosphere.fog[x.name] = v }
+  }
+  for (const x of inner('DefaultPostProcessSettings')) {
+    if (!/^Scene_/.test(x.name)) continue
+    const v = value(x)
+    if (v !== undefined) atmosphere.grade[x.name] = v
+  }
+})
 const LIGHTS: Record<string, EWLight['kind']> = {
   PointLight: 'Point', PointLightToggleable: 'Point', PointLightMovable: 'Point',
   SpotLight: 'Spot', SpotLightToggleable: 'Spot', SpotLightMovable: 'Spot',
@@ -1500,6 +1539,19 @@ const lines = [
   ...spots.map((c) => `+Spots=(Tag=${c.tag},Loc=(X=${n(c.loc[0]!)},Y=${n(c.loc[1]!)},Z=${n(c.loc[2]!)}),Rot=(Pitch=${c.rot[0]},Yaw=${c.rot[1]},Roll=${c.rot[2]}))`),
   "; EW's meld canisters' places (Group: the drop zone's, in their order; Turns: when it self-destructs; Hard or easy).",
   ...meldPoints.map((p) => `+MeldPoints=(Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Group=${p.group},Turns=${p.turns},Hard=${p.hard})`),
+  "; EW's atmosphere: its height fog (density, height, falloff, inscattering and opposite colours; -1: EW's default)",
+  '; and its colour grading.',
+  ...(atmosphere.fog ? [(() => {
+    const f = atmosphere.fog!
+    const num = (k: string) => (typeof f[k] === 'number' ? n(f[k] as number) : '-1')
+    const col = (k: string) => (Array.isArray(f[k]) ? `(R=${(f[k] as number[])[0]},G=${(f[k] as number[])[1]},B=${(f[k] as number[])[2]},A=255)` : '(R=0,G=0,B=0,A=0)')
+    return `Fog=(Enabled=${f.bEnabled ? 'true' : 'false'},Density=${num('FogDensity')},Height=${num('FogHeight')},Falloff=${num('FogHeightFalloff')},Inscatter=${col('LightInscatteringColor')},Opposite=${col('OppositeLightColor')})`
+  })()] : []),
+  ...(Object.keys(atmosphere.grade).length ? [(() => {
+    const g = atmosphere.grade
+    const vec = (k: string, d: number) => { const v = g[k] as number[] | undefined; return `(X=${n(v?.[0] ?? d)},Y=${n(v?.[1] ?? d)},Z=${n(v?.[2] ?? d)})` }
+    return `Grade=(Colorize=${vec('Scene_Colorize', 1)},Shadows=${vec('Scene_Shadows', 0)},HighLights=${vec('Scene_HighLights', 1)},MidTones=${vec('Scene_MidTones', 1)},Desaturation=${n(typeof g.Scene_Desaturation === 'number' ? g.Scene_Desaturation : 0)})`
+  })()] : []),
   "; EW's lights (point, spot, its sun and sky), spawned as movable lights.",
   ...lights.map(
     (l) =>

@@ -220,6 +220,22 @@ struct LWX2PersonSlot
 	var LinearColor Tint;
 };
 
+/** EW's height fog (its WorldInfo's XComHeightFog): -1 where the level leaves EW's default; a colour of A 0 likewise. */
+struct LWX2Fog
+{
+	var bool Enabled;
+	var float Density, Height, Falloff;
+	var Color Inscatter, Opposite;
+};
+
+/** EW's colour grading (its WorldInfo's default post-process: Scene_Colorize, _Shadows, _HighLights, _MidTones,
+ *  _Desaturation). All zero: none written for the map. */
+struct LWX2Grade
+{
+	var vector Colorize, Shadows, HighLights, MidTones;
+	var float Desaturation;
+};
+
 /** One of EW's emitters (features/ew-emitters.md): its particle system, where it stands. */
 struct LWX2Emitter
 {
@@ -318,6 +334,10 @@ var config float LightScale;
 var config bool EWAtmosphere;
 var config float EWSunScale;
 var config float EnvAmbientDiffuse, EnvAmbientSpecular;
+/** EW's fog's density × EWFogScale on XCOM 2's height fog (EW's fog is its own, its units not XCOM 2's). */
+var config float EWFogScale;
+/** EW's colour grading put on the world's post-process. */
+var config bool EWGrade;
 /** Which kinds are placed (the mission's own sun and sky light the map too). */
 var config array<name> LightKinds;
 
@@ -494,6 +514,9 @@ static function string UseEWAtmosphere(Actor Spawner)
 	local ExponentialHeightFog Fog;
 	local LWX2Light L;
 	local LWX2SunLight Sun;
+	local LWX2EWMapData D;
+	local WorldInfo WI;
+	local string FogNote;
 	local int Suns, Off;
 
 	if (!default.EWAtmosphere || !OnOwnPlot())
@@ -513,9 +536,45 @@ static function string UseEWAtmosphere(Actor Spawner)
 		Cap.EnvMapSceneCapture.fSpecularIntensity = default.EnvAmbientSpecular;
 		Cap.ReattachComponent(Cap.EnvMapSceneCapture);
 	}
+	// EW's fog in XCOM 2's (its properties set as the console's set does: they are const to script), else none.
+	D = Map();
 	foreach Spawner.AllActors(class'ExponentialHeightFog', Fog)
-		if (Fog.Component != none)
-			Fog.Component.SetEnabled(false);
+	{
+		if (Fog.Component == none)
+			continue;
+		Fog.Component.SetEnabled(false);
+		if (!D.Fog.Enabled || default.EWFogScale <= 0)
+			continue;
+		if (D.Fog.Density >= 0)
+			Spawner.ConsoleCommand("set ExponentialHeightFogComponent FogDensity" @ D.Fog.Density * default.EWFogScale);
+		if (D.Fog.Falloff >= 0)
+			Spawner.ConsoleCommand("set ExponentialHeightFogComponent FogHeightFalloff" @ D.Fog.Falloff);
+		if (D.Fog.Inscatter.A > 0)
+			Spawner.ConsoleCommand("set ExponentialHeightFogComponent LightInscatteringColor (R=" $ D.Fog.Inscatter.R $ ",G=" $ D.Fog.Inscatter.G $ ",B=" $ D.Fog.Inscatter.B $ ",A=255)");
+		if (D.Fog.Opposite.A > 0)
+			Spawner.ConsoleCommand("set ExponentialHeightFogComponent OppositeLightColor (R=" $ D.Fog.Opposite.R $ ",G=" $ D.Fog.Opposite.G $ ",B=" $ D.Fog.Opposite.B $ ",A=255)");
+		if (D.Fog.Height >= 0 && !Fog.bStatic)
+			Fog.SetLocation(vect(0, 0, 1) * D.Fog.Height + Fog.Location * vect(1, 1, 0));
+		// (Switched on again, so the renderer takes the new values.)
+		Fog.Component.SetEnabled(true);
+		FogNote = " EW's fog (density" @ D.Fog.Density @ "×" @ default.EWFogScale $ ")";
+	}
+	// EW's colour grading on the world's post-process.
+	if (default.EWGrade && VSize(D.Grade.Colorize) > 0)
+	{
+		WI = Spawner.WorldInfo;
+		WI.DefaultPostProcessSettings.bOverride_Scene_Colorize = true;
+		WI.DefaultPostProcessSettings.Scene_Colorize = D.Grade.Colorize;
+		WI.DefaultPostProcessSettings.bOverride_Scene_Shadows = true;
+		WI.DefaultPostProcessSettings.Scene_Shadows = D.Grade.Shadows;
+		WI.DefaultPostProcessSettings.bOverride_Scene_HighLights = true;
+		WI.DefaultPostProcessSettings.Scene_HighLights = D.Grade.HighLights;
+		WI.DefaultPostProcessSettings.bOverride_Scene_MidTones = true;
+		WI.DefaultPostProcessSettings.Scene_MidTones = D.Grade.MidTones;
+		WI.DefaultPostProcessSettings.bOverride_Scene_Desaturation = true;
+		WI.DefaultPostProcessSettings.Scene_Desaturation = D.Grade.Desaturation;
+		FogNote $= ", EW's colour grading";
+	}
 	// (Placed once: a loaded battle comes here again.)
 	foreach Spawner.AllActors(class'LWX2SunLight', Sun)
 		Suns++;
@@ -532,7 +591,7 @@ static function string UseEWAtmosphere(Actor Spawner)
 			Sun.ReattachComponent(Sun.LightComponent);
 			Suns++;
 		}
-	return "EW's atmosphere: XCOM 2's" @ Off @ "suns, fog and environment light off, EW's" @ Suns @ "sun(s) placed";
+	return "EW's atmosphere: XCOM 2's" @ Off @ "suns, fog and environment light off, EW's" @ Suns @ "sun(s) placed;" $ FogNote;
 }
 
 /** Spawns EW's lights (of LightKinds) moved by Shift; returns how many were placed. */
