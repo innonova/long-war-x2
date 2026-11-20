@@ -308,6 +308,16 @@ struct LWX2Camera
 };
 /** Each light's brightness times this (EW's lightmaps added bounced light the movable lights do not). */
 var config float LightScale;
+/**
+ * EW's atmosphere on an EW map's own plot (features/ew-lightmaps.md), its lightmaps on every piece: XCOM 2's environment's
+ * sun, fog and the light of its environment map (its sky's blue on every lit surface) off, and EW's sun in place of XCOM
+ * 2's. EW's dominant sun was never in its lightmaps (UE3 drew it live over them, with baked shadows), so it is placed:
+ * its colour and direction, its brightness × EWSunScale (XCOM 2's light units are not EW's: by the light of EW's store
+ * sidewalk, measured against EW). EnvAmbient: what is left of XCOM 2's environment map's diffuse and specular light.
+ */
+var config bool EWAtmosphere;
+var config float EWSunScale;
+var config float EnvAmbientDiffuse, EnvAmbientSpecular;
 /** Which kinds are placed (the mission's own sun and sky light the map too). */
 var config array<name> LightKinds;
 
@@ -474,6 +484,55 @@ static function string ChooseMap(name Kind, int Ship)
 	if (Fits.Length > 0)
 		return Fits[Rand(Fits.Length)];
 	return Any.Length > 0 ? Any[Rand(Any.Length)] : "";
+}
+
+/** EW's atmosphere in place of XCOM 2's environment on an EW map's own plot (EWAtmosphere); a line for the log. */
+static function string UseEWAtmosphere(Actor Spawner)
+{
+	local DirectionalLight DL;
+	local X2EnvMapCaptureActor Cap;
+	local ExponentialHeightFog Fog;
+	local LWX2Light L;
+	local LWX2SunLight Sun;
+	local int Suns, Off;
+
+	if (!default.EWAtmosphere || !OnOwnPlot())
+		return "XCOM 2's environment kept";
+	foreach Spawner.AllActors(class'DirectionalLight', DL)
+	{
+		if (LWX2SunLight(DL) != none || DL.LightComponent == none || !DL.LightComponent.bEnabled)
+			continue;
+		DL.LightComponent.SetEnabled(false);
+		Off++;
+	}
+	foreach Spawner.AllActors(class'X2EnvMapCaptureActor', Cap)
+	{
+		if (Cap.EnvMapSceneCapture == none)
+			continue;
+		Cap.EnvMapSceneCapture.fDiffuseIntensity = default.EnvAmbientDiffuse;
+		Cap.EnvMapSceneCapture.fSpecularIntensity = default.EnvAmbientSpecular;
+		Cap.ReattachComponent(Cap.EnvMapSceneCapture);
+	}
+	foreach Spawner.AllActors(class'ExponentialHeightFog', Fog)
+		if (Fog.Component != none)
+			Fog.Component.SetEnabled(false);
+	// (Placed once: a loaded battle comes here again.)
+	foreach Spawner.AllActors(class'LWX2SunLight', Sun)
+		Suns++;
+	if (Suns == 0)
+		foreach Map().Lights(L)
+		{
+			if (L.Kind != 'Sun')
+				continue;
+			Sun = Spawner.Spawn(class'LWX2SunLight', , , L.Loc, L.Rot);
+			if (Sun == none || Sun.LightComponent == none)
+				continue;
+			Sun.LightComponent.SetLightProperties(L.Brightness * default.EWSunScale, L.Color);
+			Sun.LightComponent.CastDynamicShadows = true;
+			Sun.ReattachComponent(Sun.LightComponent);
+			Suns++;
+		}
+	return "EW's atmosphere: XCOM 2's" @ Off @ "suns, fog and environment light off, EW's" @ Suns @ "sun(s) placed";
 }
 
 /** Spawns EW's lights (of LightKinds) moved by Shift; returns how many were placed. */
