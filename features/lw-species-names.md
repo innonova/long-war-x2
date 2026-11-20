@@ -57,7 +57,8 @@ ADVENT's body. 130 templates named (every difficulty's copy).
 
 ### Left open
 
-- Loot and corpses are still the XCOM 2 template's ("ADVENT Trooper Corpse dropped" for an EXALT soldier), as before.
+- ~~Loot and corpses are still the XCOM 2 template's.~~ The copies drop no XCOM 2 loot (decision #535); Long War's own
+  corpses come after the mission as before (checked: "7 Sectoid Corpse, 3 Drone Wreck").
 - Not checked: a captured alien's and the Chryssalid hive's and Progeny's spawns through the copies (they use
   `LWMissionSquads.TemplateFor` too).
 
