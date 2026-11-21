@@ -1312,14 +1312,18 @@ static function MaterialInterface BlackStandin(Object InOuter)
 /** A light card's stand-in: LightCardParent at LightCardScale (its colour and fade the mesh's vertex colours). */
 /** A panic map stand-in (PanicMapMaterials): PanicMapParent with the look's earth, its index texture and the base's panic
  *  colour table; none where any is missing (the plain look then). */
-/** An HDR colour softly tonemapped per channel (1 - e^-c), alpha kept. */
+/** An HDR colour brought into 0..1, alpha kept: per channel the greater of the colour scaled to its brightest channel
+ *  (hue kept: the hangar's orange 1.51 0.62 0.33 stays saturated) and 1 - e^-c (an extreme channel opens the others: the
+ *  Situation Room's blue 0 0.64 13.9 draws cyan, as EW's renderer gives it). */
 static function LinearColor SoftTone(LinearColor C)
 {
 	local LinearColor T;
+	local float M;
 
-	T.R = 1.0 - Exp(-C.R);
-	T.G = 1.0 - Exp(-C.G);
-	T.B = 1.0 - Exp(-C.B);
+	M = FMax(1.0, FMax(C.R, FMax(C.G, C.B)));
+	T.R = FMax(C.R / M, 1.0 - Exp(-C.R));
+	T.G = FMax(C.G / M, 1.0 - Exp(-C.G));
+	T.B = FMax(C.B / M, 1.0 - Exp(-C.B));
 	T.A = C.A;
 	return T;
 }
