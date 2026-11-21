@@ -340,3 +340,8 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
 - **Lamp colours, second step:** `SoftTone` now takes per channel the greater of the colour scaled to its brightest
   channel and 1 − e^−c: the Situation Room's side lamps 0 190 218 against EW's 2 214 255 (were 0 140 161). The hangar's
   bridge-edge stripes stay cream: not its light cards (those are the palette lamps); their material still to find.
+
+- **Round 14** (`logs/compare/review/_summary.md`): seen fixed: engineering's robots (#2), Shen's yellow cast (#4
+  partly: his skin a little pale), the Psi Lab's violet shafts and discs (#12 partly). **New #1, my regression:** the
+  lens flares at strength 8 drew oversized white streaks across lamps and fixtures, one over the loadout's name header.
+  `FlareOpacity` 2 now: no streaks, the loadout header clear, the lamps a slight glow (seen on wingpu, four views).
