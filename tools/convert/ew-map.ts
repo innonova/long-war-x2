@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 76 // (76: people's palette slots keep their diffuse, with Palette/UVTile)
+export const CONVERTER_VERSION = 77 // (77: the consoles' screens each their band of the sheet)
+// (76: people's palette slots keep their diffuse, with Palette/UVTile)
 // (75: _F's region and colour the other way round)
 // (74: HQ_CustomScreens_F's pictures, the sheet's alpha)
 // (73: the placements' painted vertex colours into their meshes)
@@ -1209,6 +1210,14 @@ for (const [r, l] of looks) {
   // draws a region of a decal sheet, HQ_DecalSheet_A, picked by expressions cooked away; the whole sheet on it, tried in
   // converter 44, showed letters and icons. Converter 45.)
   l.diffuse = tex.get('StaticScreenTexture') ?? ''
+  // (A console's screen, HQ_ConsoleScreen, as its compiled shader has it: one quarter-height band of its sheet, at
+  // (u, v / 4 + TintColor.w), the picture the band's red + green + blue; converter 77.)
+  if (/\.HQ_ConsoleScreen$/.test(root) && l.diffuse) {
+    const tc = vectorParam(r, 'TintColor', 0, true)
+    const w = tc ? tc[3]! : 0
+    l.screenUV = [0, 4 * w, 1, 0.25]
+    l.screenChannel = 5
+  }
   // (HQ_CustomScreens_B, as its compiled pixel shader has it (tools/convert/ew-shaders.ts): its TintColor is no colour but
   // the sheet's region, UV = (UV0 + TintColor.xy) × TintColor.zw; the picture is the sheet's blue channel, times Color.
   // A copy of the sheet per region, made by screenMip below; converter 70.)
@@ -1446,7 +1455,7 @@ if (tints.length) {
     exports = meta.exports as any[]
   }
 }
-const screenLooks = [...new Set([...looks.values(), ...personSlots.flat()])].filter((l): l is Look => !!l && l.kind === 'Glow' && /HQscreens|Froth|Meld_Hexes/i.test(l.diffuse))
+const screenLooks = [...new Set([...looks.values(), ...personSlots.flat()])].filter((l): l is Look => !!l && l.kind === 'Glow' && !l.screenUV && /HQscreens|Froth|Meld_Hexes/i.test(l.diffuse))
 if (screenLooks.length) {
   const refsOf = [...new Set(screenLooks.map((l) => l.diffuse))].map((d) => ({ d, k: exports.findIndex((e) => e.fullName === d && e.type === 'Texture2D') })).filter((x) => x.k >= 0)
   const made = addTextureCopies(bytes, refsOf.map((x) => ({ ref: x.k + 1, name: `${exports[x.k]!.name}_LWX2White` })))
@@ -1492,7 +1501,8 @@ const screenOf = new Map<string, number[]>()
   const regions = [...new Set(withRegion.map(keyOf))]
   const sheets = withRegion.map((l) => ({ l, k: exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D') })).filter((x) => x.k >= 0)
   if (sheets.length) {
-    const made = addTextureCopies(bytes, regions.map((key, n) => ({ ref: sheets.find((x) => keyOf(x.l) === key)!.k + 1, name: `${exports[sheets[0]!.k]!.name}_LWX2Screen${n}` })))
+    // (Each copy named after its own sheet: a level can have custom screens on the decal sheet and consoles on theirs.)
+    const made = addTextureCopies(bytes, regions.map((key, n) => { const k = sheets.find((x) => keyOf(x.l) === key)!.k; return { ref: k + 1, name: `${exports[k]!.name}_LWX2Screen${n}` } }))
     bytes = made.bytes
     meta = new Package(bytes)
     pkg = openPackage(bytes)
