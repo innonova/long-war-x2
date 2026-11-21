@@ -241,7 +241,7 @@ console.log(
     "; Or our lit material with a share of the texture's own colour (EW's character lighting; a room's coloured light had",
     "; turned faces yellow-green), the share PeopleEmissive.",
     'PeopleLitParent="LWX2Lightmap.M_EWLightmappedLit"',
-    'PeopleEmissive=0.3',
+    'PeopleEmissive=0.2',
     "; Only EW's characters (CHH_…, QHH_ once converted: the converter renames a carried package's first letter): its animated props (craft, pads, robots) keep XCOM 2's staff material.",
     '+PeopleLitMeshes="HH_"',
     "; A person's slot without a texture (eye lashes, eye shade): our translucent material, a faint dark shading.",
