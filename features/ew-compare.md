@@ -159,3 +159,9 @@ so the fixes are driven by evidence and the person is not needed on every round.
   control port's `basemat`, now with texture parameters) brightened it only toward a mid grey, with our unlit and our
   additive material alike, and hiding the wall's own 3D screen (`wall hide`) changed nothing. Likely the strategy view's
   tone mapping and exposure (round 10 #7), not the plane; to be taken up with that.
+- **Round 10 #7, exposure** (partly): the port's darks were lifted (the research room's wall 32 38 39 against EW's 15 22
+  21). XCOM 2 ignores the world's default post-process here (tried live, no effect: so the missions' EW grading,
+  `EWGrade`, had done nothing either); the local player's override works. The base now darkens its shadows with it
+  (`BaseShadows` 0.07: the wall 15 21 22, a console 82 147 146 against EW's 85 155 155), and EW's maps' grading goes
+  through the same override, cleared at every battle's start (it outlives the map). The control port's `grade` sets it
+  live. Seen: `logs/compare/base-grade.png`; a mission on the gas station with EW's grading.
