@@ -270,6 +270,11 @@ Trainyard placed the operative and took both relays the same way.
 - **The relays are not drawn.** Their mesh is XCOM's hot button column (`HotButton.Meshes.HotButtonColumnLow`, a
   class default of `XComRadarArrayActor`), which is not in the level's package; where the player's EW keeps it is
   not found yet. The objective text and the action are the way to them for now.
+  (2026-11-21: searched every EW package on wingpu. `HotButton.Meshes.HotButtonColumnLow` as a skeletal mesh is exported
+  only by EW's `XComGame.upk`, the relay class's default; the bomb levels' converted packages carry the high column
+  only, `HotButtonColumnHigh`, and the bomb disposals draw EW's `AlienEnergyNode` and `AlienBomb` instead. Options:
+  the setup carrying that one mesh out of `XComGame.upk` (a script package: its objects converted alone, not the
+  package), or the high column from a converted bomb level as a stand-in.)
 - A hack's effect on EXALT: EW blinds and disables the EXALT soldiers already fighting for a turn and holds the
   pods still (`OnExaltHackingArrayInteraction`). Not yet.
 - The Kismet's reinforcements as the operative nears each relay, and the wave spawner.
