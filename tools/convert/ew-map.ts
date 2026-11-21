@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 73 // (73: the placements' painted vertex colours into their meshes)
+export const CONVERTER_VERSION = 74 // (74: HQ_CustomScreens_F's pictures, the sheet's alpha)
+// (73: the placements' painted vertex colours into their meshes)
 // (72: the screens' copies' mips from larger ones)
 // (71: the light strips and lamp faces by vertex alpha, Strip/PaletteMode)
 // (70: the custom screens' own regions of the decal sheet)
@@ -941,7 +942,7 @@ for (const level of ['Stream', 'EWI', 'CNH']) {
 // not compile any), so the mod replaces each with an instance of an XCOM 2 parent given
 // the EW material's diffuse and normal maps. Read here: an instance's texture parameters
 // (its parents' for those it does not set), a material's texture expressions.
-interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number; detail?: string; detailTile?: number; palette?: number[][]; uvTile?: number[]; screenUV?: number[]; strip?: number[]; paletteMode?: number[] }
+interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number; detail?: string; detailTile?: number; palette?: number[][]; uvTile?: number[]; screenUV?: number[]; screenChannel?: number; strip?: number[]; paletteMode?: number[] }
 const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
 /** Root materials drawn see-through (EW's BlendMode BLEND_Translucent: road paint, decals), by name. */
 const translucent = new Set<string>()
@@ -1209,7 +1210,8 @@ for (const [r, l] of looks) {
   // (HQ_CustomScreens_B, as its compiled pixel shader has it (tools/convert/ew-shaders.ts): its TintColor is no colour but
   // the sheet's region, UV = (UV0 + TintColor.xy) × TintColor.zw; the picture is the sheet's blue channel, times Color.
   // A copy of the sheet per region, made by screenMip below; converter 70.)
-  if (/HQ_CustomScreens_B$/.test(root)) {
+  // (HQ_CustomScreens_F the same, its picture the sheet's alpha; converter 74.)
+  if (/HQ_CustomScreens_[BF]$/.test(root)) {
     const uv = vectorParam(r, 'TintColor', 0, true)
     const col = vectorParam(r, 'Color', 0, true)
     const sheet = tex.get('HQ_DecalSheet_A') ?? [...tex.values()][0]
@@ -1218,6 +1220,7 @@ for (const [r, l] of looks) {
       l.tint = m > 1 ? [col[0]! / m, col[1]! / m, col[2]! / m, 1] : col
       l.diffuse = sheet
       l.screenUV = uv
+      l.screenChannel = /_F$/.test(root) ? 3 : 2
     }
   }
 }
@@ -1478,19 +1481,20 @@ const detailOf = new Map<string, { detail: string; ratio: number }>()
 const screenOf = new Map<string, number[]>()
 {
   const withRegion = [...new Set(looks.values())].filter((l): l is Look => !!l && !!l.screenUV && !!l.diffuse)
-  const regions = [...new Set(withRegion.map((l) => l.screenUV!.join(',')))]
+  const keyOf = (l: Look) => `${l.screenUV!.join(',')}:${l.screenChannel ?? 2}`
+  const regions = [...new Set(withRegion.map(keyOf))]
   const sheets = withRegion.map((l) => ({ l, k: exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D') })).filter((x) => x.k >= 0)
   if (sheets.length) {
-    const made = addTextureCopies(bytes, regions.map((key, n) => ({ ref: sheets.find((x) => x.l.screenUV!.join(',') === key)!.k + 1, name: `${exports[sheets[0]!.k]!.name}_LWX2Screen${n}` })))
+    const made = addTextureCopies(bytes, regions.map((key, n) => ({ ref: sheets.find((x) => keyOf(x.l) === key)!.k + 1, name: `${exports[sheets[0]!.k]!.name}_LWX2Screen${n}` })))
     bytes = made.bytes
     meta = new Package(bytes)
     pkg = openPackage(bytes)
     exports = meta.exports as any[]
     for (const { l } of sheets) {
-      const n = regions.indexOf(l.screenUV!.join(','))
+      const n = regions.indexOf(keyOf(l))
       const r = made.refs.get(`${l.diffuse.split('.').pop()}_LWX2Screen${n}`)
       if (!r) continue
-      screenOf.set(exports[r - 1]!.fullName, l.screenUV!)
+      screenOf.set(exports[r - 1]!.fullName, [...l.screenUV!, l.screenChannel ?? 2])
       l.diffuse = exports[r - 1]!.fullName
     }
   }

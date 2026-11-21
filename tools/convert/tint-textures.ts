@@ -236,7 +236,9 @@ export function screenMip(mip: Uint8Array, format: string, w: number, h: number,
     for (let b = 0; b < n; b++) col.set(m.subarray(block * b + block - 8, block * b + block), 8 * b)
     return col
   }
-  const src = decodeDXT1(colourOf(from), fw, fh)
+  // (uv[4]: the channel the picture is in, 2 blue (HQ_CustomScreens_B) or 3 alpha (_F, the DXT5 sheet's alpha).)
+  const channel = uv[4] ?? 2
+  const src = channel === 3 && format === 'PF_DXT5' ? (() => { const a = decodeDXT5Alpha(from, fw, fh); const o = new Uint8Array(fw * fh * 4); for (let k = 0; k < fw * fh; k++) o[4 * k + 3] = a[k]!; return o })() : decodeDXT1(colourOf(from), fw, fh)
   const out = new Uint8Array(w * h * 4)
   const wrap = (x: number) => x - Math.floor(x)
   // (Each texel the mean of the source texels it covers: the source is larger, as the region magnifies the sheet.)
@@ -246,7 +248,7 @@ export function screenMip(mip: Uint8Array, format: string, w: number, h: number,
       const u = wrap((x / w + uv[0]!) * uv[2]!), v = wrap((y / h + uv[1]!) * uv[3]!)
       const x0 = Math.floor(u * fw), y0 = Math.floor(v * fh)
       let sum = 0
-      for (let j = 0; j < sy; j++) for (let i = 0; i < sx; i++) sum += src[4 * (((y0 + j) % fh) * fw + ((x0 + i) % fw)) + 2]!
+      for (let j = 0; j < sy; j++) for (let i = 0; i < sx; i++) sum += src[4 * (((y0 + j) % fh) * fw + ((x0 + i) % fw)) + channel]!
       const b = Math.round(sum / (sx * sy))
       const p = 4 * (y * w + x)
       out[p] = out[p + 1] = out[p + 2] = b
