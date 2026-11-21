@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 84 // (84: the emitters' instance parameters)
+export const CONVERTER_VERSION = 85 // (85: HQ_Master_2Sided's palette, as HQ_Master's)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
@@ -1104,7 +1104,8 @@ function lookOf(r: number): Look {
     // giving way to it), _EmissiveComboPallet in its palette colour by UV0 quadrant × TintColor × alpha² (the atlas × (1 -
     // alpha)), its diffuse not palette-coloured. Our material: StripColor (w 1: by the palette) and PaletteMode (x the
     // palette on the diffuse, y the strips on). Converter 71.)
-    ...(/\.HQ_Master$/.test(root) ? {
+    // (HQ_Master_2Sided, its two-sided twin: the Gene Lab canisters' caps; converter 85.)
+    ...(/\.HQ_Master(_2Sided)?$/.test(root) ? {
       palette: ['Colorize A', 'Colorize B', 'Colorize C', 'Colorize D'].map((n) => vectorParam(r, n, 0, true) ?? [1, 1, 1, 1]),
       uvTile: [8, 1],
     } : /\.HQ_Master_EmissiveComboPallet$/.test(root) ? {

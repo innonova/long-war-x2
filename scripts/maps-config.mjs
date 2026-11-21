@@ -298,6 +298,7 @@ console.log(
     'PaletteSlotBrightness=0.6',
     "; (Only the launch pads: on the engineering robots, unlit, their shading was lost.)",
     '+PaletteSlotMeshes="SM_Launchpad"',
+    '+PaletteSlotMeshes="SM_Canister"',
     'TankGlassOpacity=0.9',
     "; (Measured against EW's tanks: 83 77 42; with the froth tiled as EW's, 0.85.)",
     'TankGlassTintScale=0.6',

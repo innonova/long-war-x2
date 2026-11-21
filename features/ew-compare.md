@@ -348,6 +348,8 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
 - **Round 14 #3, the Gene Lab's tanks** (partly): `TankGlassTintScale` 0.85 → 0.6 brings the faces from 123 97 59 to
   117 97 58 against EW's 90 72 42 (measured on the same crop); the rest of the difference is the pale caps and what
   shows through, not the froth's tint. The caps are `SM_Canister`'s slot 0, EW's master sheet on XCOM 2's staff material; tried on
-  our palette material (`PaletteSlotMeshes`, as the launch pads): no change, the slot carries no palette data. Next: the
-  converter giving that slot its palette and tile, as for the pads.
+  our palette material (`PaletteSlotMeshes`, as the launch pads): no change, the slot carries no palette data. **Fixed:** its
+  material is `HQ_Master_2Sided`, HQ_Master's two-sided twin, which the converter did not give HQ_Master's palette and
+  8×1 tile; now it does (converter 85), and `SM_Canister` is in `PaletteSlotMeshes`. The caps are EW's dark grey metal;
+  the faces measure 101 89 53 (EW 85 72 42). Left: the faces' yellow-gold mottle (ours greener and smoother).
 - **Round 14 #5, Vahlen's coat** (partly): EW's people levels' own lights placed (`features/ew-base-people.md`).
