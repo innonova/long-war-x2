@@ -322,3 +322,7 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   1.7): the Situation Room's stair strips 216 174 139 against EW's 244 184 141 (were 159 129 103); room medians against EW
   research 61/44, engineering 26/33, barracks 10/22, Situation Room 54/48, Gene Lab 36/40, Repair Bay 11/21 (mixed, about
   as before). Lightmaps at 1.0 tried: darker dark rooms, the bright ones unchanged.
+- **Round 13** (`logs/compare/review/_summary.md`): seen fixed: the New Game screens' scene, the menu's monitor graphs,
+  the Repair Bay's brightness, the Situation Room's lamp colours, the stair lights. **#2, engineering's robots flat white**
+  (my regression, fixed): converter 76 had put every palette slot of an animated piece on our unlit material, meant for the
+  launch pads; now only for `PaletteSlotMeshes` (`SM_Launchpad`). The people's light is also limited to characters.
