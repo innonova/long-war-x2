@@ -333,6 +333,7 @@ function ShowShell()
 	RefreshAmbient();
 	SetTimer(0.5, false, nameof(RefreshAmbient));
 	SetTimer(1.5, false, nameof(RefreshAmbientLater));
+	ApplyBaseGrade();
 }
 
 /** The base placed (once) and the tiles brought up to date, and the camera on it. */
@@ -427,26 +428,7 @@ function Show()
 	if (PanicColours != none)
 		PanicColours.bNeedsUpdate = true;
 
-	// (The base's grade: BaseShadows, BaseHighlights, BaseMidtones.)
-	if ((BaseShadows > 0 || BaseHighlights > 0 || BaseMidtones > 0) && LocalPlayer(GetALocalPlayerController().Player) != none)
-	{
-		PP = WorldInfo.DefaultPostProcessSettings;
-		PP.bOverride_Scene_Shadows = true;
-		PP.Scene_Shadows = vect(1, 1, 1) * BaseShadows;
-		if (BaseHighlights > 0)
-		{
-			PP.bOverride_Scene_HighLights = true;
-			PP.Scene_HighLights = vect(1, 1, 1) * BaseHighlights;
-		}
-		if (BaseMidtones > 0)
-		{
-			PP.bOverride_Scene_MidTones = true;
-			PP.Scene_MidTones = vect(1, 1, 1) * BaseMidtones;
-		}
-		LocalPlayer(GetALocalPlayerController().Player).OverridePostProcessSettings(PP, 0.0);
-	}
-	if (BaseTonemapperOff)
-		SetTonemapperOff(true);
+	ApplyBaseGrade();
 
 	if (!Converted())
 		return;
@@ -1388,6 +1370,34 @@ function Hide(optional bool bKeepCamera)
 	if (`HQPRES != none && !bKeepCamera)
 		`HQPRES.CAMLookAtNamedLocation("Base", 0);
 	Fog(true);
+}
+
+/** The base's grade (BaseShadows, BaseHighlights, BaseMidtones) as the local player's post-process override, and XCOM 2's
+ *  tonemapper off (BaseTonemapperOff): for EW's base and for the main menu's copy of EW's room (which had read 1.6-1.9×
+ *  EW's without it, round 18 #2). */
+function ApplyBaseGrade()
+{
+	local PostProcessSettings PP;
+
+	if ((BaseShadows > 0 || BaseHighlights > 0 || BaseMidtones > 0) && LocalPlayer(GetALocalPlayerController().Player) != none)
+	{
+		PP = WorldInfo.DefaultPostProcessSettings;
+		PP.bOverride_Scene_Shadows = true;
+		PP.Scene_Shadows = vect(1, 1, 1) * BaseShadows;
+		if (BaseHighlights > 0)
+		{
+			PP.bOverride_Scene_HighLights = true;
+			PP.Scene_HighLights = vect(1, 1, 1) * BaseHighlights;
+		}
+		if (BaseMidtones > 0)
+		{
+			PP.bOverride_Scene_MidTones = true;
+			PP.Scene_MidTones = vect(1, 1, 1) * BaseMidtones;
+		}
+		LocalPlayer(GetALocalPlayerController().Player).OverridePostProcessSettings(PP, 0.0);
+	}
+	if (BaseTonemapperOff)
+		SetTonemapperOff(true);
 }
 
 /** The local player's tonemapper (its post-process chains' UberPostProcessEffect) off, or back as it was. */

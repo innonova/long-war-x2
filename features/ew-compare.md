@@ -431,3 +431,7 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   dark. `FlareOpacity` 2 → 1.2: the thin white lamp streaks fainter, the loadout header clearer.
 - **Round 17 #7, the hangar's rock** (partly): `LightmapMaterialScale` (new: a lightmapped material's brightness by a
   part of its path), `HQ_Caves` at 0.65: the hangar's rock 37 27 23 against EW's 28 20 19 (was 44 33 28).
+- **Round 18 #2, the menu scene too bright** (fixed): the base's grade and the tonemapper switch were applied only when
+  the base showed, not to the main menu's copy of EW's room, which read 1.6-1.9× EW's after the light maps went linear.
+  Now `LWX2EWBase.ApplyBaseGrade`, called by `Show` and `ShowShell`: the main menu's 10th-90th percentiles 1.09/1.16/
+  1.03/0.94/0.83 of EW's, the New Game screen's 0.89/0.79/0.97/1.02/0.86.
