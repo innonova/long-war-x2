@@ -1312,6 +1312,18 @@ static function MaterialInterface BlackStandin(Object InOuter)
 /** A light card's stand-in: LightCardParent at LightCardScale (its colour and fade the mesh's vertex colours). */
 /** A panic map stand-in (PanicMapMaterials): PanicMapParent with the look's earth, its index texture and the base's panic
  *  colour table; none where any is missing (the plain look then). */
+/** An HDR colour softly tonemapped per channel (1 - e^-c), alpha kept. */
+static function LinearColor SoftTone(LinearColor C)
+{
+	local LinearColor T;
+
+	T.R = 1.0 - Exp(-C.R);
+	T.G = 1.0 - Exp(-C.G);
+	T.B = 1.0 - Exp(-C.B);
+	T.A = C.A;
+	return T;
+}
+
 static function MaterialInterface PanicMapStandin(LWX2Look L, Actor InOuter)
 {
 	local MaterialInstanceConstant MIC;
@@ -1406,10 +1418,12 @@ static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, option
 		if (L.Palette.Length == 4)
 		{
 			MIC.SetScalarParameterValue('LMBrightness', 0.0);
-			SB = L.Palette[0]; MIC.SetVectorParameterValue('PaletteA', SB);
-			SB = L.Palette[1]; MIC.SetVectorParameterValue('PaletteB', SB);
-			SB = L.Palette[2]; MIC.SetVectorParameterValue('PaletteC', SB);
-			SB = L.Palette[3]; MIC.SetVectorParameterValue('PaletteD', SB);
+			// (Each colour softly tonemapped, 1 - e^-c per channel: EW's are HDR (the Situation Room's blue 0, 0.64, 13.9),
+			// which its renderer draws cyan; scaled to the brightest channel, as our material does, it came out dark blue.)
+			SB = SoftTone(L.Palette[0]); MIC.SetVectorParameterValue('PaletteA', SB);
+			SB = SoftTone(L.Palette[1]); MIC.SetVectorParameterValue('PaletteB', SB);
+			SB = SoftTone(L.Palette[2]); MIC.SetVectorParameterValue('PaletteC', SB);
+			SB = SoftTone(L.Palette[3]); MIC.SetVectorParameterValue('PaletteD', SB);
 			SB.R = Scale; SB.G = Scale; SB.B = Scale; SB.A = 1;
 			MIC.SetVectorParameterValue('StripColor', SB);
 			SB.R = 0; SB.G = 1; SB.B = 0; SB.A = 0;
