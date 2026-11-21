@@ -544,8 +544,8 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem(TechDone(Args.Length > 1 ? int(Args[1]) : -1));
 		return;
 	case "psixp":
-		// psixp [<soldier index> <psi XP>]: the soldiers' psi experience and psi ranks (features/lw-psi.md), or one's psi XP set
-		// (a test aid).
+		// psixp [<soldier index> <psi XP> [<psi rank>]]: the soldiers' psi experience and psi ranks (features/lw-psi.md), or
+		// one's psi XP (and psi rank) set (a test aid).
 		PsiXP(Args, Out);
 		return;
 	case "psichance":
@@ -789,6 +789,13 @@ function Handle(string Line, out array<string> Out)
 		// EW's soldier summary or promotion tree of the first soldier, or of a unit ('open summary #<id>'), as the barracks'
 		// soldier list opens them.
 		// (open psitree [#id]: EW's promotion screen in psi mode, Long War's psi tree, as the Psi Labs open it.)
+		// (open soldiers: EW's soldier list, as the barracks' View Soldiers opens it.)
+		if (Args.Length > 1 && Args[1] ~= "soldiers")
+		{
+			class'UILWEWSoldierList'.static.Open(`HQPRES);
+			Out.AddItem("ok soldiers");
+			return;
+		}
 		if (Args.Length > 1 && Args[1] ~= "psitree")
 		{
 			Out.AddItem(OpenEWSoldier(Args.Length > 2 ? int(Mid(Args[2], 1)) : 0, false, true));
@@ -3081,8 +3088,10 @@ function PsiXP(array<string> Args, out array<string> Out)
 			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: psi XP set (test aid)");
 			Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
 			Unit.SetUnitFloatValue('LWX2PsiXP', int(Args[2]), eCleanup_Never);
+			if (Args.Length > 3)
+				Unit.SetUnitFloatValue('LWX2PsiRank', int(Args[3]), eCleanup_Never);
 			`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
-			Out.AddItem("ok" @ Unit.GetFullName() @ "psi XP" @ int(Args[2]));
+			Out.AddItem("ok" @ Unit.GetFullName() @ "psi XP" @ int(Args[2]) @ "rank" @ class'XComGameState_LWStrategy'.static.PsiRankOf(Unit));
 			return;
 		}
 		if (Args.Length <= 2 && n < 8)

@@ -416,3 +416,21 @@ What Long War 1.0 does, which the port did not have:
   events, training 208 hours at 41%.
 - **Left:** the psi ranks and psi XP on the soldier list and summary; Mindfray's words have unfilled numbers (Long War's
   own text leaves them empty).
+
+## Report (2026-11-21, psi XP and psi ranks on EW's screens)
+
+- **The soldier summary** (`UILWEWSoldierSummary`): the stats line carries Long War's psi experience and what the next
+  psi rank needs (`UIStrategyComponent_SoldierStats.UpdateData`), shown by EW's movie under the experience with the psi
+  icon (300/250), once the Psi Labs' research (tech 4) is done, for a soldier neither a MEC, robotic nor Neural-Damped
+  (`XComGameState_LWStrategy.PsiXPShown`). Its Psi-Abilities option is there for a soldier with a psi rank or the psi
+  experience for one (`XGSoldierUI.UpdateMainMenu`) and opens EW's psi tree (it opened XCOM 2's promotion screen).
+- **The soldier list** (`UILWEWSoldierList`): psi XP in Long War's violet under the experience for a soldier with a psi
+  rank who is not an officer (`XGStrategySoldier.GetName`, type 8), and EW's psi promotion badge for a soldier with a
+  power to choose (`HasAvailablePerksToAssign(true)`; `PsiPromotable`).
+- **The psi tree's words:** what training needs comes first, then the power's words, in a smaller size when long (Long
+  War's longer words ran out of EW's box of four lines and the "Needs …" line was cut off).
+- **Checked on wingpu** (`psixp <i> <xp> <rank>`, `open soldiers`: test aids): the summary 300/250 with Psi-Abilities
+  opening the psi tree; the list 300/250 with the badge, 260/500 without; Psi Inspiration's words whole in the box.
+- **Left:** the psi soldier's class icon variant (EW's `GetClassLabel` with bIsPsiSoldier; stock Long War defines no
+  such icons in its config, so likely none); the rank names read "PSI RANK n" on a development build, as the words are
+  written by the setup.

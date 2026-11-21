@@ -131,7 +131,7 @@ function RealizeSelected()
 	local X2AbilityTemplate T;
 	local XComGameState_Unit U;
 	local LWBaseRules.LWPsiPower P;
-	local string Description, Why;
+	local string Description, Why, Status, Words;
 	local int Will;
 
 	if (Row < 0)
@@ -153,14 +153,19 @@ function RealizeSelected()
 	}
 	else
 	{
-		Description = T.HasLongDescription() ? T.GetMyLongDescription(, U) : "";
+		// (What training it needs first, then its words; Long War's longer words in a smaller size, so that they fit EW's
+		// box of four lines.)
 		Will = int(U.GetMaxStat(eStat_Will));
 		if (U.HasSoldierAbility(T.DataName))
-			Description $= "\n" $ class'UIUtilities_Text'.static.GetColoredText("Learned.", eUIState_Good);
+			Status = "Learned.";
 		else if (class'XComGameState_LWStrategy'.static.CanTrainPsi(class'XComGameState_LWStrategy'.static.Get(), U, P, Why))
-			Description $= "\n" $ class'UIUtilities_Text'.static.GetColoredText(class'LWBaseRules'.static.PsiHours(Will, P) @ "hours," @ class'LWBaseRules'.static.PsiChance(Will, P) $ "%", eUIState_Good);
+			Status = class'LWBaseRules'.static.PsiHours(Will, P) @ "hours," @ class'LWBaseRules'.static.PsiChance(Will, P) $ "%.";
 		else
-			Description $= "\n" $ class'UIUtilities_Text'.static.GetColoredText("Needs" @ Why $ ".", eUIState_Bad);
+			Status = "Needs" @ Why $ ".";
+		Words = T.HasLongDescription() ? T.GetMyLongDescription(, U) : "";
+		Description = class'UIUtilities_Text'.static.GetColoredText(Status, Left(Status, 5) == "Needs" ? eUIState_Bad : eUIState_Good) @ Words;
+		if (Len(Status @ Words) > 130)
+			Description = "<font size='" $ (Len(Status @ Words) > 200 ? 16 : 19) $ "'>" $ Description $ "</font>";
 		MC.QueueString(T.LocFriendlyName);
 		MC.QueueString(Description);
 	}

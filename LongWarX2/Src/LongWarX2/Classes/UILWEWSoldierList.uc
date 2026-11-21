@@ -113,7 +113,8 @@ function Fill()
 		// (Greyed: a lab's list, a soldier it cannot take; UISoldierListBase, the option's state 1.)
 		MC.QueueBoolean(ForLab != none && ForLab.WhyNot(Unit) != "");
 		MC.QueueBoolean(Unit.ShowPromoteIcon());
-		MC.QueueBoolean(false);
+		// (A psi power to choose: EW's psi promotion badge.)
+		MC.QueueBoolean(class'XComGameState_LWStrategy'.static.PsiPromotable(Unit));
 		MC.QueueString("rank" $ Clamp(Unit.GetRank(), 0, 7));
 		MC.QueueString(k != INDEX_NONE ? Classes[k].Frame : "");
 		MC.QueueString(FlagOf(Unit.GetCountry()));
@@ -149,7 +150,7 @@ function Fill()
 function string NameLine(XComGameState_Unit Unit)
 {
 	local string Line, Nick;
-	local int Rank, XP;
+	local int Rank, XP, PsiRank;
 
 	// (The nickname alone: XCOM 2's eNameType_Nick comes quoted, and as quotes round nothing when there is none.)
 	Nick = Repl(Unit.GetNickName(), "'", "");
@@ -164,6 +165,11 @@ function string NameLine(XComGameState_Unit Unit)
 	XP = class'LWExperience'.static.XPOf(Unit);
 	Line $= "<font size='1'><br></font><font color='#FFD038' size='16'>" $ XP
 		$ (Rank < 7 ? "/" $ class'X2ExperienceConfig'.static.GetRequiredKills(Rank + 1) $ "</font>" : "") $ "|";
+	// (The psi experience in Long War's violet, for a soldier with a psi rank who is not an officer, where it is shown.)
+	PsiRank = class'XComGameState_LWStrategy'.static.PsiRankOf(Unit);
+	if (PsiRank >= 1 && class'LWOfficers'.static.Rank(Unit) == 0 && class'XComGameState_LWStrategy'.static.PsiXPShown(Unit))
+		Line $= "<font size='1'><br></font><font color='#A59ED1' size='16'>" $ class'XComGameState_LWStrategy'.static.PsiXPOf(Unit)
+			$ (PsiRank < 6 ? "/" $ class'XComGameState_LWStrategy'.static.PsiXPNeeded(PsiRank + 1) $ "</font>" : "");
 	return Line;
 }
 

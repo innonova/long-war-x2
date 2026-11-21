@@ -2939,6 +2939,41 @@ static function int PsiRankOf(XComGameState_Unit Unit)
 	return n;
 }
 
+/** Whether a soldier's psi experience is shown at all (UIStrategyComponent_SoldierStats.UpdateData, XGStrategySoldier.GetName
+ *  type 8): once the Psi Labs' research (Long War's tech 4) is done, for a soldier neither a MEC nor robotic nor
+ *  Neural-Damped. */
+static function bool PsiXPShown(XComGameState_Unit Unit)
+{
+	local name Tech;
+
+	if (Unit == none || Unit.IsRobotic() || class'LWMECs'.static.IsMEC(Unit) || HasGeneMod(Unit, 28))
+		return false;
+	Tech = class'LWResearchRules'.static.TemplateForId(4);
+	return Tech != '' && class'UIUtilities_Strategy'.static.GetXComHQ().IsTechResearched(Tech);
+}
+
+/** A soldier with a psi power to choose (XGStrategySoldier.HasAvailablePerksToAssign(true)): a rank or psi rank, the psi
+ *  experience for the next psi rank, and a power not held in the columns up to it. */
+static function bool PsiPromotable(XComGameState_Unit Unit)
+{
+	local LWBaseRules.LWPsiPower P;
+	local name Ability;
+	local int Rank;
+
+	if (Unit == none || Unit.IsRobotic() || class'LWMECs'.static.IsMEC(Unit))
+		return false;
+	Rank = PsiRankOf(Unit);
+	if ((Unit.GetRank() == 0 && Rank == 0) || Rank >= 6 || PsiXPOf(Unit) < PsiXPNeeded(Rank + 1))
+		return false;
+	foreach class'LWBaseRules'.default.PsiPowers(P)
+	{
+		Ability = class'X2Ability_LWStandins'.static.PsiAbilityFor(P.Perk);
+		if (Ability != '' && P.Column >= 1 && P.Column <= Rank + 1 && !Unit.HasSoldierAbility(Ability))
+			return true;
+	}
+	return false;
+}
+
 /** The psi experience a psi rank needs (XGTacticalGameCore.GetPsiXPRequired: m_iPsiXPLevels, the last for any above). */
 static function int PsiXPNeeded(int Rank)
 {

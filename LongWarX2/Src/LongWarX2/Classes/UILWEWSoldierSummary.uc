@@ -218,7 +218,14 @@ function FillStats(XComGameState_Unit U)
 
 	Line = Stat(U, eStat_HP) $ "|" $ Stat(U, eStat_Mobility) $ "|" $ Stat(U, eStat_Will) $ "|" $ Stat(U, eStat_Offense) $ "|" $ Stat(U, eStat_Defense);
 	Rank = U.GetRank();
-	Line $= "|" $ "|" $ "|" $ class'LWExperience'.static.XPOf(U) $ "|" $ (Rank < 7 ? string(class'X2ExperienceConfig'.static.GetRequiredKills(Rank + 1)) : "0") $ "|0|-1";
+	Line $= "|" $ "|" $ "|" $ class'LWExperience'.static.XPOf(U) $ "|" $ (Rank < 7 ? string(class'X2ExperienceConfig'.static.GetRequiredKills(Rank + 1)) : "0");
+	// (The psi experience, and what the next psi rank needs where it is shown (PsiXPShown); at the last psi rank 0;
+	// otherwise -1, none shown.)
+	Line $= "|" $ class'XComGameState_LWStrategy'.static.PsiXPOf(U);
+	if (class'XComGameState_LWStrategy'.static.PsiXPShown(U))
+		Line $= "|" $ (class'XComGameState_LWStrategy'.static.PsiRankOf(U) < 6 ? string(class'XComGameState_LWStrategy'.static.PsiXPNeeded(class'XComGameState_LWStrategy'.static.PsiRankOf(U) + 1)) : "0");
+	else
+		Line $= "|-1";
 	MC.BeginChildFunctionOp("soldierStatsMC", "SetUnitStats");
 	MC.QueueString(Line);
 	MC.QueueString("");
