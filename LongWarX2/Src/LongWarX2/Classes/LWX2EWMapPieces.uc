@@ -112,6 +112,9 @@ var config float LightCardOpacity;
 var config name GlowColorParam;
 var config LinearColor GlowDefault;
 var config float GlowScale;
+/** EW's coloured lamp faces (HQ_ColorizedLight): their colours over 1 (blue 0.42 1.18 2.0) clipped in our unlit material
+ *  to a pale cyan-white; scaled by LampGlowScale so their hue stays (round 10 #8). 0: GlowScale. */
+var config float LampGlowScale;
 var config bool LightmapBase, LightmapMaps;
 /** EW's baked lighting at this brightness (1: as stored). */
 var config float LightmapBrightness;
@@ -1238,8 +1241,9 @@ static function MaterialInterface LightCardStandin(Object InOuter)
 
 /** A stand-in for one of EW's glowing parts: GlowParent in the look's colour (GlowDefault where EW colours it by vertex),
  *  over the screen's picture or plain white. */
-static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, optional bool bKeepDiffuse)
+static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, optional bool bKeepDiffuse, optional bool bLamp)
 {
+	local float Scale;
 	local MaterialInstanceConstant MIC;
 	local Material Parent;
 	local Texture T, White;
@@ -1261,7 +1265,8 @@ static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, option
 	if (T != none)
 		MIC.SetTextureParameterValue('Diffuse', T);
 	C = bKeepDiffuse ? ((L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.UnlitTint) : ((L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.GlowDefault);
-	C.R *= default.GlowScale; C.G *= default.GlowScale; C.B *= default.GlowScale; C.A = 1;
+	Scale = (default.LampGlowScale > 0 && bLamp) ? default.LampGlowScale : default.GlowScale;
+	C.R *= Scale; C.G *= Scale; C.B *= Scale; C.A = 1;
 	if (bOurs)
 	{
 		if (White != none)
@@ -1330,7 +1335,7 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	}
 	if (k != INDEX_NONE && L.Kind == 'Glow' && default.GlowParent != "")
 	{
-		S.Standin = GlowStandin(L, InOuter);
+		S.Standin = GlowStandin(L, InOuter, false, InStr(Path, "ColorizedLight") != INDEX_NONE);
 		if (S.Standin != none)
 		{
 			Standins.AddItem(S);
