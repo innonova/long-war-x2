@@ -417,3 +417,6 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   froth tinted in that orange alone read as orange tanks (84 60 31 against EW's 82 72 41, and visibly orange); EW's
   gold is that orange glow over the olive behind. Kept the olive tint (converter 90's); the gold mottling needs our
   glass to add a coloured froth glow over its own olive: a material change (SDK editor), next time.
+  Also tried (same night): the froth copy baked in colour (EW's olive + its brightest froth × the orange); our glass takes
+  its opacity from the picture's brightness, so the darker coloured copy made the tanks nearly transparent. Reverted. The
+  way: a tank glass material of ours (SDK editor) with the froth as a glow mask over a tint, its opacity its own.
