@@ -137,3 +137,12 @@ references only `Materials.Dev.NoiseHighFreq_DIF`/`_NRM`. So EW's scan lines and
 (likely screen- or world-space bands over that noise), not a texture to carry. Next, when taken up: a scan-line band
 (a panner over a sine of world Z, times the noise) added to our `M_EWGlass` in the SDK editor, and the setup carrying
 the noise texture from `StrategyResources_SF`.
+
+## Notes (2026-11-21, the hologram's shader read)
+
+`MEC_Upgrade_Active`'s compiled pixel shader (`tools/convert/ew-shaders.ts`): not maths alone but four textures, three of
+them at UV0 × a scalar each (`UniformPixelScalars_0` x, y, z) and one at UV0: t0 (×x), t1 (×y), t2 (×z), t3 (×1);
+emissive = (t0.r × t1.r × colour + saturate(1 − 60 × t2.r × t0.r × t2.g)) × t3.r × SkinColor. The `saturate(1 − 60 ·
+…)` term makes the thin bright lines (where the product is near 0), the tiled t1 the bands. To carry: which four textures
+(the material's referenced textures in `StrategyResources_SF`, the noise among them) and the three scalars (its shader
+map's uniform scalar expressions), then a material of ours with the same sum (SDK editor). Not done yet.

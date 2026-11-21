@@ -239,3 +239,6 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   `Strip` colour and `PaletteMode`; our material is to darken the atlas under a strip by the vertex alpha and add the glow
   (TintColor × 2, or the palette colour × TintColor × alpha²) to its emissive, its hue kept with the brightest channel
   capped at 1.
+- **`HQ_CustomScreens_A`** (the hangar's floating holograms): translucent, s0 at UV0 × 0.5 + `Color`.xy, s1 at UV0;
+  value = s0.r × s1.g + 0.3 × s1.r, × the vertex alpha as opacity, the vertex colour as its colour. A case for our light
+  card material (vertex colour × alpha); not done yet.
