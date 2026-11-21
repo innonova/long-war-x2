@@ -5130,35 +5130,43 @@ function string BaseMat(array<string> Args)
 	local int n, k, i;
 
 	if (Args.Length < 3)
-		return "ERR basemat <text> <material> [<param> <value>]...";
-	M = MaterialInterface(DynamicLoadObject(Args[2], class'MaterialInterface', true));
-	if (M == none)
-		return "ERR no material" @ Args[2];
+		return "ERR basemat <text> <material>|self [<param> <value>]...";
+	// (self: each element's own material kept as the parent, only the parameters given changed.)
+	if (Args[2] != "self")
+	{
+		M = MaterialInterface(DynamicLoadObject(Args[2], class'MaterialInterface', true));
+		if (M == none)
+			return "ERR no material" @ Args[2];
+	}
 	foreach AllActors(class'DynamicSMActor_Spawnable', Piece)
 	{
 		if (InStr(PathName(Piece.StaticMeshComponent.StaticMesh), Args[1], , true) == INDEX_NONE)
 			continue;
-		MIC = new(Piece) class'MaterialInstanceConstant';
-		MIC.SetParent(M);
-		for (i = 3; i + 1 < Args.Length; i += 2)
-		{
-			V = SplitString(Args[i + 1], ",");
-			// (A value with a dot and letters, a texture's path: set as a texture parameter.)
-			if (InStr(Args[i + 1], ".") != INDEX_NONE && Texture(DynamicLoadObject(Args[i + 1], class'Texture', true)) != none)
-				MIC.SetTextureParameterValue(name(Args[i]), Texture(DynamicLoadObject(Args[i + 1], class'Texture', true)));
-			else if (V.Length >= 3)
-			{
-				C = MakeLinearColor(float(V[0]), float(V[1]), float(V[2]), V.Length > 3 ? float(V[3]) : 1.0);
-				MIC.SetVectorParameterValue(name(Args[i]), C);
-			}
-			else
-				MIC.SetScalarParameterValue(name(Args[i]), float(Args[i + 1]));
-		}
 		for (k = 0; k < Piece.StaticMeshComponent.GetNumElements(); k++)
+		{
+			if (Args[2] == "self" && Piece.StaticMeshComponent.GetMaterial(k) == none)
+				continue;
+			MIC = new(Piece) class'MaterialInstanceConstant';
+			MIC.SetParent(Args[2] == "self" ? Piece.StaticMeshComponent.GetMaterial(k) : M);
+			for (i = 3; i + 1 < Args.Length; i += 2)
+			{
+				V = SplitString(Args[i + 1], ",");
+				// (A value with a dot and letters, a texture's path: set as a texture parameter.)
+				if (InStr(Args[i + 1], ".") != INDEX_NONE && Texture(DynamicLoadObject(Args[i + 1], class'Texture', true)) != none)
+					MIC.SetTextureParameterValue(name(Args[i]), Texture(DynamicLoadObject(Args[i + 1], class'Texture', true)));
+				else if (V.Length >= 3)
+				{
+					C = MakeLinearColor(float(V[0]), float(V[1]), float(V[2]), V.Length > 3 ? float(V[3]) : 1.0);
+					MIC.SetVectorParameterValue(name(Args[i]), C);
+				}
+				else
+					MIC.SetScalarParameterValue(name(Args[i]), float(Args[i + 1]));
+			}
 			Piece.StaticMeshComponent.SetMaterial(k, MIC);
+		}
 		n++;
 	}
-	return "ok" @ n @ "pieces given" @ PathName(M);
+	return "ok" @ n @ "pieces given" @ (M != none ? PathName(M) : "their own materials, changed");
 }
 
 /** A test aid: EW's base's pieces by their mesh's path, as the engine has them (basemesh). */
