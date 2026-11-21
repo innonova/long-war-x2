@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 66
+export const CONVERTER_VERSION = 67 // (67: a detail layer never the main diffuse when another texture matches)
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -983,9 +983,12 @@ function lookOf(r: number): Look {
   // Grass layer: one texture where EW blends four by vertex colour); else by the texture's name.
   // (The buildings' parents, BLDG_*, name their surface Diffuse_Base; their Damage_* layer, rubble, is what shows once a
   // wall is broken, never the stand-in's.)
+  // (A detail layer, as the cave rock's Rock_Detail_A_DIF, which EW tiles six times over its main Rock_A_DIF, only when
+  // there is no other: taken as the main texture it drew the rock in blue-grey blotches; converter 67.)
+  const byName = (re: RegExp, detail: boolean) =>
+    [...tex].find(([param, p]) => !/^Damage/i.test(param) && /Detail/i.test(p.split('.').pop()!) === detail && re.test(p.split('.').pop()!))?.[1]
   const pick = (params: string[], re: RegExp) =>
-    params.map((p) => tex.get(p)).find(Boolean)
-    ?? [...tex].find(([param, p]) => !/^Damage/i.test(param) && re.test(p.split('.').pop()!))?.[1] ?? ''
+    params.map((p) => tex.get(p)).find(Boolean) ?? byName(re, false) ?? byName(re, true) ?? ''
   const diffuse = pick(['Diffuse', 'Diffuse_Base', 'Grass', 'Diffuse_Grass', 'Diffuse_Rock', 'Hairstyle Texture'], /(_DIFF?|_D|Diffuse|_Dif|^diff)\d*$/i)
   return {
     diffuse,
