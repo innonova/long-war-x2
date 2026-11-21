@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 86 // (86: an untextured material's painted colour as its look's tint)
+export const CONVERTER_VERSION = 87 // (87: EW's grilles, HQ_Grating, as a darkened copy of their grid mask)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
@@ -1526,6 +1526,27 @@ for (const [r, l] of looks) {
   const same = tints.find((t) => t.name === name)
   if (same) { lookAlso.push({ slot: l, name }); continue }
   tints.push({ slot: l, diffuse: d + 1, mask: mk + 1, tint, name, channel: 'blue', bright: 1 })
+}
+// (EW's grilles, HQ_Grating: no diffuse, a dark DiffuseColor (0.04) over a cut-out grid, its 'Alpha Mask', tiled
+// 'Tiling' times. They had come out as plain tan panels. Our stand-in: the grid itself, darkened (GRILLE_SCALE), opaque,
+// bars dark grey over black gaps; tiled as EW's. APPROXIMATION: no cut-out, what lies behind does not show. Converter 87.)
+const GRILLE_SCALE = 0.35
+for (const [r, l] of looks) {
+  if (l.diffuse || r <= 0) continue
+  const tex = new Map<string, string>()
+  const root = texturesOf(r, tex)
+  const maskPath = tex.get('Alpha Mask')
+  if (!/\.HQ_Grating$/.test(root) || !maskPath) continue
+  const mk = exports.findIndex((e) => e.fullName === maskPath && e.type === 'Texture2D')
+  if (mk < 0) continue
+  const tiling = scalarParam(r, 'Tiling')
+  if (tiling && tiling > 0 && tiling !== 1) l.tile = tiling
+  l.kind = 'Prop'
+  const name = `${exports[mk]!.name}_LWX2Bright`
+  const same = tints.find((t) => t.name === name)
+  if (same) { lookAlso.push({ slot: l, name }); continue }
+  l.diffuse = maskPath
+  tints.push({ slot: l, diffuse: mk + 1, mask: 0, tint: [GRILLE_SCALE], name, scale: true })
 }
 if (tints.length) {
   const made = addTextureCopies(bytes, tints.map((t) => ({ ref: t.diffuse, name: t.name })))

@@ -366,3 +366,10 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   for EW's 255 203 73. Now off while EW's base shows (`BaseTonemapperOff`, restored when the base hides) and the light
   maps lowered to match (`LightmapBrightness` 1.2 → 0.95): the wall 246 224 91 at 1.05; six views' mean brightness
   1.01–1.10× EW's (were 1.13–1.19× with the tonemapper off at 1.2). The Gene Lab's tanks read yellow-gold with it.
+- **Round 15 #2, grilles as solid tan panels** (fixed): EW's `HQ_Grating` has no diffuse (DiffuseColor 0.04, a cut-out grid
+  'Alpha Mask' tiled 'Tiling' times); the port fell back to a plain panel. Now the converter gives such a look its grid
+  mask, darkened (×0.35), as the diffuse and EW's tiling (converter 87). APPROXIMATION: opaque, no cut-out. The armoury's
+  tall grille behind the promotion panel reads as EW's dark grid.
+- **Round 15 #1, hard colour patches** (cause, likely): the converter multiplies EW's two light-map atlases into one
+  DXT1 texture (`lightmap-bake.ts`); in dark areas the re-encode posterises into green and violet steps, where EW multiplies
+  them in its shader. Next: our lit material sampling both, the converter keeping them as EW has them (SDK editor).
