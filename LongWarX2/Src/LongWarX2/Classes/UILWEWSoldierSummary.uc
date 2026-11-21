@@ -104,7 +104,9 @@ function Fill()
 		return;
 	Options.Length = 0;
 	Options.AddItem('Abilities');
-	if (class'LWGearRules'.static.IsPsionic(U))
+	// (XGSoldierUI.UpdateMainMenu: a soldier with a psi rank, or the psi experience for one; features/lw-psi.md.)
+	if (class'LWGearRules'.static.IsPsionic(U) || class'XComGameState_LWStrategy'.static.PsiRankOf(U) > 0
+		|| (!U.IsRobotic() && class'XComGameState_LWStrategy'.static.PsiXPOf(U) >= class'XComGameState_LWStrategy'.static.PsiXPNeeded(class'XComGameState_LWStrategy'.static.PsiRankOf(U) + 1)))
 		Options.AddItem('PsiAbilities');
 	// (Once the Genetics Lab is built; not for MECs and SHIVs: XGSoldierUI.UpdateMainMenu.)
 	if (S != none && class'LWBase'.static.Count(S, 23) > 0 && !U.IsRobotic() && !class'LWMECs'.static.IsMEC(U))
@@ -382,7 +384,8 @@ function Choose(int i)
 			HQPres.UIArmory_Promotion(UnitRef);
 		break;
 	case 'PsiAbilities':
-		HQPres.UIArmory_Promotion(UnitRef);
+		// (EW's promotion screen in psi mode: Long War's psi tree.)
+		class'UILWEWPsiPromotion'.static.OpenPsi(HQPres, UnitRef);
 		break;
 	case 'GeneMods':
 		class'UILWEWGeneMods'.static.OpenFor(HQPres, UnitRef);
