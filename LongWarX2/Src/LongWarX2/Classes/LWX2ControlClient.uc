@@ -612,6 +612,24 @@ function Handle(string Line, out array<string> Out)
 			LocalPlayer(GetALocalPlayerController().Player).OverridePostProcessSettings(WorldInfo.DefaultPostProcessSettings, 0.0);
 		Out.AddItem("ok graded");
 		return;
+	case "bloom":
+		// bloom <scale> <threshold>: the local player's post-process bloom set live, over the current grade (a test aid: EW's
+		// lamps' halos are bloom on colours over 1).
+		if (Args.Length < 3)
+		{
+			Out.AddItem("ERR bloom <scale> <threshold>");
+			return;
+		}
+		WorldInfo.DefaultPostProcessSettings.bOverride_EnableBloom = true;
+		WorldInfo.DefaultPostProcessSettings.bEnableBloom = true;
+		WorldInfo.DefaultPostProcessSettings.bOverride_Bloom_Scale = true;
+		WorldInfo.DefaultPostProcessSettings.Bloom_Scale = float(Args[1]);
+		WorldInfo.DefaultPostProcessSettings.bOverride_Bloom_Threshold = true;
+		WorldInfo.DefaultPostProcessSettings.Bloom_Threshold = float(Args[2]);
+		if (LocalPlayer(GetALocalPlayerController().Player) != none)
+			LocalPlayer(GetALocalPlayerController().Player).OverridePostProcessSettings(WorldInfo.DefaultPostProcessSettings, 0.0);
+		Out.AddItem("ok bloom");
+		return;
 	case "wall":
 		// wall hide|show|alpha <0-100>: the Situation Room's wall screen (its 3D movie) hidden, shown, or its root's alpha
 		// set (a test aid: what lies over EW's map plane on the bare wall).
