@@ -93,6 +93,8 @@ console.log(
     "LightmapBrightness=0.4",
     "; The light maps' curve: 1, linear (a power raised the colour noise of EW's dark light-map texels into red and olive blotches); EW's darker mid-tones come from BaseMidtones.",
     "LightmapGamma=1.0",
+    "; EW's palette material on pieces without a light map (the Repair Bay's plinth): our material, a white light map, at this brightness.",
+    'UnlitPaletteBrightness=2.0',
     "; (And by level, measured against EW room by room in linear light: the Cybernetics Lab, the Repair Bay's view, 2.26x darker.)",
     '+LightmapBrightnessBy=(Level="Addon_CyberneticsLab",Scale=2.0)',
     "; EW's glowing parts (light rings and strips, consoles' screens: Kind=Glow in the converted data): our own unlit",

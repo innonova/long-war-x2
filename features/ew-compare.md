@@ -406,3 +406,8 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   converter knew only the second; now both (converter 90, channel 7: green + 2 × red). The research room's desk
   terminals still show streaks where EW shows one crisp panel: their screens' UV range is not known (the live probes,
   `basemat`, did not change that view; likely another piece than the ones tried). Left open.
+- **Round 17 #3, the Repair Bay plinth** (fixed): the plinth is `CyberneticsLab_I`, a piece of EW's palette material with
+  no light map of its own, so it fell to XCOM 2's props material, which drew EW's trim atlas unmapped: pale streaks. Such
+  pieces now take our lightmapped material with a white light map, the look's palette and 8 × 1 tile
+  (`UnlitPaletteStandin`, `UnlitPaletteBrightness` 2.0, measured: the plinth top 84 115 150 against EW's 97 120 142).
+  Its ring markings and blue-grey finish now as EW's; the hangar, engineering and base views unchanged.

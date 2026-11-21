@@ -152,6 +152,10 @@ var config float LightmapBrightness;
 /** The power our lit materials raise EW's light-map atlases to (LMGamma; EW samples them as sRGB, about 2.2): read linear
  *  (converter 89, so XCOM 2 does not band their darks), the curve applied in the shader. 0: the material's default. */
 var config float LightmapGamma;
+/** A piece of EW's palette material (HQ_Master and kin: a trim atlas tiled 8 × 1, coloured by UV quadrant) without a light
+ *  map of its own (the Repair Bay's plinth, CyberneticsLab_I): on LightmapParent with a white light map at this brightness,
+ *  so its atlas is mapped and coloured as EW's; XCOM 2's props material drew the atlas unmapped, in streaks. 0: off. */
+var config float UnlitPaletteBrightness;
 /** A level's lightmapped pieces brighter or darker by Scale (matched by the level's name in the light map's path):
  *  measured against EW where a room reads otherwise (the Cybernetics Lab, the Repair Bay's room). */
 struct LWX2LevelScale
@@ -1494,6 +1498,48 @@ static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, option
 	return MIC;
 }
 
+/** EW's palette material for a piece without a light map: LightmapParent, a white light map, the look's palette, tile and
+ *  strip settings, at UnlitPaletteBrightness. */
+static function MaterialInterface UnlitPaletteStandin(LWX2Look L, Object InOuter)
+{
+	local MaterialInstanceConstant MIC;
+	local Material Parent;
+	local Texture T;
+	local LinearColor V;
+
+	Parent = Material(DynamicLoadObject(default.LightmapParent, class'Material', true));
+	T = Texture(DynamicLoadObject(L.Diffuse, class'Texture', true));
+	if (Parent == none || T == none)
+		return none;
+	MIC = new(InOuter) class'MaterialInstanceConstant';
+	MIC.SetParent(Parent);
+	MIC.SetTextureParameterValue('Diffuse', T);
+	MIC.SetTextureParameterValue('LightMap', Texture(DynamicLoadObject("EngineResources.WhiteSquareTexture", class'Texture', true)));
+	V.R = 1; V.G = 1; V.B = 0; V.A = 0;
+	MIC.SetVectorParameterValue('LMScaleBias', V);
+	MIC.SetScalarParameterValue('LMBrightness', default.UnlitPaletteBrightness);
+	if (L.Tile > 0)
+		MIC.SetScalarParameterValue('DiffuseTile', L.Tile);
+	if (L.UVTile.X > 0)
+	{
+		V.R = L.UVTile.X; V.G = L.UVTile.Y; V.B = 1; V.A = 1;
+		MIC.SetVectorParameterValue('DiffuseUVTile', V);
+	}
+	V = L.Palette[0]; MIC.SetVectorParameterValue('PaletteA', V);
+	V = L.Palette[1]; MIC.SetVectorParameterValue('PaletteB', V);
+	V = L.Palette[2]; MIC.SetVectorParameterValue('PaletteC', V);
+	V = L.Palette[3]; MIC.SetVectorParameterValue('PaletteD', V);
+	if (L.PaletteMode.Y > 0)
+	{
+		V = L.Strip; MIC.SetVectorParameterValue('StripColor', V);
+		V.R = L.PaletteMode.X; V.G = L.PaletteMode.Y; V.B = 0; V.A = 0;
+		MIC.SetVectorParameterValue('PaletteMode', V);
+	}
+	V = MakeLinearColor(1, 1, 1, 1);
+	MIC.SetVectorParameterValue('Tint', V);
+	return MIC;
+}
+
 static function MaterialInterface MaterialFor(string Path, Object InOuter, out array<LWX2Standin> Standins, optional LWX2EWMapData D)
 {
 	local int k, i;
@@ -1556,6 +1602,16 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	if (k != INDEX_NONE && L.Diffuse != "" && default.GlowParent != "" && Matches(Path, default.UnlitMaterials))
 	{
 		S.Standin = GlowStandin(L, InOuter, true);
+		if (S.Standin != none)
+		{
+			Standins.AddItem(S);
+			return S.Standin;
+		}
+	}
+	// (EW's palette material on a piece without a light map: our lightmapped material, a white light map; UnlitPaletteBrightness.)
+	if (k != INDEX_NONE && L.Kind == 'Prop' && L.Diffuse != "" && L.Palette.Length == 4 && default.UnlitPaletteBrightness > 0 && default.LightmapParent != "")
+	{
+		S.Standin = UnlitPaletteStandin(L, InOuter);
 		if (S.Standin != none)
 		{
 			Standins.AddItem(S);
