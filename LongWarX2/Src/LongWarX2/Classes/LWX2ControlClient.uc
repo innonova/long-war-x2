@@ -539,6 +539,11 @@ function Handle(string Line, out array<string> Out)
 		// EW's placed lights of a kind (point, spot, sun, sky; all) at a scale of their brightness now, live: ewlight <kind> <scale>.
 		Out.AddItem(ScaleEWLights(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? float(Args[2]) : 1.0));
 		return;
+	case "psixp":
+		// psixp [<soldier index> <psi XP>]: the soldiers' psi experience and psi ranks (features/lw-psi.md), or one's psi XP set
+		// (a test aid).
+		PsiXP(Args, Out);
+		return;
 	case "psichance":
 		PsiChances(Out, Args.Length > 1 ? name(Args[1]) : '');
 		return;
@@ -3022,6 +3027,35 @@ function Enemies(out array<string> Out, optional bool bAll)
 }
 
 /** In a mission: a soldier's ability used on a target (its index among the available targets; -1: list them). */
+/** The soldiers' psi experience and ranks; psixp <i> <xp> sets one's. */
+function PsiXP(array<string> Args, out array<string> Out)
+{
+	local XComGameState_Unit Unit;
+	local StateObjectReference Ref;
+	local XComGameState NewGameState;
+	local int n;
+
+	foreach class'UIUtilities_Strategy'.static.GetXComHQ().Crew(Ref)
+	{
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(Ref.ObjectID));
+		if (Unit == none || !Unit.IsSoldier())
+			continue;
+		if (Args.Length > 2 && n == int(Args[1]))
+		{
+			NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: psi XP set (test aid)");
+			Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+			Unit.SetUnitFloatValue('LWX2PsiXP', int(Args[2]), eCleanup_Never);
+			`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+			Out.AddItem("ok" @ Unit.GetFullName() @ "psi XP" @ int(Args[2]));
+			return;
+		}
+		if (Args.Length <= 2 && n < 8)
+			Out.AddItem(n @ Unit.GetFullName() @ "psi XP" @ class'XComGameState_LWStrategy'.static.PsiXPOf(Unit) @ "rank" @ class'XComGameState_LWStrategy'.static.PsiRankOf(Unit)
+				@ "next" @ class'XComGameState_LWStrategy'.static.PsiXPNeeded(class'XComGameState_LWStrategy'.static.PsiRankOf(Unit) + 1) @ "will" @ int(Unit.GetBaseStat(eStat_Will)));
+		n++;
+	}
+}
+
 /**
  * Psi training (features/lw-psi.md): with no arguments the powers (target will, what is missing for the first
  * soldier ready) and the soldiers in training; 'psi <soldier index> <perk>' begins training.
