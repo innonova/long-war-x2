@@ -385,3 +385,18 @@ What Long War 1.0 does, which the port did not have:
   (perk 171)). A power gained (`XGFacility_PsiLabs`) raises the psi rank by one (`PsiLevelUp`) and the will by
   `iBaseOTSWillIncrease` + Rand(`iRandOTSWillIncrease`) (1 + 0–5).
 - **The psi tree** (EW's promotion screen in psi mode) shows the powers by rank: still the port's power list.
+
+## Report (2026-11-21, psi experience and ranks ported)
+
+- **Psi XP** on the soldier (`LWX2PsiXP`; `XComGameState_LWStrategy.AddPsiXP`, Dynamic War and the Neuroregulator as Long
+  War has them): a won mission gives each soldier alive 20 + each power's tier (`LWExperience.MissionOver`); a soldier an
+  alien's psionic ability misses gains 10 (`X2EventListener_LWStrategy.OnPsiAttack`, registered in tactical).
+- **Psi rank** (`LWX2PsiRank`; a campaign from before: the powers held). The Psi Labs take a soldier only with their next
+  rank's psi XP, and not one with Neural Damping or an officer (`PsiSoldierWhy`: "psi experience (20 of 100)"). A power
+  gained: rank + 1, will + 1 + Rand(6).
+- **Config** from stock Long War (`base-config.mjs`): `PsiXPLevels`, `PsiMissionXP`, `PsiResistXP`, `PsiXPItem`,
+  `PsiXPItemFactor`, `PsiRankWillBase`, `PsiRankWillRand`.
+- **Checked on wingpu:** a won mission, each soldier psi +20 (log); the Psi Labs refusing a soldier at 0 of 100; at 100,
+  Mindfray trained and gained: psi rank 0 → 1, will 50 → 56, the next power "needs psi experience (100 of 250)".
+  Control port: `psixp`, `techdone` (test aids). The resisted-attack award is built, not yet seen in a mission.
+- **Left:** the psi ranks' names and psi XP on EW's screens (soldier list, summary), the psi tree on EW's promotion screen.
