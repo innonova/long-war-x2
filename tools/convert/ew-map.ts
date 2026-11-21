@@ -1007,10 +1007,12 @@ function lookOf(r: number): Look {
     // (EW's base palette material, HQ_Master: its compiled pixel shader (RefShaderCache, disassembled; features/ew-compare.md)
     // samples its trim atlas at UV0 × (8, 1) and multiplies it by Colorize A, B, C or D as the face's UV0 lies in [0,1)
     // or beyond in u and v: A (u < 1, v < 1), B (u ≥ 1, v < 1), C (u < 1, v ≥ 1), D (u ≥ 1, v ≥ 1). Converter 68.)
+    // (Its emissive variants, HQ_Master_EmissiveCombo_Vector and _EmissiveComboPallet, sample the atlas at the same (8, 1);
+    // their palette or TintColor colours only the strips the mesh's vertex alpha marks, emissive: not carried yet.)
     ...(/\.HQ_Master$/.test(root) ? {
       palette: ['Colorize A', 'Colorize B', 'Colorize C', 'Colorize D'].map((n) => vectorParam(r, n, 0, true) ?? [1, 1, 1, 1]),
       uvTile: [8, 1],
-    } : {}),
+    } : /\.HQ_Master_EmissiveCombo/.test(root) ? { uvTile: [8, 1] } : {}),
   }
 }
 /**
