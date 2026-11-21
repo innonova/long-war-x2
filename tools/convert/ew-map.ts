@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 83 // (83: the NoTint lamps' unnamed TintColor)
+export const CONVERTER_VERSION = 84 // (84: the emitters' instance parameters)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
@@ -399,7 +399,46 @@ exports.forEach((e, i) => {
 
 /** EW's emitters (steam, mist, light beams, blinking lights: features/ew-emitters.md): each placed Emitter's particle
  *  system, where it stands; the systems' sprites' textures are read later (particleLooks), with the materials. */
-interface EmitterPlace { template: number; loc: number[]; rot: number[]; scale: number; maxDraw: number; dilation: number }
+interface EmitterPlace { template: number; loc: number[]; rot: number[]; scale: number; maxDraw: number; dilation: number; params: EmitterParam[] }
+/** One of a placed emitter's instance parameters (its component's InstanceParameters: the Psi Lab's beams' violet Color,
+ *  their Opacity), which the template's particle-parameter distributions read: a scalar, a vector or a colour. */
+interface EmitterParam { name: string; kind: 'Scalar' | 'Vector' | 'Color'; value: number[] }
+function emitterParams(index: number): EmitterParam[] {
+  const ip = componentTag(index, 'InstanceParameters')
+  if (!ip) return []
+  const v = ip.value as Uint8Array
+  const n = new DataView(v.buffer, v.byteOffset, v.byteLength).getInt32(0, true)
+  const rd = new Reader(v.subarray(4))
+  const out: EmitterParam[] = []
+  for (let k = 0; k < n; k++) {
+    const st = readTags(rd, pkg)
+    const get = (name: string) => st.find((t) => t.name === name)
+    const nameTag = get('Name'), typeTag = get('ParamType')
+    if (!nameTag) continue
+    const nv = nameTag.value as Uint8Array
+    const name = String(pkg.names[new DataView(nv.buffer, nv.byteOffset, nv.byteLength).getInt32(0, true)]?.name ?? '')
+    let type = 'PSPT_Scalar'
+    if (typeTag) {
+      const tv = typeTag.value as Uint8Array
+      const tdv = new DataView(tv.buffer, tv.byteOffset, tv.byteLength)
+      if (tv.length >= 4) type = String(pkg.names[tdv.getInt32(0, true)]?.name ?? type)
+    }
+    const raw = (t: Tag | undefined) => (t ? (t.value as Uint8Array) : undefined)
+    if (/Vector/.test(type)) {
+      const b = raw(get('Vector'))
+      const dv = b && new DataView(b.buffer, b.byteOffset, b.byteLength)
+      out.push({ name, kind: 'Vector', value: dv && b!.length >= 12 ? [dv.getFloat32(0, true), dv.getFloat32(4, true), dv.getFloat32(8, true)] : [0, 0, 0] })
+    } else if (/Color/.test(type)) {
+      // (FColor is stored B, G, R, A.)
+      const b = raw(get('Color'))
+      out.push({ name, kind: 'Color', value: b && b.length >= 4 ? [b[2]!, b[1]!, b[0]!, b[3]!] : [0, 0, 0, 0] })
+    } else if (/Scalar/.test(type)) {
+      const t = get('Scalar')
+      out.push({ name, kind: 'Scalar', value: [t ? f32(t, 0) : 0] })
+    }
+  }
+  return out
+}
 const emitterPlaces: EmitterPlace[] = []
 /** A component's property, its own or its archetype's (placed components store only what differs). */
 function componentTag(index: number, name: string): Tag | undefined {
@@ -453,7 +492,7 @@ exports.forEach((e, i) => {
   const loc = inherited(i, tags, 'Location', 26)
   const rot = inherited(i, tags, 'Rotation', 26)
   const ds = inherited(i, tags, 'DrawScale', 26)
-  emitterPlaces.push({ template, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)], rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)], scale: ds ? f32(ds, 0) : 1, maxDraw: md ? f32(md, 0) : 0, dilation: dil ? f32(dil, 0) : 1 })
+  emitterPlaces.push({ template, loc: [f32(loc, 0), f32(loc, 1), f32(loc, 2)], rot: [i32(rot, 0), i32(rot, 1), i32(rot, 2)], scale: ds ? f32(ds, 0) : 1, maxDraw: md ? f32(md, 0) : 0, dilation: dil ? f32(dil, 0) : 1, params: emitterParams(ref(comp) - 1) })
 })
 
 /** EW's lens flares (the autopsy lamp's glow, the labs' lamp streaks: features/ew-emitters.md): each placed
@@ -1867,7 +1906,7 @@ const lines = [
   ),
   "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
   "; EW's emitters (features/ew-emitters.md): each placed particle system, and each of its emitters' sprite texture.",
-  ...emitterPlaces.map((e) => `+Emitters=(Template="${rename(pathOf(e.template))}",Loc=(X=${n(e.loc[0]!)},Y=${n(e.loc[1]!)},Z=${n(e.loc[2]!)}),Rot=(Pitch=${e.rot[0]},Yaw=${e.rot[1]},Roll=${e.rot[2]}),Scale=${n(e.scale)}${e.maxDraw ? `,MaxDraw=${n(e.maxDraw)}` : ''}${e.dilation !== 1 ? `,Dilation=${n(e.dilation)}` : ''})`),
+  ...emitterPlaces.map((e) => `+Emitters=(Template="${rename(pathOf(e.template))}",Loc=(X=${n(e.loc[0]!)},Y=${n(e.loc[1]!)},Z=${n(e.loc[2]!)}),Rot=(Pitch=${e.rot[0]},Yaw=${e.rot[1]},Roll=${e.rot[2]}),Scale=${n(e.scale)}${e.maxDraw ? `,MaxDraw=${n(e.maxDraw)}` : ''}${e.dilation !== 1 ? `,Dilation=${n(e.dilation)}` : ''}${e.params.length ? `,Params=(${e.params.map((q) => `(Name="${q.name}",Kind=${q.kind},${q.kind === 'Scalar' ? `Scalar=${n(q.value[0]!)}` : q.kind === 'Vector' ? `Vector=(X=${n(q.value[0]!)},Y=${n(q.value[1]!)},Z=${n(q.value[2]!)})` : `Color=(R=${q.value[0]},G=${q.value[1]},B=${q.value[2]},A=${q.value[3]})`})`).join(',')})` : ''})`),
   ...flarePlaces.map((f) => `+Flares=(Template="${rename(pathOf(f.template))}",Loc=(X=${n(f.loc[0]!)},Y=${n(f.loc[1]!)},Z=${n(f.loc[2]!)}))`),
   ...flareLooks.map((l) => `+FlareLooks=(Template="${rename(pathOf(l.template))}",Element=${l.element},Texture="${rename(l.texture)}")`),
   ...particleLooks.map((l) => `+ParticleLooks=(Template="${rename(pathOf(l.template))}",Emitter=${l.emitter},Texture="${rename(l.texture)}"${l.additive ? ',Additive=true' : ''}${l.subX * l.subY > 1 ? `,SubX=${l.subX},SubY=${l.subY}` : ''})`),

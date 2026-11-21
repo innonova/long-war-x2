@@ -331,6 +331,12 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   now reads their unnamed TintColor (converter 83) and gives them our light-card material in that colour, softly
   tonemapped. They still draw nothing, as the Gene Lab's cards before: our light-card material itself is the open
   question (`features/ew-base-people.md`).
+  **Fixed (2026-11-21):** the shafts were never the light cards (that mesh is flat at the ceiling: the lamp discs). They
+  are six `Fog_Cones.HeadLight_Beam_Cheap` emitters, which the port left out as axis-locked (axis-locked fires once
+  crashed mission maps); now drawn by name (`AxisLockEmitters`). Their violet is EW's per placed emitter: the
+  components' instance parameters (`Color` 0.3 0.2 1.0, `Opacity` 0.4 / 0.2), which the converter now carries
+  (converter 84, `Params=`) and the mod sets on each emitter. Every base emitter takes its own settings now (the Psi
+  Lab's steam is EW's faint blue). `logs/compare/pairs/scr-psilabs.png`.
 - **Lamp colours, second step:** `SoftTone` now takes per channel the greater of the colour scaled to its brightest
   channel and 1 − e^−c: the Situation Room's side lamps 0 190 218 against EW's 2 214 255 (were 0 140 161). The hangar's
   bridge-edge stripes stay cream: not its light cards (those are the palette lamps); their material still to find.

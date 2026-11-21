@@ -71,6 +71,7 @@ console.log(
     '+AdditiveEmitters="P_Projection_Cone"',
     '+AdditiveEmitters="P_Holo_Dots"',
     '+AdditiveEmitters="P_Projector_Glass"',
+    '+AxisLockEmitters="HeadLight_Beam_Cheap"',
     "; EW's walls as XCOM 2's breakable walls (its fracturable actors, EW's toughness as XCOM 2's): explosions break them.",
     'PlotFracWalls=true',
     '+LightKinds=Point',

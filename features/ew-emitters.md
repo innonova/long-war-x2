@@ -81,3 +81,15 @@ battle's start, a few each tick (`LWX2EmitterPlacer`), and `MissionEmitters` is 
 bar with 77 of EW's emitters, its fires glowing, stable through an alien turn
 (`logs/compare/lm-ew/pair-bar-emitters.png`).
 
+
+## Report (2026-11-21, instance parameters; the light shafts)
+
+- **EW's placed emitters' own settings** (their components' `InstanceParameters`: scalars, vectors, colours named by
+  the template's particle-parameter distributions) are read by the converter (converter 84, `+Emitters=(…,Params=(…))`)
+  and set on each spawned emitter (`SetFloatParameter`, `SetVectorParameter`, `SetColorParameter`). Shared templates
+  take their room's colour and strength from these: the Psi Lab's beams violet (0.3, 0.2, 1.0) at opacity 0.4 / 0.2,
+  its steam a faint blue (opacity 0.1).
+- **Axis-locked emitters by name** (`AxisLockEmitters`, `HeadLight_Beam_Cheap`): the rooms' light shafts, sprites
+  locked to the beam's axis, drawn; the others stay out (`AxisLocked`). Seen in the Psi Lab, no crash.
+- **Checked on wingpu:** the Psi Lab's violet shafts as in EW; research, engineering, hangar, Gene Lab, Repair Bay and
+  foundry views as before.

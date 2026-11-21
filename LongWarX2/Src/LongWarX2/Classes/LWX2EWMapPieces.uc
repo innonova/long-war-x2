@@ -114,6 +114,9 @@ var config array<string> SkipEmitters;
 /** EW's emitters drawn additive whatever their material says (a part of the template's path): the globe's projection
  *  cones, blended, drew as dark panels. */
 var config array<string> AdditiveEmitters;
+/** EW's axis-locked emitters drawn nonetheless (a part of the template's path; others are left out, AxisLocked): the
+ *  rooms' light shafts (Fog_Cones.HeadLight_Beam_Cheap, the Psi Lab's violet beams), sprites locked to the beam's axis. */
+var config array<string> AxisLockEmitters;
 /** EW's lens flares' stand-in material (additive, ours) and how strong. */
 var config string FlareParent;
 var config float FlareOpacity;
@@ -290,6 +293,17 @@ struct LWX2Grade
 };
 
 /** One of EW's emitters (features/ew-emitters.md): its particle system, where it stands. */
+/** One of a placed emitter's instance parameters (EW's component's InstanceParameters, read by the template's particle
+ *  parameter distributions: the Psi Lab's beams' violet Color and their Opacity). Kind: Scalar, Vector or Color. */
+struct LWX2EmitterParam
+{
+	var string Name;
+	var name Kind;
+	var float Scalar;
+	var vector Vector;
+	var color Color;
+};
+
 struct LWX2Emitter
 {
 	var string Template;
@@ -300,6 +314,7 @@ struct LWX2Emitter
 	var float MaxDraw;
 	/** How fast its time runs (its component's CustomTimeDilation: EW's slow steam 0.3); 0: as the world's. */
 	var float Dilation;
+	var array<LWX2EmitterParam> Params;
 };
 
 /** One of a particle system's emitters' sprite: its texture, whether it adds, its sub-image grid. */
@@ -769,6 +784,7 @@ static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift
 	local LWX2Emitter E;
 	local ParticleSystem PS;
 	local EmitterSpawnable A;
+	local LWX2EmitterParam Q;
 	local int n, Index;
 
 	if (default.ParticleParent == "" || D == none)
@@ -784,7 +800,7 @@ static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift
 		if (Skipped(E.Template))
 			continue;
 		PS = ParticleSystem(DynamicLoadObject(E.Template, class'ParticleSystem', true));
-		if (PS == none || AxisLocked(PS) || !ParticleStandins(D, E.Template, PS))
+		if (PS == none || (AxisLocked(PS) && !MatchesAny(E.Template, default.AxisLockEmitters)) || !ParticleStandins(D, E.Template, PS))
 			continue;
 		A = Spawner.Spawn(class'EmitterSpawnable', Spawner, , E.Loc + Shift, E.Rot);
 		if (A == none)
@@ -796,6 +812,16 @@ static function int PlaceEmittersOf(LWX2EWMapData D, Actor Spawner, vector Shift
 			A.ParticleSystemComponent.SetCullDistance(E.MaxDraw > 0 ? E.MaxDraw : default.EmitterMaxDraw);
 		if (E.Dilation > 0)
 			A.CustomTimeDilation = E.Dilation;
+		// (EW's own settings for this one: its colour and strength, which the template leaves to the placed emitter.)
+		foreach E.Params(Q)
+		{
+			if (Q.Kind == 'Scalar')
+				A.ParticleSystemComponent.SetFloatParameter(name(Q.Name), Q.Scalar);
+			else if (Q.Kind == 'Vector')
+				A.ParticleSystemComponent.SetVectorParameter(name(Q.Name), Q.Vector);
+			else if (Q.Kind == 'Color')
+				A.ParticleSystemComponent.SetColorParameter(name(Q.Name), Q.Color);
+		}
 		A.ParticleSystemComponent.ActivateSystem();
 		Placed.AddItem(A);
 		n++;
