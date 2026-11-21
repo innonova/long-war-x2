@@ -251,3 +251,16 @@ clear glass with coloured, frothy edges; ours (a glow over the froth) as filled.
   Open.
 - **Shen's face** (fixed, approximation): the baked skin colour at half strength (`SKIN_POWER` 0.5, converter 82): 166 137
   88 against EW's 164 144 117 (was 109 85 48). EW's skin lighting lifts its faces beyond the formula; this stands in for it.
+
+## Report (2026-11-21, the people levels' own lights)
+
+- **EW's people levels light their people themselves:** `Anim_ScienceLabs` has a movable directional light (0.5), two
+  movable spot lights (one at brightness 8 by Vahlen, cone 50°: her key light) and a faint skylight. The port placed
+  only Command1's directional people light; the people levels' lights were never placed. Now each people level's
+  movable lights are placed on the people's channel only (`LWX2EWBase.PlacePeopleLightsOf`, `LWX2PeopleSpotLight`,
+  `LWX2PeoplePointLight`, `LWX2PeopleLight`), at `PeopleLightScale`.
+- **`PeopleLightScale` 0.5 → 0.2** (APPROXIMATION by eye): with the key light added, 0.5 saturated Vahlen's white coat;
+  at 0.2 its folds shade a little on the side away from the key. Still flatter than EW's (round 14 #5): EW's character
+  material shades more strongly than our lit stand-in.
+- **Seen on wingpu:** the research screen (Vahlen), the research room's clerks, engineering, Shen on Build Items, the
+  Gene Lab's people: none darker or brighter out of place.

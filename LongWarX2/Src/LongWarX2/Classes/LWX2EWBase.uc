@@ -638,6 +638,7 @@ function PlacePeople()
 		PlacePeopleOf(Level, BaseOffset, Placed);
 		foreach Placed(A)
 			People.AddItem(LWX2BasePerson(A));
+		PlacePeopleLightsOf(Level);
 		// (And the scene's own props, where it is not placed as a fixed room already: the lab clerks' chairs, InterpActors
 		// of Anim_ScienceLabs.)
 		if (FixedLevels.Find(Level) == INDEX_NONE && Data(Level) != none && Data(Level).Pieces.Length > 0)
@@ -649,6 +650,45 @@ function PlacePeople()
 		}
 	}
 	`log("LongWarX2: EW base:" @ People.Length @ "people placed", , 'LongWarX2');
+}
+
+/** A people level's own lights (its movable lights: EW's key and fill lights for that room's people, Vahlen's spot light
+ *  in the labs), on the people's channel only, at PeopleLightScale; its directional people light as Command1's. */
+function PlacePeopleLightsOf(string Level)
+{
+	local LWX2EWMapData D;
+	local LWX2EWMapPieces.LWX2Light L;
+	local Light A;
+
+	D = Data(Level);
+	if (D == none || PeopleLightScale <= 0)
+		return;
+	foreach D.Lights(L)
+	{
+		switch (L.Kind)
+		{
+			case 'People': A = Spawn(class'LWX2PeopleLight', self, , L.Loc + BaseOffset, L.Rot); break;
+			case 'Spot': A = Spawn(class'LWX2PeopleSpotLight', self, , L.Loc + BaseOffset, L.Rot); break;
+			case 'Point': A = Spawn(class'LWX2PeoplePointLight', self, , L.Loc + BaseOffset, L.Rot); break;
+			default: A = none;
+		}
+		if (A == none || A.LightComponent == none)
+			continue;
+		if (PointLightComponent(A.LightComponent) != none)
+		{
+			PointLightComponent(A.LightComponent).Radius = L.Radius;
+			PointLightComponent(A.LightComponent).FalloffExponent = L.Falloff;
+		}
+		if (SpotLightComponent(A.LightComponent) != none)
+		{
+			SpotLightComponent(A.LightComponent).InnerConeAngle = L.Inner;
+			SpotLightComponent(A.LightComponent).OuterConeAngle = L.Outer;
+		}
+		A.LightComponent.SetLightProperties(L.Brightness * PeopleLightScale, L.Color);
+		A.LightComponent.SetEnabled(true);
+		A.ReattachComponent(A.LightComponent);
+		Fixed.AddItem(A);
+	}
 }
 
 /** A level's people (and its animated props: the Genetics Lab's tanks …), placed with the level at Offset; added to Placed. */
