@@ -172,3 +172,8 @@ so the fixes are driven by evidence and the person is not needed on every round.
   `P_Holo_Dots`, `P_Projector_Glass`) had drawn as large dark panels with our blended particle material; they are now
   forced additive (`AdditiveEmitters`), and the main menu scene places its emitters again: the globe has its light
   column above and below, no panels. Its halo is still weaker than EW's (bloom).
+- **Round 10 #10, the menu's rear openings** (fixed): two causes. The streamed lighting level's own height fog (density
+  0.025) sat in front of the gaps, and nothing closed the room behind them. A black backdrop sphere round the scene
+  (`ShellBackdrop`, radius 60 units × scale) in our two-sided glass pane at full opacity (the lightmapped black, one-
+  sided, was culled from inside even turned inside out), and the lighting level's `ExponentialHeightFog` switched off
+  under the menu scene. The gaps measure 18 23 26 against EW's 16 29 34 (before: 80 93 118).
