@@ -254,3 +254,20 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   placement shares them (converter 73; in the base only this mesh). Drawn with our light card (vertex colour, additive),
   its strength by material (`LightCardScaleBy`, 0.3): 153 117 77 against EW's 157 104 47. The mask is not carried.
   `logs/compare/hangar-stripes.png`.
+
+## Report (2026-11-21, reviewer round 11 and after)
+
+- **Round 11** (`logs/compare/review/_summary.md`): improvements seen: texture detail (the trim tiling), the research
+  wall screen; rock "much closer". New #1: deep shadows nearly black. Its menu findings (#6, pale openings) were judged on
+  menu captures from 20 November: `capture-x2.sh` takes the hub's views only; the menus are now recaptured by hand.
+- **#1, deep shadows** (fixed): `BaseShadows` 0.07 had cut everything below it to black once EW's palette darkened the
+  surfaces. The base's grade is now set whole, matched by brightness percentiles against EW in three rooms: Shadows 0,
+  HighLights 1.4, MidTones 0.9 (`BaseHighlights`, `BaseMidtones`): engineering 2 7 25 65 115 against EW's 9 16 33 67 107
+  (before 0 0 10 59 128), the research room 19 30 49 84 113 against 22 29 44 71 112.
+- **#6, the menu's pale openings** (fixed): a glass pane of the shell scene drawn with XCOM 2's translucent parent (loaded
+  in the main menu, not in the base) and its white texture. EW's base and menu scene now always take our pane.
+- **#4, the hologlobes** (partly): EW's `M_Globe_Holo` is a translucent glowing hologram; ours had been a pale opaque
+  sphere. Our glass now takes an optional picture (`Diffuse`, `UseTexture`; SDK editor): its colour the glow, its green
+  the opacity. The globes in the main menu and Mission Control are that glass with the converter's teal earth
+  (`AdditiveGlowMaterials`, `HoloTint`, `HoloOpacity`): seas 30 83 93 and land 137 251 254 against EW's 38 121 135 and
+  117 235 245. EW's halo and projection beams (bloom) are not carried. `logs/compare/menu-globe.png`.
