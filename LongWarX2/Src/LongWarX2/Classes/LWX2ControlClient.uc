@@ -539,6 +539,10 @@ function Handle(string Line, out array<string> Out)
 		// EW's placed lights of a kind (point, spot, sun, sky; all) at a scale of their brightness now, live: ewlight <kind> <scale>.
 		Out.AddItem(ScaleEWLights(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? float(Args[2]) : 1.0));
 		return;
+	case "techdone":
+		// techdone <Long War tech number>: that tech marked researched at once (a test aid).
+		Out.AddItem(TechDone(Args.Length > 1 ? int(Args[1]) : -1));
+		return;
 	case "psixp":
 		// psixp [<soldier index> <psi XP>]: the soldiers' psi experience and psi ranks (features/lw-psi.md), or one's psi XP set
 		// (a test aid).
@@ -3027,6 +3031,32 @@ function Enemies(out array<string> Out, optional bool bAll)
 }
 
 /** In a mission: a soldier's ability used on a target (its index among the available targets; -1: list them). */
+/** A Long War tech marked researched (techdone). */
+function string TechDone(int Id)
+{
+	local XComGameState NewGameState;
+	local XComGameState_HeadquartersXCom XComHQ;
+	local XComGameState_Tech Tech;
+	local name Template;
+
+	Template = class'LWResearchRules'.static.TemplateForId(Id);
+	if (Template == '')
+		return "ERR no Long War tech" @ Id;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Tech', Tech)
+		if (Tech.GetMyTemplateName() == Template)
+			break;
+	if (Tech == none || Tech.GetMyTemplateName() != Template)
+		return "ERR no state for" @ Template;
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	if (XComHQ.IsTechResearched(Template))
+		return "ok already" @ Template;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: tech done (test aid)");
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
+	XComHQ.TechsResearched.AddItem(Tech.GetReference());
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
+	return "ok" @ Template @ "researched";
+}
+
 /** The soldiers' psi experience and ranks; psixp <i> <xp> sets one's. */
 function PsiXP(array<string> Args, out array<string> Out)
 {
