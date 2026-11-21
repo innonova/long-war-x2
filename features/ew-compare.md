@@ -271,3 +271,9 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   the opacity. The globes in the main menu and Mission Control are that glass with the converter's teal earth
   (`AdditiveGlowMaterials`, `HoloTint`, `HoloOpacity`): seas 30 83 93 and land 137 251 254 against EW's 38 121 135 and
   117 235 245. EW's halo and projection beams (bloom) are not carried. `logs/compare/menu-globe.png`.
+- **Round 11 #3, blank screens** (fixed in the Gene Lab and the Repair Bay): EW's `HQ_CustomScreens_F` screens (instances
+  A–E, placed small screens and the Gene Lab's big one) draw a region of the same decal sheet, its **alpha**, in a colour.
+  Their roles are swapped against `_B`: `Color` holds the region (a grid: offsets 0–2, cells 0.5 × 0.28) and
+  `TintColor`, set per placement, the colour (the instances' values show it; the shader tool's expression list had them
+  the other way, see its caveat). Converter 74–75. The Repair Bay's monitor shows EW's white circuit picture, the Gene
+  Lab's small screen its amber one and the big right screen EW's map picture.

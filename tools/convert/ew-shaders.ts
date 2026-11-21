@@ -11,6 +11,11 @@
 //
 // The shader type part picks which of the map's pixel shaders (default: the static-mesh base pass with a directional
 // lightmap). Nothing of the game is kept: the package is read in memory and the disassembly printed.
+//
+// CAVEAT: a material can have several shader maps of its name (permutations); the expression list printed is the first
+// map's and the shader the last of the wanted type before it, which need not be the same map's. HQ_CustomScreens_F's
+// list named Color and TintColor the other way round from what its shader and its instances' values show. Check the
+// roles against an instance's values (tools: the converter's vectorParam) before relying on the names.
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Package, decompressPackage } from '@innonova/upkit/upk'
