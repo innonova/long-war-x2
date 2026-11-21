@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 72 // (72: the screens' copies' mips from larger ones)
+export const CONVERTER_VERSION = 73 // (73: the placements' painted vertex colours into their meshes)
+// (72: the screens' copies' mips from larger ones)
 // (71: the light strips and lamp faces by vertex alpha, Strip/PaletteMode)
 // (70: the custom screens' own regions of the decal sheet)
 // (69: the cave rock's layers by EW's own formula; 68: HQ_Master's palette and 8×1 tile)
@@ -301,6 +302,8 @@ interface Frac { indices: number; minZ: number; maxZ: number; toughness: string 
 /** A piece's baked lighting (features/ew-lightmaps.md): its two atlases (EW's colour and directional coefficients) and their
  *  scales, and where its part of them lies: lightmap UV = the mesh's lightmap UV set × scale + bias. */
 interface LightMap { color: number; dir: number; s0: number[]; s1: number[]; scale: number[]; bias: number[]; uv: number }
+/** Per static mesh (its export index), each placement's own vertex colours (or undefined): overrideColoursOf. */
+const instanceColours = new Map<number, (Uint8Array | undefined)[]>()
 interface Piece { lightmap?: LightMap; mesh: string; loc: number[]; rot: number[]; scale: number[]; materials: number[]; extent: number[]; fractured: boolean; cover: Cover; frac?: Frac }
 const pieces: Piece[] = []
 const skipped: Record<string, number> = {}
@@ -327,6 +330,9 @@ exports.forEach((e, i) => {
   // (Nor one whose mesh EW keeps hidden in play: Command1's stray sidewalk tile in front of the hangar; converter 30.)
   if ((ctags.find((t) => t.name === 'HiddenGame') as { boolValue?: number } | undefined)?.boolValue) return
   const lightmap = lightmapOf(ref(comp), mesh)
+  // (Its own vertex colours, painted on this placement: EW's hangar's floor stripes are orange so, the mesh's white.)
+  const mk = exports.findIndex((x) => x.fullName === mesh && x.type === 'StaticMesh')
+  if (mk >= 0) (instanceColours.get(mk) ?? instanceColours.set(mk, []).get(mk)!).push(overrideColoursOf(ref(comp)))
   // (A placed actor stores only what differs from its archetype: one standing where its archetype stands has no Location
   // of its own, and was put at the origin until converter 18: Street Hurricane's storefront row then covered its drop zone.)
   const loc = inherited(i, tags, 'Location', 26)
@@ -461,6 +467,37 @@ exports.forEach((e, i) => {
  * the type (2: a 2D lightmap), the lights' GUIDs, three coefficients (an atlas and a scale, three floats), the atlas
  * placement's scale and bias (two floats each). Read from EW's Static_ScienceLabs; undefined where it is not that.
  */
+function overrideColoursOf(r: number): Uint8Array | undefined {
+  // After the light map (as lightmapOf reads it; none, type 0, or a 2D one, type 2): a flag, and where it is set the
+  // placement's vertex colours (a colour vertex buffer: stride 4, count, then the bulk array, element size 4 and count,
+  // BGRA). EW's mesh painting (StaticMeshComponentLODInfo.OverrideVertexColors). Converter 73.
+  if (r <= 0) return undefined
+  const d: Uint8Array = pkg.data(r)
+  const rd = new Reader(d.subarray(8))
+  try {
+    readTags(rd, pkg)
+  } catch {
+    return undefined
+  }
+  const dv = new DataView(d.buffer, d.byteOffset, d.byteLength)
+  let o = 8 + (rd as unknown as { o: number }).o
+  const i = () => { const x = dv.getInt32(o, true); o += 4; return x }
+  try {
+    if (i() < 1) return undefined
+    const sm = i(); if (sm < 0 || sm > 64) return undefined; o += 4 * sm
+    const sb = i(); if (sb < 0 || sb > 64) return undefined; o += 4 * sb
+    const type = i()
+    if (type === 2) { const g = i(); if (g < 0 || g > 256) return undefined; o += 16 * g + 3 * 16 + 16 }
+    else if (type !== 0) return undefined
+    if (d[o++] !== 1) return undefined
+    const stride = i(), n = i(), es = i(), n2 = i()
+    if (stride !== 4 || es !== 4 || n !== n2 || n < 1 || o + 4 * n > d.length) return undefined
+    return d.slice(o, o + 4 * n)
+  } catch {
+    return undefined
+  }
+}
+
 function lightmapOf(r: number, mesh: string): LightMap | undefined {
   if (r <= 0) return undefined
   const d: Uint8Array = pkg.data(r)
@@ -1659,6 +1696,23 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     return d ? combineLightmapMip(mip, d, w, h) : undefined
   },
   (e) => (tex2dClass && lmPairs.has(e) ? 4 : 0))
+// The placements' own vertex colours into their mesh's (overrideColoursOf), where every placement of the mesh has the same
+// ones: XCOM 2 reads a mesh's colours, not EW's per-placement ones. In place: the same count, the same bytes' length.
+let painted = 0
+for (const [mk, list] of instanceColours) {
+  const c = list[0]
+  if (!c || list.some((x) => !x || x.length !== c.length || x.some((b, k) => b !== c[k]))) continue
+  const md: Uint8Array = pkg.data(mk + 1)
+  const mv = new DataView(md.buffer, md.byteOffset, md.byteLength)
+  const n = c.length / 4
+  for (let q = 0; q + 16 + c.length <= md.length; q++)
+    if (mv.getInt32(q, true) === 4 && mv.getInt32(q + 4, true) === n && mv.getInt32(q + 8, true) === 4 && mv.getInt32(q + 12, true) === n) {
+      md.set(c, q + 16)
+      painted++
+      break
+    }
+}
+if (painted) console.log(`${out}: ${painted} meshes given their placements' painted vertex colours`)
 const outBytes = new Uint8Array(bytes.length + stub.length + tex.appended.length)
 outBytes.set(bytes)
 outBytes.set(stub, stubAt)
