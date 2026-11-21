@@ -277,3 +277,7 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   `TintColor`, set per placement, the colour (the instances' values show it; the shader tool's expression list had them
   the other way, see its caveat). Converter 74–75. The Repair Bay's monitor shows EW's white circuit picture, the Gene
   Lab's small screen its amber one and the big right screen EW's map picture.
+- **Round 11 #5, the tanks** (partly): the tank glass is now our glass with EW's froth as its picture (its colour the glow,
+  its green the opacity; `TankGlassMatch`, `TankGlassOpacity` 0.9, `TankGlassTintScale` 1.15): see-through between the
+  froth, the column behind visible, 100 95 55 against EW's 83 77 42. Not carried: EW's fresnel edge (its colour where
+  the glass turns away) and its fine honeycomb (the meld hexes over the froth); the hue a little greener than EW's.
