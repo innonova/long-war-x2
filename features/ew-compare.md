@@ -307,3 +307,8 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
 - **Round 12 #3** (withdrawn): the New Game, Advanced Options and Second Wave captures recaptured by clicks (main menu
   LONG WAR at 216 1042, ADVANCED OPTIONS 965 775, SECOND WAVE 547 845 in the game's 1920 × 1080): all three in EW's room
   with the translucent globe and no pale openings; the round's images were from 20 November.
+- **Round 12 #8, lamp colours** (partly): EW's `HQ_EmissivePallete` lamps (the Situation Room's side lamps among them)
+  glow in one of four palette colours by UV0 quadrant × the vertex alpha (its compiled shader); we drew the whole lamp in
+  Colorize A (orange, clipped cream). Now our strip glow with the palette (converter 81), each HDR colour softly tonemapped
+  (1 − e^−c: EW's blue is 0, 0.64, 13.9): the side lamps cyan, 0 140 161 against EW's 2 214 255. The stair strips stay
+  pale tan (159 129 103 against EW's orange 103 232 237 … their mesh not yet found).
