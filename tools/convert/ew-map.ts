@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 70 // (70: the custom screens' own regions of the decal sheet)
+export const CONVERTER_VERSION = 71 // (71: the light strips and lamp faces by vertex alpha, Strip/PaletteMode)
+// (70: the custom screens' own regions of the decal sheet)
 // (69: the cave rock's layers by EW's own formula; 68: HQ_Master's palette and 8×1 tile)
 // (67: a detail layer never the main diffuse when another matches; EW's detail layer baked into a copy of the main, detailMip)
 
@@ -902,7 +903,7 @@ for (const level of ['Stream', 'EWI', 'CNH']) {
 // not compile any), so the mod replaces each with an instance of an XCOM 2 parent given
 // the EW material's diffuse and normal maps. Read here: an instance's texture parameters
 // (its parents' for those it does not set), a material's texture expressions.
-interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number; detail?: string; detailTile?: number; palette?: number[][]; uvTile?: number[]; screenUV?: number[] }
+interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number; detail?: string; detailTile?: number; palette?: number[][]; uvTile?: number[]; screenUV?: number[]; strip?: number[]; paletteMode?: number[] }
 const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
 /** Root materials drawn see-through (EW's BlendMode BLEND_Translucent: road paint, decals), by name. */
 const translucent = new Set<string>()
@@ -1008,12 +1009,24 @@ function lookOf(r: number): Look {
     // (EW's base palette material, HQ_Master: its compiled pixel shader (RefShaderCache, disassembled; features/ew-compare.md)
     // samples its trim atlas at UV0 × (8, 1) and multiplies it by Colorize A, B, C or D as the face's UV0 lies in [0,1)
     // or beyond in u and v: A (u < 1, v < 1), B (u ≥ 1, v < 1), C (u < 1, v ≥ 1), D (u ≥ 1, v ≥ 1). Converter 68.)
-    // (Its emissive variants, HQ_Master_EmissiveCombo_Vector and _EmissiveComboPallet, sample the atlas at the same (8, 1);
-    // their palette or TintColor colours only the strips the mesh's vertex alpha marks, emissive: not carried yet.)
+    // (Its emissive variants sample the atlas at the same (8, 1) and glow where the mesh's vertex alpha marks a strip or a
+    // lamp's face (EW's lamps' meshes carry it): HQ_Master_EmissiveCombo_Vector in its TintColor (× 2, the atlas there
+    // giving way to it), _EmissiveComboPallet in its palette colour by UV0 quadrant × TintColor × alpha² (the atlas × (1 -
+    // alpha)), its diffuse not palette-coloured. Our material: StripColor (w 1: by the palette) and PaletteMode (x the
+    // palette on the diffuse, y the strips on). Converter 71.)
     ...(/\.HQ_Master$/.test(root) ? {
       palette: ['Colorize A', 'Colorize B', 'Colorize C', 'Colorize D'].map((n) => vectorParam(r, n, 0, true) ?? [1, 1, 1, 1]),
       uvTile: [8, 1],
-    } : /\.HQ_Master_EmissiveCombo/.test(root) ? { uvTile: [8, 1] } : {}),
+    } : /\.HQ_Master_EmissiveComboPallet$/.test(root) ? {
+      palette: ['Colorize A', 'Colorize B', 'Colorize C', 'Colorize D'].map((n) => vectorParam(r, n, 0, true) ?? [1, 1, 1, 1]),
+      uvTile: [8, 1],
+      strip: [...(vectorParam(r, 'TintColor', 0, true) ?? [1, 1, 1]).slice(0, 3), 1],
+      paletteMode: [0, 1],
+    } : /\.HQ_Master_EmissiveCombo_Vector$/.test(root) ? {
+      uvTile: [8, 1],
+      strip: [...(vectorParam(r, 'TintColor', 0, true) ?? [1, 1, 1]).slice(0, 3), 0],
+      paletteMode: [1, 1],
+    } : {}),
   }
 }
 /**
@@ -1736,7 +1749,7 @@ const lines = [
   ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),${p.physicsAsset ? `PhysicsAsset="${rename(p.physicsAsset)}",` : ''}${p.start ? `Start=${n(p.start)},` : ''}${p.rate ? `Rate=${n(p.rate)},` : ''}${p.window ? `Window=${n(p.window)},` : ''}${p.keys?.length ? `Keys=(${p.keys.map((k) => `(Time=${n(k.time)},From=${n(k.from)},End=${n(k.end)}${k.reverse ? ',Reverse=true' : ''})`).join(',')}),` : ''}Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}"${l?.kind === 'Glow' ? `,Glow=true${l.tint ? `,Tint=(R=${n(l.tint[0]!)},G=${n(l.tint[1]!)},B=${n(l.tint[2]!)},A=1)` : ''}` : ''})`).join(',')}))`),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
-    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''}${l.tile ? `,Tile=${l.tile}` : ''}${l.palette ? `,Palette=(${l.palette.map((c) => `(R=${n(c[0]!)},G=${n(c[1]!)},B=${n(c[2]!)},A=1)`).join(',')})` : ''}${l.uvTile ? `,UVTile=(X=${l.uvTile[0]},Y=${l.uvTile[1]})` : ''})`,
+    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''}${l.tile ? `,Tile=${l.tile}` : ''}${l.palette ? `,Palette=(${l.palette.map((c) => `(R=${n(c[0]!)},G=${n(c[1]!)},B=${n(c[2]!)},A=1)`).join(',')})` : ''}${l.uvTile ? `,UVTile=(X=${l.uvTile[0]},Y=${l.uvTile[1]})` : ''}${l.strip ? `,Strip=(R=${n(l.strip[0]!)},G=${n(l.strip[1]!)},B=${n(l.strip[2]!)},A=${l.strip[3]})` : ''}${l.paletteMode ? `,PaletteMode=(X=${l.paletteMode[0]},Y=${l.paletteMode[1]})` : ''})`,
   ),
   ...pieces.map(
     (p) =>

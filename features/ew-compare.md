@@ -228,3 +228,14 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   gets a copy of the sheet resampled to its region (`screenMip`), coloured by `Color` (converter 70; the earlier
   "TintColor hue" was the wrong parameter). The research wall's screen shows its grid of file icons over a world map.
   `HQ_CustomScreens_A` is another shader (three textures), not read yet.
+- **After the palette** (captured): the memorial wall in EW's warm orange (147 109 33 against EW's 180 132 50, before
+  147 114 76 cream), engineering and the bar warmer. The rooms read darker than EW's, by a median 1.73× in linear light
+  over 15 views, cell by cell (the OTS 1.1×, the research room 1.5×, the hangar 3.4×): EW's specular, which our unlit
+  stand-in has no term for, had been stood in for by the white palette. **Decision:** `LightmapBrightness` 1.7 (was 1.0)
+  until a specular is carried; the hangar stays darker than EW's.
+- **The custom screens' pictures** needed the glow stand-in to keep them (`GlowStandin` kept `_LWX2White` diffuses only).
+- **Light strips and lamp faces** (converter 71, the material's part in progress): EW's lamp meshes carry vertex colours
+  (`HQ_Light_LO_A`: alpha 255 on 12 of its 98 vertices, the lamp's face). The converter writes each emissive variant's
+  `Strip` colour and `PaletteMode`; our material is to darken the atlas under a strip by the vertex alpha and add the glow
+  (TintColor × 2, or the palette colour × TintColor × alpha²) to its emissive, its hue kept with the brightest channel
+  capped at 1.

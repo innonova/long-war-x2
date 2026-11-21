@@ -76,6 +76,11 @@ struct LWX2Look
 	var array<LinearColor> Palette;
 	/** Its main texture's tiling per axis (HQ_Master's UV0 × (8, 1); our material's DiffuseUVTile); 0: none. */
 	var Vector2D UVTile;
+	/** EW's light strips and lamp faces (HQ_Master's emissive variants, by the mesh's vertex alpha): their colour, A 1 when
+	 *  the palette colours them (our material's StripColor). */
+	var LinearColor Strip;
+	/** X: the palette on the diffuse; Y: the strips on (our material's PaletteMode); unset (0, 0): the palette alone. */
+	var Vector2D PaletteMode;
 };
 
 struct LWX2Standin
@@ -1089,6 +1094,12 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 		V = D.Looks[k].Palette[1]; MIC.SetVectorParameterValue('PaletteB', V);
 		V = D.Looks[k].Palette[2]; MIC.SetVectorParameterValue('PaletteC', V);
 		V = D.Looks[k].Palette[3]; MIC.SetVectorParameterValue('PaletteD', V);
+	}
+	if (D.Looks[k].PaletteMode.Y > 0)
+	{
+		V = D.Looks[k].Strip; MIC.SetVectorParameterValue('StripColor', V);
+		V.R = D.Looks[k].PaletteMode.X; V.G = D.Looks[k].PaletteMode.Y; V.B = 0; V.A = 0;
+		MIC.SetVectorParameterValue('PaletteMode', V);
 	}
 	MIC.SetTextureParameterValue('LightMap', LM);
 	V.R = P.LightMap.ScaleX; V.G = P.LightMap.ScaleY; V.B = P.LightMap.BiasX; V.A = P.LightMap.BiasY;
