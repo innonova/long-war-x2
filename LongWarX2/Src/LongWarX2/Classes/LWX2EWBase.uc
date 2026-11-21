@@ -105,6 +105,9 @@ var MaterialInstanceConstant PanicEarthMaterial;
 /** EW's tank glass (the Genetics Lab's canisters, a person slot whose picture holds TankGlassMatch, EW's froth) on our
  *  glass with that picture: TankGlassOpacity, its olive × TankGlassTintScale. */
 var config string TankGlassMatch;
+/** EW's base's people light (Command1's Kind=People directional light, LWX2PeopleLight) at this share of its brightness;
+ *  0: none. */
+var config float PeopleLightScale;
 /** The brightness of EW's palette material on animated pieces (the launch pads; unlit, a white light map). */
 var config float PaletteSlotBrightness;
 var config float TankGlassOpacity;
@@ -210,11 +213,26 @@ static function LWX2EWMapData Data(string Level)
 function PlaceFixed()
 {
 	local string Level;
+	local LWX2EWMapPieces.LWX2Light L;
+	local LWX2PeopleLight PL;
 
 	if (Fixed.Length > 0)
 		return;
 	class'LWX2EWMapPieces'.static.PlaceOf(Data("Command1"), self, vect(0, 0, 0), 0, BaseOffset, class'LWX2BasePiece', Fixed, false, true);
 	class'LWX2EWMapPieces'.static.PlaceLightsOf(Data("Command1"), self, BaseOffset, Fixed, true, BaseLightScale, true);
+	// (EW's people's own light, Command1's: on their channel only, LWX2PeopleLight.)
+	if (PeopleLightScale > 0)
+		foreach Data("Command1").Lights(L)
+		{
+			if (L.Kind != 'People')
+				continue;
+			PL = Spawn(class'LWX2PeopleLight', self, , L.Loc + BaseOffset, L.Rot);
+			if (PL == none || PL.LightComponent == none)
+				continue;
+			PL.LightComponent.SetLightProperties(L.Brightness * PeopleLightScale, L.Color);
+			PL.LightComponent.SetEnabled(true);
+			Fixed.AddItem(PL);
+		}
 	foreach FixedLevels(Level)
 	{
 		if (Data(Level).Pieces.Length == 0)
@@ -685,6 +703,7 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 	local AnimSet Set;
 	local LWX2EWBodies.LWX2Body B;
 	local string Path;
+	local LightingChannelContainer Channels;
 	local MaterialInterface Slot;
 	local MaterialInstanceConstant MIC;
 	local Texture T;
@@ -807,6 +826,14 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 		return none;
 	}
 	A.SetDrawScale(P.Scale > 0 ? P.Scale : 1.0);
+	// (On the people's light's channel too, EW's: LWX2PeopleLight, placed from Command1's.)
+	if (PeopleLightScale > 0 && A.SkeletalMeshComponent != none)
+	{
+		Channels = A.SkeletalMeshComponent.LightingChannels;
+		Channels.Cinematic_1 = true;
+		Channels.bInitialized = true;
+		A.SkeletalMeshComponent.SetLightingChannels(Channels);
+	}
 	if (!PeopleAnimate)
 		Sets.Length = 0;
 	A.Setup(Mesh, Sets, (PeopleAnimate && P.Seqs.Length > 0) ? P.Seqs[0] : '', Slots,

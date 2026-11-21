@@ -286,6 +286,8 @@ console.log(
     'PanicMapIndex=(208,174,29,140,71,64,88,82,45,98,49,20,7,119,179,152)',
     "; The Genetics Lab's tank glass (EW's froth) as our glass with the froth as its picture, see-through between (round 11 #5).",
     'TankGlassMatch="Froth"',
+    "; EW's people's own light (Command1's cool directional light, on a channel only they answer), at this share of EW's brightness.",
+    'PeopleLightScale=0.5',
     "; EW's palette material on animated pieces (the hangar's launch pads): our lightmapped material, unlit at this brightness.",
     'PaletteSlotBrightness=0.6',
     'TankGlassOpacity=0.9',

@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 78 // (78: the tanks' froth tiled eightfold)
+export const CONVERTER_VERSION = 79 // (79: EW's base's people light, Kind=People)
+// (78: the tanks' froth tiled eightfold)
 // (77: the consoles' screens each their band of the sheet)
 // (76: people's palette slots keep their diffuse, with Palette/UVTile)
 // (75: _F's region and colour the other way round)
@@ -688,7 +689,7 @@ const meldPoints: { loc: number[]; group: number; turns: number; hard: boolean }
 // the mod spawns each as a movable light. Kind, place, direction, and its component's values
 // (Unreal's defaults where the map does not set them).
 interface EWLight {
-  kind: 'Point' | 'Spot' | 'Sun' | 'Sky'
+  kind: 'Point' | 'Spot' | 'Sun' | 'Sky' | 'People'
   loc: number[]
   rot: number[]
   radius: number
@@ -743,6 +744,9 @@ const LIGHTS: Record<string, EWLight['kind']> = {
   PointLight: 'Point', PointLightToggleable: 'Point', PointLightMovable: 'Point',
   SpotLight: 'Spot', SpotLightToggleable: 'Spot', SpotLightMovable: 'Spot',
   DirectionalLight: 'Sun', DominantDirectionalLight: 'Sun', SkyLight: 'Sky',
+  // (EW's base lights its people with a movable directional light of its own, Command1's, on the people's lighting
+  // channels only: written as its own kind, placed by LWX2EWBase for the people alone; converter 79.)
+  DirectionalLightMovable: 'People',
 }
 /**
  * A component's properties: after its leading fields (net index, template names), found by trying.
