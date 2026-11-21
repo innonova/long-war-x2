@@ -249,3 +249,5 @@ clear glass with coloured, frothy edges; ours (a glow over the froth) as filled.
   (`CHH_SkinCustomizable`) is lerp(diffuse, diffuse × SkinColor, the skin mask), as ours bakes it in linear light; the rest
   is its custom (subsurface) lighting, which our lit stand-in does not have. His jacket reads 2.5× darker than EW's.
   Open.
+- **Shen's face** (fixed, approximation): the baked skin colour at half strength (`SKIN_POWER` 0.5, converter 82): 166 137
+  88 against EW's 164 144 117 (was 109 85 48). EW's skin lighting lifts its faces beyond the formula; this stands in for it.
