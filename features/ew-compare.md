@@ -291,3 +291,12 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   alone), its halo the renderer's bloom. The local player's post-process bloom (`bEnableBloom`, `Bloom_Scale` 1–3,
   `Bloom_Threshold` 0.6–0.3; the control port's new `bloom`) changed nothing visible in the strategy view: XCOM 2 does not
   bloom there through that override. Open; a halo would need geometry of its own (a soft card per lamp face).
+- **Round 12** (`logs/compare/review/_summary.md`): confirmed improved: shadow readability, the restored screen pictures,
+  the main menu's globe and openings, the craft pad's trim. Its #3 (pale openings in the New Game menus) was judged on
+  captures from 20 November (only the main menu is recaptured by hand; the New Game screens need clicking into).
+  **#4, the consoles' banded screens:** EW's `HQ_ConsoleScreen` samples its sheet at (u, v/4 + TintColor.w): each console
+  shows one quarter-height panel, its picture the red + green + blue sum; we had drawn the whole sheet (four designs
+  squashed). Each console now gets a copy of its band (converter 77). **#5, the tanks' streaks:** EW samples the froth at
+  UV0 × 8 (red + green); an eightfold tiled copy now (converter 78). **#2, hard menu shading:** EW's menu scene is soft by
+  depth of field and its haze; ours is crisp. Post-processing, which XCOM 2's strategy view did not take through the
+  local player's override (bloom tried); open.
