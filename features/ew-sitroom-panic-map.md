@@ -59,3 +59,12 @@ satellite) whenever they change.
   texture is found beside the look's earth (`_LWX2Wall` → `_Index`); without it, the plain look stays.
 - **Left:** satellites (EW's `ColorSatellite_SpecificIndex`: coverage marks), the hologlobes (they could take the same
   material), redrawing on a panic change while the map is in view.
+
+## Notes (2026-11-21, where EW's panic colours are)
+
+Seen in the game and in EW's captures: EW's base view shows the wall's map plane in its plain cyan, no panic colours;
+EW's panic tints are on the Situation Room screen's own map (Argentina red in EW's capture), which in the port is the
+earth image `UILWEWSituationRoom.AddEarth` puts into the movie's map area. So the plane is not the place: the material
+and the colour table are kept, `PanicMapMaterials` left empty. Next: the screen's map in panic colours, e.g. the earth
+drawn with the countries' colours into a `ScriptedTexture` (the earth texture, then each country tinted through the
+index) that the map area's image shows in place of the plain earth.
