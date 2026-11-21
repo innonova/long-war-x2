@@ -347,5 +347,7 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   `FlareOpacity` 2 now: no streaks, the loadout header clear, the lamps a slight glow (seen on wingpu, four views).
 - **Round 14 #3, the Gene Lab's tanks** (partly): `TankGlassTintScale` 0.85 → 0.6 brings the faces from 123 97 59 to
   117 97 58 against EW's 90 72 42 (measured on the same crop); the rest of the difference is the pale caps and what
-  shows through, not the froth's tint. The caps are the tanks' metal slot on XCOM 2's staff material; next there.
+  shows through, not the froth's tint. The caps are `SM_Canister`'s slot 0, EW's master sheet on XCOM 2's staff material; tried on
+  our palette material (`PaletteSlotMeshes`, as the launch pads): no change, the slot carries no palette data. Next: the
+  converter giving that slot its palette and tile, as for the pads.
 - **Round 14 #5, Vahlen's coat** (partly): EW's people levels' own lights placed (`features/ew-base-people.md`).
