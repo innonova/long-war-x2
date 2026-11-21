@@ -281,3 +281,9 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   its green the opacity; `TankGlassMatch`, `TankGlassOpacity` 0.9, `TankGlassTintScale` 1.15): see-through between the
   froth, the column behind visible, 100 95 55 against EW's 83 77 42. Not carried: EW's fresnel edge (its colour where
   the glass turns away) and its fine honeycomb (the meld hexes over the froth); the hue a little greener than EW's.
+- **Round 11 #9, the bright craft pad** (cause found, open): the launch pads are EW's skeletal bay pieces
+  (`SM_Launchpad`, animated by the bay's matinee), drawn on the people's stand-in with `HQ_MasterMaterial_DIFF` (the
+  brightened copy): no 8×1 tiling and no palette, which only our lightmapped material (static pieces) applies; so the pad
+  shows the trim atlas stretched and untinted, under the bay's warm lamp. To do: the palette and tiling for skeletal
+  slots of `HQ_Master` looks (the converter's `PersonSlot` with Palette/UVTile, and a lit skeletal material of ours that
+  takes them), or our lightmapped material on the pad with a white light map.
