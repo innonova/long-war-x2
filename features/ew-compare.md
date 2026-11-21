@@ -353,3 +353,9 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   8×1 tile; now it does (converter 85), and `SM_Canister` is in `PaletteSlotMeshes`. The caps are EW's dark grey metal;
   the faces measure 101 89 53 (EW 85 72 42). Left: the faces' yellow-gold mottle (ours greener and smoother).
 - **Round 14 #5, Vahlen's coat** (partly): EW's people levels' own lights placed (`features/ew-base-people.md`).
+- **Round 14 #9, the hangar bridge's edge paint** (found): `Hangar_RimSupport` carries EW's orange paint (its atlas
+  under `HQ_Master_HangarPalette`); over it lies `Hangar_LightCards` (`HQ_EmissivePallete_INST`: unlit, no texture,
+  Colorize A 1.51 0.62 0.33 / B 0.56 1.01 1.34, vertex colours white with alpha 0 or 1). Hidden (`basehide`), the paint
+  shows orange as EW's. Drawn opaque (our palette glow) or additive (`M_EWLightCard`) the card washes it cream: both
+  ignore the vertex alpha that confines EW's glow to its marked faces. Next: our card material weighted by vertex alpha
+  (SDK editor), then `HQ_EmissivePallete` among `LightCardMaterials`.
