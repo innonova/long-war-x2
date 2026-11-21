@@ -242,3 +242,15 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
 - **`HQ_CustomScreens_A`** (the hangar's floating holograms): translucent, s0 at UV0 × 0.5 + `Color`.xy, s1 at UV0;
   value = s0.r × s1.g + 0.3 × s1.r, × the vertex alpha as opacity, the vertex colour as its colour. A case for our light
   card material (vertex colour × alpha); not done yet.
+- **Light strips** (material done, SDK editor): our lightmapped material darkens the atlas under a strip by the vertex
+  alpha and adds the strip's glow (EW's TintColor × 2, or the palette colour × TintColor × alpha²), its hue kept with the
+  brightest channel at most 1; the converter writes each emissive variant's `Strip` and `PaletteMode`.
+- **The custom screens' pictures, sharp** (converter 72): each mip of a screen's copy is now made from a source mip as
+  many times larger as its region magnifies the sheet (they had been resampled from the same-size mip: blocky at a
+  distance). The research room's wall screen shows EW's two rows of file icons, the subroutine panel and the stripes.
+- **The hangar's floor stripes** (`StripeTest`, read from its shader: the mesh's vertex colour, translucent through a
+  ragged mask, lit): their orange is painted per placement in EW (`StaticMeshComponentLODInfo.OverrideVertexColors`;
+  the mesh's own colours are white). The converter now writes a placement's painted colours into its mesh where every
+  placement shares them (converter 73; in the base only this mesh). Drawn with our light card (vertex colour, additive),
+  its strength by material (`LightCardScaleBy`, 0.3): 153 117 77 against EW's 157 104 47. The mask is not carried.
+  `logs/compare/hangar-stripes.png`.
