@@ -168,3 +168,7 @@ so the fixes are driven by evidence and the person is not needed on every round.
 - **Round 10 #8, lamp faces** (tried): EW's coloured lamps (`HQ_ColorizedLight`, blue 0.42 1.18 2.0) clip in our
   unlit material to a pale cyan-white; they are now at half strength (`LampGlowScale` 0.5) so their hue stays. EW's
   halos are bloom on colours over 1, which our clamped material cannot give. Not yet judged by the reviewer.
+- **Round 10 #5, the globe's projection** (partly): EW's projection emitters (`P_Projection_Cone`, `_Secondary`,
+  `P_Holo_Dots`, `P_Projector_Glass`) had drawn as large dark panels with our blended particle material; they are now
+  forced additive (`AdditiveEmitters`), and the main menu scene places its emitters again: the globe has its light
+  column above and below, no panels. Its halo is still weaker than EW's (bloom).
