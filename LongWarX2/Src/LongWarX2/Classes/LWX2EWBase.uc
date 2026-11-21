@@ -321,6 +321,7 @@ function ScriptedTexture PanicTexture()
 function ScriptedTexture PanicEarthTexture(Texture Earth, Texture Index)
 {
 	local Material Parent;
+	local LinearColor White;
 
 	if (PanicEarth == none)
 	{
@@ -333,7 +334,8 @@ function ScriptedTexture PanicEarthTexture(Texture Earth, Texture Index)
 		PanicEarthMaterial.SetTextureParameterValue('Index', Index);
 		PanicEarthMaterial.SetTextureParameterValue('Colours', PanicColours);
 		PanicEarthMaterial.SetScalarParameterValue('Strength', class'LWX2EWMapPieces'.default.PanicMapStrength > 0 ? class'LWX2EWMapPieces'.default.PanicMapStrength : 0.7);
-		PanicEarthMaterial.SetVectorParameterValue('Tint', MakeLinearColor(1, 1, 1, 1));
+		White = MakeLinearColor(1, 1, 1, 1);
+		PanicEarthMaterial.SetVectorParameterValue('Tint', White);
 		PanicEarth = ScriptedTexture(class'ScriptedTexture'.static.Create(1024, 512, PF_A8R8G8B8, MakeLinearColor(0, 0, 0, 1), false, false, false, self));
 		if (PanicEarth == none)
 			return none;
