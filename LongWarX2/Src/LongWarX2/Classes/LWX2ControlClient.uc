@@ -591,6 +591,24 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(class'LWX2EWMapPieces'.static.PlaceEmittersOf(class'LWX2EWMapPieces'.static.Map(), self, vect(0, 0, 0), Placed, Args.Length > 1 ? Args[1] : "") @ "emitters placed");
 		return;
+	case "grade":
+		// grade <shadows> <highlights> <midtones> [desaturation]: the world's default post-process grading set live (a test
+		// aid: EW's base's darker blacks); each a grey level, e.g. grade 0.04 1.0 1.0.
+		if (Args.Length < 4)
+		{
+			Out.AddItem("ERR grade <shadows> <highlights> <midtones> [desaturation]");
+			return;
+		}
+		WorldInfo.DefaultPostProcessSettings.bOverride_Scene_Shadows = true;
+		WorldInfo.DefaultPostProcessSettings.Scene_Shadows = vect(1, 1, 1) * float(Args[1]);
+		WorldInfo.DefaultPostProcessSettings.bOverride_Scene_HighLights = true;
+		WorldInfo.DefaultPostProcessSettings.Scene_HighLights = vect(1, 1, 1) * float(Args[2]);
+		WorldInfo.DefaultPostProcessSettings.bOverride_Scene_MidTones = true;
+		WorldInfo.DefaultPostProcessSettings.Scene_MidTones = vect(1, 1, 1) * float(Args[3]);
+		WorldInfo.DefaultPostProcessSettings.bOverride_Scene_Desaturation = Args.Length > 4;
+		WorldInfo.DefaultPostProcessSettings.Scene_Desaturation = Args.Length > 4 ? float(Args[4]) : 0;
+		Out.AddItem("ok graded");
+		return;
 	case "wall":
 		// wall hide|show|alpha <0-100>: the Situation Room's wall screen (its 3D movie) hidden, shown, or its root's alpha
 		// set (a test aid: what lies over EW's map plane on the bare wall).
