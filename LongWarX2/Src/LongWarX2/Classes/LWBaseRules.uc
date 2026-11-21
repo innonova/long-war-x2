@@ -38,6 +38,8 @@ struct LWPsiPower
 	var int Tier;
 	/** Hours of fatigue after a mission (not applied yet). */
 	var int Fatigue;
+	/** Its column in Long War's psi tree: the psi rank it may be trained at, at most the soldier's next (1 to 6). */
+	var int Column;
 };
 var config float PsiGiftChance;
 var config int PsiTrainingHours;

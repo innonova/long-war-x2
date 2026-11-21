@@ -103,8 +103,18 @@ out.push(
   `PsiRankWillBase=${one('iBaseOTSWillIncrease')}`,
   `PsiRankWillRand=${one('iRandOTSWillIncrease')}`,
 )
+// (Each power's column in Long War's psi tree, its SoldierPerkTrees of eSC_Psi: the psi rank it opens at, 1 to 6;
+// XComPerkManager.GetPerkInTree, UISoldierPromotion's psi mode.)
+const psiColumn = new Map()
+const branches = ['Squaddie', 'Corporal1', 'Sergeant1', 'Lieutenant1', 'Captain1', 'Major', 'Colonel1']
+for (const t of core.matchAll(/^SoldierPerkTrees=\(SoldierType=eSC_Psi,([^)]*)\)/gm)) {
+  branches.forEach((b, k) => {
+    const v = new RegExp(`${b}=\\s*(ePerk_\\w+)`).exec(t[1])
+    if (v && !psiColumn.has(v[1])) psiColumn.set(v[1], k + 1)
+  })
+}
 for (const m of core.matchAll(/^ItemBalance_Easy=\(eItem=(\d+),\s*iCash=(\d+),\s*iElerium=(\d+),\s*iAlloys=(\d+),\s*iTime=0,\s*iEng=(\d+)\)\s*;\s*\d+=(ePerk_\w+)/gm)) {
-  out.push(`+PsiPowers=(Perk=${m[1]}, Enum=${m[6]}, TargetWill=${m[2]}, Tech=${m[3]}, Tier=${m[4]}, Fatigue=${m[5]})`)
+  out.push(`+PsiPowers=(Perk=${m[1]}, Enum=${m[6]}, TargetWill=${m[2]}, Tech=${m[3]}, Tier=${m[4]}, Fatigue=${m[5]}, Column=${psiColumn.get(m[6]) ?? 0})`)
 }
 // Long War's gene mods (features/lw-genemods.md): its "Gene Mod Configuration" ItemBalance_Easy entries (iCash the
 // cost, iElerium the tech, iAlloys the meld, iTime the days in the tank, iEng the fatigue hours) and the slot each

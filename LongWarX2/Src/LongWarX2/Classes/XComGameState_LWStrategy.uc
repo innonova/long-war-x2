@@ -3025,6 +3025,9 @@ static function bool CanTrainPsi(XComGameState_LWStrategy S, XComGameState_Unit 
 		return false;
 	if (Ability != '' && Unit.HasSoldierAbility(Ability))
 		Why = "a soldier without the power";
+	// (Long War's psi tree: a power of a column up to the soldier's next psi rank, UISoldierPromotion's psi mode.)
+	else if (P.Column > PsiRankOf(Unit) + 1)
+		Why = "psi rank " $ (P.Column - 1);
 	else if (P.Tech != 0)
 	{
 		Tech = class'LWResearchRules'.static.TemplateForId(P.Tech);
