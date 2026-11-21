@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 74 // (74: HQ_CustomScreens_F's pictures, the sheet's alpha)
+export const CONVERTER_VERSION = 75 // (75: _F's region and colour the other way round)
+// (74: HQ_CustomScreens_F's pictures, the sheet's alpha)
 // (73: the placements' painted vertex colours into their meshes)
 // (72: the screens' copies' mips from larger ones)
 // (71: the light strips and lamp faces by vertex alpha, Strip/PaletteMode)
@@ -1212,8 +1213,11 @@ for (const [r, l] of looks) {
   // A copy of the sheet per region, made by screenMip below; converter 70.)
   // (HQ_CustomScreens_F the same, its picture the sheet's alpha; converter 74.)
   if (/HQ_CustomScreens_[BF]$/.test(root)) {
-    const uv = vectorParam(r, 'TintColor', 0, true)
-    const col = vectorParam(r, 'Color', 0, true)
+    // (In _F the two swap: its instances' Color is the region, a grid of cells (offsets 0..2, cells 0.5 x 0.28), and
+    // TintColor, set per placement, the colour.)
+    const isF = /_F$/.test(root)
+    const uv = vectorParam(r, isF ? 'Color' : 'TintColor', 0, true)
+    const col = vectorParam(r, isF ? 'TintColor' : 'Color', 0, true)
     const sheet = tex.get('HQ_DecalSheet_A') ?? [...tex.values()][0]
     if (uv && col && sheet) {
       const m = Math.max(col[0]!, col[1]!, col[2]!, 1e-3)
