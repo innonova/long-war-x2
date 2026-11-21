@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 67 // (67: a detail layer never the main diffuse when another matches; EW's detail layer baked into a copy of the main, detailMip)
+export const CONVERTER_VERSION = 68 // (68: HQ_Master's palette and 8×1 tile, Palette/UVTile)
+// (67: a detail layer never the main diffuse when another matches; EW's detail layer baked into a copy of the main, detailMip)
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -900,7 +901,7 @@ for (const level of ['Stream', 'EWI', 'CNH']) {
 // not compile any), so the mod replaces each with an instance of an XCOM 2 parent given
 // the EW material's diffuse and normal maps. Read here: an instance's texture parameters
 // (its parents' for those it does not set), a material's texture expressions.
-interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number; detail?: string; detailTile?: number }
+interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number; detail?: string; detailTile?: number; palette?: number[][]; uvTile?: number[] }
 const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
 /** Root materials drawn see-through (EW's BlendMode BLEND_Translucent: road paint, decals), by name. */
 const translucent = new Set<string>()
@@ -1003,6 +1004,13 @@ function lookOf(r: number): Look {
     // ×2; baked into a copy of the main diffuse below, converter 67.)
     detail: [...tex].find(([, p]) => /Detail/i.test(p.split('.').pop()!) && /(_DIFF?|_Dif)\d*$/i.test(p))?.[1],
     detailTile: scalarParam(r, 'DetailTile_U'),
+    // (EW's base palette material, HQ_Master: its compiled pixel shader (RefShaderCache, disassembled; features/ew-compare.md)
+    // samples its trim atlas at UV0 × (8, 1) and multiplies it by Colorize A, B, C or D as the face's UV0 lies in [0,1)
+    // or beyond in u and v: A (u < 1, v < 1), B (u ≥ 1, v < 1), C (u < 1, v ≥ 1), D (u ≥ 1, v ≥ 1). Converter 68.)
+    ...(/\.HQ_Master$/.test(root) ? {
+      palette: ['Colorize A', 'Colorize B', 'Colorize C', 'Colorize D'].map((n) => vectorParam(r, n, 0, true) ?? [1, 1, 1, 1]),
+      uvTile: [8, 1],
+    } : {}),
   }
 }
 /**
@@ -1689,7 +1697,7 @@ const lines = [
   ...people.map((p, k) => `+People=(Mesh="${rename(p.mesh)}",Loc=(X=${n(p.loc[0]!)},Y=${n(p.loc[1]!)},Z=${n(p.loc[2]!)}),Rot=(Pitch=${p.rot[0]},Yaw=${p.rot[1]},Roll=${p.rot[2]}),Scale=${n(p.scale)},${p.key ? `Key=(X=${n(p.key[0]!)},Y=${n(p.key[1]!)},Z=${n(p.key[2]!)}),` : ''}${p.bay ? `Bay=${p.bay},BayState="${p.bayState}",BayPart=${p.group},` : ''}AnimSets=(${p.animSets.map((a) => `"${rename(a)}"`).join(',')}),Seqs=(${p.seqs.map((q) => `"${q}"`).join(',')}),${p.physicsAsset ? `PhysicsAsset="${rename(p.physicsAsset)}",` : ''}${p.start ? `Start=${n(p.start)},` : ''}${p.rate ? `Rate=${n(p.rate)},` : ''}${p.window ? `Window=${n(p.window)},` : ''}${p.keys?.length ? `Keys=(${p.keys.map((k) => `(Time=${n(k.time)},From=${n(k.from)},End=${n(k.end)}${k.reverse ? ',Reverse=true' : ''})`).join(',')}),` : ''}Slots=(${personSlots[k]!.map((l) => `(Diffuse="${l ? rename(l.diffuse) : ''}",Normal="${l ? rename(l.normal) : ''}"${l?.kind === 'Glow' ? `,Glow=true${l.tint ? `,Tint=(R=${n(l.tint[0]!)},G=${n(l.tint[1]!)},B=${n(l.tint[2]!)},A=1)` : ''}` : ''})`).join(',')}))`),
   "; Each EW material's textures, for the XCOM 2 parent of its kind (XComLWEWMaps.ini).",
   ...[...looks].map(
-    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''}${l.tile ? `,Tile=${l.tile}` : ''})`,
+    ([r, l]) => `+Looks=(Material="${rename(pathOf(r))}",Kind=${l.kind},Diffuse="${rename(l.diffuse)}",Normal="${rename(l.normal)}"${l.mask ? `,Mask="${rename(l.mask)}"` : ''}${l.tint ? `,Tint=(R=${l.tint[0]},G=${l.tint[1]},B=${l.tint[2]},A=1)` : ''}${l.tile ? `,Tile=${l.tile}` : ''}${l.palette ? `,Palette=(${l.palette.map((c) => `(R=${n(c[0]!)},G=${n(c[1]!)},B=${n(c[2]!)},A=1)`).join(',')})` : ''}${l.uvTile ? `,UVTile=(X=${l.uvTile[0]},Y=${l.uvTile[1]})` : ''})`,
   ),
   ...pieces.map(
     (p) =>

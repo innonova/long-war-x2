@@ -71,6 +71,11 @@ struct LWX2Look
 	var LinearColor Tint;
 	/** How often EW's material tiles its main texture (its MainTile_U: the base's cave rock twice); 0: once. */
 	var float Tile;
+	/** EW's base palette (HQ_Master's Colorize A-D: the colour its trim atlas is multiplied by, by the face's UV0 quadrant;
+	 *  our lightmapped material's PaletteA-D), where the look has one. */
+	var array<LinearColor> Palette;
+	/** Its main texture's tiling per axis (HQ_Master's UV0 × (8, 1); our material's DiffuseUVTile); 0: none. */
+	var Vector2D UVTile;
 };
 
 struct LWX2Standin
@@ -1072,6 +1077,18 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 	MIC.SetTextureParameterValue('Diffuse', Diffuse);
 	if (D.Looks[k].Tile > 0)
 		MIC.SetScalarParameterValue('DiffuseTile', D.Looks[k].Tile);
+	if (D.Looks[k].UVTile.X > 0)
+	{
+		V.R = D.Looks[k].UVTile.X; V.G = D.Looks[k].UVTile.Y; V.B = 1; V.A = 1;
+		MIC.SetVectorParameterValue('DiffuseUVTile', V);
+	}
+	if (D.Looks[k].Palette.Length == 4)
+	{
+		MIC.SetVectorParameterValue('PaletteA', D.Looks[k].Palette[0]);
+		MIC.SetVectorParameterValue('PaletteB', D.Looks[k].Palette[1]);
+		MIC.SetVectorParameterValue('PaletteC', D.Looks[k].Palette[2]);
+		MIC.SetVectorParameterValue('PaletteD', D.Looks[k].Palette[3]);
+	}
 	MIC.SetTextureParameterValue('LightMap', LM);
 	V.R = P.LightMap.ScaleX; V.G = P.LightMap.ScaleY; V.B = P.LightMap.BiasX; V.A = P.LightMap.BiasY;
 	MIC.SetVectorParameterValue('LMScaleBias', V);
