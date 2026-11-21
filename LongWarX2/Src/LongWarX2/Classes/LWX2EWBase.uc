@@ -101,6 +101,8 @@ var ScriptedTexture PanicColours;
 /** EW's tank glass (the Genetics Lab's canisters, a person slot whose picture holds TankGlassMatch, EW's froth) on our
  *  glass with that picture: TankGlassOpacity, its olive × TankGlassTintScale. */
 var config string TankGlassMatch;
+/** The brightness of EW's palette material on animated pieces (the launch pads; unlit, a white light map). */
+var config float PaletteSlotBrightness;
 var config float TankGlassOpacity;
 var config float TankGlassTintScale;
 var config float BaseHighlights;
@@ -668,6 +670,29 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 		B.Normal = S.Normal;
 		// (A slot without a texture found, the eye lashes: the body's stand-in; our unlit material cannot go on a
 		// skeletal mesh.)
+		// (EW's palette material on an animated piece, the hangar's launch pads: our lightmapped material (usable on skeletal
+		// meshes) with a white light map at PaletteSlotBrightness, EW's palette and its 8x1 tiling; on the people's stand-in
+		// the trim atlas showed stretched and untinted, round 11 #9.)
+		if (S.Palette.Length == 4 && S.Diffuse != "")
+		{
+			Shade = new(self) class'MaterialInstanceConstant';
+			Shade.SetParent(Material(DynamicLoadObject(class'LWX2EWMapPieces'.default.LightmapParent, class'Material', true)));
+			Shade.SetTextureParameterValue('Diffuse', Texture(DynamicLoadObject(S.Diffuse, class'Texture', true)));
+			Shade.SetTextureParameterValue('LightMap', Texture(DynamicLoadObject("EngineResources.WhiteSquareTexture", class'Texture', true)));
+			TankTint.R = 1; TankTint.G = 1; TankTint.B = 0; TankTint.A = 0;
+			Shade.SetVectorParameterValue('LMScaleBias', TankTint);
+			Shade.SetScalarParameterValue('LMBrightness', PaletteSlotBrightness > 0 ? PaletteSlotBrightness : 0.5);
+			TankTint = S.Palette[0]; Shade.SetVectorParameterValue('PaletteA', TankTint);
+			TankTint = S.Palette[1]; Shade.SetVectorParameterValue('PaletteB', TankTint);
+			TankTint = S.Palette[2]; Shade.SetVectorParameterValue('PaletteC', TankTint);
+			TankTint = S.Palette[3]; Shade.SetVectorParameterValue('PaletteD', TankTint);
+			TankTint.R = S.UVTile.X > 0 ? S.UVTile.X : 1; TankTint.G = S.UVTile.Y > 0 ? S.UVTile.Y : 1; TankTint.B = 1; TankTint.A = 1;
+			Shade.SetVectorParameterValue('DiffuseUVTile', TankTint);
+			TankTint = MakeLinearColor(1, 1, 1, 1);
+			Shade.SetVectorParameterValue('Tint', TankTint);
+			Slots.AddItem(Shade);
+			continue;
+		}
 		// (The Genetics Lab's tank glass, EW's froth: our glass with the froth as its picture (its colour the glow, its
 		// green the opacity), so the tank is see-through between the froth as EW's fresnel glass is clear facing the
 		// camera; as a glow over the froth it read cloudy and filled, round 11 #5.)

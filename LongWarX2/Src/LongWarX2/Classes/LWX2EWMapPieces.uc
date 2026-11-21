@@ -260,6 +260,9 @@ struct LWX2PersonSlot
 	/** One of EW's unlit glowing materials (the Genetics Lab's tank glass): a glow in Tint. */
 	var bool Glow;
 	var LinearColor Tint;
+	/** EW's base palette material on an animated piece (the hangar's launch pads): its palette and tiling (LWX2Look's). */
+	var array<LinearColor> Palette;
+	var Vector2D UVTile;
 };
 
 /** EW's height fog (its WorldInfo's XComHeightFog): -1 where the level leaves EW's default; a colour of A 0 likewise. */
