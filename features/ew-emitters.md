@@ -93,3 +93,14 @@ bar with 77 of EW's emitters, its fires glowing, stable through an alien turn
   locked to the beam's axis, drawn; the others stay out (`AxisLocked`). Seen in the Psi Lab, no crash.
 - **Checked on wingpu:** the Psi Lab's violet shafts as in EW; research, engineering, hangar, Gene Lab, Repair Bay and
   foundry views as before.
+
+## Report (2026-11-21, a flare material of ours)
+
+- **`LWX2Lightmap.M_EWFlare`** (SDK editor; a copy of our additive particle material): its opacity × Unreal's
+  `LensFlareIntensity` × `LensFlareOcclusion`, the terms EW's `M_Lens_Flare_Master` fades its elements by (its
+  instances' `Occlusion_Power`). `FlareParent` now points at it.
+- **Seen on wingpu:** at strength 1 the flares are near invisible; at 40 the lamps' streaks show and the room is no
+  longer washed white (it was at 1 on the plain material); at 8 (`FlareOpacity`, APPROXIMATION by eye against EW's
+  capture) the research room's lamps carry a soft glow as EW's and a haze stands at the autopsy window.
+- **Left:** the autopsy lamp's glow is white where EW's is warm yellow (the elements' colours are EW's distributions,
+  handed over as the vertex colour; the source element's tint not yet checked); the occlusion power per element.
