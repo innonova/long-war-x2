@@ -326,3 +326,8 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   the Repair Bay's brightness, the Situation Room's lamp colours, the stair lights. **#2, engineering's robots flat white**
   (my regression, fixed): converter 76 had put every palette slot of an animated piece on our unlit material, meant for the
   launch pads; now only for `PaletteSlotMeshes` (`SM_Launchpad`). The people's light is also limited to characters.
+- **Round 13 #12, the Psi Lab's lights** (open): EW's overhead light shafts are light cards (`PsiRoom_LightCards`,
+  `HQ_ColorizedLight_VertexColor`: TintColor 0.51 0.55 2.03 × the vertex alpha², read from the shader); the converter
+  now reads their unnamed TintColor (converter 83) and gives them our light-card material in that colour, softly
+  tonemapped. They still draw nothing, as the Gene Lab's cards before: our light-card material itself is the open
+  question (`features/ew-base-people.md`).
