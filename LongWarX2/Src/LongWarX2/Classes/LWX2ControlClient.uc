@@ -606,7 +606,7 @@ function Handle(string Line, out array<string> Out)
 		WorldInfo.DefaultPostProcessSettings.bOverride_Scene_MidTones = true;
 		WorldInfo.DefaultPostProcessSettings.Scene_MidTones = vect(1, 1, 1) * float(Args[3]);
 		WorldInfo.DefaultPostProcessSettings.bOverride_Scene_Desaturation = Args.Length > 4;
-		WorldInfo.DefaultPostProcessSettings.Scene_Desaturation = Args.Length > 4 ? float(Args[4]) : 0;
+		WorldInfo.DefaultPostProcessSettings.Scene_Desaturation = Args.Length > 4 ? float(Args[4]) : 0.0;
 		Out.AddItem("ok graded");
 		return;
 	case "wall":
