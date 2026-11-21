@@ -113,6 +113,14 @@ var config float PeopleLightScale;
 /** The brightness of EW's palette material on animated pieces (the launch pads; unlit, a white light map). */
 var config float PaletteSlotBrightness;
 var config array<string> PaletteSlotMeshes;
+/** That brightness for the meshes whose path holds Match (the first that does), else PaletteSlotBrightness: the Gene
+ *  Lab's canister caps darker (0.2) than the launch pads (0.6). */
+struct LWX2SlotBrightness
+{
+	var string Match;
+	var float Brightness;
+};
+var config array<LWX2SlotBrightness> PaletteSlotBrightnessBy;
 var config float TankGlassOpacity;
 var config float TankGlassTintScale;
 var config float BaseHighlights;
@@ -745,6 +753,8 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 	local MaterialInstanceConstant Shade;
 	local LWX2EWMapPieces.LWX2PersonSlot S;
 	local LinearColor TankTint;
+	local float SlotBright;
+	local LWX2SlotBrightness SB;
 	local LWX2EWMapPieces.LWX2Look GlowLook;
 	local LWX2BasePerson A;
 	local SkeletalMesh Mesh;
@@ -793,7 +803,14 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 			Shade.SetTextureParameterValue('LightMap', Texture(DynamicLoadObject("EngineResources.WhiteSquareTexture", class'Texture', true)));
 			TankTint.R = 1; TankTint.G = 1; TankTint.B = 0; TankTint.A = 0;
 			Shade.SetVectorParameterValue('LMScaleBias', TankTint);
-			Shade.SetScalarParameterValue('LMBrightness', PaletteSlotBrightness > 0 ? PaletteSlotBrightness : 0.5);
+			SlotBright = PaletteSlotBrightness > 0 ? PaletteSlotBrightness : 0.5;
+			foreach PaletteSlotBrightnessBy(SB)
+				if (SB.Match != "" && InStr(P.Mesh, SB.Match) != INDEX_NONE)
+				{
+					SlotBright = SB.Brightness;
+					break;
+				}
+			Shade.SetScalarParameterValue('LMBrightness', SlotBright);
 			TankTint = S.Palette[0]; Shade.SetVectorParameterValue('PaletteA', TankTint);
 			TankTint = S.Palette[1]; Shade.SetVectorParameterValue('PaletteB', TankTint);
 			TankTint = S.Palette[2]; Shade.SetVectorParameterValue('PaletteC', TankTint);

@@ -426,3 +426,6 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   veins (crests 184 144 77, body 43 41 31 against EW's 209 76 61 / 60 55 33: EW's crests are orange-red, the fresnel
   rim). Reverted to the olive tanks; the material stays in the package, unused. Next time: the froth's own detail
   (our copy reads blurred) and EW's fresnel rim.
+- **Round 17 #8 and #9** (partly): the launch pads back at `PaletteSlotBrightness` 0.6 with the Gene Lab's canister caps
+  at 0.2 by mesh (`PaletteSlotBrightnessBy`, a new setting): the craft pad lighter, nearer EW's lit grey; the caps stay
+  dark. `FlareOpacity` 2 → 1.2: the thin white lamp streaks fainter, the loadout header clearer.
