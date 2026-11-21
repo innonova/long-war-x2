@@ -164,6 +164,9 @@ struct LWX2LevelScale
 	var float Scale;
 };
 var config array<LWX2LevelScale> LightmapBrightnessBy;
+/** A material's lightmapped pieces brighter or darker by Scale (the first whose Match is in the material's path): the
+ *  base's cave rock, measured 1.5× EW's in the hangar. */
+var config array<LWX2CardScale> LightmapMaterialScale;
 var config string FoliageParent;
 /** The parent for EW's cut-out materials (tree cards, signs, fences, road paint), given the look's mask as its Masks. */
 var config string MaskedParent;
@@ -1194,6 +1197,12 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 		if (default.LightmapBrightnessBy[i].Level != "" && InStr(P.LightMap.Color, default.LightmapBrightnessBy[i].Level $ ".") == 0)
 		{
 			B *= default.LightmapBrightnessBy[i].Scale;
+			break;
+		}
+	for (i = 0; i < default.LightmapMaterialScale.Length; i++)
+		if (default.LightmapMaterialScale[i].Match != "" && InStr(Path, default.LightmapMaterialScale[i].Match) != INDEX_NONE)
+		{
+			B *= default.LightmapMaterialScale[i].Scale;
 			break;
 		}
 	MIC.SetScalarParameterValue('LMBrightness', B);

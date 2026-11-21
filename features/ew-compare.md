@@ -429,3 +429,5 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
 - **Round 17 #8 and #9** (partly): the launch pads back at `PaletteSlotBrightness` 0.6 with the Gene Lab's canister caps
   at 0.2 by mesh (`PaletteSlotBrightnessBy`, a new setting): the craft pad lighter, nearer EW's lit grey; the caps stay
   dark. `FlareOpacity` 2 → 1.2: the thin white lamp streaks fainter, the loadout header clearer.
+- **Round 17 #7, the hangar's rock** (partly): `LightmapMaterialScale` (new: a lightmapped material's brightness by a
+  part of its path), `HQ_Caves` at 0.65: the hangar's rock 37 27 23 against EW's 28 20 19 (was 44 33 28).
