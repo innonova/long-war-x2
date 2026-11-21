@@ -2205,6 +2205,15 @@ function GiveKillLoot(XComGameState NewGameState, array<int> Squad)
 		AddCount(Corpses, CorpseCounts, Sp.Corpse);
 		AddCount(Corpses, CorpseCounts, Sp.ExtraCorpse);
 	}
+	// (Dynamic War: the elerium, alloys, fragments and meld ÷ SW_MARATHON, 0.5: twice as much from fewer missions;
+	// XGSummaryUI.CollectArtifactsFromDeadAliens, its items 161-164.)
+	if (class'LWX2SecondWave'.static.On(9) && class'LWX2SecondWave'.default.Marathon > 0)
+	{
+		Fragments = int(Fragments / class'LWX2SecondWave'.default.Marathon);
+		Elerium = int(Elerium / class'LWX2SecondWave'.default.Marathon);
+		Alloys = int(Alloys / class'LWX2SecondWave'.default.Marathon);
+		Meld = int(Meld / class'LWX2SecondWave'.default.Marathon);
+	}
 	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'WeaponFragment', Cargo('WeaponFragment', Fragments));
 	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Elerium', Cargo('Elerium', Elerium / 10));
 	class'X2Item_LWArtifacts'.static.Give(NewGameState, 'Alloys', Cargo('Alloys', Alloys / 10));
