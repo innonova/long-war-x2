@@ -201,7 +201,7 @@ export function earthWallMip(mip: Uint8Array, format: string, w: number, h: numb
 
 /** EW's detail layer baked over its main layer (DXT1 both; converter 67): the detail tiled `ratio` times across the main's
  *  w×h, each texel the detail's colour × the main's brightness against its mean (so the main's broad forms shade the
- *  detail's grain and colour). EW's cave rock: Rock_Detail_A_DIF ×6 over Rock_A_DIF ×2. */
+ *  detail's grain and colour), with half the main's hue. EW's cave rock: Rock_Detail_A_DIF ×6 over Rock_A_DIF ×2. */
 export function detailMip(main: Uint8Array, w: number, h: number, detail: Uint8Array, dw: number, dh: number, ratio: number): Uint8Array {
   const m = decodeDXT1(main, w, h)
   const d = decodeDXT1(detail, dw, dh)
@@ -215,8 +215,10 @@ export function detailMip(main: Uint8Array, w: number, h: number, detail: Uint8A
       const p = 4 * (y * w + x)
       const dx = Math.floor(((x + 0.5) / w) * ratio * dw) % dw, dy = Math.floor(((y + 0.5) / h) * ratio * dh) % dh
       const q = 4 * (dy * dw + dx)
-      const k = lum(m, p) / mean
-      for (let c = 0; c < 3; c++) out[p + c] = Math.min(255, Math.round(d[q + c]! * k))
+      const l = lum(m, p), k = l / mean
+      // (Half the main layer's hue through, as a square root of its channel's share: EW's rock reads warmer than its grey
+      // detail.)
+      for (let c = 0; c < 3; c++) out[p + c] = Math.min(255, Math.round(d[q + c]! * k * (l > 0 ? Math.sqrt(m[p + c]! / l) : 1)))
       out[p + 3] = 255
     }
   return encodeDXT1(out, w, h)
