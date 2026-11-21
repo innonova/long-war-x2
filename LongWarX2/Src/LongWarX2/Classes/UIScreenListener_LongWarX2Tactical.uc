@@ -67,6 +67,8 @@ event OnInit(UIScreen Screen)
 	`log("LongWarX2: tactical HUD; first soldier pawn" @ Pawn, , 'LongWarX2');
 	if (Pawn == none)
 		return;
+	// (The base's grade cleared on any map: EW's maps set their own, LWX2EWMapPieces.UseEWAtmosphere.)
+	class'LWX2EWMapPieces'.static.ClearGrade(Screen);
 	// Long War's species named as EW's (LWX2Species; again here, where the mod's words are surely read).
 	class'LWX2Species'.static.NameCopies();
 	// On an Enemy Within map, Long War's pods at its places (lw-missions.md, step 2).

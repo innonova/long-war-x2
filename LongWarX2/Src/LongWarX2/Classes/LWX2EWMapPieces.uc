@@ -569,7 +569,9 @@ static function string UseEWAtmosphere(Actor Spawner)
 		Fog.Component.SetEnabled(true);
 		FogNote = " EW's fog (density" @ D.Fog.Density @ "×" @ default.EWFogScale $ ")";
 	}
-	// EW's colour grading on the world's post-process.
+	// EW's colour grading, as the local player's post-process override (the world's default is not used by XCOM 2's
+	// post-process: tried, no effect). Set, or cleared (it outlives the map: the base's grade would stay).
+	ClearGrade(Spawner);
 	if (default.EWGrade && VSize(D.Grade.Colorize) > 0)
 	{
 		WI = Spawner.WorldInfo;
@@ -583,6 +585,8 @@ static function string UseEWAtmosphere(Actor Spawner)
 		WI.DefaultPostProcessSettings.Scene_MidTones = D.Grade.MidTones;
 		WI.DefaultPostProcessSettings.bOverride_Scene_Desaturation = true;
 		WI.DefaultPostProcessSettings.Scene_Desaturation = D.Grade.Desaturation;
+		if (LocalPlayer(Spawner.GetALocalPlayerController().Player) != none)
+			LocalPlayer(Spawner.GetALocalPlayerController().Player).OverridePostProcessSettings(WI.DefaultPostProcessSettings, 0.0);
 		FogNote $= ", EW's colour grading";
 	}
 	// (Placed once: a loaded battle comes here again.)
@@ -637,6 +641,13 @@ static function int PlaceLights(Actor Spawner, vector Shift)
  * P_Fire_Area_Cheap (both), P_Rats_Scrambling and P_Trash_Blowing_Constant_Burning (the second) each crashed the game
  * within a second, alone; its other fires, smoke and sparks did not. Left out.
  */
+/** The local player's post-process override cleared (the base's grade, LWX2EWBase.BaseShadows, outlives the map). */
+static function ClearGrade(Actor A)
+{
+	if (A != none && A.GetALocalPlayerController() != none && LocalPlayer(A.GetALocalPlayerController().Player) != none)
+		LocalPlayer(A.GetALocalPlayerController().Player).ClearPostProcessSettingsOverride(0.0);
+}
+
 static function bool IsGlassSlot(string Mesh, int Slot)
 {
 	local string S;

@@ -80,6 +80,12 @@ var config float PeopleEmissive;
 var config array<string> PeopleLitMeshes;
 /** A person's slot without a texture (eye lashes, eye shade): our translucent material in a faint dark tint. */
 var config string EmptySlotParent;
+/**
+ * EW's base's darker blacks (round 10 #7): XCOM 2's strategy post-process lifts them (a wall 32 where EW's is 15); Scene_Shadows
+ * at BaseShadows, as the local player's post-process override (the world's default is not used), while the base shows.
+ * 0: none.
+ */
+var config float BaseShadows;
 var config LinearColor EmptySlotTint;
 var config float EmptySlotOpacity;
 /** Whether they play EW's animations (false: they stand in their reference pose; a test switch). */
@@ -254,8 +260,18 @@ function ShowShell()
 /** The base placed (once) and the tiles brought up to date, and the camera on it. */
 function Show()
 {
+	local PostProcessSettings PP;
 	local LWX2EWMapData Command;
 	local string Level;
+
+	// (EW's darker blacks, BaseShadows.)
+	if (BaseShadows > 0 && LocalPlayer(GetALocalPlayerController().Player) != none)
+	{
+		PP = WorldInfo.DefaultPostProcessSettings;
+		PP.bOverride_Scene_Shadows = true;
+		PP.Scene_Shadows = vect(1, 1, 1) * BaseShadows;
+		LocalPlayer(GetALocalPlayerController().Player).OverridePostProcessSettings(PP, 0.0);
+	}
 
 	if (!Converted())
 		return;
