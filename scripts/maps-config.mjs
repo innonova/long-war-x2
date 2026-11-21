@@ -135,7 +135,7 @@ console.log(
     "; The Situation Room's wall map in each council country's panic colour (features/ew-sitroom-panic-map.md): our panic map",
     "; material over the earth picture and EW's country index (T_Earth_Holo_Index), the colours drawn by LWX2EWBase.",
     "; (Not on the wall's map plane: EW's base view shows that plane in its plain cyan; EW's panic tints are on the Situation",
-    "; Room screen's own map, the earth image UILWEWSituationRoom.AddEarth puts there. Left empty until they go there.)",
+    "; Room screen's own map: there the material is drawn into a render target the map area shows, LWX2EWBase.PanicEarthTexture.)",
     "PanicMapParent=\"LWX2Lightmap.M_EWPanicMap\"",
     "PanicMapStrength=0.7",
     "+AdditiveGlowMaterials=\"Command1.QX_Globe.M_Globe_Holo\"",

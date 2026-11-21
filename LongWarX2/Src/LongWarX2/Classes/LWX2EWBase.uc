@@ -98,6 +98,10 @@ var config float BaseShadows;
  */
 var config array<int> PanicMapIndex;
 var ScriptedTexture PanicColours;
+/** The Situation Room screen's map in panic colours: our panic map material (PanicMapParent, the earth, EW's country index,
+ *  the colour table) drawn into a render target of 1024 x 512, which the screen's map area shows (UILWEWSituationRoom). */
+var ScriptedTexture PanicEarth;
+var MaterialInstanceConstant PanicEarthMaterial;
 /** EW's tank glass (the Genetics Lab's canisters, a person slot whose picture holds TankGlassMatch, EW's froth) on our
  *  glass with that picture: TankGlassOpacity, its olive × TankGlassTintScale. */
 var config string TankGlassMatch;
@@ -310,6 +314,40 @@ function ScriptedTexture PanicTexture()
 	if (PanicColours != none)
 		PanicColours.bNeedsUpdate = true;
 	return PanicColours;
+}
+
+/** The Situation Room screen's map in panic colours (PanicEarth), made on first use from the given earth and index
+ *  pictures; none where the material, or either picture, is missing. Redrawn at the next tick. */
+function ScriptedTexture PanicEarthTexture(Texture Earth, Texture Index)
+{
+	local Material Parent;
+
+	if (PanicEarth == none)
+	{
+		Parent = Material(DynamicLoadObject(class'LWX2EWMapPieces'.default.PanicMapParent, class'Material', true));
+		if (Parent == none || Earth == none || Index == none || PanicTexture() == none)
+			return none;
+		PanicEarthMaterial = new(self) class'MaterialInstanceConstant';
+		PanicEarthMaterial.SetParent(Parent);
+		PanicEarthMaterial.SetTextureParameterValue('Diffuse', Earth);
+		PanicEarthMaterial.SetTextureParameterValue('Index', Index);
+		PanicEarthMaterial.SetTextureParameterValue('Colours', PanicColours);
+		PanicEarthMaterial.SetScalarParameterValue('Strength', class'LWX2EWMapPieces'.default.PanicMapStrength > 0 ? class'LWX2EWMapPieces'.default.PanicMapStrength : 0.7);
+		PanicEarthMaterial.SetVectorParameterValue('Tint', MakeLinearColor(1, 1, 1, 1));
+		PanicEarth = ScriptedTexture(class'ScriptedTexture'.static.Create(1024, 512, PF_A8R8G8B8, MakeLinearColor(0, 0, 0, 1), false, false, false, self));
+		if (PanicEarth == none)
+			return none;
+		PanicEarth.Render = RenderPanicEarth;
+	}
+	PanicTexture();
+	PanicEarth.bNeedsUpdate = true;
+	return PanicEarth;
+}
+
+function RenderPanicEarth(Canvas C)
+{
+	C.SetPos(0, 0);
+	C.DrawMaterialTile(PanicEarthMaterial, 1024, 512, 0, 0, 1, 1);
 }
 
 /** Each council country's pixel in EW's panic colour (XGCountry.GetPanicColor): withdrawn (100, 0, 0); else by panic / 20
