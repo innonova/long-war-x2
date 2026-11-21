@@ -131,6 +131,9 @@ Repair Bay. EW only damaged MEC suits. Three second-wave options change this sys
 
 EW draws the Repair Bay's empty MEC with one material on every slot (`XComEmptyMecPawn.ApplyPreviewMaterial`:
 `XComHeadquartersGame.MECPreviewMaterialName` = `GEN_MaterialParents.Master_Materials.MEC_Upgrade_Active`, loaded by
-name). That material is in none of the packages the setup converts (searched: the base's levels, the unit and weapon
-packages, `Startup.upk`), so its scan-line texture is not yet known. Next: find the package that holds it, then its
-textures, and a scan-line panner on our `M_EWGlass` (SDK editor).
+name). It is in `StrategyResources_SF.upk` (found 2026-11-21 by searching every EW package on wingpu): translucent, unlit,
+used with skeletal meshes, with a world-position offset; cooked, it keeps no expression graph, and its compiled data
+references only `Materials.Dev.NoiseHighFreq_DIF`/`_NRM`. So EW's scan lines and points are the material's own maths
+(likely screen- or world-space bands over that noise), not a texture to carry. Next, when taken up: a scan-line band
+(a panner over a sine of world Z, times the noise) added to our `M_EWGlass` in the SDK editor, and the setup carrying
+the noise texture from `StrategyResources_SF`.
