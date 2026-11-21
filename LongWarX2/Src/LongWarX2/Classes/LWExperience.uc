@@ -48,7 +48,7 @@ static function MissionOver()
 	local array<StateObjectReference> Kills;
 	local array<XComGameState_Unit> Squad;
 	local bool bWon, bNoDeaths, bSawBetter, bSpecial;
-	local int XP, Gained, Earned, Rank, k, Level, Killed;
+	local int XP, Gained, Earned, Rank, k, Level, Killed, PsiGained;
 
 	History = `XCOMHISTORY;
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom', true));
@@ -150,10 +150,15 @@ static function MissionOver()
 			Unit.SetUnitFloatValue('LWX2CouncilAccrued', ValueOf(Unit, 'LWX2CouncilAccrued') + 1, eCleanup_Never);
 		}
 		Unit.SetUnitFloatValue('LWX2XP', XP, eCleanup_Never);
+		// Psi experience (XGBattle.AdditionalBonuses, a won mission: AddPsiXP(255), 20 and each power's tier; features/lw-psi.md).
+		if (bWon && !Unit.bCaptured)
+			PsiGained = class'XComGameState_LWStrategy'.static.AddPsiXP(Unit, class'LWBaseRules'.default.PsiMissionXP + class'XComGameState_LWStrategy'.static.PsiPowersXP(Unit), NewGameState);
+		else
+			PsiGained = 0;
 		Unit.SetUnitFloatValue('LWX2KillsCounted', Kills.Length, eCleanup_Never);
 		Unit.SetUnitFloatValue('LWX2XPMission', Battle.ObjectID, eCleanup_Never);
 		Unit.NonTacticalKills = Max(0, XP - Unit.GetTotalNumKills(false));
-		`log("LongWarX2: experience:" @ Unit.GetFullName() @ "+" $ Gained @ "(" $ Killed @ "kills," @ (bWon ? (bSpecial ? "special mission won" : "mission won") : "mission lost") $ (bNoDeaths ? ", nobody lost" : "") $ (bSawBetter ? ", a better alien seen" : "") $ "):" @ XP @ "of" @ (Rank < 7 ? class'X2ExperienceConfig'.static.GetRequiredKills(Rank + 1) : XP) @ "for the next rank", , 'LongWarX2');
+		`log("LongWarX2: experience:" @ Unit.GetFullName() @ "psi +" $ PsiGained @ "=" @ class'XComGameState_LWStrategy'.static.PsiXPOf(Unit) $ "," @ "+" $ Gained @ "(" $ Killed @ "kills," @ (bWon ? (bSpecial ? "special mission won" : "mission won") : "mission lost") $ (bNoDeaths ? ", nobody lost" : "") $ (bSawBetter ? ", a better alien seen" : "") $ "):" @ XP @ "of" @ (Rank < 7 ? class'X2ExperienceConfig'.static.GetRequiredKills(Rank + 1) : XP) @ "for the next rank", , 'LongWarX2');
 	}
 	if (NewGameState.GetNumGameStateObjects() > 0)
 		History.AddGameStateToHistory(NewGameState);

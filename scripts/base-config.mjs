@@ -92,6 +92,16 @@ out.push(
   `PsiGiftChance=${one('PSI_GIFT_CHANCE')}`,
   `PsiTrainingHours=${one('PSI_TRAINING_HOURS')}`,
   `PsiSlots=${one('PSI_NUM_TRAINING_SLOTS')}`,
+  "; Long War's psi experience and ranks (features/lw-psi.md): the psi XP each psi rank needs (m_iPsiXPLevels), a won",
+  "; mission's (XGBattle.AdditionalBonuses: 20 plus each power's tier), a resisted alien psi attack's (CalcXP event 7), the",
+  "; Neuroregulator's factor (item 224), the will a psi rank adds (iBaseOTSWillIncrease + Rand(iRandOTSWillIncrease)).",
+  ...all('m_iPsiXPLevels').map((v) => `+PsiXPLevels=${v}`),
+  'PsiMissionXP=20',
+  'PsiResistXP=10',
+  'PsiXPItem=224',
+  'PsiXPItemFactor=1.5',
+  `PsiRankWillBase=${one('iBaseOTSWillIncrease')}`,
+  `PsiRankWillRand=${one('iRandOTSWillIncrease')}`,
 )
 for (const m of core.matchAll(/^ItemBalance_Easy=\(eItem=(\d+),\s*iCash=(\d+),\s*iElerium=(\d+),\s*iAlloys=(\d+),\s*iTime=0,\s*iEng=(\d+)\)\s*;\s*\d+=(ePerk_\w+)/gm)) {
   out.push(`+PsiPowers=(Perk=${m[1]}, Enum=${m[6]}, TargetWill=${m[2]}, Tech=${m[3]}, Tier=${m[4]}, Fatigue=${m[5]})`)

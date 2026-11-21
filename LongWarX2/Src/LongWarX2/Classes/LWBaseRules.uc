@@ -42,6 +42,12 @@ struct LWPsiPower
 var config float PsiGiftChance;
 var config int PsiTrainingHours;
 var config int PsiSlots;
+/** Psi experience and ranks (features/lw-psi.md): each psi rank's psi XP (rank 0 first); a won mission's base and a resisted
+ *  alien psi attack's; the item (Long War's number) that multiplies it and by how much; the will each psi rank adds. */
+var config array<int> PsiXPLevels;
+var config int PsiMissionXP, PsiResistXP, PsiXPItem;
+var config float PsiXPItemFactor;
+var config int PsiRankWillBase, PsiRankWillRand;
 var config array<LWPsiPower> PsiPowers;
 
 /** A gene mod made in the Genetics Lab (features/lw-genemods.md): Long War's numbers for it. */

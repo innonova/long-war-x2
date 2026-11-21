@@ -2898,7 +2898,94 @@ static function string PsiSoldierWhy(XComGameState_LWStrategy S, XComGameState_U
 	// Mind Hates Matter (second wave #20, XGFacility_GeneLabs: a gene-modded soldier counts as psi-tested, without the gift).
 	if (class'LWX2SecondWave'.static.On(20) && HasAnyGeneMod(Unit))
 		return "a soldier without gene mods";
+	// (XGStrategySoldier.IsReadyToPsiLevelUp: no Neural Damping gene mod (perk 28), not an officer (perk 171), and the psi
+	// experience of their next psi rank; features/lw-psi.md.)
+	if (HasGeneMod(Unit, 28))
+		return "a soldier without Neural Damping";
+	if (class'LWOfficers'.static.Rank(Unit) > 0)
+		return "a soldier who is not an officer";
+	if (PsiXPOf(Unit) < PsiXPNeeded(PsiRankOf(Unit) + 1))
+		return "psi experience (" $ PsiXPOf(Unit) $ " of " $ PsiXPNeeded(PsiRankOf(Unit) + 1) $ ")";
 	return "";
+}
+
+/** A soldier's psi experience (features/lw-psi.md; Long War's m_kSoldier.iPsiXP), kept on the unit. */
+static function int PsiXPOf(XComGameState_Unit Unit)
+{
+	local UnitValue V;
+
+	return (Unit != none && Unit.GetUnitValue('LWX2PsiXP', V)) ? int(V.fValue) : 0;
+}
+
+/** A soldier's psi rank (Long War's iPsiRank: one for each power gained); never set (a campaign from before it was kept):
+ *  the powers they hold. */
+static function int PsiRankOf(XComGameState_Unit Unit)
+{
+	local UnitValue V;
+	local LWBaseRules.LWPsiPower P;
+	local name Ability;
+	local int n;
+
+	if (Unit == none)
+		return 0;
+	if (Unit.GetUnitValue('LWX2PsiRank', V))
+		return int(V.fValue);
+	foreach class'LWBaseRules'.default.PsiPowers(P)
+	{
+		Ability = class'X2Ability_LWStandins'.static.PsiAbilityFor(P.Perk);
+		if (Ability != '' && Unit.HasSoldierAbility(Ability))
+			n++;
+	}
+	return n;
+}
+
+/** The psi experience a psi rank needs (XGTacticalGameCore.GetPsiXPRequired: m_iPsiXPLevels, the last for any above). */
+static function int PsiXPNeeded(int Rank)
+{
+	local int n;
+
+	n = class'LWBaseRules'.default.PsiXPLevels.Length;
+	if (n == 0)
+		return 0;
+	return class'LWBaseRules'.default.PsiXPLevels[Clamp(Rank, 0, n - 1)];
+}
+
+/** The psi experience of the powers a soldier holds: each one's tier (XGCharacter_Soldier.AddPsiXP(255)'s per-perk bonuses). */
+static function int PsiPowersXP(XComGameState_Unit Unit)
+{
+	local LWBaseRules.LWPsiPower P;
+	local name Ability;
+	local int XP;
+
+	foreach class'LWBaseRules'.default.PsiPowers(P)
+	{
+		Ability = class'X2Ability_LWStandins'.static.PsiAbilityFor(P.Perk);
+		if (Ability != '' && Unit.HasSoldierAbility(Ability))
+			XP += P.Tier;
+	}
+	return XP;
+}
+
+/** Psi experience as Long War adds it (XGCharacter_Soldier.AddPsiXP): Dynamic War / SW_MARATHON + 1, x the item's factor
+ *  with the Neuroregulator carried. Returns what was added; Unit must be a modified state. */
+static function int AddPsiXP(XComGameState_Unit Unit, int XP, XComGameState NewGameState)
+{
+	local XComGameState_Item Item;
+	local array<XComGameState_Item> Items;
+
+	if (Unit == none || !Unit.IsSoldier() || Unit.IsRobotic() || XP <= 0)
+		return 0;
+	if (class'LWX2SecondWave'.static.On(9))
+		XP = class'LWX2SecondWave'.static.War(XP) + 1;
+	Items = Unit.GetAllInventoryItems(NewGameState, true);
+	foreach Items(Item)
+		if (class'LWGearRepair'.static.ItemNumber(Item.GetMyTemplateName()) == class'LWBaseRules'.default.PsiXPItem)
+		{
+			XP = int(XP * class'LWBaseRules'.default.PsiXPItemFactor);
+			break;
+		}
+	Unit.SetUnitFloatValue('LWX2PsiXP', PsiXPOf(Unit) + XP, eCleanup_Never);
+	return XP;
 }
 
 /** Any of Long War's gene mods on the soldier. */
@@ -3023,7 +3110,10 @@ function PsiTrainingDone(XComGameState NewGameState, LWPsiTrainee T)
 	// Bound to the soldier's weapon, as XCOM 2's psi powers are to the psi amp: its range is the power's reach.
 	Power.AbilityType.ApplyToWeaponSlot = eInvSlot_PrimaryWeapon;
 	Power.bUnlocked = true;
+	// (XGStrategySoldier.PsiLevelUp: a psi rank more, and will: iBaseOTSWillIncrease + Rand(iRandOTSWillIncrease).)
+	Unit.SetUnitFloatValue('LWX2PsiRank', PsiRankOf(Unit) + 1, eCleanup_Never);
 	Unit.AWCAbilities.AddItem(Power);
+	Unit.SetBaseMaxStat(eStat_Will, Unit.GetBaseStat(eStat_Will) + class'LWBaseRules'.default.PsiRankWillBase + Rand(Max(1, class'LWBaseRules'.default.PsiRankWillRand)));
 	Note(Unit.GetFullName() @ "gained" @ class'X2Ability_LWStandins'.static.PsiPowerName(Ability) @ "in the Psi Labs.");
 	`log("LongWarX2: psi:" @ Unit.GetFullName() @ "gained" @ Ability @ "(rolled" @ Roll @ "against" @ T.Chance $ ")", , 'LongWarX2');
 }
