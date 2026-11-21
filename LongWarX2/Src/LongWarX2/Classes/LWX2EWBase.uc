@@ -687,7 +687,7 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 			TankTint = S.Palette[1]; Shade.SetVectorParameterValue('PaletteB', TankTint);
 			TankTint = S.Palette[2]; Shade.SetVectorParameterValue('PaletteC', TankTint);
 			TankTint = S.Palette[3]; Shade.SetVectorParameterValue('PaletteD', TankTint);
-			TankTint.R = S.UVTile.X > 0 ? S.UVTile.X : 1; TankTint.G = S.UVTile.Y > 0 ? S.UVTile.Y : 1; TankTint.B = 1; TankTint.A = 1;
+			TankTint.R = S.UVTile.X > 0 ? S.UVTile.X : 1.0; TankTint.G = S.UVTile.Y > 0 ? S.UVTile.Y : 1.0; TankTint.B = 1; TankTint.A = 1;
 			Shade.SetVectorParameterValue('DiffuseUVTile', TankTint);
 			TankTint = MakeLinearColor(1, 1, 1, 1);
 			Shade.SetVectorParameterValue('Tint', TankTint);
