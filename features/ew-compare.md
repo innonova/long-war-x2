@@ -331,3 +331,6 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   now reads their unnamed TintColor (converter 83) and gives them our light-card material in that colour, softly
   tonemapped. They still draw nothing, as the Gene Lab's cards before: our light-card material itself is the open
   question (`features/ew-base-people.md`).
+- **Lamp colours, second step:** `SoftTone` now takes per channel the greater of the colour scaled to its brightest
+  channel and 1 − e^−c: the Situation Room's side lamps 0 190 218 against EW's 2 214 255 (were 0 140 161). The hangar's
+  bridge-edge stripes stay cream: not its light cards (those are the palette lamps); their material still to find.
