@@ -264,3 +264,10 @@ clear glass with coloured, frothy edges; ours (a glow over the froth) as filled.
   material shades more strongly than our lit stand-in.
 - **Seen on wingpu:** the research screen (Vahlen), the research room's clerks, engineering, Shen on Build Items, the
   Gene Lab's people: none darker or brighter out of place.
+
+## Notes (2026-11-21 night, the people's shading under the new grade)
+
+- `PeopleEmissive` 0.2 → 0.08 and `PeopleLightScale` 0.2 → 0.45 (APPROXIMATION, by eye against EW's captures): less of
+  the texture's own colour, more of EW's people lights; Vahlen's coat shades a little more on its folds, the clerks and
+  Shen no darker out of place. Shen's skin measures close to EW's (160 118 68 against 156 124 83 on the Build Items
+  view, a rough skin mask), a little more saturated.
