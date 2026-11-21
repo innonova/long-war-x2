@@ -278,7 +278,6 @@ function AddEarth()
 {
 	local UIPanel Area;
 	local UIImage Earth;
-	local Texture Index;
 	local float W, H, X, Y, FH, TY;
 
 	// (EW's converted Situation Room package first, which holds the teal earth: on the wall, without the backdrop that loads
@@ -304,14 +303,11 @@ function AddEarth()
 	MC.ChildFunctionNum("theTicker", "swapDepths", 16003);
 	if (H > 0 && FH > 0)
 		Area.MC.SetNum("_yscale", 100.0 * FH / H);
-	// (In each council country's panic colour, as EW's map shows them, where our panic map draws: LWX2EWBase.PanicEarthTexture.)
-	// (EW's country index: from EW's Situation Room package, else the base's converted Situation Room, which carries it.)
-	Index = Texture(DynamicLoadObject("FX_Globe.T_Earth_Holo_Index", class'Texture', true));
-	if (Index == none)
-		Index = Texture(DynamicLoadObject("Static_SituationRoom.QX_Globe.T_Earth_Holo_Index", class'Texture', true));
-	PanicEarth = class'LWX2EWBase'.static.Get(self).PanicEarthTexture(EarthTexture, Index);
-	Earth = Spawn(class'UIImage', Area).InitImage('LWEWEarth', PanicEarth != none ? "img:///" $ PathName(PanicEarth) : "img:///FX_Globe.T_Earth_Holo");
-	`log("LongWarX2: EW screen: the Situation Room's map" @ (PanicEarth != none ? "in panic colours," @ PathName(PanicEarth) : "plain"), , 'LongWarX2');
+	// (EW's map shows each council country in its panic colour. Our panic map can draw that into a render target
+	// (LWX2EWBase.PanicEarthTexture), but the movie's img:// loads Texture2D only ("Failed to load 'Texture2D
+	// …ScriptedTexture_1'"): to be shown through the movie's SetExternalTexture on an image the movie imports, not yet done.
+	// features/ew-sitroom-panic-map.md.)
+	Earth = Spawn(class'UIImage', Area).InitImage('LWEWEarth', "img:///FX_Globe.T_Earth_Holo");
 	Earth.SetPosition(0, 0);
 	Earth.SetSize(W > 0 ? W : 750.0, H > 0 ? H : 498.0);
 	Earth.MC.FunctionNum("swapDepths", -16000);

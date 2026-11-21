@@ -68,3 +68,8 @@ earth image `UILWEWSituationRoom.AddEarth` puts into the movie's map area. So th
 and the colour table are kept, `PanicMapMaterials` left empty. Next: the screen's map in panic colours, e.g. the earth
 drawn with the countries' colours into a `ScriptedTexture` (the earth texture, then each country tinted through the
 index) that the map area's image shows in place of the plain earth.
+- **Tried (2026-11-21):** the panic map drawn into a `ScriptedTexture` by `Canvas.DrawMaterialTile`
+  (`LWX2EWBase.PanicEarthTexture`) and given to the screen's map image by `img://`: XCOM 2's movie loads only `Texture2D`
+  through `img://` ("Failed to load 'Texture2D Engine.ScriptedTexture_1'"), so a render target cannot be shown that way.
+  The route left: `GFxMoviePlayer.SetExternalTexture(resource, texture)` on an image the movie imports (EW's Situation
+  Room movie's earth placeholder, or one of ours). The screen's map is the plain earth meanwhile.
