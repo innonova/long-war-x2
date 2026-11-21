@@ -62,6 +62,8 @@ var config int ShellCamera;
 /** The main menu scene's globe, and the seconds it takes to turn once (EW's shell matinee: 200, westward). */
 var Actor ShellGlobe;
 var config float ShellGlobeSeconds;
+/** The main menu scene's black backdrop's scale (EngineMeshes.Sphere, radius about 100 × it), round the camera; 0: none. */
+var config float ShellBackdrop;
 var array<Actor> ShellPlaced;
 var LevelStreaming ShellLighting;
 /** The parent of EW's people's stand-ins (XCOM 2's material for its own base's staff); empty: the bodies' (LWX2EWBodies). */
@@ -218,6 +220,7 @@ function ShowShell()
 	local name CamName;
 	local int k;
 	local Actor A;
+	local DynamicSMActor_Spawnable Back;
 
 	D = Data("XComShell");
 	if (D.Pieces.Length == 0 || D.Cameras.Length == 0)
@@ -231,6 +234,21 @@ function ShowShell()
 		// (Its emitters, the globe's projection and haze: their cones forced additive, AdditiveEmitters; blended they drew
 		// as dark panels. Not its lens flares: they drew dark panels too.)
 		class'LWX2EWMapPieces'.static.PlaceEmittersOf(D, self, ShellOffset, ShellPlaced);
+		// (A black backdrop round it, as EW's room is enclosed: the sky had shown pale through gaps in its rear wall.
+		// Turned inside out by a negative scale, so its inside draws with our one-sided material.)
+		if (ShellBackdrop > 0)
+		{
+			Back = Spawn(class'DynamicSMActor_Spawnable', self, , D.Cameras[0].Loc + ShellOffset);
+			if (Back != none)
+			{
+				Back.StaticMeshComponent.SetStaticMesh(StaticMesh(DynamicLoadObject("EngineMeshes.Sphere", class'StaticMesh', true)));
+				Back.SetDrawScale3D(vect(-1, 1, 1) * ShellBackdrop);
+				Back.StaticMeshComponent.SetMaterial(0, class'LWX2EWMapPieces'.static.BlackStandin(Back));
+				Back.SetCollision(false, false);
+				Back.StaticMeshComponent.SetActorCollision(false, false);
+				ShellPlaced.AddItem(Back);
+			}
+		}
 		`log("LongWarX2: EW shell scene:" @ ShellPlaced.Length @ "actors placed", , 'LongWarX2');
 		// (Its globe turns as EW's shell matinee turns it: once round, westward, in 200 seconds.)
 		foreach ShellPlaced(A)

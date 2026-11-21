@@ -237,6 +237,8 @@ console.log(
     'ShellOffset=(X=0, Y=0, Z=-90000)',
     "; Its globe turns once in this many seconds, westward (EW's shell matinee).",
     'ShellGlobeSeconds=200',
+    "; A black backdrop round the main menu scene (EW's room is enclosed; the sky showed through its rear wall's gaps).",
+    'ShellBackdrop=60',
     ...PEOPLE_LEVELS.map((l) => `+PeopleLevels="${l}"`),
     "; Scene props not placed: EW shows them only while its own animation plays (the armory's grapple rope).",
     '+PeopleSkipMeshes="SM_GrappelArmoryRope"',
