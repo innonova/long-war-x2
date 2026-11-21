@@ -101,6 +101,9 @@ var config float ParticleOpacity, ParticleAddOpacity;
 var config float EmitterMaxDraw;
 /** EW's emitters left out, by a part of their template's path (the Repair Bay's freezer mist, not seen in EW's view of it). */
 var config array<string> SkipEmitters;
+/** EW's emitters drawn additive whatever their material says (a part of the template's path): the globe's projection
+ *  cones, blended, drew as dark panels. */
+var config array<string> AdditiveEmitters;
 /** EW's lens flares' stand-in material (additive, ours) and how strong. */
 var config string FlareParent;
 var config float FlareOpacity;
@@ -661,6 +664,16 @@ static function bool IsGlassSlot(string Mesh, int Slot)
 	return false;
 }
 
+static function bool MatchesAny(string S, array<string> Parts)
+{
+	local string P;
+
+	foreach Parts(P)
+		if (InStr(S, P) != INDEX_NONE)
+			return true;
+	return false;
+}
+
 static function bool Skipped(string Template)
 {
 	local string S;
@@ -755,6 +768,7 @@ static function bool ParticleStandins(LWX2EWMapData D, string Template, Particle
 	local Material Parent;
 	local Texture T;
 	local array<int> Ours;
+	local bool bAdd;
 	local int j, k, n, Off;
 
 	// (Done already: its first emitter's material is one of ours.)
@@ -767,14 +781,15 @@ static function bool ParticleStandins(LWX2EWMapData D, string Template, Particle
 	{
 		if (L.Template != Template || L.Emitter >= PS.Emitters.Length || PS.Emitters[L.Emitter] == none)
 			continue;
-		Parent = Material(DynamicLoadObject(L.Additive ? default.ParticleAddParent : default.ParticleParent, class'Material', true));
+		bAdd = L.Additive || MatchesAny(Template, default.AdditiveEmitters);
+		Parent = Material(DynamicLoadObject(bAdd ? default.ParticleAddParent : default.ParticleParent, class'Material', true));
 		T = Texture(DynamicLoadObject(L.Texture, class'Texture', true));
 		if (Parent == none || T == none)
 			continue;
 		MIC = new(PS) class'MaterialInstanceConstant';
 		MIC.SetParent(Parent);
 		MIC.SetTextureParameterValue('Texture', T);
-		MIC.SetScalarParameterValue('OpacityScale', L.Additive ? (default.ParticleAddOpacity > 0 ? default.ParticleAddOpacity : 1.0) : (default.ParticleOpacity > 0 ? default.ParticleOpacity : 1.0));
+		MIC.SetScalarParameterValue('OpacityScale', bAdd ? (default.ParticleAddOpacity > 0 ? default.ParticleAddOpacity : 1.0) : (default.ParticleOpacity > 0 ? default.ParticleOpacity : 1.0));
 		for (k = 0; k < PS.Emitters[L.Emitter].LODLevels.Length; k++)
 			if (PS.Emitters[L.Emitter].LODLevels[k] != none && PS.Emitters[L.Emitter].LODLevels[k].RequiredModule != none)
 			{

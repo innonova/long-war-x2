@@ -228,7 +228,9 @@ function ShowShell()
 		class'LWX2EWMapPieces'.static.PlaceOf(D, self, vect(0, 0, 0), 0, ShellOffset, class'LWX2BasePiece', ShellPlaced, false, true);
 		class'LWX2EWMapPieces'.static.PlaceLightsOf(D, self, ShellOffset, ShellPlaced, true, BaseLightScale, true);
 		PlacePeopleOf("XComShell", ShellOffset, ShellPlaced);
-		// (Not its emitters nor its lens flares: tried, they drew large dark translucent panels across the view.)
+		// (Its emitters, the globe's projection and haze: their cones forced additive, AdditiveEmitters; blended they drew
+		// as dark panels. Not its lens flares: they drew dark panels too.)
+		class'LWX2EWMapPieces'.static.PlaceEmittersOf(D, self, ShellOffset, ShellPlaced);
 		`log("LongWarX2: EW shell scene:" @ ShellPlaced.Length @ "actors placed", , 'LongWarX2');
 		// (Its globe turns as EW's shell matinee turns it: once round, westward, in 200 seconds.)
 		foreach ShellPlaced(A)
