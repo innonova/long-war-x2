@@ -3,7 +3,7 @@
 // EW's cooked materials keep only their parameters; the graph that combines them is compiled away. The compiled shaders
 // are in the install's RefShaderCache-PC-D3D-SM3.upk: per material a shader map (its shaders by type and id, its name,
 // its uniform expressions, which say which parameter feeds which UniformPixelVector), and each shader's Direct3D 9 code.
-// This finds a material's map, names its uniform vectors and disassembles one of its pixel shaders (shader model 3), so
+// This finds a material's map, reads its uniform expressions and disassembles one of its pixel shaders (shader model 3), so
 // what EW does with a parameter can be read rather than guessed (features/ew-compare.md: HQ_Master's palette and 8×1
 // tiling, read this way).
 //
@@ -107,15 +107,43 @@ if (/ew-shaders\.ts$/.test(process.argv[1] ?? '')) {
   }
   const pick = shaders.filter((s) => s.type.includes(want) && s.type.includes('PixelShader')).pop()
   if (!pick) throw new Error(`no ${want} pixel shader near ${material}`)
-  // Its uniform expressions, after the name and the material's id: the vector parameters in order are UniformPixelVector_n.
-  const vectors: string[] = []
-  for (let q = at + needle.length + 16; q < at + needle.length + 4000; q += 4) {
-    const t = nameAt(q)
-    if (t === 'FMaterialUniformExpressionVectorParameter') vectors.push(nameAt(q + 8))
-    if (t.startsWith('TBasePass') || t.startsWith('TLight')) break
+  // Its uniform expressions, after the name and the material's id: vectors (UniformPixelVector_n), scalars (packed four to
+  // a UniformPixelScalars_n), 2D textures (PixelTexture2D_n: an index into the material's referenced textures), cube
+  // textures. Each expression is its type's name and that type's data (UE3's FMaterialUniformExpression serialization).
+  let p = at + needle.length + 32
+  const name = () => { const n = names[v.getInt32(p, true)] ?? `?${v.getInt32(p, true)}`; const num = v.getInt32(p + 4, true); p += 8; return num ? `${n}_${num - 1}` : n }
+  const f32 = () => { const x = v.getFloat32(p, true); p += 4; return +x.toPrecision(5) }
+  const i32 = () => { const x = v.getInt32(p, true); p += 4; return x }
+  const u8 = () => d[p++]!
+  const expr = (): string => {
+    const t = name().replace(/^FMaterialUniformExpression/, '')
+    switch (t) {
+      case 'Constant': { const c = [f32(), f32(), f32(), f32()]; u8(); return `(${c.join(', ')})` }
+      case 'Time': case 'RealTime': return t
+      case 'VectorParameter': { const n = name(); return `'${n}' (default ${[f32(), f32(), f32(), f32()].join(', ')})` }
+      case 'ScalarParameter': { const n = name(); return `'${n}' (default ${f32()})` }
+      case 'Texture': return `texture #${i32()}`
+      case 'TextureParameter': { const n = name(); return `'${n}', texture #${i32()}` }
+      case 'FoldedMath': { const a = expr(), b = expr(), op = u8(); return `(${a} ${['+', '-', '*', '/', 'dot'][op] ?? `op${op}`} ${b})` }
+      case 'Periodic': case 'Floor': case 'Ceil': case 'Frac': case 'Abs': return `${t.toLowerCase()}(${expr()})`
+      case 'Sine': { const a = expr(); return `${u8() ? 'cos' : 'sin'}(${a})` }
+      case 'AppendVector': { const a = expr(), b = expr(); return `append(${a}, ${b}; ${i32()})` }
+      case 'Min': case 'Max': return `${t.toLowerCase()}(${expr()}, ${expr()})`
+      case 'Clamp': return `clamp(${expr()}, ${expr()}, ${expr()})`
+      default: throw new Error(`an expression of a type not read here (${t})`)
+    }
+  }
+  const sets: string[] = []
+  try {
+    for (const list of ['UniformPixelVector', 'UniformPixelScalar (four to a register)', 'PixelTexture2D', 'cube texture']) {
+      const n = i32()
+      sets.push(...Array.from({ length: n }, (_, k) => `// ${list} ${k}: ${expr()}`))
+    }
+  } catch (e) {
+    sets.push(`// (uniform expressions: ${(e as Error).message})`)
   }
   const ps = buf.indexOf(Buffer.from([0x00, 0x03, 0xff, 0xff]), buf.indexOf(pick.id))
   console.log(`// ${material}: ${pick.type}`)
-  console.log(`// UniformPixelVector_n: ${vectors.map((x, k) => `${k} ${x}`).join(', ')}`)
+  console.log(sets.join('\n'))
   console.log(disassemble(d.subarray(ps, ps + v.getUint32(ps - 4, true))).join('\n'))
 }
