@@ -135,6 +135,11 @@ function Handle(string Line, out array<string> Out)
 		// material: its UV adjustment (UIMovie_3D.ScaleUVs).
 		Out.AddItem(Movie3D(Args.Length > 1 ? name(Args[1]) : ''));
 		return;
+	case "tonemap":
+		// A test aid: the local player's post-process chain's tonemapper (UberPostProcessEffect.TonemapperType) shown, or set:
+		// tonemap [off|filmic|custom].
+		Out.AddItem(Tonemap(Args.Length > 1 ? Args[1] : ""));
+		return;
 	case "basehide":
 		// A test aid: EW's base's pieces and people whose mesh's path holds <text> hidden, or shown again: basehide <text> [show];
 		// or the people among them turned or moved, live: basehide <text> yaw|z <add>; or posed: basehide <text> pose <seconds>.
@@ -5069,6 +5074,49 @@ function string Movie3D(name Tag)
 			S @= PathName(D.StaticMeshComponent.StaticMesh) @ "scale" @ D.DrawScale3D;
 		}
 	return S;
+}
+
+/** A test aid: the local player's tonemapper, shown or set (tonemap). */
+function string Tonemap(string To)
+{
+	local LocalPlayer LP;
+	local PostProcessChain Chain;
+	local PostProcessEffect E;
+	local UberPostProcessEffect U;
+	local string S;
+
+	LP = LocalPlayer(GetALocalPlayerController().Player);
+	if (LP == none)
+		return "ERR no local player";
+	foreach LP.PlayerPostProcessChains(Chain)
+		foreach Chain.Effects(E)
+		{
+			U = UberPostProcessEffect(E);
+			if (U == none)
+				continue;
+			if (To ~= "off")
+				U.TonemapperType = Tonemapper_Off;
+			else if (To ~= "filmic")
+				U.TonemapperType = Tonemapper_Filmic;
+			else if (To ~= "custom")
+				U.TonemapperType = Tonemapper_Customizable;
+			S @= string(U.Name) $ "=" $ string(U.TonemapperType) $ "(range" @ U.TonemapperRange $ ", desat" @ U.SceneDesaturation $ ")";
+		}
+	if (LP.PlayerPostProcess != none)
+		foreach LP.PlayerPostProcess.Effects(E)
+		{
+			U = UberPostProcessEffect(E);
+			if (U == none)
+				continue;
+			if (To ~= "off")
+				U.TonemapperType = Tonemapper_Off;
+			else if (To ~= "filmic")
+				U.TonemapperType = Tonemapper_Filmic;
+			else if (To ~= "custom")
+				U.TonemapperType = Tonemapper_Customizable;
+			S @= "player:" $ string(U.Name) $ "=" $ string(U.TonemapperType);
+		}
+	return S == "" ? "ERR no uber post-process effect" : "ok" $ S;
 }
 
 /** A test aid: EW's base's pieces' material swapped, live (basemat). */

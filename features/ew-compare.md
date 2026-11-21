@@ -360,3 +360,9 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   material its placements' painted colour as its look's tint (converter 86) and the mod draws `PaintCardMaterials` as
   solid paint on our translucent material at `PaintCardScale` 0.45: the stripes measure 187 139 35 against EW's 163 106
   45 (were cream, about 230 190 140).
+- **XCOM 2's tonemapper off over EW's base** (round 14 #8 and the warm colours generally): the local player's post-process
+  chain runs XCOM 2's filmic tonemapper (`UberPostProcessEffect.TonemapperType`, seen with the control port's
+  `tonemap`); EW's renderer had none. Under it the warm highlights went pale: the memorial's lamp-lit wall 213 195 96
+  for EW's 255 203 73. Now off while EW's base shows (`BaseTonemapperOff`, restored when the base hides) and the light
+  maps lowered to match (`LightmapBrightness` 1.2 → 0.95): the wall 246 224 91 at 1.05; six views' mean brightness
+  1.01–1.10× EW's (were 1.13–1.19× with the tonemapper off at 1.2). The Gene Lab's tanks read yellow-gold with it.

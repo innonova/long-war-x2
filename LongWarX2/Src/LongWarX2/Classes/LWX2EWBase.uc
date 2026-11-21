@@ -116,6 +116,11 @@ var config array<string> PaletteSlotMeshes;
 var config float TankGlassOpacity;
 var config float TankGlassTintScale;
 var config float BaseHighlights;
+/** XCOM 2's filmic tonemapper off while EW's base shows (EW's renderer had none: under it the base's warm highlights went
+ *  pale, the memorial's lamp-lit wall 213 195 96 for EW's 255 203 73; off, 246 224 91). Restored when the base hides. */
+var config bool BaseTonemapperOff;
+var bool bTonemapperChanged;
+var byte SavedTonemapper;
 var config float BaseMidtones;
 var config LinearColor EmptySlotTint;
 var config float EmptySlotOpacity;
@@ -432,6 +437,8 @@ function Show()
 		}
 		LocalPlayer(GetALocalPlayerController().Player).OverridePostProcessSettings(PP, 0.0);
 	}
+	if (BaseTonemapperOff)
+		SetTonemapperOff(true);
 
 	if (!Converted())
 		return;
@@ -1354,6 +1361,7 @@ function AvengerShown(bool bShown)
  *  its own (the armory, opened from squad select, looks at its room: the Avenger's overview would take its place). */
 function Hide(optional bool bKeepCamera)
 {
+	SetTonemapperOff(false);
 	ShowWorld();
 	ViewTag = 'Base';
 	if (LightingLevel != none)
@@ -1363,6 +1371,37 @@ function Hide(optional bool bKeepCamera)
 	if (`HQPRES != none && !bKeepCamera)
 		`HQPRES.CAMLookAtNamedLocation("Base", 0);
 	Fog(true);
+}
+
+/** The local player's tonemapper (its post-process chains' UberPostProcessEffect) off, or back as it was. */
+function SetTonemapperOff(bool bOff)
+{
+	local LocalPlayer LP;
+	local PostProcessChain Chain;
+	local PostProcessEffect E;
+	local UberPostProcessEffect U;
+
+	if (!bOff && !bTonemapperChanged)
+		return;
+	LP = LocalPlayer(GetALocalPlayerController().Player);
+	if (LP == none)
+		return;
+	foreach LP.PlayerPostProcessChains(Chain)
+		foreach Chain.Effects(E)
+		{
+			U = UberPostProcessEffect(E);
+			if (U == none)
+				continue;
+			if (bOff)
+			{
+				if (!bTonemapperChanged)
+					SavedTonemapper = U.TonemapperType;
+				U.TonemapperType = Tonemapper_Off;
+			}
+			else
+				U.TonemapperType = ETonemapperType(SavedTonemapper);
+		}
+	bTonemapperChanged = bOff;
 }
 
 /** Each tile below the top row with EW's level for it, placed again where the Long War base has changed. */
