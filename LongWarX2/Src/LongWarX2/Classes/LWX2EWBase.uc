@@ -97,6 +97,8 @@ var config float BaseShadows;
  * (XComEarth.m_CountryToIndex by EW's country number).
  */
 var config array<int> PanicMapIndex;
+/** The Situation Room screen's own earth image in its map area; false: left clear (the wall's map plane behind it). */
+var config bool SitRoomEarthImage;
 var ScriptedTexture PanicColours;
 /** The Situation Room screen's map in panic colours: our panic map material (PanicMapParent, the earth, EW's country index,
  *  the colour table) drawn into a render target of 1024 x 512, which the screen's map area shows (UILWEWSituationRoom). */

@@ -307,10 +307,14 @@ function AddEarth()
 	// (LWX2EWBase.PanicEarthTexture), but the movie's img:// loads Texture2D only ("Failed to load 'Texture2D
 	// …ScriptedTexture_1'"): to be shown through the movie's SetExternalTexture on an image the movie imports, not yet done.
 	// features/ew-sitroom-panic-map.md.)
-	Earth = Spawn(class'UIImage', Area).InitImage('LWEWEarth', "img:///FX_Globe.T_Earth_Holo");
-	Earth.SetPosition(0, 0);
-	Earth.SetSize(W > 0 ? W : 750.0, H > 0 ? H : 498.0);
-	Earth.MC.FunctionNum("swapDepths", -16000);
+	// (EarthImage off: the map area left clear, as in EW, for the wall's map plane behind it to show, in panic colours.)
+	if (class'LWX2EWBase'.default.SitRoomEarthImage)
+	{
+		Earth = Spawn(class'UIImage', Area).InitImage('LWEWEarth', "img:///FX_Globe.T_Earth_Holo");
+		Earth.SetPosition(0, 0);
+		Earth.SetSize(W > 0 ? W : 750.0, H > 0 ? H : 498.0);
+		Earth.MC.FunctionNum("swapDepths", -16000);
+	}
 	`log("LongWarX2: EW screen: the earth in the Situation Room's map area," @ W @ "x" @ H, , 'LongWarX2');
 	// The world's news (LWTicker) along the map's foot, in XCOM 2's scrolling text: EW's own ticker builds its lines from a
 	// library clip whose font does not draw in XCOM 2 (its text fields stay 4 high, nothing shows).

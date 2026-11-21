@@ -1,6 +1,6 @@
 ---
 title: The Situation Room's map in each country's panic colour, as EW's
-status: in-progress
+status: blocked
 priority: 5
 dependsOn: [ew-compare]
 ---
@@ -85,3 +85,8 @@ index) that the map area's image shows in place of the plain earth.
   EW's map is the 3D plane behind the screen. So the route is the plane: the screen's map area left clear (no earth image)
   and the wall screen drawn so that what is clear in the movie shows the plane behind (with our panic material) — to be
   tried in the game: whether XCOM 2's 3D screen material lets it through.
+- **Tried (2026-11-21): the plane route.** With the screen's map area clear (`SitRoomEarthImage=false`) and the plane on
+  our panic material, the map area shows opaque dark teal: XCOM 2's 3D screen (the movie's render target on EW's wall
+  meshes) is opaque where the movie is clear, so the plane behind cannot show. Back to the earth image. What is left: the
+  wall screen's material translucent by the movie's alpha (XCOM 2's `UIDisplay` material, ours in its place), or the earth
+  in panic colours made as a Texture2D (not writable at run time). Parked.
