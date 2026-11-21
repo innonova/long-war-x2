@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 89 // (89: the light-map atlases linear, SRGB=False, as EW's LightMapTexture2D)
+export const CONVERTER_VERSION = 90 // (90: HQ_ConsoleScreen's second mode, TintColor.w >= 1)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
@@ -1311,11 +1311,15 @@ for (const [r, l] of looks) {
   l.diffuse = tex.get('StaticScreenTexture') ?? ''
   // (A console's screen, HQ_ConsoleScreen, as its compiled shader has it: one quarter-height band of its sheet, at
   // (u, v / 4 + TintColor.w), the picture the band's red + green + blue; converter 77.)
+  // (Its shader has a second mode, read again in converter 90: with TintColor.w ≥ 1 the picture is green + 4 × (red ×
+  // a wave sweeping across it in time) + blue × a scalar, still at v / 4 + w (wrapping); below 1, red + green + blue. Two
+  // consoles with w 0 and 1 had drawn the same band the same way; the second's is mostly its sheet's green panels.)
   if (/\.HQ_ConsoleScreen$/.test(root) && l.diffuse) {
     const tc = vectorParam(r, 'TintColor', 0, true)
     const w = tc ? tc[3]! : 0
-    l.screenUV = [0, 4 * w, 1, 0.25]
-    l.screenChannel = 5
+    const band = w - Math.floor(w)
+    l.screenUV = [0, 4 * band, 1, 0.25]
+    l.screenChannel = w >= 1 ? 7 : 5
   }
   // (HQ_CustomScreens_B, as its compiled pixel shader has it (tools/convert/ew-shaders.ts): its TintColor is no colour but
   // the sheet's region, UV = (UV0 + TintColor.xy) × TintColor.zw; the picture is the sheet's blue channel, times Color.

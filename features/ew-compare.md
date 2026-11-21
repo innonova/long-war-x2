@@ -401,3 +401,8 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
 - **Round 16 #3, the Gene Lab tanks' caps** (fixed): their palette slot is drawn unlit at `PaletteSlotBrightness`; at
   0.6 (set for the launch pads under the old grade) the caps read light grey under the new base grade. At 0.2 they are
   EW's dark metal and the hangar's launch pads still read as EW's. Left: the faces' gold mottling (ours smooth olive).
+- **Round 17 #1, the console pictures** (partly): EW's `HQ_ConsoleScreen` shader read again: with TintColor.w ≥ 1 it draws
+  green + 4 × (red × a wave sweeping across in time) + blue × a scalar, at (u, v/4 + w); below 1, red + green + blue. The
+  converter knew only the second; now both (converter 90, channel 7: green + 2 × red). The research room's desk
+  terminals still show streaks where EW shows one crisp panel: their screens' UV range is not known (the live probes,
+  `basemat`, did not change that view; likely another piece than the ones tried). Left open.
