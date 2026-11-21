@@ -139,6 +139,14 @@ var config float LampGlowScale;
 var config bool LightmapBase, LightmapMaps;
 /** EW's baked lighting at this brightness (1: as stored). */
 var config float LightmapBrightness;
+/** A level's lightmapped pieces brighter or darker by Scale (matched by the level's name in the light map's path):
+ *  measured against EW where a room reads otherwise (the Cybernetics Lab, the Repair Bay's room). */
+struct LWX2LevelScale
+{
+	var string Level;
+	var float Scale;
+};
+var config array<LWX2LevelScale> LightmapBrightnessBy;
 var config string FoliageParent;
 /** The parent for EW's cut-out materials (tree cards, signs, fences, road paint), given the look's mask as its Masks. */
 var config string MaskedParent;
@@ -1088,7 +1096,7 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 	local Texture Diffuse, LM;
 	local LinearColor V;
 	local float B;
-	local int k;
+	local int k, i;
 
 	if (default.LightmapParent == "" || P.LightMap.UV != 1)
 		return none;
@@ -1131,7 +1139,14 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 	// The piece's scales as one brightness: the colour's mean × the directions' mean × 3 (the atlas holds their mean)
 	// × 1/sqrt(3) (each direction's weight for a surface facing out of its face).
 	B = (P.LightMap.S0.X + P.LightMap.S0.Y + P.LightMap.S0.Z) / 3 * (P.LightMap.S1.X + P.LightMap.S1.Y + P.LightMap.S1.Z) / 3 * 1.732;
-	MIC.SetScalarParameterValue('LMBrightness', B * (default.LightmapBrightness > 0 ? default.LightmapBrightness : 1.0));
+	B *= default.LightmapBrightness > 0 ? default.LightmapBrightness : 1.0;
+	for (i = 0; i < default.LightmapBrightnessBy.Length; i++)
+		if (default.LightmapBrightnessBy[i].Level != "" && InStr(P.LightMap.Color, default.LightmapBrightnessBy[i].Level $ ".") == 0)
+		{
+			B *= default.LightmapBrightnessBy[i].Scale;
+			break;
+		}
+	MIC.SetScalarParameterValue('LMBrightness', B);
 	V.R = 1; V.G = 1; V.B = 1; V.A = 1;
 	MIC.SetVectorParameterValue('Tint', V);
 	return MIC;
