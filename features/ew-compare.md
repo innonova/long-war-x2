@@ -391,3 +391,10 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   `LightmapBrightness` 0.4 (six views' 10th/50th/90th percentiles 0.79/1.17/1.03 of EW's; at 2.2 and 0.95 about
   0.5/1.05/1.1); some banding in the darkest areas stays. Next, if it matters: a dither in our lit materials. Mission
   maps take the curve when converted again (the plot writer sets `LMGamma` from the config).
+- **Round 16 #1, the remaining blotches** (fixed, by the curve): with `LMGamma` set live on engineering's pieces
+  (`basemat … self LMGamma <g>`), red and olive blotches appear in the dark corners at 1.6 and strongly at 2.6, none at
+  1.0: raising EW's colour atlas (normalized colour, noisy in dark texels) to a power exaggerates its colour noise. So the
+  light maps stay linear (`LightmapGamma` 1.0), and EW's darker mid-tones come from the base's grade instead
+  (`BaseMidtones` 0.9 → 1.25; higher darkens: at 0.75 everything read 2× EW's, at 1.5 0.6×). With `LightmapBrightness`
+  0.4, seven views' 10th/25th/50th/75th/90th percentiles measure 1.06/1.00/1.03/1.00/0.89 of EW's; no blotches on the
+  workshop's left, no banding on the research ceiling.
