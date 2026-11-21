@@ -200,3 +200,31 @@ so the fixes are driven by evidence and the person is not needed on every round.
 - **Found on the way:** EW's persistent base level (`Command1`) has a SkyLight (166 165 149), a movable directional light
   (brightness 3) and four movable spots, all on the Cinematic_1 / Unnamed_2 lighting channels, none on static geometry:
   EW lights its base people with them, live. For the people's lighting (`features/ew-base-people.md`).
+
+## Report (2026-11-21, EW's compiled shaders read)
+
+EW's cooked materials keep their parameters only; what they do with them was guessed until now. Their compiled shaders
+are in the player's `RefShaderCache-PC-D3D-SM3.upk` (each material's shader map: its shaders by type and id, its name,
+its uniform expressions naming which parameter feeds which `UniformPixelVector_n`, and the Direct3D 9 code).
+**`tools/convert/ew-shaders.ts`** finds a material's map, names its uniform vectors and disassembles a pixel shader
+(shader model 3; a small disassembler of ours). Read so far:
+
+- **`HQ_Master`** (most of the base's walls, floors and machinery): the trim atlas is sampled at UV0 × **(8, 1)** (the port
+  drew it once: stretched eightfold, the reviewer's "coarse, stretched metal", round 10 #1) and **multiplied by one of its
+  four palette colours** by the face's UV0 quadrant: Colorize A (u < 1, v < 1), B (u ≥ 1, v < 1), C (u < 1, v ≥ 1),
+  D (u ≥ 1, v ≥ 1); the colours' w weights only the specular tint. Per room: the bar's beige and orange, the hangar's
+  0.41 grey, the command rooms' greys (the port drew them white: the memorial wall cream, round 10 #11; the rooms pale,
+  #7). **Done:** our lightmapped material (SDK editor) now has `PaletteA`–`D` and the quadrant choice in a Custom (HLSL)
+  node, and `DiffuseUVTile` on its UVs; the converter writes each look's Colorize A–D and the 8×1 tile (converter 68).
+- **`HQ_Master_EmissiveCombo_Vector`, `_EmissiveComboPallet`**: the same atlas at (8, 1) (now tiled too); their
+  `TintColor` or palette colours only the strips the mesh's **vertex alpha** marks, emissive (×2): EW's coloured light
+  strips (the hangar ramps' orange). **Open:** needs the vertex colour in our material.
+- **`HQ_Caves_Simple`** (the cave rock): diffuse = (main × detail)^0.65 in linear light, specular colour √(main × detail).
+  The baked copy (`detailMip`) now uses that formula, with the specular colour folded in at an average share (1.7,
+  measured on EW's hangar), since our stand-in has no specular input (converter 69). The main layer's own rotation and
+  offset are not carried.
+- **`HQ_CustomScreens_B`** (the labs' and Gene Lab's wall screens): its `TintColor` is no colour but the decal sheet's
+  region, UV = (UV0 + TintColor.xy) × TintColor.zw; the picture is the sheet's blue channel, × `Color`. Each screen now
+  gets a copy of the sheet resampled to its region (`screenMip`), coloured by `Color` (converter 70; the earlier
+  "TintColor hue" was the wrong parameter). The research wall's screen shows its grid of file icons over a world map.
+  `HQ_CustomScreens_A` is another shader (three textures), not read yet.
