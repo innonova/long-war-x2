@@ -304,3 +304,6 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   room 1.0, engineering 1.4: a level-wide difference, likely EW's live lights in that lab. The lightmap brightness can now
   be set by level (`LightmapBrightnessBy`); the Cybernetics Lab at 2.0 brings it to 1.25×. The far corridor behind the
   panel stays darker (other levels), and the plinth paler than EW's.
+- **Round 12 #3** (withdrawn): the New Game, Advanced Options and Second Wave captures recaptured by clicks (main menu
+  LONG WAR at 216 1042, ADVANCED OPTIONS 965 775, SECOND WAVE 547 845 in the game's 1920 × 1080): all three in EW's room
+  with the translucent globe and no pale openings; the round's images were from 20 November.
