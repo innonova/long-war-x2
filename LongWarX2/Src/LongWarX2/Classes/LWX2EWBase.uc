@@ -110,6 +110,7 @@ var config string TankGlassMatch;
 var config float PeopleLightScale;
 /** The brightness of EW's palette material on animated pieces (the launch pads; unlit, a white light map). */
 var config float PaletteSlotBrightness;
+var config array<string> PaletteSlotMeshes;
 var config float TankGlassOpacity;
 var config float TankGlassTintScale;
 var config float BaseHighlights;
@@ -733,7 +734,9 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 		// (EW's palette material on an animated piece, the hangar's launch pads: our lightmapped material (usable on skeletal
 		// meshes) with a white light map at PaletteSlotBrightness, EW's palette and its 8x1 tiling; on the people's stand-in
 		// the trim atlas showed stretched and untinted, round 11 #9.)
-		if (S.Palette.Length == 4 && S.Diffuse != "")
+		// (Only on the pieces listed, PaletteSlotMeshes (the launch pads): unlit, the engineering robots lost their shading
+		// and read flat white, round 13 #2.)
+		if (S.Palette.Length == 4 && S.Diffuse != "" && class'LWX2EWMapPieces'.static.Matches(P.Mesh, PaletteSlotMeshes))
 		{
 			Shade = new(self) class'MaterialInstanceConstant';
 			Shade.SetParent(Material(DynamicLoadObject(class'LWX2EWMapPieces'.default.LightmapParent, class'Material', true)));

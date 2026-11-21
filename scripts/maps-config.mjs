@@ -292,6 +292,8 @@ console.log(
     'PeopleLightScale=0.5',
     "; EW's palette material on animated pieces (the hangar's launch pads): our lightmapped material, unlit at this brightness.",
     'PaletteSlotBrightness=0.6',
+    "; (Only the launch pads: on the engineering robots, unlit, their shading was lost.)",
+    '+PaletteSlotMeshes="SM_Launchpad"',
     'TankGlassOpacity=0.9',
     "; (Measured against EW's tanks: 83 77 42; with the froth tiled as EW's, 0.85.)",
     'TankGlassTintScale=0.85',
