@@ -73,3 +73,10 @@ index) that the map area's image shows in place of the plain earth.
   through `img://` ("Failed to load 'Texture2D Engine.ScriptedTexture_1'"), so a render target cannot be shown that way.
   The route left: `GFxMoviePlayer.SetExternalTexture(resource, texture)` on an image the movie imports (EW's Situation
   Room movie's earth placeholder, or one of ours). The screen's map is the plain earth meanwhile.
+- **EW's own design, likely:** EW's Situation Room movie leaves its map area clear and the 3D map plane behind it
+  (`SituationRm_WorldMapPlane`, `M_Globe_Holo` with `Nation_Index` and the country colour texture) shows through, coloured
+  by panic only while the room is up (`XComEarth.HighlightCountry` toggles each council country on). In the port the
+  movie is drawn on EW's wall meshes through a render target, opaque where the movie is clear, so the plane behind is
+  hidden and the earth is put into the movie as an image instead. Two routes: the wall screen's material translucent where
+  the movie is clear (the plane, with our panic material, behind it), or `UIMovie.SetExternalTexture` (UIMovie extends
+  GFxMoviePlayer) on an image with a linkage name in the converted movie, given the render target.
