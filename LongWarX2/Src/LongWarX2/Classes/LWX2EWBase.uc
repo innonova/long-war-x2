@@ -827,7 +827,8 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 	}
 	A.SetDrawScale(P.Scale > 0 ? P.Scale : 1.0);
 	// (On the people's light's channel too, EW's: LWX2PeopleLight, placed from Command1's.)
-	if (PeopleLightScale > 0 && A.SkeletalMeshComponent != none)
+	// (Characters only, IsLitPerson: on the robots and props it made them flat white, round 13 #2.)
+	if (PeopleLightScale > 0 && A.SkeletalMeshComponent != none && IsLitPerson(P.Mesh))
 	{
 		Channels = A.SkeletalMeshComponent.LightingChannels;
 		Channels.Cinematic_1 = true;
