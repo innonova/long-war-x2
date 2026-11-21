@@ -120,7 +120,8 @@ The live ones:
   - ~~The mission summary's own ÷ `SW_MARATHON` on artifacts 161–164.~~ Done 2026-11-21: those are elerium, alloys,
     weapon fragments and meld (`data/itemtree.json`); `XGSummaryUI.CollectArtifactsFromDeadAliens` divides the dead
     aliens' (counted in tenths) by `SW_MARATHON` before each unit's roll, so with Dynamic War they double, as the
-    experience does. The port's kill loot (`GiveKillLoot`) does the same.
+    experience does. The port's kill loot (`GiveKillLoot`) does the same. Checked on wingpu (`secondwave 9 on`, `auto 72 100`):
+    8 Sectoids killed left 16 weapon fragments and 4 meld, where standard Long War gives 8 and 2.
   - The Medal of Honor's missions (medals not ported) and a colonel's roll every 10 × 0.5 missions (not in the port).
 - **Checked on wingpu** (`war` now also prints six soldiers' experience): a mission won with Dynamic War gave each soldier
   +200 (350 → 550), where standard Long War gives +100. The other scalars are each a line where the port's rule is; not each
