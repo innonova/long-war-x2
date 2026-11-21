@@ -369,3 +369,19 @@ All of Long War's psi powers now act in missions.
 - **Checked on wingpu:** an Ethereal beside a squad of six, three with the power: its Mindfray on two of them was
   answered by each. It never aimed at one without the power in four turns, so the teammate's answer was not seen in
   play; the Mind Control fix was built after that run and not seen either.
+
+## Psi experience and psi ranks (2026-11-21, read from Long War's code)
+
+What Long War 1.0 does, which the port did not have:
+- **Psi XP** (`XGCharacter_Soldier.AddPsiXP`, `m_kSoldier.iPsiXP`): each soldier alive at the end of a **won** mission
+  (`XGBattle.AdditionalBonuses`, `AddPsiXP(255)`) gets 20, plus each psi power they hold's **tier** (10, 20 or 30; Rift
+  none: the code's per-perk bonuses are exactly the powers' tiers). A soldier who **resists an alien psi attack**
+  (`XGAbilityTree`, the ability failed against a soldier: `CalcXP(…, 7)`) gets 10. Each award ×1.5 with the
+  **Neuroregulator** (item 224) carried; Dynamic War ÷ `SW_MARATHON` + 1. Only soldiers gain it (`CanGainXP`).
+- **Psi ranks** (`m_iPsiXPLevels`: 0, 100, 250, 500, 850, 1350, 2000, 99999 — None, Awakened, Sensitive, Talent, Adept,
+  Psion, Master): a soldier may be put in the Psi Labs only when their psi XP reaches their next rank's
+  (`XGStrategySoldier.IsReadyToPsiLevelUp`, used by `XGPsiLabsUI`'s soldier list; also: the Labs built, not
+  psi-tested by Mind Hates Matter, no Neural Damping gene mod (perk 28), active, not augmented, not a SHIV, not an officer
+  (perk 171)). A power gained (`XGFacility_PsiLabs`) raises the psi rank by one (`PsiLevelUp`) and the will by
+  `iBaseOTSWillIncrease` + Rand(`iRandOTSWillIncrease`) (1 + 0–5).
+- **The psi tree** (EW's promotion screen in psi mode) shows the powers by rank: still the port's power list.
