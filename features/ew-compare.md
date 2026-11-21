@@ -177,3 +177,8 @@ so the fixes are driven by evidence and the person is not needed on every round.
   (`ShellBackdrop`, radius 60 units × scale) in our two-sided glass pane at full opacity (the lightmapped black, one-
   sided, was culled from inside even turned inside out), and the lighting level's `ExponentialHeightFog` switched off
   under the menu scene. The gaps measure 18 23 26 against EW's 16 29 34 (before: 80 93 118).
+- **Round 10 #15, Mission Control's globe button** (left out, decision): EW's button beside Back
+  (`UIMissionControl.OnMouseHologlobe`) toggles `XGGeoscape.ShowRealEarth` / `ShowHoloEarth`, which fire the Geoscape
+  level's Kismet to switch EW's *space* Earth between its real and its hologram look (country colours by panic). The
+  port's Mission Control stands in EW's room with the room's hologlobe, and has no space Earth; the button would have
+  nothing of EW's to do. It comes with the space Earth, if that is ever ported.
