@@ -1,6 +1,6 @@
 ---
 title: The Situation Room's map in each country's panic colour, as EW's
-status: planned
+status: in-progress
 priority: 5
 dependsOn: [ew-compare]
 ---
@@ -45,3 +45,17 @@ satellite) whenever they change.
 - **`XComEarth.m_CountryToIndex`** (each `ECountry` to its index in `Nation_Index`): 0 208, 1 174, 2 29, 3 140, 4 71,
   5 64, 6 88, 7 82, 8 45, 9 244, 10 97, 11 232, 12 97, 13 232, 14 97, 15 98, 16 97, 17 97, 18 49, 19 20, 20 7, 21 119,
   22 179, 23 97, 24 232, 25 152, 26 161, 27 232, 28 161 (97 and 232 look like "no country of its own").
+
+## Report (2026-11-21, first cut; not yet seen in the game)
+
+- **The colour table** (`LWX2EWBase.PanicTexture`, `RenderPanic`): a `ScriptedTexture` of 256 × 1, cleared to
+  transparent black, each council country's pixel (`PanicMapIndex`, EW's `m_CountryToIndex` in Long War's order) drawn
+  in EW's `GetPanicColor` colour from its panic, withdrawn countries EW's (100, 0, 0). Redrawn whenever the base shows.
+- **Our material** (`LWX2Lightmap.M_EWPanicMap`, SDK editor; unlit): the earth picture (`Diffuse`), EW's country index
+  (`Index`, `T_Earth_Holo_Index`, G8), the table (`Colours`) read at u = index / 256; where the table has a colour, the
+  earth mixed toward it by `Strength` (0.7), the country's own brightness kept (colour × (0.35 + 1.3 × the earth's
+  luminance)); × `Tint`.
+- **Wired** (`LWX2EWMapPieces.PanicMapStandin`, `PanicMapMaterials`): the Situation Room's wall map plane. The index
+  texture is found beside the look's earth (`_LWX2Wall` → `_Index`); without it, the plain look stays.
+- **Left:** satellites (EW's `ColorSatellite_SpecificIndex`: coverage marks), the hologlobes (they could take the same
+  material), redrawing on a panic change while the map is in view.
