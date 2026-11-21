@@ -71,6 +71,8 @@ console.log(
     '+AdditiveEmitters="P_Projection_Cone"',
     '+AdditiveEmitters="P_Holo_Dots"',
     '+AdditiveEmitters="P_Projector_Glass"',
+    "; Emitters' strength by template: the globe's projector beams (EW's blue at 2x) clipped white at full strength.",
+    '+EmitterOpacityBy=(Match="P_Projection_Cone",Scale=0.35)',
     '+AxisLockEmitters="HeadLight_Beam"',
     "; EW's walls as XCOM 2's breakable walls (its fracturable actors, EW's toughness as XCOM 2's): explosions break them.",
     'PlotFracWalls=true',

@@ -137,6 +137,9 @@ struct LWX2CardScale
 	var float Scale;
 };
 var config array<LWX2CardScale> LightCardScaleBy;
+/** Emitters' strength by template (the first whose Match is in the template's path), times their opacity: the globe's
+ *  projector beams, EW's blue at 2× its colour, clipped to white on our additive material. */
+var config array<LWX2CardScale> EmitterOpacityBy;
 var config float LightCardScale;
 /** Its opacity where the parent has one (our glass: the cards as faint panes when the mesh's vertex colours do not reach). */
 var config float LightCardOpacity;
@@ -857,6 +860,7 @@ static function bool ParticleStandins(LWX2EWMapData D, string Template, Particle
 	local array<int> Ours;
 	local bool bAdd;
 	local int j, k, n, Off;
+	local float Strength;
 
 	// (Done already: its first emitter's material is one of ours.)
 	if (PS.Emitters.Length > 0 && PS.Emitters[0] != none && PS.Emitters[0].LODLevels.Length > 0 && PS.Emitters[0].LODLevels[0] != none
@@ -876,7 +880,14 @@ static function bool ParticleStandins(LWX2EWMapData D, string Template, Particle
 		MIC = new(PS) class'MaterialInstanceConstant';
 		MIC.SetParent(Parent);
 		MIC.SetTextureParameterValue('Texture', T);
-		MIC.SetScalarParameterValue('OpacityScale', bAdd ? (default.ParticleAddOpacity > 0 ? default.ParticleAddOpacity : 1.0) : (default.ParticleOpacity > 0 ? default.ParticleOpacity : 1.0));
+		Strength = bAdd ? (default.ParticleAddOpacity > 0 ? default.ParticleAddOpacity : 1.0) : (default.ParticleOpacity > 0 ? default.ParticleOpacity : 1.0);
+		for (j = 0; j < default.EmitterOpacityBy.Length; j++)
+			if (default.EmitterOpacityBy[j].Match != "" && InStr(Template, default.EmitterOpacityBy[j].Match) != INDEX_NONE)
+			{
+				Strength *= default.EmitterOpacityBy[j].Scale;
+				break;
+			}
+		MIC.SetScalarParameterValue('OpacityScale', Strength);
 		for (k = 0; k < PS.Emitters[L.Emitter].LODLevels.Length; k++)
 			if (PS.Emitters[L.Emitter].LODLevels[k] != none && PS.Emitters[L.Emitter].LODLevels[k].RequiredModule != none)
 			{

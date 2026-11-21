@@ -435,3 +435,8 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   the base showed, not to the main menu's copy of EW's room, which read 1.6-1.9× EW's after the light maps went linear.
   Now `LWX2EWBase.ApplyBaseGrade`, called by `Show` and `ShowShell`: the main menu's 10th-90th percentiles 1.09/1.16/
   1.03/0.94/0.83 of EW's, the New Game screen's 0.89/0.79/0.97/1.02/0.86.
+- **Round 18 #10, the menu globe's projector beams** (partly): `P_Projection_Cone_Secondary` (EW's colour (0, 0.55, 1)
+  × 2 over life, read from its colour modules); at full strength on our additive material they were hard white shafts.
+  `EmitterOpacityBy` (new: an emitter's strength by template), the cones at 0.35: fainter; still white rather than EW's
+  cyan-blue, so the particles' own colour does not seem to reach our material for these (to look at: the cooked colour
+  distributions' lookup tables as XCOM 2 reads them).
