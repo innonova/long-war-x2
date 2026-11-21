@@ -174,6 +174,11 @@ var config array<string> BaseBlackMaterials;
 var config array<string> UnlitMaterials;
 var config LinearColor UnlitTint;
 var config array<string> GlassMaterials;
+/** EW's holograms drawn additively with their (overridden) picture, our additive particle material (ParticleAddParent):
+ *  the hologlobes in the main menu and Mission Control, EW's M_Globe_Holo translucent and glowing; on our opaque unlit
+ *  material they were pale solid spheres. AdditiveGlowScale: their strength. */
+var config array<string> AdditiveGlowMaterials;
+var config float AdditiveGlowScale;
 var config string GlassParent;
 var config float GlassOpacity;
 /** EW's base's glass panes placed; off: left out. */
@@ -1378,6 +1383,21 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 			L.Tint = default.LookOverrides[i].Tint;
 		}
 		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : ((L.Kind == 'Masked' && default.MaskedParent != "") ? default.MaskedParent : default.PropParent));
+	}
+	if (k != INDEX_NONE && L.Diffuse != "" && default.ParticleAddParent != "" && Matches(Path, default.AdditiveGlowMaterials))
+	{
+		Parent = Material(DynamicLoadObject(default.ParticleAddParent, class'Material', true));
+		T = Texture(DynamicLoadObject(L.Diffuse, class'Texture', true));
+		if (Parent != none && T != none)
+		{
+			MIC = new(InOuter) class'MaterialInstanceConstant';
+			MIC.SetParent(Parent);
+			MIC.SetTextureParameterValue('Texture', T);
+			MIC.SetScalarParameterValue('OpacityScale', default.AdditiveGlowScale > 0 ? default.AdditiveGlowScale : 1.0);
+			S.Standin = MIC;
+			Standins.AddItem(S);
+			return S.Standin;
+		}
 	}
 	if (k != INDEX_NONE && L.Diffuse != "" && default.GlowParent != "" && Matches(Path, default.UnlitMaterials))
 	{
