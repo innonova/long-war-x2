@@ -80,3 +80,8 @@ index) that the map area's image shows in place of the plain earth.
   hidden and the earth is put into the movie as an image instead. Two routes: the wall screen's material translucent where
   the movie is clear (the plane, with our panic material, behind it), or `UIMovie.SetExternalTexture` (UIMovie extends
   GFxMoviePlayer) on an image with a linkage name in the converted movie, given the render target.
+- **EW's Situation Room movie** (`gfxSituationRoom.SituationRoom`, read with `tools/convert/swf-as2.ts`) exports no
+  bitmap for its map (`MapArea` is a clip of its own, empty of an earth): `SetExternalTexture` has no linkage to replace.
+  EW's map is the 3D plane behind the screen. So the route is the plane: the screen's map area left clear (no earth image)
+  and the wall screen drawn so that what is clear in the movie shows the plane behind (with our panic material) — to be
+  tried in the game: whether XCOM 2's 3D screen material lets it through.
