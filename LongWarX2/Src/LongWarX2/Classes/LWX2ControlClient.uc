@@ -788,6 +788,12 @@ function Handle(string Line, out array<string> Out)
 		}
 		// EW's soldier summary or promotion tree of the first soldier, or of a unit ('open summary #<id>'), as the barracks'
 		// soldier list opens them.
+		// (open psitree [#id]: EW's promotion screen in psi mode, Long War's psi tree, as the Psi Labs open it.)
+		if (Args.Length > 1 && Args[1] ~= "psitree")
+		{
+			Out.AddItem(OpenEWSoldier(Args.Length > 2 ? int(Mid(Args[2], 1)) : 0, false, true));
+			return;
+		}
 		if (Args.Length > 1 && (Args[1] ~= "summary" || Args[1] ~= "abilities"))
 		{
 			Out.AddItem(OpenEWSoldier(Args.Length > 2 ? int(Mid(Args[2], 1)) : 0, Args[1] ~= "abilities"));
@@ -3492,7 +3498,7 @@ function Council(array<string> Args, out array<string> Out)
 }
 
 /** A shot's chance (its ability's to-hit calculation, as the targeting shows it), its crit and the modifiers' reasons. */
-function string OpenEWSoldier(int UnitID, bool bAbilities)
+function string OpenEWSoldier(int UnitID, bool bAbilities, optional bool bPsi)
 {
 	local XComGameState_Unit Unit;
 	local StateObjectReference Ref;
@@ -3510,7 +3516,9 @@ function string OpenEWSoldier(int UnitID, bool bAbilities)
 	Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitID));
 	if (Unit == none || `HQPRES == none)
 		return "ERR no such soldier, or not at the base";
-	if (bAbilities)
+	if (bPsi)
+		class'UILWEWPsiPromotion'.static.OpenPsi(`HQPRES, Unit.GetReference());
+	else if (bAbilities)
 		class'UILWEWSoldierPromotion'.static.Open(`HQPRES, Unit.GetReference());
 	else
 		class'UILWEWSoldierSummary'.static.Open(`HQPRES, Unit.GetReference());
