@@ -278,6 +278,9 @@ function AddEarth()
 	local UIImage Earth;
 	local float W, H, X, Y, FH, TY;
 
+	// (EW's converted Situation Room package first, which holds the teal earth: on the wall, without the backdrop that loads
+	// it, the earth had come only from the hologlobe's look loading it, and when that changed the map area stayed empty.)
+	DynamicLoadObject("EWSitRoomMap.TheWorld", class'Object', true);
 	EarthTexture = Texture2D(DynamicLoadObject("FX_Globe.T_Earth_Holo", class'Texture2D', true));
 	if (EarthTexture == none)
 		return;
