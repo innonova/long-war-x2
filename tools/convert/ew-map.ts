@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 71 // (71: the light strips and lamp faces by vertex alpha, Strip/PaletteMode)
+export const CONVERTER_VERSION = 72 // (72: the screens' copies' mips from larger ones)
+// (71: the light strips and lamp faces by vertex alpha, Strip/PaletteMode)
 // (70: the custom screens' own regions of the decal sheet)
 // (69: the cave rock's layers by EW's own formula; 68: HQ_Master's palette and 8×1 tile)
 // (67: a detail layer never the main diffuse when another matches; EW's detail layer baked into a copy of the main, detailMip)
@@ -1594,9 +1595,12 @@ for (const p of pieces) if (p.lightmap) lmPairs.set(exports[p.lightmap.color - 1
 const lmDirs = new Set(lmPairs.values())
 const tintMasks = new Set([...tintOf.values()].map((t) => t.mask))
 const detailLayers = new Set([...detailOf.values()].map((t) => t.detail))
+// (The screens' copies' own mips, the sheet's as copied: each mip of a copy is made from a larger one, as its region
+// magnifies the sheet.)
+const screenCopies = new Set(screenOf.keys())
 const dirMips = new Map<string, Uint8Array>()
-if (lmDirs.size || tintMasks.size || detailLayers.size)
-  inlineTextures(bytes.slice(), exports, meta.names, dirname(src), stubAt + stub.length, (e) => !lmDirs.has(e) && !tintMasks.has(e.fullName) && !detailLayers.has(e.fullName), (e, format, mip, w, h) => {
+if (lmDirs.size || tintMasks.size || detailLayers.size || screenCopies.size)
+  inlineTextures(bytes.slice(), exports, meta.names, dirname(src), stubAt + stub.length, (e) => !lmDirs.has(e) && !tintMasks.has(e.fullName) && !detailLayers.has(e.fullName) && !screenCopies.has(e.fullName), (e, format, mip, w, h) => {
     if (lmDirs.has(e) || tintMasks.has(e.fullName) || format === 'PF_DXT5') dirMips.set(`${e.fullName}:${w}x${h}`, mip.slice())
     if (detailLayers.has(e.fullName) && format === 'PF_DXT1') dirMips.set(`${e.fullName}:${w}x${h}`, mip.slice())
     return undefined
@@ -1619,7 +1623,14 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
     if (e.fullName.endsWith('T_Earth_Holo_LWX2Wall') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return earthWallMip(mip, format, w, h)
     const scr = screenOf.get(e.fullName)
-    if (scr && (format === 'PF_DXT5' || format === 'PF_DXT1') && w >= 4 && h >= 4) return screenMip(mip, format, w, h, scr)
+    if (scr && (format === 'PF_DXT5' || format === 'PF_DXT1') && w >= 4 && h >= 4) {
+      // (The source mip as many times larger as the region magnifies, rounded up to a power of two; the largest there is.)
+      const mag = 2 ** Math.ceil(Math.log2(1 / Math.max(1e-3, Math.min(Math.abs(scr[2]!), Math.abs(scr[3]!)))))
+      const sizes = [...dirMips].map(([key, m]) => ({ km: /^(.*):(\d+)x(\d+)$/.exec(key), m })).filter((x) => x.km?.[1] === e.fullName)
+        .map((x) => ({ m: x.m, sw: Number(x.km![2]), sh: Number(x.km![3]) })).sort((p, q) => p.sw - q.sw)
+      const src = sizes.find((x) => x.sw >= w * mag && x.sh >= h * mag) ?? sizes[sizes.length - 1] ?? { m: mip, sw: w, sh: h }
+      return screenMip(mip, format, w, h, scr, src.m, src.sw, src.sh)
+    }
     const det = detailOf.get(e.fullName)
     if (det && format === 'PF_DXT1' && w >= 4 && h >= 4) {
       // (The detail's smallest mip still as fine as one tile of the copy needs.)

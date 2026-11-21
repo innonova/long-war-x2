@@ -1369,7 +1369,9 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	}
 	// (EW's light cards, coloured and faded by the mesh's own vertex colours: our additive card material, LightCardParent,
 	// which reads them; the Genetics Lab's tanks' glow, the Psi Labs' lamps.)
-	if (k != INDEX_NONE && L.Kind == 'Glow' && default.LightCardParent != "" && Matches(Path, default.LightCardMaterials))
+	// (Any kind matching LightCardMaterials: the hangar's floor stripes, StripeTest, are coloured by their vertex colours,
+	// translucent, a Prop by the converter's reading.)
+	if (k != INDEX_NONE && default.LightCardParent != "" && Matches(Path, default.LightCardMaterials))
 	{
 		S.Standin = LightCardStandin(InOuter);
 		if (S.Standin != none)

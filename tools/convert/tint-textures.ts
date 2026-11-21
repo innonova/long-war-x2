@@ -228,19 +228,26 @@ export function detailMip(main: Uint8Array, w: number, h: number, detail: Uint8A
 /** One of EW's custom screens' pictures (HQ_CustomScreens_B; converter 70): its decal sheet's blue channel through the
  *  screen's UV transform, UV = (UV0 + uv.xy) × uv.zw (its TintColor, as its compiled shader reads it), resampled so that
  *  the copy's 0..1 is the screen's region; grey, for our glow material to colour. The same size, DXT1 or DXT5 (the alpha
- *  left as it was). */
-export function screenMip(mip: Uint8Array, format: string, w: number, h: number, uv: number[]): Uint8Array {
+ *  left as it was); sampled from `from`, a larger mip of the same texture (fw × fh), so the small mips keep the detail. */
+export function screenMip(mip: Uint8Array, format: string, w: number, h: number, uv: number[], from = mip, fw = w, fh = h): Uint8Array {
   const block = format === 'PF_DXT5' ? 16 : 8
-  const blocks = mip.length / block
-  const col = new Uint8Array(blocks * 8)
-  for (let b = 0; b < blocks; b++) col.set(mip.subarray(block * b + block - 8, block * b + block), 8 * b)
-  const src = decodeDXT1(col, w, h)
+  const colourOf = (m: Uint8Array) => {
+    const n = m.length / block, col = new Uint8Array(n * 8)
+    for (let b = 0; b < n; b++) col.set(m.subarray(block * b + block - 8, block * b + block), 8 * b)
+    return col
+  }
+  const src = decodeDXT1(colourOf(from), fw, fh)
   const out = new Uint8Array(w * h * 4)
   const wrap = (x: number) => x - Math.floor(x)
+  // (Each texel the mean of the source texels it covers: the source is larger, as the region magnifies the sheet.)
+  const sx = Math.max(1, Math.round((fw / w) * Math.abs(uv[2]!))), sy = Math.max(1, Math.round((fh / h) * Math.abs(uv[3]!)))
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
-      const u = wrap(((x + 0.5) / w + uv[0]!) * uv[2]!), v = wrap(((y + 0.5) / h + uv[1]!) * uv[3]!)
-      const b = src[4 * (Math.min(h - 1, Math.floor(v * h)) * w + Math.min(w - 1, Math.floor(u * w))) + 2]!
+      const u = wrap((x / w + uv[0]!) * uv[2]!), v = wrap((y / h + uv[1]!) * uv[3]!)
+      const x0 = Math.floor(u * fw), y0 = Math.floor(v * fh)
+      let sum = 0
+      for (let j = 0; j < sy; j++) for (let i = 0; i < sx; i++) sum += src[4 * (((y0 + j) % fh) * fw + ((x0 + i) % fw)) + 2]!
+      const b = Math.round(sum / (sx * sy))
       const p = 4 * (y * w + x)
       out[p] = out[p + 1] = out[p + 2] = b
       out[p + 3] = 255
@@ -248,6 +255,6 @@ export function screenMip(mip: Uint8Array, format: string, w: number, h: number,
   const enc = encodeDXT1(out, w, h)
   if (block === 8) return enc
   const res = mip.slice()
-  for (let b = 0; b < blocks; b++) res.set(enc.subarray(8 * b, 8 * b + 8), block * b + 8)
+  for (let b = 0; b < mip.length / block; b++) res.set(enc.subarray(8 * b, 8 * b + 8), block * b + 8)
   return res
 }
