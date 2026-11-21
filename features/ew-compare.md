@@ -312,3 +312,9 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   Colorize A (orange, clipped cream). Now our strip glow with the palette (converter 81), each HDR colour softly tonemapped
   (1 − e^−c: EW's blue is 0, 0.64, 13.9): the side lamps cyan, 0 140 161 against EW's 2 214 255. The stair strips stay
   pale tan (159 129 103 against EW's orange 103 232 237 … their mesh not yet found).
+- **Why glows read dull after the grade:** the base's grade (`BaseHighlights` 1.4: UE3's highlights divide the scene)
+  darkens every glow by 1/1.4, and our material's palette glow is normalised to at most 1 before it (`g / max(1, …)` in
+  its glow node), so no scale can make up for it: the Situation Room's stair strips (`SituationRm_LightCards`, quadrant A,
+  vertex alpha 255) 159 129 103 against EW's 244 184 141. To do at the next editor pass: the glow node's normalisation
+  replaced by a soft tonemap with headroom (the palette colours are already tonemapped in the mod, `SoftTone`), so the
+  glows can be raised by the grade's factor.
