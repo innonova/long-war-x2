@@ -318,3 +318,7 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   vertex alpha 255) 159 129 103 against EW's 244 184 141. To do at the next editor pass: the glow node's normalisation
   replaced by a soft tonemap with headroom (the palette colours are already tonemapped in the mod, `SoftTone`), so the
   glows can be raised by the grade's factor.
+- **The grade changed for the glows (decision):** `BaseHighlights` 1.0 (was 1.4) with `LightmapBrightness` 1.2 (was
+  1.7): the Situation Room's stair strips 216 174 139 against EW's 244 184 141 (were 159 129 103); room medians against EW
+  research 61/44, engineering 26/33, barracks 10/22, Situation Room 54/48, Gene Lab 36/40, Repair Bay 11/21 (mixed, about
+  as before). Lightmaps at 1.0 tried: darker dark rooms, the bright ones unchanged.
