@@ -40,6 +40,8 @@ struct LWPsiPower
 	var int Fatigue;
 	/** Its column in Long War's psi tree: the psi rank it may be trained at, at most the soldier's next (1 to 6). */
 	var int Column;
+	/** Its row there (0 to 2). */
+	var int Row;
 };
 var config float PsiGiftChance;
 var config int PsiTrainingHours;

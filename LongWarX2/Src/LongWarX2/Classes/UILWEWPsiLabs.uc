@@ -38,7 +38,8 @@ function string WhyNot(XComGameState_Unit U)
 
 function Chosen(StateObjectReference UnitRef)
 {
-	class'UILWPsiLabs'.static.OpenPowers(XComHQPresentationLayer(Movie.Pres), UnitRef);
+	// (EW's promotion screen in psi mode: Long War's psi tree, XGPsiLabsUI.OnChooseSoldier's UISoldier in psi mode.)
+	class'UILWEWPsiPromotion'.static.OpenPsi(XComHQPresentationLayer(Movie.Pres), UnitRef);
 }
 
 /** EW's OnConfirmRemoveTrainee. */

@@ -73,7 +73,7 @@ export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '', baseI
   const ots = strategyText ? makeOTSWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
   const officers = strategyText ? makeOfficerWords({ strategyLoc: strategyText, loc: decodeInt(readFileSync(loc)) }) : { text: '', named: 0 }
   const exalt = strategyText ? makeExaltWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
-  const psi = strategyText ? makePsiWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
+  const psi = strategyText ? makePsiWords({ strategyLoc: strategyText, loc: decodeInt(readFileSync(loc)) }) : { text: '', named: 0 }
   const gene = strategyText ? makeGeneWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
   const monthly = strategyText ? makeReportWords({ strategyLoc: strategyText }) : { text: '', named: 0 }
   const shivs = makeSHIVWords({ loc: decodeInt(readFileSync(loc)), strategyLoc: strategyText, shivsIni })

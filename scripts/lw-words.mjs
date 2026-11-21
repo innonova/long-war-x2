@@ -675,8 +675,19 @@ export function makeExaltWords({ strategyLoc }) {
 }
 
 /** The Psi Labs' words (UILWPsiLabs, in the mod's LongWarX2.int): EW's (XGPsiLabsUI), from Long War's strategy text. */
-export function makePsiWords({ strategyLoc }) {
+export function makePsiWords({ strategyLoc, loc = '' }) {
   const text = strategyLoc.replace(/\r/g, '')
+  // (EW's promotion screen in psi mode, UILWEWPsiPromotion: its title, and Long War's psi ranks' names, m_aPsiRankNames
+  // 0-4 then m_aPsiRankAbbr 1-3, where Long War put Psion, Master and Volunteer.)
+  const game = loc.replace(/\r/g, '')
+  const gameOne = (key) => game.match(new RegExp(`^${key.replace(/[[\]]/g, '\\$&')}=(.*)$`, 'm'))?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const promo = (() => { const a = text.indexOf('\n[UISoldierPromotion]\n'); const e = a < 0 ? -1 : text.indexOf('\n[', a + 2); return a < 0 ? '' : text.slice(a, e < 0 ? undefined : e) })()
+  const psiTitle = promo.match(/^m_strPsiAbilitiesTitle=(.*)$/m)?.[1].trim().replace(/^"(.*)"$/, '$1')
+  const ranks = [0, 1, 2, 3, 4].map((k) => gameOne(`m_aPsiRankNames[${k}]`)).concat([1, 2, 3].map((k) => gameOne(`m_aPsiRankAbbr[${k}]`)))
+  const psiPromotion = [
+    ...(psiTitle ? [['PsiTitle', psiTitle]] : []),
+    ...ranks.map((v, k) => [`PsiRankNames[${k}]`, v ?? '']),
+  ]
   const at = text.indexOf('\n[XGPsiLabsUI]\n')
   const end = at < 0 ? -1 : text.indexOf('\n[', at + 2)
   const section = at < 0 ? '' : text.slice(at, end < 0 ? undefined : end)
@@ -685,7 +696,7 @@ export function makePsiWords({ strategyLoc }) {
     ['Title', one('m_strPsiLabsPostHelpTitle')], ['Current', one('m_strLabelCurrentTestSubjects')],
     ['Days', one('m_strLabelDays')], ['Empty', one('m_strItemEmpty')],
   ].filter(([, v]) => v)
-  return { text: ['[UILWPsiLabs]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
+  return { text: ['[UILWPsiLabs]', ...words.map(([k, v]) => `${k}="${v}"`), '', '[UILWEWPsiPromotion]', ...psiPromotion.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length + psiPromotion.length }
 }
 
 /** The Gene Mods screen's words (UILWEWGeneMods, in the mod's LongWarX2.int): Long War's (UISoldierGeneMods, XGSoldierUI,
