@@ -1401,6 +1401,22 @@ static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, option
 		MIC.SetVectorParameterValue('LMScaleBias', SB);
 		MIC.SetScalarParameterValue('LMBrightness', 1.0);
 		MIC.SetVectorParameterValue('Tint', C);
+		// (EW's palette lamps, HQ_EmissivePallete: no plain glow but our strip glow, the palette colour by UV0 quadrant times
+		// the vertex alpha; one colour on the whole lamp had turned EW's blue faces orange, clipping to cream, round 12 #8.)
+		if (L.Palette.Length == 4)
+		{
+			MIC.SetScalarParameterValue('LMBrightness', 0.0);
+			SB = L.Palette[0]; MIC.SetVectorParameterValue('PaletteA', SB);
+			SB = L.Palette[1]; MIC.SetVectorParameterValue('PaletteB', SB);
+			SB = L.Palette[2]; MIC.SetVectorParameterValue('PaletteC', SB);
+			SB = L.Palette[3]; MIC.SetVectorParameterValue('PaletteD', SB);
+			SB.R = Scale; SB.G = Scale; SB.B = Scale; SB.A = 1;
+			MIC.SetVectorParameterValue('StripColor', SB);
+			SB.R = 0; SB.G = 1; SB.B = 0; SB.A = 0;
+			MIC.SetVectorParameterValue('PaletteMode', SB);
+			SB = MakeLinearColor(1, 1, 1, 1);
+			MIC.SetVectorParameterValue('Tint', SB);
+		}
 	}
 	else
 		MIC.SetVectorParameterValue(default.GlowColorParam, C);

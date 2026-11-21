@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 80 // (80: people on EW's cinematic channels only, Cinematic=true)
+export const CONVERTER_VERSION = 81 // (81: HQ_EmissivePallete's palette for its glow)
+// (80: people on EW's cinematic channels only, Cinematic=true)
 // (79: EW's base's people light, Kind=People)
 // (78: the tanks' froth tiled eightfold)
 // (77: the consoles' screens each their band of the sheet)
@@ -1206,6 +1207,10 @@ for (const [r, l] of looks) {
   l.kind = 'Glow'
   // (The palette lights take theirs in Colorize A.)
   l.tint = vectorParam(r, 'TintColor') ?? vectorParam(r, 'Colorize A')
+  // (HQ_EmissivePallete, as its compiled shader has it: the glow one of Colorize A-D by the face's UV0 quadrant, times the
+  // vertex alpha; the palette carried for our material's strip glow, converter 81.)
+  if (/\.HQ_EmissivePallete$/.test(root))
+    l.palette = ['Colorize A', 'Colorize B', 'Colorize C', 'Colorize D'].map((n) => vectorParam(r, n, 0, true) ?? [1, 1, 1, 1])
   // (A custom screen's colour is HDR over a picture of its own, which is cooked away: alone, it drew the screen white; its
   // hue kept, brightest channel 1.)
   if (l.tint && /HQ_CustomScreens/i.test(pathOf(r))) {
