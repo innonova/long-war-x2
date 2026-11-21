@@ -1349,7 +1349,7 @@ static function MaterialInterface PanicMapStandin(LWX2Look L, Actor InOuter)
 	return MIC;
 }
 
-static function MaterialInterface LightCardStandin(Object InOuter, optional string Path)
+static function MaterialInterface LightCardStandin(Object InOuter, optional string Path, optional LinearColor Colour)
 {
 	local MaterialInstanceConstant MIC;
 	local Material Parent;
@@ -1370,6 +1370,13 @@ static function MaterialInterface LightCardStandin(Object InOuter, optional stri
 			break;
 		}
 	C = MakeLinearColor(K, K, K, 1);
+	// (A card coloured by its material rather than its vertices (HQ_ColorizedLight_VertexColor: TintColor x the vertex
+	// alpha; the Psi Lab's violet overhead lights): that colour, softly tonemapped.)
+	if (Colour.R + Colour.G + Colour.B > 0)
+	{
+		C = SoftTone(Colour);
+		C.R *= K; C.G *= K; C.B *= K; C.A = 1;
+	}
 	MIC.SetVectorParameterValue('Tint', C);
 	if (default.LightCardOpacity > 0)
 		MIC.SetScalarParameterValue('Opacity', default.LightCardOpacity);
@@ -1510,7 +1517,7 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	// translucent, a Prop by the converter's reading.)
 	if (k != INDEX_NONE && default.LightCardParent != "" && Matches(Path, default.LightCardMaterials))
 	{
-		S.Standin = LightCardStandin(InOuter, Path);
+		S.Standin = LightCardStandin(InOuter, Path, L.Tint);
 		if (S.Standin != none)
 		{
 			Standins.AddItem(S);

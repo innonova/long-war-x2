@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 82 // (82: people's skin colour at half strength)
+export const CONVERTER_VERSION = 83 // (83: the NoTint lamps' unnamed TintColor)
+// (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
 // (79: EW's base's people light, Kind=People)
@@ -1130,6 +1131,28 @@ function scalarParam(r: number, name: string, depth = 0): number | undefined {
 /** A material instance's vector parameter, its own or its parents'; with withDefault, else the material's expression
  *  default (EW draws that where no instance sets one: the tank glass's olive, a car's paint). Without it, as before: the
  *  people's CMOD is only a colour mod where an instance sets one (with the default, Shen's jacket came out green). */
+/** A material instance's vector parameter value that has no name tag (the only one), or undefined. */
+function unnamedVector(r: number): number[] | undefined {
+  if (r <= 0) return undefined
+  try {
+    const vp = tagsOf(r - 1, 4).find((t) => t.name === 'VectorParameterValues')
+    if (!vp) return undefined
+    const rd = new Reader(vp.value.subarray(4))
+    const count = new DataView(vp.value.buffer, vp.value.byteOffset).getInt32(0, true)
+    for (let k = 0; k < count; k++) {
+      const st = readTags(rd, pkg)
+      const pv = st.find((t) => t.name === 'ParameterValue')
+      if (!st.some((t) => t.name === 'ParameterName') && pv && pv.value.length >= 16) {
+        const d = new DataView(pv.value.buffer, pv.value.byteOffset)
+        return [0, 4, 8, 12].map((o) => d.getFloat32(o, true))
+      }
+    }
+  } catch {
+    // none
+  }
+  return undefined
+}
+
 function vectorParam(r: number, name: string, depth = 0, withDefault = false): number[] | undefined {
   if (r <= 0 || depth > 8) return undefined
   let tags: Tag[]
@@ -1208,6 +1231,9 @@ for (const [r, l] of looks) {
   l.kind = 'Glow'
   // (The palette lights take theirs in Colorize A.)
   l.tint = vectorParam(r, 'TintColor') ?? vectorParam(r, 'Colorize A')
+  // (HQ_ColorizedLight_VertexColor_NoTint's instances keep their TintColor without a name tag (the Psi Lab's overhead
+  // lights, 0.51 0.55 2.03): the instance's one unnamed vector value; converter 83.)
+  if (!l.tint && /VertexColor_NoTint/.test(root)) l.tint = unnamedVector(r)
   // (HQ_EmissivePallete, as its compiled shader has it: the glow one of Colorize A-D by the face's UV0 quadrant, times the
   // vertex alpha; the palette carried for our material's strip glow, converter 81.)
   if (/\.HQ_EmissivePallete$/.test(root))
