@@ -400,3 +400,19 @@ What Long War 1.0 does, which the port did not have:
   Mindfray trained and gained: psi rank 0 → 1, will 50 → 56, the next power "needs psi experience (100 of 250)".
   Control port: `psixp`, `techdone` (test aids). The resisted-attack award is built, not yet seen in a mission.
 - **Left:** the psi ranks' names and psi XP on EW's screens (soldier list, summary), the psi tree on EW's promotion screen.
+
+## Report (2026-11-21, EW's psi tree)
+
+- **Long War's psi tree** (its `SoldierPerkTrees` of `eSC_Psi`): each power's column (the psi rank it opens at) and row
+  in the config (`PsiPowers` Column, Row: Mindfray, Neural Feedback, Regen Biofield at 1; Inspiration, Distortion Field
+  at 2; Mind Merge, Panic at 3; Telekinetic Field, Psychokinetic Strike, Pyrokinesis at 4; Mind Control 5; Rift 6). A
+  power is trainable only up to the soldier's next psi rank's column ("needs psi rank 1").
+- **EW's promotion screen in psi mode** (`UILWEWPsiPromotion`, as `UISoldierPromotion` with `m_bPsiPromotion`): EW's
+  PSIONIC ABILITIES title, a row per psi rank in Long War's names (Awakened … Master, written by the setup from Long
+  War's text; "PSI RANK n" until then), the powers in EW's icons, the soldier's own and the trainable lit, the first open
+  rank highlighted; a power's words end with its hours and chance or what it needs. Chosen by click with EW's NEW
+  TRAINING confirmation, it begins training. The Psi Labs' soldier list opens it in place of the port's power list.
+- **Checked on wingpu:** the screen (`logs/compare/psi-tree.png`), Mindfray chosen by clicks → "Psi Testing" in the
+  events, training 208 hours at 41%.
+- **Left:** the psi ranks and psi XP on the soldier list and summary; Mindfray's words have unfilled numbers (Long War's
+  own text leaves them empty).
