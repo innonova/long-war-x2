@@ -182,3 +182,10 @@ so the fixes are driven by evidence and the person is not needed on every round.
   level's Kismet to switch EW's *space* Earth between its real and its hologram look (country colours by panic). The
   port's Mission Control stands in EW's room with the room's hologlobe, and has no space Earth; the button would have
   nothing of EW's to do. It comes with the space Earth, if that is ever ported.
+- **Round 10 #1, coarse metal** (looked into, open): not texture size. EW's base metal (`HQ_Master`, a 1024×8192 trim
+  atlas, `TEXTUREGROUP_Cinematic`) and its world textures meet the same group limits in XCOM 2 as in EW (World 1024,
+  Cinematic 4096; EW's `DefaultEngine.ini` and WotC's agree), and the converter carries every mip. `HQ_Master` is a
+  palette material (`Colorize A`–`D` per room: the hangar's greys and a blue 0.23 0.24 0.34) whose graph is stripped in
+  the cooked package, so how EW picks a palette colour per surface is not readable; the atlas itself is grey with the
+  alpha as a variation mask. What our stand-in lacks against EW is the specular and the normal map's relief under
+  lighting (baked light only), which is likely what reads as flat and coarse. Left open.

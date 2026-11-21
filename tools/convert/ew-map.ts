@@ -22,7 +22,7 @@ import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, addTextureCopies, maskMip } from './mask-textures.ts'
-import { scaleMip, tintMip, whiteMip, hairMip, earthWallMip } from './tint-textures.ts'
+import { scaleMip, tintMip, whiteMip, hairMip, earthWallMip, detailMip } from './tint-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
 import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-people.ts'
 
@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 67 // (67: a detail layer never the main diffuse when another texture matches)
+export const CONVERTER_VERSION = 67 // (67: a detail layer never the main diffuse when another matches; EW's detail layer baked into a copy of the main, detailMip)
 
 const CACHES: Record<string, string> = {
   CharTextures: 'EWCharTextrs',
@@ -900,7 +900,7 @@ for (const level of ['Stream', 'EWI', 'CNH']) {
 // not compile any), so the mod replaces each with an instance of an XCOM 2 parent given
 // the EW material's diffuse and normal maps. Read here: an instance's texture parameters
 // (its parents' for those it does not set), a material's texture expressions.
-interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number }
+interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number; detail?: string; detailTile?: number }
 const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
 /** Root materials drawn see-through (EW's BlendMode BLEND_Translucent: road paint, decals), by name. */
 const translucent = new Set<string>()
@@ -999,6 +999,10 @@ function lookOf(r: number): Look {
     // (How often EW's material tiles its main texture, where it says: the base's cave rock twice, MainTile_U; converter 33.)
     // (And EW's props' Tile U, the grilles' and panels' 2 and 4; converter 42.)
     tile: (() => { const t = scalarParam(r, 'MainTile_U') ?? scalarParam(r, 'Tile U'); return t && t > 0 && t !== 1 ? t : undefined })(),
+    // (EW's detail layer and its tiling, where the material has one: the cave rock's Rock_Detail_A_DIF ×6 over Rock_A_DIF
+    // ×2; baked into a copy of the main diffuse below, converter 67.)
+    detail: [...tex].find(([, p]) => /Detail/i.test(p.split('.').pop()!) && /(_DIFF?|_Dif)\d*$/i.test(p))?.[1],
+    detailTile: scalarParam(r, 'DetailTile_U'),
   }
 }
 /**
@@ -1371,6 +1375,30 @@ if (screenLooks.length) {
     if (r) l.diffuse = exports[r - 1]!.fullName
   }
 }
+// EW's detail layer baked into a copy of the main diffuse (converter 67): the cave rock reads as its grey detail layer,
+// tiled three times as often as its dark brown main layer, which gives the broad forms. Our stand-in samples one texture
+// at one tiling, so the copy (<main>_LWX2Detail, its mips made by detailMip as the textures are inlined) is the detail
+// tiled at the ratio of the two tilings, shaded by the main layer's brightness against its mean (APPROXIMATION: EW's
+// blend is in its compiled shader). Only where the ratio is a whole number, so the copy still tiles.
+const detailOf = new Map<string, { detail: string; ratio: number }>()
+{
+  const withDetail = [...new Set(looks.values())].filter((l): l is Look => !!l && !!l.detail && !!l.diffuse && !!l.detailTile
+    && Number.isInteger((l.detailTile ?? 0) / (l.tile ?? 1)) && (l.detailTile ?? 0) / (l.tile ?? 1) >= 2)
+  const refsOf = [...new Set(withDetail.map((l) => l.diffuse))].map((d) => ({ d, k: exports.findIndex((e) => e.fullName === d && e.type === 'Texture2D') })).filter((x) => x.k >= 0)
+  if (refsOf.length) {
+    const made = addTextureCopies(bytes, refsOf.map((x) => ({ ref: x.k + 1, name: `${exports[x.k]!.name}_LWX2Detail` })))
+    bytes = made.bytes
+    meta = new Package(bytes)
+    pkg = openPackage(bytes)
+    exports = meta.exports as any[]
+    for (const l of withDetail) {
+      const r = made.refs.get(`${l.diffuse.split('.').pop()}_LWX2Detail`)
+      if (!r) continue
+      detailOf.set(exports[r - 1]!.fullName, { detail: l.detail!, ratio: l.detailTile! / (l.tile ?? 1) })
+      l.diffuse = exports[r - 1]!.fullName
+    }
+  }
+}
 const tintOf = new Map<string, { mask: string; tint: number[]; scale?: boolean; channel?: 'alpha' | 'blue'; bright?: number; multiply?: boolean }>()
 for (const t of tints) if (/_LWX2(Tint|Bright|Lit)/.test(t.slot.diffuse)) tintOf.set(t.slot.diffuse, { mask: t.mask ? exports[t.mask - 1]!.fullName : '', tint: t.tint, scale: t.scale, channel: t.channel, bright: t.bright, multiply: t.multiply })
 const masked = addMaskTextures(bytes, [...cutOut.values()])
@@ -1507,10 +1535,12 @@ const lmPairs = new Map<(typeof exports)[number], (typeof exports)[number]>()
 for (const p of pieces) if (p.lightmap) lmPairs.set(exports[p.lightmap.color - 1]!, exports[p.lightmap.dir - 1]!)
 const lmDirs = new Set(lmPairs.values())
 const tintMasks = new Set([...tintOf.values()].map((t) => t.mask))
+const detailLayers = new Set([...detailOf.values()].map((t) => t.detail))
 const dirMips = new Map<string, Uint8Array>()
-if (lmDirs.size || tintMasks.size)
-  inlineTextures(bytes.slice(), exports, meta.names, dirname(src), stubAt + stub.length, (e) => !lmDirs.has(e) && !tintMasks.has(e.fullName), (e, format, mip, w, h) => {
+if (lmDirs.size || tintMasks.size || detailLayers.size)
+  inlineTextures(bytes.slice(), exports, meta.names, dirname(src), stubAt + stub.length, (e) => !lmDirs.has(e) && !tintMasks.has(e.fullName) && !detailLayers.has(e.fullName), (e, format, mip, w, h) => {
     if (lmDirs.has(e) || tintMasks.has(e.fullName) || format === 'PF_DXT5') dirMips.set(`${e.fullName}:${w}x${h}`, mip.slice())
+    if (detailLayers.has(e.fullName) && format === 'PF_DXT1') dirMips.set(`${e.fullName}:${w}x${h}`, mip.slice())
     return undefined
   })
 // The combined atlases made plain textures (Texture2D's class, the lightmap's flags at the end left off): bound to our
@@ -1530,6 +1560,14 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
     if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
     if (e.fullName.endsWith('T_Earth_Holo_LWX2Wall') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return earthWallMip(mip, format, w, h)
+    const det = detailOf.get(e.fullName)
+    if (det && format === 'PF_DXT1' && w >= 4 && h >= 4) {
+      // (The detail's smallest mip still as fine as one tile of the copy needs.)
+      const sizes = [...dirMips].map(([key, m]) => ({ km: /^(.*):(\d+)x(\d+)$/.exec(key), m })).filter((x) => x.km?.[1] === det.detail)
+        .map((x) => ({ m: x.m, dw: Number(x.km![2]), dh: Number(x.km![3]) })).sort((p, q) => p.dw - q.dw)
+      const pick = sizes.find((x) => x.dw * det.ratio >= w && x.dh * det.ratio >= h) ?? sizes[sizes.length - 1]
+      if (pick) return detailMip(mip, w, h, pick.m, pick.dw, pick.dh, det.ratio)
+    }
     // (The mask's mip of the same size, else its largest: masks are often smaller than their diffuse.)
     let tm = tinted && (format === 'PF_DXT1' || format === 'PF_DXT5') ? dirMips.get(`${tinted.mask}:${w}x${h}`) : undefined
     let mw = w, mh = h

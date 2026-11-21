@@ -198,3 +198,26 @@ export function earthWallMip(mip: Uint8Array, format: string, w: number, h: numb
   return out
 }
 
+
+/** EW's detail layer baked over its main layer (DXT1 both; converter 67): the detail tiled `ratio` times across the main's
+ *  w×h, each texel the detail's colour × the main's brightness against its mean (so the main's broad forms shade the
+ *  detail's grain and colour). EW's cave rock: Rock_Detail_A_DIF ×6 over Rock_A_DIF ×2. */
+export function detailMip(main: Uint8Array, w: number, h: number, detail: Uint8Array, dw: number, dh: number, ratio: number): Uint8Array {
+  const m = decodeDXT1(main, w, h)
+  const d = decodeDXT1(detail, dw, dh)
+  const lum = (a: Uint8Array, p: number) => 0.3 * a[p]! + 0.59 * a[p + 1]! + 0.11 * a[p + 2]!
+  let mean = 0
+  for (let p = 0; p < m.length; p += 4) mean += lum(m, p)
+  mean = Math.max(1, mean / (w * h))
+  const out = new Uint8Array(w * h * 4)
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const p = 4 * (y * w + x)
+      const dx = Math.floor(((x + 0.5) / w) * ratio * dw) % dw, dy = Math.floor(((y + 0.5) / h) * ratio * dh) % dh
+      const q = 4 * (dy * dw + dx)
+      const k = lum(m, p) / mean
+      for (let c = 0; c < 3; c++) out[p + c] = Math.min(255, Math.round(d[q + c]! * k))
+      out[p + 3] = 255
+    }
+  return encodeDXT1(out, w, h)
+}
