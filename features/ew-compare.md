@@ -189,3 +189,14 @@ so the fixes are driven by evidence and the person is not needed on every round.
   the cooked package, so how EW picks a palette colour per surface is not readable; the atlas itself is grey with the
   alpha as a variation mask. What our stand-in lacks against EW is the specular and the normal map's relief under
   lighting (baked light only), which is likely what reads as flat and coarse. Left open.
+- **Round 10 #13, the hangar rock's blotches** (fixed): the converter had taken EW's rock *detail* layer
+  (`Rock_Detail_A_DIF`, which `HQ_Caves_Simple` tiles ×6) as the main diffuse, where the main is `Rock_A_DIF` (×2): a
+  detail layer now comes last when picking a look's diffuse (converter 67). Drawn alone, the main layer is dark brown
+  (the rock near black: 1 against EW's 21), as EW reads its grey grain from the detail: the two are now baked into one
+  copy (`<main>_LWX2Detail`, `detailMip`): the detail tiled at the ratio of the tilings (3), shaded by the main's
+  brightness at 60% and a quarter of its hue (APPROXIMATION, EW's blend is in its compiled shader; matched against EW's
+  hangar: 12–32 against 21–32, grey-brown, EW's broad rock forms). Only the hangar's rock has a detail layer among the
+  base's looks. `logs/compare/hangar-rock.png`.
+- **Found on the way:** EW's persistent base level (`Command1`) has a SkyLight (166 165 149), a movable directional light
+  (brightness 3) and four movable spots, all on the Cinematic_1 / Unnamed_2 lighting channels, none on static geometry:
+  EW lights its base people with them, live. For the people's lighting (`features/ew-base-people.md`).
