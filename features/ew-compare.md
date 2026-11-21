@@ -420,3 +420,9 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   Also tried (same night): the froth copy baked in colour (EW's olive + its brightest froth × the orange); our glass takes
   its opacity from the picture's brightness, so the darker coloured copy made the tanks nearly transparent. Reverted. The
   way: a tank glass material of ours (SDK editor) with the froth as a glow mask over a tint, its opacity its own.
+  Third try (same night): our own tank glass (`LWX2Lightmap.M_EWTankGlass`, SDK editor: `M_EWGlass` with the Opacity
+  parameter wired straight to opacity) with the froth copy baked in colour, base and crest glow measured from EW's capture
+  (body 58 53 32, crests 120 97 58). The tanks showed, mottled, but tan and in coarse blotches against EW's fine olive-gold
+  veins (crests 184 144 77, body 43 41 31 against EW's 209 76 61 / 60 55 33: EW's crests are orange-red, the fresnel
+  rim). Reverted to the olive tanks; the material stays in the package, unused. Next time: the froth's own detail
+  (our copy reads blurred) and EW's fresnel rim.
