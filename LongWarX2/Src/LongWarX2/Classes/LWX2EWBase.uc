@@ -234,16 +234,17 @@ function ShowShell()
 		// (Its emitters, the globe's projection and haze: their cones forced additive, AdditiveEmitters; blended they drew
 		// as dark panels. Not its lens flares: they drew dark panels too.)
 		class'LWX2EWMapPieces'.static.PlaceEmittersOf(D, self, ShellOffset, ShellPlaced);
-		// (A black backdrop round it, as EW's room is enclosed: the sky had shown pale through gaps in its rear wall.
-		// Turned inside out by a negative scale, so its inside draws with our one-sided material.)
+		// (A black backdrop round it, as EW's room is enclosed: the sky had shown pale through gaps in its rear wall.)
 		if (ShellBackdrop > 0)
 		{
 			Back = Spawn(class'DynamicSMActor_Spawnable', self, , D.Cameras[0].Loc + ShellOffset);
 			if (Back != none)
 			{
 				Back.StaticMeshComponent.SetStaticMesh(StaticMesh(DynamicLoadObject("EngineMeshes.Sphere", class'StaticMesh', true)));
-				Back.SetDrawScale3D(vect(-1, 1, 1) * ShellBackdrop);
-				Back.StaticMeshComponent.SetMaterial(0, class'LWX2EWMapPieces'.static.BlackStandin(Back));
+				Back.SetDrawScale(ShellBackdrop);
+				// (Our translucent pane in black at full opacity: two-sided, where the lightmapped black was culled from
+				// inside.)
+				Back.StaticMeshComponent.SetMaterial(0, class'LWX2BodyShade'.static.Make(class'LWX2EWMapPieces'.default.GlassOwnParent, MakeLinearColor(0, 0, 0, 1), 1.0, Back));
 				Back.SetCollision(false, false);
 				Back.StaticMeshComponent.SetActorCollision(false, false);
 				ShellPlaced.AddItem(Back);
@@ -433,7 +434,14 @@ function bool LookAtMatched(name FromCam, name FromSpot, name ToSpot, name AsTag
 
 function RefreshAmbientLater()
 {
+	local ExponentialHeightFog F;
+
 	RefreshAmbient();
+	// (The streamed lighting level's own height fog off under the main menu scene: it greyed the room's far gaps.)
+	if (ShellLighting != none)
+		foreach AllActors(class'ExponentialHeightFog', F)
+			if (F.Component != none)
+				F.Component.SetEnabled(false);
 }
 
 /** The camera's own post-process, which XCOM 2's HQ camera takes from the camera it views through
