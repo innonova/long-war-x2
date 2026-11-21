@@ -300,3 +300,7 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   UV0 × 8 (red + green); an eightfold tiled copy now (converter 78). **#2, hard menu shading:** EW's menu scene is soft by
   depth of field and its haze; ours is crisp. Post-processing, which XCOM 2's strategy view did not take through the
   local player's override (bloom tried); open.
+- **Round 12 #1, the Repair Bay** (partly): its room read 2.26× darker than EW's (median, linear light), the research
+  room 1.0, engineering 1.4: a level-wide difference, likely EW's live lights in that lab. The lightmap brightness can now
+  be set by level (`LightmapBrightnessBy`); the Cybernetics Lab at 2.0 brings it to 1.25×. The far corridor behind the
+  panel stays darker (other levels), and the plinth paler than EW's.
