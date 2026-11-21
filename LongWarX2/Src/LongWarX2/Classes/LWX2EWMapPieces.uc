@@ -1203,7 +1203,11 @@ static function MaterialInterface PlainStandin(string Path, Object InOuter)
 	local int k;
 
 	bGlass = Matches(Path, default.GlassMaterials) && default.GlassParent != "";
-	Parent = Material(DynamicLoadObject(bGlass ? default.GlassParent : default.PropParent, class'Material', true));
+	// (EW's base and its main menu scene, placed as spawnable actors, always on our own pane: in the main menu XCOM 2's
+	// translucent parent is loaded, and with its white texture the shell's window pane drew as white panels in the room's
+	// rear openings, round 11 #6.)
+	Parent = (bGlass && default.GlassOwnParent != "" && DynamicSMActor_Spawnable(InOuter) != none) ? none
+		: Material(DynamicLoadObject(bGlass ? default.GlassParent : default.PropParent, class'Material', true));
 	// (Glass where XCOM 2's translucent parent is not loaded, EW's base: our own pane, GlassOwnParent, in GlassTint at
 	// GlassOwnOpacity; EW's own material had drawn opaque and blue.)
 	if (Parent == none && bGlass && default.GlassOwnParent != "")
