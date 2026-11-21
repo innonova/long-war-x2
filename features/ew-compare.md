@@ -287,3 +287,7 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   shows the trim atlas stretched and untinted, under the bay's warm lamp. To do: the palette and tiling for skeletal
   slots of `HQ_Master` looks (the converter's `PersonSlot` with Palette/UVTile, and a lit skeletal material of ours that
   takes them), or our lightmapped material on the pad with a white light map.
+- **Lamp halos (round 11 #7), tried:** EW's `HQ_ColorizedLight` is a flat HDR colour (its compiled shader: TintColor
+  alone), its halo the renderer's bloom. The local player's post-process bloom (`bEnableBloom`, `Bloom_Scale` 1–3,
+  `Bloom_Threshold` 0.6–0.3; the control port's new `bloom`) changed nothing visible in the strategy view: XCOM 2 does not
+  bloom there through that override. Open; a halo would need geometry of its own (a soft card per lamp face).
