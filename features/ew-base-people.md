@@ -237,3 +237,15 @@ by a second fresnel (×25 in log space, ×0.2). Opacity: 0.8 × saturate(fresnel
 clear glass with coloured, frothy edges; ours (a glow over the froth) as filled. To do: a tank glass material of ours
 (SDK editor: translucent, a Fresnel node for both the colour and the opacity, the froth texture, `Color`), given to
 `GeneLabTankGlassMaster` looks.
+
+## Notes (2026-11-21, the people's light; round 12 #6)
+
+- **EW's people's own light:** Command1 has a movable directional light (warm white, brightness 3) and a sky light on
+  lighting channels only EW's people answer; Shen's and Vahlen's components are on the Cinematic channels only, the other
+  people on Dynamic. Carried: the light as `LWX2PeopleLight` (Cinematic_1, `PeopleLightScale` 0.5; converter 79,
+  `Kind=People`), every base person put on Cinematic_1, and those EW keeps on the cinematic channels alone (Shen, Vahlen;
+  converter 80, `Cinematic=true`) taken off the rooms' lamps.
+- **Shen's yellow face is not the lamps:** unchanged by it (109 85 48 against EW's 164 144 117). EW's skin material
+  (`CHH_SkinCustomizable`) is lerp(diffuse, diffuse × SkinColor, the skin mask), as ours bakes it in linear light; the rest
+  is its custom (subsurface) lighting, which our lit stand-in does not have. His jacket reads 2.5× darker than EW's.
+  Open.
