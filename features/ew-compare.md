@@ -373,3 +373,12 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
 - **Round 15 #1, hard colour patches** (cause, likely): the converter multiplies EW's two light-map atlases into one
   DXT1 texture (`lightmap-bake.ts`); in dark areas the re-encode posterises into green and violet steps, where EW multiplies
   them in its shader. Next: our lit material sampling both, the converter keeping them as EW has them (SDK editor).
+- **Round 15 #1, the hard colour patches** (partly fixed): with a plain white light map on the research room's pieces
+  (`basemat <text> self LightMap …`, a new form of the aid keeping each piece's own material) the green, violet and
+  blue patches vanished: they were the converter's combined light map, EW's two atlases (colour × the directions' mean)
+  re-encoded as one DXT1, whose dark texels lost their hue (8.6% mean hue error, measured offline). Now EW's atlases are
+  kept apart (converter 88, `Split=true` on the pieces' light maps) and our material multiplies them per pixel as EW's
+  shader does (`M_EWLightmapped`, SDK editor: `LightMapDir` and a Custom node, C × dot(D, ⅓)); the mod and the plot
+  writer set `LightMapDir` where a level says `Split`. Seen on wingpu: the research room's ceiling without the coloured
+  blotches; eight views' brightness as before (1.00–1.16× EW's). Left: some value banding in the darkest areas, likely
+  the atlases sampled as sRGB (our copies are plain Texture2D, sRGB by default; EW's light maps are linear).

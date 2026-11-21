@@ -18,6 +18,8 @@ struct LWX2PieceFrac
 struct LWX2PieceLightMap
 {
 	var string Color, Dir;
+	/** Dir kept apart, to be multiplied in by our material (converter 88); before, Color was already their product. */
+	var bool Split;
 	var vector S0, S1;
 	var float ScaleX, ScaleY, BiasX, BiasY;
 	var int UV;
@@ -1126,7 +1128,7 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 {
 	local MaterialInstanceConstant MIC;
 	local Material Parent;
-	local Texture Diffuse, LM;
+	local Texture Diffuse, LM, LMDir;
 	local LinearColor V;
 	local float B;
 	local int k, i;
@@ -1167,6 +1169,14 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 		MIC.SetVectorParameterValue('PaletteMode', V);
 	}
 	MIC.SetTextureParameterValue('LightMap', LM);
+	// (EW's directional atlas, multiplied in by our material, as EW's shader does; kept apart by the converter since 88.
+	// From a level converted before (no Split), the colour atlas is already the product and the default white stands.)
+	if (P.LightMap.Split && P.LightMap.Dir != "")
+	{
+		LMDir = Texture(DynamicLoadObject(P.LightMap.Dir, class'Texture', true));
+		if (LMDir != none)
+			MIC.SetTextureParameterValue('LightMapDir', LMDir);
+	}
 	V.R = P.LightMap.ScaleX; V.G = P.LightMap.ScaleY; V.B = P.LightMap.BiasX; V.A = P.LightMap.BiasY;
 	MIC.SetVectorParameterValue('LMScaleBias', V);
 	// The piece's scales as one brightness: the colour's mean × the directions' mean × 3 (the atlas holds their mean)

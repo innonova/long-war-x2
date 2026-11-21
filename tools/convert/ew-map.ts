@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 87 // (87: EW's grilles, HQ_Grating, as a darkened copy of their grid mask)
+export const CONVERTER_VERSION = 88 // (88: EW's two light-map atlases kept apart, our material multiplies them)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
@@ -1789,11 +1789,16 @@ if (lmDirs.size || tintMasks.size || detailLayers.size || screenCopies.size)
 // The combined atlases made plain textures (Texture2D's class, the lightmap's flags at the end left off): bound to our
 // material as LightMapTexture2D, XCOM 2 crashed (heap corruption) as the base came into view.
 const tex2dClass = exports.find((e) => e.type === 'Texture2D')
-if (tex2dClass) for (const e of lmPairs.keys()) v.setInt32(e.entryOffset + 0, v.getInt32(tex2dClass.entryOffset + 0, true), true)
+// (Both atlases, since converter 88: EW's colour and directional atlases kept as EW has them, multiplied per pixel by our
+// material (LWX2Lightmap.M_EWLightmapped's LightMapDir), as EW's shader does. Combined into one DXT1 here before, the
+// product's dark texels lost their hue in the re-encoding: green and violet patches on the base's surfaces, round 15 #1.)
+const SEPARATE_LIGHTMAPS = true
+const lmAtlases = SEPARATE_LIGHTMAPS ? [...lmPairs.keys(), ...lmDirs] : [...lmPairs.keys()]
+if (tex2dClass) for (const e of lmAtlases) v.setInt32(e.entryOffset + 0, v.getInt32(tex2dClass.entryOffset + 0, true), true)
 // (And public, as EW's other textures are: a mission's plot, another package, imports them for its pieces' baked lighting;
 // private, the plot failed to load, "Can't import private object". The object flags' low half is the entry's second
 // dword; RF_Public 0x4. Converter 31.)
-for (const e of lmPairs.keys()) v.setUint32(e.entryOffset + 28, v.getUint32(e.entryOffset + 28, true) | 4, true)
+for (const e of lmAtlases) v.setUint32(e.entryOffset + 28, v.getUint32(e.entryOffset + 28, true) | 4, true)
 const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + stub.length, (e) => e.fullName.startsWith('TheWorld'),
   (e, format, mip, w, h) => {
     if (maskExports.has(e)) return maskMip(format, mip)
@@ -1837,9 +1842,9 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     if (tinted && tm) return tintMip(mip, tm, w, h, tinted.tint, tinted.bright ?? PEOPLE_SCALE, tinted.channel ?? 'alpha', tinted.channel === 'blue', tinted.multiply, mw, mh)
     const dir = lmPairs.get(e)
     const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${w}x${h}`) : undefined
-    return d ? combineLightmapMip(mip, d, w, h) : undefined
+    return d && !SEPARATE_LIGHTMAPS ? combineLightmapMip(mip, d, w, h) : undefined
   },
-  (e) => (tex2dClass && lmPairs.has(e) ? 4 : 0))
+  (e) => (tex2dClass && (lmPairs.has(e) || (SEPARATE_LIGHTMAPS && lmDirs.has(e))) ? 4 : 0))
 // The placements' own vertex colours into their mesh's (overrideColoursOf), where every placement of the mesh has the same
 // ones: XCOM 2 reads a mesh's colours, not EW's per-placement ones. In place: the same count, the same bytes' length.
 let painted = 0
@@ -1883,7 +1888,7 @@ const n = (x: number) => (Math.abs(x) < 1e-4 ? '0' : String(Math.round(x * 1000)
 /** A piece's lightmap in the ini (LWX2PieceLightMap). */
 const lightmapText = (l?: LightMap) =>
   l
-    ? `,LightMap=(Color="${rename(pathOf(l.color))}",Dir="${rename(pathOf(l.dir))}",S0=(X=${n(l.s0[0]!)},Y=${n(l.s0[1]!)},Z=${n(l.s0[2]!)}),S1=(X=${n(l.s1[0]!)},Y=${n(l.s1[1]!)},Z=${n(l.s1[2]!)}),ScaleX=${l.scale[0]},ScaleY=${l.scale[1]},BiasX=${l.bias[0]},BiasY=${l.bias[1]},UV=${l.uv})`
+    ? `,LightMap=(Color="${rename(pathOf(l.color))}",Dir="${rename(pathOf(l.dir))}",S0=(X=${n(l.s0[0]!)},Y=${n(l.s0[1]!)},Z=${n(l.s0[2]!)}),S1=(X=${n(l.s1[0]!)},Y=${n(l.s1[1]!)},Z=${n(l.s1[2]!)}),ScaleX=${l.scale[0]},ScaleY=${l.scale[1]},BiasX=${l.bias[0]},BiasY=${l.bias[1]},UV=${l.uv}${SEPARATE_LIGHTMAPS ? ',Split=true' : ''})`
     : ''
 const coverText = (c: Cover) =>
   (c.onto ? '' : ',ClimbOnto=false') + (c.floor ? ',ClimbOnto=true,Floor=true' : '') + (c.over ? ',ClimbOver=true' : '') + (c.destination ? '' : ',Destination=false') +

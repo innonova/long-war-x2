@@ -14,7 +14,7 @@ import { writePackage } from '@innonova/upkit/writer'
 
 /** A piece's baked lighting as ew-map.ts writes it (features/ew-lightmaps.md): its colour atlas (combined with the
  *  directional one), the two coefficients' scales, its place in the atlas, and the mesh's UV set it is laid out on. */
-export interface PieceLightmap { color: string; s0: number[]; s1: number[]; scale: number[]; bias: number[]; uv: number }
+export interface PieceLightmap { split?: boolean; color: string; dir: string; s0: number[]; s1: number[]; scale: number[]; bias: number[]; uv: number }
 
 /** One converted EW map's section (LWX2EWMapData, as ew-map.ts writes it). */
 export interface EWMap {
@@ -89,8 +89,8 @@ export function readSection(text: string): EWMap {
           return f ? { indices: Number(f[1]), minZ: Number(f[2]), maxZ: Number(f[3]), toughness: f[4]! } : undefined
         })(),
         lightmap: (() => {
-          const l = /LightMap=\(Color="([^"]*)",Dir="[^"]*",S0=\(([^()]*)\),S1=\(([^()]*)\),ScaleX=([-\d.e]+),ScaleY=([-\d.e]+),BiasX=([-\d.e]+),BiasY=([-\d.e]+),UV=(\d+)\)/.exec(line)
-          return l ? { color: l[1]!, s0: vec(l[2]!), s1: vec(l[3]!), scale: [Number(l[4]), Number(l[5])], bias: [Number(l[6]), Number(l[7])], uv: Number(l[8]) } : undefined
+          const l = /LightMap=\(Color="([^"]*)",Dir="([^"]*)",S0=\(([^()]*)\),S1=\(([^()]*)\),ScaleX=([-\d.e]+),ScaleY=([-\d.e]+),BiasX=([-\d.e]+),BiasY=([-\d.e]+),UV=(\d+)(,Split=true)?\)/.exec(line)
+          return l ? { color: l[1]!, dir: l[2]!, s0: vec(l[3]!), s1: vec(l[4]!), scale: [Number(l[5]), Number(l[6])], bias: [Number(l[7]), Number(l[8])], uv: Number(l[9]), split: !!l[10] } : undefined
         })(),
         // Its cover flags where they differ from an XComLevelActor's (ew-map.ts: ClimbOnto=false, CoverForce=…).
         cover: [...line.matchAll(/,(ClimbOnto|ClimbOver|Destination|IgnoreForCover|CoverForce|BlocksSight|Window|Floor)=(\w+)/g)].map((m) => `${m[1]}=${m[2]}`),
@@ -401,7 +401,9 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     const p = parse(pkg.data(sampleMIC), 4)
     const name = (n: string) => bin((x) => { const r = objName(n); x.i32(r.index).i32(r.number) })
     const param = (n: string, value: T) => serialize({ head: new Uint8Array(0), tags: [{ name: 'ParameterName', type: 'NameProperty', arrayIndex: 0, value: name(n) }, value], tail: new Uint8Array(0) })
+    // (EW's directional atlas too, multiplied in by our material; converter 88 keeps the two apart.)
     const textures: [string, number][] = [['Diffuse', importRef(look.diffuse, 'Texture2D')], ['LightMap', importRef(l.color, 'Texture2D')]]
+    if (l.split) textures.push(['LightMapDir', importRef(l.dir, 'Texture2D')])
     if (look.normal) textures.push(['Normal', importRef(look.normal, 'Texture2D')])
     for (const [n, t] of settings.textures) textures.push([n, importRef(t, 'Texture2D')])
     const mean = (v: number[]) => (v[0]! + v[1]! + v[2]!) / 3
