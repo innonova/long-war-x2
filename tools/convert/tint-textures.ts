@@ -224,3 +224,30 @@ export function detailMip(main: Uint8Array, w: number, h: number, detail: Uint8A
     }
   return encodeDXT1(out, w, h)
 }
+
+/** One of EW's custom screens' pictures (HQ_CustomScreens_B; converter 70): its decal sheet's blue channel through the
+ *  screen's UV transform, UV = (UV0 + uv.xy) × uv.zw (its TintColor, as its compiled shader reads it), resampled so that
+ *  the copy's 0..1 is the screen's region; grey, for our glow material to colour. The same size, DXT1 or DXT5 (the alpha
+ *  left as it was). */
+export function screenMip(mip: Uint8Array, format: string, w: number, h: number, uv: number[]): Uint8Array {
+  const block = format === 'PF_DXT5' ? 16 : 8
+  const blocks = mip.length / block
+  const col = new Uint8Array(blocks * 8)
+  for (let b = 0; b < blocks; b++) col.set(mip.subarray(block * b + block - 8, block * b + block), 8 * b)
+  const src = decodeDXT1(col, w, h)
+  const out = new Uint8Array(w * h * 4)
+  const wrap = (x: number) => x - Math.floor(x)
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const u = wrap(((x + 0.5) / w + uv[0]!) * uv[2]!), v = wrap(((y + 0.5) / h + uv[1]!) * uv[3]!)
+      const b = src[4 * (Math.min(h - 1, Math.floor(v * h)) * w + Math.min(w - 1, Math.floor(u * w))) + 2]!
+      const p = 4 * (y * w + x)
+      out[p] = out[p + 1] = out[p + 2] = b
+      out[p + 3] = 255
+    }
+  const enc = encodeDXT1(out, w, h)
+  if (block === 8) return enc
+  const res = mip.slice()
+  for (let b = 0; b < blocks; b++) res.set(enc.subarray(8 * b, 8 * b + 8), block * b + 8)
+  return res
+}

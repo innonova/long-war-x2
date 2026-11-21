@@ -22,7 +22,7 @@ import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, addTextureCopies, maskMip } from './mask-textures.ts'
-import { scaleMip, tintMip, whiteMip, hairMip, earthWallMip, detailMip } from './tint-textures.ts'
+import { scaleMip, tintMip, whiteMip, hairMip, earthWallMip, detailMip, screenMip } from './tint-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
 import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-people.ts'
 
@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 69 // (69: the cave rock's layers by EW's own formula; 68: HQ_Master's palette and 8×1 tile)
+export const CONVERTER_VERSION = 70 // (70: the custom screens' own regions of the decal sheet)
+// (69: the cave rock's layers by EW's own formula; 68: HQ_Master's palette and 8×1 tile)
 // (67: a detail layer never the main diffuse when another matches; EW's detail layer baked into a copy of the main, detailMip)
 
 const CACHES: Record<string, string> = {
@@ -901,7 +902,7 @@ for (const level of ['Stream', 'EWI', 'CNH']) {
 // not compile any), so the mod replaces each with an instance of an XCOM 2 parent given
 // the EW material's diffuse and normal maps. Read here: an instance's texture parameters
 // (its parents' for those it does not set), a material's texture expressions.
-interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number; detail?: string; detailTile?: number; palette?: number[][]; uvTile?: number[] }
+interface Look { diffuse: string; normal: string; kind: 'Prop' | 'Foliage' | 'Masked' | 'Alien' | 'Glow'; mask?: string; tint?: number[]; tile?: number; detail?: string; detailTile?: number; palette?: number[][]; uvTile?: number[]; screenUV?: number[] }
 const nameOf = (t: Tag) => pkg.names[new DataView(t.value.buffer, t.value.byteOffset).getInt32(0, true)].name as string
 /** Root materials drawn see-through (EW's BlendMode BLEND_Translucent: road paint, decals), by name. */
 const translucent = new Set<string>()
@@ -1154,7 +1155,20 @@ for (const [r, l] of looks) {
   // draws a region of a decal sheet, HQ_DecalSheet_A, picked by expressions cooked away; the whole sheet on it, tried in
   // converter 44, showed letters and icons. Converter 45.)
   l.diffuse = tex.get('StaticScreenTexture') ?? ''
-  void root
+  // (HQ_CustomScreens_B, as its compiled pixel shader has it (tools/convert/ew-shaders.ts): its TintColor is no colour but
+  // the sheet's region, UV = (UV0 + TintColor.xy) × TintColor.zw; the picture is the sheet's blue channel, times Color.
+  // A copy of the sheet per region, made by screenMip below; converter 70.)
+  if (/HQ_CustomScreens_B$/.test(root)) {
+    const uv = vectorParam(r, 'TintColor', 0, true)
+    const col = vectorParam(r, 'Color', 0, true)
+    const sheet = tex.get('HQ_DecalSheet_A') ?? [...tex.values()][0]
+    if (uv && col && sheet) {
+      const m = Math.max(col[0]!, col[1]!, col[2]!, 1e-3)
+      l.tint = m > 1 ? [col[0]! / m, col[1]! / m, col[2]! / m, 1] : col
+      l.diffuse = sheet
+      l.screenUV = uv
+    }
+  }
 }
 // EW's people in its base (an Anim_ level's skeletal mesh actors and its matinee's loops: ew-people.ts), their material
 // slots read as looks are (diffuse and normal for XCOM 2's skeletal stand-in parent).
@@ -1409,6 +1423,27 @@ const detailOf = new Map<string, { detail: string; ratio: number }>()
     }
   }
 }
+// EW's custom screens' regions of the decal sheet (HQ_CustomScreens_B's TintColor), a copy each (<sheet>_LWX2Screen<n>).
+const screenOf = new Map<string, number[]>()
+{
+  const withRegion = [...new Set(looks.values())].filter((l): l is Look => !!l && !!l.screenUV && !!l.diffuse)
+  const regions = [...new Set(withRegion.map((l) => l.screenUV!.join(',')))]
+  const sheets = withRegion.map((l) => ({ l, k: exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D') })).filter((x) => x.k >= 0)
+  if (sheets.length) {
+    const made = addTextureCopies(bytes, regions.map((key, n) => ({ ref: sheets.find((x) => x.l.screenUV!.join(',') === key)!.k + 1, name: `${exports[sheets[0]!.k]!.name}_LWX2Screen${n}` })))
+    bytes = made.bytes
+    meta = new Package(bytes)
+    pkg = openPackage(bytes)
+    exports = meta.exports as any[]
+    for (const { l } of sheets) {
+      const n = regions.indexOf(l.screenUV!.join(','))
+      const r = made.refs.get(`${l.diffuse.split('.').pop()}_LWX2Screen${n}`)
+      if (!r) continue
+      screenOf.set(exports[r - 1]!.fullName, l.screenUV!)
+      l.diffuse = exports[r - 1]!.fullName
+    }
+  }
+}
 const tintOf = new Map<string, { mask: string; tint: number[]; scale?: boolean; channel?: 'alpha' | 'blue'; bright?: number; multiply?: boolean }>()
 for (const t of tints) if (/_LWX2(Tint|Bright|Lit)/.test(t.slot.diffuse)) tintOf.set(t.slot.diffuse, { mask: t.mask ? exports[t.mask - 1]!.fullName : '', tint: t.tint, scale: t.scale, channel: t.channel, bright: t.bright, multiply: t.multiply })
 const masked = addMaskTextures(bytes, [...cutOut.values()])
@@ -1570,6 +1605,8 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
     if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
     if (e.fullName.endsWith('T_Earth_Holo_LWX2Wall') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return earthWallMip(mip, format, w, h)
+    const scr = screenOf.get(e.fullName)
+    if (scr && (format === 'PF_DXT5' || format === 'PF_DXT1') && w >= 4 && h >= 4) return screenMip(mip, format, w, h, scr)
     const det = detailOf.get(e.fullName)
     if (det && format === 'PF_DXT1' && w >= 4 && h >= 4) {
       // (The detail's smallest mip still as fine as one tile of the copy needs.)
