@@ -149,6 +149,9 @@ var config float LampGlowScale;
 var config bool LightmapBase, LightmapMaps;
 /** EW's baked lighting at this brightness (1: as stored). */
 var config float LightmapBrightness;
+/** The power our lit materials raise EW's light-map atlases to (LMGamma; EW samples them as sRGB, about 2.2): read linear
+ *  (converter 89, so XCOM 2 does not band their darks), the curve applied in the shader. 0: the material's default. */
+var config float LightmapGamma;
 /** A level's lightmapped pieces brighter or darker by Scale (matched by the level's name in the light map's path):
  *  measured against EW where a room reads otherwise (the Cybernetics Lab, the Repair Bay's room). */
 struct LWX2LevelScale
@@ -1190,6 +1193,8 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 			break;
 		}
 	MIC.SetScalarParameterValue('LMBrightness', B);
+	if (default.LightmapGamma > 0)
+		MIC.SetScalarParameterValue('LMGamma', default.LightmapGamma);
 	V.R = 1; V.G = 1; V.B = 1; V.A = 1;
 	MIC.SetVectorParameterValue('Tint', V);
 	return MIC;

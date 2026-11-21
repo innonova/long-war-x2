@@ -37,6 +37,9 @@ export function inlineTextures(
    *  the cache's GUID and the mobile mips, which every XCOM texture has as 1 and 0; without them XCOM 2 read past the
    *  texture: "Serial size mismatch", Long War's LongWar.upk). */
   padEnd?: Uint8Array,
+  /** Linear, not sRGB (a tagged SRGB=False added before the properties' end): EW's light-map atlases made Texture2D, whose
+   *  class default is sRGB, where EW's LightMapTexture2D is linear. */
+  linear: (e: Export) => boolean = () => false,
 ): { appended: Uint8Array; textures: number; mips: number } {
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   const caches = new Map<string, Uint8Array>()
@@ -78,8 +81,28 @@ export function inlineTextures(
       }
       o += size
     }
-    const chunks: Uint8Array[] = [bytes.subarray(e.offset, o)]
-    let len = o - e.offset
+    let hasSRGB = false
+    {
+      let q = e.offset + 4
+      for (;;) {
+        const n2 = v.getInt32(q, true)
+        if (n2 === none) break
+        const type2 = names[v.getInt32(q + 8, true)]
+        const size2 = v.getInt32(q + 16, true)
+        if (names[n2] === 'SRGB') hasSRGB = true
+        q += 24 + (type2 === 'StructProperty' || type2 === 'ByteProperty' ? 8 : 0) + (type2 === 'BoolProperty' ? 1 : size2)
+      }
+    }
+    const srgb = names.indexOf('SRGB'), boolType = names.indexOf('BoolProperty')
+    const chunks: Uint8Array[] = linear(e) && !hasSRGB && srgb >= 0 && boolType >= 0
+      ? [bytes.subarray(e.offset, o - 8), (() => {
+          // (name, its number; type, its number; size 0; array index 0; the bool's one byte, false.)
+          const b = new Uint8Array(25); const d = new DataView(b.buffer)
+          d.setInt32(0, srgb, true); d.setInt32(8, boolType, true)
+          return b
+        })(), bytes.subarray(o - 8, o)]
+      : [bytes.subarray(e.offset, o)]
+    let len = chunks.reduce((s, c) => s + c.length, 0)
     const push = (b: Uint8Array) => {
       chunks.push(b)
       len += b.length

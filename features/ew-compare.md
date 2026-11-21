@@ -382,3 +382,12 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   writer set `LightMapDir` where a level says `Split`. Seen on wingpu: the research room's ceiling without the coloured
   blotches; eight views' brightness as before (1.00–1.16× EW's). Left: some value banding in the darkest areas, likely
   the atlases sampled as sRGB (our copies are plain Texture2D, sRGB by default; EW's light maps are linear).
+- **The light maps' curve** (converter 89, `LightmapGamma`): EW's compiled shader samples its two atlases raw and
+  multiplies them (colour × LightMapScale × the directions weighted by the normal); its atlases carry no SRGB tag, so
+  they take the class default, sRGB. Read linear (SRGB=False written by the converter) the remaining value banding of
+  the darks vanished, but the rooms read twice as bright with lifted darks; with the sRGB curve applied in our shader
+  instead (`LMGamma`, a parameter of both lit materials, SDK editor) EW's tones return and so does the banding. So the
+  banding comes from how XCOM 2 stores very dark scene values, not from the texture. Chosen: `LightmapGamma` 1.6,
+  `LightmapBrightness` 0.4 (six views' 10th/50th/90th percentiles 0.79/1.17/1.03 of EW's; at 2.2 and 0.95 about
+  0.5/1.05/1.1); some banding in the darkest areas stays. Next, if it matters: a dither in our lit materials. Mission
+  maps take the curve when converted again (the plot writer sets `LMGamma` from the config).

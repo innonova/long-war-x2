@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 88 // (88: EW's two light-map atlases kept apart, our material multiplies them)
+export const CONVERTER_VERSION = 89 // (89: the light-map atlases linear, SRGB=False, as EW's LightMapTexture2D)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
@@ -1793,6 +1793,7 @@ const tex2dClass = exports.find((e) => e.type === 'Texture2D')
 // material (LWX2Lightmap.M_EWLightmapped's LightMapDir), as EW's shader does. Combined into one DXT1 here before, the
 // product's dark texels lost their hue in the re-encoding: green and violet patches on the base's surfaces, round 15 #1.)
 const SEPARATE_LIGHTMAPS = true
+const LINEAR_LIGHTMAPS = true
 const lmAtlases = SEPARATE_LIGHTMAPS ? [...lmPairs.keys(), ...lmDirs] : [...lmPairs.keys()]
 if (tex2dClass) for (const e of lmAtlases) v.setInt32(e.entryOffset + 0, v.getInt32(tex2dClass.entryOffset + 0, true), true)
 // (And public, as EW's other textures are: a mission's plot, another package, imports them for its pieces' baked lighting;
@@ -1844,7 +1845,10 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     const d = dir && format === 'PF_DXT1' ? dirMips.get(`${dir.fullName}:${w}x${h}`) : undefined
     return d && !SEPARATE_LIGHTMAPS ? combineLightmapMip(mip, d, w, h) : undefined
   },
-  (e) => (tex2dClass && (lmPairs.has(e) || (SEPARATE_LIGHTMAPS && lmDirs.has(e))) ? 4 : 0))
+  (e) => (tex2dClass && (lmPairs.has(e) || (SEPARATE_LIGHTMAPS && lmDirs.has(e))) ? 4 : 0),
+  undefined,
+  // (Linear, as EW's LightMapTexture2D: made Texture2D, they took its sRGB default, darkening the darks; converter 89.)
+  (e) => LINEAR_LIGHTMAPS && (lmPairs.has(e) || lmDirs.has(e)))
 // The placements' own vertex colours into their mesh's (overrideColoursOf), where every placement of the mesh has the same
 // ones: XCOM 2 reads a mesh's colours, not EW's per-placement ones. In place: the same count, the same bytes' length.
 let painted = 0

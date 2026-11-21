@@ -136,7 +136,7 @@ export interface PlotSettings {
   /** EW's baked lighting on the mission maps, the middle way (features/ew-lightmaps.md): pieces inside EW's buildings, and
    *  every piece of a night map, get an instance each of this parent (XCOM 2's lit prop material with EW's lightmap
    *  added, made in the SDK editor) with their lightmap; "" none. */
-  lightmap?: { parent: string; brightness: number; interiors: boolean; nightMaps: string[]; onlyMaps: string[]; everywhere?: boolean }
+  lightmap?: { parent: string; brightness: number; gamma?: number; interiors: boolean; nightMaps: string[]; onlyMaps: string[]; everywhere?: boolean }
 }
 
 /**
@@ -409,6 +409,8 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     const mean = (v: number[]) => (v[0]! + v[1]! + v[2]!) / 3
     const scalars: [string, number][] = [...settings.scalars, ['LMBrightness', mean(l.s0) * mean(l.s1) * 1.732 * lm.brightness]]
     if (look.tile) scalars.push(['DiffuseTile', look.tile])
+    // (The light maps' curve, LightmapGamma, where the atlases are linear (Split, converter 88/89).)
+    if (l.split && lm.gamma) scalars.push(['LMGamma', lm.gamma])
     const tags: T[] = [
       tObj('Parent', importRef(lm.parent, 'Material')),
       tGuid('LightingGuid'),

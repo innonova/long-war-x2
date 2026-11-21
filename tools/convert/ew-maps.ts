@@ -47,6 +47,7 @@ export function plotSettings(mod: string): PlotSettings {
       everywhere: process.env.LWX2_PLOT_LIGHTMAP === 'all' || (process.env.LWX2_PLOT_LIGHTMAP !== 'middle' && /^PlotLightmapEverywhere=true/m.test(ini)),
       parent: str('PlotLightmapParent'),
       brightness: Number(/^LightmapBrightness=([\d.]+)/m.exec(ini)?.[1] ?? 1) || 1,
+      gamma: Number(/^LightmapGamma=([\d.]+)/m.exec(ini)?.[1] ?? 0) || undefined,
       interiors: !/^PlotLightmapInteriors=false/m.test(ini),
       nightMaps: [...ini.matchAll(/^\+Maps=\(Name="([^"]+)"[^\n]*Night=true/gm)].map((m) => m[1]!),
       onlyMaps: [...ini.matchAll(/^\+PlotLightmapMaps="([^"]+)"/gm)].map((m) => m[1]!),
