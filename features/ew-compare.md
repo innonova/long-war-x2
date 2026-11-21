@@ -165,3 +165,6 @@ so the fixes are driven by evidence and the person is not needed on every round.
   (`BaseShadows` 0.07: the wall 15 21 22, a console 82 147 146 against EW's 85 155 155), and EW's maps' grading goes
   through the same override, cleared at every battle's start (it outlives the map). The control port's `grade` sets it
   live. Seen: `logs/compare/base-grade.png`; a mission on the gas station with EW's grading.
+- **Round 10 #8, lamp faces** (tried): EW's coloured lamps (`HQ_ColorizedLight`, blue 0.42 1.18 2.0) clip in our
+  unlit material to a pale cyan-white; they are now at half strength (`LampGlowScale` 0.5) so their hue stays. EW's
+  halos are bloom on colours over 1, which our clamped material cannot give. Not yet judged by the reviewer.
