@@ -411,3 +411,9 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   pieces now take our lightmapped material with a white light map, the look's palette and 8 × 1 tile
   (`UnlitPaletteStandin`, `UnlitPaletteBrightness` 2.0, measured: the plinth top 84 115 150 against EW's 97 120 142).
   Its ring markings and blue-grey finish now as EW's; the hangar, engineering and base views unchanged.
+- **Round 17 #4, the Gene Lab tank faces** (tried, reverted): EW's tank glass shader read
+  (`ew-shaders.ts GeneLabTankGlassMaster`): it glows the froth (×8, red + green) in its `Color` (the instance's orange
+  0.83 0.28 0) by a fresnel term, adds 0.05 × Color and a reflection, over the scene behind (the tank's olive fluid). The
+  froth tinted in that orange alone read as orange tanks (84 60 31 against EW's 82 72 41, and visibly orange); EW's
+  gold is that orange glow over the olive behind. Kept the olive tint (converter 90's); the gold mottling needs our
+  glass to add a coloured froth glow over its own olive: a material change (SDK editor), next time.
