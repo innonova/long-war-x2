@@ -1084,10 +1084,11 @@ static function MaterialInterface Lightmapped(LWX2Piece P, string Path, Object I
 	}
 	if (D.Looks[k].Palette.Length == 4)
 	{
-		MIC.SetVectorParameterValue('PaletteA', D.Looks[k].Palette[0]);
-		MIC.SetVectorParameterValue('PaletteB', D.Looks[k].Palette[1]);
-		MIC.SetVectorParameterValue('PaletteC', D.Looks[k].Palette[2]);
-		MIC.SetVectorParameterValue('PaletteD', D.Looks[k].Palette[3]);
+		// (Copied out: an array element cannot be passed as the out parameter it is declared as.)
+		V = D.Looks[k].Palette[0]; MIC.SetVectorParameterValue('PaletteA', V);
+		V = D.Looks[k].Palette[1]; MIC.SetVectorParameterValue('PaletteB', V);
+		V = D.Looks[k].Palette[2]; MIC.SetVectorParameterValue('PaletteC', V);
+		V = D.Looks[k].Palette[3]; MIC.SetVectorParameterValue('PaletteD', V);
 	}
 	MIC.SetTextureParameterValue('LightMap', LM);
 	V.R = P.LightMap.ScaleX; V.G = P.LightMap.ScaleY; V.B = P.LightMap.BiasX; V.A = P.LightMap.BiasY;
