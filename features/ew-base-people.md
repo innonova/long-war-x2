@@ -227,3 +227,13 @@ material also pans and layers hexes and a fresnel), and the tanks' caps beige wh
   texture, cyan patches on Vahlen's eyelids; it is now a faint dark translucent shading (`EmptySlotParent`, our glass).
   Her hair takes EW's olive-blonde (converter 65; 85 86 53 against EW's 84 82 58). **Open:** redness around her
   eyes a little stronger than EW's.
+
+## Notes (2026-11-21, the tanks' glass read from its shader; round 10 #6)
+
+`GeneLabTankGlassMaster` (`tools/convert/ew-shaders.ts`): translucent, the scene behind it sampled (`SceneColorTexture`)
+and shown through where the glass faces the camera; the edges by a fresnel term (`(1 − N·V)^GlassFresnel`) in `Color`
+× the froth texture (UV0 × 8, its red + green) plus `Color` × 0.05; a cube-map reflection × `RefTint` × 10; `RefColor`
+by a second fresnel (×25 in log space, ×0.2). Opacity: 0.8 × saturate(fresnel⁴-ish − 0.3 − …). So EW's tank reads as
+clear glass with coloured, frothy edges; ours (a glow over the froth) as filled. To do: a tank glass material of ours
+(SDK editor: translucent, a Fresnel node for both the colour and the opacity, the froth texture, `Color`), given to
+`GeneLabTankGlassMaster` looks.
