@@ -89,6 +89,11 @@ var config string EmptySlotParent;
  * BaseMidtones too (round 11 #1: the darks had fallen to black).
  */
 var config float BaseShadows;
+/** EW's tank glass (the Genetics Lab's canisters, a person slot whose picture holds TankGlassMatch, EW's froth) on our
+ *  glass with that picture: TankGlassOpacity, its olive × TankGlassTintScale. */
+var config string TankGlassMatch;
+var config float TankGlassOpacity;
+var config float TankGlassTintScale;
 var config float BaseHighlights;
 var config float BaseMidtones;
 var config LinearColor EmptySlotTint;
@@ -571,6 +576,7 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 	local bool bLitPerson;
 	local MaterialInstanceConstant Shade;
 	local LWX2EWMapPieces.LWX2PersonSlot S;
+	local LinearColor TankTint;
 	local LWX2EWMapPieces.LWX2Look GlowLook;
 	local LWX2BasePerson A;
 	local SkeletalMesh Mesh;
@@ -605,6 +611,22 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 		B.Normal = S.Normal;
 		// (A slot without a texture found, the eye lashes: the body's stand-in; our unlit material cannot go on a
 		// skeletal mesh.)
+		// (The Genetics Lab's tank glass, EW's froth: our glass with the froth as its picture (its colour the glow, its
+		// green the opacity), so the tank is see-through between the froth as EW's fresnel glass is clear facing the
+		// camera; as a glow over the froth it read cloudy and filled, round 11 #5.)
+		if (S.Glow && TankGlassMatch != "" && InStr(S.Diffuse, TankGlassMatch) != INDEX_NONE && class'LWX2EWMapPieces'.default.GlassOwnParent != "")
+		{
+			Shade = new(self) class'MaterialInstanceConstant';
+			Shade.SetParent(Material(DynamicLoadObject(class'LWX2EWMapPieces'.default.GlassOwnParent, class'Material', true)));
+			Shade.SetTextureParameterValue('Diffuse', Texture(DynamicLoadObject(S.Diffuse, class'Texture', true)));
+			Shade.SetScalarParameterValue('UseTexture', 1.0);
+			TankTint = S.Tint;
+			TankTint.R *= TankGlassTintScale; TankTint.G *= TankGlassTintScale; TankTint.B *= TankGlassTintScale; TankTint.A = 1;
+			Shade.SetVectorParameterValue('Tint', TankTint);
+			Shade.SetScalarParameterValue('Opacity', TankGlassOpacity);
+			Slots.AddItem(Shade);
+			continue;
+		}
 		if (S.Glow)
 		{
 			// (Its texture where the converter gives one: the Genetics Lab's tank glass, EW's froth in EW's olive.)
