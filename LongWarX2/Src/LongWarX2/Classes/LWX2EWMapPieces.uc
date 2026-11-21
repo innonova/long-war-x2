@@ -179,6 +179,12 @@ var config array<string> GlassMaterials;
  *  hologlobes in the main menu and Mission Control, EW's M_Globe_Holo translucent and glowing; on our opaque unlit
  *  material they were pale solid spheres. */
 var config array<string> AdditiveGlowMaterials;
+/** EW's Situation Room map (and globes) in each country's panic colour (features/ew-sitroom-panic-map.md): these materials
+ *  get PanicMapParent (ours: the earth, EW's country index, the base's panic colour table, LWX2EWBase.PanicTexture), the
+ *  index texture beside the look's earth picture (its name with _Index for _LWX2Wall). */
+var config array<string> PanicMapMaterials;
+var config string PanicMapParent;
+var config float PanicMapStrength;
 var config LinearColor HoloTint;
 var config float HoloOpacity;
 var config string GlassParent;
@@ -1284,6 +1290,33 @@ static function MaterialInterface BlackStandin(Object InOuter)
 }
 
 /** A light card's stand-in: LightCardParent at LightCardScale (its colour and fade the mesh's vertex colours). */
+/** A panic map stand-in (PanicMapMaterials): PanicMapParent with the look's earth, its index texture and the base's panic
+ *  colour table; none where any is missing (the plain look then). */
+static function MaterialInterface PanicMapStandin(LWX2Look L, Actor InOuter)
+{
+	local MaterialInstanceConstant MIC;
+	local Material Parent;
+	local Texture Earth, Index;
+	local ScriptedTexture Colours;
+	local LinearColor C;
+
+	Parent = Material(DynamicLoadObject(default.PanicMapParent, class'Material', true));
+	Earth = Texture(DynamicLoadObject(L.Diffuse, class'Texture', true));
+	Index = Texture(DynamicLoadObject(Repl(L.Diffuse, "_LWX2Wall", "_Index"), class'Texture', true));
+	Colours = class'LWX2EWBase'.static.Get(InOuter).PanicTexture();
+	if (Parent == none || Earth == none || Index == none || Colours == none)
+		return none;
+	MIC = new(InOuter) class'MaterialInstanceConstant';
+	MIC.SetParent(Parent);
+	MIC.SetTextureParameterValue('Diffuse', Earth);
+	MIC.SetTextureParameterValue('Index', Index);
+	MIC.SetTextureParameterValue('Colours', Colours);
+	MIC.SetScalarParameterValue('Strength', default.PanicMapStrength > 0 ? default.PanicMapStrength : 0.7);
+	C = (L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : MakeLinearColor(1, 1, 1, 1);
+	MIC.SetVectorParameterValue('Tint', C);
+	return MIC;
+}
+
 static function MaterialInterface LightCardStandin(Object InOuter, optional string Path)
 {
 	local MaterialInstanceConstant MIC;
@@ -1385,6 +1418,15 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 			L.Tint = default.LookOverrides[i].Tint;
 		}
 		ParentPath = L.Kind == 'Foliage' ? default.FoliageParent : (L.Kind == 'Alien' ? default.AlienParent : ((L.Kind == 'Masked' && default.MaskedParent != "") ? default.MaskedParent : default.PropParent));
+	}
+	if (k != INDEX_NONE && L.Diffuse != "" && default.PanicMapParent != "" && Matches(Path, default.PanicMapMaterials) && Actor(InOuter) != none)
+	{
+		S.Standin = PanicMapStandin(L, Actor(InOuter));
+		if (S.Standin != none)
+		{
+			Standins.AddItem(S);
+			return S.Standin;
+		}
 	}
 	if (k != INDEX_NONE && L.Diffuse != "" && default.GlassOwnParent != "" && Matches(Path, default.AdditiveGlowMaterials))
 	{

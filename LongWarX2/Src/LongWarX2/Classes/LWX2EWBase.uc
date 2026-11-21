@@ -89,6 +89,15 @@ var config string EmptySlotParent;
  * BaseMidtones too (round 11 #1: the darks had fallen to black).
  */
 var config float BaseShadows;
+/**
+ * EW's Situation Room map and hologlobe in each council country's panic colour (features/ew-sitroom-panic-map.md): a
+ * table of 256 x 1, one pixel per index of EW's country index texture (T_Earth_Holo_Index), drawn in EW's
+ * XGCountry.GetPanicColor colours from Long War's panic (withdrawn: EW's dark red), transparent elsewhere; our panic map
+ * material reads it by each pixel's country index. PanicMapIndex: each council country's index, in Long War's order
+ * (XComEarth.m_CountryToIndex by EW's country number).
+ */
+var config array<int> PanicMapIndex;
+var ScriptedTexture PanicColours;
 /** EW's tank glass (the Genetics Lab's canisters, a person slot whose picture holds TankGlassMatch, EW's froth) on our
  *  glass with that picture: TankGlassOpacity, its olive × TankGlassTintScale. */
 var config string TankGlassMatch;
@@ -287,8 +296,56 @@ function ShowShell()
 }
 
 /** The base placed (once) and the tiles brought up to date, and the camera on it. */
+/** The panic colour table (PanicColours), made on first use and redrawn at the next tick. */
+function ScriptedTexture PanicTexture()
+{
+	if (PanicColours == none)
+	{
+		PanicColours = ScriptedTexture(class'ScriptedTexture'.static.Create(256, 1, PF_A8R8G8B8, MakeLinearColor(0, 0, 0, 0), false, false, false, self));
+		if (PanicColours != none)
+			PanicColours.Render = RenderPanic;
+	}
+	if (PanicColours != none)
+		PanicColours.bNeedsUpdate = true;
+	return PanicColours;
+}
+
+/** Each council country's pixel in EW's panic colour (XGCountry.GetPanicColor): withdrawn (100, 0, 0); else by panic / 20
+ *  green, cyan, yellow, orange, red. */
+function RenderPanic(Canvas C)
+{
+	local XComGameState_LWStrategy S;
+	local int k, Band;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none)
+		return;
+	for (k = 0; k < S.Countries.Length && k < PanicMapIndex.Length; k++)
+	{
+		if (S.Countries[k].bLeft)
+			C.SetDrawColor(100, 0, 0, 255);
+		else
+		{
+			Band = S.Countries[k].Panic / 20;
+			switch (Band)
+			{
+				case 0: C.SetDrawColor(92, 209, 108, 255); break;
+				case 1: C.SetDrawColor(103, 232, 237, 255); break;
+				case 2: C.SetDrawColor(255, 209, 56, 255); break;
+				case 3: C.SetDrawColor(246, 116, 32, 255); break;
+				case 4: C.SetDrawColor(238, 28, 37, 255); break;
+				default: C.SetDrawColor(255, 0, 0, 255);
+			}
+		}
+		C.SetPos(PanicMapIndex[k], 0);
+		C.DrawRect(1, 1);
+	}
+}
+
 function Show()
 {
+	if (PanicColours != none)
+		PanicColours.bNeedsUpdate = true;
 	local PostProcessSettings PP;
 	local LWX2EWMapData Command;
 	local string Level;
