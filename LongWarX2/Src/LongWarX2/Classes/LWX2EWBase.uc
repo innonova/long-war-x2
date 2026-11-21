@@ -346,11 +346,12 @@ function RenderPanic(Canvas C)
 
 function Show()
 {
-	if (PanicColours != none)
-		PanicColours.bNeedsUpdate = true;
 	local PostProcessSettings PP;
 	local LWX2EWMapData Command;
 	local string Level;
+
+	if (PanicColours != none)
+		PanicColours.bNeedsUpdate = true;
 
 	// (The base's grade: BaseShadows, BaseHighlights, BaseMidtones.)
 	if ((BaseShadows > 0 || BaseHighlights > 0 || BaseMidtones > 0) && LocalPlayer(GetALocalPlayerController().Player) != none)
