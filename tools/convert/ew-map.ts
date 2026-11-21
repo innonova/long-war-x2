@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 85 // (85: HQ_Master_2Sided's palette, as HQ_Master's)
+export const CONVERTER_VERSION = 86 // (86: an untextured material's painted colour as its look's tint)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
@@ -1264,6 +1264,27 @@ function materialTexture(r: number, test: RegExp, depth = 0): string | undefined
 const GLOW = /HQ_ColorizedLight|HQ_ConsoleScreen|HQ_CustomScreens|HQ_EmissivePallete/i
 const looks = new Map<number, Look>()
 for (const p of [...pieces, ...doors]) for (const m of p.materials) if (m && !looks.has(m)) looks.set(m, lookOf(m))
+// (A material with no texture, coloured by the colours painted on its placements (EW's hangar stripes, StripeTest: lit,
+// translucent, its diffuse the vertex colour, painted orange on the floor-stripe mesh): the painted colour, averaged over
+// the painted vertices, as its look's tint (0..1). Converter 86.)
+{
+  const sums = new Map<number, number[]>()
+  for (const p of pieces) {
+    if (p.materials.length !== 1 || !p.materials[0]) continue
+    const mk = exports.findIndex((x) => x.fullName === p.mesh && x.type === 'StaticMesh')
+    for (const c of instanceColours.get(mk) ?? []) {
+      if (!c) continue
+      const s = sums.get(p.materials[0]) ?? [0, 0, 0, 0]
+      for (let k = 0; k + 4 <= c.length; k += 4) if (c[k + 3]! > 0) { s[0]! += c[k + 2]!; s[1]! += c[k + 1]!; s[2]! += c[k]!; s[3]! += 1 }
+      sums.set(p.materials[0], s)
+    }
+  }
+  for (const [m, s] of sums) {
+    const l = looks.get(m)
+    if (!l || l.diffuse || l.kind !== 'Prop' || l.tint || !s[3]) continue
+    l.tint = [s[0]! / s[3]! / 255, s[1]! / s[3]! / 255, s[2]! / s[3]! / 255].map((x) => Math.round(x * 1000) / 1000)
+  }
+}
 for (const [r, l] of looks) {
   if (!GLOW.test(pathOf(r))) continue
   const tex = new Map<string, string>()

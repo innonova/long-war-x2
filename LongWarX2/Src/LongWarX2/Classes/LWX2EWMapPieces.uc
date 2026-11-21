@@ -122,6 +122,11 @@ var config string FlareParent;
 var config float FlareOpacity;
 
 var config array<string> LightCardMaterials;
+/** EW's untextured paint coloured by its placements' painted vertex colours (the hangar's bridge and floor stripes,
+ *  StripeTest: lit, translucent, its diffuse the vertex colour): our translucent material in the look's tint (the painted
+ *  colour, converter 86) × PaintCardScale, solid. */
+var config array<string> PaintCardMaterials;
+var config float PaintCardScale;
 /** A light card's strength by material (the first whose Match is in the material's path), else LightCardScale: the
  *  hangar's floor stripes, StripeTest, are lit colour in EW, not a glow. */
 struct LWX2CardScale
@@ -1483,6 +1488,7 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	local Material Parent;
 	local MaterialInstanceConstant MIC;
 	local Texture T;
+	local LinearColor PaintTint;
 
 	if (D == none)
 		D = Map();
@@ -1537,6 +1543,23 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 		S.Standin = GlowStandin(L, InOuter, true);
 		if (S.Standin != none)
 		{
+			Standins.AddItem(S);
+			return S.Standin;
+		}
+	}
+	// (EW's painted stripes: solid paint in their painted colour on our translucent material, PaintCardMaterials.)
+	if (k != INDEX_NONE && default.GlassOwnParent != "" && Matches(Path, default.PaintCardMaterials) && L.Tint.R + L.Tint.G + L.Tint.B > 0)
+	{
+		Parent = Material(DynamicLoadObject(default.GlassOwnParent, class'Material', true));
+		if (Parent != none)
+		{
+			MIC = new(InOuter) class'MaterialInstanceConstant';
+			MIC.SetParent(Parent);
+			MIC.SetScalarParameterValue('UseTexture', 0.0);
+			MIC.SetScalarParameterValue('Opacity', 1.0);
+			PaintTint = MakeLinearColor(L.Tint.R * default.PaintCardScale, L.Tint.G * default.PaintCardScale, L.Tint.B * default.PaintCardScale, 1);
+			MIC.SetVectorParameterValue('Tint', PaintTint);
+			S.Standin = MIC;
 			Standins.AddItem(S);
 			return S.Standin;
 		}

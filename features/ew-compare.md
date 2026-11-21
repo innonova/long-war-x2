@@ -353,10 +353,10 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   8×1 tile; now it does (converter 85), and `SM_Canister` is in `PaletteSlotMeshes`. The caps are EW's dark grey metal;
   the faces measure 101 89 53 (EW 85 72 42). Left: the faces' yellow-gold mottle (ours greener and smoother).
 - **Round 14 #5, Vahlen's coat** (partly): EW's people levels' own lights placed (`features/ew-base-people.md`).
-- **Round 14 #9, the hangar bridge's edge paint** (open, narrowed): `Hangar_RimSupport` carries the paint (its atlas
-  under `HQ_Master_HangarPalette`, a grey palette); `Hangar_LightCards` (`HQ_EmissivePallete_INST`: unlit, no texture,
-  Colorize A 1.51 0.62 0.33, vertex colours white with alpha 0 or 1) lies over the bridge. A first `basehide` of the cards
-  seemed to bring EW's orange back, but that frame was mid camera move; in the settled view the stripes stay cream with
-  the cards hidden, drawn additive (`M_EWLightCard`, which does weight by vertex alpha) or at 0.12. So the cream is the
-  paint as our lightmapped material draws it (the atlas's paint region × the grey palette × the light map), not the cards.
-  Next: the atlas texel colour of the stripe and the bridge's light map there.
+- **Round 14 #9, the hangar bridge's edge paint** (fixed): the stripes are not the bridge's (`Hangar_RimSupport`, a grey
+  palette over a grey atlas) but `Hangar_Floor_Stripes` (`StripeTest`: lit, translucent, its diffuse the vertex colour,
+  painted orange 255 100 9 on its placement), which the port drew as a faint additive card over the grey: cream. Found
+  by `basehide` in the settled view (a first test mid camera move had misled). Now the converter gives an untextured
+  material its placements' painted colour as its look's tint (converter 86) and the mod draws `PaintCardMaterials` as
+  solid paint on our translucent material at `PaintCardScale` 0.45: the stripes measure 187 139 35 against EW's 163 106
+  45 (were cream, about 230 190 140).
