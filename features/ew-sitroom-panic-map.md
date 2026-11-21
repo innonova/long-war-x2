@@ -33,3 +33,15 @@ satellite) whenever they change.
   country index, redrawn in EW's colours from Long War's panic and satellites when they change (EW's `UpdateCountryColors`
   rules, read from its script). The material reads it by index.
 - **Checked** against EW's Situation Room capture (`tools/compare`): countries in their panic colours, satellites marked.
+
+## Notes (2026-11-21, EW's rules read)
+
+- **`XGGeoscape.UpdateCountryColors`**: for each council member, `ColorCountry(its id, XGCountry.GetPanicColor())`, which
+  goes to `XComEarth.HighlightCountry` → `XComHQCountryBorderToggles.ColorCountry_SpecificIndex(m_CountryToIndex[id],
+  colour)` (and `ToggleCountry_SpecificIndex(…, true)`); satellites by `ColorSatellite_SpecificIndex(…, coverage)`. The
+  border toggles' texture is native (C++): the port's own table replaces it.
+- **`XGCountry.GetPanicColor`**: panic < 0 → (100, 0, 0); else by panic ÷ 20: 0 (92, 209, 108) green, 1 (103, 232,
+  237) cyan, 2 (255, 209, 56) yellow, 3 (246, 116, 32) orange, 4 (238, 28, 37) red, otherwise (255, 0, 0).
+- **`XComEarth.m_CountryToIndex`** (each `ECountry` to its index in `Nation_Index`): 0 208, 1 174, 2 29, 3 140, 4 71,
+  5 64, 6 88, 7 82, 8 45, 9 244, 10 97, 11 232, 12 97, 13 232, 14 97, 15 98, 16 97, 17 97, 18 49, 19 20, 20 7, 21 119,
+  22 179, 23 97, 24 232, 25 152, 26 161, 27 232, 28 161 (97 and 232 look like "no country of its own").
