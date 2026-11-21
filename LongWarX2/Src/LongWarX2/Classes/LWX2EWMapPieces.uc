@@ -339,6 +339,8 @@ struct LWX2AnimKey
 struct LWX2Person
 {
 	var string Mesh;
+	/** Lit in EW by Command1's character lights only, none of the rooms' (EW's Shen and Vahlen: the Cinematic channels). */
+	var bool Cinematic;
 	var vector Loc;
 	var rotator Rot;
 	var float Scale;

@@ -831,6 +831,13 @@ function LWX2BasePerson PlacePerson(LWX2EWMapPieces.LWX2Person P, string Level, 
 	{
 		Channels = A.SkeletalMeshComponent.LightingChannels;
 		Channels.Cinematic_1 = true;
+		// (As EW's: those on the cinematic channels only, Shen and Vahlen, take none of the rooms' lamps, whose warm light had
+		// made Shen's face yellow, round 12 #6.)
+		if (P.Cinematic)
+		{
+			Channels.Dynamic = false;
+			Channels.CompositeDynamic = false;
+		}
 		Channels.bInitialized = true;
 		A.SkeletalMeshComponent.SetLightingChannels(Channels);
 	}

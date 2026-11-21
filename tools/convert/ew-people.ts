@@ -13,7 +13,7 @@ import { readTags, type Tag } from '@innonova/upkit/objects'
 /** A key of a matinee's animation track (InterpTrackAnimControl's AnimSeqs): from its time on, the animation from `from`
  *  seconds to its length less `end`, forwards or (reverse) backwards, held at the stretch's end. */
 export interface AnimKey { time: number; from: number; end: number; reverse: boolean }
-export interface Person { bay?: number; bayState?: string; key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; physicsAsset?: string; start?: number; rate?: number; window?: number; keys?: AnimKey[]; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
+export interface Person { cinematic?: boolean; bay?: number; bayState?: string; key?: number[]; keyRot?: number[]; group: string; mesh: string; materials: string[]; loc: number[]; rot: number[]; scale: number; animSets: string[]; seqs: string[]; loop: boolean; physicsAsset?: string; start?: number; rate?: number; window?: number; keys?: AnimKey[]; meshRef: number; materialRefs: number[]; animSetRefs: number[] }
 
 export function peopleOf(file: string): Person[] {
   const bytes = decompressPackage(new Uint8Array(readFileSync(file)))
@@ -283,7 +283,21 @@ export function peopleIn(meta: any, pkg: any): Person[] {
     // under the ceiling down to the column; their bounds follow the bodies of PHYS_Canister. Without it the bounds stayed
     // the mesh's at the rack, and the canisters were never drawn at the column.)
     const physicsAsset = path(i32(ct.find((x) => x.name === 'PhysicsAsset'))) || undefined
+    // (Its lighting channels: EW's Shen and Vahlen answer the Cinematic channels only, lit by Command1's character lights
+    // and none of the rooms' lamps; the others Dynamic. A LightingChannelContainer struct's tags, each a bool by name.)
+    const lc = ct.find((x) => x.name === 'LightingChannels')
+    let cinematic = false
+    if (lc) {
+      try {
+        const sub = readTags(new Reader(lc.value), pkg) as (Tag & { boolValue?: number })[]
+        const on = (n: RegExp) => sub.some((x) => n.test(x.name) && !!x.boolValue)
+        cinematic = on(/^Cinematic/) && !on(/^Dynamic$/)
+      } catch {
+        // not read
+      }
+    }
     return {
+      cinematic,
       physicsAsset,
       group,
       key: g.key,
