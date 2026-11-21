@@ -607,6 +607,9 @@ function Handle(string Line, out array<string> Out)
 		WorldInfo.DefaultPostProcessSettings.Scene_MidTones = vect(1, 1, 1) * float(Args[3]);
 		WorldInfo.DefaultPostProcessSettings.bOverride_Scene_Desaturation = Args.Length > 4;
 		WorldInfo.DefaultPostProcessSettings.Scene_Desaturation = Args.Length > 4 ? float(Args[4]) : 0.0;
+		// (And as the local player's override, which XCOM 2's own debug screen uses: the world's default had no effect.)
+		if (LocalPlayer(GetALocalPlayerController().Player) != none)
+			LocalPlayer(GetALocalPlayerController().Player).OverridePostProcessSettings(WorldInfo.DefaultPostProcessSettings, 0.0);
 		Out.AddItem("ok graded");
 		return;
 	case "wall":
