@@ -199,26 +199,27 @@ export function earthWallMip(mip: Uint8Array, format: string, w: number, h: numb
 }
 
 
-/** EW's detail layer baked over its main layer (DXT1 both; converter 67): the detail tiled `ratio` times across the main's
- *  w×h, each texel the detail's colour × the main's brightness against its mean (so the main's broad forms shade the
- *  detail's grain and colour), with some of the main's hue. EW's cave rock: Rock_Detail_A_DIF ×6 over Rock_A_DIF ×2. */
+/** EW's detail layer baked over its main layer (DXT1 both; converter 67, 69): the detail tiled `ratio` times across the
+ *  main's w×h, each texel as EW's cave material computes its diffuse: (main × detail)^0.65 in linear light (HQ_Caves_Simple's
+ *  compiled pixel shader, read with tools/convert/ew-shaders.ts), plus its specular colour, √(main × detail), at an average
+ *  share (our stand-in has no specular input). EW's cave rock: Rock_Detail_A_DIF ×6 over Rock_A_DIF ×2. Not carried: the main layer's own rotation and offset
+ *  (MainRotation, MainOffset_U/V), which a tiling texture cannot hold. */
+/** The share of EW's specular colour folded into a baked detail layer (detailMip): measured on EW's hangar rock. */
+const SPECULAR_SHARE = 1.7
 export function detailMip(main: Uint8Array, w: number, h: number, detail: Uint8Array, dw: number, dh: number, ratio: number): Uint8Array {
   const m = decodeDXT1(main, w, h)
   const d = decodeDXT1(detail, dw, dh)
-  const lum = (a: Uint8Array, p: number) => 0.3 * a[p]! + 0.59 * a[p + 1]! + 0.11 * a[p + 2]!
-  let mean = 0
-  for (let p = 0; p < m.length; p += 4) mean += lum(m, p)
-  mean = Math.max(1, mean / (w * h))
+  const lin = (x: number) => { const c = x / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 }
+  const srgb = (c: number) => Math.round(255 * Math.min(1, c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055))
   const out = new Uint8Array(w * h * 4)
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
       const p = 4 * (y * w + x)
       const dx = Math.floor(((x + 0.5) / w) * ratio * dw) % dw, dy = Math.floor(((y + 0.5) / h) * ratio * dh) % dh
       const q = 4 * (dy * dw + dx)
-      // (The main layer's shading at 60% and a quarter of its hue, as the fourth root of its channel's share: matched by
-      // eye and by the mean against EW's hangar rock, softer and greyer than the main layer's full say.)
-      const l = lum(m, p), k = 1 + 0.6 * (l / mean - 1)
-      for (let c = 0; c < 3; c++) out[p + c] = Math.min(255, Math.round(d[q + c]! * k * (l > 0 ? Math.pow(m[p + c]! / l, 0.25) : 1)))
+      // (EW's diffuse, (m·d)^0.65, and its specular colour, √(m·d), folded in at SPECULAR_SHARE: what its specular adds on
+      // average where the cave is lit, measured against EW's hangar, since our stand-in has no specular input.)
+      for (let c = 0; c < 3; c++) { const md = lin(m[p + c]!) * lin(d[q + c]!); out[p + c] = srgb(md ** 0.65 + SPECULAR_SHARE * Math.sqrt(md)) }
       out[p + 3] = 255
     }
   return encodeDXT1(out, w, h)

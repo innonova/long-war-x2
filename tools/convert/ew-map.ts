@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 68 // (68: HQ_Master's palette and 8×1 tile, Palette/UVTile)
+export const CONVERTER_VERSION = 69 // (69: the cave rock's layers by EW's own formula; 68: HQ_Master's palette and 8×1 tile)
 // (67: a detail layer never the main diffuse when another matches; EW's detail layer baked into a copy of the main, detailMip)
 
 const CACHES: Record<string, string> = {
@@ -1388,8 +1388,8 @@ if (screenLooks.length) {
 // EW's detail layer baked into a copy of the main diffuse (converter 67): the cave rock reads as its grey detail layer,
 // tiled three times as often as its dark brown main layer, which gives the broad forms. Our stand-in samples one texture
 // at one tiling, so the copy (<main>_LWX2Detail, its mips made by detailMip as the textures are inlined) is the detail
-// tiled at the ratio of the two tilings, shaded by the main layer's brightness against its mean (APPROXIMATION: EW's
-// blend is in its compiled shader). Only where the ratio is a whole number, so the copy still tiles.
+// tiled at the ratio of the two tilings, combined as EW's shader does ((main × detail)^0.65, read from its compiled
+// shader). Only where the ratio is a whole number, so the copy still tiles.
 const detailOf = new Map<string, { detail: string; ratio: number }>()
 {
   const withDetail = [...new Set(looks.values())].filter((l): l is Look => !!l && !!l.detail && !!l.diffuse && !!l.detailTile
