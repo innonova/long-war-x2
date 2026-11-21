@@ -398,3 +398,6 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   (`BaseMidtones` 0.9 → 1.25; higher darkens: at 0.75 everything read 2× EW's, at 1.5 0.6×). With `LightmapBrightness`
   0.4, seven views' 10th/25th/50th/75th/90th percentiles measure 1.06/1.00/1.03/1.00/0.89 of EW's; no blotches on the
   workshop's left, no banding on the research ceiling.
+- **Round 16 #3, the Gene Lab tanks' caps** (fixed): their palette slot is drawn unlit at `PaletteSlotBrightness`; at
+  0.6 (set for the launch pads under the old grade) the caps read light grey under the new base grade. At 0.2 they are
+  EW's dark metal and the hangar's launch pads still read as EW's. Left: the faces' gold mottling (ours smooth olive).
