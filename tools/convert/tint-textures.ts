@@ -237,7 +237,7 @@ export function screenMip(mip: Uint8Array, format: string, w: number, h: number,
     return col
   }
   // (uv[4]: the channel the picture is in, 2 blue (HQ_CustomScreens_B) or 3 alpha (_F, the DXT5 sheet's alpha), or 5 the
-  // sum of red, green and blue (HQ_ConsoleScreen's static picture).)
+  // sum of red, green and blue (HQ_ConsoleScreen's static picture), or 6 red + green (the tanks' froth).)
   const channel = uv[4] ?? 2
   const src = channel === 3 && format === 'PF_DXT5' ? (() => { const a = decodeDXT5Alpha(from, fw, fh); const o = new Uint8Array(fw * fh * 4); for (let k = 0; k < fw * fh; k++) o[4 * k + 3] = a[k]!; return o })() : decodeDXT1(colourOf(from), fw, fh)
   const out = new Uint8Array(w * h * 4)
@@ -252,7 +252,7 @@ export function screenMip(mip: Uint8Array, format: string, w: number, h: number,
       for (let j = 0; j < sy; j++)
         for (let i = 0; i < sx; i++) {
           const q = 4 * (((y0 + j) % fh) * fw + ((x0 + i) % fw))
-          sum += channel === 5 ? Math.min(255, src[q]! + src[q + 1]! + src[q + 2]!) : src[q + channel]!
+          sum += channel === 5 ? Math.min(255, src[q]! + src[q + 1]! + src[q + 2]!) : channel === 6 ? Math.min(255, src[q]! + src[q + 1]!) : src[q + channel]!
         }
       const b = Math.round(sum / (sx * sy))
       const p = 4 * (y * w + x)

@@ -52,7 +52,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 77 // (77: the consoles' screens each their band of the sheet)
+export const CONVERTER_VERSION = 78 // (78: the tanks' froth tiled eightfold)
+// (77: the consoles' screens each their band of the sheet)
 // (76: people's palette slots keep their diffuse, with Palette/UVTile)
 // (75: _F's region and colour the other way round)
 // (74: HQ_CustomScreens_F's pictures, the sheet's alpha)
@@ -1267,6 +1268,9 @@ const personSlots = people.map((p) =>
         l.tint = wer ? wer.map((c, k) => (k < 3 ? 0.6 * c * 0.45 + 0.4 * mean : c)) : l.tint
         // (Its froth: EW's meld hexes, tried alone, are an overlay, mostly dark, and the tanks came out black; converter 62.)
         l.diffuse = materialTexture(m, /Froth/i) ?? ''
+        // (EW's shader samples the froth at UV0 x 8 and takes its red + green: an eightfold tiled copy, that sum in grey,
+        // for our glass with a picture; drawn once, it read as coarse cloudy streaks, round 12 #5. Converter 78.)
+        if (l.diffuse) { l.screenUV = [0, 0, 8, 8]; l.screenChannel = 6 }
       }
     }
     return l
@@ -1496,7 +1500,7 @@ const detailOf = new Map<string, { detail: string; ratio: number }>()
 // EW's custom screens' regions of the decal sheet (HQ_CustomScreens_B's TintColor), a copy each (<sheet>_LWX2Screen<n>).
 const screenOf = new Map<string, number[]>()
 {
-  const withRegion = [...new Set(looks.values())].filter((l): l is Look => !!l && !!l.screenUV && !!l.diffuse)
+  const withRegion = [...new Set([...looks.values(), ...personSlots.flat()])].filter((l): l is Look => !!l && !!l.screenUV && !!l.diffuse)
   const keyOf = (l: Look) => `${l.screenUV!.join(',')}:${l.screenChannel ?? 2}`
   const regions = [...new Set(withRegion.map(keyOf))]
   const sheets = withRegion.map((l) => ({ l, k: exports.findIndex((e) => e.fullName === l.diffuse && e.type === 'Texture2D') })).filter((x) => x.k >= 0)
