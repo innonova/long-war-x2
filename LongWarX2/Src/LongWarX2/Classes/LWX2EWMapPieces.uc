@@ -119,6 +119,14 @@ var config string FlareParent;
 var config float FlareOpacity;
 
 var config array<string> LightCardMaterials;
+/** A light card's strength by material (the first whose Match is in the material's path), else LightCardScale: the
+ *  hangar's floor stripes, StripeTest, are lit colour in EW, not a glow. */
+struct LWX2CardScale
+{
+	var string Match;
+	var float Scale;
+};
+var config array<LWX2CardScale> LightCardScaleBy;
 var config float LightCardScale;
 /** Its opacity where the parent has one (our glass: the cards as faint panes when the mesh's vertex colours do not reach). */
 var config float LightCardOpacity;
@@ -1265,18 +1273,27 @@ static function MaterialInterface BlackStandin(Object InOuter)
 }
 
 /** A light card's stand-in: LightCardParent at LightCardScale (its colour and fade the mesh's vertex colours). */
-static function MaterialInterface LightCardStandin(Object InOuter)
+static function MaterialInterface LightCardStandin(Object InOuter, optional string Path)
 {
 	local MaterialInstanceConstant MIC;
 	local Material Parent;
 	local LinearColor C;
+	local float K;
+	local LWX2CardScale S;
 
 	Parent = Material(DynamicLoadObject(default.LightCardParent, class'Material', true));
 	if (Parent == none)
 		return none;
 	MIC = new(InOuter) class'MaterialInstanceConstant';
 	MIC.SetParent(Parent);
-	C = MakeLinearColor(default.LightCardScale, default.LightCardScale, default.LightCardScale, 1);
+	K = default.LightCardScale;
+	foreach default.LightCardScaleBy(S)
+		if (S.Match != "" && InStr(Path, S.Match) != INDEX_NONE)
+		{
+			K = S.Scale;
+			break;
+		}
+	C = MakeLinearColor(K, K, K, 1);
 	MIC.SetVectorParameterValue('Tint', C);
 	if (default.LightCardOpacity > 0)
 		MIC.SetScalarParameterValue('Opacity', default.LightCardOpacity);
@@ -1373,7 +1390,7 @@ static function MaterialInterface MaterialFor(string Path, Object InOuter, out a
 	// translucent, a Prop by the converter's reading.)
 	if (k != INDEX_NONE && default.LightCardParent != "" && Matches(Path, default.LightCardMaterials))
 	{
-		S.Standin = LightCardStandin(InOuter);
+		S.Standin = LightCardStandin(InOuter, Path);
 		if (S.Standin != none)
 		{
 			Standins.AddItem(S);

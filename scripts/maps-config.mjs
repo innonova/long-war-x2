@@ -112,6 +112,8 @@ console.log(
     "; (The hangar's floor stripes: EW's StripeTest draws the mesh's vertex colour, its orange, translucent through a ragged",
     "; mask; read from its compiled shader. Approximation: our additive card in the vertex colour, the mask not carried.)",
     '+LightCardMaterials="StripeTest"',
+    "; (Their strength: EW's stripe measured 159 104 45 on the hangar view, ours at 1.0 192 162 94; 0.3 in linear light.)",
+    '+LightCardScaleBy=(Match="StripeTest",Scale=0.3)',
     'LightCardScale=1.0',
     "GlowScale=1.0",
     "; EW's coloured lamp faces (HQ_ColorizedLight) at this share, so their colour over 1 does not clip to white.",
