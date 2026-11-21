@@ -85,9 +85,12 @@ var config string EmptySlotParent;
 /**
  * EW's base's darker blacks (round 10 #7): XCOM 2's strategy post-process lifts them (a wall 32 where EW's is 15); Scene_Shadows
  * at BaseShadows, as the local player's post-process override (the world's default is not used), while the base shows.
- * 0: none.
+ * 0: none. With EW's palette on the base (darker surfaces, as EW's), the base's grade as a whole: BaseHighlights and
+ * BaseMidtones too (round 11 #1: the darks had fallen to black).
  */
 var config float BaseShadows;
+var config float BaseHighlights;
+var config float BaseMidtones;
 var config LinearColor EmptySlotTint;
 var config float EmptySlotOpacity;
 /** Whether they play EW's animations (false: they stand in their reference pose; a test switch). */
@@ -285,12 +288,22 @@ function Show()
 	local LWX2EWMapData Command;
 	local string Level;
 
-	// (EW's darker blacks, BaseShadows.)
-	if (BaseShadows > 0 && LocalPlayer(GetALocalPlayerController().Player) != none)
+	// (The base's grade: BaseShadows, BaseHighlights, BaseMidtones.)
+	if ((BaseShadows > 0 || BaseHighlights > 0 || BaseMidtones > 0) && LocalPlayer(GetALocalPlayerController().Player) != none)
 	{
 		PP = WorldInfo.DefaultPostProcessSettings;
 		PP.bOverride_Scene_Shadows = true;
 		PP.Scene_Shadows = vect(1, 1, 1) * BaseShadows;
+		if (BaseHighlights > 0)
+		{
+			PP.bOverride_Scene_HighLights = true;
+			PP.Scene_HighLights = vect(1, 1, 1) * BaseHighlights;
+		}
+		if (BaseMidtones > 0)
+		{
+			PP.bOverride_Scene_MidTones = true;
+			PP.Scene_MidTones = vect(1, 1, 1) * BaseMidtones;
+		}
 		LocalPlayer(GetALocalPlayerController().Player).OverridePostProcessSettings(PP, 0.0);
 	}
 
