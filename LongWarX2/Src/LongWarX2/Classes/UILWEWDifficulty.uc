@@ -12,6 +12,8 @@
 // set when unticked; LWCouncil reads the first; Slingshot is not in the port yet).
 class UILWEWDifficulty extends UILWEWScreen;
 
+/** START taken once (Start). */
+var bool bStarted;
 var localized string m_strSelectDifficulty;
 var localized string m_arrDifficultyTypeStrings[4], m_arrDifficultyDescStrings[4];
 var localized string m_strDifficultyEnableTutorial, m_strDifficultyEnableMeldTutorial, m_strDifficultyEnableProgeny;
@@ -315,8 +317,11 @@ function Start()
 	local string ID;
 	local int i, n;
 
-	if (Under == none)
+	// (Once: one click on START reached this twice, through the movie's event and the mouse's release, and the campaign
+	// was started twice, its first mission a different map each time; the game then hung loading it, aek 2026-11-22.)
+	if (Under == none || bStarted)
 		return;
+	bStarted = true;
 	Under.m_iSelectedDifficulty = Difficulty;
 	Under.m_bIronmanFromShell = Advanced[OPT_IRONMAN];
 	Under.m_bControlledStart = false;
