@@ -351,6 +351,7 @@ function Start()
 	// (Not XCOM 2's story: its ADVENT broadcast, which it plays as the strategy map loads, is cancelled; the map opens by a
 	// timer of its own. EW's intro is a Bink 1 film XCOM 2 cannot play.)
 	Under.ClearTimer('StartIntroMovie');
+	class'LWX2FirstMissionStart'.static.Expect();
 }
 
 defaultproperties

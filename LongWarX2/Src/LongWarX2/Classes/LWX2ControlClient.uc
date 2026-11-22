@@ -1066,6 +1066,8 @@ function string NewCampaign(int Difficulty, bool bFirstMission)
 	Settings = XComGameState_CampaignSettings(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_CampaignSettings'));
 	Settings.SetStartTime(Start.TimeStamp);
 	Settings.bSkipFirstTactical = !bFirstMission;
+	if (bFirstMission)
+		class'LWX2FirstMissionStart'.static.Expect();
 	Settings.SetDifficulty(Difficulty, D.TacticalDifficulty, D.StrategyDifficulty, D.GameLength);
 	GetALocalPlayerController().ConsoleCommand("open Avenger_Root?game=XComGame.XComHeadQuartersGame");
 	return "ok difficulty" @ Difficulty @ (bFirstMission ? "with" : "without") @ "the first mission";
