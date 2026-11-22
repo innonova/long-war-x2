@@ -271,3 +271,6 @@ clear glass with coloured, frothy edges; ours (a glow over the froth) as filled.
   the texture's own colour, more of EW's people lights; Vahlen's coat shades a little more on its folds, the clerks and
   Shen no darker out of place. Shen's skin measures close to EW's (160 118 68 against 156 124 83 on the Build Items
   view, a rough skin mask), a little more saturated.
+- **Shen's yellow** (2026-11-22, tried): engineering's own people lights at 0.2 instead of 0.45 changed little; his skin
+  measures 153 112 63 against EW's 157 124 82: as bright, but more saturated (less blue). The yellow is the skin tint
+  copy (`SkinColor` on the skin mask), not the light. Reverted; next: the skin tint's saturation in `tint-textures.ts`.
