@@ -3,6 +3,9 @@
 # line clicked, or ERR with what was read (features/e2e-tests.md).
 #   tools\test\click-label.ps1 "BUILD/BUY ITEMS" [-Right] [-Nth 2]
 param([Parameter(Mandatory)][string]$Label, [switch]$Right, [int]$Nth = 1)
+# ("=LABEL": the whole line exactly, not a line holding it: the main menu's LONG WAR beside LONG WAR: AIR WAR (DEMO).)
+$exact = $Label.StartsWith('=')
+if ($exact) { $Label = $Label.Substring(1) }
 $want = ($Label -replace '\s', '').ToLowerInvariant()
 # (OCR misses a label now and then (dim, fading in, light on dark): read again with other settings, and again a moment
 # later, for up to three rounds, before giving up.)
@@ -16,7 +19,7 @@ $hits = @()
     $hits = @($lines | Where-Object {
       if ($_ -notmatch '^(\d+) (\d+) (\d+) (\d+) (.*)$') { return $false }
       $t = ($Matches[5] -replace '\s', '').ToLowerInvariant()
-      $t.Contains($want) -or ($t.Length -ge $min -and $t.Length -le $want.Length -and $want.StartsWith($t))
+      if ($exact) { $t -eq $want } else { $t.Contains($want) -or ($t.Length -ge $min -and $t.Length -le $want.Length -and $want.StartsWith($t)) }
     })
     if ($hits.Count -ge $Nth) { break rounds }
   }

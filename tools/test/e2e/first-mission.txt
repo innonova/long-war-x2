@@ -1,0 +1,10 @@
+# A new campaign as a player starts one (aek, 2026-11-22: START, then the loading screen for ever): the main menu's LONG
+# WAR, EW's difficulty screen, START GAME clicked once, into the first mission's map. The game at the main menu.
+expect MainMenu
+click =LONG WAR
+expect Difficulty
+shot difficulty
+click START GAME
+waitfor phase=tactical 240
+waitfor ready=1 120
+shot first-mission

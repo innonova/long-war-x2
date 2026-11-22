@@ -11,6 +11,7 @@
 #   expect <text>     the top screen's class holds text (FAIL otherwise)
 #   lw <command>      a control-port command (setup only, never the thing tested)
 #   wait <s>          shot <name>
+#   waitfor <text> <s> wait until the game's state line (phase, map, screen) holds text, at most s seconds (FAIL after)
 #   rec <name> <s>    a video of the next s seconds (in the background; fetched at the end with a frame strip per
 #                     quarter second, logs/e2e/<journey>/<name>.mp4 and <name>-strip.png)
 set -uo pipefail
@@ -34,6 +35,9 @@ while IFS= read -r line <&3 || [ -n "$line" ]; do
     rmb)    r=$(tools/test/on.sh 'tools\test\click.ps1 960 540 -Right' 2>&1 | tail -1); sleep 1.5 ;;
     lw)     r=$(tools/test/lw.sh "$arg" 2>&1 | tail -1); sleep 1 ;;
     wait)   sleep "$arg"; r="" ;;
+    waitfor) wt=${arg% *}; ws=${arg##* }; t0=$(date +%s); r="FAIL: no '$wt' within ${ws}s"
+            while [ $(( $(date +%s) - t0 )) -lt "$ws" ]; do st=$(tools/test/lw.sh state 2>/dev/null | tail -1); if [[ "$st" == *"$wt"* ]]; then r="ok after $(( $(date +%s) - t0 ))s ($st)"; break; fi; sleep 5; done
+            [[ "$r" == FAIL* ]] && fails=$((fails+1)) ;;
     rec)    rn=${arg%% *}; rs=${arg#* }; r=$(tools/test/on.sh "tools\\test\\record.ps1 C:\\Users\\aekms\\e2e-$rn.mp4 $rs" 2>&1 | tail -1); clips="$clips $rn" ;;
     shot)   tools/test/shot.sh "$out/$arg.png" >/dev/null 2>&1; r="shot $arg" ;;
     expect) s=$(screen); if [[ "$s" == *"$arg"* ]]; then r="ok ($s)"; else r="FAIL: expected $arg, got $s"; fails=$((fails+1)); fi ;;
