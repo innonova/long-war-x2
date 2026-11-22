@@ -58,3 +58,9 @@ exits and transitions went unseen, and regressions in motion (animations) were n
 - **Next:** journeys for the strategy screens' own buttons (research, build, hangar, Situation Room's menu), the Geoscape's
   clock and events, squad select and a mission's first turn; a species check (each EW body animates); clips of the
   transitions for review.
+- **A setup bug, found from aek's report** (3d59a36 on his PC: a new campaign stuck on the loading screen, Launch
+  Satellite showing only the countries' bars): the setup keeps EW conversions from earlier setups unless they predate
+  converter version 20 (a copy of the number in `ew-maps.ts`, never raised), while the converter has reached 93. A player
+  updating kept base levels and maps converted weeks before. wingpu never showed it: its levels are reconverted by hand
+  with `--force`. Now one number, `tools/convert/converter-version.ts`, read by both; the next setup reconverts what an
+  older converter made. (Whether this is the whole cause on his PC: his Launch.log asked for.)
