@@ -265,6 +265,7 @@ simulated function OnReceiveFocus()
 	if (Room >= 0)
 	{
 		// (The menu's words again: START NEW RESEARCH PROJECT stayed after a project was begun, where EW's says CHANGE.)
+		`log("LongWarX2: Long War hub: focus back in room" @ Room $ ", its menu again", , 'LongWarX2');
 		ShowRoomMenu();
 		// (The room's tab lit and the others dimmed again: the menu's onReceiveFocus lit them all.)
 		CallNow("theMenu.facilityMenu.DimAllUnselectedMenuOptions");
