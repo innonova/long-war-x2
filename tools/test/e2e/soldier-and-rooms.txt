@@ -9,7 +9,7 @@ at 458 215
 expect SoldierSummary
 wait 2
 shot soldier-summary
-click =Abilities
+click ABILITIES
 expect Promotion
 shot abilities
 back
