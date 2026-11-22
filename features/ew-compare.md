@@ -442,3 +442,8 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   distributions' lookup tables as XCOM 2 reads them).
   Fourth look: `M_EWTankGlass` with the grey froth and the olive tint at 1.0 (config only, not kept): the faces' mean
   84 74 48 matches EW's 85 72 42, but greener and still cloudy, not EW's yellow-gold veins; left as committed.
+- **The research terminals' streaks** (found, open): the desk terminal on the research screen is `Console_B`, its screen
+  its second material slot (`HQ_ConsoleScreen_Tinted`, our copy `HQscreens_test_LWX2Screen4`/`6`); the earlier probes
+  missed it. A checker texture on it shows the screen maps a small sub-rectangle of its texture. Our band copies look
+  crisp offline, so the streaks come from how that small region is sampled (the copies' smaller mips, made per mip from
+  the source's same-size mip, are the first suspect). Next: the copies' mips made from the largest source mip.
