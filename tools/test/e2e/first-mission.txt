@@ -28,7 +28,8 @@ wait 3
 shot debrief
 click CONTINUE
 wait 3
-click CONTINUE
+# (Artifacts Recovered, only when the mission brought something back.)
+maybe CONTINUE
 waitfor StartSelect 60
 shot start-screen
 click Begin Game

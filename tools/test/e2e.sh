@@ -8,6 +8,7 @@
 #   tab <room>        one of EW's room tabs clicked at its place (Windows' OCR misses that row in some states; the tabs
 #                     do not move): RESEARCH ENGINEERING BARRACKS HANGAR SITUATION ROOM
 #   back              the corner back arrow clicked     esc        Esc pressed     rmb        a right click mid-screen
+#   maybe <label>     a label clicked if it is on screen (a page that comes only sometimes); no FAIL otherwise
 #   key <key>         a key pressed (key.ps1's names: Space, Enter, W ...)
 #   at <x> <y>        a click at a place in the 1920x1080 UI (a list's row, whose label is a random name)
 #   expect <text>     the top screen's class holds text (FAIL otherwise)
@@ -29,6 +30,7 @@ while IFS= read -r line <&3 || [ -n "$line" ]; do
   exec </dev/null
   case "$op" in
     click)  r=$(tools/test/on.sh "tools\\test\\click-label.ps1 \"$arg\"" 2>&1 | tail -1); sleep 1.5 ;;
+    maybe)  r=$(tools/test/on.sh "tools\\test\\click-label.ps1 \"$arg\"" 2>&1 | tail -1); case "$r" in ERR*) r="(none: $arg)";; esac; sleep 1.5 ;;
     rclick) r=$(tools/test/on.sh "tools\\test\\click-label.ps1 \"$arg\" -Right" 2>&1 | tail -1); sleep 1.5 ;;
     tab)    case "$arg" in RESEARCH) x=809;; ENGINEERING) x=985;; BARRACKS) x=1164;; HANGAR) x=1313;; "SITUATION ROOM") x=1495;; *) x=0;; esac
             if [ "$x" = 0 ]; then r="ERR no tab $arg"; else r=$(tools/test/on.sh "tools\\test\\click.ps1 $x 33" 2>&1 | tail -1); r="tab $arg at $x 33 $r"; fi; sleep 1.5 ;;
