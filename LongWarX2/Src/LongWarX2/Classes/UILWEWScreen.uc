@@ -34,11 +34,6 @@ var Object MovieObject;
 /** The help bar buttons attached (HelpButton), as <container>.<L|R>.<button>, for their layout. */
 var array<string> HelpButtons;
 
-/** In 3D: the clip the mouse is over (its last mouse-in, until its mouse-out), and when a click's release and the movie's
- *  own release last came (ForwardClick3D). */
-var array<string> HoverArgs;
-var float ReleasedAt, FlashUpAt;
-
 /** The presentation layer up now (the strategy layer's, or the shell's for EW's game creation screens): the test aids'. */
 static function XComPresentationLayerBase AnyPres()
 {
@@ -585,51 +580,13 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 	for (i = 0; i < args.Length; i++)
 		Joined @= args[i];
 	`log("LongWarX2: EW screen mouse" @ cmd $ ":" $ Joined, , 'LongWarX2');
-	if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_IN)
-		HoverArgs = args;
-	else if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_OUT && Joined == JoinedHover())
-		HoverArgs.Length = 0;
-	else if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP || cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_DOUBLE_UP)
-		FlashUpAt = WorldInfo.RealTimeSeconds;
 	super.OnMouseEvent(cmd, args);
-}
-
-function string JoinedHover()
-{
-	local string Joined;
-	local int i;
-
-	for (i = 0; i < HoverArgs.Length; i++)
-		Joined @= HoverArgs[i];
-	return Joined;
-}
-
-/**
- * A click on a screen in XCOM 2's 3D movie that its movie did not report: the soldier summary's menu on EW's armory panel
- * took the mouse's hover but never its click (no release came from the movie, nor from XCOM 2's own click under the
- * mouse), so no entry could be chosen with the mouse, aek 2026-11-22 (features/e2e-tests.md). When the movie has not
- * reported a release just after the button's, the clip under the mouse is given the release as the movie would give it.
- */
-function ForwardClick3D()
-{
-	local array<string> Args;
-
-	if (FlashUpAt >= ReleasedAt || HoverArgs.Length == 0 || !bIsFocused)
-		return;
-	Args = HoverArgs;
-	`log("LongWarX2: EW screen in 3D: a click its movie did not report, given to" $ JoinedHover(), , 'LongWarX2');
-	OnMouseEvent(class'UIUtilities_Input'.const.FXS_L_MOUSE_UP, Args);
 }
 
 simulated function bool OnUnrealCommand(int cmd, int arg)
 {
 	local UILWEWHub Hub;
 
-	if (bIsIn3D && cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_DOWN && (arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0)
-	{
-		ReleasedAt = WorldInfo.RealTimeSeconds;
-		SetTimer(0.15, false, nameof(ForwardClick3D));
-	}
 	// (Out by Esc, a pad's B or a right click, as EW's screens all take them; the right click only on some screens had made
 	// leaving a screen feel random, aek 2026-11-22, features/e2e-tests.md.)
 	if ((cmd == class'UIUtilities_Input'.const.FXS_KEY_ESCAPE || cmd == class'UIUtilities_Input'.const.FXS_BUTTON_B) && (arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0)
