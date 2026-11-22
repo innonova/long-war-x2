@@ -100,12 +100,15 @@ path, never walked before:
 - **The journey now passes:** LONG WAR → START GAME → briefing → (won) → summary → debrief → SELECT BASE LOCATION → Begin
   Game → EW's base, seen.
 
-The new `soldier-and-rooms` journey (a soldier's screens, Launch Satellite, a craft) found that **no click reached the
-soldier summary's menu** on EW's armory panel (XCOM 2's 3D movie), in any campaign: the movie reported the mouse over
-an entry, never a click (nor did XCOM 2's own click-under-mouse, the `click3d` aid). Engineering's 3D panel takes clicks.
-The cause inside the movie is not found; **the fix:** an EW screen in 3D that gets the mouse button's release with no
-release from its movie just after (0.15 s) gives the clip under the mouse the release itself (`UILWEWScreen.ForwardClick3D`;
-screens whose movie does report it are untouched). Abilities and Loadout now open by click. Also found: a right click on
-the summary closed the soldier list below too (the release reached it); now an EW screen closes on the press only.
+The new `soldier-and-rooms` journey (a soldier's screens, Launch Satellite, a craft) seemed to find that **no click
+reached the soldier summary's menu** on EW's armory panel (XCOM 2's 3D movie). **It was the test's own fault**, found by
+sweeping the mouse over the panel (each mouse-in logged) against a screenshot taken at the same moment: the panel's
+clickable rows match its drawn rows exactly, but Windows' OCR gives its boxes in the picture as it straightened it
+(`OcrResult.TextAngle`, -1.9 degrees on that slanted panel, about the picture's centre), so the boxes came back up to 28 px
+too high and the test clicked the row above (nothing above ABILITIES; ABILITIES for LOADOUT). `ocr.ps1` now turns each box
+back. A click forwarding added in between (`UILWEWScreen.ForwardClick3D`, a click the movie "did not report" given to the
+clip under the mouse) is taken out again; it is in download 731e83f, where it should only act on a click on a 3D screen
+that the movie itself ignores. Also found, and real: a right click on the summary closed the soldier list below too (the
+release reached it); now an EW screen closes on the press only.
 Control-port aids added for this: `fade [off]` (fade, cinematic mode, the HUD's mouse target, the camera's busy state,
-the displays), `click3d`, `closescreen <class>`.
+the displays), `click3d`, `closescreen <class>`, `uvadjust <display>`; `start-game.ps1 -Display` (fullscreen as a player's).
