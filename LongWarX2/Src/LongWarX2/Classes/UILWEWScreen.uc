@@ -639,6 +639,9 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	}
 	if (cmd == class'UIUtilities_Input'.const.FXS_R_MOUSE_DOWN)
 	{
+		// (On the press only: its release comes to the screen below, which had closed on it too, two levels for one click.)
+		if ((arg & class'UIUtilities_Input'.const.FXS_ACTION_PRESS) == 0)
+			return true;
 		// (The hub below told, so it does not take the same click as its own: one click had left two levels.)
 		foreach AllActors(class'UILWEWHub', Hub)
 			Hub.LastRightClose = WorldInfo.TimeSeconds;
