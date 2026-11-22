@@ -57,6 +57,7 @@ function Read-Image($img) {
   $sb = Await ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
   $out = Await ($engine.RecognizeAsync($sb)) ([Windows.Media.Ocr.OcrResult])
   $stream.Dispose()
+  if ($env:LWX2_OCR_ANGLE) { [Console]::Error.WriteLine("TextAngle " + $out.TextAngle) }
   return $out
 }
 # (-Bands: read in overlapping horizontal bands as well: Windows' OCR misses a whole row of labels now and then (the room
