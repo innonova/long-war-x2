@@ -452,3 +452,6 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   the sheet rolled so the band starts at its top, at its own resolution, and the material samples v × 0.25
   (`DiffuseUVTile` from the look's `UVTile`, set by the glow stand-in) as EW's shader does (converter 91). The desk
   terminals show EW's crisp panel; the engineering, base, Mission Control and Gene Lab views unchanged otherwise.
+- **Custom screens** (converter 92): the same fix for `HQ_CustomScreens_B`/`_F` regions of EW's decal sheet: the copy is
+  the sheet shifted by the region's offset, the material scales UV0 by its size. The Gene Lab's side screen shows its
+  panel detail (still dim: EW's colour there is HDR, normalized to 1 in ours).

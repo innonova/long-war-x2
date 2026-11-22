@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 91 // (91: console screens' band at its own resolution, scaled by the material)
+export const CONVERTER_VERSION = 92 // (92: custom screens' regions too: the sheet shifted, scaled by the material)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
@@ -1340,7 +1340,11 @@ for (const [r, l] of looks) {
       const m = Math.max(col[0]!, col[1]!, col[2]!, 1e-3)
       l.tint = m > 1 ? [col[0]! / m, col[1]! / m, col[2]! / m, 1] : col
       l.diffuse = sheet
-      l.screenUV = uv
+      // (EW samples (UV0 + xy) × zw. The copy is the sheet shifted by xy × zw, at its own resolution, and the material
+      // scales UV0 by zw (DiffuseUVTile): stretched into the copy, the regions blurred as the consoles' bands had;
+      // converter 92.)
+      l.screenUV = [uv[0]! * uv[2]!, uv[1]! * uv[3]!, 1, 1]
+      l.uvTile = [uv[2]!, uv[3]!]
       l.screenChannel = /_F$/.test(root) ? 3 : 2
     }
   }
