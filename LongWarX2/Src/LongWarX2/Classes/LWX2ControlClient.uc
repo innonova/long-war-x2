@@ -576,6 +576,10 @@ function Handle(string Line, out array<string> Out)
 	case "hurt":
 		Out.AddItem(Hurt(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? int(Args[2]) : 1));
 		return;
+	case "uvadjust":
+		// uvadjust <display tag> [x y]: the display material's UVAdjust read, or set (a test aid: the 3D panels' mouse mapping).
+		Out.AddItem(UVAdjust(Args.Length > 1 ? name(Args[1]) : '', Args.Length > 3, Args.Length > 3 ? float(Args[2]) : 1.0, Args.Length > 3 ? float(Args[3]) : 1.0));
+		return;
 	case "click3d":
 		// A click on what lies under the mouse in the 3D movie (XCOM 2's Steam controller confirm; a test aid).
 		Pres().ClickPathUnderMouse3D(true);
@@ -1118,6 +1122,37 @@ function string NewCampaign(int Difficulty, bool bFirstMission)
  * movie=0|1, in a mission turn=<team whose units act> busy=0|1 (the visualizer still showing what happened) ended=0|1,
  * and ready=1 when the game waits on the player (no film, nothing being shown; in a mission XCOM's turn with the HUD up).
  */
+function string UVAdjust(name DisplayTag, bool bSet, float X, float Y)
+{
+	local UIDisplay_LevelActor D;
+	local MaterialInstanceConstant M;
+	local LinearColor C;
+	local string Result;
+
+	foreach AllActors(class'UIDisplay_LevelActor', D)
+	{
+		if (D.Tag != DisplayTag || D.StaticMeshComponent == none)
+			continue;
+		M = MaterialInstanceConstant(D.StaticMeshComponent.GetMaterial(0));
+		if (M == none)
+		{
+			Result @= string(D.Name) @ "no instance;";
+			continue;
+		}
+		M.GetVectorParameterValue('UVAdjust', C);
+		Result @= string(D.Name) @ "UVAdjust" @ C.R @ C.G @ C.B @ C.A @ "scale" @ D.DrawScale @ D.DrawScale3D @ "rot" @ D.Rotation @ "parent" @ M.Parent;
+		if (bSet)
+		{
+			C.R = X;
+			C.G = Y;
+			M.SetVectorParameterValue('UVAdjust', C);
+			Result @= "set";
+		}
+		Result $= ";";
+	}
+	return Result != "" ? Result : "ERR no display" @ DisplayTag;
+}
+
 /** The HQ camera's state as XCOM 2's input sees it (XComHeadquartersInput.LMouse drops clicks while it is busy). */
 function string CamBusy()
 {
