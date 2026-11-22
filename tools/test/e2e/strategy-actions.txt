@@ -27,6 +27,9 @@ see Sawed-off Shotgun (1)
 shot item-ordered
 back
 expect UILWEWHub
+# (Out of the room: EW's HUD shows Mission Control and the clock only on the base's view.)
+rmb
+expect UILWEWHub
 # Mission Control: SCAN FOR ACTIVITY, the clock running (1 March to 2 March), the research and the council report listed.
 click MISSION CONTROL
 expect MissionControl
