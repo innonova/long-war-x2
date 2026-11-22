@@ -6,15 +6,21 @@ click =LONG WAR
 expect Difficulty
 shot difficulty
 click START GAME
+# (The base chosen first, as EW's: features/first-mission-order.md.)
+expect StartSelect
+shot start-screen
+click Begin Game
 waitfor phase=tactical 240
 waitfor DropShipBriefing 60
 wait 25
 shot briefing
+# (The first mission in a country of the home's continent: its abductions named in the briefing.)
+see Abductions -
 key Space
 waitfor ready=1 180
 shot first-mission
-# Won (setup: the mission itself is not what is tested), then back as a player goes: the reports, Long War's start screen
-# (SELECT BASE LOCATION, which the debrief had skipped), Begin Game, EW's base (which stayed black: XCOM 2's fade).
+# Won (setup: the mission itself is not what is tested), then back as a player goes: the reports, then EW's base at once
+# (the base was chosen before the mission; it had stayed black: XCOM 2's fade).
 lw win
 waitfor MissionSummary 60
 wait 3
@@ -30,9 +36,6 @@ click CONTINUE
 wait 3
 # (Artifacts Recovered, only when the mission brought something back.)
 maybe CONTINUE
-waitfor StartSelect 60
-shot start-screen
-click Begin Game
 waitfor UILWEWHub 60
 wait 5
 shot base
