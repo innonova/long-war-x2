@@ -20,7 +20,7 @@ static function FirstMissionOnEWMap(XComGameState StartState)
 	local PlotDefinition Plot;
 	local MissionDefinition Def;
 	local BiomeDefinition Biome;
-	local string EWMap;
+	local string EWMap, OpName;
 
 	if (!class'UIScreenListener_LongWarX2Tactical'.default.PlaceEWMapWhole)
 		return;
@@ -49,6 +49,10 @@ static function FirstMissionOnEWMap(XComGameState StartState)
 		Mission.GeneratedMission.Biome = Biome;
 		Mission.GeneratedMission.SitReps.Length = 0;
 		Mission.TacticalGameplayTags.Length = 0;
+		// (EW's operation name, as Long War's other missions get (UILWHeadquarters), not XCOM 2's Operation Gatecrasher.)
+		OpName = class'LWOpNames'.static.For(3);
+		if (OpName != "")
+			Mission.GeneratedMission.BattleOpName = OpName;
 		`log("LongWarX2: the first mission on" @ Plot.MapName @ "with" @ Def.sType, , 'LongWarX2');
 		return;
 	}
