@@ -629,3 +629,16 @@ remains is how EW's 3D movie maps its 1280 x 720 stage onto its render target (E
   soldier panels at the summary's places (`UILWEWSoldierPromotion.Centre`), measured against EW's capture: the tree, the
   header and the stats now stand where EW's do, every border closed.
 
+
+## Notes (2026-11-22, the campaign's first mission and the base's place)
+
+- **EW's order** (`XGStrategyAI.CreateFirstMission`, without the tutorial): the base's place is chosen first, then the first
+  mission is an abduction (`XGMission_Abduction`) in a random city of the base's continent, its squad
+  `DetermineFirstMissionSquad`, its timer `ABDUCTION_TIMER`.
+- **The port's order:** XCOM 2's new campaign launches its first mission straight from the strategy map's start
+  (`XGStrategy`, `Initing`), played on an EW abduction map (`FirstMissionOnEWMap`); Long War's start screen (SELECT BASE
+  LOCATION) comes after it. So the first mission's briefing can name no country, and its location stays XCOM 2's region
+  text. Since 2026-11-22 it has an EW operation name.
+- **To make it EW's:** hold XCOM 2's launch (its wait on the movie in `Initing` is the place: `LWX2FirstMissionStart`
+  already ends it) until Long War's start screen has chosen the base, then make the first mission an abduction in that
+  continent (city, country, briefing in Long War's words). Not started.
