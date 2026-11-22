@@ -25,6 +25,7 @@ rmb
 wait 6
 lwsee units|ap 1
 key Back
-waitfor turn=eTeam_Alien 30
+# (XCOM's second turn: the state line's round, the turns of the side acting now.)
+waitfor round=2 240
 waitfor turn=eTeam_XCom busy=0 240
 shot second-turn
