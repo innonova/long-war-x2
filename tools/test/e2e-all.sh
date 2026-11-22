@@ -5,7 +5,9 @@
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 fails=0
-run() { local r; r=$(tools/test/e2e.sh "tools/test/e2e/$1.txt" 2>&1 | tail -1); echo "$r"; [[ "$r" == *", 0 failed" ]] || fails=$((fails+1)); }
+# (Each journey from the base's view: a journey can end inside a room, and clicking that room's tab again leaves it. A
+# right click leaves a room and does nothing on the base's view.)
+run() { local r; tools/test/on.sh 'tools\test\click.ps1 960 540 -Right' 'Start-Sleep 2' 'tools\test\click.ps1 960 540 -Right' 'Start-Sleep 2' >/dev/null 2>&1; r=$(tools/test/e2e.sh "tools/test/e2e/$1.txt" 2>&1 | tail -1); echo "$r"; [[ "$r" == *", 0 failed" ]] || fails=$((fails+1)); }
 tools/test/on.sh 'tools\test\stop-game.ps1' 'tools\test\start-game.ps1' 2>&1 | tail -1
 run first-mission
 tools/test/new-campaign.sh 1 --begin 2>&1 | tail -1
