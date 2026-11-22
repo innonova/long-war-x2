@@ -91,6 +91,10 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	super.InitScreen(InitController, InitMovie, InitName);
 	// (As the Geoscape does: a mission come back counted, its wounds and fatigue; the hub is the strategy layer's root.)
 	class'XComGameState_LWStrategy'.static.Arrived();
+	// (XCOM 2 comes back from a mission faded to black and fades in from its own after-action screens; after the
+	// campaign's first mission, which goes straight to Long War's start screen, nothing did, and the base stayed black,
+	// aek 2026-11-22. The hub is what the player sees now: no fade left over it.)
+	InitController.ClientSetCameraFade(false);
 }
 
 /** The room's options in EW's submenu under its tab, the first selected. */
