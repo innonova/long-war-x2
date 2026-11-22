@@ -5,11 +5,12 @@
 // then is XCOM 2's looping loading screen, which neither ends nor takes a key: the wait never ended and the
 // game stood on the loading screen for ever (aek 2026-11-22). That movie is stopped here once the wait has
 // begun, which is what skipping the intro did.
-class LWX2FirstMissionStart extends Actor;
+class LWX2FirstMissionStart extends Actor config(LWAirWar);
 
 /** Set by the campaign's start (the EW new-game screen, the control port), across the map change to the
- *  strategy map; cleared once the first mission is on its way. */
-var bool bPending;
+ *  strategy map; cleared once the first mission is on its way. (Config only so that its default may be set: never in an
+ *  ini, never saved.) */
+var config bool bPending;
 var float Waited;
 
 static function Expect()
@@ -22,7 +23,7 @@ event Tick(float DeltaTime)
 	local XGStrategy Strategy;
 
 	Waited += DeltaTime;
-	Strategy = XGStrategy(`GAME);
+	Strategy = `GAME;
 	if (!default.bPending || Waited > 600)
 	{
 		default.bPending = false;
