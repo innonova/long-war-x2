@@ -11,6 +11,9 @@ class LWX2FirstMissionStart extends Actor config(LWAirWar);
  *  strategy map; cleared once the first mission is on its way. (Config only so that its default may be set: never in an
  *  ini, never saved.) */
 var config bool bPending;
+/** The main menu's start screen's choice (UILWStartSelect in the shell), for the campaign's start state
+ *  (XComGameState_LWStartChoice); -1 none. (Config only so that its default may be set.) */
+var config int StartHome, StartChoice;
 var float Waited;
 
 static function Expect()
@@ -55,4 +58,5 @@ event Tick(float DeltaTime)
 defaultproperties
 {
 	bAlwaysTick = true;
+	StartHome = -1;
 }

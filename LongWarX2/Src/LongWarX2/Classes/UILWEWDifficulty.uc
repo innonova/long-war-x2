@@ -310,8 +310,23 @@ function Pressed(string Which)
 	}
 }
 
-/** XCOM 2's screen under this told what was chosen here, then its confirm: the campaign starts as XCOM 2 starts one. */
+/** START GAME: first the base's place, as EW chooses it before the first mission (Long War's start screen in the main menu's
+ *  world, features/first-mission-order.md), which then starts the campaign (StartCampaign). */
 function Start()
+{
+	if (Under == none || bStarted)
+		return;
+	if (class'UILWEWScreen'.static.HasEWScreens() && Movie.Pres.ScreenStack.GetFirstInstanceOf(class'UILWStartSelect') == none)
+	{
+		class'LWX2FirstMissionStart'.default.StartHome = -1;
+		class'UILWStartSelect'.static.OpenInShell(self, Difficulty);
+		return;
+	}
+	StartCampaign();
+}
+
+/** XCOM 2's screen under this told what was chosen here, then its confirm: the campaign starts as XCOM 2 starts one. */
+function StartCampaign()
 {
 	local UIMechaListItem Item;
 	local string ID;

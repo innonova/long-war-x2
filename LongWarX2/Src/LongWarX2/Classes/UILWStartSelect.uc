@@ -8,6 +8,25 @@ class UILWStartSelect extends UILWEWScreen;
 var array<int> Choices;
 var array<int> Countries;
 var int Selected;
+/** In the main menu's world, before the campaign starts (features/first-mission-order.md): EW's new-game screen beneath,
+ *  started once the base is chosen; its difficulty for the starting money. */
+var UILWEWDifficulty NewGame;
+var int ShellDifficulty;
+
+/** SELECT BASE LOCATION over EW's new-game screen, after its START GAME, as EW chooses the base before the first mission. */
+static function OpenInShell(UILWEWDifficulty Screen, int Difficulty)
+{
+	local UILWStartSelect Start;
+
+	DynamicLoadObject(default.UIPackage $ ".ewxContinentSelect", class'Object', true);
+	Start = Screen.Movie.Pres.Spawn(class'UILWStartSelect', Screen.Movie.Pres);
+	Start.Package = name("/ package/ewxContinentSelect/ContinentSelect");
+	Start.MCName = 'theScreen';
+	Start.NewGame = Screen;
+	Start.ShellDifficulty = Difficulty;
+	Screen.Movie.Pres.ScreenStack.Push(Start);
+	`log("LongWarX2: start screen shown before the campaign", , 'LongWarX2');
+}
 
 /** The start screen if the campaign has not begun and EW's screens are there; else the Geoscape (the campaign begun with
  * the United States and no starting bonus, as before the start screen). */
@@ -15,6 +34,10 @@ static function OpenGeoscape(XComHQPresentationLayer HQPres)
 {
 	local UILWStartSelect Start;
 
+	// (The base chosen before the campaign's first mission, as EW's: Long War's campaign made with that choice, no start
+	// screen now; features/first-mission-order.md.)
+	if (class'XComGameState_LWStrategy'.static.Get() == none && class'XComGameState_LWStartChoice'.static.Get() != none)
+		class'XComGameState_LWStrategy'.static.GetOrCreate(class'XComGameState_LWStartChoice'.static.Get().Home, class'XComGameState_LWStartChoice'.static.Get().Choice);
 	if (class'XComGameState_LWStrategy'.static.Get() == none && class'UILWEWScreen'.static.HasEWScreens())
 	{
 		if (HQPres.ScreenStack.IsInStack(class'UILWStartSelect'))
@@ -116,7 +139,7 @@ function Select(int Index)
 	MC.FunctionNum("SetListSelection", Selected);
 	MC.BeginFunctionOp("UpdateInfo");
 	MC.QueueString(Caps(class'LWStrategyRules'.default.Countries[k].Name));
-	MC.QueueString(Label(class'LWBonuses'.default.LabelStarting, "Starting: ") $ class'LWStrategyRules'.static.Money(Round(class'LWStrategyRules'.default.Countries[k].StartingCash * class'LWStrategyRules'.default.StartingCashBalance[class'LWStrategyRules'.static.Difficulty()])));
+	MC.QueueString(Label(class'LWBonuses'.default.LabelStarting, "Starting: ") $ class'LWStrategyRules'.static.Money(Round(class'LWStrategyRules'.default.Countries[k].StartingCash * class'LWStrategyRules'.default.StartingCashBalance[NewGame != none ? Clamp(ShellDifficulty, 0, 3) : class'LWStrategyRules'.static.Difficulty()])));
 	MC.QueueString(class'LWBonuses'.static.ChoiceText(Choices[Selected], k, Label(class'LWBonuses'.default.LabelContinentBonus, "CONTINENT BONUS:")));
 	MC.EndOp();
 }
@@ -126,6 +149,16 @@ function Accept()
 {
 	local XComHQPresentationLayer HQPres;
 
+	if (NewGame != none)
+	{
+		// (Before the campaign: the choice kept for its start state, XComGameState_LWStartChoice; then it starts.)
+		`log("LongWarX2: start screen before the campaign: home" @ class'LWStrategyRules'.default.Countries[Countries[Selected]].Name $ ", option" @ Choices[Selected], , 'LongWarX2');
+		class'LWX2FirstMissionStart'.default.StartHome = Countries[Selected];
+		class'LWX2FirstMissionStart'.default.StartChoice = Choices[Selected];
+		CloseScreen();
+		NewGame.StartCampaign();
+		return;
+	}
 	if (Choices.Length == 0 || class'XComGameState_LWStrategy'.static.Get() != none)
 		return;
 	`log("LongWarX2: start screen: home" @ class'LWStrategyRules'.default.Countries[Countries[Selected]].Name $ ", option" @ Choices[Selected], , 'LongWarX2');
@@ -202,9 +235,12 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		case class'UIUtilities_Input'.const.FXS_BUTTON_A:
 			Accept();
 			return true;
-		// No way back: the campaign has to begin somewhere (Long War's offers only Exit, to the main menu).
+		// No way back once the campaign has begun (Long War's offers only Exit, to the main menu); before it, back to the
+		// new-game screen.
 		case class'UIUtilities_Input'.const.FXS_KEY_ESCAPE:
 		case class'UIUtilities_Input'.const.FXS_BUTTON_B:
+			if (NewGame != none)
+				CloseScreen();
 			return true;
 	}
 	return super(UIScreen).OnUnrealCommand(cmd, arg);

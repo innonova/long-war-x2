@@ -7,6 +7,7 @@ static event InstallNewCampaign(XComGameState StartState)
 	class'XComGameState_LWAirWar'.static.CreateIn(StartState);
 	ReplaceFactionHeroes(StartState);
 	FirstMissionOnEWMap(StartState);
+	class'XComGameState_LWStartChoice'.static.CreateIn(StartState);
 }
 
 /**
