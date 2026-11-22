@@ -19,19 +19,23 @@ fails=0
 for room in "${rooms[@]}"; do
   tools/test/on.sh "tools\\test\\click.ps1 ${X[$room]} 33" >/dev/null 2>&1; sleep 2.5
   # (The room's menu: OCR lines in the menu column, x 700-1350, y 70-330 of the 1920x1080 UI, upper-case labels.)
-  mapfile -t items < <(tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | tr -d '\r' | awk '$1>=700 && $1<=1350 && $2>=70 && $2<=330 {$1=$2=$3=$4=""; sub(/^ +/,""); print}' | grep -E '^[A-Z0-9 /:-]+$' | awk 'length($0)>3')
+  # (Each with where it was read: clicked there when the label is not read again, OCR being confused by the wall behind;
+# labels in capitals, a letter or two misread ("VIEW XCOM Fl") allowed.)
+  declare -A AT=()
+  while read -r x y w h t; do AT["$t"]="$((x + w / 2)) $((y + h / 2))"; done < <(tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | tr -d '\r' | awk '$1>=700 && $1<=1350 && $2>=70 && $2<=330' | awk '{t=$0; sub(/^[0-9]+ [0-9]+ [0-9]+ [0-9]+ /,"",t); u=t; l=t; nu=gsub(/[A-Z]/,"",u); nl=gsub(/[a-z]/,"",l); if (nu >= 4 && nl * 5 <= nu) print}')
+  mapfile -t items < <(printf '%s\n' "${!AT[@]}" | grep . | sort)
   say "== $room: ${#items[@]} entries: ${items[*]}"
   for it in "${items[@]}"; do
     slug=$(echo "$room-$it" | tr ' /:' '___' | tr -cd 'A-Za-z0-9_-')
     r=$(tools/test/on.sh "tools\\test\\click-label.ps1 \"$it\"" 2>&1 | tail -1 | tr -d '\r'); sleep 3
     # (Once more after a moment: the screen read nothing just after a dialog closed.)
-    [[ "$r" == ERR* ]] && { sleep 2; r=$(tools/test/on.sh "tools\\test\\click-label.ps1 \"$it\"" 2>&1 | tail -1 | tr -d '\r'); sleep 3; }
+    [[ "$r" == ERR* && -n "${AT[$it]:-}" ]] && { r=$(tools/test/on.sh "tools\\test\\click.ps1 ${AT[$it]}" 2>&1 | tail -1 | tr -d '\r'); r="clicked where read (${AT[$it]}) $r"; sleep 3; }
     s=$(screen); tools/test/shot.sh "$out/$slug.png" >/dev/null 2>&1
     n1=$(tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | grep -c .)
     if [[ "$r" == ERR* ]]; then say "  $it: FAIL click ($r)"; fails=$((fails+1)); continue; fi
     if [ "$s" = UILWEWHub ]; then say "  $it: opened nothing (still the hub)"; continue; fi
-    # (A dialog (EW's own: the bonuses' list, hiring) has its own buttons, no corner arrow: Esc, as its Cancel.)
-    if [[ "$s" == UIDialogueBox || "$s" == UILWEWHiring ]]; then
+    # (A dialog (EW's own: the bonuses' list, hiring, pending requests) has its own buttons, no corner arrow: Esc, as its Cancel.)
+    if [[ "$s" == UIDialogueBox || "$s" == UILWEWHiring || "$s" == UILWEWPendingRequests ]]; then
       tools/test/on.sh 'tools\test\esc.ps1' >/dev/null 2>&1; sleep 2.5; b=$(screen)
       if [ "$b" = UILWEWHub ]; then say "  $it: $s (a dialog), Esc ok"; else say "  $it: $s (a dialog), Esc left $b on top: FAIL"; fails=$((fails+1)); fi
       continue
@@ -41,7 +45,7 @@ for room in "${rooms[@]}"; do
     if [ "$b" = UILWEWHub ]; then
       say "  $it: $s, back ok"
       # (The second visit: as much text as the first.)
-      tools/test/on.sh "tools\\test\\click-label.ps1 \"$it\"" >/dev/null 2>&1; sleep 3
+      r2=$(tools/test/on.sh "tools\\test\\click-label.ps1 \"$it\"" 2>&1 | tail -1); [[ "$r2" == ERR* && -n "${AT[$it]:-}" ]] && tools/test/on.sh "tools\\test\\click.ps1 ${AT[$it]}" >/dev/null 2>&1; sleep 3
       n2=$(tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | grep -c .); tools/test/shot.sh "$out/$slug-2.png" >/dev/null 2>&1
       if [ "$n2" -lt $(( n1 * 7 / 10 )) ]; then say "  $it: second visit shows less ($n2 lines of text against $n1): FAIL"; fails=$((fails+1))
       else say "  $it: second visit as the first ($n2 lines of text against $n1)"; fi
