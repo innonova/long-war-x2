@@ -459,3 +459,5 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   converter's copy of EW's decal sheet (custom screens), 2.6; the consoles' own sheet stays at 1 (at 1.8 for all, round
   19 found the consoles too bright). The Gene Lab's left screen nearer EW's; its right one still dark (its picture's
   region is mostly dark in our copy: to look at).
+  The Gene Lab's dark right screen: at `ScreenGlowBrightness` 4.5 (a test, not kept) it did not brighten, so it is not
+  one of the decal-sheet custom screens; its piece and material still to identify (`basenear` in the Gene Lab view).
