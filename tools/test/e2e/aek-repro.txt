@@ -1,0 +1,41 @@
+# aek's report (2026-11-22): "i clicked into engineering facilities, then clicked out and clicked buy items under
+# engineering and got facilities again then i clicked barracks and got buy items". Each way out in turn.
+tab ENGINEERING
+expect UILWEWHub
+click BUILD FACILITIES
+expect Facilities
+back
+expect UILWEWHub
+click BUILD/BUY ITEMS
+expect Engineering
+back
+expect UILWEWHub
+tab BARRACKS
+expect UILWEWHub
+shot barracks-after-back
+tab ENGINEERING
+expect UILWEWHub
+click BUILD FACILITIES
+expect Facilities
+rmb
+expect UILWEWHub
+click BUILD/BUY ITEMS
+expect Engineering
+rmb
+expect UILWEWHub
+tab BARRACKS
+expect UILWEWHub
+shot barracks-after-rmb
+tab ENGINEERING
+expect UILWEWHub
+click BUILD FACILITIES
+expect Facilities
+esc
+expect UILWEWHub
+click BUILD/BUY ITEMS
+expect Engineering
+esc
+expect UILWEWHub
+tab BARRACKS
+expect UILWEWHub
+shot barracks-after-esc
