@@ -445,5 +445,5 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
 - **The research terminals' streaks** (found, open): the desk terminal on the research screen is `Console_B`, its screen
   its second material slot (`HQ_ConsoleScreen_Tinted`, our copy `HQscreens_test_LWX2Screen4`/`6`); the earlier probes
   missed it. A checker texture on it shows the screen maps a small sub-rectangle of its texture. Our band copies look
-  crisp offline, so the streaks come from how that small region is sampled (the copies' smaller mips, made per mip from
-  the source's same-size mip, are the first suspect). Next: the copies' mips made from the largest source mip.
+  crisp offline (their mips are made from larger source mips already), so the cause is still open: next, the screen
+  element's own UVs read per element, against EW's shader's (u, v/4 + w).
