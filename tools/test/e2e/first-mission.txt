@@ -13,3 +13,25 @@ shot briefing
 key Space
 waitfor ready=1 180
 shot first-mission
+# Won (setup: the mission itself is not what is tested), then back as a player goes: the reports, Long War's start screen
+# (SELECT BASE LOCATION, which the debrief had skipped), Begin Game, EW's base (which stayed black: XCOM 2's fade).
+lw win
+waitfor MissionSummary 60
+wait 3
+shot summary
+click CONTINUE
+waitfor DropShipBriefingEnd 120
+wait 20
+key Space
+waitfor Debrief 180
+wait 3
+shot debrief
+click CONTINUE
+wait 3
+click CONTINUE
+waitfor StartSelect 60
+shot start-screen
+click Begin Game
+waitfor UILWEWHub 60
+wait 5
+shot base
