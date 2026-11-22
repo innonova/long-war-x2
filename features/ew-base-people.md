@@ -273,4 +273,5 @@ clear glass with coloured, frothy edges; ours (a glow over the froth) as filled.
   view, a rough skin mask), a little more saturated.
 - **Shen's yellow** (2026-11-22, tried): engineering's own people lights at 0.2 instead of 0.45 changed little; his skin
   measures 153 112 63 against EW's 157 124 82: as bright, but more saturated (less blue). The yellow is the skin tint
-  copy (`SkinColor` on the skin mask), not the light. Reverted; next: the skin tint's saturation in `tint-textures.ts`.
+  copy (`SkinColor` on the skin mask), not the light. Reverted; then the skin tint's warmth in `tint-textures.ts` (`SKIN_WARMTH` 1.07 0.98 0.95 → 1.0 1.03 1.25,
+  converter 93): Shen's skin 164 124 75 against EW's 157 124 82 (was 153 112 63); Vahlen's face unchanged in kind.
