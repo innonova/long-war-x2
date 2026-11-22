@@ -17,7 +17,8 @@ expect SoldierSummary
 click Loadout
 expect Loadout
 shot loadout
-back
+# (XCOM 2's loadout: its own back arrow, further into the corner than EW's.)
+at 43 1036
 expect SoldierSummary
 rmb
 expect SoldierList

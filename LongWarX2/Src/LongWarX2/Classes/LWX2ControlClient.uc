@@ -44,6 +44,7 @@ function Handle(string Line, out array<string> Out)
 	local UIScreen Scr;
 	local array<Actor> Placed;
 	local PlayerController PC;
+	local UIDisplay_LevelActor Disp;
 
 	ParseStringIntoArray(Line, Args, " ", true);
 	if (Args.Length == 0)
@@ -516,6 +517,14 @@ function Handle(string Line, out array<string> Out)
 		// The camera's fade (a screen left black): fade [off].
 		PC = GetALocalPlayerController();
 		Out.AddItem("fading" @ PC.PlayerCamera.bEnableFading @ "amount" @ PC.PlayerCamera.FadeAmount @ "colour" @ PC.PlayerCamera.FadeColor.R $ "," $ PC.PlayerCamera.FadeColor.G $ "," $ PC.PlayerCamera.FadeColor.B @ "cinematic" @ PC.bCinematicMode);
+		Out.AddItem("hud" @ (PC.myHUD != none ? string(PC.myHUD.Class.Name) : "none") @ "shown" @ (PC.myHUD != none && PC.myHUD.bShowHUD)
+			@ "mouse target" @ (XComHUD(PC.myHUD) != none ? string(XComHUD(PC.myHUD).CachedMouseInteractionInterface) : "-")
+			@ (UIDisplay_LevelActor(XComHUD(PC.myHUD).CachedMouseInteractionInterface) != none ? "tag" @ UIDisplay_LevelActor(XComHUD(PC.myHUD).CachedMouseInteractionInterface).Tag @ "at" @ UIDisplay_LevelActor(XComHUD(PC.myHUD).CachedMouseInteractionInterface).Location : "")
+			@ "travel processed" @ XComPlayerController(PC).bProcessedTravelDestinationLoaded @ "input state" @ PC.GetStateName()
+			@ "cam" @ CamBusy()
+			@ "mouse on 2D" @ XComInputBase(PC.PlayerInput).TestMouseConsumedByFlash() @ "on 3D" @ XComInputBase(PC.PlayerInput).TestMouseConsumedBy3DFlash());
+		foreach AllActors(class'UIDisplay_LevelActor', Disp)
+			Out.AddItem("display" @ Disp.Name @ "tag" @ Disp.Tag @ "hidden" @ Disp.bHidden @ "collide" @ Disp.bCollideActors @ (Disp.StaticMeshComponent != none ? "block" @ Disp.StaticMeshComponent.BlockZeroExtent @ "mesh" @ Disp.StaticMeshComponent.StaticMesh : ""));
 		if (Args.Length > 1 && Args[1] == "off")
 			PC.ClientSetCameraFade(false);
 		return;
@@ -566,6 +575,22 @@ function Handle(string Line, out array<string> Out)
 		return;
 	case "hurt":
 		Out.AddItem(Hurt(Args.Length > 1 ? Args[1] : "", Args.Length > 2 ? int(Args[2]) : 1));
+		return;
+	case "click3d":
+		// A click on what lies under the mouse in the 3D movie (XCOM 2's Steam controller confirm; a test aid).
+		Pres().ClickPathUnderMouse3D(true);
+		Out.AddItem("clicked under the mouse in 3D");
+		return;
+	case "closescreen":
+		// closescreen <class>: that screen taken off the stack (a test aid: what a screen below does to the one on top).
+		Scr = Args.Length > 1 ? Pres().ScreenStack.GetScreen(class<UIScreen>(DynamicLoadObject("LongWarX2." $ Args[1], class'Class', true))) : none;
+		if (Scr == none)
+			Out.AddItem("ERR no such screen in the stack");
+		else
+		{
+			Pres().ScreenStack.Pop(Scr);
+			Out.AddItem("closed" @ Scr.Name);
+		}
 		return;
 	case "remove":
 		// remove #<unit>: a unit taken off the field (a test aid: a mind-controlled soldier out of the aliens' aim).
@@ -1093,6 +1118,17 @@ function string NewCampaign(int Difficulty, bool bFirstMission)
  * movie=0|1, in a mission turn=<team whose units act> busy=0|1 (the visualizer still showing what happened) ended=0|1,
  * and ready=1 when the game waits on the player (no film, nothing being shown; in a mission XCOM's turn with the HUD up).
  */
+/** The HQ camera's state as XCOM 2's input sees it (XComHeadquartersInput.LMouse drops clicks while it is busy). */
+function string CamBusy()
+{
+	local XComHQPresentationLayer HQ;
+
+	HQ = XComHQPresentationLayer(XComPlayerController(GetALocalPlayerController()).Pres);
+	if (HQ == none || HQ.m_kCamera == none)
+		return "-";
+	return "busy" @ HQ.CAMIsBusy() @ "state" @ HQ.m_kCamera.GetStateName();
+}
+
 function string GameState()
 {
 	local string Phase, Screen, Mission;
