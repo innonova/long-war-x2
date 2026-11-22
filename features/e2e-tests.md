@@ -87,3 +87,25 @@ exits and transitions went unseen, and regressions in motion (animations) were n
   `FirstMissionOnEWMap`). **Left open:** its location is XCOM 2's region text ("Wilderness of East Africa") and its
   briefing and objective are empty: Long War's state does not exist before the first mission, and XCOM HQ's country is
   chosen only after it (EW chooses the base first).
+
+## Report (2026-11-22, after the first mission; clicks on 3D screens)
+
+The first-mission journey carried on past the mission (won by `lw win`, the rest by clicks) found three faults on that
+path, never walked before:
+- **The start screen skipped:** the debrief (`UILWEWDebrief`) asked for Long War's campaign (`Arrived` → `GetOrCreate`),
+  which made it with the United States as home; SELECT BASE LOCATION then never came. Now the debrief leaves it alone
+  when there is none yet, and the start screen makes it with the base chosen.
+- **The base black:** XCOM 2 comes back from a mission faded to black and fades in from its own after-action screen, which
+  this path never shows. The hub clears the camera's fade when it opens (and a cinematic mode, if one is left on).
+- **The journey now passes:** LONG WAR → START GAME → briefing → (won) → summary → debrief → SELECT BASE LOCATION → Begin
+  Game → EW's base, seen.
+
+The new `soldier-and-rooms` journey (a soldier's screens, Launch Satellite, a craft) found that **no click reached the
+soldier summary's menu** on EW's armory panel (XCOM 2's 3D movie), in any campaign: the movie reported the mouse over
+an entry, never a click (nor did XCOM 2's own click-under-mouse, the `click3d` aid). Engineering's 3D panel takes clicks.
+The cause inside the movie is not found; **the fix:** an EW screen in 3D that gets the mouse button's release with no
+release from its movie just after (0.15 s) gives the clip under the mouse the release itself (`UILWEWScreen.ForwardClick3D`;
+screens whose movie does report it are untouched). Abilities and Loadout now open by click. Also found: a right click on
+the summary closed the soldier list below too (the release reached it); now an EW screen closes on the press only.
+Control-port aids added for this: `fade [off]` (fade, cinematic mode, the HUD's mouse target, the camera's busy state,
+the displays), `click3d`, `closescreen <class>`.
