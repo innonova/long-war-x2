@@ -440,3 +440,5 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   `EmitterOpacityBy` (new: an emitter's strength by template), the cones at 0.35: fainter; still white rather than EW's
   cyan-blue, so the particles' own colour does not seem to reach our material for these (to look at: the cooked colour
   distributions' lookup tables as XCOM 2 reads them).
+  Fourth look: `M_EWTankGlass` with the grey froth and the olive tint at 1.0 (config only, not kept): the faces' mean
+  84 74 48 matches EW's 85 72 42, but greener and still cloudy, not EW's yellow-gold veins; left as committed.
