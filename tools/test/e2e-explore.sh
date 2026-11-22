@@ -18,12 +18,14 @@ rooms=("$@"); [ ${#rooms[@]} -eq 0 ] && rooms=(RESEARCH ENGINEERING BARRACKS HAN
 fails=0
 for room in "${rooms[@]}"; do
   tools/test/on.sh "tools\\test\\click.ps1 ${X[$room]} 33" >/dev/null 2>&1; sleep 2.5
-  # (The room's menu: OCR lines in the menu column, x 900-1350, y 70-330 of the 1920x1080 UI, upper-case labels.)
-  mapfile -t items < <(tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | tr -d '\r' | awk '$1>=880 && $1<=1350 && $2>=70 && $2<=330 {$1=$2=$3=$4=""; sub(/^ +/,""); print}' | grep -E '^[A-Z0-9 /:-]+$' | awk 'length($0)>3')
+  # (The room's menu: OCR lines in the menu column, x 700-1350, y 70-330 of the 1920x1080 UI, upper-case labels.)
+  mapfile -t items < <(tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | tr -d '\r' | awk '$1>=700 && $1<=1350 && $2>=70 && $2<=330 {$1=$2=$3=$4=""; sub(/^ +/,""); print}' | grep -E '^[A-Z0-9 /:-]+$' | awk 'length($0)>3')
   say "== $room: ${#items[@]} entries: ${items[*]}"
   for it in "${items[@]}"; do
     slug=$(echo "$room-$it" | tr ' /:' '___' | tr -cd 'A-Za-z0-9_-')
     r=$(tools/test/on.sh "tools\\test\\click-label.ps1 \"$it\"" 2>&1 | tail -1 | tr -d '\r'); sleep 3
+    # (Once more after a moment: the screen read nothing just after a dialog closed.)
+    [[ "$r" == ERR* ]] && { sleep 2; r=$(tools/test/on.sh "tools\\test\\click-label.ps1 \"$it\"" 2>&1 | tail -1 | tr -d '\r'); sleep 3; }
     s=$(screen); tools/test/shot.sh "$out/$slug.png" >/dev/null 2>&1
     n1=$(tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | grep -c .)
     if [[ "$r" == ERR* ]]; then say "  $it: FAIL click ($r)"; fails=$((fails+1)); continue; fi
