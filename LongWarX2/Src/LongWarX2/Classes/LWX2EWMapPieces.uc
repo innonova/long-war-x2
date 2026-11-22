@@ -149,8 +149,9 @@ var config float GlowScale;
 /** EW's coloured lamp faces (HQ_ColorizedLight): their colours over 1 (blue 0.42 1.18 2.0) clipped in our unlit material
  *  to a pale cyan-white; scaled by LampGlowScale so their hue stays (round 10 #8). 0: GlowScale. */
 var config float LampGlowScale;
-/** EW's screen pictures' brightness (looks whose picture is a converter's screen copy, _LWX2Screen): EW's colours there
- *  are HDR, normalized to 1 in ours, and the base grade darkens them further. 0: 1. */
+/** EW's custom screens' brightness (looks whose picture is a converter's copy of EW's decal sheet, DecalSheet…_LWX2Screen):
+ *  EW's colours there are HDR, normalized to 1 in ours, and the base grade darkens them further; the consoles' own sheet
+ *  (HQscreens_test) stays at 1 (at 1.8 they read too bright, round 19 #2). 0: 1. */
 var config float ScreenGlowBrightness;
 var config bool LightmapBase, LightmapMaps;
 /** EW's baked lighting at this brightness (1: as stored). */
@@ -1501,7 +1502,12 @@ static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, option
 			MIC.SetTextureParameterValue('LightMap', White);
 		SB.R = 1; SB.G = 1; SB.B = 0; SB.A = 0;
 		MIC.SetVectorParameterValue('LMScaleBias', SB);
-		MIC.SetScalarParameterValue('LMBrightness', (default.ScreenGlowBrightness > 0 && InStr(L.Diffuse, "_LWX2Screen") != INDEX_NONE) ? default.ScreenGlowBrightness : 1.0);
+		MIC.SetScalarParameterValue('LMBrightness', 1.0);
+		// (The custom screens' brightness on their tint: LMBrightness did not change them.)
+		if (default.ScreenGlowBrightness > 0 && InStr(L.Diffuse, "_LWX2Screen") != INDEX_NONE && InStr(L.Diffuse, "DecalSheet") != INDEX_NONE)
+		{
+			C.R *= default.ScreenGlowBrightness; C.G *= default.ScreenGlowBrightness; C.B *= default.ScreenGlowBrightness;
+		}
 		MIC.SetVectorParameterValue('Tint', C);
 		// (EW's palette lamps, HQ_EmissivePallete: no plain glow but our strip glow, the palette colour by UV0 quadrant times
 		// the vertex alpha; one colour on the whole lamp had turned EW's blue faces orange, clipping to cream, round 12 #8.)
