@@ -19,7 +19,7 @@ $hits = @()
     $hits = @($lines | Where-Object {
       if ($_ -notmatch '^(\d+) (\d+) (\d+) (\d+) (.*)$') { return $false }
       $t = ($Matches[5] -replace '\s', '').ToLowerInvariant()
-      if ($exact) { $t -eq $want } else { $t.Contains($want) -or ($t.Length -ge $min -and $t.Length -le $want.Length -and $want.StartsWith($t)) }
+      if ($exact) { ($t -replace '[^a-z0-9]+$', '') -eq $want } else { $t.Contains($want) -or ($t.Length -ge $min -and $t.Length -le $want.Length -and $want.StartsWith($t)) }
     })
     if ($hits.Count -ge $Nth) { break rounds }
   }
@@ -42,6 +42,24 @@ if ($hits.Count -lt $Nth) {
       }
     }
     if ($hits.Count -ge $Nth) { break }
+  }
+}
+# (Still not found: the screen read in tiles (1100 x 180 of the UI, overlapping), each alone, plain and inverted: Windows'
+# OCR reads some rows (the main menu's buttons along the bottom) only in a smaller picture.)
+if ($hits.Count -lt $Nth) {
+  $min = [Math]::Max(4, [int][Math]::Ceiling($want.Length * 0.85))
+  :tiles foreach ($ty in 900, 0, 150, 300, 450, 600, 750) {
+    foreach ($tx in 0, 410, 820) {
+      foreach ($inv in $true, $false) {
+        $lines = & (Join-Path $PSScriptRoot 'ocr.ps1') -Scale 2 -Invert:$inv -Region "$tx $ty 1100 180"
+        $hits = @($lines | Where-Object {
+          if ($_ -notmatch '^(\d+) (\d+) (\d+) (\d+) (.*)$') { return $false }
+          $t = ($Matches[5] -replace '\s', '').ToLowerInvariant()
+          if ($exact) { ($t -replace '[^a-z0-9]+$', '') -eq $want } else { $t.Contains($want) -or ($t.Length -ge $min -and $t.Length -le $want.Length -and $want.StartsWith($t)) }
+        })
+        if ($hits.Count -ge $Nth) { break tiles }
+      }
+    }
   }
 }
 if ($hits.Count -lt $Nth) { "ERR no '$Label' on screen; read: " + (($lines | ForEach-Object { ($_ -split ' ', 5)[4] }) -join ' | '); exit 1 }

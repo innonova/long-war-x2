@@ -2,7 +2,7 @@
 # box in the game's 1920x1080 UI coordinates (as click.ps1 takes them): "x y w h text". The E2E click tests find a
 # menu item by its label this way, as a player does (features/e2e-tests.md).
 #   tools\test\ocr.ps1 [-Scale 2]
-param([double]$Scale = 2, [double]$Gain = 1, [switch]$Words, [switch]$Bands, [switch]$Invert)
+param([double]$Scale = 2, [double]$Gain = 1, [switch]$Words, [switch]$Bands, [switch]$Invert, [string]$Region = '')
 . (Join-Path $PSScriptRoot 'game.ps1')
 Add-Type -AssemblyName System.Drawing, System.Runtime.WindowsRuntime
 $null = [Windows.Media.Ocr.OcrEngine, Windows.Foundation, ContentType = WindowsRuntime]
@@ -20,8 +20,16 @@ $o = New-Object POINT; [GW]::ClientToScreen($h, [ref]$o) | Out-Null
 $cw = $r.R - $r.L; $ch = $r.B - $r.T
 $ui = [Math]::Min($cw / 1920.0, $ch / 1080.0)
 # The client area, enlarged (OCR reads the game's small UI text better at twice the size).
+# (-Region "x y w h" in the 1920x1080 UI: only that part read, enlarged more (the main menu's small buttons along the
+# bottom are read alone, not with the whole screen).)
+$rx = 0; $ry = 0
+if ($Region) {
+  $p = $Region -split ' '
+  $rx = [int]([double]$p[0] * $ui); $ry = [int]([double]$p[1] * $ui)
+  $cw = [int]([double]$p[2] * $ui); $ch = [int]([double]$p[3] * $ui)
+}
 $bmp = New-Object System.Drawing.Bitmap $cw, $ch
-[System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($o.X, $o.Y, 0, 0, (New-Object System.Drawing.Size $cw, $ch))
+[System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($o.X + $rx, $o.Y + $ry, 0, 0, (New-Object System.Drawing.Size $cw, $ch))
 $big = New-Object System.Drawing.Bitmap ([int]($cw * $Scale)), ([int]($ch * $Scale))
 $g = [System.Drawing.Graphics]::FromImage($big); $g.InterpolationMode = 'HighQualityBicubic'
 # (-Gain: brightened, so dim labels (the room tabs not chosen) read too.)
@@ -67,12 +75,12 @@ $k = 1.0 / ($Scale * $ui)
 # (-Words: each word on its own, "x y w h line# text": OCR joins neighbouring labels into one line now and then.)
 if ($Words) {
   $li = 0
-  foreach ($rr in $results) { foreach ($line in $rr.R.Lines) { foreach ($w in $line.Words) { $b = $w.BoundingRect; "{0} {1} {2} {3} {4} {5}" -f [int]($b.X * $k), [int](($b.Y + $rr.DY) * $k), [int]($b.Width * $k), [int]($b.Height * $k), $li, $w.Text }; $li++ } }
+  foreach ($rr in $results) { foreach ($line in $rr.R.Lines) { foreach ($w in $line.Words) { $b = $w.BoundingRect; "{0} {1} {2} {3} {4} {5}" -f [int]($b.X * $k + $rx / $ui), [int](($b.Y + $rr.DY) * $k + $ry / $ui), [int]($b.Width * $k), [int]($b.Height * $k), $li, $w.Text }; $li++ } }
   return
 }
 foreach ($rr in $results) { foreach ($line in $rr.R.Lines) {
   $x0 = 1e9; $y0 = 1e9; $x1 = 0; $y1 = 0
   foreach ($w in $line.Words) { $b = $w.BoundingRect; $x0 = [Math]::Min($x0, $b.X); $y0 = [Math]::Min($y0, $b.Y); $x1 = [Math]::Max($x1, $b.X + $b.Width); $y1 = [Math]::Max($y1, $b.Y + $b.Height) }
   $k = 1.0 / ($Scale * $ui)
-  "{0} {1} {2} {3} {4}" -f [int]($x0 * $k), [int](($y0 + $rr.DY) * $k), [int](($x1 - $x0) * $k), [int](($y1 - $y0) * $k), $line.Text
+  "{0} {1} {2} {3} {4}" -f [int]($x0 * $k + $rx / $ui), [int](($y0 + $rr.DY) * $k + $ry / $ui), [int](($x1 - $x0) * $k), [int](($y1 - $y0) * $k), $line.Text
 } }
