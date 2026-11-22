@@ -19,7 +19,7 @@ $hits = @()
     $hits = @($lines | Where-Object {
       if ($_ -notmatch '^(\d+) (\d+) (\d+) (\d+) (.*)$') { return $false }
       $t = ($Matches[5] -replace '\s', '').ToLowerInvariant()
-      if ($exact) { ($t -replace '[^a-z0-9]+$', '') -eq $want } else { $t.Contains($want) -or ($t.Length -ge $min -and $t.Length -le $want.Length -and $want.StartsWith($t)) }
+      if ($exact) { ($t -replace '[^a-z0-9:]+$', '') -eq $want } else { $t.Contains($want) -or ($t.Length -ge $min -and $t.Length -le $want.Length -and $want.StartsWith($t)) }
     })
     if ($hits.Count -ge $Nth) { break rounds }
   }
@@ -35,6 +35,13 @@ if ($hits.Count -lt $Nth) {
     for ($i = 0; $i -le $ws.Count - $parts.Count; $i++) {
       $ok = $true
       for ($j = 0; $j -lt $parts.Count; $j++) { if ($ws[$i + $j].L -ne $ws[$i].L -or -not (& $like $ws[$i + $j].T $parts[$j])) { $ok = $false; break } }
+      # (Exact: the words the whole of their line, each the label's word itself: "LONG WAR:" of LONG WAR: AIR WAR is not
+      # LONG WAR.)
+      if ($ok -and $exact) {
+        $line = @($ws | Where-Object { $_.L -eq $ws[$i].L })
+        for ($j = 0; $j -lt $parts.Count; $j++) { if ($ws[$i + $j].T -ne $parts[$j]) { $ok = $false } }
+        if ($line.Count -ne $parts.Count) { $ok = $false }
+      }
       if ($ok) {
         $a = $ws[$i]; $z = $ws[$i + $parts.Count - 1]
         $hits += ("{0} {1} {2} {3} {4}" -f $a.X, $a.Y, ($z.X + $z.W - $a.X), $a.H, (($ws[$i..($i + $parts.Count - 1)] | ForEach-Object { $_.T }) -join ' '))
@@ -55,7 +62,7 @@ if ($hits.Count -lt $Nth) {
         $hits = @($lines | Where-Object {
           if ($_ -notmatch '^(\d+) (\d+) (\d+) (\d+) (.*)$') { return $false }
           $t = ($Matches[5] -replace '\s', '').ToLowerInvariant()
-          if ($exact) { ($t -replace '[^a-z0-9]+$', '') -eq $want } else { $t.Contains($want) -or ($t.Length -ge $min -and $t.Length -le $want.Length -and $want.StartsWith($t)) }
+          if ($exact) { ($t -replace '[^a-z0-9:]+$', '') -eq $want } else { $t.Contains($want) -or ($t.Length -ge $min -and $t.Length -le $want.Length -and $want.StartsWith($t)) }
         })
         if ($hits.Count -ge $Nth) { break tiles }
       }
