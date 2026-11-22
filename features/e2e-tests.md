@@ -112,3 +112,19 @@ that the movie itself ignores. Also found, and real: a right click on the summar
 release reached it); now an EW screen closes on the press only.
 Control-port aids added for this: `fade [off]` (fade, cinematic mode, the HUD's mouse target, the camera's busy state,
 the displays), `click3d`, `closescreen <class>`, `uvadjust <display>`; `start-game.ps1 -Display` (fullscreen as a player's).
+
+## Report (2026-11-22, evening)
+
+- **Download 210f248** on the draft (replacing 3d59a36 by way of 731e83f), installed on wingpu from the zip; on the
+  installed build all four journeys pass: first-mission (32 steps), soldier-and-rooms (41), base-menus (60), aek-repro (39).
+- **`strategy-actions`** (new, 38 steps): a research project begun by clicks (Alien Weaponry; its requirement seen), an
+  item ordered in engineering (MANUFACTURE → START PROJECT, seen in EW's project queue), Mission Control's SCAN FOR
+  ACTIVITY with the clock running. **Found and fixed:** the research menu kept START NEW RESEARCH PROJECT after a project
+  was begun (EW's CHANGE RESEARCH PROJECT came only on entering the room again): the hub rebuilds the room's menu when it
+  gets the focus back.
+- **Found, not fixed (EW's notices):** an item built is only noted in Long War's event list; EW shows a notice for it
+  (`XGFacility_Engineering.OnItemCompleted`: `PRES().Notify(20, item, quantity)`), as for other events. The port has no
+  EW notices yet.
+- New steps: `see <text>` (OCR, spaces ignored), `maybe <label>`, `at <x> <y>`, `key <key>`.
+- **Left:** squad select and a mission's first turn by clicks; the Geoscape's decisions (an alert answered); the hangar's
+  actions; EW's notices.
