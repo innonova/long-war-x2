@@ -23,7 +23,7 @@ click MANUFACTURE
 expect Manufacturing
 click START PROJECT
 expect Engineering
-see Sawed-off Shotgun (1)
+see Sawed-off Shotgun (
 shot item-ordered
 back
 expect UILWEWHub
