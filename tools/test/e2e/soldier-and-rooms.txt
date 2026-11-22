@@ -1,0 +1,44 @@
+# One level deeper than base-menus: a soldier's own screens from the list (aek, 2026-11-22: "the soldier view does not
+# show the soldier model at all"), Launch Satellite ("completely broken"), a craft from the hangar's list. A campaign at
+# EW's base (tools/test/new-campaign.sh 1 --begin).
+tab BARRACKS
+expect UILWEWHub
+click VIEW SOLDIERS
+expect SoldierList
+at 458 215
+expect SoldierSummary
+wait 2
+shot soldier-summary
+click =Abilities
+expect Promotion
+shot abilities
+back
+expect SoldierSummary
+click Loadout
+expect Loadout
+shot loadout
+back
+expect SoldierSummary
+rmb
+expect SoldierList
+esc
+expect UILWEWHub
+tab SITUATION ROOM
+expect UILWEWHub
+click LAUNCH SATELLITE
+expect SituationRoomHUD
+wait 2
+shot launch-satellite
+back
+expect UILWEWHub
+tab HANGAR
+expect UILWEWHub
+click VIEW AIRCRAFT LIST
+expect Hangar
+shot aircraft-list
+at 458 215
+wait 2
+shot craft
+esc
+esc
+expect UILWEWHub
