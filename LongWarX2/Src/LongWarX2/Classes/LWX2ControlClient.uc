@@ -728,7 +728,8 @@ function Handle(string Line, out array<string> Out)
 	case "anims":
 		// anims [n] [all|relink1|relink2|play <name>]: the n-th enemy's (else the nearest's) animation nodes in play: the name asked for, found or not, weight.
 		// (n -10, -11 …: squad select's line-up pawns, first, second ….)
-		Anims(Out, Args.Length > 1 ? int(Args[1]) : -1, Args.Length > 2 && Args[2] == "all", (Args.Length > 2 && Left(Args[2], 6) == "relink") ? int(Mid(Args[2], 6)) : 0, (Args.Length > 3 && Args[2] == "play") ? name(Args[3]) : '');
+		// (Or #<unit id>: that enemy, as spawn reports it.)
+		Anims(Out, Args.Length > 1 ? (Left(Args[1], 1) == "#" ? EnemyIndexOf(int(Mid(Args[1], 1))) : int(Args[1])) : -1, Args.Length > 2 && Args[2] == "all", (Args.Length > 2 && Left(Args[2], 6) == "relink") ? int(Mid(Args[2], 6)) : 0, (Args.Length > 3 && Args[2] == "play") ? name(Args[3]) : '');
 		return;
 	case "flashnum":
 		// flashnum <path under the top screen's clip>: a Flash number there (where the EW screens' clips sit).
@@ -1884,7 +1885,25 @@ function string SpawnAlien(name CharacterTemplate, int Tiles, optional int Speci
 			`TACTICALRULES.SubmitGameState(NewGameState);
 		}
 	}
-	return "dropped" @ CharacterTemplate @ Tiles @ "tiles from" @ Unit.GetFullName() @ (Species > 0 ? "as species" @ Species @ "leader level" @ LeaderLevel : "");
+	return "dropped" @ CharacterTemplate @ Tiles @ "tiles from" @ Unit.GetFullName() @ (Species > 0 ? "as species" @ Species @ "leader level" @ LeaderLevel : "")
+		@ (Newest != none ? "#" $ Newest.ObjectID : "");
+}
+
+/** The index anims counts an enemy by (the living, visualized, non-XCOM units in history order), from its unit id; -1 none. */
+function int EnemyIndexOf(int ObjectID)
+{
+	local XComGameState_Unit Unit;
+	local int n;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+	{
+		if (Unit.GetTeam() == eTeam_XCom || !Unit.IsAlive() || Unit.bRemovedFromPlay || XGUnit(Unit.GetVisualizer()) == none)
+			continue;
+		if (Unit.ObjectID == ObjectID)
+			return n;
+		n++;
+	}
+	return -1;
 }
 
 /** The abilities a unit has for Long War's alien perks (X2Ability_LWStandins.AlienAbilities), and the scale; "-" for none. */

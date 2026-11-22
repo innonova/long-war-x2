@@ -39,6 +39,11 @@ exits and transitions went unseen, and regressions in motion (animations) were n
   the five rooms open and close (Research's menu is behind its report on a fresh campaign; one OCR miss on the highlighted
   entry).
 
+- `tools/test/species-check.sh` (in a mission): each Long War species spawned beside the squad (`spawn` now reports the
+  unit's id, `anims #<id>` takes it), its mesh finding its idle in a set whose tracks fit its bones: all 23 pass after the
+  Sectoid fix. (Some read "still" over a second: their joints sampled the same, an idle that barely moves those bones or a
+  pawn out of view; the Sectoid seen in its crouched idle.)
+
 ## Report (2026-11-22)
 
 - **Found and fixed:** a right click backed out of only a handful of EW screens (the others ignored it and stayed up while
