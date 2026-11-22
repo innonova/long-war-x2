@@ -455,3 +455,5 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
 - **Custom screens** (converter 92): the same fix for `HQ_CustomScreens_B`/`_F` regions of EW's decal sheet: the copy is
   the sheet shifted by the region's offset, the material scales UV0 by its size. The Gene Lab's side screen shows its
   panel detail (still dim: EW's colour there is HDR, normalized to 1 in ours).
+- **Dim screen pictures** (partly): `ScreenGlowBrightness` 1.8 (new) on looks whose picture is a converter's screen copy:
+  the Gene Lab's side and upper screens nearer EW's brightness; the other rooms' screens no worse.
