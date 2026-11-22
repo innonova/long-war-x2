@@ -15,6 +15,7 @@
 #   at <x> <y>        a click at a place in the 1920x1080 UI (a list's row, whose label is a random name)
 #   expect <text>     the top screen's class holds text (FAIL otherwise)
 #   lw <command>      a control-port command (setup only, never the thing tested)
+#   until <cmd>|<text>|<setup cmd>|<n> setup: the setup command run (at most n times) until the state command holds text
 #   lwsee <cmd>|<text> the game's state (a control-port command's answer) holds text: what the clicks did, where the
 #                     screen shows it too faintly to read
 #   wait <s>          shot <name>
@@ -47,6 +48,9 @@ while IFS= read -r line <&3 || [ -n "$line" ]; do
     at)     r=$(tools/test/on.sh "tools\\test\\click.ps1 $arg" 2>&1 | tail -1); r="clicked at $arg${r:+ $r}"; sleep 1.5 ;;
     key)    r=$(tools/test/on.sh 'tools\test\focus.ps1' "tools\\test\\key.ps1 $arg 150" 2>&1 | tail -1); sleep 1.5 ;;
     rmb)    r=$(tools/test/on.sh 'tools\test\click.ps1 960 540 -Right' 2>&1 | tail -1); sleep 1.5 ;;
+    until)  IFS='|' read -r c txt act max <<< "$arg"; r="FAIL: '$txt' not in '$c' after $max x '$act'"
+            for ((k = 0; k < max; k++)); do o=$(tools/test/lw.sh "$c" 2>&1 | grep -v '^>'); if printf '%s' "$o" | grep -qiF -- "$txt"; then r="ok after $k x '$act'"; break; fi; tools/test/lw.sh "$act" >/dev/null 2>&1; done
+            [[ "$r" == FAIL* ]] && fails=$((fails+1)) ;;
     lwsee)  c="${arg%%|*}"; txt="${arg#*|}"; o=$(tools/test/lw.sh "$c" 2>&1 | grep -v '^>'); if printf '%s' "$o" | grep -qiF -- "$txt"; then r="ok (the game's state: $txt)"; else r="FAIL: '$txt' not in '$c': ${o:0:200}"; fails=$((fails+1)); fi ;;
     lw)     r=$(tools/test/lw.sh "$arg" 2>&1 | tail -1); sleep 1 ;;
     wait)   sleep "$arg"; r="" ;;
