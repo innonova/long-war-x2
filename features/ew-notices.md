@@ -1,6 +1,6 @@
 ---
 title: EW's notices on Mission Control (item built, soldiers arrived, ship online ...)
-status: planned
+status: review
 priority: 2
 dependsOn: [lw-geoscape]
 ---
@@ -33,3 +33,18 @@ port shows nothing, so things finishing pass unseen unless the player reads the 
 - Shown on EW's Mission Control (`UILWEWMissionControl`) through its movie's `DisplayNotifications`, counted down by
   real time while it is open, as EW's.
 - Checked with a click journey: an item ordered, the scan run, the notice seen (`see`).
+
+## Report (2026-11-22)
+
+- **Built:** `XComGameState_LWStrategy.Notice` keeps EW's notices (the last 12, numbered); Long War's rules add one where EW
+  notifies: an item built (`LWEngineering`), new soldiers arrived (`LWHiring`), excavation complete and a facility removed
+  (`LWBase`), a jet back in service and a jet arrived from a transfer, an interceptor order arrived (`LWHangar`), a council
+  request expired (`LWCouncilRequests`). Words: EW's `XGMissionControlUI` labels from the player's install (`lw-words.mjs`,
+  `UILWEWAlert.Notice*`), English stand-ins without them.
+- **Shown** on EW's Mission Control (`UILWEWMissionControl.UpdateNotices`), each for six seconds, newest first, through the
+  movie's `DisplayNotifications` (EW's text field at the bottom left, orange); those that came while Mission Control was
+  closed show when it opens.
+- **Checked on wingpu:** an item ordered by clicks, the scan run, "Sawed-off Shotgun built: 1" seen at the bottom left
+  for six seconds (screenshot and the `strategy-actions` journey's `waitsee`).
+- **Left:** EW's sounds for them; the kinds the port has no event for yet (soldier healed, new scientists and engineers,
+  satellite operational: the port's satellites are up at once, ship rearmed).

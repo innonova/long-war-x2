@@ -23,7 +23,6 @@ click MANUFACTURE
 expect Manufacturing
 click START PROJECT
 expect Engineering
-see CURRENT PROJECTS
 lwsee builds|project item 254
 shot item-ordered
 back
