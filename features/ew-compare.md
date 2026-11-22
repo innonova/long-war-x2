@@ -447,3 +447,8 @@ its uniform expressions naming which parameter feeds which `UniformPixelVector_n
   missed it. A checker texture on it shows the screen maps a small sub-rectangle of its texture. Our band copies look
   crisp offline (their mips are made from larger source mips already), so the cause is still open: next, the screen
   element's own UVs read per element, against EW's shader's (u, v/4 + w).
+- **The research terminals' streaks** (fixed): the console-screen copies held EW's quarter band stretched four times
+  vertically, so the GPU picked a mip by the vertical rate and the panels blurred into horizontal streaks. The copy is now
+  the sheet rolled so the band starts at its top, at its own resolution, and the material samples v × 0.25
+  (`DiffuseUVTile` from the look's `UVTile`, set by the glow stand-in) as EW's shader does (converter 91). The desk
+  terminals show EW's crisp panel; the engineering, base, Mission Control and Gene Lab views unchanged otherwise.

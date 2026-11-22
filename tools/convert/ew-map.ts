@@ -52,7 +52,7 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
  *  the console screens' picture made white for our glow to tint (whiteMip).; 41: EW's people brightened (PEOPLE_SCALE).;
  *  42: the props' tiling (Tile U) too.; 43: brightened textures decoded and encoded again (no black blocks).; 44: the custom
  *  screens' decal sheet, whitened, as their picture.; 45: taken back (the whole sheet showed). */
-export const CONVERTER_VERSION = 90 // (90: HQ_ConsoleScreen's second mode, TintColor.w >= 1)
+export const CONVERTER_VERSION = 91 // (91: console screens' band at its own resolution, scaled by the material)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
@@ -1318,7 +1318,11 @@ for (const [r, l] of looks) {
     const tc = vectorParam(r, 'TintColor', 0, true)
     const w = tc ? tc[3]! : 0
     const band = w - Math.floor(w)
-    l.screenUV = [0, 4 * band, 1, 0.25]
+    // (The copy is the sheet rolled so the band starts at its top, at its own resolution, and the material samples
+    // v × 0.25 (DiffuseUVTile) as EW's shader does: stretched four times in the copy instead, the GPU picked a mip by the
+    // vertical rate and the screens' panels blurred into horizontal streaks (round 18 #1). Converter 91.)
+    l.screenUV = [0, band, 1, 1]
+    l.uvTile = [1, 0.25]
     l.screenChannel = w >= 1 ? 7 : 5
   }
   // (HQ_CustomScreens_B, as its compiled pixel shader has it (tools/convert/ew-shaders.ts): its TintColor is no colour but

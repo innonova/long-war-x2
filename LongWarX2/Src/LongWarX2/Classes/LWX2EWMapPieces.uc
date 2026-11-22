@@ -1483,6 +1483,12 @@ static function MaterialInterface GlowStandin(LWX2Look L, Object InOuter, option
 	T = Texture(DynamicLoadObject((L.Diffuse != "" && (!bOurs || bKeepDiffuse || InStr(L.Diffuse, "_LWX2White") != INDEX_NONE || InStr(L.Diffuse, "_LWX2Screen") != INDEX_NONE)) ? L.Diffuse : "EngineResources.WhiteSquareTexture", class'Texture', true));
 	if (T != none)
 		MIC.SetTextureParameterValue('Diffuse', T);
+	// (A console screen's band, sampled at v × 0.25 as EW's shader does (converter 91).)
+	if (L.UVTile.X > 0 && L.Palette.Length != 4)
+	{
+		SB.R = L.UVTile.X; SB.G = L.UVTile.Y; SB.B = 1; SB.A = 1;
+		MIC.SetVectorParameterValue('DiffuseUVTile', SB);
+	}
 	C = bKeepDiffuse ? ((L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.UnlitTint) : ((L.Tint.R + L.Tint.G + L.Tint.B > 0) ? L.Tint : default.GlowDefault);
 	Scale = (default.LampGlowScale > 0 && bLamp) ? default.LampGlowScale : default.GlowScale;
 	C.R *= Scale; C.G *= Scale; C.B *= Scale; C.A = 1;
