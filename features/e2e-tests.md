@@ -128,3 +128,19 @@ the displays), `click3d`, `closescreen <class>`, `uvadjust <display>`; `start-ga
 - New steps: `see <text>` (OCR, spaces ignored), `maybe <label>`, `at <x> <y>`, `key <key>`.
 - **Left:** squad select and a mission's first turn by clicks; the Geoscape's decisions (an alert answered); the hangar's
   actions; EW's notices.
+
+## Report (2026-11-22, night)
+
+- **Mission Control blank on every visit after the first:** found by opening it twice. Its list's rows had no text and
+  no rows could be added: Flash's classes are global and the first movie to define one wins, and EW's Mission Control
+  movie defines its list's classes itself; with the first Mission Control's movie unloaded, the next one's list was
+  dead (the hangar's and research's lists survive repeat visits). **Fix:** `UILWEWMovieKeeper` keeps one hidden copy of
+  that movie loaded beneath the hub. `e2e-explore.sh` now opens every room-menu entry and Mission Control twice and
+  compares the text read on screen: all alike.
+- **EW's notices** on Mission Control (`features/ew-notices.md`), checked by `strategy-actions` (`waitsee`).
+- **`geoscape-mission`** (new, 25 steps): time run to the first abductions (setup, `until`), then by clicks Mission
+  Control's alert, EW's site selection, squad select, LAUNCH, the briefing, a soldier moved by XCOM 2's right click, the
+  turn ended (Backspace), XCOM's second turn (the state line now has `round=`). Passes. **Found and fixed:** on squad
+  select EW's corner arrow sat under XCOM 2's own back button and its BUILD ITEMS label.
+- **`e2e-all.sh`**: every journey from the start it needs (main menu or a campaign at the base).
+- New steps: `until <cmd>|<text>|<setup>|<n>`, `lwsee <cmd>|<text>`, `waitsee <text> <s>`.
