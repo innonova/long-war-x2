@@ -93,8 +93,14 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	class'XComGameState_LWStrategy'.static.Arrived();
 	// (XCOM 2 comes back from a mission faded to black and fades in from its own after-action screens; after the
 	// campaign's first mission, which goes straight to Long War's start screen, nothing did, and the base stayed black,
-	// aek 2026-11-22. The hub is what the player sees now: no fade left over it.)
+	// aek 2026-11-22. The hub is what the player sees now: no fade left over it.) Nor the cinematic mode that path left on,
+	// which kept every click from EW's screens on the base's 3D panels (the soldier summary's menu, engineering).
 	InitController.ClientSetCameraFade(false);
+	if (InitController.bCinematicMode)
+	{
+		`log("LongWarX2: the hub: XCOM 2's cinematic mode, left on, turned off", , 'LongWarX2');
+		InitController.SetCinematicMode(false, false, true, true, true, true);
+	}
 }
 
 /** The room's options in EW's submenu under its tab, the first selected. */
