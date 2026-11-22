@@ -13,3 +13,28 @@ see CHANGE RESEARCH PROJECT
 shot research-begun
 back
 expect UILWEWHub
+# An item ordered in engineering (the Sawed-off Shotgun: no cost but a Shotgun, a day's work), seen in EW's project queue.
+tab ENGINEERING
+expect UILWEWHub
+click BUILD/BUY ITEMS
+expect Engineering
+see SAWED-OFF SHOTGUN
+click MANUFACTURE
+expect Manufacturing
+click START PROJECT
+expect Engineering
+see Sawed-off Shotgun (1)
+shot item-ordered
+back
+expect UILWEWHub
+# Mission Control: SCAN FOR ACTIVITY, the clock running (1 March to 2 March), the research and the council report listed.
+click MISSION CONTROL
+expect MissionControl
+see SCAN FOR ACTIVITY
+see Council Report
+click SCAN FOR ACTIVITY
+wait 12
+see 2 March
+shot scanned
+esc
+expect UILWEWHub
