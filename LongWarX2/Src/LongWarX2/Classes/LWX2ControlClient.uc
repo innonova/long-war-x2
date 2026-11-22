@@ -43,6 +43,7 @@ function Handle(string Line, out array<string> Out)
 	local LevelStreaming Streamed;
 	local UIScreen Scr;
 	local array<Actor> Placed;
+	local PlayerController PC;
 
 	ParseStringIntoArray(Line, Args, " ", true);
 	if (Args.Length == 0)
@@ -510,6 +511,13 @@ function Handle(string Line, out array<string> Out)
 		// The movie playing (the new campaign's intro, which the first mission waits for) stopped.
 		Out.AddItem("movie playing:" @ class'XComEngine'.static.IsAnyMoviePlaying());
 		class'XComEngine'.static.StopCurrentMovie();
+		return;
+	case "fade":
+		// The camera's fade (a screen left black): fade [off].
+		PC = GetALocalPlayerController();
+		Out.AddItem("fading" @ PC.PlayerCamera.bEnableFading @ "amount" @ PC.PlayerCamera.FadeAmount @ "colour" @ PC.PlayerCamera.FadeColor.R $ "," $ PC.PlayerCamera.FadeColor.G $ "," $ PC.PlayerCamera.FadeColor.B @ "cinematic" @ PC.bCinematicMode);
+		if (Args.Length > 1 && Args[1] == "off")
+			PC.ClientSetCameraFade(false);
 		return;
 	case "buildings":
 		// The plot's building volumes as XCOM 2 sees them; with an action on the n-th: buildings [n show <lo> <hi> | n reveal | n rebuild].
