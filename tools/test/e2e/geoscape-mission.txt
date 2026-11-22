@@ -1,0 +1,29 @@
+# A mission from the Geoscape as a player takes it (a campaign at EW's base: tools/test/new-campaign.sh 1 --begin): time run
+# until the first mission comes (setup: abductions or a landed UFO, whichever the aliens' plan brings), then by clicks:
+# Mission Control's alert (abductions: EW's site selection), XCOM 2's squad select in EW's hangar, LAUNCH, the briefing,
+# a soldier moved (XCOM 2's right click on a tile), the turn ended (Backspace), the aliens' turn, XCOM's second turn.
+lw arm now
+lw run 720
+lw run 720
+lwsee decisions|decision 0
+click MISSION CONTROL
+expect Alert
+shot alert
+maybe VIEW ABDUCTION SITE
+maybe Confirm
+maybe SEND SKYRANGER
+expect SquadSelect
+shot squad-select
+click LAUNCH
+waitfor DropShipBriefing 240
+wait 25
+key Space
+waitfor ready=1 180
+shot mission-start
+rmb
+wait 6
+lwsee units|ap 1
+key Back
+waitfor turn=eTeam_Alien 30
+waitfor turn=eTeam_XCom busy=0 240
+shot second-turn
