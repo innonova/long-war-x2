@@ -228,3 +228,15 @@ particle systems as they are; its materials it cannot draw).
   closed and open states (`MV_JetClosedState`, `MV_JetOpenState`), which the tree asks for by EW's names, now in its set.
 - **Not done:** the other species are not rewritten (their bodies move by rotation; rewriting all costs about a key
   a frame per track in every copy). A species that looks as the Cyberdisc did would be one line in `ew-units.ts`.
+
+## Report (2026-11-22, the Sectoids' animations back)
+
+- **The regression:** since Long War's species got template copies of their own (`LWX2Char_n`, 8af8340), the
+  Sectoids on the field had EW's mesh but only XCOM 2's `AS_Sectoid` (none of its 163 tracks fit EW's bones): bind
+  pose. The copies' `AdditionalAnimSets` came out empty on the field (the control port's `anims`), although
+  `AddAnimSets` gives them EW's set at start (why, still to find).
+- **Fixed, robustly:** `LWX2EWBodies.EnsureAnimSet` puts the body's AnimSet on the pawn's mesh itself, last, when the
+  body is applied and at every check, whatever the template carries.
+- **Checked on wingpu:** the Sectoid's mesh finds EW's `NO_IdleGunDwnA` (113 of 113 tracks on the mesh); a spawned
+  Sectoid near the squad in EW's crouched idle (its joints off the bind pose, `logs/sec5.png`).
+- **Left:** a regression check (each species' pawn finds its idle with its tracks on the mesh), run after unit changes.

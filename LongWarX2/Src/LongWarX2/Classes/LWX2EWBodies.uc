@@ -184,7 +184,7 @@ static function bool ApplyBody(XComUnitPawn Pawn, LWX2Body B, optional out int A
 	{
 		QuietControls(Pawn);
 		FixMasks(Pawn);
-		AnimsChanged = OwnAnims(Pawn, B) ? 1 : 0;
+		AnimsChanged = (OwnAnims(Pawn, B) || EnsureAnimSet(Pawn, B)) ? 1 : 0;
 		SeatWeapons(Pawn, B);
 		return false;
 	}
@@ -205,7 +205,7 @@ static function bool ApplyBody(XComUnitPawn Pawn, LWX2Body B, optional out int A
 	Pawn.UpdateAnimations();
 	QuietControls(Pawn);
 	FixMasks(Pawn);
-	AnimsChanged = OwnAnims(Pawn, B) ? 1 : 0;
+	AnimsChanged = (OwnAnims(Pawn, B) || EnsureAnimSet(Pawn, B)) ? 1 : 0;
 	SeatWeapons(Pawn, B);
 	return true;
 }
@@ -290,6 +290,24 @@ static function DressWeapon(SkeletalMeshComponent C, LWX2Body B)
 
 /** For a body of EW's animations only: the pawn's AnimSets that are not EW's taken off (again, if XCOM 2 has put them back).
  *  True when they changed. */
+/** The body's AnimSet on the pawn's mesh, last (its animations over XCOM 2's of the same names), whatever the template
+ *  carries: the species' template copies (LWX2Char_n) came out with empty AdditionalAnimSets on the field, and the
+ *  Sectoid stood in its bind pose under XCOM 2's set, none of whose tracks fit EW's mesh. True when it was added. */
+static function bool EnsureAnimSet(XComUnitPawn Pawn, LWX2Body B)
+{
+	local AnimSet Set;
+
+	if (Pawn.Mesh == none)
+		return false;
+	Set = AnimSet(DynamicLoadObject(B.AnimSet, class'AnimSet', true));
+	if (Set == none || (Pawn.Mesh.AnimSets.Length > 0 && Pawn.Mesh.AnimSets[Pawn.Mesh.AnimSets.Length - 1] == Set))
+		return false;
+	Pawn.Mesh.AnimSets.RemoveItem(Set);
+	Pawn.Mesh.AnimSets.AddItem(Set);
+	Pawn.Mesh.UpdateAnimations();
+	return true;
+}
+
 static function bool OwnAnims(XComUnitPawn Pawn, LWX2Body B)
 {
 	local AnimSet Set;
