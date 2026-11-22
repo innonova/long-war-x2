@@ -78,6 +78,9 @@ static function Open(XComHQPresentationLayer HQPres)
 
 	if (HQPres.ScreenStack.IsInStack(class'UILWEWHub'))
 		return;
+	// (EW's Mission Control movie kept loaded beneath the hub, so that its list's classes outlive each Mission Control
+	// screen: UILWEWMovieKeeper.)
+	class'UILWEWMovieKeeper'.static.Keep(HQPres, "ewxMissionControl", "MissionControl");
 	DynamicLoadObject(default.UIPackage $ ".ewxStrategyHUD", class'Object', true);
 	Hub = HQPres.Spawn(class'UILWEWHub', HQPres);
 	Hub.Package = name("/ package/ewxStrategyHUD/StrategyHUD");

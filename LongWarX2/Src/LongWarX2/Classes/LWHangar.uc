@@ -165,10 +165,12 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 		{
 		case 4:
 			AirWar.Jets[i].Hp = MaxHp(AirWar.Jets[i]);
+			S.Notice(class'UILWEWAlert'.default.NoticeShipOnline, "<XGParam:StrValue0/>'s aircraft has returned to service.", AirWar.Jets[i].Callsign);
 			S.Note(AirWar.Jets[i].Callsign @ "is repaired.");
 			break;
 		case 6:
 			AirWar.Jets[i].Continent = AirWar.Jets[i].TransferTo;
+			S.Notice(class'UILWEWAlert'.default.NoticeShipTransfer, "<XGParam:StrValue0/> arrives at <XGParam:StrValue1/>.", AirWar.Jets[i].Callsign, class'LWStrategyRules'.static.ContinentName(AirWar.Jets[i].Continent));
 			S.Note(AirWar.Jets[i].Callsign @ "has arrived in" @ class'LWStrategyRules'.static.ContinentName(AirWar.Jets[i].Continent) $ ".");
 			class'LWCouncilRequests'.static.JetArrived(NewGameState, S, AirWar.Jets[i].Continent);
 			break;
@@ -184,6 +186,7 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 			continue;
 		for (k = 0; k < AirWar.Orders[i].Count; k++)
 			NewJet(AirWar, 1, AirWar.Orders[i].Continent);
+		S.Notice(class'UILWEWAlert'.default.NoticeInterceptorArrival, "Interceptor order has arrived at <XGParam:StrValue0/>", class'LWStrategyRules'.static.ContinentName(AirWar.Orders[i].Continent));
 		S.Note(AirWar.Orders[i].Count @ (AirWar.Orders[i].Count == 1 ? "interceptor has" : "interceptors have") @ "arrived in" @ class'LWStrategyRules'.static.ContinentName(AirWar.Orders[i].Continent) $ ".");
 		class'LWCouncilRequests'.static.JetArrived(NewGameState, S, AirWar.Orders[i].Continent);
 		AirWar.Orders.Remove(i, 1);

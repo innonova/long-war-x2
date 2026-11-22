@@ -14,6 +14,9 @@ class UILWEWAlert extends UILWEWScreen dependson(LWAirWar);
 
 var localized string RadarContact, Contact, Location, UFOClass, Unidentified, Scramble, IgnoreContact, SendSkyranger, Ignore,
 	CrashSite, HasLanded;
+/** EW's notices' words (XGMissionControlUI: m_strLabelItemBuilt ...; features/ew-notices.md). */
+var localized string NoticeItemBuilt, NoticeExcavation, NoticeFacilityRemoved, NoticeNewSoldiers, NoticeInterceptorArrival;
+var localized string NoticeShipOnline, NoticeShipTransfer, NoticeSatOnline, NoticeRequestExpired;
 var localized string AbductionsReported, ViewAbductionSites, TerrorCity, PanicLevel, Difficulty, FCMission,
 	AssaultAlienBase, AssaultTempleShip, TempleShipText, Assault, Wait, ExaltTitle, ExaltBody, ExaltSend, ExaltNotNow,
 	AbductionSites, Reward, Confirm, UFOPrefix, SizeLabel, ObjectiveLabel, HyperwaveTitle;

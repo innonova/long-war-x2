@@ -634,6 +634,7 @@ static function bool Remove(int X, int Y, out string Why)
 	// (A thermo generator stood on a vent; a campaign begun before the vents were kept remembers it by that.)
 	S.TileType[k] = (S.SteamTiles.Find(k) != INDEX_NONE || Id == 15) ? DUG_STEAM : DUG;
 	S.TileFacility[k] = 0;
+	S.Notice(class'UILWEWAlert'.default.NoticeFacilityRemoved, "Facility removal complete.");
 	S.Note(FacilityName(Id) @ "removed at" @ TileName(X, Y) $ ".");
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	`log("LongWarX2: base: facility" @ Id @ "removed at" @ X $ "," $ Y, , 'LongWarX2');
@@ -659,6 +660,7 @@ static function Tick(XComGameState_LWStrategy S)
 		if (S.BaseJobs[i].Kind == 0)
 		{
 			S.TileType[k] = S.TileType[k] == ROCK_STEAM ? DUG_STEAM : DUG;
+			S.Notice(class'UILWEWAlert'.default.NoticeExcavation, "Excavation complete.");
 			S.Note("Digging done at" @ TileName(S.BaseJobs[i].X, S.BaseJobs[i].Y) $ (S.TileType[k] == DUG_STEAM ? ": a steam vent." : "."));
 		}
 		else

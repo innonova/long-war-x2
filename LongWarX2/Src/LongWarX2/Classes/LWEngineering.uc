@@ -260,6 +260,7 @@ static function Deliver(XComGameState NewGameState, XComGameState_LWStrategy S, 
 	Elerium = class'LWBase'.static.Rebate(S, B.Elerium) * P.Quantity;
 	class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, 'AlienAlloy', Alloys);
 	class'X2Item_LWArtifacts'.static.GiveItem(NewGameState, 'EleriumDust', Elerium);
+	S.Notice(class'UILWEWAlert'.default.NoticeItemBuilt, "<XGParam:StrValue0/> built: <XGParam:IntValue0/>", ItemName(B.Template), , P.Quantity);
 	S.Note("Engineering built" @ P.Quantity @ ItemName(B.Template) $ ((Alloys + Elerium) > 0 ? "; the workshops gave back" @ Alloys @ "alloys and" @ Elerium @ "elerium." : "."));
 }
 

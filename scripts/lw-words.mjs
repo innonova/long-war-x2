@@ -811,6 +811,12 @@ export function makeAlertWords({ strategyLoc }) {
     ['TempleShipText', mc('m_strLabelTempleShip')], ['Assault', mc('m_strLabelAssault')], ['Wait', mc('m_strlabelWait')],
     ['ExaltTitle', mc('m_strLabelExaltAlertTitle')], ['ExaltBody', mc('m_strLabelExaltAlertBody')],
     ['ExaltSend', mc('m_strLabelExaltAlertSendSquad')], ['ExaltNotNow', mc('m_strLabelExaltAlertNotNow')],
+    // EW's notices (features/ew-notices.md).
+    ['NoticeItemBuilt', mc('m_strLabelItemBuilt')], ['NoticeExcavation', mc('m_strLabelExcavationComplete')],
+    ['NoticeFacilityRemoved', mc('m_strLabelFacilityRemoved')], ['NoticeNewSoldiers', mc('m_strLabelNewSoldiers')],
+    ['NoticeInterceptorArrival', mc('m_strLabelNewInterceptorArrival')], ['NoticeShipOnline', mc('m_strLabelShipOnline')],
+    ['NoticeShipTransfer', mc('m_strLabelShipTransferArrival')], ['NoticeSatOnline', mc('m_strLabelSatOnline')],
+    ['NoticeRequestExpired', mc('m_strLabelFCRequestExpired')],
   ].filter(([, v]) => v)
   return { text: ['[UILWEWAlert]', ...words.map(([k, v]) => `${k}="${v}"`), ''].join('\r\n'), named: words.length }
 }

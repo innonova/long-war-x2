@@ -14,6 +14,10 @@ var UILWGeoscape Geo;
 var array<int> EntryKinds, EntryIndexes;
 var int Highlight;
 var UILWEWAlertTarget ListTarget;
+/** EW's notices shown now, and when each came (XGMissionControlUI.AddNotice: six seconds each; features/ew-notices.md). */
+var array<string> NoticeTexts;
+var array<float> NoticeTimes;
+var string NoticesShown;
 
 /** Opened over the Geoscape (UILWGeoscape.InitScreen) when EW's screens are converted; false otherwise. */
 static function bool OpenOver(UILWGeoscape Geoscape)
@@ -44,12 +48,59 @@ simulated function OnInit()
 	// EW's back arrow in the movie's own help bar (UIMissionControl.UpdateButtonHelp: AddBackButton; its hologlobe button
 	// leads to EW's space view of the earth, which the port does not have). The HUD's beneath it was covered by this movie.
 	HelpButton("helpBarMC", false, 0, "4", "", "QComButtonIconPC");
+	`log("LongWarX2: Mission Control: list title visible" @ Movie.GetVariableBool(MCPath $ ".theMissionList.titleMC._visible") @ "y" @ Movie.GetVariableNumber(MCPath $ ".theMissionList._y"), , 'LongWarX2');
 	Movie.Invoke(MCPath $ ".theMissionList.onLoad", NoArgs);
+	`log("LongWarX2: Mission Control: list after onLoad y" @ Movie.GetVariableNumber(MCPath $ ".theMissionList._y"), , 'LongWarX2');
 	ListTarget = class'UILWEWAlertTarget'.static.At(self, MCPath $ ".theMissionList");
 	LookAtRoom();
 	SetTimer(0.2, false, nameof(Refresh));
 	// (The Geoscape beneath brought up to date once this is up: an alert that waited opens over Mission Control.)
 	SetTimer(0.3, false, nameof(RefreshGeoscape));
+	SetTimer(0.5, true, nameof(UpdateNotices));
+}
+
+/**
+ * EW's notices (XGMissionControlUI.AddNotice, UpdateNotices; UIMissionControl.UpdateNotices): each new one of Long War's
+ * (XComGameState_LWStrategy.Notices) shown for six seconds, the newest first, one a line, through the movie's
+ * DisplayNotifications. Those that came while Mission Control was closed show when it opens, as EW's wait for it.
+ */
+function UpdateNotices()
+{
+	local XComGameState_LWStrategy S;
+	local array<ASValue> Params;
+	local string Shown;
+	local int i, n;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (S == none || Geo == none)
+		return;
+	// (Not the campaign's earlier ones, the first time.)
+	if (!Geo.bNoticesStarted)
+	{
+		Geo.bNoticesStarted = true;
+		Geo.NoticesSeen = S.NoticeCount;
+	}
+	n = Min(S.NoticeCount - Geo.NoticesSeen, S.Notices.Length);
+	for (i = S.Notices.Length - n; i < S.Notices.Length; i++)
+	{
+		NoticeTexts.AddItem(S.Notices[i]);
+		NoticeTimes.AddItem(WorldInfo.RealTimeSeconds);
+	}
+	Geo.NoticesSeen = S.NoticeCount;
+	for (i = NoticeTexts.Length - 1; i >= 0; i--)
+		if (WorldInfo.RealTimeSeconds - NoticeTimes[i] > 6.0)
+		{
+			NoticeTexts.Remove(i, 1);
+			NoticeTimes.Remove(i, 1);
+		}
+	for (i = NoticeTexts.Length - 1; i >= 0; i--)
+		Shown $= NoticeTexts[i] $ Chr(10);
+	if (Shown == NoticesShown)
+		return;
+	NoticesShown = Shown;
+	Params.AddItem(Str(Shown));
+	Movie.Invoke(MCPath $ ".DisplayNotifications", Params);
+	`log("LongWarX2: Mission Control: notices" @ Repl(Shown, Chr(10), " | "), , 'LongWarX2');
 }
 
 function RefreshGeoscape()

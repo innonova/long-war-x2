@@ -8,6 +8,9 @@ class UILWGeoscape extends UILWHeadquarters;
 const MAX_ACTIONS = 6;
 
 var UIText Header, EventsText, StatusText;
+/** EW's notices (XComGameState_LWStrategy.Notices) Mission Control has shown: their count (features/ew-notices.md). */
+var int NoticesSeen;
+var bool bNoticesStarted;
 var array<UIButton> CountryButtons;
 var array<UIText> CountryTexts;
 var UIButton ActionButtons[MAX_ACTIONS];

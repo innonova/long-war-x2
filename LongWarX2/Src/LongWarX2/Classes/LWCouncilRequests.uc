@@ -87,6 +87,7 @@ static function Hour(XComGameState_LWStrategy S)
 	{
 		if (S.Requests[i].bPending || --S.Requests[i].HoursLeft > 0)
 			continue;
+		S.Notice(class'UILWEWAlert'.default.NoticeRequestExpired, "Situation Room: A request from <XGParam:StrValue0/> has expired.", S.CountryName(S.Requests[i].Country));
 		S.Note(S.CountryName(S.Requests[i].Country) $ "'s request (" $ Words(S.Requests[i]) $ ") went unanswered.");
 		class'LWTicker'.static.Request(S, S.Requests[i].Id, S.Requests[i].Country, false);
 		S.Requests.Remove(i, 1);

@@ -225,6 +225,11 @@ var array<int> FoundryDone;
 var array<string> Events;
 /** Events noted since the campaign began (Events keeps the last 40). */
 var int EventCount;
+/** EW's notices (XGMissionControlUI.AddNotice: an item built, soldiers arrived, a ship back in service ...): the text in
+ *  EW's words, numbered (NoticeCount) so that Mission Control shows each once, six seconds (features/ew-notices.md).
+ *  The last 12 kept. */
+var array<string> Notices;
+var int NoticeCount;
 /** Set when something wants the player's decision: the clock stops. */
 var bool bStop;
 /** The last tech researched (EW's XGFacility_Labs.m_eLastResearched): its report waits in the labs until read; and the one
@@ -2862,6 +2867,20 @@ static function AddDecision(out array<int> Kinds, out array<int> Indexes, out ar
 	Kinds.AddItem(Kind);
 	Indexes.AddItem(Index);
 	Labels.AddItem(Label);
+}
+
+/** An EW notice (features/ew-notices.md): one of EW's notice words (XGMissionControlUI's, UILWEWAlert.Notice*) with its
+ *  values put in (<XGParam:StrValue0/>, StrValue1, IntValue0), else the fallback; for Mission Control to show. */
+function Notice(string Words, string Fallback, optional string Str0, optional string Str1, optional int Int0)
+{
+	local string T;
+
+	T = Words != "" ? Words : Fallback;
+	T = Repl(Repl(Repl(T, "<XGParam:StrValue0/>", Str0), "<XGParam:StrValue1/>", Str1), "<XGParam:IntValue0/>", string(Int0));
+	NoticeCount++;
+	Notices.AddItem(T);
+	if (Notices.Length > 12)
+		Notices.Remove(0, Notices.Length - 12);
 }
 
 function Note(string Text)

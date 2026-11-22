@@ -94,6 +94,7 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 			XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', class'UIUtilities_Strategy'.static.GetXComHQ().ObjectID));
 		for (k = 0; k < S.HiringOrders[i].Count; k++)
 			class'LWBonusEffects'.static.NewSoldier(NewGameState, XComHQ, 0, 0);
+		S.Notice(class'UILWEWAlert'.default.NoticeNewSoldiers, "New soldiers on site: <XGParam:IntValue0/>", , , S.HiringOrders[i].Count);
 		S.Note(S.HiringOrders[i].Count == 1 ? "A new soldier has arrived at XCOM HQ." : S.HiringOrders[i].Count @ "new soldiers have arrived at XCOM HQ.");
 		S.HiringOrders.Remove(i, 1);
 		S.bStop = true;
