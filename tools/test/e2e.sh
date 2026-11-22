@@ -8,6 +8,7 @@
 #   tab <room>        one of EW's room tabs clicked at its place (Windows' OCR misses that row in some states; the tabs
 #                     do not move): RESEARCH ENGINEERING BARRACKS HANGAR SITUATION ROOM
 #   back              the corner back arrow clicked     esc        Esc pressed     rmb        a right click mid-screen
+#   key <key>         a key pressed (key.ps1's names: Space, Enter, W ...)
 #   expect <text>     the top screen's class holds text (FAIL otherwise)
 #   lw <command>      a control-port command (setup only, never the thing tested)
 #   wait <s>          shot <name>
@@ -32,6 +33,7 @@ while IFS= read -r line <&3 || [ -n "$line" ]; do
             if [ "$x" = 0 ]; then r="ERR no tab $arg"; else r=$(tools/test/on.sh "tools\\test\\click.ps1 $x 33" 2>&1 | tail -1); r="tab $arg at $x 33 $r"; fi; sleep 1.5 ;;
     back)   r=$(tools/test/on.sh 'tools\test\click.ps1 96 1027' 2>&1 | tail -1); sleep 1.5 ;;
     esc)    r=$(tools/test/on.sh 'tools\test\esc.ps1' 2>&1 | tail -1); sleep 1.5 ;;
+    key)    r=$(tools/test/on.sh 'tools\test\focus.ps1' "tools\\test\\key.ps1 $arg 150" 2>&1 | tail -1); sleep 1.5 ;;
     rmb)    r=$(tools/test/on.sh 'tools\test\click.ps1 960 540 -Right' 2>&1 | tail -1); sleep 1.5 ;;
     lw)     r=$(tools/test/lw.sh "$arg" 2>&1 | tail -1); sleep 1 ;;
     wait)   sleep "$arg"; r="" ;;
