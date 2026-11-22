@@ -15,6 +15,8 @@
 #   at <x> <y>        a click at a place in the 1920x1080 UI (a list's row, whose label is a random name)
 #   expect <text>     the top screen's class holds text (FAIL otherwise)
 #   lw <command>      a control-port command (setup only, never the thing tested)
+#   lwsee <cmd>|<text> the game's state (a control-port command's answer) holds text: what the clicks did, where the
+#                     screen shows it too faintly to read
 #   wait <s>          shot <name>
 #   waitfor <text> <s> wait until the game's state line (phase, map, screen) holds text, at most s seconds (FAIL after)
 #   rec <name> <s>    a video of the next s seconds (in the background; fetched at the end with a frame strip per
@@ -45,6 +47,7 @@ while IFS= read -r line <&3 || [ -n "$line" ]; do
     at)     r=$(tools/test/on.sh "tools\\test\\click.ps1 $arg" 2>&1 | tail -1); r="clicked at $arg${r:+ $r}"; sleep 1.5 ;;
     key)    r=$(tools/test/on.sh 'tools\test\focus.ps1' "tools\\test\\key.ps1 $arg 150" 2>&1 | tail -1); sleep 1.5 ;;
     rmb)    r=$(tools/test/on.sh 'tools\test\click.ps1 960 540 -Right' 2>&1 | tail -1); sleep 1.5 ;;
+    lwsee)  c="${arg%%|*}"; txt="${arg#*|}"; o=$(tools/test/lw.sh "$c" 2>&1 | grep -v '^>'); if printf '%s' "$o" | grep -qiF -- "$txt"; then r="ok (the game's state: $txt)"; else r="FAIL: '$txt' not in '$c': ${o:0:200}"; fails=$((fails+1)); fi ;;
     lw)     r=$(tools/test/lw.sh "$arg" 2>&1 | tail -1); sleep 1 ;;
     wait)   sleep "$arg"; r="" ;;
     waitfor) wt=${arg% *}; ws=${arg##* }; t0=$(date +%s); r="FAIL: no '$wt' within ${ws}s"
