@@ -261,7 +261,8 @@ simulated function OnReceiveFocus()
 	MC.ChildFunctionVoid("theMenu.facilityMenu", "onReceiveFocus");
 	if (Room >= 0)
 	{
-		SetTimer(0.15, true, nameof(HoverOption));
+		// (The menu's words again: START NEW RESEARCH PROJECT stayed after a project was begun, where EW's says CHANGE.)
+		ShowRoomMenu();
 		// (The room's tab lit and the others dimmed again: the menu's onReceiveFocus lit them all.)
 		CallNow("theMenu.facilityMenu.DimAllUnselectedMenuOptions");
 	}

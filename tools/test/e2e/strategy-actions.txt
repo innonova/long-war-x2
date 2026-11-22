@@ -1,0 +1,15 @@
+# The strategy screens' own buttons, as a player uses them (a campaign at EW's base: tools/test/new-campaign.sh 1 --begin):
+# a research project begun (Alien Weaponry: 5 weapon fragments, which a new campaign has), the menu's words after it.
+tab RESEARCH
+expect UILWEWHub
+click START NEW RESEARCH PROJECT
+expect Research
+click ALIEN WEAPONRY
+see 5x Weapon Fragments
+click BEGIN PROJECT
+expect UILWEWHub
+see Alien Weaponry
+see CHANGE RESEARCH PROJECT
+shot research-begun
+back
+expect UILWEWHub
