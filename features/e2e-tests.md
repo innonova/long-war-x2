@@ -58,9 +58,32 @@ exits and transitions went unseen, and regressions in motion (animations) were n
 - **Next:** journeys for the strategy screens' own buttons (research, build, hangar, Situation Room's menu), the Geoscape's
   clock and events, squad select and a mission's first turn; a species check (each EW body animates); clips of the
   transitions for review.
-- **A setup bug, found from aek's report** (3d59a36 on his PC: a new campaign stuck on the loading screen, Launch
+- **A setup bug, found from aek's report** (3d59a36 on aek's PC: a new campaign stuck on the loading screen, Launch
   Satellite showing only the countries' bars): the setup keeps EW conversions from earlier setups unless they predate
   converter version 20 (a copy of the number in `ew-maps.ts`, never raised), while the converter has reached 93. A player
   updating kept base levels and maps converted weeks before. wingpu never showed it: its levels are reconverted by hand
   with `--force`. Now one number, `tools/convert/converter-version.ts`, read by both; the next setup reconverts what an
-  older converter made. (Whether this is the whole cause on his PC: his Launch.log asked for.)
+  older converter made. (Whether this was the whole cause there: aek's Launch.log asked for.)
+
+## Report (2026-11-22, the first mission)
+
+- **aek's Launch.log and screenshots** (3d59a36, START pressed once): (1) START had been taken twice, 0.8 s apart (the
+  movie's event and the mouse's release), starting the campaign twice; now once (`UILWEWDifficulty.bStarted`). (2) The
+  soldier screen and Launch Satellite fell back to flat 2D screens and the mission map was dark: all three from the stale
+  conversions above (the base's conversion lacked EW's 3D displays; the map's light map made by an older converter than its material
+  expects). (3) The new campaign then stood on the loading screen for ever.
+- **The hang, reproduced on wingpu** (every build back to 20 November: never covered, as every test campaign skipped the
+  first mission): XCOM 2's new campaign (`XGStrategy`, state `Initing`) prepares the first mission, then waits while any
+  movie plays: there, its intro film played as the loading screen, ending or skipped. The port leaves that intro out
+  (`UILWEWDifficulty.Start` clears `StartIntroMovie`), so the movie playing was XCOM 2's looping loading screen, which
+  never ends and takes no key. `stopmovie` on the hung game launched the mission. **Fix:** `LWX2FirstMissionStart`, set by
+  the campaign's start and put on the strategy map by its first screen (`UIScreenListener_LWX2FirstMission`), stops the
+  loading screen once the wait has begun (the history past its start state, `Initing`), then removes itself. The control
+  port's campaign start with the first mission uses it too.
+- **The first-mission journey** (`tools/test/e2e/first-mission.txt`): LONG WAR → START GAME, one click → the drop-ship
+  briefing → Space → the squad on the map, XCOM's turn: passes. New steps: `key <name>`; `=LABEL` now exact on OCR's
+  word path too (it had clicked LONG WAR: AIR WAR, the development build's demo button).
+- **The first mission's briefing** showed XCOM 2's "Operation Gatecrasher": now an EW operation name (`LWOpNames`, set in
+  `FirstMissionOnEWMap`). **Left open:** its location is XCOM 2's region text ("Wilderness of East Africa") and its
+  briefing and objective are empty: Long War's state does not exist before the first mission, and XCOM HQ's country is
+  chosen only after it (EW chooses the base first).
