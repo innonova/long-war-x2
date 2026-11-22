@@ -100,7 +100,7 @@ function UpdateNotices()
 	NoticesShown = Shown;
 	Params.AddItem(Str(Shown));
 	Movie.Invoke(MCPath $ ".DisplayNotifications", Params);
-	`log("LongWarX2: Mission Control: notices" @ Repl(Shown, Chr(10), " | "), , 'LongWarX2');
+	`log("LongWarX2: Mission Control: notices" @ Repl(Shown, Chr(10), " | ") @ "at" @ Movie.GetVariableNumber(MCPath $ ".notificationTextfield._x") @ Movie.GetVariableNumber(MCPath $ ".notificationTextfield._y") @ "visible" @ Movie.GetVariableBool(MCPath $ ".notificationTextfield._visible") @ "alpha" @ Movie.GetVariableNumber(MCPath $ ".notificationTextfield._alpha"), , 'LongWarX2');
 }
 
 function RefreshGeoscape()
