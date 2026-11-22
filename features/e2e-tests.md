@@ -34,12 +34,20 @@ exits and transitions went unseen, and regressions in motion (animations) were n
 - `base-menus.txt`: every room's first menu, each left by the corner arrow, Esc and a right click (60 steps). Passes.
 - `aek-repro.txt`: Engineering → Facilities → out → Buy Items → Barracks, with each way out (39 steps). Passes.
 
+- `tools/test/e2e-explore.sh`: the systematic walk: each room's menu read off the screen, each entry clicked, the screen
+  that opens recorded and photographed (`logs/e2e/explore/`), left by the corner arrow (a dialog by Esc). All 11 entries of
+  the five rooms open and close (Research's menu is behind its report on a fresh campaign; one OCR miss on the highlighted
+  entry).
+
 ## Report (2026-11-22)
 
 - **Found and fixed:** a right click backed out of only a handful of EW screens (the others ignored it and stayed up while
   the player clicked on: the "random" exits, the wrong screens). Now every EW screen (`UILWEWScreen`) and the hub's rooms
   back out on a right click, once (the hub ignores the click that just closed a screen over it). The room's tab dimmed again
   on return. The Sectoids' animations (`features/lw-ew-units.md`).
+- **Found by the explorer and fixed:** on Launch Satellite the corner back arrow did nothing: the arrow sends Esc to the
+  screen on top, and there the Situation Room's own HUD (which passes its keys on) swallowed it. The arrow's Esc now goes
+  down the stack to the first screen that takes it (`UILWEWStrategyHUD.OnMouseEvent`).
 - **Not reproduced on the development build:** Launch Satellite "completely broken", the soldier view without its model
   (asked aek which download and what exactly).
 - **Next:** journeys for the strategy screens' own buttons (research, build, hangar, Situation Room's menu), the Geoscape's

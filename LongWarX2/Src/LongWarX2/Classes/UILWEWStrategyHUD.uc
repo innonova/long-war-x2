@@ -643,6 +643,7 @@ function SetClock(XComGameState_LWStrategy S)
 simulated function OnMouseEvent(int cmd, array<string> args)
 {
 	local UIScreen Top;
+	local int i;
 
 	`log("LongWarX2: EW HUD mouse" @ cmd @ (args.Length > 0 ? args[args.Length - 1] : ""), , 'LongWarX2');
 	if (cmd != class'UIUtilities_Input'.const.FXS_L_MOUSE_UP)
@@ -660,8 +661,16 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 		UILWEWEngineering(Top).ShowCard();
 		return;
 	}
-	if (Top != none)
-		Top.OnUnrealCommand(class'UIUtilities_Input'.const.FXS_KEY_ESCAPE, class'UIUtilities_Input'.const.FXS_ACTION_RELEASE);
+	// (To the screen on top that takes it, downwards (Screens[0] is the top): a screen over another that passes its keys on (the Situation Room's
+	// own HUD over its room, on Launch Satellite) had swallowed the back arrow, which then did nothing.)
+	for (i = 0; i < Movie.Pres.ScreenStack.Screens.Length && Top != none; i++)
+	{
+		Top = Movie.Pres.ScreenStack.Screens[i];
+		if (Top == none || Top == self)
+			continue;
+		if (Top.OnUnrealCommand(class'UIUtilities_Input'.const.FXS_KEY_ESCAPE, class'UIUtilities_Input'.const.FXS_ACTION_RELEASE))
+			break;
+	}
 }
 
 defaultproperties
