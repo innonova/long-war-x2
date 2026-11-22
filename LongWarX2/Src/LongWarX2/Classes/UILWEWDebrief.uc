@@ -174,7 +174,10 @@ function TakeCargo()
 	Crew = XComHQ.Crew;
 	Battle = XComGameState_BattleData(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_BattleData', true));
 	bWon = Battle != none && Battle.bLocalPlayerWon;
-	class'XComGameState_LWStrategy'.static.Arrived();
+	// (Not after the campaign's first mission, which comes before Long War's campaign exists: its start screen makes it,
+	// with the home country chosen; made here, it was the United States and the start screen never came, aek 2026-11-22.)
+	if (S != none)
+		class'XComGameState_LWStrategy'.static.Arrived();
 	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
 	foreach XComHQ.Inventory(Ref)
 	{
