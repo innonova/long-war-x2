@@ -1,5 +1,6 @@
-# A left click at a point of the game's UI, given in its 1920x1080 coordinates (-Move: the pointer moved there only, to hover).
-param([Parameter(Mandatory)][double]$X, [Parameter(Mandatory)][double]$Y, [switch]$Move)
+# A left click at a point of the game's UI, given in its 1920x1080 coordinates (-Move: the pointer moved there only, to
+# hover; -Right: a right click).
+param([Parameter(Mandatory)][double]$X, [Parameter(Mandatory)][double]$Y, [switch]$Move, [switch]$Right)
 . (Join-Path $PSScriptRoot 'game.ps1')
 $h = Focus-Game
 if (-not $h) { exit 1 }
@@ -18,5 +19,6 @@ foreach ($k in 1..6) {
 }
 Start-Sleep -Milliseconds 300
 if ($Move) { exit 0 }
-[GW]::mouse_event(0x0002, 0, 0, 0, [IntPtr]::Zero); Start-Sleep -Milliseconds 100; [GW]::mouse_event(0x0004, 0, 0, 0, [IntPtr]::Zero)
+$down, $up = if ($Right) { 0x0008, 0x0010 } else { 0x0002, 0x0004 }
+[GW]::mouse_event($down, 0, 0, 0, [IntPtr]::Zero); Start-Sleep -Milliseconds 100; [GW]::mouse_event($up, 0, 0, 0, [IntPtr]::Zero)
 Start-Sleep -Milliseconds 300

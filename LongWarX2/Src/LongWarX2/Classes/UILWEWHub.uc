@@ -65,6 +65,8 @@ const OPT_REQUESTS = 20;
 const OPT_ARCHIVES = 21;
 /** The research alert's Assign New Research: the research list after the report (JumpToLabs). */
 var bool bChooseAfterReport;
+/** When a screen over the hub last closed on a right click (UILWEWScreen): the same click not taken as the hub's too. */
+var float LastRightClose;
 const OPT_CREDITS = 22;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
@@ -248,7 +250,11 @@ simulated function OnReceiveFocus()
 		return;
 	MC.ChildFunctionVoid("theMenu.facilityMenu", "onReceiveFocus");
 	if (Room >= 0)
+	{
 		SetTimer(0.15, true, nameof(HoverOption));
+		// (The room's tab lit and the others dimmed again: the menu's onReceiveFocus lit them all.)
+		CallNow("theMenu.facilityMenu.DimAllUnselectedMenuOptions");
+	}
 	ShowBase();
 	// (EW's Situation Room wall, live again once its own screen has closed.)
 	class'UILWEWSituationRoom'.static.OpenWall(XComHQPresentationLayer(Movie.Pres));
@@ -702,6 +708,14 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 {
 	local int i;
 
+	// (A right click: out of the room, as Esc and the corner arrow; at the base's view, nothing. Not the one that just closed
+	// a screen over the hub: its press and the hub's turn come within the same moment, and one click left two levels.)
+	if (cmd == class'UIUtilities_Input'.const.FXS_R_MOUSE_DOWN)
+	{
+		if (Room >= 0 && WorldInfo.TimeSeconds - LastRightClose > 0.4)
+			LeaveRoom();
+		return true;
+	}
 	if ((arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) == 0)
 		return super.OnUnrealCommand(cmd, arg);
 	if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED || cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP)

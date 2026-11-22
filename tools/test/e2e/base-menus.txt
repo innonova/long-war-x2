@@ -1,0 +1,62 @@
+# The base's rooms and their first menus, left by each of the three ways out (aek's report, 2026-11-22: the back button,
+# Esc and right-click work only sometimes; Engineering → Facilities → out → Buy Items opened Facilities).
+tab ENGINEERING
+expect UILWEWHub
+click BUILD FACILITIES
+expect Facilities
+back
+expect UILWEWHub
+click BUILD/BUY ITEMS
+expect Engineering
+esc
+expect UILWEWHub
+click BUILD FACILITIES
+expect Facilities
+rmb
+expect UILWEWHub
+click BUILD/BUY ITEMS
+expect Engineering
+rmb
+expect UILWEWHub
+tab BARRACKS
+expect UILWEWHub
+click VIEW SOLDIERS
+expect SoldierList
+rmb
+expect UILWEWHub
+click VIEW SOLDIERS
+expect SoldierList
+esc
+expect UILWEWHub
+click VIEW SOLDIERS
+expect SoldierList
+back
+expect UILWEWHub
+tab RESEARCH
+expect UILWEWHub
+click START NEW RESEARCH
+expect Research
+back
+expect UILWEWHub
+click START NEW RESEARCH
+expect Research
+rmb
+expect UILWEWHub
+tab HANGAR
+expect UILWEWHub
+click VIEW AIRCRAFT
+expect Hangar
+esc
+expect UILWEWHub
+click VIEW AIRCRAFT
+expect Hangar
+rmb
+expect UILWEWHub
+tab SITUATION ROOM
+expect UILWEWHub
+click LAUNCH SATELLITE
+shot launch-satellite
+esc
+expect UILWEWHub
+rmb
+shot base-after-rmb

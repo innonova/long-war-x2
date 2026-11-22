@@ -585,8 +585,20 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 
 simulated function bool OnUnrealCommand(int cmd, int arg)
 {
+	local UILWEWHub Hub;
+
+	// (Out by Esc, a pad's B or a right click, as EW's screens all take them; the right click only on some screens had made
+	// leaving a screen feel random, aek 2026-11-22, features/e2e-tests.md.)
 	if ((cmd == class'UIUtilities_Input'.const.FXS_KEY_ESCAPE || cmd == class'UIUtilities_Input'.const.FXS_BUTTON_B) && (arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0)
 	{
+		CloseScreen();
+		return true;
+	}
+	if (cmd == class'UIUtilities_Input'.const.FXS_R_MOUSE_DOWN)
+	{
+		// (The hub below told, so it does not take the same click as its own: one click had left two levels.)
+		foreach AllActors(class'UILWEWHub', Hub)
+			Hub.LastRightClose = WorldInfo.TimeSeconds;
 		CloseScreen();
 		return true;
 	}
