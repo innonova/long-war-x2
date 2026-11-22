@@ -57,7 +57,6 @@ function Read-Image($img) {
   $sb = Await ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
   $out = Await ($engine.RecognizeAsync($sb)) ([Windows.Media.Ocr.OcrResult])
   $stream.Dispose()
-  if ($env:LWX2_OCR_ANGLE) { [Console]::Error.WriteLine("TextAngle " + $out.TextAngle) }
   return $out
 }
 # (-Bands: read in overlapping horizontal bands as well: Windows' OCR misses a whole row of labels now and then (the room
@@ -69,19 +68,31 @@ if ($Bands) {
     $hgt = [Math]::Min($bh, $big.Height - $y)
     if ($hgt -lt 20) { break }
     $band = $big.Clone((New-Object System.Drawing.Rectangle 0, $y, $big.Width, $hgt), $big.PixelFormat)
-    $results += [pscustomobject]@{ R = (Read-Image $band); DY = $y }
+    $results += [pscustomobject]@{ R = (Read-Image $band); DY = $y; W = $band.Width; H = $band.Height }
   }
-} else { $results += [pscustomobject]@{ R = (Read-Image $big); DY = 0 } }
+} else { $results += [pscustomobject]@{ R = (Read-Image $big); DY = 0; W = $big.Width; H = $big.Height } }
+# (Windows' OCR gives its boxes in the picture as it straightened it: TextAngle, the text's slant it found, about the
+# picture's centre. A screen on one of the base's 3D panels reads slanted (-1.9 degrees on the soldier summary) and every
+# box came back up to 28 px off, so the click tests clicked the row above (features/e2e-tests.md). Each box's centre is
+# turned back.)
+function Box($b, $rr) {
+  $a = $rr.R.TextAngle
+  if ($a -eq $null -or $a -eq 0) { return [pscustomobject]@{ X = $b.X; Y = $b.Y; Width = $b.Width; Height = $b.Height } }
+  $t = $a * [Math]::PI / 180; $cx = $rr.W / 2; $cy = $rr.H / 2
+  $dx = $b.X + $b.Width / 2 - $cx; $dy = $b.Y + $b.Height / 2 - $cy
+  $mx = $cx + $dx * [Math]::Cos($t) - $dy * [Math]::Sin($t); $my = $cy + $dx * [Math]::Sin($t) + $dy * [Math]::Cos($t)
+  return [pscustomobject]@{ X = $mx - $b.Width / 2; Y = $my - $b.Height / 2; Width = $b.Width; Height = $b.Height }
+}
 $k = 1.0 / ($Scale * $ui)
 # (-Words: each word on its own, "x y w h line# text": OCR joins neighbouring labels into one line now and then.)
 if ($Words) {
   $li = 0
-  foreach ($rr in $results) { foreach ($line in $rr.R.Lines) { foreach ($w in $line.Words) { $b = $w.BoundingRect; "{0} {1} {2} {3} {4} {5}" -f [int]($b.X * $k + $rx / $ui), [int](($b.Y + $rr.DY) * $k + $ry / $ui), [int]($b.Width * $k), [int]($b.Height * $k), $li, $w.Text }; $li++ } }
+  foreach ($rr in $results) { foreach ($line in $rr.R.Lines) { foreach ($w in $line.Words) { $b = Box $w.BoundingRect $rr; "{0} {1} {2} {3} {4} {5}" -f [int]($b.X * $k + $rx / $ui), [int](($b.Y + $rr.DY) * $k + $ry / $ui), [int]($b.Width * $k), [int]($b.Height * $k), $li, $w.Text }; $li++ } }
   return
 }
 foreach ($rr in $results) { foreach ($line in $rr.R.Lines) {
   $x0 = 1e9; $y0 = 1e9; $x1 = 0; $y1 = 0
-  foreach ($w in $line.Words) { $b = $w.BoundingRect; $x0 = [Math]::Min($x0, $b.X); $y0 = [Math]::Min($y0, $b.Y); $x1 = [Math]::Max($x1, $b.X + $b.Width); $y1 = [Math]::Max($y1, $b.Y + $b.Height) }
+  foreach ($w in $line.Words) { $b = Box $w.BoundingRect $rr; $x0 = [Math]::Min($x0, $b.X); $y0 = [Math]::Min($y0, $b.Y); $x1 = [Math]::Max($x1, $b.X + $b.Width); $y1 = [Math]::Max($y1, $b.Y + $b.Height) }
   $k = 1.0 / ($Scale * $ui)
   "{0} {1} {2} {3} {4}" -f [int]($x0 * $k + $rx / $ui), [int](($y0 + $rr.DY) * $k + $ry / $ui), [int](($x1 - $x0) * $k), [int](($y1 - $y0) * $k), $line.Text
 } }
