@@ -5,6 +5,8 @@ lw give Supplies 300
 lw base set 2 2 9
 lw sat build
 until geo|satellites_ready 1|run 24 all|40
+# (The satellites up counted: the country first in the list may have left the council meanwhile.)
+lwsave sats base|Satellites [0-9]+
 tab SITUATION ROOM
 expect UILWEWHub
 click LAUNCH SATELLITE
@@ -19,7 +21,7 @@ shot confirm
 at 1205 624
 expect SituationRoomHUD
 lwsee geo|satellites_ready 0
-lwsee geo|~country 0 USA panic [0-9]+ satellite 1
+lwdiff sats base|Satellites [0-9]+|1
 shot launched
 back
 expect UILWEWHub
