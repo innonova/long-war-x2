@@ -783,6 +783,11 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(MoveUnit(int(Args[1]), int(Args[2]), int(Args[3]), Args.Length > 4 ? int(Args[4]) : -1));
 		return;
+	case "approach":
+		// approach <unit> <tile x> <tile y>: the unit walks as far as its move goes along the way there (a test aid: a soldier
+		// brought into sight of a pod over turns, for the click tests' shots).
+		Out.AddItem(Args.Length > 3 ? ApproachUnit(int(Args[1]), int(Args[2]), int(Args[3])) : "ERR approach <unit> <tile x> <tile y>");
+		return;
 	case "spawn":
 		// spawn [template] [tiles] [Long War species, as the pods tag theirs: its EW body by species] [leader level]
 		Out.AddItem(SpawnAlien(Args.Length > 1 ? name(Args[1]) : 'Sectoid', Args.Length > 2 ? int(Args[2]) : 2, Args.Length > 3 ? int(Args[3]) : 0, Args.Length > 4 ? int(Args[4]) : 0));
@@ -3072,6 +3077,36 @@ function string MoveUnit(int Index, int X, int Y, int Z)
 	if (!Controller.GameStateMoveUnitSingle(XGUnit(Unit.GetVisualizer()), Path))
 		return "ERR the move was refused";
 	return "ok" @ Unit.GetFullName() @ "moving" @ (Path.Length - 1) @ "tiles to" @ Dest.X @ Dest.Y @ Dest.Z;
+}
+
+/** The unit walked along its way to a tile, as far as one move reaches (the farthest tile of the whole path it can reach). */
+function string ApproachUnit(int Index, int X, int Y)
+{
+	local array<XComGameState_Unit> Units;
+	local XComGameState_Unit Unit;
+	local XComWorldData World;
+	local array<TTile> Path, Reach;
+	local TTile Dest;
+	local vector At;
+	local int k;
+
+	Units = FieldXCom();
+	if (Index < 0 || Index >= Units.Length)
+		return "ERR no unit" @ Index;
+	Unit = Units[Index];
+	World = `XWORLD;
+	Dest.X = X;
+	Dest.Y = Y;
+	Dest.Z = World.NumZ - 1;
+	At = World.GetPositionFromTileCoordinates(Dest);
+	if (!World.GetFloorTileForPosition(At, Dest, true))
+		return "ERR no floor at" @ X @ Y;
+	if (!class'X2PathSolver'.static.BuildPath(Unit, Unit.TileLocation, Dest, Path, false) || Path.Length < 2)
+		return "ERR no path for" @ Unit.GetFullName() @ "to" @ X @ Y;
+	for (k = Path.Length - 1; k > 0; k--)
+		if (class'X2PathSolver'.static.BuildPath(Unit, Unit.TileLocation, Path[k], Reach, true) && Reach.Length >= 2)
+			return MoveUnit(Index, Path[k].X, Path[k].Y, Path[k].Z);
+	return "ERR" @ Unit.GetFullName() @ "can reach no tile of the way to" @ X @ Y;
 }
 
 function Enemies(out array<string> Out, optional bool bAll)
