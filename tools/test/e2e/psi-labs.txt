@@ -3,7 +3,7 @@
 # VISIT THE PSI LABS → ADD SOLDIER → EW's soldier list → that soldier → EW's psi tree, Mindfray (rank 1's right-hand
 # power: EW's rows run right to left) → NEW TRAINING → CONFIRM → the labs listing him in training.
 lw techdone 4
-lw base set 3 2 17
+lw base set 5 2 17
 lw psixp 0 100
 tab BARRACKS
 expect UILWEWHub
