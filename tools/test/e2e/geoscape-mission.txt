@@ -1,7 +1,8 @@
 # A mission from the Geoscape as a player takes it (a campaign at EW's base: tools/test/new-campaign.sh 1 --begin): time run
 # until abductions are reported (setup; other decisions left waiting), then by clicks:
 # Mission Control's alert (abductions: EW's site selection), XCOM 2's squad select in EW's hangar, LAUNCH, the briefing,
-# a soldier moved (XCOM 2's right click on a tile), the turn ended (Backspace), the aliens' turn, XCOM's second turn.
+# a soldier moved (XCOM 2's right click on a tile), the turn ended (Backspace), the aliens' turn, XCOM's second turn,
+# Restart Mission from the pause menu, the aliens there again.
 lw arm now
 until decisions|abductions in|run 720|12
 click MISSION CONTROL
@@ -31,3 +32,19 @@ key Back
 waitfor round=2 240
 waitfor turn=eTeam_XCom busy=0 240
 shot second-turn
+lwsee enemies|team
+# Restart Mission from the pause menu (in every mission's, the port's): the mission again, Long War's aliens in it (they
+# had been lost on a restart, 2026-11-23).
+esc
+expect PauseMenu
+click Restart Mission
+expect DialogueBox
+key Enter
+waitfor DropShipBriefing 240
+wait 25
+key Space
+waitfor ready=1 180
+wait 5
+lwsee enemies|team
+shot restarted
+
