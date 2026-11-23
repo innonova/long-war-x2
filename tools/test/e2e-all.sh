@@ -11,7 +11,7 @@ run() { local r; tools/test/on.sh 'tools\test\click.ps1 960 540 -Right' 'Start-S
 tools/test/on.sh 'tools\test\stop-game.ps1' 'tools\test\start-game.ps1' 2>&1 | tail -1
 run first-mission
 tools/test/new-campaign.sh 1 --begin 2>&1 | tail -1
-for j in base-menus aek-repro soldier-and-rooms strategy-actions; do run "$j"; done
+for j in base-menus aek-repro soldier-and-rooms strategy-actions base-building; do run "$j"; done
 tools/test/new-campaign.sh 1 --begin 2>&1 | tail -1
 run geoscape-mission
 echo "e2e-all: $fails journeys with failures"
