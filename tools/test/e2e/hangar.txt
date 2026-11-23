@@ -1,0 +1,28 @@
+# The hangar as a player uses it (a new campaign at EW's base: tools/test/new-campaign.sh 1 --begin): the aircraft list,
+# a jet's summary, its loadout (EW's CHOOSE LOADOUT), back, and an interceptor ordered for North America (EW's order
+# dialog, §200), seen in Long War's hangar.
+tab HANGAR
+expect UILWEWHub
+click VIEW AIRCRAFT LIST
+expect Hangar
+see Raven
+at 360 430
+expect ShipSummary
+see EDIT LOADOUT
+click EDIT LOADOUT
+expect ShipLoadout
+see CHOOSE LOADOUT
+see Avalanche Missiles
+shot loadout
+back
+expect ShipSummary
+back
+expect Hangar
+click ORDER INTERCEPTORS
+see Monthly Cost
+shot order
+click =ORDER
+lwsee hangar|order
+expect Hangar
+back
+expect UILWEWHub
