@@ -6,6 +6,7 @@ lw base set 6 2 11
 lw techdone 10
 lw give AlienAlloy 20
 lw give LWItem_WeaponFragment 30
+lw give Supplies 100
 tab ENGINEERING
 expect UILWEWHub
 click THE FOUNDRY
