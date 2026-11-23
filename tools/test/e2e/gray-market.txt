@@ -1,0 +1,16 @@
+# The Gray Market as a player uses it (a new campaign at EW's base: tools/test/new-campaign.sh 1 --begin; it holds the
+# first mission's loot): Situation Room → VISIT THE GRAY MARKET, two Sectoid corpses put up for sale with the row's right
+# arrow, COMPLETE TRANSACTION, Long War's credits and stores after it.
+tab SITUATION ROOM
+expect UILWEWHub
+click VISIT THE GRAY MARKET
+expect GreyMarket
+see Sectoid Corpse
+at 751 256
+at 751 256
+shot two-for-sale
+click COMPLETE TRANSACTION
+lwsee geo|money 504
+shot sold
+back
+expect UILWEWHub
