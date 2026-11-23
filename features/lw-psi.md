@@ -439,6 +439,7 @@ What Long War 1.0 does, which the port did not have:
 
 - **Mindfray's words have holes** on EW's psi tree ("Lasts  turns.  turn cooldown."): its text carries
   `<XGAbility:MindfrayDuration/>` and `<XGAbility:MindfrayCooldown/>`, which `lw-words.mjs` cannot fill: EW computes them
-  in `XGAbilityTag.GetAbilityDuration` / `GetAbilityCooldown`, which `upk_script.py` does not decompile yet (token 0x29).
-  The same gap is in play: the port's Mindfray uses XCOM 2's disorientation and no cooldown of Long War's. To read
-  those two functions (the decompiler's token 0x29 first), then fill the words and the ability from them.
+  in `XGAbilityTag.GetAbilityDuration` / `GetAbilityCooldown`, which are native (their script is only the native call's
+  parameters, token 0x29 `EX_NativeParm`): the numbers are in EW's C++. The same gap is in play: the port's Mindfray
+  uses XCOM 2's disorientation and no cooldown of Long War's. Ways left: EW's executable read for them, or measured in
+  the EW harness (a Mindfray cast, its duration and cooldown counted).
