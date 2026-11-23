@@ -8,6 +8,20 @@ static event InstallNewCampaign(XComGameState StartState)
 	ReplaceFactionHeroes(StartState);
 	FirstMissionOnEWMap(StartState);
 	class'XComGameState_LWStartChoice'.static.CreateIn(StartState);
+	NoBeginnerVO(StartState);
+}
+
+/** XCOM 2's beginner voice lines off (its advisors on a first sighting: Shen on the Sectoid, at a pod's reveal; the
+ *  click tests, 2026-11-23): XCOM 2's characters and story, not Long War's; as its skirmish and ladder modes set it. */
+static function NoBeginnerVO(XComGameState StartState)
+{
+	local XComGameState_CampaignSettings Settings;
+
+	foreach StartState.IterateByClassType(class'XComGameState_CampaignSettings', Settings)
+	{
+		Settings.SetSuppressFirstTimeNarrativeEnabled(true);
+		break;
+	}
 }
 
 /**

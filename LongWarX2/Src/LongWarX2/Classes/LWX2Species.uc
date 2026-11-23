@@ -36,6 +36,9 @@ static function NameCopies()
 				X2CharacterTemplate(T).Loot.LootReferences.Length = 0;
 				X2CharacterTemplate(T).TimedLoot.LootReferences.Length = 0;
 				X2CharacterTemplate(T).VultureLoot.LootReferences.Length = 0;
+				// (No XCOM 2 advisor's line on its first sighting, Shen or Tygan on "the Sectoid" at a pod's reveal: XCOM 2's
+				// story, not Long War's; the click tests, 2026-11-23.)
+				X2CharacterTemplate(T).SightedNarrativeMoments.Length = 0;
 				n++;
 			}
 	}
