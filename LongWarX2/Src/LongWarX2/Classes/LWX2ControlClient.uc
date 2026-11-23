@@ -1209,7 +1209,18 @@ function string Continue()
 		|| UITacticalHUD(Top) != none || UISpecialMissionHUD(Top) != none || UIShell(Top) != none)
 		return "nothing to continue:" @ (Top != none ? string(Top.Class.Name) : "no screen");
 	if (UIDropShipBriefing_MissionStart(Top) != none || UIDropShipBriefing_MissionEnd(Top) != none)
+	{
+		// (What the Skyranger's "press any key" does, XComInputBase: the drop ship's end and the fade into the mission. Only
+		// the flag set, the mission's next key press did the rest later, and its fade to black never lifted: the world black
+		// under the HUD in tests.)
+		if (XComPlayerController(GetALocalPlayerController()) != none && !XComPlayerController(GetALocalPlayerController()).bProcessedTravelDestinationLoaded
+			&& XComPlayerController(GetALocalPlayerController()).bSeamlessTravelDestinationLoaded)
+		{
+			XComPlayerController(GetALocalPlayerController()).CleanupDropshipStart();
+			GetALocalPlayerController().ClientSetCameraFade(true, MakeColor(0, 0, 0), vect2d(0, 1), 0.5);
+		}
 		WorldInfo.bContinueToSeamlessTravelDestination = true; // what the Skyranger's "press any key" sets (X2TacticalGameRuleset waits on it)
+	}
 	else if (UILWEWDebrief(Top) != none)
 		UILWEWDebrief(Top).GoOn();
 	else if (UIAfterAction(Top) != none)
