@@ -18,6 +18,8 @@ shot squad-select
 click LAUNCH
 waitfor DropShipBriefing 240
 wait 25
+# (EW's situation for the mission in the briefing.)
+see Alien abduction in progress
 key Space
 waitfor ready=1 180
 shot mission-start

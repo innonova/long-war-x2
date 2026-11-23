@@ -28,7 +28,9 @@ function UpdateBriefingScreen()
 	MC.QueueString(m_strLocationLabel);
 	MC.QueueString(S.CountryName(S.PendingCountry()));
 	MC.QueueString(m_strBriefingLabel);
-	MC.QueueString(Reward);
+	// (EW's situation for the kind of mission, its reward after it.)
+	MC.QueueString(S.PendingKind > 0 && S.PendingKind < 11 && class'UILWEWAlert'.default.Situations[S.PendingKind] != ""
+		? class'UILWEWAlert'.default.Situations[S.PendingKind] $ (Reward != "" ? "<br><br>" $ Reward : "") : Reward);
 	MC.QueueString(m_strObjectiveLabel);
 	MC.QueueString(Title);
 	MC.QueueString("");
@@ -59,7 +61,7 @@ function bool FirstMission()
 	MC.QueueString(m_strLocationLabel);
 	MC.QueueString(Country);
 	MC.QueueString(m_strBriefingLabel);
-	MC.QueueString("");
+	MC.QueueString(class'UILWEWAlert'.default.Situations[3]);
 	MC.QueueString(m_strObjectiveLabel);
 	MC.QueueString((class'UILWEWAlert'.default.TitleAbductions != "" ? class'UILWEWAlert'.default.TitleAbductions : "Abductions") @ "-" @ Country);
 	MC.QueueString("");

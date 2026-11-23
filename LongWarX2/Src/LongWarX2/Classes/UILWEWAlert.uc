@@ -14,6 +14,8 @@ class UILWEWAlert extends UILWEWScreen dependson(LWAirWar);
 
 var localized string RadarContact, Contact, Location, UFOClass, Unidentified, Scramble, IgnoreContact, SendSkyranger, Ignore,
 	CrashSite, HasLanded;
+/** Each mission's situation (EW's XGMission_*.m_strSituation), by Long War's kind of mission (PendingKind). */
+var localized string Situations[11];
 /** EW's notices' words (XGMissionControlUI: m_strLabelItemBuilt ...; features/ew-notices.md). */
 var localized string NoticeItemBuilt, NoticeExcavation, NoticeFacilityRemoved, NoticeNewSoldiers, NoticeInterceptorArrival;
 var localized string NoticeShipOnline, NoticeShipTransfer, NoticeSatOnline, NoticeRequestExpired;

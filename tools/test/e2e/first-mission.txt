@@ -16,6 +16,8 @@ wait 25
 shot briefing
 # (The first mission in a country of the home's continent: its abductions named in the briefing.)
 see Alien Abductions
+# (EW's situation for the mission in the briefing.)
+see Alien abduction in progress
 key Space
 waitfor ready=1 180
 shot first-mission

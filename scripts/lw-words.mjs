@@ -807,6 +807,10 @@ export function makeAlertWords({ strategyLoc }) {
     ...[['TitleAbductions', 'Abduction'], ['TitleTerror', 'Terror'], ['TitleCrash', 'UFOCrash'], ['TitleLanded', 'UFOLanded'],
       ['TitleAlienBase', 'AlienBase'], ['TitleTempleShip', 'TempleShip'], ['TitleHQ', 'HQAssault'], ['TitleCovertExtraction', 'CovertOpsExtraction'],
       ['TitleDataRecovery', 'CaptureAndHold'], ['TitleExaltRaid', 'ExaltRaid']].map(([k, m]) => [k, one(sections(`XGMission_${m}`), 'm_strTitle')]),
+    // Each mission's situation, by Long War's kind of mission sent (XComGameState_LWStrategy.PendingKind), for the drop-ship
+    // briefing (UILWDropShipBriefing).
+    ...[[1, 'UFOCrash'], [2, 'UFOLanded'], [3, 'Abduction'], [4, 'Terror'], [5, 'AlienBase'], [6, 'TempleShip'], [7, 'HQAssault'],
+      [9, 'ExaltRaid']].map(([k, m]) => [`Situations[${k}]`, one(sections(`XGMission_${m}`), 'm_strSituation')]),
     ['AssaultAlienBase', mc('m_strLabelAssaultAlienBase')], ['AssaultTempleShip', mc('m_strLabelAssaultTempleShip')],
     ['TempleShipText', mc('m_strLabelTempleShip')], ['Assault', mc('m_strLabelAssault')], ['Wait', mc('m_strlabelWait')],
     ['ExaltTitle', mc('m_strLabelExaltAlertTitle')], ['ExaltBody', mc('m_strLabelExaltAlertBody')],
