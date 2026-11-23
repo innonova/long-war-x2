@@ -360,6 +360,20 @@ function ShowRoom()
 	B.LookAt(BaseCamera, 0);
 }
 
+/** Under a dialog (EW's confirmations: CONFIRM UPGRADE, NEW TRAINING, ...) the screen stays in view, as EW's: XCOM 2 hides a
+ *  screen losing the focus, which left the base's black cutaway around the dialog (the click tests' shot, 2026-11-23). */
+simulated function OnLoseFocus()
+{
+	super.OnLoseFocus();
+	SetTimer(0.01, false, nameof(ShowUnderDialog));
+}
+
+function ShowUnderDialog()
+{
+	if (!bIsFocused && UIDialogueBox(Movie.Pres.ScreenStack.GetCurrentScreen()) != none && Movie.Pres.ScreenStack.GetScreen(class) == self)
+		Show();
+}
+
 simulated function OnReceiveFocus()
 {
 	super.OnReceiveFocus();
