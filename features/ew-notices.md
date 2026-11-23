@@ -48,3 +48,6 @@ port shows nothing, so things finishing pass unseen unless the player reads the 
   for six seconds (screenshot and the `strategy-actions` journey's `waitsee`).
 - **Left:** EW's sounds for them; the kinds the port has no event for yet (soldier healed, new scientists and engineers,
   satellite operational: the port's satellites are up at once, ship rearmed).
+- **Fixed (2026-11-23):** notices that came before the session's first Mission Control never showed (the count started
+  at the campaign's latest). The count of those shown is kept on the hub now, and on the first opening those of the last
+  game day show. `strategy-actions` checks it as Mission Control opens after the item is built.
