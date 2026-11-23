@@ -376,3 +376,15 @@ The "post-mission fatigue of every mod" left open above is in: `LWFatigue.Powers
   within reach but out of sight (the ones within reach were in the soldier's view), and the outline itself was not clearly
   visible in the screenshot at the camera's distance.
 - With this the gene mods have no stand-in left (`STATUS.md`).
+
+## Notes (2026-11-23, found by the click tests: the mouse no longer chooses a mod)
+
+- On EW's Gene Mods screen (from the Genetics Lab's ADD SOLDIER or the soldier summary's GENE MODS) a click on a mod does
+  nothing; the keys work (arrows, Enter: "CLICK TO REMOVE"). It worked by mouse on 2026-11-16 (the report above). The
+  movie raises (almost) no mouse events: XCOM 2's hit test finds no clip under the pointer over the tree
+  (`TestMouseConsumedByFlash` false, the `fade` aid), where over the hub's tabs it finds one. Ruled out: the hidden
+  Mission Control movie kept beneath the hub (closed, no change), the screen's hit test switch (`hitTestDisable` false),
+  the movie's own `onLoad`s called again, the mouse-in's selection called a moment later (out of Flash's callback).
+- **Likely lead:** the converter's renaming of EW's Flash classes that clash with XCOM 2's (2026-11-18, `ew-ui.ts`), made
+  after the 16th: the tree's icons may now bind to a class without EW's mouse handlers. To check: the Gene Mods movie's
+  icons' classes before and after the renaming (`tools/convert/swf-as2.ts … classes SoldierGeneMods`).
