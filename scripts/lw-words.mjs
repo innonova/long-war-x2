@@ -337,6 +337,13 @@ export function makeSmallWords({ loc, strategyLoc, items }) {
     if (plural) out.push(`FriendlyNamePlural="${plural}"`)
     const summary = of(strategyLoc, 'ItemTypeSummary')
     if (summary) out.push(`BriefSummary="${summary}"`, `TacticalText="${summary}"`)
+    // A grenade's throw on the soldier's ability bar, as EW names it (its ability bears the grenade's name, "HE Grenade";
+    // XGAbility.GetName), its words the item's: XCOM 2 takes both from the grenade (XComGameState_Ability.GetMyFriendlyName,
+    // GetMyHelpText), and without them showed no name and "Missing 'LocHelpText'" (the click tests, 2026-11-23).
+    if (cls === 'X2GrenadeTemplate') {
+      out.push(`ThrownAbilityName="${name}"`, `LaunchedAbilityName="${name}"`)
+      if (summary) out.push(`ThrownAbilityHelpText="${summary}"`, `LaunchedAbilityHelpText="${summary}"`)
+    }
     out.push('')
   }
   return { text: out.join('\r\n'), named }
