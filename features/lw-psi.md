@@ -434,3 +434,11 @@ What Long War 1.0 does, which the port did not have:
 - **Left:** the psi soldier's class icon variant (EW's `GetClassLabel` with bIsPsiSoldier; stock Long War defines no
   such icons in its config, so likely none); the rank names read "PSI RANK n" on a development build, as the words are
   written by the setup.
+
+## Notes (2026-11-23, found by the click tests)
+
+- **Mindfray's words have holes** on EW's psi tree ("Lasts  turns.  turn cooldown."): its text carries
+  `<XGAbility:MindfrayDuration/>` and `<XGAbility:MindfrayCooldown/>`, which `lw-words.mjs` cannot fill: EW computes them
+  in `XGAbilityTag.GetAbilityDuration` / `GetAbilityCooldown`, which `upk_script.py` does not decompile yet (token 0x29).
+  The same gap is in play: the port's Mindfray uses XCOM 2's disorientation and no cooldown of Long War's. To read
+  those two functions (the decompiler's token 0x29 first), then fill the words and the ability from them.
