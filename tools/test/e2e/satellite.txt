@@ -1,6 +1,7 @@
 # A satellite launched from the Situation Room as a player does (a new campaign at EW's base: tools/test/new-campaign.sh 1
-# --begin): one built (setup: ordered and time run until it is ready), then by clicks LAUNCH SATELLITE, the country first
+# --begin): one built (setup: money given, as an earlier journey may have spent it; ordered; time run until ready), then by clicks LAUNCH SATELLITE, the country first
 # in EW's list (selected), its LAUNCH SATELLITE, the confirmation, and Long War's country with its satellite.
+lw give Supplies 300
 lw sat build
 until geo|satellites_ready 1|run 24 all|40
 tab SITUATION ROOM
