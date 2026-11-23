@@ -1,0 +1,27 @@
+# Psionic training as a player starts it (a new campaign at EW's base: tools/test/new-campaign.sh 1 --begin): setup gives
+# Long War's psi research, a Psi Lab and the first soldier 100 psi XP (his first psi rank's); then by clicks Barracks →
+# VISIT THE PSI LABS → ADD SOLDIER → EW's soldier list → that soldier → EW's psi tree, Mindfray (rank 1's right-hand
+# power: EW's rows run right to left) → NEW TRAINING → CONFIRM → the labs listing him in training.
+lw techdone 4
+lw base set 3 2 17
+lw psixp 0 100
+tab BARRACKS
+expect UILWEWHub
+click VISIT THE PSI LABS
+expect PsiLabs
+see Current Psionic Training
+click ADD SOLDIER
+expect SoldierList
+at 458 215
+expect PsiPromotion
+see PSIONIC ABILITIES
+shot psi-tree
+at 771 209
+expect DialogueBox
+see Mindfray
+click CONFIRM
+expect PsiLabs
+see (Mindfray)
+shot in-training
+back
+expect UILWEWHub
