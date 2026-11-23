@@ -188,3 +188,7 @@ the displays), `click3d`, `closescreen <class>`, `uvadjust <display>`; `start-ga
   and XCOM 2's "Missing 'LocHelpText'" (its words come from the grenade item: `ThrownAbilityName`/`ThrownAbilityHelpText`,
   now EW's, "HE Grenade: Does 3 damage."); the officers' Command showed on every soldier as "Not enough charges" (now
   hidden without charges). New step `unseen <text>`.
+- **`gene-mods`** (new): Neural Damping chosen by a click on EW's Gene Mods screen, confirmed, the soldier in a tank.
+  A false alarm on the way (the mouse "not choosing a mod"): the test had clicked at a place read off a desktop
+  screenshot of the windowed game, not in the game's UI coordinates; withdrawn in `lw-genemods.md`. **Lesson for the
+  journeys:** places for `at` come from OCR (UI coordinates) or a fullscreen screenshot, never a windowed one.
