@@ -159,3 +159,7 @@ the displays), `click3d`, `closescreen <class>`, `uvadjust <display>`; `start-ga
 - **Open, not reproduced:** once, in a full run, the hub's room menu ignored clicks for some minutes while the HUD's back
   arrow still worked (2026-11-23 00:17 run); five repeats and a rerun of the same sequence passed. Watched for in later
   full runs.
+- **More journeys (2026-11-23, morning):** `psi-labs` (Psi Labs → ADD SOLDIER → EW's list (others greyed) → EW's psi
+  tree → Mindfray → NEW TRAINING → CONFIRM → in training), `gray-market` (corpses sold), `foundry` (a project begun). All
+  pass. Found on the way: Mindfray's words have holes where EW fills its duration and cooldown from native code
+  (`features/lw-psi.md`).
