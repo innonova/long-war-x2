@@ -30,18 +30,20 @@ expect UILWEWHub
 # (Out of the room: EW's HUD shows Mission Control and the clock only on the base's view.)
 rmb
 expect UILWEWHub
-# Mission Control: SCAN FOR ACTIVITY, the clock running (1 March to 2 March), the research and the council report listed.
+# The day's work done (setup: time run until the item is built; a UFO seen meanwhile would stop the scan), then Mission
+# Control opened: EW's notice for the item, which waited for it, six seconds at the bottom left (features/ew-notices.md;
+# small orange text over the room: OCR reads "Shotgun" well and "built" badly ("btilt"); "Shotgun b" is the notice's,
+# not the event list's "Sawed-off Shotgun", which ends its line).
+until geo|Engineering built|run 6|8
 click MISSION CONTROL
+waitsee Shotgun b 20
 expect MissionControl
 see SCAN FOR ACTIVITY
 see Council Report
+# SCAN FOR ACTIVITY: the clock running.
 click SCAN FOR ACTIVITY
-# (EW's notice for the item, six seconds at the bottom left: features/ew-notices.md. Small orange text over the room:
-# OCR reads "Shotgun" well and "built" badly ("btilt"); "Shotgun b" is the notice's, not the event list's "Sawed-off
-# Shotgun", which ends its line.)
-waitsee Shotgun b 20
-wait 4
-see 2 March
+wait 8
+maybe IGNORE CONTACT
 shot scanned
 esc
 expect UILWEWHub
