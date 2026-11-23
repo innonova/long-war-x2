@@ -13,7 +13,10 @@ maybe =IGNORE
 maybe IGNORE CONTACT
 maybe =IGNORE
 shot alert
-click VIEW ABDUCTION SITE
+# (The abductions' alert, or, once another alert was let go, their entry in Mission Control's list: EW's list opens the
+# site selection itself.)
+maybe VIEW ABDUCTION SITE
+maybe ALIEN ABDUCTIONS
 see ABDUCTION SITE
 click Confirm
 expect SquadSelect
