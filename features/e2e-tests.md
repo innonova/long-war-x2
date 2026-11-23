@@ -170,3 +170,10 @@ the displays), `click3d`, `closescreen <class>`, `uvadjust <display>`; `start-ga
   Long War's words rewritten after each build (`tools/test/words.mjs`, run by `sync-build.sh`).
 - **Downloads tested by all journeys on the installed build:** 0bbceda, af72592, 99e61dd (the draft's now).
 - **Seen, not done:** the rubble in an excavated room draws in odd green-yellow colours; Mindfray's description holes.
+- **Restart Mission left the mission without aliens** (found while setting up a shooting journey): XCOM 2 restores the
+  mission's start into the history after the tactical HUD comes up, and Long War's pods spawned then
+  (`LWMissionSquads.SpawnAtEWPods`) were lost; the mission could not be won. Now the tactical listener's two-second check
+  (`UIScreenListener_LongWarX2Tactical.CheckSwept`) spawns the squad (and civilians, meld) when no alien was ever in the
+  history. `geoscape-mission` restarts its mission and checks the aliens are back.
+- **Seen, not a player's path:** after the `spawn` test aid dropped an alien, the mission's world drew black under the
+  HUD.
