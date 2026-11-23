@@ -6,14 +6,13 @@ expect UILWEWHub
 click VISIT THE GRAY MARKET
 expect GreyMarket
 see Sectoid Corpse
-# (Ten corpses to start with: as many again given, so that the count after is known whatever came before.)
-lw give LWItem_SectoidCorpse 10
-lwsee give LWItem_SectoidCorpse 0|held 20
+# (The corpses held counted first: the first mission's loot varies.)
+lwsave corpses give LWItem_SectoidCorpse 0|held [0-9]+
 at 751 256
 at 751 256
 shot two-for-sale
 click COMPLETE TRANSACTION
-lwsee give LWItem_SectoidCorpse 0|held 18
+lwdiff corpses give LWItem_SectoidCorpse 0|held [0-9]+|-2
 shot sold
 back
 expect UILWEWHub
