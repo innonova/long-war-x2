@@ -241,6 +241,17 @@ static function NoReinforcements()
  * at least one was there), the mission is won, as by the test button (XCOM 2's objectives counted as done). XCOM 2
  * leaves victory to each mission's kismet, which on an Enemy Within map has nothing to act on.
  */
+/** Whether any alien unit is in the mission's history, alive or dead. */
+static function bool AnyAlienEver()
+{
+	local XComGameState_Unit Unit;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_Alien)
+			return true;
+	return false;
+}
+
 function CheckSwept()
 {
 	local XComGameState_Unit Unit;
@@ -248,6 +259,16 @@ function CheckSwept()
 
 	if (bSwept || `TACTICALRULES == none || `TACTICALRULES.HasTacticalGameEnded())
 		return;
+	// (Restart Mission: XCOM 2 puts the mission's start back into the history after the HUD has come up, and the pods
+	// spawned then were gone with it, the mission left without aliens, aek 2026-11-23 (features/e2e-tests.md). No alien
+	// ever on the field: Long War's squad spawned now.)
+	if (class'LWX2EWMapPieces'.static.HasMap() && !AnyAlienEver())
+	{
+		`log("LongWarX2: missions: no alien on the field (the mission restarted): Long War's squad spawned again", , 'LongWarX2');
+		class'LWMissionSquads'.static.SpawnAtEWPods();
+		class'LWMissionSquads'.static.SpawnCivilians();
+		class'LWMeld'.static.Place();
+	}
 	NoReinforcements();
 	LongWarObjectives();
 	class'X2Effect_LWRespirator'.static.Update();
