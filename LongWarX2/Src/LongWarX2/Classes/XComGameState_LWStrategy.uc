@@ -229,6 +229,7 @@ var int EventCount;
  *  EW's words, numbered (NoticeCount) so that Mission Control shows each once, six seconds (features/ew-notices.md).
  *  The last 12 kept. */
 var array<string> Notices;
+var array<int> NoticeHours;
 var int NoticeCount;
 /** Set when something wants the player's decision: the clock stops. */
 var bool bStop;
@@ -2879,8 +2880,11 @@ function Notice(string Words, string Fallback, optional string Str0, optional st
 	T = Repl(Repl(Repl(T, "<XGParam:StrValue0/>", Str0), "<XGParam:StrValue1/>", Str1), "<XGParam:IntValue0/>", string(Int0));
 	NoticeCount++;
 	Notices.AddItem(T);
+	NoticeHours.AddItem(Hours);
 	if (Notices.Length > 12)
 		Notices.Remove(0, Notices.Length - 12);
+	if (NoticeHours.Length > Notices.Length)
+		NoticeHours.Remove(0, NoticeHours.Length - Notices.Length);
 }
 
 function Note(string Text)

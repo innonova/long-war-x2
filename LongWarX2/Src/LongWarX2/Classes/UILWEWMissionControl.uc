@@ -69,24 +69,29 @@ function UpdateNotices()
 	local XComGameState_LWStrategy S;
 	local array<ASValue> Params;
 	local string Shown;
+	local UILWEWHub Hub;
 	local int i, n;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
-	if (S == none || Geo == none)
+	Hub = UILWEWHub(Movie.Pres.ScreenStack.GetFirstInstanceOf(class'UILWEWHub'));
+	if (S == none || Hub == none)
 		return;
-	// (Not the campaign's earlier ones, the first time.)
-	if (!Geo.bNoticesStarted)
+	// (The first time in a session (a game loaded, the strategy layer come back to), those of the last game day only, not the
+	// campaign's older ones.)
+	if (!Hub.bNoticesStarted)
 	{
-		Geo.bNoticesStarted = true;
-		Geo.NoticesSeen = S.NoticeCount;
+		Hub.bNoticesStarted = true;
+		Hub.NoticesSeen = S.NoticeCount;
+		for (i = S.NoticeHours.Length - 1; i >= 0 && S.Hours - S.NoticeHours[i] <= 24; i--)
+			Hub.NoticesSeen--;
 	}
-	n = Min(S.NoticeCount - Geo.NoticesSeen, S.Notices.Length);
+	n = Min(S.NoticeCount - Hub.NoticesSeen, S.Notices.Length);
 	for (i = S.Notices.Length - n; i < S.Notices.Length; i++)
 	{
 		NoticeTexts.AddItem(S.Notices[i]);
 		NoticeTimes.AddItem(WorldInfo.RealTimeSeconds);
 	}
-	Geo.NoticesSeen = S.NoticeCount;
+	Hub.NoticesSeen = S.NoticeCount;
 	for (i = NoticeTexts.Length - 1; i >= 0; i--)
 		if (WorldInfo.RealTimeSeconds - NoticeTimes[i] > 6.0)
 		{

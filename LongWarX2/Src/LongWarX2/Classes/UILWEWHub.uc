@@ -67,6 +67,10 @@ const OPT_ARCHIVES = 21;
 var bool bChooseAfterReport;
 /** When a screen over the hub last closed on a right click (UILWEWScreen): the same click not taken as the hub's too. */
 var float LastRightClose;
+/** EW's notices (XComGameState_LWStrategy.Notices) Mission Control has shown while this hub has been up: their count
+ *  (features/ew-notices.md). */
+var int NoticesSeen;
+var bool bNoticesStarted;
 const OPT_CREDITS = 22;
 
 /** Long War's Foundry facility (LWBase's facility numbers: EW's eFacility_Foundry). */
