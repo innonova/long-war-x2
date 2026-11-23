@@ -388,3 +388,7 @@ The "post-mission fatigue of every mod" left open above is in: `LWFatigue.Powers
 - **Likely lead:** the converter's renaming of EW's Flash classes that clash with XCOM 2's (2026-11-18, `ew-ui.ts`), made
   after the 16th: the tree's icons may now bind to a class without EW's mouse handlers. To check: the Gene Mods movie's
   icons' classes before and after the renaming (`tools/convert/swf-as2.ts … classes SoldierGeneMods`).
+- **Read since:** EW's Gene Mods movie binds its icons to its mouse handler through `Bind.mouse` (`MouseHandler.bind`, only
+  `if Environment.instance.IsPC()`); the platform defaults to PC and the mod's `SetEWView` says PC again, so that gate
+  should pass. Next: whether the icons' `MouseHandler_*` callbacks still reach XCOM 2 (`flash.external.ExternalInterface
+  .call("FlashRaiseMouseEvent", …)`) after the converter's renaming, by comparing the converted movie's code with EW's.
