@@ -45,5 +45,5 @@ click SCAN FOR ACTIVITY
 wait 8
 maybe IGNORE CONTACT
 shot scanned
-esc
-expect UILWEWHub
+# (Out of Mission Control: an alert the scan brought, if any, closed first.)
+escto UILWEWHub 3

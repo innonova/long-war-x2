@@ -11,6 +11,7 @@
 #   see <text>        the text on screen (OCR, spaces ignored; FAIL otherwise): a result the screen shows
 #   waitsee <text> <s> the text on screen within s seconds (OCR again and again): a notice that comes and goes
 #   maybe <label>     a label clicked if it is on screen (a page that comes only sometimes); no FAIL otherwise
+#   escto <screen> <n> Esc pressed until the screen holds text, at most n times (an alert that may come or not)
 #   key <key>         a key pressed (key.ps1's names: Space, Enter, W ...)
 #   at <x> <y>        a click at a place in the 1920x1080 UI (a list's row, whose label is a random name)
 #   expect <text>     the top screen's class holds text (FAIL otherwise)
@@ -47,6 +48,10 @@ while IFS= read -r line <&3 || [ -n "$line" ]; do
     esc)    r=$(tools/test/on.sh 'tools\test\esc.ps1' 2>&1 | tail -1); sleep 1.5 ;;
     at)     r=$(tools/test/on.sh "tools\\test\\click.ps1 $arg" 2>&1 | tail -1); r="clicked at $arg${r:+ $r}"; sleep 1.5 ;;
     key)    r=$(tools/test/on.sh 'tools\test\focus.ps1' "tools\\test\\key.ps1 $arg 150" 2>&1 | tail -1); sleep 1.5 ;;
+    escto)  want="${arg% *}"; max="${arg##* }"; r="FAIL: not back to $want after $max Esc"
+            for ((k = 0; k < max; k++)); do [[ "$(screen)" == *"$want"* ]] && { r="ok after $k Esc"; break; }; tools/test/on.sh 'tools\test\esc.ps1' >/dev/null 2>&1; sleep 1.5; done
+            [[ "$r" == FAIL* && "$(screen)" == *"$want"* ]] && r="ok after $max Esc"
+            [[ "$r" == FAIL* ]] && fails=$((fails+1)) ;;
     rmb)    r=$(tools/test/on.sh 'tools\test\click.ps1 960 540 -Right' 2>&1 | tail -1); sleep 1.5 ;;
     until)  IFS='|' read -r c txt act max <<< "$arg"; r="FAIL: '$txt' not in '$c' after $max x '$act'"
             for ((k = 0; k < max; k++)); do o=$(tools/test/lw.sh "$c" 2>&1 | grep -v '^>'); if printf '%s' "$o" | grep -qiF -- "$txt"; then r="ok after $k x '$act'"; break; fi; tools/test/lw.sh "$act" >/dev/null 2>&1; done
