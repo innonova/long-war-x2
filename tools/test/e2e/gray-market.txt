@@ -6,11 +6,14 @@ expect UILWEWHub
 click VISIT THE GRAY MARKET
 expect GreyMarket
 see Sectoid Corpse
+# (Ten corpses to start with: as many again given, so that the count after is known whatever came before.)
+lw give LWItem_SectoidCorpse 10
+lwsee give LWItem_SectoidCorpse 0|held 20
 at 751 256
 at 751 256
 shot two-for-sale
 click COMPLETE TRANSACTION
-lwsee geo|money 504
+lwsee give LWItem_SectoidCorpse 0|held 18
 shot sold
 back
 expect UILWEWHub
