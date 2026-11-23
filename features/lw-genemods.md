@@ -392,3 +392,11 @@ The "post-mission fatigue of every mod" left open above is in: `LWFatigue.Powers
   `if Environment.instance.IsPC()`); the platform defaults to PC and the mod's `SetEWView` says PC again, so that gate
   should pass. Next: whether the icons' `MouseHandler_*` callbacks still reach XCOM 2 (`flash.external.ExternalInterface
   .call("FlashRaiseMouseEvent", …)`) after the converter's renaming, by comparing the converted movie's code with EW's.
+- **Found (2026-11-23):** the tree is drawn smaller than Flash's own layout says, so Flash's hit test misses the drawn
+  icons. Measured on wingpu (1920 × 1080 UI): the two icons of a row are drawn 97 px apart, at x 463 and 560; by the clips'
+  own transforms (the screen at 873.65 scaled 150 %, the tree at −48.5, the icons at −171.3 and −93.8) they stand 116 px
+  apart, at 544 and 660 — the drawing about 0.84 of the model, and offset. A click on a drawn icon lands outside it in
+  Flash's model (the icon's `_xmouse` −55.85 at its drawn centre, its width 101.55), so nothing is hit. The same kind of
+  gap was seen on the soldier summary's panel (0.878, "Notes (2026-11-19 …)" in `strategy-flow.md`). The fix belongs
+  where EW's 1280 × 720 movies are scaled into XCOM 2's (`UILWEWScreen.ScaleToStage`, the movie's view mode), not in
+  this screen; keys work meanwhile.
