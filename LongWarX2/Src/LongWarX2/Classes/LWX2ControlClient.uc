@@ -3095,13 +3095,17 @@ function string ApproachUnit(int Index, int X, int Y)
 		return "ERR no unit" @ Index;
 	Unit = Units[Index];
 	World = `XWORLD;
-	Dest.X = X;
-	Dest.Y = Y;
-	Dest.Z = World.NumZ - 1;
-	At = World.GetPositionFromTileCoordinates(Dest);
-	if (!World.GetFloorTileForPosition(At, Dest, true))
-		return "ERR no floor at" @ X @ Y;
-	if (!class'X2PathSolver'.static.BuildPath(Unit, Unit.TileLocation, Dest, Path, false) || Path.Length < 2)
+	// (The tile itself, or one near it: a unit's own tile has no path to it.)
+	for (k = 0; k < 49 && Path.Length < 2; k++)
+	{
+		Dest.X = X + (k % 7) - 3;
+		Dest.Y = Y + (k / 7) - 3;
+		Dest.Z = World.NumZ - 1;
+		At = World.GetPositionFromTileCoordinates(Dest);
+		if (World.GetFloorTileForPosition(At, Dest, true))
+			class'X2PathSolver'.static.BuildPath(Unit, Unit.TileLocation, Dest, Path, false);
+	}
+	if (Path.Length < 2)
 		return "ERR no path for" @ Unit.GetFullName() @ "to" @ X @ Y;
 	for (k = Path.Length - 1; k > 0; k--)
 		if (class'X2PathSolver'.static.BuildPath(Unit, Unit.TileLocation, Path[k], Reach, true) && Reach.Length >= 2)
