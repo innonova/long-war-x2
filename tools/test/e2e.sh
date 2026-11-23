@@ -17,7 +17,7 @@
 #   expect <text>     the top screen's class holds text (FAIL otherwise)
 #   lw <command>      a control-port command (setup only, never the thing tested)
 #   until <cmd>|<text>|<setup cmd>|<n> setup: the setup command run (at most n times) until the state command holds text
-#   lwsee <cmd>|<text> the game's state (a control-port command's answer) holds text: what the clicks did, where the
+#   lwsee <cmd>|<text> the game's state (a control-port command's answer) holds text (~regex): what the clicks did, where the
 #                     screen shows it too faintly to read
 #   wait <s>          shot <name>
 #   waitfor <text> <s> wait until the game's state line (phase, map, screen) holds text, at most s seconds (FAIL after)
@@ -56,7 +56,7 @@ while IFS= read -r line <&3 || [ -n "$line" ]; do
     until)  IFS='|' read -r c txt act max <<< "$arg"; r="FAIL: '$txt' not in '$c' after $max x '$act'"
             for ((k = 0; k < max; k++)); do o=$(tools/test/lw.sh "$c" 2>&1 | grep -v '^>'); if printf '%s' "$o" | grep -qiF -- "$txt"; then r="ok after $k x '$act'"; break; fi; tools/test/lw.sh "$act" >/dev/null 2>&1; done
             [[ "$r" == FAIL* ]] && fails=$((fails+1)) ;;
-    lwsee)  c="${arg%%|*}"; txt="${arg#*|}"; o=$(tools/test/lw.sh "$c" 2>&1 | grep -v '^>'); if printf '%s' "$o" | grep -qiF -- "$txt"; then r="ok (the game's state: $txt)"; else r="FAIL: '$txt' not in '$c': ${o:0:200}"; fails=$((fails+1)); fi ;;
+    lwsee)  c="${arg%%|*}"; txt="${arg#*|}"; o=$(tools/test/lw.sh "$c" 2>&1 | grep -v '^>'); if { [[ "$txt" == "~"* ]] && printf '%s' "$o" | grep -qiE -- "${txt#\~}"; } || { [[ "$txt" != "~"* ]] && printf '%s' "$o" | grep -qiF -- "$txt"; }; then r="ok (the game's state: $txt)"; else r="FAIL: '$txt' not in '$c': ${o:0:200}"; fails=$((fails+1)); fi ;;
     lw)     r=$(tools/test/lw.sh "$arg" 2>&1 | tail -1); sleep 1 ;;
     wait)   sleep "$arg"; r="" ;;
     waitfor) wt=${arg% *}; ws=${arg##* }; t0=$(date +%s); r="FAIL: no '$wt' within ${ws}s"
