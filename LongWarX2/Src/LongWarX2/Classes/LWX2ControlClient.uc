@@ -783,6 +783,11 @@ function Handle(string Line, out array<string> Out)
 		}
 		Out.AddItem(MoveUnit(int(Args[1]), int(Args[2]), int(Args[3]), Args.Length > 4 ? int(Args[4]) : -1));
 		return;
+	case "inview":
+		// inview [unit]: the unit (by default the one selected) put on a floor tile 6 to 9 tiles from the nearest alien, with a clear line to it (a test aid:
+		// a shot by keys in the click tests).
+		Out.AddItem(PutInView(Args.Length > 1 ? int(Args[1]) : -1));
+		return;
 	case "approach":
 		// approach <unit> <tile x> <tile y>: the unit walks as far as its move goes along the way there (a test aid: a soldier
 		// brought into sight of a pod over turns, for the click tests' shots).
@@ -3088,6 +3093,60 @@ function string MoveUnit(int Index, int X, int Y, int Z)
 	if (!Controller.GameStateMoveUnitSingle(XGUnit(Unit.GetVisualizer()), Path))
 		return "ERR the move was refused";
 	return "ok" @ Unit.GetFullName() @ "moving" @ (Path.Length - 1) @ "tiles to" @ Dest.X @ Dest.Y @ Dest.Z;
+}
+
+function string PutInView(int Index)
+{
+	local array<XComGameState_Unit> Units;
+	local XComGameState_Unit Unit, Alien, Best;
+	local XComWorldData World;
+	local XComGameState NewGameState;
+	local TTile T, Tile, AlienTile;
+	local vector At;
+	local GameRulesCache_VisibilityInfo Vis;
+	local int d, dx, dy, BestD;
+
+	Units = FieldXCom();
+	if (Index < 0 && XComTacticalController(GetALocalPlayerController()) != none)
+		Unit = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(XComTacticalController(GetALocalPlayerController()).GetActiveUnitStateRef().ObjectID));
+	else if (Index >= 0 && Index < Units.Length)
+		Unit = Units[Index];
+	if (Unit == none)
+		return "ERR no unit" @ Index;
+	World = `XWORLD;
+	BestD = 9999;
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Alien)
+		if (Alien.GetTeam() == eTeam_Alien && Alien.IsAlive() && !Alien.bRemovedFromPlay && Alien.TileDistanceBetween(Unit) < BestD)
+		{
+			Best = Alien;
+			BestD = Alien.TileDistanceBetween(Unit);
+		}
+	if (Best == none)
+		return "ERR no alien";
+	for (d = 6; d <= 9; d++)
+		for (dx = -d; dx <= d; dx++)
+			for (dy = -d; dy <= d; dy++)
+			{
+				if (Abs(dx) != d && Abs(dy) != d)
+					continue;
+				T.X = Best.TileLocation.X + dx;
+				T.Y = Best.TileLocation.Y + dy;
+				T.Z = World.NumZ - 1;
+				At = World.GetPositionFromTileCoordinates(T);
+				if (!World.GetFloorTileForPosition(At, Tile, true) || World.IsTileOccupied(Tile) || !World.CanUnitsEnterTile(Tile))
+					continue;
+				// (A clear line from the tile to the alien, as the game's visibility sees it.)
+				AlienTile = Best.TileLocation;
+				if (!World.CanSeeTileToTile(Tile, AlienTile, Vis) || !Vis.bClearLOS)
+					continue;
+				NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a unit put in view (control port)");
+				Unit = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', Unit.ObjectID));
+				Unit.SetVisibilityLocation(Tile);
+				`TACTICALRULES.SubmitGameState(NewGameState);
+				XGUnit(Unit.GetVisualizer()).GetPawn().SetLocation(World.GetPositionFromTileCoordinates(Tile));
+				return "ok" @ Unit.GetFullName() @ "at" @ Tile.X @ Tile.Y @ Tile.Z @ "in view of" @ Best.GetMyTemplateName() @ "#" $ Best.ObjectID;
+			}
+	return "ERR no tile in view of the nearest alien";
 }
 
 /** The unit walked along its way to a tile, as far as one move reaches (the farthest tile of the whole path it can reach). */
