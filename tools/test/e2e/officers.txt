@@ -3,6 +3,16 @@
 # UPGRADE → YES, the squad one larger in Long War's state and the row marked bought.
 lw base set 6 2 12
 lw give Supplies 200
+# (The school's first squad size needs 40 ranks in the barracks: a release campaign's soldiers are rookies, so eight of
+# them are promoted five times; development builds promote the rookies already, PromoteRookies.)
+lw rankup 0 5
+lw rankup 1 5
+lw rankup 2 5
+lw rankup 3 5
+lw rankup 4 5
+lw rankup 5 5
+lw rankup 6 5
+lw rankup 7 5
 lwsave squad ots|squad size [0-9]+
 tab BARRACKS
 expect UILWEWHub
