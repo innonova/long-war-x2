@@ -15,7 +15,8 @@ at 986 728
 expect DialogueBox
 see Confirm Satellite Launch
 shot confirm
-click Launch Satellite
+# (The dialog's own button: the screen's LAUNCH SATELLITE behind it reads the same to OCR.)
+at 1205 624
 expect SituationRoomHUD
 lwsee geo|satellites_ready 0
 lwsee geo|~country 0 USA panic [0-9]+ satellite 1
