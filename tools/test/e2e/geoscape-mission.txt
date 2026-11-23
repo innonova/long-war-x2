@@ -7,9 +7,11 @@ lw arm now
 until decisions|abductions in|run 720|12
 click MISSION CONTROL
 expect Alert
-# (A UFO seen meanwhile comes first: its contact let go, as a player might.)
+# (A UFO seen or landed meanwhile comes first: let go, as a player might.)
 maybe IGNORE CONTACT
+maybe =IGNORE
 maybe IGNORE CONTACT
+maybe =IGNORE
 shot alert
 click VIEW ABDUCTION SITE
 see ABDUCTION SITE
