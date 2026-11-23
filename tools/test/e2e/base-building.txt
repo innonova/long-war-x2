@@ -1,0 +1,22 @@
+# Building in the base as a player does (a new campaign at EW's base: tools/test/new-campaign.sh 1 --begin): Engineering →
+# BUILD FACILITIES, EW's grid of Long War's base; the excavated tile left of the satellite uplink on the first level
+# (Long War's starting base) clicked: EW's facility list over that room; Laboratory chosen and clicked again to build it
+# (its first has no requirement); the tile then shows it, and Long War's base has it under construction.
+tab ENGINEERING
+expect UILWEWHub
+click BUILD FACILITIES
+expect BuildFacilities
+see ACCESS LIFT
+at 254 407
+expect ChooseFacility
+see Fission Generator
+click Laboratory
+see LABORATORY
+shot facility-chosen
+click Laboratory
+expect BuildFacilities
+lwsee base|LABORATORY 21d
+see LABORATORY
+shot facility-building
+back
+expect UILWEWHub
