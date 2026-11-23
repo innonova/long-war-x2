@@ -8,7 +8,7 @@ function UpdateBriefingScreen()
 {
 	local XComGameState_LWStrategy S;
 	local XComGameState_BattleData BattleData;
-	local string Title, Reward;
+	local string Title, Reward, Situation;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
 	// (The campaign's first mission, its base chosen before it: an abduction in a country of the home's continent, as EW's
@@ -29,8 +29,8 @@ function UpdateBriefingScreen()
 	MC.QueueString(S.CountryName(S.PendingCountry()));
 	MC.QueueString(m_strBriefingLabel);
 	// (EW's situation for the kind of mission, its reward after it.)
-	MC.QueueString(S.PendingKind > 0 && S.PendingKind < 11 && class'UILWEWAlert'.default.Situations[S.PendingKind] != ""
-		? class'UILWEWAlert'.default.Situations[S.PendingKind] $ (Reward != "" ? "<br><br>" $ Reward : "") : Reward);
+	Situation = (S.PendingKind > 0 && S.PendingKind < 11) ? class'UILWEWAlert'.default.Situations[S.PendingKind] : "";
+	MC.QueueString(Situation != "" ? Situation $ (Reward != "" ? "<br><br>" $ Reward : "") : Reward);
 	MC.QueueString(m_strObjectiveLabel);
 	MC.QueueString(Title);
 	MC.QueueString("");
