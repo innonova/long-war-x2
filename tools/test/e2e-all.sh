@@ -14,4 +14,7 @@ tools/test/new-campaign.sh 1 --begin 2>&1 | tail -1
 for j in base-menus aek-repro soldier-and-rooms strategy-actions base-building hangar satellite psi-labs gray-market foundry officers; do run "$j"; done
 tools/test/new-campaign.sh 1 --begin 2>&1 | tail -1
 run geoscape-mission
+# (A shot, from a mission's first turn: to-mission.sh's own campaign.)
+tools/test/to-mission.sh 2>&1 | tail -1
+run shot
 echo "e2e-all: $fails journeys with failures"

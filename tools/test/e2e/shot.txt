@@ -1,0 +1,18 @@
+# A shot fired as a player fires one (in a mission at XCOM's first turn: tools/test/to-mission.sh): setup puts the selected
+# soldier in view of the nearest alien (the pod's reveal plays); then by keys: 1 (Fire Weapon: EW's aim panel with the
+# hit chance), Enter, the shot taken: the soldier's two action points spent (the state line's xcom_ap: XCOM 2 selects the next soldier after a shot).
+lw inview
+waitfor busy=0 60
+wait 3
+lwsee state|selected_ap=2
+lwsave ap state|xcom_ap=[0-9]+
+key D1
+wait 2
+see Fire Wea
+see HIT
+shot aim
+key Enter
+wait 8
+waitfor busy=0 60
+lwdiff ap state|xcom_ap=[0-9]+|-2
+shot fired

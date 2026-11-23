@@ -1179,6 +1179,8 @@ function string GameState()
 	local string Phase, Screen, Mission;
 	local bool bMovie, bReady, bBusy;
 	local XComGameState_Player Player;
+	local XComGameState_Unit Active;
+	local int XComAP;
 	local UIScreen Top;
 
 	if (XComTacticalGame(WorldInfo.Game) != none)
@@ -1200,6 +1202,16 @@ function string GameState()
 		// cinematic: the mission's intro camera (the squad leaving the Skyranger) still running, the HUD already up.
 		Mission = " turn=" $ (Player != none ? string(Player.TeamFlag) : "none") @ "busy=" $ int(bBusy) @ "cinematic=" $ int(GetALocalPlayerController().bCinematicMode)
 			@ "ended=" $ int(`TACTICALRULES.HasTacticalGameEnded()) @ "round=" $ (Player != none ? Player.PlayerTurnCount : 0);
+		// The unit selected and its action points (the click tests: a move or a shot taken).
+		Active = XComTacticalController(GetALocalPlayerController()) != none ? XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(XComTacticalController(GetALocalPlayerController()).GetActiveUnitStateRef().ObjectID)) : none;
+		if (Active != none)
+			Mission @= "selected_ap=" $ Active.ActionPoints.Length;
+		// XCOM's action points left this turn, all its units (a shot taken shows here: XCOM 2 selects the next unit after it).
+		XComAP = 0;
+		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Active)
+			if (Active.GetTeam() == eTeam_XCom && Active.IsAlive() && !Active.bRemovedFromPlay)
+				XComAP += Active.ActionPoints.Length;
+		Mission @= "xcom_ap=" $ XComAP;
 		bReady = bReady && !bBusy && !GetALocalPlayerController().bCinematicMode && Player != none && Player.TeamFlag == eTeam_XCom && (UITacticalHUD(Top) != none || UISpecialMissionHUD(Top) != none);
 	}
 	return "phase=" $ Phase @ "map=" $ WorldInfo.GetMapName() @ "screen=" $ Screen @ "movie=" $ int(bMovie) $ Mission @ "ready=" $ int(bReady);
