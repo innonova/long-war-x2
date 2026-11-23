@@ -1,0 +1,22 @@
+# The Officer Training School as a player uses it (a new campaign at EW's base: tools/test/new-campaign.sh 1 --begin):
+# setup places the school; then by clicks Barracks → OFFICER TRAINING SCHOOL → Squad Size I → PURCHASE → EW's CONFIRM
+# UPGRADE → YES, the squad one larger in Long War's state and the row marked bought.
+lw base set 6 2 12
+lw give Supplies 200
+lwsave squad ots|squad size [0-9]+
+tab BARRACKS
+expect UILWEWHub
+click OFFICER TRAINING SCHOOL
+expect OTS
+see TOTAL RANKS
+click Squad Size I
+click PURCHASE
+expect DialogueBox
+see CONFIRM UPGRADE
+click =YES
+expect OTS
+lwdiff squad ots|squad size [0-9]+|1
+see Bought.
+shot bought
+back
+expect UILWEWHub
