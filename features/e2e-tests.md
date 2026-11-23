@@ -184,3 +184,7 @@ the displays), `click3d`, `closescreen <class>`, `uvadjust <display>`; `start-ga
 - **Found in the control port, not a player's path:** passing the drop-ship briefing with `continue` set only the flag
   the key sets; the next key in the mission then ran XCOM 2's drop-ship fade to black, which never lifted. `continue`
   now does what the key does.
+- **`ability-bar`** (new): a soldier's ability bar read key by key. **Found and fixed:** the grenades' throw had no name
+  and XCOM 2's "Missing 'LocHelpText'" (its words come from the grenade item: `ThrownAbilityName`/`ThrownAbilityHelpText`,
+  now EW's, "HE Grenade: Does 3 damage."); the officers' Command showed on every soldier as "Not enough charges" (now
+  hidden without charges). New step `unseen <text>`.
