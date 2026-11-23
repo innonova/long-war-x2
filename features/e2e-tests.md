@@ -177,3 +177,10 @@ the displays), `click3d`, `closescreen <class>`, `uvadjust <display>`; `start-ga
   history. `geoscape-mission` restarts its mission and checks the aliens are back.
 - **Seen, not a player's path:** after the `spawn` test aid dropped an alien, the mission's world drew black under the
   HUD.
+- **`shot`** (new): in a mission, the selected soldier put in view of a pod (`inview` aid), key 1 → Fire Weapon (EW-style
+  aim, the hit chance), Enter → the shot (XCOM's action points down by two; the state line now carries `selected_ap` and
+  `xcom_ap`). The pod's reveal had XCOM 2's Shen or Tygan talking with a portrait: their sighting lines are cleared on
+  Long War's species, and XCOM 2's beginner voice lines are off (decision in the chat).
+- **Found in the control port, not a player's path:** passing the drop-ship briefing with `continue` set only the flag
+  the key sets; the next key in the mission then ran XCOM 2's drop-ship fade to black, which never lifted. `continue`
+  now does what the key does.
