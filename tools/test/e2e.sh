@@ -9,6 +9,7 @@
 #                     do not move): RESEARCH ENGINEERING BARRACKS HANGAR SITUATION ROOM
 #   back              the corner back arrow clicked     esc        Esc pressed     rmb        a right click mid-screen
 #   see <text>        the text on screen (OCR, spaces ignored; FAIL otherwise): a result the screen shows
+#   unseen <text>     the text not on screen (OCR; FAIL if it is): a placeholder or an error that should not show
 #   waitsee <text> <s> the text on screen within s seconds (OCR again and again): a notice that comes and goes
 #   maybe <label>     a label clicked if it is on screen (a page that comes only sometimes); no FAIL otherwise
 #   escto <screen> <n> Esc pressed until the screen holds text, at most n times (an alert that may come or not)
@@ -39,6 +40,7 @@ while IFS= read -r line <&3 || [ -n "$line" ]; do
   case "$op" in
     click)  r=$(tools/test/on.sh "tools\\test\\click-label.ps1 \"$arg\"" 2>&1 | tail -1); sleep 1.5 ;;
     see)    t=$(tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 'tools\test\ocr.ps1' 2>&1 | cut -d' ' -f5- | tr '\n' '|'); if printf '%s' "$t" | tr -d ' ' | grep -qiF -- "${arg// /}"; then r="ok (seen: $arg)"; else r="FAIL: '$arg' not on screen; read: ${t:0:300}"; fails=$((fails+1)); fi ;;
+    unseen) t=$(tools/test/on.sh 'tools\\test\\ocr.ps1 -Invert' 'tools\\test\\ocr.ps1' 2>&1 | cut -d' ' -f5- | tr '\n' '|'); if printf '%s' "$t" | tr -d ' ' | grep -qiF -- "${arg// /}"; then r="FAIL: '$arg' on screen"; fails=$((fails+1)); else r="ok (not seen: $arg)"; fi ;;
     waitsee) txt="${arg% *}"; lim="${arg##* }"; t0=$SECONDS; r="FAIL: '$txt' not seen within ${lim}s"
             while (( SECONDS - t0 < lim )); do t=$(tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>&1 | cut -d' ' -f5- | tr '\n' '|'); if printf '%s' "$t" | tr -d ' ' | grep -qiF -- "${txt// /}"; then r="ok after $((SECONDS - t0))s (seen: $txt)"; break; fi; done
             [[ "$r" == FAIL* ]] && fails=$((fails+1)) ;;

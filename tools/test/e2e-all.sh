@@ -16,5 +16,6 @@ tools/test/new-campaign.sh 1 --begin 2>&1 | tail -1
 run geoscape-mission
 # (A shot, from a mission's first turn: to-mission.sh's own campaign.)
 tools/test/to-mission.sh 2>&1 | tail -1
+run ability-bar
 run shot
 echo "e2e-all: $fails journeys with failures"

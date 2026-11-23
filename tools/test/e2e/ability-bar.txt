@@ -1,0 +1,23 @@
+# The first soldier's ability bar by keys, as a player reads it (in a mission at XCOM's first turn: tools/test/to-mission.sh):
+# each key's panel names its ability and says what it does; none shows XCOM 2's "Missing 'LocHelpText'" placeholder, and
+# Command shows only on an officer (it had shown on every soldier as "Not enough charges").
+key D2
+wait 2
+see Overwatch
+unseen Missing
+unseen Not enough charges
+key Escape
+key D5
+wait 2
+see Grenade
+see Does
+unseen Missing
+unseen Not enough charges
+shot grenade
+key Escape
+key D6
+wait 2
+shot key6
+unseen Missing
+unseen Not enough charges
+key Escape
