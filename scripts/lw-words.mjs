@@ -345,7 +345,7 @@ export function makeSmallWords({ loc, strategyLoc, items }) {
       // (EW's help for it, "Does <XGAbility:PossibleDamage/> damage." (HelpMessages[eAbility_<…>Grenade]), its damage put in;
       // else the item's summary.)
       const ability = { eItem_FragGrenade: 'FragGrenade', eItem_AlienGrenade: 'AlienGrenade', eItem_SmokeGrenade: 'SmokeGrenade',
-        eItem_GasGrenade: 'GasGrenade', eItem_FlashBangGrenade: 'FlashBang', eItem_NeedleGrenade: 'NeedleGrenade', eItem_GhostGrenade: 'GhostGrenade' }[x.enum]
+        eItem_GasGrenade: 'GasGrenade', eItem_FlashBang: 'FlashBang', eItem_NeedleGrenade: 'NeedleGrenade', eItem_GhostGrenade: 'GhostGrenade' }[x.enum]
       const ewHelp = ability && loc.match(new RegExp(`^HelpMessages\\[eAbility_${ability}\\]="(.*)"\\s*$`, 'm'))?.[1]
       const help = ewHelp ? ewHelp.replace(/<XGAbility:PossibleDamage\/>/g, String(x.damage ?? '')) : summary
       if (help) out.push(`ThrownAbilityHelpText="${help}"`, `LaunchedAbilityHelpText="${help}"`)
