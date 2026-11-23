@@ -65,6 +65,9 @@ static function X2AbilityTemplate Command()
 	// Only the leader sees it.
 	Template.eAbilityIconBehaviorHUD = eAbilityIconBehavior_HideSpecificErrors;
 	Template.HideErrors.AddItem('AA_AbilityUnavailable');
+	// (Nor a soldier who is no officer: no charges, and XCOM 2 checks the charges first; it showed on every soldier's bar
+	// as "Command: Not enough charges", the click tests, 2026-11-23. A leader whose charges are spent loses it too.)
+	Template.HideErrors.AddItem('AA_CannotAfford_Charges');
 	Template.ShotHUDPriority = class'UIUtilities_Tactical'.const.CLASS_SQUADDIE_PRIORITY;
 	Template.Hostility = eHostility_Neutral;
 	Template.bDisplayInUITooltip = true;
