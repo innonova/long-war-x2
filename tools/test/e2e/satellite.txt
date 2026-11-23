@@ -1,0 +1,22 @@
+# A satellite launched from the Situation Room as a player does (a new campaign at EW's base: tools/test/new-campaign.sh 1
+# --begin): one built (setup: ordered and time run until it is ready), then by clicks LAUNCH SATELLITE, the country first
+# in EW's list (selected), its LAUNCH SATELLITE, the confirmation, and Long War's country with its satellite.
+lw sat build
+until geo|satellites_ready 1|run 24 all|40
+tab SITUATION ROOM
+expect UILWEWHub
+click LAUNCH SATELLITE
+expect SituationRoomHUD
+see AVAILABLE
+shot satellites
+at 986 728
+expect DialogueBox
+see Confirm Satellite Launch
+shot confirm
+click Launch Satellite
+expect SituationRoomHUD
+lwsee geo|satellites_ready 0
+lwsee geo|country 0 USA
+shot launched
+back
+expect UILWEWHub
