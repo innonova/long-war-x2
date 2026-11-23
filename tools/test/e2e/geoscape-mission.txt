@@ -40,7 +40,8 @@ expect PauseMenu
 click Restart Mission
 expect DialogueBox
 key Enter
-waitfor DropShipBriefing 240
+# (The map loaded again: its first round; the drop-ship briefing comes and goes faster than the state's poll at times.)
+waitfor round=1 240
 wait 25
 key Space
 waitfor ready=1 180
