@@ -144,3 +144,18 @@ the displays), `click3d`, `closescreen <class>`, `uvadjust <display>`; `start-ga
   select EW's corner arrow sat under XCOM 2's own back button and its BUILD ITEMS label.
 - **`e2e-all.sh`**: every journey from the start it needs (main menu or a campaign at the base).
 - New steps: `until <cmd>|<text>|<setup>|<n>`, `lwsee <cmd>|<text>`, `waitsee <text> <s>`.
+
+## Report (2026-11-23, early)
+
+- **The base chosen before the first mission** (`features/first-mission-order.md`): `first-mission` now goes LONG WAR →
+  START GAME → SELECT BASE LOCATION → Begin Game → briefing ("Alien Abductions - <country of the home continent>") →
+  mission → debrief → EW's base.
+- **New journeys:** `base-building` (Engineering → BUILD FACILITIES → an excavated tile → EW's facility list → Laboratory
+  built), `hangar` (a jet's summary and loadout, an interceptor ordered), `satellite` (one built by setup, then Launch
+  Satellite → the country → the confirmation → launched). All pass; `e2e-all.sh` runs ten journeys (about an hour).
+- **Found and fixed:** EW's notices from before the session's first Mission Control never showed.
+- **Test robustness:** journeys that run time now tolerate what the aliens' plan brings meanwhile (`escto` closes an
+  alert, the notice checked as Mission Control opens rather than mid-scan); `lwsee` takes a regex (`~`).
+- **Open, not reproduced:** once, in a full run, the hub's room menu ignored clicks for some minutes while the HUD's back
+  arrow still worked (2026-11-23 00:17 run); five repeats and a rerun of the same sequence passed. Watched for in later
+  full runs.
