@@ -377,24 +377,9 @@ The "post-mission fatigue of every mod" left open above is in: `LWFatigue.Powers
   visible in the screenshot at the camera's distance.
 - With this the gene mods have no stand-in left (`STATUS.md`).
 
-## Notes (2026-11-23, found by the click tests: the mouse no longer chooses a mod)
+## Notes (2026-11-23, a false alarm)
 
-- On EW's Gene Mods screen (from the Genetics Lab's ADD SOLDIER or the soldier summary's GENE MODS) a click on a mod does
-  nothing; the keys work (arrows, Enter: "CLICK TO REMOVE"). It worked by mouse on 2026-11-16 (the report above). The
-  movie raises (almost) no mouse events: XCOM 2's hit test finds no clip under the pointer over the tree
-  (`TestMouseConsumedByFlash` false, the `fade` aid), where over the hub's tabs it finds one. Ruled out: the hidden
-  Mission Control movie kept beneath the hub (closed, no change), the screen's hit test switch (`hitTestDisable` false),
-  the movie's own `onLoad`s called again, the mouse-in's selection called a moment later (out of Flash's callback).
-- **Likely lead:** the converter's renaming of EW's Flash classes that clash with XCOM 2's (2026-11-18, `ew-ui.ts`), made
-  after the 16th: the tree's icons may now bind to a class without EW's mouse handlers. To check: the Gene Mods movie's
-  icons' classes before and after the renaming (`tools/convert/swf-as2.ts … classes SoldierGeneMods`).
-- **Read since:** EW's Gene Mods movie binds its icons to its mouse handler through `Bind.mouse` (`MouseHandler.bind`, only
-  `if Environment.instance.IsPC()`); the platform defaults to PC and the mod's `SetEWView` says PC again, so that gate
-  should pass. Next: whether the icons' `MouseHandler_*` callbacks still reach XCOM 2 (`flash.external.ExternalInterface
-  .call("FlashRaiseMouseEvent", …)`) after the converter's renaming, by comparing the converted movie's code with EW's.
-- **Measured (2026-11-23), two things, the cause not settled:** (1) the drawing and Flash's own model disagree: across
-  the first icon as drawn (x 430 → 496 of the 1920 × 1080 UI) its inner `icon` clip's `_xmouse` runs −61 → −27, while that
-  clip is 46 wide; in Flash's model the icon stands about 66 px right of where it is drawn (the soldier summary's panel
-  showed the same kind of gap, 0.878, in `strategy-flow.md`'s notes of 2026-11-19). (2) Even a click where Flash's model
-  has the icon (x 560) chose nothing, and the hit test finds no clip there: the icons' mouse binding (`Bind.mouse`) may
-  not have taken. Keys work meanwhile.
+- The click tests seemed to find that the mouse no longer chose a mod. It does: a click on Neural Damping at its place
+  in the game's 1920 × 1080 UI (548, 135) chooses it ("CLICK TO REMOVE"). The test had clicked at a place read off a
+  screenshot of the whole desktop (the windowed game drawn smaller within it), not in the game's UI coordinates; the
+  measurements written here earlier came from that mistake and are withdrawn. The `gene-mods` journey checks it.
