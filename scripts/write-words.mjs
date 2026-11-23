@@ -61,7 +61,7 @@ export function wordsFrom(ew, researchIni, strategyIni = '', gearIni = '', baseI
   const small = makeSmallWords({
     loc: decodeInt(readFileSync(loc)),
     strategyLoc: strategyText,
-    items: [...gearIni.matchAll(/^\+SmallItems=\(Item=(\d+), Template=\w+, Enum=(\w+), Kind=(\w+), Look=(\w+)/gm)].map((m) => ({ item: Number(m[1]), enum: m[2], kind: m[3], look: m[4] })),
+    items: [...gearIni.matchAll(/^\+SmallItems=\(Item=(\d+), Template=\w+, Enum=(\w+), Kind=(\w+), Look=(\w+), Damage=(\d+)/gm)].map((m) => ({ item: Number(m[1]), enum: m[2], kind: m[3], look: m[4], damage: Number(m[5]) })),
   })
   // The bonuses' words, for the mod's own package (LongWarX2.int: the classes of the mod read theirs from it).
   const bonus = strategyText
