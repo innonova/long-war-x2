@@ -163,3 +163,10 @@ the displays), `click3d`, `closescreen <class>`, `uvadjust <display>`; `start-ga
   tree → Mindfray → NEW TRAINING → CONFIRM → in training), `gray-market` (corpses sold), `foundry` (a project begun). All
   pass. Found on the way: Mindfray's words have holes where EW fills its duration and cooldown from native code
   (`features/lw-psi.md`).
+- **`officers`** (new): Barracks → OFFICER TRAINING SCHOOL → Squad Size I → PURCHASE → CONFIRM UPGRADE → YES, the squad
+  one larger. **Found and fixed:** under EW's confirmation dialogs the screen vanished and left the base's black cutaway
+  (XCOM 2 hides a screen that loses the focus); EW's screens now stay in view under a dialog.
+- **The drop-ship briefing** shows EW's situation for the mission (`see abduction in progress`). Development builds get
+  Long War's words rewritten after each build (`tools/test/words.mjs`, run by `sync-build.sh`).
+- **Downloads tested by all journeys on the installed build:** 0bbceda, af72592, 99e61dd (the draft's now).
+- **Seen, not done:** the rubble in an excavated room draws in odd green-yellow colours; Mindfray's description holes.
