@@ -1560,6 +1560,9 @@ function string GiveTo(int Index, name ItemName)
 	Item = Template.CreateInstanceFromTemplate(NewGameState);
 	if (Slot != eInvSlot_Utility && Unit.GetItemInSlot(Slot, NewGameState) != none)
 		Unit.RemoveItemFromInventory(XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Unit.GetItemInSlot(Slot, NewGameState).ObjectID)), NewGameState);
+	// (A full utility slot, a rookie's starting kit: its first item put back in the stores, as a player swaps it.)
+	if (Slot == eInvSlot_Utility && !Unit.CanAddItemToInventory(Template, Slot, NewGameState) && Unit.GetAllItemsInSlot(Slot, NewGameState).Length > 0)
+		Unit.RemoveItemFromInventory(XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Unit.GetAllItemsInSlot(Slot, NewGameState)[0].ObjectID)), NewGameState);
 	if (!Unit.AddItemToInventory(Item, Slot, NewGameState))
 	{
 		`XCOMHISTORY.CleanupPendingGameState(NewGameState);
