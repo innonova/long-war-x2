@@ -1,6 +1,9 @@
 # A shot fired as a player fires one (in a mission at XCOM's first turn: tools/test/to-mission.sh): setup puts the selected
 # soldier in view of the nearest alien (the pod's reveal plays); then by keys: 1 (Fire Weapon: EW's aim panel with the
 # hit chance), Enter, the shot taken: the soldier's two action points spent (the state line's xcom_ap: XCOM 2 selects the next soldier after a shot).
+# (A soldier with both action points selected first, by Tab as a player does: in a full run the ability-bar journey before
+# this one can leave the selected soldier with one.)
+until state|selected_ap=2|key:Tab|6
 lw inview
 waitfor busy=0 60
 wait 3

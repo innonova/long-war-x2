@@ -58,7 +58,7 @@ while IFS= read -r line <&3 || [ -n "$line" ]; do
             [[ "$r" == FAIL* ]] && fails=$((fails+1)) ;;
     rmb)    r=$(tools/test/on.sh 'tools\test\click.ps1 960 540 -Right' 2>&1 | tail -1); sleep 1.5 ;;
     until)  IFS='|' read -r c txt act max <<< "$arg"; r="FAIL: '$txt' not in '$c' after $max x '$act'"
-            for ((k = 0; k < max; k++)); do o=$(tools/test/lw.sh "$c" 2>&1 | grep -v '^>'); if printf '%s' "$o" | grep -qiF -- "$txt"; then r="ok after $k x '$act'"; break; fi; tools/test/lw.sh "$act" >/dev/null 2>&1; done
+            for ((k = 0; k < max; k++)); do o=$(tools/test/lw.sh "$c" 2>&1 | grep -v '^>'); if printf '%s' "$o" | grep -qiF -- "$txt"; then r="ok after $k x '$act'"; break; fi; if [[ "$act" == key:* ]]; then tools/test/on.sh 'tools\test\focus.ps1' "tools\\test\\key.ps1 ${act#key:} 150" >/dev/null 2>&1; sleep 1.5; else tools/test/lw.sh "$act" >/dev/null 2>&1; fi; done
             [[ "$r" == FAIL* ]] && fails=$((fails+1)) ;;
     lwsave) nm="${arg%% *}"; rest="${arg#* }"; c="${rest%%|*}"; rx="${rest#*|}"; v=$(tools/test/lw.sh "$c" 2>&1 | grep -v '^>' | grep -oE -- "$rx" | grep -oE '[0-9]+' | head -1)
             if [ -n "$v" ]; then declare -g "saved_$nm=$v"; r="ok ($nm = $v)"; else r="FAIL: no number for '$rx' in '$c'"; fails=$((fails+1)); fi ;;
