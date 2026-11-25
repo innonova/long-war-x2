@@ -234,6 +234,7 @@ function PlaceFixed()
 
 	if (Fixed.Length > 0)
 		return;
+	ScreenCameras();
 	class'LWX2EWMapPieces'.static.PlaceOf(Data("Command1"), self, vect(0, 0, 0), 0, BaseOffset, class'LWX2BasePiece', Fixed, false, true);
 	class'LWX2EWMapPieces'.static.PlaceLightsOf(Data("Command1"), self, BaseOffset, Fixed, true, BaseLightScale, true);
 	// (EW's people's own light, Command1's: on their channel only, LWX2PeopleLight.)
@@ -1089,6 +1090,41 @@ function PlaceDisplaysOf(string Level, vector At, out array<Actor> Placed)
 }
 
 /** EW's camera for an XCOM 2 screen drawn on one of EW's panels (ScreenDisplays), by the screen's display tag; '' if none. */
+/**
+ * XCOM 2's own camera names for its armory screens (UIBlueprint_CustomizeMenu …: its screens look through a camera of
+ * that tag, XComCamState_HQ_BaseRoomView.GetViewFromCameraName, UIUtilities.DisplayUI3D) given to EW's cameras for them
+ * (ScreenDisplays), so a screen that moves the view itself lands on EW's: XCOM 2's Customize found no camera of its
+ * name and took the last one with XCOM 2's default field of view, 90 for EW's 50 (aek 2026-11-25: "customize is
+ * zoomed way out").
+ */
+function ScreenCameras()
+{
+	local LWX2EWMapPieces.LWX2Camera C;
+	local LWX2EWMapData Command;
+	local LWX2ScreenDisplay S;
+	local CameraActor Cam;
+	local int k;
+
+	if (!ArmoryInBase)
+		return;
+	Command = Data("Command1");
+	foreach ScreenDisplays(S)
+	{
+		k = Command.Cameras.Find('Tag', S.Camera);
+		if (k == INDEX_NONE)
+			continue;
+		C = Command.Cameras[k];
+		Cam = Spawn(class'DynamicCameraActor', self, S.Screen, C.Loc + BaseOffset, C.Rot);
+		if (Cam == none)
+			continue;
+		Cam.FOVAngle = C.FOV;
+		Cam.bConstrainAspectRatio = false;
+		NeutralLook(Cam);
+		Cams.AddItem(Cam);
+		CamTags.AddItem(S.Screen);
+	}
+}
+
 static function name ScreenCamera(name DisplayTag)
 {
 	local int k;
@@ -1290,6 +1326,7 @@ static function SquadSpot(int Column, int Columns, out vector Loc, out rotator R
 	local LWX2EWMapPieces.LWX2Camera C;
 	local vector Forward, Right;
 	local LWX2EWMapData Command;
+	local float Spacing, Pitch;
 
 	Command = Data("Command1");
 	C = Command.Cameras[Command.Cameras.Find('Tag', default.SquadCamera)];
@@ -1299,7 +1336,17 @@ static function SquadSpot(int Column, int Columns, out vector Loc, out rotator R
 	// (Unreal's axes: Z up, left-handed; the camera's right is Forward rotated a quarter turn about Z.)
 	Right.X = -Forward.Y;
 	Right.Y = Forward.X;
-	Loc = C.Loc + Forward * default.SquadDistance + Right * (Column - (Columns - 1) / 2.0) * default.SquadSpacing;
+	// (SquadSpacing 0: each soldier over their card, as XCOM 2's line-up stands: the cards' pitch on the screen (UISquadSelect
+	// lays them out 1920 wide, scaled down to fit when there are many: UILWSquadSelect.FitSlots) at the soldiers' distance
+	// through the camera's field of view, which is horizontal.)
+	Spacing = default.SquadSpacing;
+	if (Spacing <= 0)
+	{
+		Pitch = class'UISquadSelect_ListItem'.default.width + class'UISquadSelect'.const.LIST_ITEM_PADDING;
+		Pitch *= FMin(1.0, (1920.0 - 40.0) / (Max(Columns, 1) * Pitch));
+		Spacing = Pitch / 1920.0 * 2.0 * default.SquadDistance * Tan(C.FOV * Pi / 360.0);
+	}
+	Loc = C.Loc + Forward * default.SquadDistance + Right * (Column - (Columns - 1) / 2.0) * Spacing;
 	Loc.Z = default.SquadFloorZ;
 	Loc += default.BaseOffset;
 	Rot = rotator(-Forward);

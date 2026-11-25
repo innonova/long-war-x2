@@ -20,6 +20,15 @@ shot loadout
 # (XCOM 2's loadout: its own back arrow, further into the corner than EW's.)
 at 43 1036
 expect SoldierSummary
+# XCOM 2's Customize through EW's customize camera, its menu on EW's panel (aek 2026-11-25: "customize is zoomed way
+# out": XCOM 2 looked for its own camera's name, found none and took XCOM 2's wide default).
+click Customize
+expect Customize
+see Character Info
+lwsee pov|fov 50
+shot customize
+esc
+expect SoldierSummary
 rmb
 expect SoldierList
 esc

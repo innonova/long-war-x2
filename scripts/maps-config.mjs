@@ -250,8 +250,9 @@ console.log(
     ].map(([screen, panel, camera]) => `+ScreenDisplays=(Screen=${screen}, Panel=${panel}, Camera=${camera})`),
     'ArmoryDistance=250',
     'SquadCamera=AwayTeam',
-    'SquadDistance=600',
-    'SquadSpacing=80',
+    "; (380 and the soldiers each over their card: at 600 and 80 apart they stood small in a huddle mid-screen, aek 2026-11-25.)",
+    'SquadDistance=380',
+    'SquadSpacing=0',
     'SquadFloorZ=-1714',
     // (Not Static_Hangar_CAP: it covered the hangar's view with a dark beam where EW's is open; ew-compare, 2026-11-18.)
     ...['Static_SituationRoom', 'Static_Infirmary', 'Static_ScienceLabs', 'Static_Barracks', 'Static_Hangar', 'Static_MissionControl', 'Static_Armory', 'Static_Engineering',
