@@ -195,6 +195,14 @@ struct LWX2ScreenDisplay
 	var name Camera;
 };
 var config array<LWX2ScreenDisplay> ScreenDisplays;
+/** A screen's camera moved from EW's camera for it, in that camera's axes (X forward, Y right, Z up): XCOM 2's head
+ *  customization nearer the face (ScreenCameras). */
+struct LWX2ScreenCameraShift
+{
+	var name Screen;
+	var vector Shift;
+};
+var config array<LWX2ScreenCameraShift> ScreenCameraShifts;
 var LevelStreaming LightingLevel;
 /** The streamed levels hidden while the base is in view (HideWorld), to show again. */
 var array<name> HiddenLevels;
@@ -1103,7 +1111,8 @@ function ScreenCameras()
 	local LWX2EWMapData Command;
 	local LWX2ScreenDisplay S;
 	local CameraActor Cam;
-	local int k;
+	local vector Shift, X, Y, Z;
+	local int k, j;
 
 	if (!ArmoryInBase)
 		return;
@@ -1114,7 +1123,16 @@ function ScreenCameras()
 		if (k == INDEX_NONE)
 			continue;
 		C = Command.Cameras[k];
-		Cam = Spawn(class'DynamicCameraActor', self, S.Screen, C.Loc + BaseOffset, C.Rot);
+		// (A screen's own shift from EW's camera, in the camera's axes: forward, right, up; XCOM 2's head customization
+		// nearer the face, ScreenCameraShifts.)
+		Shift = vect(0, 0, 0);
+		for (j = 0; j < ScreenCameraShifts.Length; j++)
+			if (ScreenCameraShifts[j].Screen == S.Screen)
+			{
+				GetAxes(C.Rot, X, Y, Z);
+				Shift = X * ScreenCameraShifts[j].Shift.X + Y * ScreenCameraShifts[j].Shift.Y + Z * ScreenCameraShifts[j].Shift.Z;
+			}
+		Cam = Spawn(class'DynamicCameraActor', self, S.Screen, C.Loc + BaseOffset + Shift, C.Rot);
 		if (Cam == none)
 			continue;
 		Cam.FOVAngle = C.FOV;

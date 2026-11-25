@@ -1103,6 +1103,10 @@ static function int BakedLightsUnitsOnly(Actor Spawner)
 	local array<Light> Baked;
 	local int n;
 
+	// (Once: the battle's start comes here again on a screen's return.)
+	foreach Spawner.AllActors(class'Light', A)
+		if (A.Tag == 'LWX2BakedUnits')
+			return 0;
 	foreach Spawner.AllActors(class'Light', A)
 		if (A.Tag == 'LWX2Baked' && A.LightComponent != none)
 			Baked.AddItem(A);
