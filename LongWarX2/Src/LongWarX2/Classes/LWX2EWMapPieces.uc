@@ -269,6 +269,8 @@ struct LWX2Light
 	var float Inner;
 	var float Outer;
 	var float Lower;
+	/** EW's static kind: its light is baked into EW's light maps (converter 94). */
+	var bool Baked;
 };
 /** EW's base (features/lw-base-view.md): a room location (XComHQ_RoomLocation, tagged R<row>_C<column>) and a camera
  *  (CameraActor, by its tag: the base's view, each tile's, each room's). */
@@ -427,6 +429,9 @@ var config float LightScale;
  */
 var config bool EWAtmosphere;
 var config float EWSunScale;
+/** Every piece of a mission map in EW's light maps (the plot writer reads it too, ew-maps.ts): EW's static lights then light
+ *  the units only (UnitsOnly). */
+var config bool PlotLightmapEverywhere;
 var config float EnvAmbientDiffuse, EnvAmbientSpecular;
 /** EW's fog's density × EWFogScale on XCOM 2's height fog (EW's fog is its own, its units not XCOM 2's). */
 var config float EWFogScale;
@@ -686,7 +691,8 @@ static function string UseEWAtmosphere(Actor Spawner)
 		{
 			if (L.Kind != 'Sun')
 				continue;
-			Sun = Spawner.Spawn(class'LWX2SunLight', , , L.Loc, L.Rot);
+			// (EW's static sun, in its light maps already: the units only, not the map a second time.)
+			Sun = Spawner.Spawn((L.Baked && default.PlotLightmapEverywhere) ? class'LWX2UnitsSunLight' : class'LWX2SunLight', , , L.Loc, L.Rot);
 			if (Sun == none || Sun.LightComponent == none)
 				continue;
 			Sun.LightComponent.SetLightProperties(L.Brightness * default.EWSunScale, L.Color);
@@ -990,6 +996,51 @@ static function bool FlareStandins(LWX2EWMapData D, string Template, LensFlare L
 		n++;
 	}
 	return n > 0;
+}
+
+/**
+ * The plot's lights the converter tagged as EW's static ones (ew-plot.ts: LWX2Baked), whose light on the map is in EW's
+ * light maps already (features/ew-lightmaps.md): each replaced by a light of the same kind, place and values that lights the
+ * units only (the dynamic lighting channels; a light's channels cannot be changed at run time). Placed twice over the
+ * pieces, a night map's moonlight came from two sides in a saturated blue and its lamps' pools burned white (aek
+ * 2026-11-25).
+ */
+static function int BakedLightsUnitsOnly(Actor Spawner)
+{
+	local Light A, B;
+	local array<Light> Baked;
+	local int n;
+
+	foreach Spawner.AllActors(class'Light', A)
+		if (A.Tag == 'LWX2Baked' && A.LightComponent != none)
+			Baked.AddItem(A);
+	foreach Baked(A)
+	{
+		if (SpotLightComponent(A.LightComponent) != none)
+			B = Spawner.Spawn(class'LWX2UnitsSpotLight', , , A.Location, A.Rotation);
+		else if (PointLightComponent(A.LightComponent) != none)
+			B = Spawner.Spawn(class'LWX2UnitsPointLight', , , A.Location, A.Rotation);
+		else
+			B = none;
+		if (B == none || B.LightComponent == none)
+			continue;
+		if (PointLightComponent(B.LightComponent) != none)
+		{
+			PointLightComponent(B.LightComponent).Radius = PointLightComponent(A.LightComponent).Radius;
+			PointLightComponent(B.LightComponent).FalloffExponent = PointLightComponent(A.LightComponent).FalloffExponent;
+		}
+		if (SpotLightComponent(B.LightComponent) != none)
+		{
+			SpotLightComponent(B.LightComponent).InnerConeAngle = SpotLightComponent(A.LightComponent).InnerConeAngle;
+			SpotLightComponent(B.LightComponent).OuterConeAngle = SpotLightComponent(A.LightComponent).OuterConeAngle;
+		}
+		B.LightComponent.SetLightProperties(A.LightComponent.Brightness, A.LightComponent.LightColor);
+		B.Tag = 'LWX2BakedUnits';
+		B.ReattachComponent(B.LightComponent);
+		A.LightComponent.SetEnabled(false);
+		n++;
+	}
+	return n;
 }
 
 static function int PlaceLightsOf(LWX2EWMapData D, Actor Spawner, vector Shift, out array<Actor> Placed, optional bool bNoShadows, optional float Scale, optional bool bNoSky)

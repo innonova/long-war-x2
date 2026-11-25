@@ -82,6 +82,8 @@ event OnInit(UIScreen Screen)
 			`log("LongWarX2: EW map: at the battle's start," @ class'LWX2PartPlacer'.static.CacheBuildings(Screen) @ "buildings' floors cached," @ class'LWX2PartPlacer'.static.ShowBuildings(Screen) @ "of their actors shown", , 'LongWarX2');
 		// EW's own sun and no sky's blue in place of XCOM 2's environment (features/ew-lightmaps.md).
 		`log("LongWarX2: EW map:" @ class'LWX2EWMapPieces'.static.UseEWAtmosphere(Screen), , 'LongWarX2');
+		// (EW's static lights in the plot, in its light maps already: on the units only.)
+		`log("LongWarX2: EW map:" @ class'LWX2EWMapPieces'.static.BakedLightsUnitsOnly(Screen) @ "of EW's static lights on the units only", , 'LongWarX2');
 		// EW's doors (XComInteractiveLevelActors in the plot) known to the tile data, so paths go through them.
 		if (class'LWX2EWMapPieces'.static.OnOwnPlot())
 			`log("LongWarX2: EW map: at the battle's start," @ class'LWX2PartPlacer'.static.RegisterDoors(Screen) @ "doors added to the tile data;" @ class'LWX2PartPlacer'.static.WallToughness(Screen), , 'LongWarX2');

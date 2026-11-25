@@ -56,6 +56,8 @@ import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-peop
 import { CONVERTER_VERSION } from './converter-version.ts'
 export { CONVERTER_VERSION }
 // (93: the skin warmth less yellow, measured on Shen against EW)
+// (94: EW's static lights marked Baked (their light is in EW's light maps); the plot tags them, the mod lets them light the
+// units only, not the pieces a second time: a night map's doubled moonlight, aek 2026-11-25)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
@@ -745,6 +747,9 @@ interface EWLight {
   inner: number
   outer: number
   lower: number
+  /** EW's static kind (PointLight, SpotLight, DirectionalLight, SkyLight): its light is baked into EW's light maps; the
+   *  toggleable, movable and dominant kinds light at run time. */
+  baked: boolean
 }
 const lights: EWLight[] = []
 // EW's atmosphere (features/ew-lightmaps.md): its WorldInfo's height fog (XComHeightFog) and its default post-process's
@@ -909,6 +914,7 @@ exports.forEach((e, i) => {
       inner: num('InnerConeAngle', 0),
       outer: num('OuterConeAngle', 44),
       lower: num('LowerBrightness', 0),
+      baked: /^(PointLight|SpotLight|DirectionalLight|SkyLight)$/.test(e.type),
     })
   }
   if (e.type === 'XComBuildingVolume') {
@@ -1969,7 +1975,7 @@ const lines = [
     (l) =>
       `+Lights=(Kind=${l.kind},Loc=(X=${n(l.loc[0]!)},Y=${n(l.loc[1]!)},Z=${n(l.loc[2]!)}),Rot=(Pitch=${l.rot[0]},Yaw=${l.rot[1]},Roll=${l.rot[2]}),` +
       `Radius=${n(l.radius)},Brightness=${n(l.brightness)},Color=(R=${l.color[0]},G=${l.color[1]},B=${l.color[2]},A=${l.color[3]}),` +
-      `Falloff=${n(l.falloff)},Inner=${n(l.inner)},Outer=${n(l.outer)},Lower=${n(l.lower)})`,
+      `Falloff=${n(l.falloff)},Inner=${n(l.inner)},Outer=${n(l.outer)},Lower=${n(l.lower)}${l.baked ? ',Baked=true' : ''})`,
   ),
   "; EW's 3D UI panels: its screens draw on the one of their tag (features/ew-3d-screens.md).",
   "; EW's emitters (features/ew-emitters.md): each placed particle system, and each of its emitters' sprite texture.",

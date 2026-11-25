@@ -27,7 +27,7 @@ export interface EWMap {
   /** EW's doors (ew-map.ts): mesh, AnimTree, AnimSets, physics, where, the idle animation, the interaction points. */
   doors: { mesh: string; materials: string[]; tree: string; physics: string; sets: string[]; loc: number[]; rot: number[]; scale: number[]; idle: string; blocksSight: boolean; window: boolean; points: Record<string, string>[] }[]
   looks: Map<string, { kind: string; diffuse: string; normal: string; mask: string; tile?: number }>
-  lights: { kind: string; loc: number[]; rot: number[]; radius: number; brightness: number; color: number[]; falloff: number; inner: number; outer: number }[]
+  lights: { kind: string; loc: number[]; rot: number[]; radius: number; brightness: number; color: number[]; falloff: number; inner: number; outer: number; baked: boolean }[]
   /** EW's building volumes, each with its floors (a box each). */
   buildings: { center: number[]; extent: number[]; floors: { center: number[]; extent: number[] }[]; ufo: boolean }[]
 }
@@ -107,6 +107,7 @@ export function readSection(text: string): EWMap {
         falloff: num(line, 'Falloff'),
         inner: num(line, 'Inner'),
         outer: num(line, 'Outer'),
+        baked: /,Baked=true/.test(line),
       })
     }
   }
@@ -581,6 +582,9 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     const compSampleL = parse(pkg.data(spot ? sampleSpotC : samplePointC), 8)
     const actorRef = exportCount() + 1
     const atags = actorSampleL.tags.map((t) => ({ ...t })).filter((t) => t.name !== 'Tag')
+    // (EW's static lights, baked into its light maps, which the pieces carry where the map has them: tagged, so the mod
+    // lets them light the units only, not the pieces a second time; the doubled moonlight of a night map, aek 2026-11-25.)
+    if (light.baked && settings.lightmap?.everywhere) atags.push(tName('Tag', 'LWX2Baked'))
     set(atags, tObj('LightComponent', actorRef + 1))
     set(atags, tVec('Location', light.loc))
     set(atags, tRot('Rotation', light.rot))
