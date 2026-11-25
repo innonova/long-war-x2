@@ -12,8 +12,10 @@
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 tag=${1:?usage: nav-walk.sh <port|ew> [room …]}; shift
-out=logs/nav/$tag; mkdir -p "$out"; rm -rf "${out:?}"/*
-index="$out/index.tsv"; printf 'room\tentry\tscreen\tback\tlines\n' > "$index"
+out=logs/nav/$tag; mkdir -p "$out"; index="$out/index.tsv"
+# (All rooms: the walk read afresh; some: those rooms read again, the others kept.)
+if [ $# -eq 0 ] || [ ! -f "$index" ]; then rm -rf "${out:?}"/*; printf 'room\tentry\tscreen\tback\tlines\n' > "$index"
+else for room in "$@"; do grep -v -P "^\Q$room\E\t" "$index" > "$index.tmp"; mv "$index.tmp" "$index"; rm -rf "$out/$(echo "$room" | tr ' /:' '___' | tr -cd 'A-Za-z0-9_-')"; done; fi
 say() { echo "$*" | tee -a "$out/run.log"; }
 screen() { [ "$tag" = port ] && tools/test/lw.sh state 2>/dev/null | sed -n 's/.*screen=\([^ ]*\).*/\1/p' | tail -1; }
 # (What is on the screen: both OCR passes, the plain and the inverted (each misses rows the other reads), merged.)
@@ -46,16 +48,25 @@ for room in "${rooms[@]}"; do
     if [[ "$r" == ERR* ]]; then say "  $it: click failed ($r)"; printf '%s\t%s\t%s\t%s\t%s\n' "$room" "$it" "$s" "click failed" "$n" >> "$index"; continue; fi
     # (The way back: the corner arrow; a dialog's Cancel by Esc. In EW, whether it went back is judged by the room's
     # menu being read again.)
-    if [[ "$s" == UIDialogueBox || "$s" == UILWEWHiring || "$s" == UILWEWPendingRequests ]]; then tools/test/on.sh 'tools\test\esc.ps1' >/dev/null 2>&1
+    # (EW names no screen: a dialog is told by its own CANCEL, which the corner arrow does not close.)
+    if [[ "$s" == UIDialogueBox || "$s" == UILWEWHiring || "$s" == UILWEWPendingRequests ]] || { [ "$tag" = ew ] && grep -qE ' (CANCEL|Cancel)$' "$out/$rs/$es.txt"; }; then tools/test/on.sh 'tools\test\esc.ps1' >/dev/null 2>&1
     else tools/test/on.sh 'tools\test\click.ps1 96 1027' >/dev/null 2>&1; fi
     sleep 3
     b=back
     if [ "$tag" = port ]; then [ "$(screen)" = UILWEWHub ] || b="left $(screen) on top"
-    else tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | tr -d '\r' | grep -qF "$it" || b="room menu not seen again"; fi
+    else
+      # (EW's menu comes back with its slide-in: read twice before calling it lost.)
+      tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | tr -d '\r' | grep -qF "$it" \
+        || { sleep 2; tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | tr -d '\r' | grep -qF "$it"; } || b="room menu not seen again"
+    fi
     say "  $it: ${s:-?}, $n lines, $b"
     printf '%s\t%s\t%s\t%s\t%s\n' "$room" "$it" "$s" "$b" "$n" >> "$index"
     if [ "$b" != back ]; then
-      tools/test/on.sh 'tools\test\esc.ps1' >/dev/null 2>&1; sleep 2
+      # (The port: Esc, as its screens take it. EW: Esc at the room opens its pause menu, which then swallowed the next
+      # entry's click; the corner arrow once more instead.)
+      if [ "$tag" = port ]; then tools/test/on.sh 'tools\test\esc.ps1' >/dev/null 2>&1
+      else tools/test/on.sh 'tools\test\click.ps1 96 1027' >/dev/null 2>&1; fi
+      sleep 2
       tools/test/on.sh "tools\\test\\click.ps1 ${X[$room]} 33" >/dev/null 2>&1; sleep 3
     fi
   done

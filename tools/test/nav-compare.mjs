@@ -37,6 +37,11 @@ function same(a, b) {
   return n / Math.max(A.size, B.size) >= 0.6
 }
 const onlyIn = (xs, ys) => xs.filter((x) => !ys.some((y) => same(x, y)))
+/** OCR's variants of one label (VISITJHE GENE LAB, VISIT THE GENE LAB) kept once. */
+const distinct = (xs) => xs.reduce((out, x) => (out.some((y) => same(x, y)) ? out : [...out, x]), [])
+/** A screen's labels less what the room's own screen shows in that game (the HUD's tabs and resources, the room's menu
+ *  behind a screen that leaves it in view). */
+const own = (dir, room, entry) => distinct(onlyIn(labels(dir, room, entry), labels(dir, room, '')))
 
 const ew = readIndex(ewDir), port = readIndex(portDir)
 const rooms = [...new Set([...ew, ...port].map((r) => r.room))]
@@ -44,16 +49,16 @@ const out = ['# EW\'s base navigation against the port\'s', '', `From ${ewDir} a
 for (const room of rooms) {
   const e = ew.filter((r) => r.room === room && r.entry), p = port.filter((r) => r.room === room && r.entry)
   out.push(`## ${room}`, '')
-  const eEntries = e.map((r) => r.entry), pEntries = p.map((r) => r.entry)
+  const eEntries = distinct(e.map((r) => r.entry)), pEntries = distinct(p.map((r) => r.entry))
   const missing = onlyIn(eEntries, pEntries), extra = onlyIn(pEntries, eEntries)
   out.push(`- Menu: EW ${eEntries.length} entries, the port ${pEntries.length}.` + (missing.length ? ` **Only in EW:** ${missing.join('; ')}.` : '') + (extra.length ? ` **Only in the port:** ${extra.join('; ')}.` : ''))
   const roomOnlyEW = onlyIn(labels(ewDir, room, ''), labels(portDir, room, '')), roomOnlyPort = onlyIn(labels(portDir, room, ''), labels(ewDir, room, ''))
   if (roomOnlyEW.length || roomOnlyPort.length)
     out.push(`- The room's screen: only in EW: ${roomOnlyEW.join(' · ') || '-'}; only in the port: ${roomOnlyPort.join(' · ') || '-'}`)
-  for (const r of e) {
+  for (const r of e.filter((x, k) => e.findIndex((y) => same(x.entry, y.entry)) === k)) {
     const q = p.find((x) => same(x.entry, r.entry))
     if (!q) continue
-    const a = labels(ewDir, room, r.entry), b = labels(portDir, room, q.entry)
+    const a = own(ewDir, room, r.entry), b = own(portDir, room, q.entry)
     const oe = onlyIn(a, b), op = onlyIn(b, a)
     const back = [r.back !== 'back' ? `EW's way back: ${r.back}` : '', q.back !== 'back' ? `**the port's way back: ${q.back}**` : ''].filter(Boolean).join('; ')
     out.push(`- **${r.entry}** (the port: ${q.screen || '?'}; ${a.length} labels in EW, ${b.length} in the port${back ? '; ' + back : ''})`)
