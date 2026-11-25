@@ -1,5 +1,5 @@
 # A gene mod bought as a player buys one (a campaign at EW's base: tools/test/new-campaign.sh 1 --begin): setup gives a
-# Genetics Lab, the Berserker autopsy (Neural Damping's) and meld; then by clicks Barracks → VIEW SOLDIERS → the first
+# Genetics Lab, the Berserker autopsy (Neural Damping's) and meld; then by clicks Barracks → VIEW SOLDIERS → the second
 # soldier → GENE MODS → Neural Damping (the brain's left icon, at its place in the game's UI) → CONFIRM GENE IMPLANTS →
 # EW's confirmation (Enter) → the soldier in a gene tank (Long War's lab: "1 in the tanks").
 lw base set 6 2 23
@@ -12,7 +12,8 @@ tab BARRACKS
 expect UILWEWHub
 click VIEW SOLDIERS
 expect SoldierList
-at 458 215
+# (The second soldier: in a full run the psi-labs journey has put the first into psi training, which no tank takes.)
+at 458 305
 expect SoldierSummary
 click GENE MODS
 expect GeneMods
