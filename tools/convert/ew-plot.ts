@@ -148,6 +148,12 @@ export interface PlotSettings {
  */
 const SKIPPED_MATERIAL = /Drop_Zone|DESIGN_Border|Sky\b|Sky_|NightSky|DuskSky|NoonSky|SkyDome|RoadPaint|Puddle|Decal|Scar|Asphalt_Patch|Burning|Charred|Black$/i
 const GLASS_MATERIAL = /Glass|Window/i
+/** EW's water (its X_Water package: rain puddles, gutters' runoff, streams, marsh and river surfaces), drawn by EW with
+ *  reflections and refraction and no diffuse map: a dark translucent film (XCOM 2's Translucent_SD, black at some
+ *  opacity), wet ground rather than water. The plain grey stand-in drew a night map's runoff as glowing lavender slabs
+ *  under the moon (aek 2026-11-25, URB_HighwayConstruction_EWI). Before the skipped names: a puddle is water. */
+const WATER_MATERIAL = /(^|\.)QX_Water\.|(^|\.)X_Water\./
+const WATER = { parent: 'Materials.Approved.Translucent_SD', diffuse: 'EngineResources.Black', opacity: Number(process.env.LWX2_WATER_OPACITY ?? 0.35), specular: 1 }
 /** Glass: a translucent pane (XCOM 2's Translucent_SD, white at some opacity), or cut out entirely (the masked parent with a
  *  black mask: its opacity is the mask's green; the window a see-through frame). */
 const GLASS = { translucent: process.env.LWX2_GLASS !== 'cut', parent: 'Materials.Approved.Translucent_SD', diffuse: 'EngineResources.WhiteSquareTexture', mask: 'EngineResources.Black', opacity: Number(process.env.LWX2_GLASS_OPACITY ?? 0.2), specular: 0.5 }
@@ -311,6 +317,22 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     if (mics.has(key)) return mics.get(key)!
     const look = map.looks.get(path)
     let ref = 0
+    if (look && !look.diffuse && WATER_MATERIAL.test(path)) {
+      // EW's water: a dark translucent film.
+      const p = parse(pkg.data(sampleMIC), 4)
+      const name = (n: string) => bin((x) => { const r = objName(n); x.i32(r.index).i32(r.number) })
+      const param = (n: string, value: T) => serialize({ head: new Uint8Array(0), tags: [{ name: 'ParameterName', type: 'NameProperty', arrayIndex: 0, value: name(n) }, value], tail: new Uint8Array(0) })
+      const scalars: [string, number][] = [['Opacity', WATER.opacity], ['SpecularScale', WATER.specular]]
+      const tags: T[] = [
+        tObj('Parent', importRef(WATER.parent, 'Material')),
+        tGuid('LightingGuid'),
+        { name: 'TextureParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(1); w.bytes(param('Diffuse', tObj('ParameterValue', importRef(WATER.diffuse, 'Texture2D')))) }) },
+        { name: 'ScalarParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(scalars.length); for (const [n, v] of scalars) w.bytes(param(n, tFloat('ParameterValue', v))) }) },
+      ]
+      ref = addExport(sampleMIC, nextName('LWX2Water'), level, serialize({ head: objectHead(), tags, tail: p.tail }))
+      mics.set(key, ref)
+      return ref
+    }
     if (look && !look.diffuse && !SKIPPED_MATERIAL.test(path)) {
       // No diffuse map found: glass as a translucent pane, anything else plain grey.
       const glass = GLASS_MATERIAL.test(path)
@@ -432,7 +454,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const debug = process.env.LWX2_PLOT_DEBUG ?? ''
   const pieces = debug.includes('nopieces') ? [] : map.pieces.filter(
     (p) => !p.mesh.startsWith('TheWorld.') && !/SkyDome|Skybox/i.test(p.mesh)
-      && !(p.materials.length > 0 && p.materials.every((m) => !m || (SKIPPED_MATERIAL.test(m) && !map.looks.get(m)?.diffuse))),
+      && !(p.materials.length > 0 && p.materials.every((m) => !m || (SKIPPED_MATERIAL.test(m) && !WATER_MATERIAL.test(m) && !map.looks.get(m)?.diffuse))),
   ).filter((_p, k) => {
     const range = /pieces=(\d+)-(\d+)/.exec(debug)
     return !range || (k >= Number(range[1]) && k < Number(range[2]))
