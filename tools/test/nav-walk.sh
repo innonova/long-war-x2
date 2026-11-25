@@ -49,7 +49,7 @@ for room in "${rooms[@]}"; do
     # (The way back: the corner arrow; a dialog's Cancel by Esc. In EW, whether it went back is judged by the room's
     # menu being read again.)
     # (EW names no screen: a dialog is told by its own CANCEL, which the corner arrow does not close.)
-    if [[ "$s" == UIDialogueBox || "$s" == UILWEWHiring || "$s" == UILWEWPendingRequests ]] || { [ "$tag" = ew ] && grep -qE ' (CANCEL|Cancel)$' "$out/$rs/$es.txt"; }; then tools/test/on.sh 'tools\test\esc.ps1' >/dev/null 2>&1
+    if [[ "$s" == UIDialogueBox || "$s" == UILWEWHiring || "$s" == UILWEWPendingRequests ]] || { [ "$tag" = ew ] && grep -qE ' (CANCEL|Cancel|CONTINUE|Continue|OK)$' "$out/$rs/$es.txt"; }; then tools/test/on.sh 'tools\test\esc.ps1' >/dev/null 2>&1
     else tools/test/on.sh 'tools\test\click.ps1 96 1027' >/dev/null 2>&1; fi
     sleep 3
     b=back

@@ -90,7 +90,7 @@ function Card(XComGameState_LWStrategy S, int TX, int TY)
 	if (Job >= 0)
 	{
 		Icon = S.BaseJobs[Job].Kind == 0 ? "BeingExcavated" : "Construction";
-		Label = (S.BaseJobs[Job].Kind == 0 ? class'UILWEWHub'.static.Word(Excavating, "EXCAVATING") : Caps(class'LWBase'.static.FacilityName(S.BaseJobs[Job].Facility)))
+		Label = (S.BaseJobs[Job].Kind == 0 ? class'UILWEWHub'.static.Word(Excavating, "EXCAVATING") : class'LWBase'.static.FacilityName(S.BaseJobs[Job].Facility))
 			$ "<br>" $ DaysText((S.BaseJobs[Job].HoursLeft + 23) / 24);
 	}
 	else if (Type == class'LWBase'.const.BUILT)
@@ -98,7 +98,8 @@ function Card(XComGameState_LWStrategy S, int TX, int TY)
 		if (S.TileFacility[i] == 0)
 			return;
 		Icon = FacilityIcon(S.TileFacility[i]);
-		Label = Caps(class'LWBase'.static.FacilityName(S.TileFacility[i]));
+		// (In EW's own case, as XGBuildUI.BuildFacilityTile writes it: "Satellite Uplink", not capitals; nav-map.md.)
+		Label = class'LWBase'.static.FacilityName(S.TileFacility[i]);
 	}
 	else if (Type == class'LWBase'.const.ROCK)
 		Icon = "Rock";
