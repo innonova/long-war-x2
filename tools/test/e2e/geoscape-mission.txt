@@ -31,7 +31,8 @@ waitfor ready=1 180
 shot mission-start
 rmb
 wait 6
-lwsee units|ap 1
+# (A move spent one action point, or both on a far tile: a dash.)
+lwsee units|~ ap [01] sight
 key Back
 # (XCOM's second turn: the state line's round, the turns of the side acting now.)
 waitfor round=2 240
