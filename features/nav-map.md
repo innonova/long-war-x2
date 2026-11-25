@@ -110,4 +110,4 @@ Found and written up, not done: **the Motion Tracker** is missing from the port 
 lw-gear.md).
 
 Still different, explained: the research menu's Change (EW's save has a project running), the memorial (the port's first
-mission lost a soldier), the soldiers' ranks (the port's start makes Long War's Lance Corporals).
+mission lost a soldier), the soldiers' ranks (development builds promote the starting rookies, a test switch; the release keeps them PFCs as EW).
