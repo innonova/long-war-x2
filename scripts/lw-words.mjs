@@ -211,6 +211,17 @@ export function makeItemWords({ loc, strategyLoc, more = [] }) {
     if (summary) out.push(`BriefSummary="${summary}"`)
     out.push('')
   }
+  // (XCOM 2's resources Long War keeps, named as EW names them: its elerium is "Elerium", where XCOM 2 says "Elerium
+  // Crystals"; the navigation map against EW, 2026-11-25.)
+  for (const [x2, ew] of [['EleriumDust', 'Elerium115'], ['AlienAlloy', 'AlienAlloys']]) {
+    const name = one(loc, 'm_aItemNames', `eItem_${ew}`)
+    if (!name) continue
+    named++
+    out.push(`[${x2} X2ItemTemplate]`, `FriendlyName="${name}"`)
+    const plural = one(loc, 'm_aItemNamesPlural', `eItem_${ew}`)
+    if (plural) out.push(`FriendlyNamePlural="${plural}"`)
+    out.push('')
+  }
   return { text: out.join('\r\n'), named }
 }
 
@@ -1093,7 +1104,7 @@ export function makeFinanceWords({ strategyLoc }) {
 }
 
 export function makeMemorialWords({ strategyLoc }) {
-  const copied = copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial'], ['UIPendingRequests', 'UILWEWPendingRequests'], ['UIShipList', 'UILWEWHangar'], ['UIDebrief', 'UILWEWDebrief']])
+  const copied = copySections(strategyLoc, [['UIMemorial', 'UILWEWMemorial'], ['UIPendingRequests', 'UILWEWPendingRequests'], ['UIShipList', 'UILWEWHangar'], ['UIDebrief', 'UILWEWDebrief'], ['XGGreyMarketUI', 'UILWEWGreyMarket']])
   // (The debrief's titles: XGDebriefUI's.)
   const deb = strategyLoc.replace(/\r/g, '').match(/^\[XGDebriefUI\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
   const dk = (k) => deb.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim() ?? ''

@@ -5,6 +5,8 @@
 // bar; here an XCOM 2 button below the movie) or Enter. The rules are LWGreyMarket's.
 class UILWEWGreyMarket extends UILWEWScreen;
 
+/** EW's words for the list's headers and its button (XGGreyMarketUI's, written by the setup). */
+var localized string m_strLabelInStorage, m_strLabelSell, m_strLabelCompleteTransaction;
 var array<int> Offered;
 var array<int> Selling;
 var int Highlight;
@@ -25,7 +27,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 {
 	super.InitScreen(InitController, InitMovie, InitName);
 	// The movie is scaled to the stage (UILWEWScreen): the button is placed in its 1280 x 720 terms.
-	SellButton = Spawn(class'UIButton', self).InitButton('LWGreyMarketSell', "COMPLETE TRANSACTION", OnSellButton);
+	SellButton = Spawn(class'UIButton', self).InitButton('LWGreyMarketSell', Caps(m_strLabelCompleteTransaction != "" ? m_strLabelCompleteTransaction : "Complete Transaction"), OnSellButton);
 	SellButton.SetPosition(560, 660);
 }
 
@@ -34,9 +36,9 @@ simulated function OnInit()
 	super.OnInit();
 	// (EW's title, its facility's name: UIGreyMarket, m_aFacilityNamesCaps[eFacility_GreyMarket].)
 	MC.FunctionString("SetTitle", class'UILWEWHub'.static.Word(class'UILWEWHub'.default.GreyMarketTitle, "GRAY MARKET"));
-	Header(0, "IN STORAGE");
+	Header(0, m_strLabelInStorage != "" ? m_strLabelInStorage : "In Storage");
 	Header(1, "");
-	Header(2, "SELL");
+	Header(2, m_strLabelSell != "" ? m_strLabelSell : "Sell");
 	Fill(true);
 }
 
