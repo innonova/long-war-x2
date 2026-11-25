@@ -58,6 +58,7 @@ export { CONVERTER_VERSION }
 // (93: the skin warmth less yellow, measured on Shen against EW)
 // (94: EW's static lights marked Baked (their light is in EW's light maps); the plot tags them, the mod lets them light the
 // units only, not the pieces a second time: a night map's doubled moonlight, aek 2026-11-25)
+// (96: no normal or distortion map as an emitter's sprite (a smoke's normal map drew as a grey square))
 // (95: nothing new in what ew-map.ts writes; raised so every map is written as a plot again: EW's water as a wet film,
 // ew-plot.ts, aek 2026-11-25)
 // (82: people's skin colour at half strength)
@@ -1422,7 +1423,10 @@ for (const template of new Set(emitterPlaces.map((p) => p.template))) {
       const mat = ref(rt.find((t) => t.name === 'Material'))
       const tex = new Map<string, string>()
       const root = mat ? texturesOf(mat, tex) : ''
-      const texture = tex.get('Texture') ?? tex.get('Diffuse') ?? [...tex.values()][0] ?? ''
+      // (Not a normal or distortion map: drawn as the sprite's colour, a smoke's normal map (T_Smoke_Cloud_Scrolling_NML)
+      // showed as a hard grey square by the Skyranger, aek 2026-11-25; without a colour texture the emitter stays off.)
+      const notNormal = (t?: string) => (t && !/(_NML|_NRM|_N|Normal|Distortion)$/i.test(t) && !/Distortion|_NML|Normal/i.test(t.split('.').pop()!) ? t : undefined)
+      const texture = notNormal(tex.get('Texture')) ?? notNormal(tex.get('Diffuse')) ?? [...tex.values()].find((t) => notNormal(t)) ?? ''
       let additive = false
       const rootIndex = exports.findIndex((x) => x.fullName === root && x.type === 'Material')
       if (rootIndex >= 0) {
