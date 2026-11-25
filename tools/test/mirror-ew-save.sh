@@ -20,8 +20,8 @@ for chunk in d['checkpoints']:
             if c['class_name'] == 'XComStrategyGame.XGFacility_Labs' and p['name'] == 'm_arrResearched':
                 researched = p['elements']
 for f in facilities:
-    # (The top row is the fixed rooms; the access lift's column is the shaft, which the port digs itself.)
-    if f.get('iFacility', 0) > 0 and f.get('Y', 0) > 0 and f.get('iFacility') != 6:
+    # (The top row is the fixed rooms.)
+    if f.get('iFacility', 0) > 0 and f.get('Y', 0) > 0:
         print(f"base set {f.get('X', 0) + 1} {f.get('Y', 0) + 1} {f['iFacility']}")
 for t, done in enumerate(researched):
     if done and t > 0:
@@ -29,7 +29,7 @@ for t, done in enumerate(researched):
 EOF
 n=0
 while read -r cmd; do
-  r=$(tools/test/lw.sh "$cmd" 2>&1 | grep -v '^> ' | tail -1)
+  r=$(tools/test/lw.sh "$cmd" < /dev/null 2>&1 | grep -v "^> " | tail -1)
   case "$r" in ERR*) echo "$cmd: $r";; esac
   n=$((n + 1))
 done < /tmp/lwx2-mirror.txt
