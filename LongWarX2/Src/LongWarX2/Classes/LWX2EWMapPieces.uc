@@ -437,6 +437,9 @@ var config float EnvAmbientDiffuse, EnvAmbientSpecular;
 var config float EWFogScale;
 /** EW's colour grading put on the world's post-process. */
 var config bool EWGrade;
+/** And XCOM 2's filmic tonemapper off on EW's maps, as over EW's base (EW's renderer had none): it darkened and saturated
+ *  a night map's blue (aek 2026-11-25). */
+var config bool EWTonemapperOff;
 /** EW's level emitters on its maps' own plots (its fires, smoke, sparks; off while one of them crashed the game). */
 var config bool MissionEmitters;
 /** Which kinds are placed (the mission's own sun and sky light the map too). */
@@ -683,6 +686,8 @@ static function string UseEWAtmosphere(Actor Spawner)
 			LocalPlayer(Spawner.GetALocalPlayerController().Player).OverridePostProcessSettings(WI.DefaultPostProcessSettings, 0.0);
 		FogNote $= ", EW's colour grading";
 	}
+	if (default.EWTonemapperOff && SetTonemapper(Spawner, false) > 0)
+		FogNote $= ", XCOM 2's tonemapper off";
 	// (Placed once: a loaded battle comes here again.)
 	foreach Spawner.AllActors(class'LWX2SunLight', Sun)
 		Suns++;
@@ -996,6 +1001,90 @@ static function bool FlareStandins(LWX2EWMapData D, string Template, LensFlare L
 		n++;
 	}
 	return n > 0;
+}
+
+/** The local player's tonemapper (its post-process chains' UberPostProcessEffect) off, or filmic, XCOM 2's own; how many. */
+static function int SetTonemapper(Actor Spawner, bool bFilmic)
+{
+	local LocalPlayer LP;
+	local PostProcessChain Chain;
+	local PostProcessEffect E;
+	local int n;
+
+	LP = LocalPlayer(Spawner.GetALocalPlayerController().Player);
+	if (LP == none)
+		return 0;
+	foreach LP.PlayerPostProcessChains(Chain)
+		foreach Chain.Effects(E)
+			if (UberPostProcessEffect(E) != none)
+			{
+				UberPostProcessEffect(E).TonemapperType = bFilmic ? Tonemapper_Filmic : Tonemapper_Off;
+				n++;
+			}
+	return n;
+}
+
+/**
+ * A test aid for matching a mission map's look to EW's (the control port's ewlook): EW's suns at their brightness × Sun;
+ * every light-mapped piece's light map × LM (on what it is now); EW's fog at Density, switched off and on so the renderer
+ * takes it. A value below 0 leaves that part as it is.
+ */
+static function string TuneLook(Actor Spawner, float SunScale, float LMFactor, float FogDensity)
+{
+	local LWX2SunLight Sun;
+	local LWX2Light L;
+	local MaterialInstanceConstant MIC;
+	local ExponentialHeightFog Fog;
+	local float V;
+	local int Suns, Mics, Fogs, k;
+	local array<LWX2Light> EWSuns;
+	local array<MaterialInstanceConstant> Seen;
+	local Actor A;
+	local StaticMeshComponent C;
+
+	if (SunScale >= 0)
+	{
+		foreach Map().Lights(L)
+			if (L.Kind == 'Sun')
+				EWSuns.AddItem(L);
+		foreach Spawner.AllActors(class'LWX2SunLight', Sun)
+		{
+			// (Matched to EW's by direction: the units-only one and the other.)
+			for (k = 0; k < EWSuns.Length; k++)
+				if (EWSuns[k].Rot == Sun.Rotation)
+					break;
+			if (k == EWSuns.Length)
+				continue;
+			Sun.LightComponent.SetLightProperties(EWSuns[k].Brightness * SunScale);
+			Suns++;
+		}
+	}
+	if (LMFactor >= 0)
+		foreach Spawner.AllActors(class'Actor', A)
+			foreach A.AllOwnedComponents(class'StaticMeshComponent', C)
+				for (k = 0; k < C.GetNumElements(); k++)
+				{
+					MIC = MaterialInstanceConstant(C.GetMaterial(k));
+					if (MIC == none || MIC.Parent == none || Seen.Find(MIC) != INDEX_NONE || InStr(PathName(MIC.Parent), "M_EWLightmappedLit") == INDEX_NONE)
+						continue;
+					Seen.AddItem(MIC);
+					if (MIC.GetScalarParameterValue('LMBrightness', V))
+					{
+						MIC.SetScalarParameterValue('LMBrightness', V * LMFactor);
+						Mics++;
+					}
+				}
+	if (FogDensity >= 0)
+		foreach Spawner.AllActors(class'ExponentialHeightFog', Fog)
+		{
+			if (Fog.Component == none)
+				continue;
+			Fog.Component.SetEnabled(false);
+			Spawner.ConsoleCommand("set ExponentialHeightFogComponent FogDensity" @ FogDensity);
+			Fog.Component.SetEnabled(true);
+			Fogs++;
+		}
+	return "ok" @ Suns @ "suns," @ Mics @ "light maps," @ Fogs @ "fogs";
 }
 
 /**

@@ -580,6 +580,14 @@ function Handle(string Line, out array<string> Out)
 		// uvadjust <display tag> [x y]: the display material's UVAdjust read, or set (a test aid: the 3D panels' mouse mapping).
 		Out.AddItem(UVAdjust(Args.Length > 1 ? name(Args[1]) : '', Args.Length > 3, Args.Length > 3 ? float(Args[2]) : 1.0, Args.Length > 3 ? float(Args[3]) : 1.0));
 		return;
+	case "ewlook":
+		// ewlook <sun scale> <light-map factor> <fog density> [filmic|off]: a mission map's look tuned live against EW's (a
+		// test aid; -1 leaves a part as it is; the light-map factor multiplies what the light maps are now).
+		if (Args.Length > 4)
+			class'LWX2EWMapPieces'.static.SetTonemapper(self, Args[4] ~= "filmic");
+		Out.AddItem(class'LWX2EWMapPieces'.static.TuneLook(self, Args.Length > 1 ? float(Args[1]) : -1.0, Args.Length > 2 ? float(Args[2]) : -1.0,
+			Args.Length > 3 ? float(Args[3]) : -1.0));
+		return;
 	case "probe":
 		// probe <x> <y> [n]: what is drawn under that point of the screen (fractions of its width and height, 0.5 0.5 the
 		// centre): the pieces whose bounds the line of sight passes through, nearest first (n, default 8), each with its

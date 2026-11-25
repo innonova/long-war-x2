@@ -47,7 +47,9 @@ export function plotSettings(mod: string): PlotSettings {
     lightmap: str('PlotLightmapParent') && process.env.LWX2_PLOT_LIGHTMAP !== 'off' ? {
       everywhere: process.env.LWX2_PLOT_LIGHTMAP === 'all' || (process.env.LWX2_PLOT_LIGHTMAP !== 'middle' && /^PlotLightmapEverywhere=true/m.test(ini)),
       parent: str('PlotLightmapParent'),
-      brightness: Number(/^LightmapBrightness=([\d.]+)/m.exec(ini)?.[1] ?? 1) || 1,
+      // (The mission maps' own, PlotLightmapBrightness, where set: the base's LightmapBrightness is matched against EW's
+      // base under its own grade (BaseMidtones).)
+      brightness: Number(process.env.LWX2_PLOT_LM_BRIGHTNESS ?? /^PlotLightmapBrightness=([\d.]+)/m.exec(ini)?.[1] ?? /^LightmapBrightness=([\d.]+)/m.exec(ini)?.[1] ?? 1) || 1,
       gamma: Number(/^LightmapGamma=([\d.]+)/m.exec(ini)?.[1] ?? 0) || undefined,
       interiors: !/^PlotLightmapInteriors=false/m.test(ini),
       nightMaps: [...ini.matchAll(/^\+Maps=\(Name="([^"]+)"[^\n]*Night=true/gm)].map((m) => m[1]!),

@@ -63,6 +63,8 @@ console.log(
     "; EW's height fog on XCOM 2's (its density × EWFogScale) and EW's colour grading on the world's post-process.",
     'EWFogScale=1',
     'EWGrade=true',
+    '; XCOM 2\'s filmic tonemapper off on EW\'s maps, as over EW\'s base (EW had none; it darkened and saturated a night map\'s blue).',
+    'EWTonemapperOff=true',
     "; EW's level emitters on its maps (fires, smoke, sparks), placed a few each tick (all at once crashed the game).",
     'MissionEmitters=true',
     "; EW's emitters left out (a part of the template's path): the Repair Bay's freezer mist, which EW's view does not show.",
