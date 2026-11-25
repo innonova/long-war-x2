@@ -2,7 +2,7 @@
 # box in the game's 1920x1080 UI coordinates (as click.ps1 takes them): "x y w h text". The E2E click tests find a
 # menu item by its label this way, as a player does (features/e2e-tests.md).
 #   tools\test\ocr.ps1 [-Scale 2]
-param([double]$Scale = 2, [double]$Gain = 1, [switch]$Words, [switch]$Bands, [switch]$Invert, [string]$Region = '')
+param([double]$Scale = 2, [double]$Gain = 1, [switch]$Words, [switch]$Bands, [switch]$Invert, [string]$Region = '', [string]$Save = '')
 . (Join-Path $PSScriptRoot 'game.ps1')
 Add-Type -AssemblyName System.Drawing, System.Runtime.WindowsRuntime
 $null = [Windows.Media.Ocr.OcrEngine, Windows.Foundation, ContentType = WindowsRuntime]
@@ -30,6 +30,8 @@ if ($Region) {
 }
 $bmp = New-Object System.Drawing.Bitmap $cw, $ch
 [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($o.X + $rx, $o.Y + $ry, 0, 0, (New-Object System.Drawing.Size $cw, $ch))
+# (-Save <png>: what was read, kept to look at.)
+if ($Save) { $bmp.Save($Save) }
 $big = New-Object System.Drawing.Bitmap ([int]($cw * $Scale)), ([int]($ch * $Scale))
 $g = [System.Drawing.Graphics]::FromImage($big); $g.InterpolationMode = 'HighQualityBicubic'
 # (-Gain: brightened, so dim labels (the room tabs not chosen) read too.)

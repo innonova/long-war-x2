@@ -642,3 +642,22 @@ remains is how EW's 3D movie maps its 1280 x 720 stage onto its render target (E
 - **To make it EW's:** hold XCOM 2's launch (its wait on the movie in `Initing` is the place: `LWX2FirstMissionStart`
   already ends it) until Long War's start screen has chosen the base, then make the first mission an abduction in that
   continent (city, country, briefing in Long War's words). Not started.
+
+## Report (2026-11-25, Customize zoomed out, squad select's soldiers small)
+
+aek, 2026-11-25: "the soldiers on the squad setup screen are oddly small" (logs/squad.png), "and customize is zoomed way
+out" (logs/customize.png).
+
+- **Customize:** XCOM 2's customize screens move the view themselves, to a camera by their own name
+  (`UIBlueprint_CustomizeMenu`, UIUtilities.DisplayUI3D; XComCamState_HQ_BaseRoomView.GetViewFromCameraName looks it up
+  by tag). EW's base has no camera of that name, so the lookup fell through to the last camera found, with XCOM 2's
+  default field of view, 90 where EW's armory cameras have 50. EW's cameras for the armory screens (ScreenDisplays) now
+  also stand under XCOM 2's names (LWX2EWBase.ScreenCameras), so Customize looks through EW's customize camera: the
+  soldier large, XCOM 2's menu readable on EW's panel (logs/compare/customize-fixed.png). The soldier-and-rooms
+  journey opens Customize and checks the view's field of view (50).
+- **Squad select:** the soldiers stood 600 units in front of EW's AwayTeam camera, 80 apart: a small huddle in the middle
+  over the cards. Now 380 in front, and each soldier stands over their own card: the spacing is the cards' pitch on
+  the screen at that distance through the camera's field of view (scaled with the cards when a big squad shrinks them;
+  `SquadSpacing=0`) (logs/compare/squad-fixed.png).
+- **Not yet:** XCOM 2's head customization has its own close camera on the face (`UIBlueprint_CustomizeHead`); here it
+  takes EW's customize view, which shows the whole soldier.

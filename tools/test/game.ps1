@@ -17,7 +17,13 @@ public class GW {
   [DllImport("user32.dll")] public static extern void mouse_event(uint f, uint x, uint y, uint d, IntPtr e);
 }
 "@
-function Get-GameWindow { (Get-Process XCom2 -ErrorAction SilentlyContinue | Select-Object -First 1).MainWindowHandle }
+# (XCOM 2's window; Enemy Within's when XCOM 2 is not running, so the same clicks and OCR walk EW in its harness:
+# features/nav-map.md.)
+function Get-GameWindow {
+  $p = Get-Process XCom2 -ErrorAction SilentlyContinue | Select-Object -First 1
+  if (-not $p) { $p = Get-Process XComEW -ErrorAction SilentlyContinue | Select-Object -First 1 }
+  $p.MainWindowHandle
+}
 function Focus-Game {
   $h = Get-GameWindow
   if (-not $h) { return $null }
