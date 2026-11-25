@@ -662,7 +662,8 @@ out" (logs/customize.png).
 - **Not yet:** XCOM 2's head customization has its own close camera on the face (`UIBlueprint_CustomizeHead`); here it
   takes EW's customize view, which shows the whole soldier.
 - **Head customization** (later the same day): nearer the face, EW's panel still in view (`ScreenCameraShifts`, tuned with
-  the control port's `screencam` aid). Seen there and not yet explained: the soldier in Customize wears XCOM 2's underlay
-  (vest and trousers) where the summary shows the armour (XComHumanPawn.ShouldUseUnderlay is true only inside the crew
-  manager's placing of the Avenger's crew, XGBaseCrewMgr.bScopedUseUnderlays: to check whether that is left set); and a
+  the control port's `screencam` aid). Explained since: the soldiers "without armour" (vest, bare arms, shorts) wear XCOM 2's own Anarchy's Children parts
+  (DLC_30_SldCnv: torso, arms, legs), which XCOM 2's generator gives recruits when that pack is installed; the summary
+  and Customize show the same parts (four soldiers compared; `parts` aid), and the crew manager's underlay flag is off.
+  Not the port's. Still not traced: a
   portrait of XCOM 2's Central appeared top right while customizing (an XCOM 2 narrative line, not yet traced).
