@@ -228,3 +228,41 @@ input: EW's lamps glow through the lightmaps and light cards, not through it. Wh
 meshes' vertex colours (the HQ meshes have them) weighting A-D. The port draws the grey diffuse × EW's lightmap, which
 already carries the rooms' warm and orange light; whether the palette adds much is not established. Next, if pursued:
 a mesh's vertex colours read, then `Colorize` × vertex colour in our lightmapped material (SDK editor).
+
+## Report (2026-11-25, a night map "still broken")
+
+aek, 2026-11-25, after a full reconversion: the night map (URB_HighwayConstruction, his first mission) deep blue, with
+glowing lavender patches, white spiky shapes, hard white pools and speckled discs (logs/map-lighting-1.png, -2.png).
+Compared with EW's own view of its _EWI variant (his save1669, Covert Extraction; logs/compare/night/ew-highway.png).
+
+Found and fixed (converter 95, every map plotted again; development build):
+
+- **The moonlight counted twice.** EW lights its night maps with a static DirectionalLight already baked into the
+  light maps and a DominantDirectionalLight drawn live; the port placed both as live lights. Converter 94 marks EW's
+  static lights (`Baked=true`); on light-mapped plots the mod swaps them for lights on the units' channels only
+  (LWX2UnitsSunLight, LWX2UnitsPointLight, LWX2UnitsSpotLight: a light's channels are const to script, so they are
+  classes), so their light reaches the soldiers and aliens, not the ground a second time (30 of 32 lights on that map).
+- **The glowing lavender patches were EW's rain runoff,** drawn with the plain grey stand-in (its materials have no diffuse
+  map; only "Puddle" names were left out) and lit by the moon. EW's water (its X_Water package) is now a dark translucent
+  film (XCOM 2's Translucent_SD, black at 0.35, specular 0.15); rain runoff always, whatever texture was found for it (a
+  puddle's ripple noise drew as an opaque speckled disc). At specular 1 the moon's highlight made blue blotches.
+- **The white spiky shapes were EW's alien webbing** over abductees (P_Fogged_Body_Webbing): EW colours each placement
+  black at half brightness, which our particle stand-in does not take, so they drew white. Left out for now
+  (`SkipEmitters`); to come back with a particle material that takes the instance colour.
+- **XCOM 2's filmic tonemapper is off on EW's maps** (`EWTonemapperOff`), as over the base (EW had none): it deepened and
+  saturated the blue (ground saturation 0.69 with it, 0.58 without; EW's 0.27).
+- **A probe aid** (`probe x y`): what is drawn under a point of the screen, nearest first, with mesh, material and parent;
+  no collision needed. It named the speckled discs and the blue blotches.
+- **ewlook** (a test aid): EW's suns' scale, the light maps' factor and the fog's density set live, to tune a map's look.
+
+Left open, measured:
+
+- **The light maps contribute almost nothing on this map.** With the moon off, the light maps at 10× their brightness
+  changed the ground from 14,27,38 to 17,30,41. The instances carry their atlases and LMBrightness (obj dump), so either
+  this map's light maps are nearly black (its light is mostly the live moon) or our lit material's light-map term is
+  weak; to be settled on a map whose EW view shows baked light (the Bar at night).
+- **EW's fog has no effect in XCOM 2:** density 0.01 to 0.3 on XCOM 2's height fog changed nothing on screen. EW's fog
+  there is warm (77,50,45), which is part of why EW's night reads grey-green rather than blue.
+- **No rain:** EW's night highway has rain streaks and splashes, which lighten and grey its view.
+- **The soldiers' flashlight pools** (XCOM 2's at night) are XCOM 2's, not EW's.
+- After these, the port's ground on the _EWI map measures 21,35,53 (saturation 0.49) against EW's 29,37,49 (0.25).
