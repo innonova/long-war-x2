@@ -1,7 +1,9 @@
 # Building in the base as a player does (a new campaign at EW's base: tools/test/new-campaign.sh 1 --begin): Engineering →
 # BUILD FACILITIES, EW's grid of Long War's base; the excavated tile left of the satellite uplink on the first level
-# (Long War's starting base) clicked: EW's facility list over that room; Laboratory chosen and clicked again to build it
-# (its first has no requirement); the tile then shows it, and Long War's base has it under construction.
+# (Long War's starting base) clicked: EW's facility list over that room, with EW's BEGIN BUILD on the help bar (the person
+# found no way to build, 2026-11-25: EW's word is "Begin Construction"); the Fission Generator, the first and selected,
+# built by it (it has no requirement); the tile then shows it, and Long War's base has it under construction. (A click on a
+# facility builds it too, as in EW.)
 tab ENGINEERING
 expect UILWEWHub
 click BUILD FACILITIES
@@ -9,14 +11,14 @@ expect BuildFacilities
 see ACCESS LIFT
 at 254 407
 expect ChooseFacility
-see Fission Generator
-click Laboratory
-see LABORATORY
+see Laboratory
+see FISSION GENERATOR
+see Begin Construction
 shot facility-chosen
-click Laboratory
+click Begin Construction
 expect BuildFacilities
-lwsee base|LABORATORY 21d
-see LABORATORY
+lwsee base|FISSION GENERATOR 10d
+see FISSION GENERATOR
 shot facility-building
 back
 expect UILWEWHub

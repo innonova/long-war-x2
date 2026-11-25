@@ -32,7 +32,7 @@ var bool bResourcesHidden;
 /** Whether XCOM 2's navigation help is hidden (an EW screen on top, which has EW's own back arrow and help: ShowForTop). */
 var bool bNavHelpHidden;
 /** EW's build screen's item card button shown in the bar. */
-var bool bCardHelp;
+var bool bCardHelp, bBuildHelp;
 
 /**
  * The HUD shown over the Avenger, on top, when the converted package is there. It is loaded into the movie without
@@ -373,7 +373,9 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 		&& UILWEWHiring(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWEWPendingRequests(Movie.Pres.ScreenStack.GetCurrentScreen()) == none);
 	// (EW's build screen's "?" beside the back arrow, UIBuildItem: its item card.)
 	bCardHelp = UILWEWEngineering(Movie.Pres.ScreenStack.GetCurrentScreen()) != none && !UILWEWEngineering(Movie.Pres.ScreenStack.GetCurrentScreen()).bFoundry;
-	Ctx = Context $ Kind $ bCardHelp;
+	// (The facility chooser's BEGIN BUILD on the right, UIChooseFacility.UpdateButtonHelp; aek 2026-11-25: no way to build.)
+	bBuildHelp = UILWEWChooseFacility(Movie.Pres.ScreenStack.GetCurrentScreen()) != none;
+	Ctx = Context $ Kind $ bCardHelp $ bBuildHelp;
 	if (Ctx != ShownFor)
 	{
 		ShownFor = Ctx;
@@ -421,6 +423,16 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 				MC.ChildFunctionVoid("helpBar", "onCenterButtonHelpLoaded");
 			}
 			MC.ChildFunctionString("helpBar", "SetButtonType", "");
+			if (bBuildHelp)
+			{
+				MC.BeginChildFunctionOp("helpBar", "AddRightButtonHelp");
+				MC.QueueNumber(5);
+				MC.QueueString(class'UILWEWHub'.static.Word(class'UILWEWBuildFacilities'.default.BeginBuild, "BEGIN BUILD"));
+				MC.QueueString("Icon_START");
+				MC.QueueBoolean(false);
+				MC.EndOp();
+				MC.ChildFunctionVoid("helpBar", "onRightButtonHelpLoaded");
+			}
 			// (The bar hides itself until its button reports loaded, which takes a frame of the hidden clip that XCOM 2's
 			// Flash never gives: told at once, as the hub's submenu is shown.)
 			MC.ChildFunctionVoid("helpBar", "onLeftButtonHelpLoaded");
@@ -654,6 +666,12 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 	if (UILWEWSoldierSummary(Top) != none && args.Length > 0 && (args[args.Length - 1] == "buttonHelp_1" || args[args.Length - 1] == "buttonHelp_2"))
 	{
 		UILWEWSoldierSummary(Top).Cycle(args[args.Length - 1] == "buttonHelp_1" ? -1 : 1);
+		return;
+	}
+	// (The facility chooser's BEGIN BUILD, button 5.)
+	if (UILWEWChooseFacility(Top) != none && args.Length > 0 && args[args.Length - 1] == "buttonHelp_5")
+	{
+		UILWEWChooseFacility(Top).Accept();
 		return;
 	}
 	// (The build screen's "?": the selected item's card, UIBuildItem.OnMouseAccept.)

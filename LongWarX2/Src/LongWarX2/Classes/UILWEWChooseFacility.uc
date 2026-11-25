@@ -32,6 +32,20 @@ simulated function OnInit()
 	B.Show();
 	B.LookAt(name("AddonCam_R" $ TileY $ "_C" $ (TileX + 1)), 1.0);
 	Fill();
+	// (EW selects the option under the mouse as it moves, its list items' mouse-in; here read off the movie.)
+	SetTimer(0.1, true, nameof(HoverSelect));
+}
+
+/** The option under the mouse selected, as EW's list does on the mouse coming over it (UIChooseFacility.OnMouseEvent 400). */
+function HoverSelect()
+{
+	local int i;
+
+	if (Movie == none || Movie.Pres.ScreenStack.GetCurrentScreen() != self)
+		return;
+	i = OptionUnderMouse();
+	if (i >= 0 && i != Selected)
+		Select(i);
 }
 
 /** The facilities for the tile, buildable first (as EW sorts them), each with what it needs when it cannot be built. */
@@ -178,13 +192,13 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	{
 	case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP:
 	case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED:
+		// (A click on a facility builds it, as in EW (OnMouseEvent 398: RealizeSelected, OnAccept); the help bar's BEGIN
+		// BUILD builds the one selected, UILWEWStrategyHUD.)
 		i = OptionUnderMouse();
 		if (i >= 0)
 		{
-			if (i == Selected)
-				Accept();
-			else
-				Select(i);
+			Select(i);
+			Accept();
 			return true;
 		}
 		break;

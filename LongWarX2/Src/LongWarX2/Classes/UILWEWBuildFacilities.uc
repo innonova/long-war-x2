@@ -8,7 +8,7 @@ class UILWEWBuildFacilities extends UILWEWScreen;
 
 /** EW's words, written from the player's install (scripts/lw-words.mjs, makeBuildWords). */
 var localized string Title, Excavate, Excavating, BuildLift, BuildFacility, Steam, Days, Cost, RequiredBuild;
-var localized string ErrNeedLift, ErrNeedExcavating, ErrNeedFunds, ErrNeedPower, ErrNeedSteam, NoRequirements;
+var localized string ErrNeedLift, ErrNeedExcavating, ErrNeedFunds, ErrNeedPower, ErrNeedSteam, NoRequirements, BeginBuild;
 /** Removing a facility (EW's XGBuildUI words): the reasons it cannot be, by LWBase.RemoveBlock's codes. */
 var localized string Remove, RemoveTitle, RemoveBody, RemoveOK, RemoveCancel, CantRemoveTitle, OK, CaptiveRemoveBody;
 var localized string CantRemove[10];

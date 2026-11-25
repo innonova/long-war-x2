@@ -554,6 +554,8 @@ export function makeBuildWords({ strategyLoc }) {
     ['ErrNeedPower', inSection('XGBuildUI', 'm_strErrNeedPower')],
     ['ErrNeedSteam', inSection('XGBuildUI', 'm_strErrNeedSteam')],
     ['NoRequirements', inSection('UIChooseFacility', 'm_strNoReqLabel')],
+    // (The chooser's BEGIN BUILD on the help bar, UIChooseFacility.UpdateButtonHelp: XGManufacturingUI's label.)
+    ['BeginBuild', inSection('XGManufacturingUI', 'm_strLabelModifyBeginBuild')],
     // Removing a facility (XGBuildUI.UpdateCursor, ConfirmRemovalDialogue): the reasons by LWBase.RemoveBlock's codes.
     ['Remove', inSection('XGBuildUI', 'm_strLabelRemove')],
     ['RemoveTitle', inSection('XGBuildUI', 'm_strRemoveTitle')],
