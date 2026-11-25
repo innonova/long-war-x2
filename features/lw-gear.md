@@ -647,3 +647,24 @@ all (lw-gear.mjs SMALL has no 222). In EW it works through eAbility_TooCloseForC
 remainder of the turn"), its charges set by the item's number in native code, and a radar on the tactical HUD
 (UITacticalHUD_Radar, XComRadarArrayActor) showing what it picks up. To build: the item and its build line, an activated
 ability for the turn, and a radar of blips on XCOM 2's HUD (its radius and charges read from EW/Long War first).
+
+## Report (2026-11-25, the Motion Tracker)
+
+- **The item:** Long War's item 222 as a utility item (`LWSmall_222`, the battle scanner's model, none of its abilities),
+  built in engineering from the start at Long War's ItemBalance line (§20, 5 days, 10 engineers), in EW's words.
+- **The ability** (`LW_MotionTracker`, X2Ability_LWMotionTracker), as Long War builds eAbility_TooCloseForComfort
+  (XGAbilityTree.BuildAbilities): self-targeted, a free action (eProp_CostNone), a cooldown of one turn, lasting the turn
+  (LW_MotionTrackerActive); three charges (XGUnit.UpdateItemCharges: EXALT_LOOT1), one more with Deep Pockets
+  (X2Effect_LWCharges). EW's name and help ("Activates a radar for the remainder of the turn.").
+- **The radar:** EW's own (UITacticalHUD_Radar), from EW's tactical HUD movie converted on the player's machine like its
+  strategy screens (EWTacticalUI.upk; the setup converts it), only its radar shown (UILWEWRadar), below XCOM 2's
+  objectives where EW had its corner. Shown while the selected soldier has the radar on or Bioelectric Skin (EW shows it
+  for both); hidden with XCOM 2's HUD (reveals, ability cameras). Its blips as EW's: squadmates (hurt, dead), aliens (a
+  cloaked Seeker left out), civilians, meld (canisters on the field and those still hidden in the fog) within Long War's
+  BASE_REMOVAL_DAYS, 35 of EW's metres (2240 units); turned with the camera by EW's own formula
+  (UpdateCameraOrientation). EW's CalculateRadarPosition is native: the blips' axes are derived so that, turned by EW's
+  angle, forward is up and the camera's right is right (logs/compare/motion-tracker-radar.png).
+- **Seen on wingpu:** the item on a soldier, the ability on the bar with 3 charges, used, the radar with the squad, the
+  aliens of two pods and a meld canister; turned with the camera (yaw 90: the turn went from 41° to -48°).
+- **Not yet:** a click journey (the item must be on a soldier before the mission; the journeys' missions start without
+  one); EW's objective blips (its interactive objectives, types 7 and 8) are not drawn.
