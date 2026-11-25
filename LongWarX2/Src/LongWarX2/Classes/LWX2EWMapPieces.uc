@@ -443,6 +443,9 @@ var config bool EWGrade;
 /** And XCOM 2's filmic tonemapper off on EW's maps, as over EW's base (EW's renderer had none): it darkened and saturated
  *  a night map's blue (aek 2026-11-25). */
 var config bool EWTonemapperOff;
+/** On EW's night maps, at least this desaturation in the grade: lit mostly by EW's light maps, their dark blues came out
+ *  twice as saturated as EW draws them (the highway at night: saturation 0.49 against EW's 0.25; 0.29 with 0.4). */
+var config float NightDesaturation;
 /** EW's level emitters on its maps' own plots (its fires, smoke, sparks; off while one of them crashed the game). */
 var config bool MissionEmitters;
 /** Which kinds are placed (the mission's own sun and sky light the map too). */
@@ -464,6 +467,17 @@ var config array<LWX2MapChoice> Maps;
 var config string DefaultMap;
 /** For development: this converted map for every Long War mission, whatever its kind ("": Long War's list decides). */
 var config string ForceMap;
+
+/** Whether Long War lists the map as a night map (its Maps, Night). */
+static function bool IsNightMap(string Name)
+{
+	local LWX2MapChoice M;
+
+	foreach default.Maps(M)
+		if (M.Name ~= Name && M.Night)
+			return true;
+	return false;
+}
 
 /** The mission's converted EW map: a Long War mission's choice (XComGameState_LWStrategy.PendingEWMap, "" for none), else DefaultMap. */
 static function string MapName()
@@ -684,7 +698,7 @@ static function string UseEWAtmosphere(Actor Spawner)
 		WI.DefaultPostProcessSettings.bOverride_Scene_MidTones = true;
 		WI.DefaultPostProcessSettings.Scene_MidTones = D.Grade.MidTones;
 		WI.DefaultPostProcessSettings.bOverride_Scene_Desaturation = true;
-		WI.DefaultPostProcessSettings.Scene_Desaturation = D.Grade.Desaturation;
+		WI.DefaultPostProcessSettings.Scene_Desaturation = FMax(D.Grade.Desaturation, IsNightMap(MapName()) ? default.NightDesaturation : 0.0);
 		if (LocalPlayer(Spawner.GetALocalPlayerController().Player) != none)
 			LocalPlayer(Spawner.GetALocalPlayerController().Player).OverridePostProcessSettings(WI.DefaultPostProcessSettings, 0.0);
 		FogNote $= ", EW's colour grading";
