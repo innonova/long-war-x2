@@ -264,6 +264,8 @@ static function NewMission(XComGameState_LWStrategy S, optional int Id)
 	if (Country < 0)
 		return;
 	S.AddCouncilSite(M.Id, Country, RollRewards(S, M));
+	// (EW's "!" on the Situation Room: XGFundingCouncil.DetermineNewFCMission.)
+	S.Attention = S.Attention | 16;
 }
 
 /** The mission's rewards as Long War rolls and scales them (BuildMission, CreateMission). */

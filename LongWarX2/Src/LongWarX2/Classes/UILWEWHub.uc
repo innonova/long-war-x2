@@ -39,6 +39,8 @@ var array<string> FallbackRooms;
 var int Room;
 var array<int> RoomOptions;
 var int RoomSelected;
+/** The attention bits the tabs show now (ShowAttention). */
+var int AttentionShown;
 var UILWEWObjectives Objectives;
 
 const OPT_RESEARCH = 0;
@@ -186,6 +188,45 @@ function SelectOption(int k)
 	CallNow("subMenuMC.SetHelpText", Params);
 }
 
+/** The room tabs and EW's Mission Control button above the clock (its second, the Gollop Chamber's, left empty), each with
+ *  EW's "!" where Long War's state wants attention (XComGameState_LWStrategy.Attention; UIStrategyHUD_FacilityMenu.UpdateData
+ *  adds the options again when it changes, UIStrategyHUD.UpdateHotlink). */
+function ShowAttention()
+{
+	local XComGameState_LWStrategy S;
+	local array<ASValue> Params;
+	local int i, Bits;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	Bits = S != none ? S.Attention : 0;
+	if (Bits == AttentionShown)
+		return;
+	AttentionShown = Bits;
+	for (i = 0; i < RoomCameras.Length; i++)
+	{
+		MC.BeginChildFunctionOp("theMenu.facilityMenu", "AddMenuOption");
+		MC.QueueNumber(i);
+		MC.QueueString(RoomName(i));
+		MC.QueueBoolean((Bits & (1 << i)) != 0);
+		MC.EndOp();
+	}
+	MC.BeginFunctionOp("SetHotlink");
+	MC.QueueString(Word(MissionControlName, "MISSION CONTROL"));
+	MC.QueueString("");
+	MC.QueueBoolean((Bits & 32) != 0);
+	MC.QueueString("");
+	MC.QueueString("");
+	MC.QueueBoolean(false);
+	MC.EndOp();
+	// (In a room: its tab lit and the others dimmed again, as entering it left them.)
+	if (Room >= 0 && bIsInited)
+	{
+		Params.AddItem(Str(string(Room)));
+		CallNow("theMenu.facilityMenu.setFocus", Params);
+		CallNow("theMenu.facilityMenu.DimAllUnselectedMenuOptions");
+	}
+}
+
 simulated function OnInit()
 {
 	local int i;
@@ -195,24 +236,11 @@ simulated function OnInit()
 	// Only the menu and Mission Control: the HUD shown beside this one has the resources, the clock and the events.
 	MC.FunctionVoid("HideTicker");
 	HideHUDParts();
-	for (i = 0; i < RoomCameras.Length; i++)
-	{
-		MC.BeginChildFunctionOp("theMenu.facilityMenu", "AddMenuOption");
-		MC.QueueNumber(i);
-		MC.QueueString(RoomName(i));
-		MC.QueueBoolean(false);
-		MC.EndOp();
-	}
+	AttentionShown = -1;
+	ShowAttention();
+	// (Again as the state changes: research done while time runs, a room entered.)
+	SetTimer(0.5, true, nameof(ShowAttention));
 	MC.ChildFunctionVoid("theMenu.facilityMenu", "onReceiveFocus");
-	// EW's Mission Control button above the clock (its second, the Gollop Chamber's, left empty).
-	MC.BeginFunctionOp("SetHotlink");
-	MC.QueueString(Word(MissionControlName, "MISSION CONTROL"));
-	MC.QueueString("");
-	MC.QueueBoolean(false);
-	MC.QueueString("");
-	MC.QueueString("");
-	MC.QueueBoolean(false);
-	MC.EndOp();
 	class'LWX2EWBase'.static.Get(self).Show();
 	// The parts the HUD beside this one shows, hidden (the movie shows them again as it lays itself out).
 	SetTimer(0.5, true, nameof(HideHUDParts));
@@ -335,6 +363,7 @@ function EnterRoom(int i)
 	}
 	`log("LongWarX2: Long War hub: room" @ RoomName(i), , 'LongWarX2');
 	Room = i;
+	class'XComGameState_LWStrategy'.static.AttentionSeen(1 << i);
 	ShowObjectives(Room == 4);
 	Params.AddItem(Str(string(i)));
 	CallNow("theMenu.facilityMenu.setFocus", Params);
@@ -662,6 +691,7 @@ function EnterMissionControl()
 	local XComHQPresentationLayer HQPres;
 
 	`log("LongWarX2: Long War hub: Mission Control", , 'LongWarX2');
+	class'XComGameState_LWStrategy'.static.AttentionSeen(32);
 	HQPres = XComHQPresentationLayer(Movie.Pres);
 	HQPres.ScreenStack.Push(HQPres.Spawn(class'UILWGeoscape', HQPres));
 }

@@ -228,6 +228,10 @@ var int EventCount;
 /** EW's notices (XGMissionControlUI.AddNotice: an item built, soldiers arrived, a ship back in service ...): the text in
  *  EW's words, numbered (NoticeCount) so that Mission Control shows each once, six seconds (features/ew-notices.md).
  *  The last 12 kept. */
+/** The rooms that want the player's attention, EW's "!" on their tabs (XGFacility.m_bRequiresAttention): bits by the hub's
+ *  rooms (1 research, 2 engineering, 4 barracks, 8 hangar, 16 the Situation Room) and 32 Mission Control; set where Long
+ *  War sets them, cleared as the room is entered (XGFacility.Enter). */
+var int Attention;
 var array<string> Notices;
 var array<int> NoticeHours;
 var int NoticeCount;
@@ -366,6 +370,9 @@ static function XComGameState_LWStrategy GetOrCreate(optional int Home = -1, opt
 	S = XComGameState_LWStrategy(NewGameState.CreateNewStateObject(class'XComGameState_LWStrategy'));
 	S.HomeIndex = Home >= 0 ? Home : 0;
 	S.StartChoice = Choice;
+	// (EW's at a new game, after its first mission: the labs and engineering (InitNewGame), Mission Control
+	// (CheckForDebrief, back from the first mission) and the Situation Room (PostCombat, the first mission taken).)
+	S.Attention = 1 | 2 | 16 | 32;
 	S.Begin();
 	// (The world's first news, InitTickerItems, at the campaign's start.)
 	class'LWTicker'.static.Fill(S);
@@ -573,9 +580,25 @@ static function ResearchDone(XComGameState NewGameState, int Id)
 	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
 	S.LastResearched = Id;
 	S.ResearchAlert = Id;
+	// (EW's "!" on the labs and engineering: XGFacility_Labs.OnResearchCompleted.)
+	S.Attention = S.Attention | 1 | 2;
 	S.bStop = true;
 	// (Long War's objective, as the research report closes: XGResearchUI.)
 	class'LWObjectives'.static.Researched(S, Id);
+}
+
+/** A room's (or Mission Control's) attention cleared as it is entered (XGFacility.Enter). */
+static function AttentionSeen(int Bit)
+{
+	local XComGameState NewGameState;
+	local XComGameState_LWStrategy S;
+
+	if (Get() == none || (Get().Attention & Bit) == 0)
+		return;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Long War X2: a room's attention seen");
+	S = XComGameState_LWStrategy(NewGameState.ModifyStateObject(class'XComGameState_LWStrategy', Get().ObjectID));
+	S.Attention = S.Attention & ~Bit;
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 }
 
 /** The research alert answered (0: none waits); and the report read in the labs (EW's OnLeaveReport). */
