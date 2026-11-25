@@ -58,3 +58,33 @@ button). Against the port:
   facility built it. Now the help bar has it, a click on a facility builds it, and the mouse over a facility selects it,
   as EW's list does (its OnMouseEvent: mouse-in selects; a click selects and builds). The base-building journey builds by
   the button.
+
+## Report (2026-11-25, the first comparison)
+
+Built: `tools/test/nav-walk.sh <port|ew> [room …]` (each room's menu read by OCR, every entry clicked, the screen read,
+photographed and left; the scripts take EW's window when XCOM 2 is not running), `tools/test/nav-compare.mjs` (per room
+and screen, the labels in one game and not the other, the HUD's own and OCR's variants dropped) and
+`tools/test/mirror-ew-save.sh <save>` (a port campaign brought to an EW save's base and research, so both are walked at
+the same state). EW walked on the person's Game 55 base (save1753, December 2016), the port on a campaign mirrored from
+it; the table is logs/nav/compare.md (not committed: the games' words).
+
+Every menu entry of every room opens the matching screen in the port, and every way back worked. Differences found and
+fixed:
+
+- **The cash flow statement** (View XCOM Finances): EW lists every kind of facility in its own order (XGFinanceUI.
+  BuildFacilityUI: 0 to 23, the starting rooms at §0), writes costs negative ("-§420", the titles too), and its salaries'
+  section is empty (BuildSalaryUI); the port listed only paid kinds in another order, positive, and a "Staff Salaries §0"
+  line. Now as EW's (logs/compare/finances-fixed.png).
+- **Money** everywhere as EW's ConvertCashToString writes it in English: the sign before the §, thousands with commas
+  ("+§1,006"); the port wrote "§-1006".
+- **The rooms' menus** opened with the first entry selected and its help shown; EW's submenu selects nothing until the
+  mouse comes over an entry or a key moves (UIStrategyHUD_FacilitySubMenu.RealizeSelected only from those). Now as EW's.
+- **Build Facilities' tiles** named in capitals; EW writes the facilities' names as they are (XGBuildUI.
+  BuildFacilityTile). Now as EW's.
+
+Seen and explained by the two campaigns' states (not the port): the research menu's Change/Start and Review Research
+Credits (EW's save has a project and credits), the barracks' Officer Promotions (promotions due), the OTS's officer
+projects (EW's soldiers are Master Sergeants), the Bonuses held (EW's 16 satellites), the gray market's stock.
+
+Next: the walk one level deeper (each screen's own buttons and lists, without buying or launching), and the comparison
+kept as a check after changes to the base's screens.
