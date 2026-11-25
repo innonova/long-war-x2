@@ -208,6 +208,7 @@ static function string ReadVar(string SubPath)
 {
 	local UILWEWScreen EWScreen;
 	local UILWEWStrategyHUD HUD;
+	local UILWEWRadar Radar;
 	local UIScreen Top;
 
 	// (abs:<path>: a path from the movie's root, _global.<Class> too, in the movie of the EW screen up.)
@@ -215,6 +216,20 @@ static function string ReadVar(string SubPath)
 	{
 		EWScreen = UILWEWScreen(AnyPres().ScreenStack.GetFirstInstanceOf(class'UILWEWScreen'));
 		return EWScreen == none ? "ERR no EW screen" : Mid(SubPath, 4) @ "=" @ EWScreen.Movie.GetVariableString(Mid(SubPath, 4));
+	}
+	// (radar:<path>: inside EW's tactical radar's movie (UILWEWRadar), not on the stack either; "radar:" alone its path.)
+	if (Left(SubPath, 6) == "radar:")
+	{
+		foreach class'WorldInfo'.static.GetWorldInfo().AllActors(class'UILWEWRadar', Radar)
+			return Mid(SubPath, 6) == "" ? string(Radar.MCPath) : (Radar.MCPath $ "." $ Mid(SubPath, 6) @ "=" @ Radar.Movie.GetVariableString(Radar.MCPath $ "." $ Mid(SubPath, 6)));
+		return "ERR no EW radar";
+	}
+	// (any:<path>: a path from the 2D movie's root, the tactical one too.)
+	if (Left(SubPath, 4) == "any:")
+	{
+		foreach class'WorldInfo'.static.GetWorldInfo().AllActors(class'UILWEWRadar', Radar)
+			return Mid(SubPath, 4) @ "=" @ Radar.Movie.GetVariableString(Mid(SubPath, 4));
+		return "ERR no EW radar";
 	}
 	// (hud:<path>: inside EW's strategy HUD, which is not on the screen stack.)
 	if (Left(SubPath, 4) == "hud:")

@@ -33,6 +33,7 @@ function Answer(string Line)
 
 function Handle(string Line, out array<string> Out)
 {
+	local UILWEWRadar Radar;
 	local array<string> Args;
 	local XComGameState_LWStrategy S;
 	local UILWGeoscape Geo;
@@ -594,6 +595,11 @@ function Handle(string Line, out array<string> Out)
 			Out.AddItem(class'LWX2EWBase'.static.Get(self).ShiftScreenCamera(name(Args[1]), vect(1, 0, 0) * float(Args[2]) + vect(0, 1, 0) * float(Args[3]) + vect(0, 0, 1) * float(Args[4])));
 		else
 			Out.AddItem("ERR screencam <camera> <forward> <right> <up>");
+		return;
+	case "radar":
+		// radar: EW's radar's last blips ("type,x,y//…") and turn (a test aid, UILWEWRadar).
+		foreach AllActors(class'UILWEWRadar', Radar)
+			Out.AddItem("radar shown" @ Radar.bShown @ "turn" @ Radar.LastTurn @ "blips" @ Radar.LastBlips);
 		return;
 	case "probe":
 		// probe <x> <y> [n]: what is drawn under that point of the screen (fractions of its width and height, 0.5 0.5 the

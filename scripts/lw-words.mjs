@@ -363,6 +363,11 @@ export function makeSmallWords({ loc, strategyLoc, items }) {
     }
     out.push('')
   }
+  // (The Motion Tracker's ability, as EW names it: eAbility_TooCloseForComfort's name, help and the flyover's words.)
+  const mt = (k) => loc.match(new RegExp(`^${k}\\[eAbility_TooCloseForComfort\\]="(.*)"\\s*$`, 'm'))?.[1]
+  if (mt('AbilityNames'))
+    out.push('[LW_MotionTracker X2AbilityTemplate]', `LocFriendlyName="${mt('AbilityNames')}"`, `LocHelpText="${mt('HelpMessages') ?? ''}"`,
+      `LocLongDescription="${mt('HelpMessages') ?? ''}"`, `LocFlyOverText="${mt('TargetMessages') ?? mt('AbilityNames')}"`, '')
   return { text: out.join('\r\n'), named }
 }
 

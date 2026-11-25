@@ -63,6 +63,9 @@ static function X2ItemTemplate SmallTemplate(LWGearRules.LWSmallDef D)
 		Weapon.ItemCat = D.Kind == 'Launcher' ? 'weapon' : (D.Kind == 'Medikit' ? 'heal' : 'utility');
 		if (D.Kind == 'ArcThrower')
 			Weapon.Abilities.AddItem('LWArcThrowerStun');
+		// The Motion Tracker: its radar (X2Ability_LWMotionTracker), three charges (X2Effect_LWCharges).
+		if (D.Kind == 'MotionTracker')
+			Weapon.Abilities.AddItem('LW_MotionTracker');
 		// The MEC's flamethrower: its cone, two charges an item (XGUnit.UpdateItemCharges).
 		if (D.Kind == 'Flamethrower')
 			Weapon.Abilities.AddItem('LWX2_MECFlamethrower');
@@ -72,7 +75,7 @@ static function X2ItemTemplate SmallTemplate(LWGearRules.LWSmallDef D)
 		Weapon.iRadius = D.Radius;
 		Weapon.iRange = D.Range;
 		Weapon.iEnvironmentDamage = D.Environment;
-		Weapon.iClipSize = D.Kind == 'Flamethrower' ? 2 : 1;
+		Weapon.iClipSize = D.Kind == 'Flamethrower' ? 2 : (D.Kind == 'MotionTracker' ? 3 : 1);
 		Weapon.InfiniteAmmo = false;
 		Item = Weapon;
 	}
@@ -143,7 +146,7 @@ static function CopyLook(X2ItemTemplate Mine, X2ItemTemplate Look, LWGearRules.L
 		MyItem.GameArchetype = LookItem.GameArchetype;
 		MyItem.EquipSound = LookItem.EquipSound;
 		// The passive items are stats of their own; the rest act as XCOM 2's item does (not as the SPARK's).
-		if (D.Kind != 'Passive' && D.Kind != 'Rocket' && D.Kind != 'ArcThrower' && D.Kind != 'Flamethrower')
+		if (D.Kind != 'Passive' && D.Kind != 'Rocket' && D.Kind != 'ArcThrower' && D.Kind != 'Flamethrower' && D.Kind != 'MotionTracker')
 			foreach LookItem.Abilities(A)
 				if (MyItem.Abilities.Find(A) == INDEX_NONE && Left(string(A), 5) != "Spark")
 					MyItem.Abilities.AddItem(A);

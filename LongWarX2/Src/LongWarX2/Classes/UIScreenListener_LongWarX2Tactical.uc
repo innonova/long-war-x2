@@ -282,6 +282,9 @@ function CheckSwept()
 	class'LWX2Zombies'.static.Update();
 	// Bioelectric Skin's reveal (LWX2Bioelectric).
 	class'LWX2Bioelectric'.static.Update();
+	// EW's radar, made once a soldier of the squad has a Motion Tracker or Bioelectric Skin (UILWEWRadar).
+	if (SquadHasRadar())
+		class'UILWEWRadar'.static.Ensure(`PRES);
 	// Meld canisters hidden in the fog until seen, without Recon (second wave #29; LWMeld).
 	class'LWMeld'.static.Reveal();
 	// Red Fog (second wave #6): the hurt slowed and less sure (LWX2SecondWave).
@@ -572,6 +575,17 @@ function ReportPerks()
 				Out @= string(Effect);
 		`log("LongWarX2: Long War perks in play:" @ Unit.GetFullName() @ "(" $ Unit.GetSoldierClassTemplateName() @ "rank" @ Unit.GetRank() $ "): aim" @ Unit.GetCurrentStat(eStat_Offense) @ "mobility" @ Unit.GetCurrentStat(eStat_Mobility) $ ";" $ Out, , 'LongWarX2');
 	}
+}
+
+/** A soldier on the field with a Motion Tracker's radar or Bioelectric Skin. */
+static function bool SquadHasRadar()
+{
+	local XComGameState_Unit Unit;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_XCom && !Unit.bRemovedFromPlay && (Unit.FindAbility('LW_MotionTracker').ObjectID > 0 || Unit.FindAbility('LW_BioelectricSkin').ObjectID > 0))
+			return true;
+	return false;
 }
 
 defaultproperties

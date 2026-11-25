@@ -123,6 +123,9 @@ static function int ChargesFor(XComGameState_Unit Unit, int Item, int n, int Cur
 		if (Unit.HasSoldierAbility('LW_BattleScanner'))
 			c += 2 + (bDeep ? 1 : 0) + (bSmoke ? 1 : 0);
 		return c;
+	case 222:
+		// The Motion Tracker: three charges, not one an item (m_iProximityMines = EXALT_LOOT1), and one more with Deep Pockets.
+		return 3 + (bDeep ? 1 : 0);
 	case 218:
 		// The launcher's rocket, a second with Shock and Awe (the Rocket item's own is X2Effect_LWSmallItem's).
 		return Current + (Unit.HasSoldierAbility('LW_ShockAndAwe') ? 1 : 0);
