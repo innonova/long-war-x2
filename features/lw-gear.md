@@ -637,3 +637,13 @@ have no flying animations and fly in their ground poses.
   fuel 5 → 0, one a turn, and at 0 the flight over. A Sectoid 6 tiles off at the exposed sniper: 74% to hit, 50% crit on the
   ground; 44%, 0% crit in flight ("Flying −30", "Flying −50 (crit)"). **Not seen:** the flying move itself over an obstacle
   (the control port's `move` takes a path a soldier walks), the Hover SHIV's.
+
+## Found (2026-11-25, the navigation map against EW): the Motion Tracker is missing
+
+EW's build list at a campaign's start (the person's Game 56, 1 March 2016) offers the **Motion Tracker** (Long War's item
+222, "uses radar pulses and infrared sensors to detect nearby enemies, civilians and alien artifacts"; §20, 5 days, 10
+engineers; a backpack item for any class); the port's offers only the Sawed-off Shotgun. The item is not in the port at
+all (lw-gear.mjs SMALL has no 222). In EW it works through eAbility_TooCloseForComfort ("Activates a radar for the
+remainder of the turn"), its charges set by the item's number in native code, and a radar on the tactical HUD
+(UITacticalHUD_Radar, XComRadarArrayActor) showing what it picks up. To build: the item and its build line, an activated
+ability for the turn, and a radar of blips on XCOM 2's HUD (its radius and charges read from EW/Long War first).

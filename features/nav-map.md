@@ -88,3 +88,26 @@ projects (EW's soldiers are Master Sergeants), the Bonuses held (EW's 16 satelli
 
 Next: the walk one level deeper (each screen's own buttons and lists, without buying or launching), and the comparison
 kept as a check after changes to the base's screens.
+
+## Report (2026-11-25, the early-campaign comparison)
+
+The first comparison was on a late-game save, and most of its differences came from the two campaigns' states. This one
+is EW on the person's Game 56 at 1 March 2016 (save1755, just after the first mission) and a fresh port campaign. The walk
+now starts each room from the base's view (EW's had drifted: Engineering read no entries, Barracks Engineering's).
+Found and fixed:
+
+- **EW's attention markers** ("!" on a room tab or on Mission Control: a new game, research done, a council mission;
+  cleared by entering the room; XGFacility.m_bRequiresAttention): the port had none. Now in Long War's state (Attention).
+- **The Situation Room's wall stayed black** in the room's view from a campaign's start until something showed its panels
+  again; now shown on entering the room (its 4 panels were found hidden; the cause of their hiding not found yet, logged).
+- **The year:** Long War's campaigns begin on 1 March 2016 (the person's saves), the port said 2015.
+- **The gray market:** EW's "In Storage" / "Sell" / "Complete Transaction"; elerium and alloys named as EW names them
+  ("Elerium", not XCOM 2's "Elerium Crystals").
+- **The build screen:** EW's "BUILD ITEMS", "ITEM / BUILT", and "Cost:" with each requirement on its line in its colour
+  (red when short), no time line; the port had "BUILD WEAPONS", "HELD", "BUILD COST: §0, 1 Shotgun / TIME: …".
+
+Found and written up, not done: **the Motion Tracker** is missing from the port (EW's build list has it at the start;
+lw-gear.md).
+
+Still different, explained: the research menu's Change (EW's save has a project running), the memorial (the port's first
+mission lost a soldier), the soldiers' ranks (the port's start makes Long War's Lance Corporals).
