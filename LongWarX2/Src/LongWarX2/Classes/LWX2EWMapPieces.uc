@@ -39,6 +39,9 @@ struct LWX2Piece
 	var bool Fractured;
 	/** Its cover flags where they differ from an XComLevelActor's (the plot sets them; read here only so the line parses). */
 	var bool ClimbOnto, ClimbOver, Destination, IgnoreForCover;
+	// (A wide breakable piece written as a floor, for the plot writer (ew-plot.ts: XComFracLevelActor.bIsFloor); here only
+	// so the ini reads without "Unknown member Floor" in the log.)
+	var bool Floor;
 	var name CoverForce;
 	/** Seen through (EW's windows, foliage, cars) and windows: the plot sets them too. */
 	var bool BlocksSight, Window;
