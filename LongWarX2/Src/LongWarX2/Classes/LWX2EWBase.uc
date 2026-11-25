@@ -1143,6 +1143,33 @@ function ScreenCameras()
 	}
 }
 
+/** A test aid (the control port's screencam): XCOM 2's camera of this name moved to EW's camera for it plus Shift in that
+ *  camera's axes, as ScreenCameraShifts would; the view taken through it again. */
+function string ShiftScreenCamera(name Screen, vector Shift)
+{
+	local LWX2ScreenDisplay S;
+	local LWX2EWMapPieces.LWX2Camera C;
+	local vector X, Y, Z;
+	local int k;
+
+	k = ScreenDisplays.Find('Screen', Screen);
+	if (k == INDEX_NONE)
+		return "ERR no screen" @ Screen;
+	S = ScreenDisplays[k];
+	k = Data("Command1").Cameras.Find('Tag', S.Camera);
+	if (k == INDEX_NONE)
+		return "ERR no camera" @ S.Camera;
+	C = Data("Command1").Cameras[k];
+	k = CamTags.Find(Screen);
+	if (k == INDEX_NONE)
+		return "ERR no camera placed for" @ Screen;
+	GetAxes(C.Rot, X, Y, Z);
+	Cams[k].SetLocation(C.Loc + BaseOffset + X * Shift.X + Y * Shift.Y + Z * Shift.Z);
+	if (`HQPRES != none)
+		`HQPRES.CAMLookAtNamedLocation(string(Screen), 0);
+	return "ok" @ Screen @ "at" @ Cams[k].Location;
+}
+
 static function name ScreenCamera(name DisplayTag)
 {
 	local int k;

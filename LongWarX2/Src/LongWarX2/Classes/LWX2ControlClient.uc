@@ -588,6 +588,13 @@ function Handle(string Line, out array<string> Out)
 		Out.AddItem(class'LWX2EWMapPieces'.static.TuneLook(self, Args.Length > 1 ? float(Args[1]) : -1.0, Args.Length > 2 ? float(Args[2]) : -1.0,
 			Args.Length > 3 ? float(Args[3]) : -1.0));
 		return;
+	case "screencam":
+		// screencam <XCOM 2's camera name> <forward> <right> <up>: that camera moved from EW's (a test aid, ScreenCameraShifts).
+		if (Args.Length > 4)
+			Out.AddItem(class'LWX2EWBase'.static.Get(self).ShiftScreenCamera(name(Args[1]), vect(1, 0, 0) * float(Args[2]) + vect(0, 1, 0) * float(Args[3]) + vect(0, 0, 1) * float(Args[4])));
+		else
+			Out.AddItem("ERR screencam <camera> <forward> <right> <up>");
+		return;
 	case "probe":
 		// probe <x> <y> [n]: what is drawn under that point of the screen (fractions of its width and height, 0.5 0.5 the
 		// centre): the pieces whose bounds the line of sight passes through, nearest first (n, default 8), each with its
