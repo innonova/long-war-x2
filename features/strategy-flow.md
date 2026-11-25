@@ -661,3 +661,8 @@ out" (logs/customize.png).
   `SquadSpacing=0`) (logs/compare/squad-fixed.png).
 - **Not yet:** XCOM 2's head customization has its own close camera on the face (`UIBlueprint_CustomizeHead`); here it
   takes EW's customize view, which shows the whole soldier.
+- **Head customization** (later the same day): nearer the face, EW's panel still in view (`ScreenCameraShifts`, tuned with
+  the control port's `screencam` aid). Seen there and not yet explained: the soldier in Customize wears XCOM 2's underlay
+  (vest and trousers) where the summary shows the armour (XComHumanPawn.ShouldUseUnderlay is true only inside the crew
+  manager's placing of the Avenger's crew, XGBaseCrewMgr.bScopedUseUnderlays: to check whether that is left set); and a
+  portrait of XCOM 2's Central appeared top right while customizing (an XCOM 2 narrative line, not yet traced).
