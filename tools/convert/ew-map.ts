@@ -58,6 +58,8 @@ export { CONVERTER_VERSION }
 // (93: the skin warmth less yellow, measured on Shen against EW)
 // (94: EW's static lights marked Baked (their light is in EW's light maps); the plot tags them, the mod lets them light the
 // units only, not the pieces a second time: a night map's doubled moonlight, aek 2026-11-25)
+// (95: nothing new in what ew-map.ts writes; raised so every map is written as a plot again: EW's water as a wet film,
+// ew-plot.ts, aek 2026-11-25)
 // (82: people's skin colour at half strength)
 // (81: HQ_EmissivePallete's palette for its glow)
 // (80: people on EW's cinematic channels only, Cinematic=true)
