@@ -1110,6 +1110,17 @@ export function makeMemorialWords({ strategyLoc }) {
   const dk = (k) => deb.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim() ?? ''
   const debKeys = ['m_strAbductionStopped', 'm_strAbductionFeedback', 'm_strAbductionLoss', 'm_strTerrorFeedback', 'm_strTerrorLoss', 'm_strCountryWithdraw', 'm_strAlienBaseFeedback', 'm_strAlienBaseLoss', 'm_strReward', 'm_strPanicIncreaseCountry', 'm_strPanicDecreaseCountry', 'm_strScientists', 'm_strEngineers']
   const debExtra = [['AfterReport', dk('m_strLabelAfterReport')], ['ArtifactsRecovered', dk('m_strLabelArtifactsRecovered')], ['CouncilTransmission', dk('m_strLabelFundingCouncil')], ...debKeys.map((k) => [k, dk(k)])].filter(([, v]) => v)
+  // (The build screen's: UIBuildItem's column labels, XGEngineeringUI's cost label and tab names, under one section.)
+  const eng = strategyLoc.replace(/\r/g, '').match(/^\[XGEngineeringUI\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
+  const bui = strategyLoc.replace(/\r/g, '').match(/^\[UIBuildItem\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
+  const kv = (sec, k) => sec.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''
+  const build = [['ItemLabel', kv(bui, 'm_strItemLabel')], ['BuiltLabel', kv(bui, 'm_strQuantityLabel')], ['CostLabel', kv(eng, 'm_strBuildCost')],
+    ['BuildHeader', kv(eng, 'm_strHeaderBuildItems')], ['TabItems', kv(eng, 'm_strCatWeapons')], ['TabArmor', kv(eng, 'm_strCatArmor')],
+    ['TabVehicles', kv(eng, 'm_strCatVehicles')], ['TabAll', kv(eng, 'm_strCatAll')]].filter(([, v]) => v)
+  if (build.length) {
+    copied.text += `[UILWEWEngineering]\r\n${build.map(([k, v]) => `${k}="${v}"\r\n`).join('')}\r\n`
+    copied.named += build.length
+  }
   copied.text = copied.text.replace('[UILWEWDebrief]\r\n', `[UILWEWDebrief]\r\n${debExtra.map(([k, v]) => `${k}=${v}\r\n`).join('')}`)
   copied.named += debExtra.length
   // (The craft summary: its words, and Long War's pilots for its RENAME, XGLocalizedData.ShipWeaponFlavorTxt[11..255].)

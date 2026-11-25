@@ -7,6 +7,8 @@
 class UILWEWEngineering extends UILWEWScreen;
 
 /** EW's tabs and Long War's item categories (EItemCategory) on them. */
+/** EW's words (UIBuildItem's labels, XGEngineeringUI's cost label and tabs), written by the setup. */
+var localized string ItemLabel, BuiltLabel, CostLabel, BuildHeader, TabItems, TabArmor, TabVehicles, TabAll;
 var array<int> Tabs;
 var int Tab;
 var array<int> Items;
@@ -56,9 +58,9 @@ function Fill()
 	}
 	All = class'LWEngineering'.static.Buildable();
 	MC.BeginFunctionOp("SetLabels");
-	MC.QueueString("BUILD" @ TabName(Tabs[Tab]));
-	MC.QueueString("ITEM");
-	MC.QueueString("HELD");
+	MC.QueueString(W(BuildHeader, "BUILD") @ TabName(Tabs[Tab]));
+	MC.QueueString(W(ItemLabel, "ITEM"));
+	MC.QueueString(W(BuiltLabel, "BUILT"));
 	MC.EndOp();
 	for (i = 0; i < Tabs.Length; i++)
 	{
@@ -159,15 +161,44 @@ function SelectFoundry(int Index)
 	MC.EndOp();
 }
 
+static function string W(string Localized, string Fallback)
+{
+	return Localized != "" ? Localized : Fallback;
+}
+
+/** An item's cost as EW's build screen lists it (GetCostSummary): the money, "Nx Elerium", "Nx Alloys", "Nx <item>". */
+function string CostLines(LWGearRules.LWBuildDef B)
+{
+	local string Out;
+	local int Cash;
+
+	Out = W(CostLabel, "Cost:") $ " ";
+	Cash = class'LWEngineering'.static.CashCost(B);
+	if (Cash > 0)
+		Out $= class'UIUtilities_Text'.static.GetColoredText(class'LWStrategyRules'.static.Money(Cash), class'LWEngineering'.static.Held('Supplies') < Cash ? eUIState_Bad : eUIState_Cash) $ "<br>";
+	if (B.Elerium > 0)
+		Out $= class'UIUtilities_Text'.static.GetColoredText(B.Elerium $ "x" @ class'X2Item_LWArtifacts'.static.DisplayName('Elerium'), class'LWEngineering'.static.Held('EleriumDust') < B.Elerium ? eUIState_Bad : eUIState_Psyonic) $ "<br>";
+	if (B.Alloys > 0)
+		Out $= class'UIUtilities_Text'.static.GetColoredText(B.Alloys $ "x" @ class'X2Item_LWArtifacts'.static.DisplayName('Alloys'), class'LWEngineering'.static.Held('AlienAlloy') < B.Alloys ? eUIState_Bad : eUIState_Highlight) $ "<br>";
+	if (B.Meld > 0)
+		Out $= class'UIUtilities_Text'.static.GetColoredText(B.Meld $ "x" @ class'X2Item_LWArtifacts'.static.DisplayName('Meld'), eUIState_Warning) $ "<br>";
+	if (B.ItemReq != '')
+		Out $= class'UIUtilities_Text'.static.GetColoredText(class'LWEngineering'.static.ReqCount(B) $ "x" @ class'LWEngineering'.static.ItemName(B.ItemReq), class'LWEngineering'.static.Held(B.ItemReq) < class'LWEngineering'.static.ReqCount(B) ? eUIState_Bad : eUIState_Normal) $ "<br>";
+	if (B.ItemReq2 != '')
+		Out $= class'UIUtilities_Text'.static.GetColoredText(B.ItemReq2Count $ "x" @ class'LWEngineering'.static.ItemName(B.ItemReq2), class'LWEngineering'.static.Held(B.ItemReq2) < B.ItemReq2Count ? eUIState_Bad : eUIState_Normal) $ "<br>";
+	return Out;
+}
+
 static function string TabName(int Category)
 {
 	switch (Category)
 	{
-	case 1: return "WEAPONS";
-	case 2: return "ARMOR";
-	case 3: return "VEHICLES";
+	// (EW's tab names: its weapons tab is "ITEMS", XGEngineeringUI.m_strCatWeapons.)
+	case 1: return W(default.TabItems, "ITEMS");
+	case 2: return W(default.TabArmor, "ARMOR");
+	case 3: return W(default.TabVehicles, "VEHICLES");
 	}
-	return "ITEMS";
+	return W(default.TabItems, "ITEMS");
 }
 
 /** An item's tab: its Long War category (an item with none counts as a weapon, as EW's GetBuildItems lists it). */
@@ -193,7 +224,7 @@ function Select(int Index)
 	local LWGearRules.LWBuildDef B;
 	local X2ItemTemplate Template;
 	local XComGameState_LWStrategy S;
-	local string Info, Short;
+	local string Info;
 
 	if (bFoundry)
 	{
@@ -215,11 +246,9 @@ function Select(int Index)
 	class'LWGearRules'.static.BuildFor(Items[Selected], B);
 	Template = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(B.Template);
 	S = class'XComGameState_LWStrategy'.static.Get();
-	Short = class'LWEngineering'.static.Short(B, 1);
-	Info = "BUILD COST:" @ class'LWEngineering'.static.CostText(B) $ "<br>"
-		$ "TIME:" @ class'LWEngineering'.static.HoursText(class'LWEngineering'.static.HoursFor(class'LWEngineering'.static.UnitWork(B), B.Engineers, S != none ? S.Engineers : 0))
-		@ "(" $ B.Engineers @ "engineers)"
-		$ (Short != "" ? "<br>" $ class'UIUtilities_Text'.static.GetColoredText("Short of" @ Short, eUIState_Bad) : "");
+	// (As EW writes it, XGEngineeringUI.BuildSummary over XGFacility_Engineering.GetCostSummary: "Cost:" and each requirement
+	// on its line in its colour, red when short; no time, which EW shows once ordered.)
+	Info = CostLines(B);
 	MC.FunctionString("SetFocus", string(Selected));
 	MC.BeginFunctionOp("UpdateInfo");
 	MC.QueueString(Caps(class'LWEngineering'.static.ItemName(B.Template)));
