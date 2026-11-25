@@ -130,7 +130,9 @@ function ShowRoomMenu()
 	CallNow("subMenuMC.onInvalidate");
 	TabAnchorsToHUD(Room);
 	CallNow("subMenuMC.UpdateLocation");
-	SelectOption(0);
+	// (Nothing selected and no help shown until the mouse comes over an option or a key moves to one, as EW's submenu
+	// opens: its help only from RealizeSelected, on those; the port had shown the first option's help at once.)
+	RoomSelected = -1;
 	SetTimer(0.15, true, nameof(HoverOption));
 }
 
@@ -765,7 +767,7 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		{
 		case class'UIUtilities_Input'.const.FXS_ARROW_UP:
 		case class'UIUtilities_Input'.const.FXS_DPAD_UP:
-			SelectOption(RoomSelected - 1);
+			SelectOption(RoomSelected < 0 ? RoomOptions.Length - 1 : RoomSelected - 1);
 			return true;
 		case class'UIUtilities_Input'.const.FXS_ARROW_DOWN:
 		case class'UIUtilities_Input'.const.FXS_DPAD_DOWN:
@@ -773,7 +775,7 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 			return true;
 		case class'UIUtilities_Input'.const.FXS_KEY_ENTER:
 		case class'UIUtilities_Input'.const.FXS_BUTTON_A:
-			if (RoomSelected < RoomOptions.Length)
+			if (RoomSelected >= 0 && RoomSelected < RoomOptions.Length)
 				ChooseOption(RoomOptions[RoomSelected]);
 			return true;
 		}

@@ -242,7 +242,17 @@ static function bool PlanFor(int Tier, int Aggression, out LWPlanCell Cell)
 /** An amount of money as the game writes it: Long War's credits sign (§, written by its code so the source stays ASCII). */
 static function string Money(int Amount)
 {
-	return Chr(167) $ Amount;
+	local string Digits, Out;
+
+	// (As EW's XGScreenMgr.ConvertCashToString writes it in English: the sign before the §, thousands with commas:
+	// "-§1,006"; the port wrote "§-1006".)
+	Digits = string(Amount < 0 ? -Amount : Amount);
+	while (Len(Digits) > 3)
+	{
+		Out = "," $ Right(Digits, 3) $ Out;
+		Digits = Left(Digits, Len(Digits) - 3);
+	}
+	return (Amount < 0 ? "-" : "") $ Chr(167) $ Digits $ Out;
 }
 
 /** An objective's name, as the Geoscape shows it (Long War's EAlienObjective). */

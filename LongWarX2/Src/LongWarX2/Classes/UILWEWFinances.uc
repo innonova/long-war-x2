@@ -41,7 +41,9 @@ function Section(int Index, string Subtitle, int Total, string Labels, string Va
 	MC.BeginFunctionOp("SetSection");
 	MC.QueueNumber(Index);
 	MC.QueueString(Caps(Subtitle));
-	MC.QueueString(class'UIUtilities_Text'.static.GetColoredText(class'LWStrategyRules'.static.Money(Total), eUIState_Bad));
+	// (A cost as EW writes it, negative: XGFinanceUI's titles are the maintenance costs, which EW keeps negative; an empty
+	// section, the salaries', has no sum at all.)
+	MC.QueueString(Subtitle == "" ? "" : class'UIUtilities_Text'.static.GetColoredText(class'LWStrategyRules'.static.Money(-Total), eUIState_Bad));
 	MC.QueueString(Labels);
 	MC.QueueString(Values);
 	MC.EndOp();
@@ -53,7 +55,7 @@ function Fill()
 	local XComGameState_LWAirWar AirWar;
 	local LWBaseRules.LWFacilityDef F;
 	local string Labels, Values;
-	local int i, n, Jets, Storms, Income, Each, Total;
+	local int i, n, Jets, Storms, Income, Each, Total, Id;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
 	if (S == none)
@@ -85,31 +87,34 @@ function Fill()
 	{
 		Each = class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.InterceptorUpkeep);
 		Labels $= Jets $ "x" @ Word(Interceptor, "Interceptor") $ "\n";
-		Values $= class'LWStrategyRules'.static.Money(Each * Jets) $ "\n";
+		Values $= class'LWStrategyRules'.static.Money(-Each * Jets) $ "\n";
 	}
 	if (Storms > 0)
 	{
 		Each = class'LWBonusEffects'.static.AirCost(class'LWBaseRules'.default.FirestormUpkeep);
 		Labels $= Storms $ "x" @ Word(Firestorm, "Firestorm") $ "\n";
-		Values $= class'LWStrategyRules'.static.Money(Each * Storms) $ "\n";
+		Values $= class'LWStrategyRules'.static.Money(-Each * Storms) $ "\n";
 	}
 	Labels $= "1x" @ Word(Skyranger, "Skyranger") $ "\n";
-	Values $= class'LWStrategyRules'.static.Money(class'LWBaseRules'.default.SkyrangerUpkeep) $ "\n";
+	Values $= class'LWStrategyRules'.static.Money(-class'LWBaseRules'.default.SkyrangerUpkeep) $ "\n";
 	Section(1, Word(Craft, "Craft Maintenance"), class'LWHangar'.static.Upkeep() + class'LWBaseRules'.default.SkyrangerUpkeep, Labels, Values);
-	// Staff salaries: none in Long War (BuildSalaryUI makes an empty section).
-	Section(2, Word(Salary, "Staff Salaries"), 0, "", "");
-	// Facility maintenance (BuildFacilityUI): each kind built, its count and its cost.
+	// Staff salaries: none in Long War (BuildSalaryUI makes an empty section: no title, no sum).
+	Section(2, "", 0, "", "");
+	// Facility maintenance (BuildFacilityUI): each kind built, in EW's order of facilities (0 to 23), its count and its
+	// cost, the starting rooms too at §0 (EW lists every kind with a maintenance of 0 or more).
 	Labels = "";
 	Values = "";
 	Total = 0;
-	foreach class'LWBaseRules'.default.Facilities(F)
+	for (Id = 0; Id < 24; Id++)
 	{
+		if (!class'LWBaseRules'.static.FacilityFor(Id, F))
+			continue;
 		class'LWBonusEffects'.static.AdjustFacility(F);
 		n = S.TileType.Length > 0 ? class'LWBase'.static.Count(S, F.Id) : 0;
-		if (n <= 0 || F.Upkeep <= 0)
+		if (n <= 0 || F.Upkeep < 0)
 			continue;
 		Labels $= n $ "x" @ class'LWBase'.static.FacilityName(F.Id) $ "\n";
-		Values $= class'LWStrategyRules'.static.Money(F.Upkeep * n) $ "\n";
+		Values $= class'LWStrategyRules'.static.Money(-F.Upkeep * n) $ "\n";
 		Total += F.Upkeep * n;
 	}
 	Section(3, Word(Facilities, "Facility Maintenance"), Total, Labels, Values);
