@@ -580,6 +580,12 @@ function Handle(string Line, out array<string> Out)
 		// uvadjust <display tag> [x y]: the display material's UVAdjust read, or set (a test aid: the 3D panels' mouse mapping).
 		Out.AddItem(UVAdjust(Args.Length > 1 ? name(Args[1]) : '', Args.Length > 3, Args.Length > 3 ? float(Args[2]) : 1.0, Args.Length > 3 ? float(Args[3]) : 1.0));
 		return;
+	case "probe":
+		// probe <x> <y> [n]: what is drawn under that point of the screen (fractions of its width and height, 0.5 0.5 the
+		// centre): the pieces whose bounds the line of sight passes through, nearest first (n, default 8), each with its
+		// actor's class, mesh and first materials (and their parents). No collision needed: puddles and decals have none.
+		Probe(Out, Args.Length > 2 ? float(Args[1]) : 0.5, Args.Length > 2 ? float(Args[2]) : 0.5, Args.Length > 3 ? int(Args[3]) : 8);
+		return;
 	case "click3d":
 		// A click on what lies under the mouse in the 3D movie (XCOM 2's Steam controller confirm; a test aid).
 		Pres().ClickPathUnderMouse3D(true);
@@ -1849,6 +1855,82 @@ function EnvLights(out array<string> Out, string Mode)
 			V.bEnabled = Mode == "on";
 		Out.AddItem(PathName(V) @ "post-process volume priority" @ V.Priority @ "on" @ V.bEnabled @ "colorize" @ V.Settings.Scene_Colorize);
 	}
+}
+
+/** The probe aid: the line of sight through a point of the screen, and the static meshes' bounds it passes through. */
+function Probe(out array<string> Out, float SX, float SY, int Most)
+{
+	local LocalPlayer LP;
+	local vector2D At;
+	local vector Origin, Dir, Lo, Hi;
+	local Actor A;
+	local StaticMeshComponent C;
+	local array<float> Dists;
+	local array<string> Lines;
+	local float TNear, TFar, T1, T2, Tmp;
+	local int k, i, Axis;
+	local string Line;
+	local MaterialInterface M;
+
+	LP = LocalPlayer(GetALocalPlayerController().Player);
+	if (LP == none)
+	{
+		Out.AddItem("ERR no local player");
+		return;
+	}
+	At.X = SX;
+	At.Y = SY;
+	LP.DeProject(At, Origin, Dir);
+	foreach AllActors(class'Actor', A)
+	{
+		if (A.bHidden)
+			continue;
+		foreach A.AllOwnedComponents(class'StaticMeshComponent', C)
+		{
+			if (C.StaticMesh == none || C.HiddenGame || !C.bAttached)
+				continue;
+			// (The line against the bounds' box, slab by slab.)
+			Lo = C.Bounds.Origin - C.Bounds.BoxExtent;
+			Hi = C.Bounds.Origin + C.Bounds.BoxExtent;
+			TNear = 0.0;
+			TFar = 1000000.0;
+			for (Axis = 0; Axis < 3 && TNear <= TFar; Axis++)
+			{
+				if (Abs(Axis == 0 ? Dir.X : Axis == 1 ? Dir.Y : Dir.Z) < 0.000001)
+				{
+					Tmp = Axis == 0 ? Origin.X : Axis == 1 ? Origin.Y : Origin.Z;
+					if (Tmp < (Axis == 0 ? Lo.X : Axis == 1 ? Lo.Y : Lo.Z) || Tmp > (Axis == 0 ? Hi.X : Axis == 1 ? Hi.Y : Hi.Z))
+						TNear = TFar + 1;
+					continue;
+				}
+				T1 = ((Axis == 0 ? Lo.X : Axis == 1 ? Lo.Y : Lo.Z) - (Axis == 0 ? Origin.X : Axis == 1 ? Origin.Y : Origin.Z)) / (Axis == 0 ? Dir.X : Axis == 1 ? Dir.Y : Dir.Z);
+				T2 = ((Axis == 0 ? Hi.X : Axis == 1 ? Hi.Y : Hi.Z) - (Axis == 0 ? Origin.X : Axis == 1 ? Origin.Y : Origin.Z)) / (Axis == 0 ? Dir.X : Axis == 1 ? Dir.Y : Dir.Z);
+				if (T1 > T2)
+				{
+					Tmp = T1; T1 = T2; T2 = Tmp;
+				}
+				TNear = FMax(TNear, T1);
+				TFar = FMin(TFar, T2);
+			}
+			if (TNear > TFar)
+				continue;
+			Line = int(TNear) @ A.Class.Name @ PathName(C.StaticMesh);
+			for (k = 0; k < Min(2, C.GetNumElements()); k++)
+			{
+				M = C.GetMaterial(k);
+				Line @= "[" $ k $ "]" $ PathName(M);
+				if (MaterialInstance(M) != none && MaterialInstance(M).Parent != none)
+					Line @= "<" $ PathName(MaterialInstance(M).Parent);
+			}
+			// (Kept sorted by distance.)
+			for (i = 0; i < Dists.Length && Dists[i] <= TNear; i++);
+			Dists.InsertItem(i, TNear);
+			Lines.InsertItem(i, Line);
+		}
+	}
+	Out.AddItem("probe" @ SX @ SY $ ":" @ Lines.Length @ "pieces on the line of sight, from" @ Origin);
+	for (i = 0; i < Min(Most, Lines.Length); i++)
+		Out.AddItem(Lines[i]);
 }
 
 function string Look(array<string> Args)

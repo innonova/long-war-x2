@@ -152,8 +152,12 @@ const GLASS_MATERIAL = /Glass|Window/i
  *  reflections and refraction and no diffuse map: a dark translucent film (XCOM 2's Translucent_SD, black at some
  *  opacity), wet ground rather than water. The plain grey stand-in drew a night map's runoff as glowing lavender slabs
  *  under the moon (aek 2026-11-25, URB_HighwayConstruction_EWI). Before the skipped names: a puddle is water. */
-const WATER_MATERIAL = /(^|\.)QX_Water\.|(^|\.)X_Water\./
-const WATER = { parent: 'Materials.Approved.Translucent_SD', diffuse: 'EngineResources.Black', opacity: Number(process.env.LWX2_WATER_OPACITY ?? 0.35), specular: 1 }
+const WATER_MATERIAL = /(^|\.)Q?X_Water\./
+/** (Rain runoff is water whatever texture the converter found for it: a puddle's ripple noise drew as an opaque speckled
+ *  disc. Elsewhere in X_Water a diffuse is a river's or marsh's bed, kept.) Its specular low: at 1 the moon's highlight
+ *  turned the puddles into bright blue blotches. */
+const RUNOFF_MATERIAL = /(^|\.)Q?X_Water\.Rain_Runoff\./
+const WATER = { parent: 'Materials.Approved.Translucent_SD', diffuse: 'EngineResources.Black', opacity: Number(process.env.LWX2_WATER_OPACITY ?? 0.35), specular: Number(process.env.LWX2_WATER_SPECULAR ?? 0.15) }
 /** Glass: a translucent pane (XCOM 2's Translucent_SD, white at some opacity), or cut out entirely (the masked parent with a
  *  black mask: its opacity is the mask's green; the window a see-through frame). */
 const GLASS = { translucent: process.env.LWX2_GLASS !== 'cut', parent: 'Materials.Approved.Translucent_SD', diffuse: 'EngineResources.WhiteSquareTexture', mask: 'EngineResources.Black', opacity: Number(process.env.LWX2_GLASS_OPACITY ?? 0.2), specular: 0.5 }
@@ -317,7 +321,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
     if (mics.has(key)) return mics.get(key)!
     const look = map.looks.get(path)
     let ref = 0
-    if (look && !look.diffuse && WATER_MATERIAL.test(path)) {
+    if (look && ((!look.diffuse && WATER_MATERIAL.test(path)) || RUNOFF_MATERIAL.test(path))) {
       // EW's water: a dark translucent film.
       const p = parse(pkg.data(sampleMIC), 4)
       const name = (n: string) => bin((x) => { const r = objName(n); x.i32(r.index).i32(r.number) })
@@ -420,7 +424,7 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const night = !!lm && (lm.everywhere || lm.nightMaps.includes(map.name))
   const lightmapMIC = (path: string, l: PieceLightmap): number => {
     const look = map.looks.get(path)
-    if (!lm || l.uv !== 1 || !look || look.kind !== 'Prop' || !look.diffuse || GLASS_MATERIAL.test(path)) return 0
+    if (!lm || l.uv !== 1 || !look || look.kind !== 'Prop' || !look.diffuse || GLASS_MATERIAL.test(path) || RUNOFF_MATERIAL.test(path)) return 0
     const p = parse(pkg.data(sampleMIC), 4)
     const name = (n: string) => bin((x) => { const r = objName(n); x.i32(r.index).i32(r.number) })
     const param = (n: string, value: T) => serialize({ head: new Uint8Array(0), tags: [{ name: 'ParameterName', type: 'NameProperty', arrayIndex: 0, value: name(n) }, value], tail: new Uint8Array(0) })

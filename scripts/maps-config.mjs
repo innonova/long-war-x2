@@ -67,6 +67,8 @@ console.log(
     'MissionEmitters=true',
     "; EW's emitters left out (a part of the template's path): the Repair Bay's freezer mist, which EW's view does not show.",
     '+SkipEmitters="Freezer_Mist"',
+    '; And the alien webbing over abductees: EW tints it per placement (black, at half brightness), which our particle stand-in\n; cannot take, so it drew as white spiky shapes (aek 2026-11-25).',
+    '+SkipEmitters="Fogged_Body_Webbing"',
     "; EW's emitters drawn additive whatever their material says: the globe's projection cones and dots.",
     '+AdditiveEmitters="P_Projection_Cone"',
     '+AdditiveEmitters="P_Holo_Dots"',
