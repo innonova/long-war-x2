@@ -52,6 +52,26 @@ var int NewsTickerFontSize;
 var ScriptedTexture PanicEarth;
 
 /** EW's wall, live, under the hub (bWall): once, while the base is in view; where 3D screens are on. */
+/** The wall's panels shown again as the Situation Room is entered (EW's room shows its wall on entering it): from the
+ *  campaign's start the wall stayed black in the room's view until something showed its panels again (2026-11-25, the
+ *  navigation map against EW; the cause of their hiding not found yet, logged here). */
+static function ShowWall(XComHQPresentationLayer HQPres)
+{
+	local UILWEWSituationRoom W;
+	local LWX2UIDisplay D;
+	local int Hidden;
+
+	W = HQPres != none ? UILWEWSituationRoom(HQPres.ScreenStack.GetScreen(class'UILWEWSituationRoom')) : none;
+	if (W == none || !W.bWall || !W.bIsInited)
+		return;
+	foreach class'LWX2EWBase'.static.Get(W).Displays(D)
+		if (D != none && D.Tag == W.EWDisplay && D.StaticMeshComponent.HiddenGame)
+			Hidden++;
+	if (Hidden > 0)
+		`log("LongWarX2: Situation Room: the wall's" @ Hidden @ "panels were hidden; shown again", , 'LongWarX2');
+	W.ShowOnPanel();
+}
+
 static function OpenWall(XComHQPresentationLayer HQPres)
 {
 	local UILWEWSituationRoom EWScreen;

@@ -103,6 +103,9 @@ struct LWBaseJob
 	var int HoursLeft;
 };
 
+/** Long War's campaigns begin on March 1st, 2016 (the person's stock Long War campaign, Game 56: "March 1 2016" just after
+ *  its first mission; EW's own begin in 2015). */
+const LW_START_YEAR = 2016;
 var array<LWCountry> Countries;
 /** XCOM's home country (an index of Countries) and the starting bonus chosen with it (LWBonuses' Choice), from Long War's
  * start screen (UILWStartSelect); a campaign begun before it was offered: the United States and none. */
@@ -449,16 +452,16 @@ function string DateText()
 {
 	local TDateTime T;
 
-	class'X2StrategyGameRulesetDataStructures'.static.SetTime(T, 0, 0, 0, 3, 1, 2015);
+	class'X2StrategyGameRulesetDataStructures'.static.SetTime(T, 0, 0, 0, 3, 1, class'XComGameState_LWStrategy'.const.LW_START_YEAR);
 	class'X2StrategyGameRulesetDataStructures'.static.AddHours(T, Hours);
 	return class'X2StrategyGameRulesetDataStructures'.static.GetDateString(T) @ (HourOfDay() < 10 ? "0" : "") $ HourOfDay() $ ":00";
 }
 
 /** An XCOM 2 date as Long War's calendar has it: XCOM 2's clock runs with Long War's hours (Run) from its own start
- *  (START_YEAR, 2035), Long War's from 2015 on the same day. */
+ *  (START_YEAR, 2035), Long War's from LW_START_YEAR on the same day. */
 static function TDateTime LongWarDate(TDateTime T)
 {
-	T.m_iYear += 2015 - class'X2StrategyGameRulesetDataStructures'.default.START_YEAR;
+	T.m_iYear += LW_START_YEAR - class'X2StrategyGameRulesetDataStructures'.default.START_YEAR;
 	return T;
 }
 

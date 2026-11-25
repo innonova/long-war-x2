@@ -101,7 +101,7 @@ static function string MonthText(XComGameState_LWStrategy S)
 {
 	local TDateTime T;
 
-	class'X2StrategyGameRulesetDataStructures'.static.SetTime(T, 0, 0, 0, 3, 1, 2015);
+	class'X2StrategyGameRulesetDataStructures'.static.SetTime(T, 0, 0, 0, 3, 1, class'XComGameState_LWStrategy'.const.LW_START_YEAR);
 	class'X2StrategyGameRulesetDataStructures'.static.AddHours(T, Max(0, S.ReportHours - 15 * 24));
 	return class'X2StrategyGameRulesetDataStructures'.static.GetMonthString(class'X2StrategyGameRulesetDataStructures'.static.GetMonth(T)) $ ","
 		@ class'X2StrategyGameRulesetDataStructures'.static.GetYear(T);

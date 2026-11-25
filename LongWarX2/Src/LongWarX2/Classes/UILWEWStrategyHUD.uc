@@ -627,7 +627,7 @@ function SetClock(XComGameState_LWStrategy S)
 	local ASValue V;
 	local int Hour;
 
-	class'X2StrategyGameRulesetDataStructures'.static.SetTime(T, 0, 0, 0, 3, 1, 2015);
+	class'X2StrategyGameRulesetDataStructures'.static.SetTime(T, 0, 0, 0, 3, 1, class'XComGameState_LWStrategy'.const.LW_START_YEAR);
 	class'X2StrategyGameRulesetDataStructures'.static.AddHours(T, S.Hours);
 	Hour = class'X2StrategyGameRulesetDataStructures'.static.GetHour(T);
 	V.Type = AS_String;

@@ -194,7 +194,6 @@ function SelectOption(int k)
 function ShowAttention()
 {
 	local XComGameState_LWStrategy S;
-	local array<ASValue> Params;
 	local int i, Bits;
 
 	S = class'XComGameState_LWStrategy'.static.Get();
@@ -218,13 +217,21 @@ function ShowAttention()
 	MC.QueueString("");
 	MC.QueueBoolean(false);
 	MC.EndOp();
-	// (In a room: its tab lit and the others dimmed again, as entering it left them.)
+	// (In a room: its tab lit and the others dimmed again, as entering it left them; a moment later, once the options are
+	// made again.)
 	if (Room >= 0 && bIsInited)
-	{
-		Params.AddItem(Str(string(Room)));
-		CallNow("theMenu.facilityMenu.setFocus", Params);
-		CallNow("theMenu.facilityMenu.DimAllUnselectedMenuOptions");
-	}
+		SetTimer(0.15, false, nameof(RefocusRoom));
+}
+
+function RefocusRoom()
+{
+	local array<ASValue> Params;
+
+	if (Room < 0)
+		return;
+	Params.AddItem(Str(string(Room)));
+	CallNow("theMenu.facilityMenu.setFocus", Params);
+	CallNow("theMenu.facilityMenu.DimAllUnselectedMenuOptions");
 }
 
 simulated function OnInit()
@@ -364,6 +371,8 @@ function EnterRoom(int i)
 	`log("LongWarX2: Long War hub: room" @ RoomName(i), , 'LongWarX2');
 	Room = i;
 	class'XComGameState_LWStrategy'.static.AttentionSeen(1 << i);
+	if (i == 4)
+		class'UILWEWSituationRoom'.static.ShowWall(XComHQPresentationLayer(Movie.Pres));
 	ShowObjectives(Room == 4);
 	Params.AddItem(Str(string(i)));
 	CallNow("theMenu.facilityMenu.setFocus", Params);
