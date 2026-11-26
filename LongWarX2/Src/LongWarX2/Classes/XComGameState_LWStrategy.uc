@@ -537,6 +537,8 @@ function SyncResearchIn(XComGameState NewGameState)
 	XComHQ.BonusScienceScore = Target - Base;
 	// The techs' time cuts, which the bonuses change as satellites come and go.
 	TechTimesIn(NewGameState);
+	// The items ever had that research asks for (Long War's EverHad).
+	class'X2Item_LWArtifacts'.static.GrantEverHad(NewGameState);
 	// No XCOM 2 inspirations or breakthroughs (Long War has neither): their timers never run out, and
 	// one already given is taken back.
 	class'X2StrategyGameRulesetDataStructures'.static.SetTime(XComHQ.InspiredTechTimer, 0, 0, 0, 1, 1, 9999);

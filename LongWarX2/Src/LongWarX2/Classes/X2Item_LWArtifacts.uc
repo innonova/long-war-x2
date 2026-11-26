@@ -28,7 +28,7 @@ static function array<X2DataTemplate> CreateTemplates()
 {
 	local array<X2DataTemplate> Templates;
 	local X2ItemTemplate Template;
-	local array<name> All;
+	local array<name> All, Made;
 	local name A;
 	local int i, j;
 
@@ -82,7 +82,50 @@ static function array<X2DataTemplate> CreateTemplates()
 		Template.CanBeBuilt = false;
 		Templates.AddItem(Template);
 	}
+	// An item ever held that research asks for (Long War's EverHad: XGFacility_Labs lists a tech once XCOM has ever had its
+	// item, HasEverHadItem): a marker research asks for, not shown (EverHadMarker).
+	for (i = 0; i < class'LWResearchRules'.default.Techs.Length; i++)
+		if (class'LWResearchRules'.default.Techs[i].EverHad != '' && Made.Find(class'LWResearchRules'.default.Techs[i].EverHad) == INDEX_NONE)
+		{
+			Made.AddItem(class'LWResearchRules'.default.Techs[i].EverHad);
+			`CREATE_X2TEMPLATE(class'X2ItemTemplate', Template, EverHadMarker(class'LWResearchRules'.default.Techs[i].EverHad));
+			Template.ItemCat = 'resource';
+			Template.HideInInventory = true;
+			Template.CanBeBuilt = false;
+			Templates.AddItem(Template);
+		}
 	return Templates;
+}
+
+/** The marker for an item ever held (research's EverHad). */
+static function name EverHadMarker(name Artifact)
+{
+	return name("LWEverHad_" $ Artifact);
+}
+
+/**
+ * The markers given for every item research asks to have ever had that XCOM has ever had (XComHQ's
+ * EverAcquiredInventoryTypes, or held now); once given they stay, as Long War's record does.
+ */
+static function GrantEverHad(XComGameState NewGameState)
+{
+	local XComGameState_HeadquartersXCom XComHQ;
+	local array<name> Done;
+	local name Item;
+	local int i;
+
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+	for (i = 0; i < class'LWResearchRules'.default.Techs.Length; i++)
+	{
+		Item = class'LWResearchRules'.default.Techs[i].EverHad;
+		if (Item == '' || Done.Find(Item) != INDEX_NONE)
+			continue;
+		Done.AddItem(Item);
+		if (XComHQ.GetItemByName(EverHadMarker(Item)) != none)
+			continue;
+		if (XComHQ.EverAcquiredInventoryTypes.Find(ItemFor(Item)) != INDEX_NONE || XComHQ.GetItemByName(ItemFor(Item)) != none)
+			GiveItem(NewGameState, EverHadMarker(Item), 1);
+	}
 }
 
 /** An LWItem_ template name's artifact added (others are the mod's weapons and armours, or XCOM 2's). */

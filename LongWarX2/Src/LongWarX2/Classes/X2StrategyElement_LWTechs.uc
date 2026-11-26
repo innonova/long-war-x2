@@ -53,8 +53,11 @@ static function X2TechTemplate TechTemplate(LWResearchRules.LWTechDef T)
 	Template.SortingTier = 1;
 	for (i = 0; i < T.Requires.Length; i++)
 		Base.RequiredTechs.AddItem(class'LWResearchRules'.static.TemplateForId(T.Requires[i]));
-	if (T.EverHad != '' && T.Items <= 0)
-		Base.RequiredItems.AddItem(class'X2Item_LWArtifacts'.static.ItemFor(T.EverHad));
+	// (Listed once XCOM has ever had the item, as Long War lists it (XGFacility_Labs: HasEverHadItem), whether or not the
+	// research then costs some of it: a marker kept from the first one held, X2Item_LWArtifacts.GrantEverHad. Alien
+	// Computers had shown before any UFO Flight Computer was recovered, the navigation map against EW, 2026-11-26.)
+	if (T.EverHad != '')
+		Base.RequiredItems.AddItem(class'X2Item_LWArtifacts'.static.EverHadMarker(T.EverHad));
 	if (T.CapturedUfo > 0)
 		Base.RequiredItems.AddItem(class'X2Item_LWArtifacts'.static.CapturedMarker(T.CapturedUfo));
 	// The "one of"s: a requirement for each tech of AnyOf with each item of InStores; the first is the
