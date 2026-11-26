@@ -248,6 +248,10 @@ function Handle(string Line, out array<string> Out)
 	case "screens":
 		Screens(Out);
 		return;
+	case "load":
+		// A test aid: an object loaded by its path (DynamicLoadObject, quietly), its class and full path, or none.
+		Out.AddItem(Args.Length > 1 ? (DynamicLoadObject(Args[1], class'Object', true) != none ? PathName(DynamicLoadObject(Args[1], class'Object', true)) @ DynamicLoadObject(Args[1], class'Object', true).Class.Name : "none") : "ERR load <path>");
+		return;
 	case "screensv":
 		// A test aid: the screen stack with each screen's visibility, its cinematic mode, XCOM 2's navigation help's.
 		foreach Pres().ScreenStack.Screens(Scr)

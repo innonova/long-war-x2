@@ -13,6 +13,9 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { Package } from '@innonova/upkit/upk'
 
 export const EW_IMAGES = 'QILibrary_StrategyImages'
+/** The carried packages opened so: EW's pictures, and its facility chooser's (ChooseFacilities, renamed as the converter
+ *  renames carried packages: the blueprints ew-map.ts copies, LWX2Blueprint_*, and their frame; converter 97). */
+const OPENED = [EW_IMAGES, 'QhooseFacilities']
 
 /** The pictures in the converted base package made loadable by their paths; returns how many were changed. */
 export function openImages(base: string): number {
@@ -21,7 +24,7 @@ export function openImages(base: string): number {
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   let n = 0
   for (const e of pkg.exports as { fullName: string; entryOffset: number }[]) {
-    if (e.fullName !== EW_IMAGES && !e.fullName.startsWith(EW_IMAGES + '.')) continue
+    if (!OPENED.some((p) => e.fullName === p || e.fullName.startsWith(p + '.'))) continue
     // (The export flags: an entry's 41st byte; EF_ForcedExport = 1.)
     const at = e.entryOffset + 40
     const flags = v.getUint32(at, true)

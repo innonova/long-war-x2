@@ -183,6 +183,7 @@ function ShowBlueprintFrame()
 	local string P;
 
 	P = ChooserImage("facility_border");
+	`log("LongWarX2: EW's facility blueprints:" @ (P != "" ? P : "not in the converted base (converter 97)"), , 'LongWarX2');
 	if (P == "")
 		return;
 	// (In the screen's own frame: EW's stage, scaled by STAGE_SCALE from its origin, StageX, StageY.)
