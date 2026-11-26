@@ -188,3 +188,9 @@ dialog, a gray market item, a craft's weapon and ship cards, the order dialog, t
 - **Order Interceptors, transfer mode, the gray market's item:** as EW's (in transfer mode EW's code labels the craft
   CANCEL TRANSFER too, UIShipList.UpdateData; its capture showed TRANSFER before its list redrew). Left: EW keeps its
   corner arrow under the order dialog.
+- **Satellites could not be built from EW's base:** EW builds them in engineering's vehicles (XGItemTree: eItem_Satellite,
+  Long War's §200, 25 days, 10 engineers); the port only through its old Geoscape and the control port. Now an engineering
+  build like any other (gear-config.mjs, item 106), delivered as a satellite ready to launch (LWEngineering.Deliver), priced
+  by Diminishing Returns as before, which counts those under construction too. Checked by clicks: ordered, 25 days run,
+  "1 AVAILABLE" on Launch Satellite. Left from the vehicles pair: EW lists SHIV first and has REBUILD SHIV, and shows
+  the SHIV's description and its "1 Barracks Capacity".

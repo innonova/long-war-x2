@@ -26,8 +26,7 @@ craft-weapon-info|HANGAR|VIEW AIRCRAFT LIST|click RAVEN-;click WEAPON INFO
 craft-ship-info|HANGAR|VIEW AIRCRAFT LIST|click RAVEN-;click SHIP INFO
 order-interceptors|HANGAR|VIEW AIRCRAFT LIST|click ORDER INTERCEPTORS
 craft-transfer|HANGAR|VIEW AIRCRAFT LIST|click TRANSFER
-build-tab-armor|ENGINEERING|BUILD/BUY ITEMS|click ARMOR
-build-tab-vehicles|ENGINEERING|BUILD/BUY ITEMS|click VEHICLES
+build-tab-craft|ENGINEERING|BUILD/BUY ITEMS|at 605 299
 soldier-list-sorted|BARRACKS|VIEW SOLDIERS|click STATUS
 EOF
 )

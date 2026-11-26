@@ -232,6 +232,10 @@ static function int SatellitesHeld()
 	if (S == none)
 		return 0;
 	n = S.SatellitesReady + S.SatellitesDue.Length;
+	// (And those engineering is building, LWEngineering: item 106.)
+	for (i = 0; i < S.Builds.Length; i++)
+		if (S.Builds[i].Item == 106)
+			n += S.Builds[i].Quantity;
 	for (i = 0; i < S.Countries.Length; i++)
 		if (S.Countries[i].bSatellite)
 			n++;

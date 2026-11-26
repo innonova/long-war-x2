@@ -128,7 +128,8 @@ out.push('[LongWarX2.X2AbilityToHitCalc_LWStun]', `StunBalance=${ini('UFO_PSI_LI
 // interceptors' weapons and the Firestorm (the hangar, features/lw-hangar.md), the Skeleton Key (lw-story.md).
 // And the interceptors' consumables (125 Defense Matrix: Dodge, 126 UFO Tracking: Boost, 127 Uplink Targeting: Aim), after
 // their Foundry project (26) and their research (XGInterceptionEngagement.IsConsumableResearched).
-const CRAFT = [117, 119, 120, 121, 122, 104, 184, 125, 126, 127]
+// And the satellite (106; EW builds it in engineering's vehicles, LWEngineering.Deliver makes it one ready to launch).
+const CRAFT = [117, 119, 120, 121, 122, 104, 184, 125, 126, 127, 106]
 // XGFacility_Engineering.GetItemProjectCost's own cases: items consumed beyond the item requirement (the
 // Firestorm UFO power sources and navigation computers, the Skeleton Key the Outsider Shard).
 const SPECIAL = { 104: [[170, 4], [168, 8]], 184: [[183, 1]] }

@@ -28,6 +28,9 @@ static function bool Unlocked(LWGearRules.LWBuildDef B)
 /** The cash an item costs: less with workshops and engineering adjacencies (XGItemTree.ScaleCost). */
 static function int CashCost(LWGearRules.LWBuildDef B)
 {
+	// (A satellite at Long War's satellite price, dearer under Diminishing Returns: XGItemTree.CalcEscalatingSatelliteCost.)
+	if (B.Template == 'LWItem_Satellite')
+		return int(class'LWStrategyRules'.static.SatelliteCash() * class'LWBase'.static.WorkshopCashScale(class'XComGameState_LWStrategy'.static.Get()));
 	return int(B.Cash * class'LWBase'.static.WorkshopCashScale(class'XComGameState_LWStrategy'.static.Get()));
 }
 
@@ -249,6 +252,9 @@ static function Deliver(XComGameState NewGameState, XComGameState_LWStrategy S, 
 	// A Firestorm is a craft: it joins the hangar at home (LWHangar).
 	if (B.Template == 'LWItem_Firestorm')
 		class'LWHangar'.static.AddCraft(NewGameState, 3, P.Quantity);
+	// A satellite is one more ready to launch from the Situation Room (as XComGameState_LWStrategy's satellites due become).
+	else if (B.Template == 'LWItem_Satellite')
+		S.SatellitesReady += P.Quantity;
 	// A SHIV joins the barracks (features/lw-shivs-mecs.md).
 	else if (class'LWSHIVs'.static.BodyForItem(P.Item, Body))
 		for (i = 0; i < P.Quantity; i++)
