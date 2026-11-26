@@ -1099,6 +1099,11 @@ export function makeShipLoadoutWords({ strategyLoc, loc }) {
     ...weapons.map((w, i) => [`WeaponText[${i}]`, one(`ShipWeaponFlavorTxt[eShipWeapon_${w}]`)]),
     ...[[1, 'Interceptor'], [3, 'Firestorm']].flatMap(([i, t]) => [[`CraftName[${i}]`, one(`ShipTypeNames[eShip_${t}]`)], [`CraftText[${i}]`, one(`ShipTypeFlavorTxt[eShip_${t}]`)]]),
   ].filter(([, v]) => v).map(([k, v]) => `${k}=${v}`)
+  // (The loadout's description of each craft weapon, as EW's: the item's ItemTypeSummary by its number,
+  // UILWEWShipSummary.WeaponItemNumber: weapon 1 the cannon (117), 2 the Stingray (116), 3 on 118 onwards.)
+  const itemNumber = (w) => (w === 2 ? 116 : w === 1 ? 117 : 115 + w)
+  const summaries = weapons.map((_, i) => [`WeaponSummary[${i}]`, strategyLoc.replace(/\r/g, '').match(new RegExp(`^ItemTypeSummary\\[${itemNumber(i)}\\]=(.*)$`, 'm'))?.[1]?.trim() ?? '']).filter(([, v], i) => i > 0 && v)
+  card.push(...summaries.map(([k, v]) => `${k}=${v}`))
   const cardText = ['[UILWEWItemCard]', ...card, ''].join('\r\n')
   const text0 = copied.text.includes('[UILWEWShipLoadout]') ? copied.text.replace('[UILWEWShipLoadout]\r\n', `[UILWEWShipLoadout]\r\n${lines.map((l) => l + '\r\n').join('')}`) : ['[UILWEWShipLoadout]', ...lines, ''].join('\r\n')
   return { text: text0 + '\r\n' + cardText, named: copied.named + lines.length + card.length }

@@ -12,6 +12,8 @@ var localized string m_strEffectiveRangeLabel, m_strBaseDamageLabel, m_strBaseCr
 /** Craft weapons' and craft types' texts (XGItemTree.ShipWeaponFlavorTxt by EShipWeapon, ShipTypeFlavorTxt by EShipType)
  *  and the craft types' names. */
 var localized string WeaponText[8], CraftText[4], CraftName[4];
+/** EW's description of each craft weapon in the loadout (ItemTypeSummary of its item), by Long War's weapon number. */
+var localized string WeaponSummary[8];
 
 /** EW's card type (3 a craft weapon, 8 a craft) and what it shows (Long War's craft weapon number, or its craft type). */
 var int CardType, What;

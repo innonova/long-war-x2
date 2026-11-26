@@ -68,7 +68,8 @@ simulated function OnInit()
 		MC.QueueBoolean(w == AirWar.Jets[Jet].Weapon);
 		MC.EndOp();
 	}
-	Select(Max(0, Weapons.Find(AirWar.Jets[Jet].Weapon)));
+	// (The first selected, as EW's UIShipLoadout opens; the craft's own weapon is marked in the list.)
+	Select(0);
 }
 
 /** A weapon selected (UIShipLoadout.RealizeSelected). */
@@ -76,7 +77,7 @@ function Select(int Index)
 {
 	local LWAirWar.LWWeaponDef W;
 	local X2ItemTemplate Template;
-	local string Rating;
+	local string Rating, Desc;
 
 	if (Weapons.Length == 0)
 		return;
@@ -100,7 +101,11 @@ function Select(int Index)
 	MC.QueueString(class'LWX2Pictures'.static.Item(class'UILWEWShipSummary'.static.WeaponItemNumber(W.Id), ""));
 	MC.QueueNumber(0.9);
 	MC.EndOp();
-	MC.FunctionString("SetWeaponDescription", Template != none ? Template.GetItemBriefSummary() : "");
+	// (Its text, as EW's: the weapon item's ItemTypeSummary (UILWEWItemCard.WeaponSummary); it had shown none.)
+	Desc = (W.Id >= 0 && W.Id < 8) ? class'UILWEWItemCard'.default.WeaponSummary[W.Id] : "";
+	if (Desc == "" && Template != none)
+		Desc = Template.GetItemBriefSummary();
+	MC.FunctionString("SetWeaponDescription", Desc);
 }
 
 function Stat(int i, string Label, string Value)
