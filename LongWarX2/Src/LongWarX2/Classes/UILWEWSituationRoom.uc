@@ -370,7 +370,9 @@ function Refresh()
 		MC.BeginFunctionOp("SetCountryInfo");
 		MC.QueueNumber(i);
 		MC.QueueString(Caps(S.CountryName(k)));
-		MC.QueueString((S.Countries[k].bSatellite ? "+" : "") $ class'LWStrategyRules'.static.Money(Funding));
+		// (EW's "+" marks a country without a satellite, the funding it would bring: XGSituationRoomUI.BuildSitCountry.
+		// The movie lights the row's satellite where it is not there.)
+		MC.QueueString((S.Countries[k].bSatellite ? "" : "+") $ class'LWStrategyRules'.static.Money(Funding));
 		// The movie's panic level, 0 to 5: its bars have six frames and its colours (Colors.wrapInPanicLevelHtml) know
 		// only these; any other value leaves the name and the funding without a colour, and so unseen. Long War's panic is
 		// 0 to 100: a level each 20.
@@ -457,7 +459,8 @@ function string StaffText(int k)
 		T = "+" $ Sci @ (Sci == 1 ? Word(SatScientist, "Scientist") : Word(SatScientists, "Scientists"));
 	if (Eng > 0)
 		T $= (T != "" ? ", " : "") $ "+" $ Eng @ (Eng == 1 ? Word(SatEngineer, "Engineer") : Word(SatEngineers, "Engineers"));
-	return T;
+	// (EW's BuildBonusString ends with its "per month".)
+	return T != "" ? T @ Word(SatPerMonth, "per month") : T;
 }
 
 /**
@@ -492,7 +495,11 @@ function UpdateSatelliteHUD()
 	}
 	SatHUD.SetContinentInfo(Caps(class'LWStrategyRules'.static.ContinentName(c)), Body);
 	Why = WhyNoLaunch(S, k);
-	SatHUD.SetCountryInfo(Caps(S.CountryName(k)), class'LWStrategyRules'.static.Money(FundingOf(k, true)) @ Word(SatPerMonth, "per month") $ (Why != "" ? "\n" $ Why : ""),
+	// (In EW's colours, XGSatelliteSitRoomUI.UpdateCountry and UpdateCountryHelp: the funding green when a launch can be
+	// made, grey for a country that has left, else pale; why not in red, "HAS SATELLITE" grey.)
+	SatHUD.SetCountryInfo(Caps(S.CountryName(k)),
+		EWColoured(class'LWStrategyRules'.static.Money(FundingOf(k, true)) @ Word(SatPerMonth, "per month"), Why == "" ? 6 : (S.Countries[k].bLeft ? 1 : 5))
+		$ (Why != "" ? "\n" $ EWColoured(Why, (S.Countries[k].bSatellite && !S.Countries[k].bLeft) ? 1 : 3) : ""),
 		Clamp(S.Countries[k].Panic / 20 + 1, 1, 5));
 	SatHUD.SetSatStatus(S.Countries[k].bSatellite);
 	SatHUD.SetLaunchButton(Why == "" ? Word(SatLaunch, "LAUNCH SATELLITE") : "", Why == "");

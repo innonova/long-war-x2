@@ -218,7 +218,9 @@ function FillStats(XComGameState_Unit U)
 
 	Line = Stat(U, eStat_HP) $ "|" $ Stat(U, eStat_Mobility) $ "|" $ Stat(U, eStat_Will) $ "|" $ Stat(U, eStat_Offense) $ "|" $ Stat(U, eStat_Defense);
 	Rank = U.GetRank();
-	Line $= "|" $ "|" $ "|" $ class'LWExperience'.static.XPOf(U) $ "|" $ (Rank < 7 ? string(class'X2ExperienceConfig'.static.GetRequiredKills(Rank + 1)) : "0");
+	// (Then Long War's damage reduction from the soldier's gear, as XGSoldierUI.UpdateHeader writes it in its txtStrength:
+	// tenths, "1.5"; its txtCritShot empty.)
+	Line $= "|" $ ReductionText(U) $ "|" $ "|" $ class'LWExperience'.static.XPOf(U) $ "|" $ (Rank < 7 ? string(class'X2ExperienceConfig'.static.GetRequiredKills(Rank + 1)) : "0");
 	// (The psi experience, and what the next psi rank needs where it is shown (PsiXPShown); at the last psi rank 0;
 	// otherwise -1, none shown.)
 	Line $= "|" $ class'XComGameState_LWStrategy'.static.PsiXPOf(U);
@@ -232,6 +234,15 @@ function FillStats(XComGameState_Unit U)
 	MC.QueueString("");
 	MC.QueueString("");
 	MC.EndOp();
+}
+
+/** A soldier's damage reduction as Long War's header writes it: whole and tenths ("0.0", "1.5"). */
+static function string ReductionText(XComGameState_Unit U)
+{
+	local int Tenths;
+
+	Tenths = Round(10 * class'X2Ability_LWDamageReduction'.static.OwnReduction(U));
+	return (Tenths / 10) $ "." $ (Tenths % 10);
 }
 
 /** A stat and its gear's bonus, as Long War's header shows them ("8|+2"; no bonus, an empty one): the gear's as XCOM 2's

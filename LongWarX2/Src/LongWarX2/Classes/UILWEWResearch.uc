@@ -287,8 +287,9 @@ function Select(int Index)
 	if (Hours <= 0)
 		Info = Word(ETAInstant, "INSTANT");
 	else
-		Info = EWColoured(Days <= 5 ? Word(Progress[0], "FAST") : (Days <= 10 ? Word(Progress[1], "NORMAL") : Word(Progress[2], "SLOW")), Days <= 5 ? 2 : (Days <= 10 ? 0 : 3))
-			@ "(" $ Expand(Days == 1 ? Word(ETADay, "<XGParam:IntValue0/> day") : Word(ETADays, "<XGParam:IntValue0/> days"), Days) $ ")";
+		// (The days in the time's colour too: EW's BuildTechSummary adds them to GetProgressText's coloured text.)
+		Info = EWColoured((Days <= 5 ? Word(Progress[0], "FAST") : (Days <= 10 ? Word(Progress[1], "NORMAL") : Word(Progress[2], "SLOW")))
+			@ "(" $ Expand(Days == 1 ? Word(ETADay, "<XGParam:IntValue0/> day") : Word(ETADays, "<XGParam:IntValue0/> days"), Days) $ ")", Days <= 5 ? 2 : (Days <= 10 ? 0 : 3));
 	Req = Requirements(Tech, Why);
 	if (Req != "")
 		Info $= "\n" $ Word(CostLabel, "REQUIREMENTS:") $ Req;

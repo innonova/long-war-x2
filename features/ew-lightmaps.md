@@ -262,7 +262,10 @@ Left open, measured:
   this map's light maps are nearly black (its light is mostly the live moon) or our lit material's light-map term is
   weak; to be settled on a map whose EW view shows baked light (the Bar at night).
 - **EW's fog has no effect in XCOM 2:** density 0.01 to 0.3 on XCOM 2's height fog changed nothing on screen. EW's fog
-  there is warm (77,50,45), which is part of why EW's night reads grey-green rather than blue.
+  there is warm (77,50,45), which is part of why EW's night reads grey-green rather than blue. *Corrected 2026-11-26:*
+  that colour was read the wrong way round. A Color is B, G, R, A in memory (the lights' were read so, the fog's not):
+  the highway's inscattering is (45,50,77), a blue-grey, so the fog would not warm the night; the converter now reads
+  it as the lights'. Why XCOM 2's fog shows so little at EW's values stays open.
 - **No rain:** EW's night highway has rain streaks and splashes, which lighten and grey its view.
 - **The soldiers' flashlight pools** (XCOM 2's at night) are XCOM 2's, not EW's.
 - After these, the port's ground on the _EWI map measures 21,35,53 (saturation 0.49) against EW's 29,37,49 (0.25).

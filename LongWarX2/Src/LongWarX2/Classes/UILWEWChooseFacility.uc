@@ -9,6 +9,10 @@ var int TileX, TileY;
 var array<int> Choices;
 var array<string> Whys;
 var int Selected;
+/** EW's blueprint of the chosen facility over the screen's top, in EW's frame (XComHQHUD.DrawHUD: the frame 80% of the
+ *  screen's width and 55% of its height, 20 down; the blueprint 70% by 57.5% within it), the converter's copies
+ *  (ew-map.ts, blueprintMip: cyan on black, added over the scene as EW composites it). */
+var UIImage BlueprintFrame, Blueprint;
 
 static function Open(XComHQPresentationLayer HQPres, int AtX, int AtY)
 {
@@ -31,6 +35,7 @@ simulated function OnInit()
 	B = class'LWX2EWBase'.static.Get(self);
 	B.Show();
 	B.LookAt(name("AddonCam_R" $ TileY $ "_C" $ (TileX + 1)), 1.0);
+	ShowBlueprintFrame();
 	Fill();
 	// (EW's BACK and BEGIN CONSTRUCTION in the panel's own help bar, UIChooseFacility.UpdateButtonHelp.)
 	HelpButton("helpBarMC", false, 0, Caps(W(class'UILWEWBuildFacilities'.default.BackLabel, class'UIUtilities_Text'.default.m_strGenericBack)), "Icon_B_CIRCLE");
@@ -130,6 +135,81 @@ function Select(int i)
 	MC.QueueString(class'UILWEWBuildFacilities'.static.FacilityIcon(Choices[Selected]));
 	MC.EndOp();
 	MC.FunctionString("setFocus", string(Selected));
+	ShowBlueprint(Choices[Selected]);
+}
+
+/** The name of EW's blueprint material for a facility (XComHQHUD's ChooseFacilityMICs: M_<name>), by Long War's facility. */
+static function string BlueprintName(int Id)
+{
+	switch (Id)
+	{
+	case 7: return "Laboratory";
+	case 8: return "Workshop";
+	case 9: return "SmallRadar";
+	case 10: return "PowerGenerator";
+	case 11: return "Foundry";
+	case 12: return "OTS";
+	case 13: return "AlienContainment";
+	case 14: return "LargeRadar";
+	case 15: return "ThermalPower";
+	case 16: return "EleriumPower";
+	case 17: return "PsionicLab";
+	case 18: return "Hyperwave";
+	case 19: return "GollopChamber";
+	case 22: return "CyberneticsLab";
+	case 23: return "GeneticsLab";
+	}
+	return "";
+}
+
+/** An image of EW's facility chooser in the converted base (its ChooseFacilities group, renamed by the converter), as an
+ *  image path; "" when the base was converted before it had them. */
+static function string ChooserImage(string Name)
+{
+	local string P;
+
+	P = "QhooseFacilities.EWTextrs." $ Name;
+	if (DynamicLoadObject(P, class'Texture2D', true) == none)
+	{
+		P = "Command1." $ P;
+		if (DynamicLoadObject(P, class'Texture2D', true) == none)
+			return "";
+	}
+	return "img:///" $ P;
+}
+
+function ShowBlueprintFrame()
+{
+	local string P;
+
+	P = ChooserImage("facility_border");
+	if (P == "")
+		return;
+	// (In the screen's own frame: EW's stage, scaled by STAGE_SCALE from its origin, StageX, StageY.)
+	BlueprintFrame = Spawn(class'UIImage', self).InitImage('LWEWBlueprintFrame', P);
+	BlueprintFrame.SetPosition(1920 * 0.1 / STAGE_SCALE - StageX, 20 / STAGE_SCALE - StageY);
+	BlueprintFrame.SetSize(1920 * 0.8 / STAGE_SCALE, 1080 * 0.55 / STAGE_SCALE);
+	Blueprint = Spawn(class'UIImage', self).InitImage('LWEWBlueprint');
+	Blueprint.SetPosition(1920 * 0.15 / STAGE_SCALE - StageX, (1080 * (0.55 - 0.575) * 0.5 + 20) / STAGE_SCALE - StageY);
+	Blueprint.SetSize(1920 * 0.7 / STAGE_SCALE, 1080 * 0.575 / STAGE_SCALE);
+	// (Added over the scene: black adds nothing, as EW's AlphaComposite drew its black.)
+	Blueprint.MC.SetString("blendMode", "add");
+}
+
+function ShowBlueprint(int Id)
+{
+	local string P;
+
+	if (Blueprint == none)
+		return;
+	P = BlueprintName(Id) != "" ? ChooserImage("LWX2Blueprint_" $ BlueprintName(Id)) : "";
+	if (P == "")
+	{
+		Blueprint.Hide();
+		return;
+	}
+	Blueprint.LoadImage(P);
+	Blueprint.Show();
 }
 
 /**

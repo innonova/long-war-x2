@@ -271,3 +271,29 @@ export function screenMip(mip: Uint8Array, format: string, w: number, h: number,
   for (let b = 0; b < mip.length / block; b++) res.set(enc.subarray(8 * b, 8 * b + 8), block * b + 8)
   return res
 }
+
+/** EW's facility blueprint (features/nav-map.md: the facility chooser's hologram, XComHQHUD.ShowFacilityTexture): one
+ *  facility of EW's shared ChooseFacilities texture, its green or alpha channel (M_ChooseFacilities' GreenChannel switch)
+ *  times EW's TintColor, opaque and black where the drawing is not, for the mod to add over the screen (as EW composites
+ *  it). The source's own format kept: DXT1, or DXT5 with its alpha made opaque. */
+export function blueprintMip(mip: Uint8Array, format: string, w: number, h: number, green: boolean, tint: number[]): Uint8Array {
+  const block = format === 'PF_DXT5' ? 16 : 8
+  const blocks = mip.length / block
+  const col = new Uint8Array(blocks * 8)
+  for (let b = 0; b < blocks; b++) col.set(mip.subarray(block * b + block - 8, block * b + block), 8 * b)
+  const rgba = decodeDXT1(col, w, h)
+  const alpha = block === 16 ? decodeDXT5Alpha(mip, w, h) : undefined
+  for (let p = 0; p < w * h; p++) {
+    const k = (green ? rgba[4 * p + 1]! : alpha ? alpha[p]! : 0) / 255
+    for (let c = 0; c < 3; c++) rgba[4 * p + c] = Math.round(255 * Math.min(1, tint[c]! * k))
+    rgba[4 * p + 3] = 255
+  }
+  const enc = encodeDXT1(rgba, w, h)
+  if (block === 8) return enc
+  const out = new Uint8Array(mip.length)
+  for (let b = 0; b < blocks; b++) {
+    out.set([255, 255, 0, 0, 0, 0, 0, 0], block * b)
+    out.set(enc.subarray(8 * b, 8 * b + 8), block * b + 8)
+  }
+  return out
+}

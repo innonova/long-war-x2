@@ -37,6 +37,7 @@ function Handle(string Line, out array<string> Out)
 	local array<string> Args;
 	local XComGameState_LWStrategy S;
 	local UILWGeoscape Geo;
+	local XComNarrativeMoment Moment;
 	local string Cmd, Why;
 	local XComGameState_Unit EffUnit;
 	local int Before;
@@ -222,6 +223,23 @@ function Handle(string Line, out array<string> Out)
 		{
 			Geo.Show();
 			Out.AddItem("Geoscape shown");
+		}
+		return;
+	case "storm":
+		// A test aid: XCOM 2's weather actor at a storm level (0 none, 2 light rain, 3 light storm, … 6 hurricane), the ground
+		// wet from 2 (LWX2EWMapPieces.SetStorm, as EW's map's own level is set at the battle's start): storm <level>.
+		Out.AddItem(class'LWX2EWMapPieces'.static.SetStorm(Pres(), Args.Length > 1 ? int(Args[1]) : 2) ? "ok storm" @ (Args.Length > 1 ? Args[1] : "2") : "ERR no weather actor");
+		return;
+	case "narrative":
+		// A test aid: one of XCOM 2's headquarters narratives played as its own code plays them (HQPres.UINarrative), to see
+		// it stopped (UIScreenListener_LWX2NoHQNarrative): narrative [<path>] (XCOM 2's objective-added comm link by default).
+		Moment = XComNarrativeMoment(DynamicLoadObject(Args.Length > 1 ? Args[1] : "X2NarrativeMoments.Strategy.Avenger_Objective_Added", class'XComNarrativeMoment', true));
+		if (Moment == none || XComHQPresentationLayer(Pres()) == none)
+			Out.AddItem("ERR" @ (Moment == none ? "no such narrative" : "not at headquarters"));
+		else
+		{
+			XComHQPresentationLayer(Pres()).UINarrative(Moment);
+			Out.AddItem("ok playing" @ PathName(Moment));
 		}
 		return;
 	case "ping":

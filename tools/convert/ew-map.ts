@@ -22,7 +22,7 @@ import { Reader } from '@innonova/upkit/bytes'
 import { readTags, type Tag } from '@innonova/upkit/objects'
 import { inlineTextures } from './inline-textures.ts'
 import { addMaskTextures, addTextureCopies, maskMip } from './mask-textures.ts'
-import { scaleMip, tintMip, whiteMip, hairMip, earthWallMip, detailMip, screenMip } from './tint-textures.ts'
+import { scaleMip, tintMip, whiteMip, hairMip, earthWallMip, detailMip, screenMip, blueprintMip } from './tint-textures.ts'
 import { combineLightmapMip } from './lightmap-bake.ts'
 import { cameras as matineeCameras, matineeAxisPoses, peopleIn } from './ew-people.ts'
 
@@ -58,6 +58,8 @@ export { CONVERTER_VERSION }
 // (93: the skin warmth less yellow, measured on Shen against EW)
 // (94: EW's static lights marked Baked (their light is in EW's light maps); the plot tags them, the mod lets them light the
 // units only, not the pieces a second time: a night map's doubled moonlight, aek 2026-11-25)
+// (97: EW's weather per map (Weather=: its storm level, for XCOM 2's weather actor); its fog's colours read B, G, R as a
+// Color is kept (they were swapped); a cyan copy per facility of EW's blueprints for the facility chooser, LWX2Blueprint_*)
 // (96: no normal or distortion map as an emitter's sprite (a smoke's normal map drew as a grey square))
 // (95: nothing new in what ew-map.ts writes; raised so every map is written as a plot again: EW's water as a wet film,
 // ew-plot.ts, aek 2026-11-25)
@@ -757,7 +759,9 @@ interface EWLight {
 const lights: EWLight[] = []
 // EW's atmosphere (features/ew-lightmaps.md): its WorldInfo's height fog (XComHeightFog) and its default post-process's
 // colour grading (Scene_Colorize, _Shadows, _HighLights, _MidTones, _Desaturation), where the level sets them.
-const atmosphere: { fog?: Record<string, number | number[]>; grade: Record<string, number | number[]> } = { grade: {} }
+const atmosphere: { fog?: Record<string, number | number[]>; grade: Record<string, number | number[]>; storm?: number; rainOpacity?: number } = { grade: {} }
+/** EW's storm levels (WorldInfo.StormIntensity, XComWeatherControl's StormIntensity_t, the same in XCOM 2): rain from 2. */
+const STORMS = ['NoStorm', 'DistantGatheringStorm', 'LightRain', 'LightStorm', 'ModerateStorm', 'SevereStorm', 'Hurricane', 'Custom']
 exports.forEach((e, i) => {
   if (e.type !== 'WorldInfo' || !e.fullName.startsWith('TheWorld.PersistentLevel.')) return
   let t: Tag[] = []
@@ -780,9 +784,15 @@ exports.forEach((e, i) => {
   const value = (x: Tag): number | number[] | undefined =>
     x.type === 'FloatProperty' ? new DataView(x.value.buffer, x.value.byteOffset).getFloat32(0, true)
     : x.type === 'BoolProperty' ? (x as { boolValue?: number }).boolValue ?? 0
-    : x.type === 'StructProperty' && (x as { structName?: string }).structName === 'Color' ? [...x.value.slice(0, 4)]
+    // (A Color is B, G, R, A in memory, as the lights' are read: R, G, B, A here.)
+    : x.type === 'StructProperty' && (x as { structName?: string }).structName === 'Color' ? [x.value[2]!, x.value[1]!, x.value[0]!, x.value[3]!]
     : x.type === 'StructProperty' && x.value.length === 12 ? [0, 1, 2].map((k) => new DataView(x.value.buffer, x.value.byteOffset).getFloat32(4 * k, true))
     : undefined
+  // (Its weather: the storm level and the rain's opacity, XComWeatherControl's, which XCOM 2's own weather actor takes.)
+  const storm = t.find((x) => x.name === 'StormIntensity')
+  if (storm) atmosphere.storm = Math.max(0, STORMS.indexOf(nameAt(storm.value)))
+  const rain = t.find((x) => x.name === 'RainOpacity')
+  if (rain) atmosphere.rainOpacity = new DataView(rain.value.buffer, rain.value.byteOffset).getFloat32(0, true)
   const fog = inner('XComHeightFog')
   if (fog.length) {
     atmosphere.fog = {}
@@ -1605,6 +1615,31 @@ if (tints.length) {
     exports = meta.exports as any[]
   }
 }
+// EW's facility blueprints, a cyan copy per facility for the facility chooser (blueprintMip; converter 97): EW's
+// ChooseFacilities.Materials.M_<facility> each take one channel of a shared texture (its GreenChannel switch, the last
+// bytes of each instance: set, green; else alpha).
+const BLUEPRINTS: [string, string, boolean][] = [
+  ['Laboratory', 'channel_test', true], ['Workshop', 'Facility_1', false], ['SmallRadar', 'Facility_2', true],
+  ['PowerGenerator', 'Facility_2', false], ['Foundry', 'Facility_3', true], ['OTS', 'Facility_3', false],
+  ['AlienContainment', 'Facility_4', true], ['LargeRadar', 'Facility_4', false], ['ThermalPower', 'Facility_5', true],
+  ['EleriumPower', 'Facility_5', false], ['PsionicLab', 'Facility_6', true], ['Hyperwave', 'Facility_6', false],
+  ['GollopChamber', 'Facility_7', true], ['CyberneticsLab', 'Facility_8', true], ['GeneticsLab', 'Facility_9', true],
+]
+/** EW's blueprint colour (M_ChooseFacilities' TintColor), brightened as its composite draws it (its lines near white). */
+const BLUEPRINT_TINT = [0.136, 0.812, 0.85].map((c) => c * 2.2)
+const blueprintOf = new Map<string, boolean>()
+{
+  const copies = BLUEPRINTS.map(([f, t, g]) => ({ k: exports.findIndex((e) => e.fullName === `ChooseFacilities.Textures.${t}` && e.type === 'Texture2D'), name: `LWX2Blueprint_${f}`, g }))
+    .filter((c) => c.k >= 0)
+  if (copies.length) {
+    const made = addTextureCopies(bytes, copies.map((c) => ({ ref: c.k + 1, name: c.name })))
+    bytes = made.bytes
+    meta = new Package(bytes)
+    pkg = openPackage(bytes)
+    exports = meta.exports as any[]
+    for (const c of copies) blueprintOf.set(c.name, c.g)
+  }
+}
 const screenLooks = [...new Set([...looks.values(), ...personSlots.flat()])].filter((l): l is Look => !!l && l.kind === 'Glow' && !l.screenUV && /HQscreens|Froth|Meld_Hexes/i.test(l.diffuse))
 if (screenLooks.length) {
   const refsOf = [...new Set(screenLooks.map((l) => l.diffuse))].map((d) => ({ d, k: exports.findIndex((e) => e.fullName === d && e.type === 'Texture2D') })).filter((x) => x.k >= 0)
@@ -1836,6 +1871,7 @@ const tex = inlineTextures(bytes, exports, meta.names, dirname(src), stubAt + st
     if (tinted?.scale) return scaleMip(mip, format, tinted.tint[0]!)
     if (e.fullName.endsWith('_LWX2White') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return whiteMip(mip, format, w, h)
     if (e.fullName.endsWith('T_Earth_Holo_LWX2Wall') && (format === 'PF_DXT5' || format === 'PF_DXT1')) return earthWallMip(mip, format, w, h)
+    if (blueprintOf.has(e.fullName.split('.').pop()!) && (format === 'PF_DXT5' || format === 'PF_DXT1') && w >= 4 && h >= 4) return blueprintMip(mip, format, w, h, blueprintOf.get(e.fullName.split('.').pop()!)!, BLUEPRINT_TINT)
     const scr = screenOf.get(e.fullName)
     if (scr && (format === 'PF_DXT5' || format === 'PF_DXT1') && w >= 4 && h >= 4) {
       // (The source mip as many times larger as the region magnifies, rounded up to a power of two; the largest there is.)
@@ -1976,6 +2012,8 @@ const lines = [
     const vec = (k: string, d: number) => { const v = g[k] as number[] | undefined; return `(X=${n(v?.[0] ?? d)},Y=${n(v?.[1] ?? d)},Z=${n(v?.[2] ?? d)})` }
     return `Grade=(Colorize=${vec('Scene_Colorize', 1)},Shadows=${vec('Scene_Shadows', 0)},HighLights=${vec('Scene_HighLights', 1)},MidTones=${vec('Scene_MidTones', 1)},Desaturation=${n(typeof g.Scene_Desaturation === 'number' ? g.Scene_Desaturation : 0)})`
   })()] : []),
+  ...(atmosphere.storm ? ["; EW's weather: its storm level (XComWeatherControl.StormIntensity_t, 2 light rain and up) and its rain's opacity.",
+    `Weather=(Storm=${atmosphere.storm},RainOpacity=${n(atmosphere.rainOpacity ?? 0.5)})`] : []),
   "; EW's lights (point, spot, its sun and sky), spawned as movable lights.",
   ...lights.map(
     (l) =>

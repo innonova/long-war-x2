@@ -8,6 +8,8 @@ var config string MapPackage;
 /** EW's atmosphere (features/ew-lightmaps.md): its height fog and colour grading, as its level's WorldInfo has them. */
 var config LWX2EWMapPieces.LWX2Fog Fog;
 var config LWX2EWMapPieces.LWX2Grade Grade;
+/** EW's weather: its storm level and rain (ew-map.ts's Weather=). */
+var config LWX2EWMapPieces.LWX2Weather Weather;
 var config array<LWX2EWMapPieces.LWX2Look> Looks;
 var config array<LWX2EWMapPieces.LWX2Piece> Pieces;
 /** EW's play area (its level volume: centre and half sizes) and drop zones (its player starts). */
