@@ -194,3 +194,10 @@ dialog, a gray market item, a craft's weapon and ship cards, the order dialog, t
   by Diminishing Returns as before, which counts those under construction too. Checked by clicks: ordered, 25 days run,
   "1 AVAILABLE" on Launch Satellite. Left from the vehicles pair: EW lists SHIV first and has REBUILD SHIV, and shows
   the SHIV's description and its "1 Barracks Capacity".
+- **Choosing an item on the build screen by a click did not work:** each row's clip reports 60 high where the rows stand
+  about 22 apart, so the first row's box held the mouse over the second and every click chose the first (only the keys
+  moved the choice). The rows are now tried from the last up. Found walking the vehicles tab; the strategy-actions
+  journey now chooses the Motion Tracker and the shotgun by clicks.
+- **The vehicles tab's SHIV** now shows EW's description and "1 Barracks Capacity" (XGItemTree's ItemTypeSummary,
+  XGFacility_Engineering's m_strCostBarracks); **the Motion Tracker** its description (Long War's text lacks its closing
+  quote, which the words generator now allows; it had shown "Error! LWSmall_222 has no BriefSummary!").

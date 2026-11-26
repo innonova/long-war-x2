@@ -9,6 +9,9 @@ class UILWEWEngineering extends UILWEWScreen;
 /** EW's tabs and Long War's item categories (EItemCategory) on them. */
 /** EW's words (UIBuildItem's labels, XGEngineeringUI's cost label and tabs), written by the setup. */
 var localized string ItemLabel, BuiltLabel, CostLabel, BuildHeader, TabItems, TabArmor, TabVehicles, TabAll;
+/** A SHIV's barracks room as a cost, and the three SHIVs' descriptions (XGFacility_Engineering, XGItemTree: a SHIV is built
+ *  as a unit, with no item template to carry them). */
+var localized string CostBarracks, ShivSummary[3];
 var array<int> Tabs;
 var int Tab;
 var array<int> Items;
@@ -169,6 +172,7 @@ static function string W(string Localized, string Fallback)
 /** An item's cost as EW's build screen lists it (GetCostSummary): the money, "Nx Elerium", "Nx Alloys", "Nx <item>". */
 function string CostLines(LWGearRules.LWBuildDef B)
 {
+	local LWSHIVs.LWSHIVBody Body;
 	local string Out;
 	local int Cash;
 
@@ -186,6 +190,9 @@ function string CostLines(LWGearRules.LWBuildDef B)
 		Out $= class'UIUtilities_Text'.static.GetColoredText(class'LWEngineering'.static.ReqCount(B) $ "x" @ class'LWEngineering'.static.ItemName(B.ItemReq), class'LWEngineering'.static.Held(B.ItemReq) < class'LWEngineering'.static.ReqCount(B) ? eUIState_Bad : eUIState_Normal) $ "<br>";
 	if (B.ItemReq2 != '')
 		Out $= class'UIUtilities_Text'.static.GetColoredText(B.ItemReq2Count $ "x" @ class'LWEngineering'.static.ItemName(B.ItemReq2), class'LWEngineering'.static.Held(B.ItemReq2) < B.ItemReq2Count ? eUIState_Bad : eUIState_Normal) $ "<br>";
+	// (A SHIV takes a place in the barracks, as EW's cost lists it: "1 Barracks Capacity".)
+	if (class'LWSHIVs'.static.BodyForItem(B.Item, Body) && CostBarracks != "")
+		Out $= class'UIUtilities_Text'.static.GetColoredText(Repl(CostBarracks, "<XGParam:IntValue0/>", "1"), eUIState_Normal) $ "<br>";
 	return Out;
 }
 
@@ -253,7 +260,7 @@ function Select(int Index)
 	MC.BeginFunctionOp("UpdateInfo");
 	MC.QueueString(Caps(class'LWEngineering'.static.ItemName(B.Template)));
 	MC.QueueString(Info);
-	MC.QueueString(Template != none ? Template.GetItemBriefSummary() : "");
+	MC.QueueString(Template != none ? Template.GetItemBriefSummary() : ((Items[Selected] >= 100 && Items[Selected] <= 102) ? ShivSummary[Items[Selected] - 100] : ""));
 	MC.QueueString(class'LWX2Pictures'.static.Item(Items[Selected], Template != none ? Template.strImage : ""));
 	MC.EndOp();
 }
@@ -323,7 +330,9 @@ function int OptionUnderMouse()
 	local float MouseX, MouseY, W, H;
 	local int i;
 
-	for (i = 0; i < Items.Length; i++)
+	// (From the last up: a row's clip is 60 high where the rows stand about 22 apart, so the first row's box held the
+	// mouse over the second, and every click chose the first; the lowest row whose box holds it is the one under it.)
+	for (i = Items.Length - 1; i >= 0; i--)
 	{
 		Path = MCPath $ ".itemList.theItems." $ i;
 		W = Movie.GetVariableNumber(Path $ "._width");
@@ -344,6 +353,7 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		&& (arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0)
 	{
 		i = OptionUnderMouse();
+		`log("LongWarX2: EW build screen: click on option" @ i, , 'LongWarX2');
 		if (i >= 0)
 		{
 			Select(i);

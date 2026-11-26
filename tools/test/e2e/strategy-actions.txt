@@ -19,6 +19,11 @@ expect UILWEWHub
 click BUILD/BUY ITEMS
 expect Engineering
 see SAWED-OFF SHOTGUN
+# (A row chosen by a click: every click had chosen the first row, its clip's box covering the second's.)
+click MOTION TRACKER
+see radar pulses
+click SAWED-OFF SHOTGUN
+see truncated combat shotgun
 click MANUFACTURE
 expect Manufacturing
 # (EW's dialog, as EW's: its duration, requirements and note; the quantity on its spinner; SUBMIT ORDER; no corner arrow.)

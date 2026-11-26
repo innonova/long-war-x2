@@ -335,7 +335,8 @@ export function makeFacilityWords({ strategyLoc, facilities }) {
 
 /** Long War's small items' names (by enum or item number) for the mod's LWSmall_ templates, each under its template class. */
 export function makeSmallWords({ loc, strategyLoc, items }) {
-  const one = (text, key, k) => text.match(new RegExp(`^${key}\\[${k}\\]="(.*)"\\s*$`, 'm'))?.[1]
+  // (A closing quote may be missing: Long War's own ItemTypeSummary[222], the Motion Tracker's, has none.)
+  const one = (text, key, k) => text.match(new RegExp(`^${key}\\[${k}\\]="(.*?)"?\\s*$`, 'm'))?.[1]
   const weaponLook = ['BattleScanner', 'MimicBeacon', 'Medikit', 'RocketLauncher']
   const out = []
   let named = 0
@@ -1161,10 +1162,16 @@ export function makeMemorialWords({ strategyLoc }) {
   // (The build screen's: UIBuildItem's column labels, XGEngineeringUI's cost label and tab names, under one section.)
   const eng = strategyLoc.replace(/\r/g, '').match(/^\[XGEngineeringUI\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
   const bui = strategyLoc.replace(/\r/g, '').match(/^\[UIBuildItem\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
+  const fac = strategyLoc.replace(/\r/g, '').match(/^\[XGFacility_Engineering\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
+  const tree = strategyLoc.replace(/\r/g, '').match(/^\[XGItemTree\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
   const kv = (sec, k) => sec.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''
   const build = [['ItemLabel', kv(bui, 'm_strItemLabel')], ['BuiltLabel', kv(bui, 'm_strQuantityLabel')], ['CostLabel', kv(eng, 'm_strBuildCost')],
     ['BuildHeader', kv(eng, 'm_strHeaderBuildItems')], ['TabItems', kv(eng, 'm_strCatWeapons')], ['TabArmor', kv(eng, 'm_strCatArmor')],
-    ['TabVehicles', kv(eng, 'm_strCatVehicles')], ['TabAll', kv(eng, 'm_strCatAll')]].filter(([, v]) => v)
+    ['TabVehicles', kv(eng, 'm_strCatVehicles')], ['TabAll', kv(eng, 'm_strCatAll')],
+    // (A SHIV's description and its cost in barracks room, as EW's build screen shows them: XGItemTree's ItemTypeSummary,
+    // XGFacility_Engineering's m_strCostBarracks. A SHIV is built as a unit, with no item template to carry them.)
+    ['CostBarracks', kv(fac, 'm_strCostBarracks')],
+    ...['eItem_SHIV', 'eItem_SHIV_Alloy', 'eItem_SHIV_Hover'].map((e, k) => [`ShivSummary[${k}]`, tree.match(new RegExp(`^ItemTypeSummary\\[${e}\\]\\s*=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''])].filter(([, v]) => v)
   if (build.length) {
     copied.text += `[UILWEWEngineering]\r\n${build.map(([k, v]) => `${k}="${v}"\r\n`).join('')}\r\n`
     copied.named += build.length
