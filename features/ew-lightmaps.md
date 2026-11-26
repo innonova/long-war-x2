@@ -267,5 +267,11 @@ Left open, measured:
   the highway's inscattering is (45,50,77), a blue-grey, so the fog would not warm the night; the converter now reads
   it as the lights'. Why XCOM 2's fog shows so little at EW's values stays open.
 - **No rain:** EW's night highway has rain streaks and splashes, which lighten and grey its view.
+  *2026-11-26:* EW sets a storm level per map (its WorldInfo's StormIntensity; the highway's LightRain) for its weather
+  actor (XComWeatherControl), and XCOM 2 has the same actor in its lighting levels. The converter (97) writes the level
+  (`Weather=(Storm=2,RainOpacity=0.5)`), and the mod sets XCOM 2's weather actor to it at the battle's start and wets the
+  ground (LWX2EWMapPieces.SetStorm: the level by the console's set, the actor's enum being out of the mod's reach). Seen
+  on the highway: thin rain streaks, as faint as EW's own there (`logs/compare/night/x2-highway-rain.png`, EW's
+  `ew-highway.png`); XCOM 2's rain is lit by its sun, which is off on EW's maps. Test aid: `storm <0-7>`.
 - **The soldiers' flashlight pools** (XCOM 2's at night) are XCOM 2's, not EW's.
 - After these, the port's ground on the _EWI map measures 21,35,53 (saturation 0.49) against EW's 29,37,49 (0.25).
