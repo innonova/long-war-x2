@@ -25,6 +25,9 @@ expect SoldierSummary
 click Customize
 expect Customize
 see Character Info
+# (The armory's menu, not the character pool's: XCOM 2 took EW's summary for no armory, aek's shot 2026-11-26.)
+unseen Can Appear as VIP
+see Save to Character Pool
 lwsee pov|fov 50
 shot customize
 esc

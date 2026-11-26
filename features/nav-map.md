@@ -137,3 +137,31 @@ both games; nav-compare.mjs sets them side by side. On the person's Game 56 at 1
 - **The craft loadout** lacks the weapon's description under its numbers (EW: "Stingray Missiles are small, fast
   air-to-air missiles…"), and selects the craft's own weapon where EW selects the first; open.
 - Explained by the campaigns: names, ranks (development builds promote the starting rookies), the research in progress.
+
+## Report (2026-11-26, the next level, continued)
+
+From the pairs' pictures and EW's code (development build; built and checked on wingpu where marked):
+
+- **The craft loadout** now selects the first weapon and shows its description, as EW's (92266f5).
+- **Launch Satellite:** EW writes "+" before the funding of a country *without* a satellite (XGSituationRoomUI.BuildSitCountry:
+  `if (!HasSatelliteCoverage) "+"`); the port wrote it on the countries with one, and the movie, which lights a row's
+  satellite icon by it, lit the icons the wrong way round too. The chosen country's lines are in EW's colours
+  (XGSatelliteSitRoomUI.UpdateCountry, UpdateCountryHelp; UIUtilities.GetHTMLColoredText's states): the funding green when
+  a launch can be made, pale otherwise, grey for a country that has left; why not in red ("Build More Uplinks."), "HAS
+  SATELLITE" grey. The staff bonus ends with EW's "per month" (BuildBonusString).
+- **The research list's time** is coloured whole ("SLOW (18 days)" red), as EW adds the days to GetProgressText's
+  coloured text in BuildTechSummary; the port had coloured the word only.
+- **The soldier summary's sixth stat** is Long War's damage reduction from gear, "0.0" (XGSoldierUI.UpdateHeader: its
+  txtStrength, aModifiers[4] in tenths); the port left it empty.
+- **EW's facility blueprints** (XComHQHUD.DrawHUD): the chosen facility's blueprint across the top of the screen in EW's
+  gridded frame (the frame 80% of the screen wide and 55% high, 20 down; the blueprint 70% by 57.5%). EW keeps them two
+  to a texture (Facility_1..9, channel_test), each facility's material taking the green channel or the alpha (its
+  GreenChannel switch, the flag at the end of each instance): green the Laboratory, the Satellite Uplink, the Foundry,
+  Alien Containment, Thermal Power, the Psi Labs, the Gollop Chamber and the two labs; alpha the Workshop, the Fission
+  Generator, the OTS, the Satellite Nexus, Elerium Power and the Hyperwave Relay. The converter (97) makes a cyan copy per
+  facility (TintColor 0.14, 0.81, 0.85, brightened, black where nothing is drawn); the chooser shows the frame and adds
+  the blueprint over the scene. Unchecked in the game until the base is converted again.
+- **The hangar's jets** read pale cyan-white in the port, grey in EW, on all three hangar pairs: the craft are placed as
+  EW's people are and so take the people's lights; open.
+- `nav-deep.sh` has six more screens for the next walk: an item's manufacture dialog, a gray market item, the craft's
+  weapon and ship cards, the order and transfer dialogs.

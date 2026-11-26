@@ -24,4 +24,4 @@ LWX2_TIMEOUT=${LWX2_TIMEOUT:-600} tools/test/on.sh 'tools\test\stop-game.ps1' 'g
   'if ((Get-Item C:\Users\aekms\lwx2-sync.patch).Length -gt 0) { git apply C:\Users\aekms\lwx2-sync.patch 2>&1 }' 'tools\test\build.ps1' \
   'node tools\test\words.mjs 2>&1 | ForEach-Object { if ($_ -match "^words written") { "words: SUCCESS" } else { $_ } }' \
   ${LWX2_EWMAP:+'$f = "C:\Program Files (x86)\Steam\steamapps\common\XCOM 2\XCom2-WarOfTheChosen\XComGame\Mods\LongWarX2\Config\XComLWAirWar.ini"; (Get-Content $f) -replace "PlaceEWMapWhole=false","PlaceEWMapWhole=true" | Set-Content $f; "EW map: SUCCESS placed whole"'} 2>&1 |
-  tr -d '\r' | grep -E 'error|: Error|SUCCESS|FAIL|Crash detected' | grep -v 'Unknown property in defaults' | head -20
+  tr -d '\r' | grep -E 'error|Error|SUCCESS|FAIL|Fail|Crash detected' | grep -v 'Unknown property in defaults' | head -20

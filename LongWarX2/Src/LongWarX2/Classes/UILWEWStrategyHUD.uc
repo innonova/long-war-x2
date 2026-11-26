@@ -224,8 +224,9 @@ function bool bNavHelpShown()
 	local UIScreen Top;
 
 	Top = Movie.Pres.ScreenStack.GetCurrentScreen();
-	// (XCOM 2's squad select too: its own back button sat on EW's arrow, beside its BUILD ITEMS; the click tests' shot.)
-	return Top != none && UILWEWScreen(Top) == none && UILWEWHub(Top) == none && (UIArmory(Top) != none || UISquadSelect(Top) != none);
+	// (XCOM 2's squad select too: its own back button sat on EW's arrow, beside its BUILD ITEMS; the click tests' shot.
+	// And its Customize, the same: two back arrows on one another.)
+	return Top != none && UILWEWScreen(Top) == none && UILWEWHub(Top) == none && (UIArmory(Top) != none || UISquadSelect(Top) != none || UICustomize(Top) != none);
 }
 
 static function string FragmentsName()

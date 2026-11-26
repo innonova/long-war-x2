@@ -667,3 +667,23 @@ out" (logs/customize.png).
   and Customize show the same parts (four soldiers compared; `parts` aid), and the crew manager's underlay flag is off.
   Not the port's. Still not traced: a
   portrait of XCOM 2's Central appeared top right while customizing (an XCOM 2 narrative line, not yet traced).
+
+## Report (2026-11-26, Customize and XCOM 2's voices at the base)
+
+- **Customize showed XCOM 2's character pool menu** (Change Soldier Type, Can Appear as VIP / Dark VIP, Created at):
+  XCOM 2 takes it for its armory only with its own armory screen on the stack (UICustomize.InitScreen: bInArmory), and
+  EW's soldier summary replaces that screen. A listener (UIScreenListener_LWX2CustomizeInArmory) tells it it is in the
+  armory and rebuilds its menu: Character Info, Head, Body, Weapon, Save to Character Pool. The soldier-and-rooms journey
+  checks for "Save to Character Pool" and against "Can Appear as VIP".
+- **Two back arrows over Customize**, EW's and XCOM 2's: EW's corner arrow is hidden over it, as over the armory and squad
+  select (UILWEWStrategyHUD.bNavHelpShown).
+- **Central over Customize** (aek, 2026-11-25) reproduced: XCOM 2's base ambient lines (S_Ambient_Burger_Contraband_Central,
+  Avenger_Ambient_Quick10/11_Central) start on the timers of its base's ambient voice manager (XGBaseAmbientVOMgr: Central's,
+  Shen's and Tygan's musings, the radio, the facilities' callouts), about 20 s into a screen. Those timers are now cleared
+  while EW's base runs (LWX2EWBase.SilenceNarrative, each quarter second); any other conversation XCOM 2's narrative
+  manager starts at headquarters is stopped and logged (UIScreenListener_LWX2NoHQNarrative.StopAll). Checked: a minute in
+  Customize on a new campaign, no line, nothing to stop.
+- **Open:** straight from EW's soldier summary, Customize's own navigation (its back button and the previous/next soldier
+  buttons, on XCOM 2's HUD's helpBarMC) is not drawn, though the help and every clip above it report visible; reached
+  after XCOM 2's loadout it is drawn. Esc and the right click still leave it. EW's HUD has a help bar of the same name; the
+  lead is EW's layout classes taking XCOM 2's help bar over on that path.

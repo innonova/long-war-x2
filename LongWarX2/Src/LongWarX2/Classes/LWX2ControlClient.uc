@@ -248,6 +248,25 @@ function Handle(string Line, out array<string> Out)
 	case "screens":
 		Screens(Out);
 		return;
+	case "screensv":
+		// A test aid: the screen stack with each screen's visibility, its cinematic mode, XCOM 2's navigation help's.
+		foreach Pres().ScreenStack.Screens(Scr)
+			Out.AddItem(string(Scr.Class.Name) @ (Scr.bIsVisible ? "shown" : "hidden"));
+		Out.AddItem("cinematic mode" @ Pres().ScreenStack.bCinematicMode);
+		if (XComHQPresentationLayer(Pres()) != none && XComHQPresentationLayer(Pres()).m_kAvengerHUD != none)
+		{
+			Out.AddItem("nav help" @ (XComHQPresentationLayer(Pres()).m_kAvengerHUD.NavHelp.bIsVisible ? "shown" : "hidden"));
+			// (And as Flash has it: the help's clip and each clip above it, _visible and _alpha.)
+			Cmd = string(XComHQPresentationLayer(Pres()).m_kAvengerHUD.NavHelp.MCPath);
+			while (InStr(Cmd, ".") != INDEX_NONE)
+			{
+				Out.AddItem(Cmd @ "visible" @ XComHQPresentationLayer(Pres()).m_kAvengerHUD.Movie.GetVariableBool(Cmd $ "._visible")
+					@ "alpha" @ XComHQPresentationLayer(Pres()).m_kAvengerHUD.Movie.GetVariableNumber(Cmd $ "._alpha")
+					@ "y" @ XComHQPresentationLayer(Pres()).m_kAvengerHUD.Movie.GetVariableNumber(Cmd $ "._y"));
+				Cmd = Left(Cmd, InStr(Cmd, ".", true));
+			}
+		}
+		return;
 	case "exec":
 		Out.AddItem(GetALocalPlayerController().ConsoleCommand(Mid(Line, Len(Args[0]) + 1), true));
 		return;

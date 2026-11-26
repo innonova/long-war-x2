@@ -208,6 +208,31 @@ var LevelStreaming LightingLevel;
 var array<name> HiddenLevels;
 
 /** The base of this world (made the first time). */
+event PostBeginPlay()
+{
+	super.PostBeginPlay();
+	SetTimer(0.25, true, nameof(SilenceNarrative));
+}
+
+/** XCOM 2's story at headquarters kept silent (UIScreenListener_LWX2NoHQNarrative.StopAll): its objectives start their
+ *  conversations on game events, which no screen of ours sees. */
+function SilenceNarrative()
+{
+	local XComPresentationLayerBase Pres;
+	local XGGeoscape Geo;
+
+	// (At its source first: XCOM 2's base's ambient lines (Central's, Tygan's and Shen's musings, the radio, the
+	// facilities' callouts: XGBaseAmbientVOMgr) run on that actor's timers, cleared. Its conversations stopped midway
+	// had left XCOM 2's navigation help undrawn under Customize.)
+	Geo = `GAME != none ? `GAME.GetGeoscape() : none;
+	if (Geo != none && Geo.m_kBase != none && Geo.m_kBase.m_kAmbientVOMgr != none)
+		Geo.m_kBase.m_kAmbientVOMgr.ClearAllTimers();
+
+	Pres = XComPlayerController(GetALocalPlayerController()) != none ? XComPlayerController(GetALocalPlayerController()).Pres : none;
+	if (Pres != none)
+		class'UIScreenListener_LWX2NoHQNarrative'.static.StopAll(Pres);
+}
+
 static function LWX2EWBase Get(Actor Finder)
 {
 	local LWX2EWBase B;
