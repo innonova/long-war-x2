@@ -1,5 +1,5 @@
 # The Motion Tracker in a mission (features/lw-gear.md; a mission at XCOM's first turn with the item on the first soldier:
-# tools/test/to-mission.sh 'give-to 0 LWSmall_222'): its radar turned on (the ability used through the control port, the
+# tools/test/to-mission.sh 'give-to 0 LWSmall_222' and the next two (one may be left out of the squad, wounded)): its radar turned on (the ability used through the control port, the
 # holder found by its ability), then the holder selected by Tab as a player does, EW's radar shown on the HUD with the
 # squad on it; a free action: the holder keeps both action points.
 lwsee abilities|LW_MotionTracker[LWSmall_222 3]
