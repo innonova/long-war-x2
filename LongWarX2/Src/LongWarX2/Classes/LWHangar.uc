@@ -195,10 +195,41 @@ static function Hour(XComGameState NewGameState, XComGameState_LWStrategy S)
 	AssignBays(AirWar);
 }
 
+/**
+ * A craft arrived, named as Long War names it (XGFacility_Hangar.AddInterceptor, AddFirestorm): an interceptor RAVEN-<n>;
+ * a Firestorm takes the callsign and kills of the interceptor with the most kills (its pilot moves up), that interceptor
+ * a new RAVEN-<n> with none; with no interceptor at all, DEMON-<n>.
+ */
 static function NewJet(XComGameState_LWAirWar AirWar, int Type, int Continent)
 {
-	AirWar.Counter++;
-	AirWar.AddJet((Type == 3 ? "Firestorm-" : "Raven-") $ AirWar.Counter, Type, Type == 3 ? 3 : 3);
+	local string Callsign;
+	local int i, Best, Kills;
+
+	if (Type == 3)
+	{
+		AirWar.FirestormCounter++;
+		Best = -1;
+		for (i = 0; i < AirWar.Jets.Length; i++)
+			if (AirWar.Jets[i].Type != 3 && (Best < 0 || AirWar.Jets[i].Kills > AirWar.Jets[Best].Kills))
+				Best = i;
+		if (Best >= 0)
+		{
+			Callsign = AirWar.Jets[Best].Callsign;
+			Kills = AirWar.Jets[Best].Kills;
+			AirWar.Counter++;
+			AirWar.Jets[Best].Callsign = class'XComGameState_LWAirWar'.static.CallsignOf(1) $ "-" $ AirWar.Counter;
+			AirWar.Jets[Best].Kills = 0;
+		}
+		else
+			Callsign = class'XComGameState_LWAirWar'.static.CallsignOf(3) $ "-" $ AirWar.FirestormCounter;
+	}
+	else
+	{
+		AirWar.Counter++;
+		Callsign = class'XComGameState_LWAirWar'.static.CallsignOf(1) $ "-" $ AirWar.Counter;
+	}
+	AirWar.AddJet(Callsign, Type, 3);
+	AirWar.Jets[AirWar.Jets.Length - 1].Kills = Kills;
 	AirWar.Jets[AirWar.Jets.Length - 1].Continent = Continent;
 	AssignBays(AirWar);
 }

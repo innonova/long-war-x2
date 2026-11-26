@@ -14,6 +14,8 @@ var localized string m_strScreenTitle, m_strEmptySlotLabel, m_strFullContinentLa
 	m_strColumnShipStatus;
 /** The cancel-order confirmation (XGHangarUI.ConfirmRemovalOfPendingShipOrder). */
 var localized string CancelOrderTitle, CancelOrderText;
+/** EW's callsigns (XGFacility_Hangar's), written by the setup. */
+var localized string CallsignInterceptor, CallsignFirestorm;
 var localized string m_strConfirmTransferDialogTitle, m_strConfirmTransferDialogAcceptText, m_strConfirmTransferDialogText;
 var localized string m_strHangarsFullDialogTitle, m_strHangarsFullDialogText;
 

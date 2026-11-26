@@ -30,24 +30,35 @@ struct LWJetOrder
 
 var array<LWJet> Jets;
 var array<LWJetOrder> Orders;
-/** Craft made so far, for their callsigns. */
-var int Counter;
+/** Interceptors and Firestorms named so far, for their callsigns (XGFacility_Hangar's m_iInterceptorCounter, m_iFirestormCounter). */
+var int Counter, FirestormCounter;
 
 static function XComGameState_LWAirWar Get()
 {
 	return XComGameState_LWAirWar(`XCOMHISTORY.GetSingleGameStateObjectForClass(class'XComGameState_LWAirWar', true));
 }
 
-/** Long War's start: two Interceptors with Avalanche Missiles. */
+/** Long War's start: four Interceptors with Avalanche Missiles (XGFacility_Engineering.GrantInitialStores: eItem_Interceptor
+ *  x 4; the port had two until the navigation map against EW, 2026-11-26), called RAVEN-1 to RAVEN-4. */
 static function XComGameState_LWAirWar CreateIn(XComGameState NewGameState)
 {
 	local XComGameState_LWAirWar AirWar;
+	local int i;
 
 	AirWar = XComGameState_LWAirWar(NewGameState.CreateNewStateObject(class'XComGameState_LWAirWar'));
-	AirWar.AddJet("Raven-1", 1, 3);
-	AirWar.AddJet("Raven-2", 1, 3);
-	AirWar.Counter = 2;
+	for (i = 1; i <= 4; i++)
+		AirWar.AddJet(CallsignOf(1) $ "-" $ i, 1, 3);
+	AirWar.Counter = 4;
 	return AirWar;
+}
+
+/** EW's callsign for a kind of craft (XGFacility_Hangar's m_strCallsignInterceptor, m_strCallsignFireStorm: "RAVEN",
+ *  "DEMON"). */
+static function string CallsignOf(int Type)
+{
+	if (Type == 3)
+		return class'UILWEWHangar'.default.CallsignFirestorm != "" ? class'UILWEWHangar'.default.CallsignFirestorm : "DEMON";
+	return class'UILWEWHangar'.default.CallsignInterceptor != "" ? class'UILWEWHangar'.default.CallsignInterceptor : "RAVEN";
 }
 
 function AddJet(string Callsign, int Type, int Weapon)

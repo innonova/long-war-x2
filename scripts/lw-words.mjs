@@ -1137,7 +1137,11 @@ export function makeMemorialWords({ strategyLoc }) {
   // (The hangar's cancel-order confirmation, XGHangarUI's, under the same section.)
   const hangar = strategyLoc.replace(/\r/g, '').match(/^\[XGHangarUI\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
   const key = (k) => hangar.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''
-  const extra = [['CancelOrderTitle', key('m_strCancelPendingOrderTitle')], ['CancelOrderText', key('m_strCancelPendingOrderText_Interceptor')]].filter(([, v]) => v)
+  // (And the craft's callsigns, XGFacility_Hangar's: RAVEN, DEMON.)
+  const fh = strategyLoc.replace(/\r/g, '').match(/^\[XGFacility_Hangar\]\n([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
+  const fk = (k) => fh.match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''
+  const extra = [['CancelOrderTitle', key('m_strCancelPendingOrderTitle')], ['CancelOrderText', key('m_strCancelPendingOrderText_Interceptor')],
+    ['CallsignInterceptor', fk('m_strCallsignInterceptor')], ['CallsignFirestorm', fk('m_strCallsignFireStorm')]].filter(([, v]) => v)
   const text = copied.text.replace('[UILWEWHangar]\r\n', `[UILWEWHangar]\r\n${extra.map(([k, v]) => `${k}="${v}"\r\n`).join('')}`)
   return { text, named: copied.named + extra.length }
 }
