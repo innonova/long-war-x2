@@ -1031,6 +1031,29 @@ export function makeLabWords({ strategyLoc }) {
   return { text: out.join('\r\n'), named }
 }
 
+/** EW's manufacture dialog's words (UILWEWManufacturing: XGManufacturingUI's labels, XGFacility_Engineering's ETA). */
+export function makeManufactureWords({ strategyLoc }) {
+  const text = strategyLoc.replace(/\r/g, '')
+  const section = (name) => text.match(new RegExp(`^\\[${name}\\]\\n([\\s\\S]*?)(?=^\\[|(?![\\s\\S]))`, 'm'))?.[1] ?? ''
+  const key = (sec, k) => section(sec).match(new RegExp(`^${k}\\s*=(.*)$`, 'm'))?.[1]?.trim().replace(/^"(.*)"$/, '$1') ?? ''
+  const words = [
+    ['Duration', key('XGManufacturingUI', 'm_strLabelProjectDuration')],
+    ['Immediate', key('XGManufacturingUI', 'm_strLabelImmediate')],
+    ['Requirements', key('XGManufacturingUI', 'm_strLabelProjectCost')],
+    ['EngineersNeeded', key('XGManufacturingUI', 'm_strLabelEngineersAssigned')],
+    ['QuantityLabel', key('XGManufacturingUI', 'm_strLabelQuantity')],
+    ['Notes', key('XGManufacturingUI', 'm_strLabelNotes')],
+    ['CostHelp', key('XGManufacturingUI', 'm_strHelp')],
+    ['SubmitOrder', key('XGManufacturingUI', 'm_strLabelSubmitOrder')],
+    ['BeginProject', key('XGManufacturingUI', 'm_strLabelBeginProject')],
+    ['BackLabel', key('XGManufacturingUI', 'm_strBackLabel')],
+    ['ErrEngineers', key('XGManufacturingUI', 'm_strErrEngineers')],
+    ['ETADay', key('XGFacility_Engineering', 'm_strETADay')],
+    ['ETAHour', key('XGFacility_Engineering', 'm_strETAHour')],
+  ].filter(([, v]) => v)
+  return { text: ['[UILWEWManufacturing]', ...words.map(([k, v]) => `${k}="${v.replace(/"/g, "'")}"`), ''].join('\r\n'), named: words.length }
+}
+
 /** EW's operation names (LWOpNames: XGMission's two word lists, its "Operation …" and the story missions' own). */
 export function makeOpNameWords({ strategyLoc }) {
   return copySections(strategyLoc, [['XGMission', 'LWOpNames']])

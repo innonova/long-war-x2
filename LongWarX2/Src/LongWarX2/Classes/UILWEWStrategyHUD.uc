@@ -372,7 +372,9 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 	// (Nor over EW's screens with their own Cancel, as EW shows them: hiring and the pending requests; round 9 #13.)
 	Movie.SetVariableBool(MCPath $ ".helpBar._visible", Context > 0 && UILWEWMissionControl(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && !bNavHelpShown()
 		&& UILWEWHiring(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWEWPendingRequests(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
-		&& UILWEWChooseFacility(Movie.Pres.ScreenStack.GetCurrentScreen()) == none);
+		&& UILWEWChooseFacility(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
+		// (Nor over the manufacture dialog, with its own BACK, as EW shows it: the deeper navigation map's pair.)
+		&& UILWEWManufacturing(Movie.Pres.ScreenStack.GetCurrentScreen()) == none);
 	// (EW's build screen's "?" beside the back arrow, UIBuildItem: its item card.)
 	bCardHelp = UILWEWEngineering(Movie.Pres.ScreenStack.GetCurrentScreen()) != none && !UILWEWEngineering(Movie.Pres.ScreenStack.GetCurrentScreen()).bFoundry;
 	// (The facility chooser's BEGIN BUILD on the right, UIChooseFacility.UpdateButtonHelp; aek 2026-11-25: no way to build.)

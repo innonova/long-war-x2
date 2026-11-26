@@ -21,7 +21,12 @@ expect Engineering
 see SAWED-OFF SHOTGUN
 click MANUFACTURE
 expect Manufacturing
-click START PROJECT
+# (EW's dialog, as EW's: its duration, requirements and note; the quantity on its spinner; SUBMIT ORDER; no corner arrow.)
+see Project Duration
+see Note(s)
+see QUANTITY
+shot manufacture
+click SUBMIT ORDER
 expect Engineering
 lwsee builds|project item 254
 shot item-ordered

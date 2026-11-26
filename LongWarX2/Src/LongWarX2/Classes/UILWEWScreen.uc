@@ -385,7 +385,9 @@ simulated function OnLoseFocus()
 
 function ShowUnderDialog()
 {
-	if (!bIsFocused && UIDialogueBox(Movie.Pres.ScreenStack.GetCurrentScreen()) != none && Movie.Pres.ScreenStack.GetScreen(class) == self)
+	// (And under EW's item cards, as EW shows the craft summary behind a WEAPON INFO card: the navigation map's pair.)
+	if (!bIsFocused && (UIDialogueBox(Movie.Pres.ScreenStack.GetCurrentScreen()) != none || UILWEWItemCard(Movie.Pres.ScreenStack.GetCurrentScreen()) != none)
+		&& Movie.Pres.ScreenStack.GetScreen(class) == self)
 		Show();
 }
 

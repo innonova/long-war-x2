@@ -1,7 +1,7 @@
 # A Foundry project begun as a player begins one (a new campaign at EW's base: tools/test/new-campaign.sh 1 --begin):
 # setup gives a Foundry, Alien Materials researched and the alloys and fragments Enhanced Ballistics costs (no project is
 # open at a campaign's start, as Long War's); then by clicks Engineering → THE FOUNDRY → Enhanced Ballistics →
-# BEGIN PROJECT → EW's project screen → START PROJECT, the project under way in Long War's Foundry.
+# BEGIN PROJECT → EW's project screen → BEGIN PROJECT, the project under way in Long War's Foundry.
 lw base set 6 2 11
 lw techdone 10
 lw give AlienAlloy 20
@@ -17,7 +17,8 @@ see PROJECT COST
 click BEGIN PROJECT
 expect Manufacturing
 see ENHANCED BALLISTICS
-click START PROJECT
+# (EW's button for a Foundry project, XGManufacturingUI.UpdateManButtons: Begin Project.)
+click BEGIN PROJECT
 expect Engineering
 lwsee foundry|under_way 1
 shot foundry-begun

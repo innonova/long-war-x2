@@ -165,3 +165,23 @@ From the pairs' pictures and EW's code (development build; built and checked on 
   EW's people are and so take the people's lights; open.
 - `nav-deep.sh` has six more screens for the next walk: an item's manufacture dialog, a gray market item, the craft's
   weapon and ship cards, the order and transfer dialogs.
+
+## Report (2026-11-26, six more screens)
+
+Walked in both games (EW on the person's Game 56 at 1 March 2016; the port on a fresh campaign): an item's manufacture
+dialog, a gray market item, a craft's weapon and ship cards, the order dialog, transfer mode.
+
+- **The manufacture dialog** was the port's own form (TIME, COST, the item's description, ENGINEERS with XCOM's count,
+  a fixed quantity, START PROJECT, a stray "10 ENGINEERS" at its foot, and the corner arrow beside its BACK). Now as EW's
+  (UIManufacturing.DrawItemProject, XGManufacturingUI.UpdateManufactureItem, UpdateManButtons): "Project Duration: 1d"
+  (EW's ETA: hours under a day, else days), "Requirements:" with what the quantity takes in their colours (red when short),
+  "ENGINEERS NEEDED" with the order's engineers (EW's m_strErrEngineers in red when XCOM has fewer), "QUANTITY:",
+  "Note(s): To reduce the cost of items, build more workshops.", SUBMIT ORDER (BEGIN PROJECT for the Foundry), no corner
+  arrow (logs/compare/manufacture.png). EW's words (lw-words.mjs, makeManufactureWords). Open: EW shows the quantity on
+  its spinner with arrows (driven as its widget helper drives it, it did not show; the arrow keys and the wheel change
+  it); the engineering room's ENGINEERS count peeks under the dialog's foot. Not carried: Long War's Build Quickly.
+- **The item cards** (WEAPON INFO, SHIP INFO) had no CLOSE: the port called a SetHelp the card's movie does not have
+  (EW's: SetButtonNavHelp, UIItemCards.RefreshNavigationHelp). And EW keeps the craft summary in view behind the card;
+  the port hid it. Both fixed.
+- **Order Interceptors, transfer mode, the gray market's item:** as EW's. Left: in transfer mode the chosen craft's button
+  reads CANCEL TRANSFER where EW keeps TRANSFER; EW keeps its corner arrow under the order dialog.

@@ -80,9 +80,11 @@ function Fill()
 	local int i;
 
 	L = class'UILWEWShipLoadout';
+	// (EW's card's own CLOSE, UIItemCards.RefreshNavigationHelp: its movie's SetButtonNavHelp; "SetHelp" is not this
+	// movie's, and the button never showed.)
 	Params.AddItem(Str(Word(m_strCloseCardLabel, "CLOSE")));
-	Params.AddItem(Str(""));
-	CallNow("SetHelp", Params);
+	Params.AddItem(Str("Icon_B_CIRCLE"));
+	CallNow("SetButtonNavHelp", Params);
 	if (CardType == 1 || CardType == 2 || CardType == 4)
 		FillGear();
 	else if (CardType == 3)
@@ -198,9 +200,19 @@ function Image(string Path)
 	CallNow("SetCardImage", Params);
 }
 
+static function string JoinPath(array<string> A)
+{
+	local string S, X;
+
+	foreach A(X)
+		S $= X $ ".";
+	return S;
+}
+
 simulated function OnMouseEvent(int cmd, array<string> args)
 {
-	if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP && args.Length > 0 && args[args.Length - 1] == "theBackButton")
+	// (The corner arrow, or the card's own CLOSE: a button of its help.)
+	if (cmd == class'UIUtilities_Input'.const.FXS_L_MOUSE_UP && args.Length > 0 && (args[args.Length - 1] == "theBackButton" || InStr(Locs(JoinPath(args)), "button") != INDEX_NONE))
 	{
 		CloseScreen();
 		return;

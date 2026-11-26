@@ -5,6 +5,9 @@
 // is begun with LWEngineering.Start.
 class UILWEWManufacturing extends UILWEWScreen;
 
+/** EW's words (XGManufacturingUI, XGFacility_Engineering's ETA; lw-words.mjs, makeManufactureWords). */
+var localized string Duration, Immediate, Requirements, EngineersNeeded, QuantityLabel, Notes, CostHelp, SubmitOrder, BeginProject, BackLabel, ErrEngineers, ETADay, ETAHour;
+
 var int Item;
 var int Quantity;
 var UILWEWEngineering From;
@@ -29,10 +32,10 @@ static function Open(XComHQPresentationLayer HQPres, int ItemNumber, UILWEWEngin
 simulated function OnInit()
 {
 	super.OnInit();
-	// EW's buttons by their help (UI_FxsShellScreen.SetHelp): 0 back, 3 start; 1 (cancel an order) and 2 (rush) are not
-	// Long War X2's, so hidden.
-	Help(0, "BACK");
-	Help(3, "START PROJECT");
+	// EW's buttons by their help (UI_FxsShellScreen.SetHelp, XGManufacturingUI.UpdateManButtons): 0 back, 3 SUBMIT ORDER
+	// (BEGIN PROJECT for the Foundry); 1 (delete an order) and 2 (Long War's Build Quickly) are not Long War X2's, hidden.
+	Help(0, Caps(W(BackLabel, "BACK")));
+	Help(3, Caps(bFoundry ? W(BeginProject, "Begin Project") : W(SubmitOrder, "Submit Order")));
 	Help(1, "");
 	Help(2, "");
 	// Once the movie has laid them out: the two unused buttons and the second spinner (EW's engineers, not adjustable).
@@ -44,11 +47,62 @@ function HideUnused()
 {
 	MC.ChildSetBool("centerButton1", "_visible", false);
 	MC.ChildSetBool("centerButton2", "_visible", false);
+	// (EW's spinners, option0 and option1, unused: the quantity on its line, Refresh.)
 	MC.ChildSetBool("option0", "_visible", false);
-	if (bFoundry)
-		MC.ChildSetBool("option1", "_visible", false);
-	// The arrows that stay (the movie's second spinner) moved up into the hidden one's place, beside the quantity.
-	MC.ChildSetNum("option1", "_y", Movie.GetVariableNumber(MCPath $ ".option0._y"));
+	MC.ChildSetBool("option1", "_visible", false);
+}
+
+static function string W(string Localized, string Fallback)
+{
+	return Localized != "" ? Localized : Fallback;
+}
+
+/** EW's ETA (XGFacility_Engineering.GetETAString): hours under a day ("5h"), else days rounded up ("2d"); none, EW's
+ *  Immediate. */
+function string ETA(int Hours)
+{
+	local XGParamTag Tag;
+
+	if (Hours <= 0)
+		return W(Immediate, "Immediate");
+	Tag = XGParamTag(`XEXPANDCONTEXT.FindTag("XGParam"));
+	Tag.IntValue0 = Hours < 24 ? Hours : (Hours + 23) / 24;
+	return `XEXPAND.ExpandString(Hours < 24 ? W(ETAHour, "<XGParam:IntValue0/>h") : W(ETADay, "<XGParam:IntValue0/>d"));
+}
+
+/** What n of the item take, as EW's GetItemCostSummary lists them: each part in its colour, red when XCOM is short, by
+ *  commas; bShort when any is. */
+static function string RequirementsFor(LWGearRules.LWBuildDef B, int n, out int bShort)
+{
+	local array<string> Parts;
+	local string Out;
+	local int i, Cash;
+
+	Cash = class'LWEngineering'.static.CashCost(B) * n;
+	if (Cash > 0)
+		Parts.AddItem(Part(class'LWStrategyRules'.static.Money(Cash), class'LWEngineering'.static.Held('Supplies') < Cash, eUIState_Cash, bShort));
+	if (B.Elerium > 0)
+		Parts.AddItem(Part(B.Elerium * n $ "x" @ class'X2Item_LWArtifacts'.static.DisplayName('Elerium'), class'LWEngineering'.static.Held('EleriumDust') < B.Elerium * n, eUIState_Psyonic, bShort));
+	if (B.Alloys > 0)
+		Parts.AddItem(Part(B.Alloys * n $ "x" @ class'X2Item_LWArtifacts'.static.DisplayName('Alloys'), class'LWEngineering'.static.Held('AlienAlloy') < B.Alloys * n, eUIState_Highlight, bShort));
+	if (B.Meld > 0)
+		Parts.AddItem(Part(B.Meld * n $ "x" @ class'X2Item_LWArtifacts'.static.DisplayName('Meld'), class'LWEngineering'.static.Held('LWItem_Meld') < B.Meld * n, eUIState_Warning, bShort));
+	if (B.ItemReq != '')
+		Parts.AddItem(Part(class'LWEngineering'.static.ReqCount(B) * n $ "x" @ class'LWEngineering'.static.ItemName(B.ItemReq), class'LWEngineering'.static.Held(B.ItemReq) < class'LWEngineering'.static.ReqCount(B) * n, eUIState_Normal, bShort));
+	if (B.ItemReq2 != '')
+		Parts.AddItem(Part(B.ItemReq2Count * n $ "x" @ class'LWEngineering'.static.ItemName(B.ItemReq2), class'LWEngineering'.static.Held(B.ItemReq2) < B.ItemReq2Count * n, eUIState_Normal, bShort));
+	for (i = 0; i < Parts.Length; i++)
+		Out $= (i > 0 ? ", " : "") $ Parts[i];
+	return Out;
+}
+
+static function string Part(string Text, bool bLacking, EUIState Colour, out int bShort)
+{
+	if (bLacking)
+		bShort = 1;
+	if (bLacking)
+		Colour = eUIState_Bad;
+	return class'UIUtilities_Text'.static.GetColoredText(Text, Colour);
 }
 
 function Help(int Index, string Text)
@@ -65,7 +119,9 @@ function Refresh()
 	local LWGearRules.LWBuildDef B;
 	local X2ItemTemplate Template;
 	local XComGameState_LWStrategy S;
-	local string Short, Cost;
+	local string Req, Why;
+	local int Needed, Hours, bShort;
+	local bool bFewEngineers;
 
 	if (bFoundry)
 	{
@@ -76,23 +132,32 @@ function Refresh()
 		return;
 	Template = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(B.Template);
 	S = class'XComGameState_LWStrategy'.static.Get();
-	Short = class'LWEngineering'.static.Short(B, Quantity);
-	MC.FunctionString("SetTitle", "<font size='26'>" $ Caps(class'LWEngineering'.static.ItemName(B.Template)) $ "</font>");
+	// As EW's XGManufacturingUI.UpdateManufactureItem and UIManufacturing.DrawItemProject: the title; the engineers the
+	// order needs (red when XCOM has fewer); the quantity on EW's spinner; the duration and requirements; the problem (red)
+	// and EW's note.
+	MC.FunctionString("SetTitle", class'UIUtilities_Text'.static.GetColoredText(Caps(class'LWEngineering'.static.ItemName(B.Template)), eUIState_Warning));
+	Needed = B.Engineers * Quantity;
+	bFewEngineers = S != none && S.Engineers < Needed;
+	// (Plain text: the movie's engineer and quantity lines take no HTML, UIManufacturing.RefreshDisplay.)
 	MC.BeginFunctionOp("SetEngineerLine");
-	MC.QueueString("ENGINEERS");
-	MC.QueueString(string(S != none ? S.Engineers : 0));
+	MC.QueueString(Caps(W(EngineersNeeded, "Engineers Needed")));
+	MC.QueueString(string(Needed));
 	MC.EndOp();
-	// The quantity on the movie's quantity line (read-only: it shows the number), beside the spinner arrows the movie draws there.
+	// (OPEN: EW shows the quantity on its spinner, option0 (SetSpinnerLabel, SetSpinnerValue, SetSpinnerArrows, SetActive);
+	// called so, it did not show here. The quantity line instead; the arrow keys and the wheel change it.)
 	MC.BeginFunctionOp("SetQuantityLine");
-	MC.QueueString("QUANTITY");
+	MC.QueueString(Caps(W(QuantityLabel, "Quantity:")));
 	MC.QueueString(string(Quantity));
 	MC.QueueBoolean(true);
 	MC.EndOp();
-	Cost = "COST:" @ Times(class'LWEngineering'.static.CostText(B), Quantity);
+	Req = RequirementsFor(B, Quantity, bShort);
+	Hours = class'LWEngineering'.static.HoursFor(class'LWEngineering'.static.UnitWork(B), Needed, S != none ? S.Engineers : 0);
+	Why = bShort > 0 ? class'UIUtilities_Text'.static.GetColoredText("Short of" @ class'LWEngineering'.static.Short(B, Quantity), eUIState_Bad) $ "\n"
+		: (bFewEngineers ? class'UIUtilities_Text'.static.GetColoredText(W(ErrEngineers, ""), eUIState_Bad) $ "\n" : "");
 	MC.BeginFunctionOp("UpdateInfo");
-	MC.QueueString("TIME:" @ class'LWEngineering'.static.HoursText(class'LWEngineering'.static.HoursFor(class'LWEngineering'.static.UnitWork(B), B.Engineers * Quantity, S != none ? S.Engineers : 0))
-		$ "\n" $ Cost $ (Short != "" ? "\n" $ class'UIUtilities_Text'.static.GetColoredText("Short of" @ Short, eUIState_Bad) : ""));
-	MC.QueueString(Template != none ? Template.GetItemBriefSummary() : "");
+	MC.QueueString(class'UIUtilities_Text'.static.GetColoredText(W(Duration, "Project Duration:") @ ETA(Hours), eUIState_Warning) $ "\n"
+		$ (Req != "" ? class'UIUtilities_Text'.static.GetColoredText(W(Requirements, "Requirements:"), bShort > 0 ? eUIState_Bad : eUIState_Warning) @ Req : ""));
+	MC.QueueString(Why $ class'UIUtilities_Text'.static.GetColoredText(W(Notes, "Note(s):"), eUIState_Normal) @ class'UIUtilities_Text'.static.GetColoredText(W(CostHelp, ""), eUIState_Normal));
 	MC.QueueString(class'LWX2Pictures'.static.Item(Item, Template != none ? Template.strImage : ""));
 	MC.EndOp();
 }
