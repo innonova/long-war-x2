@@ -4426,7 +4426,8 @@ function string UseAbility(string Who, name AbilityName, int TargetIndex, option
 	}
 	else
 		foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
-			if (Unit.GetTeam() == eTeam_XCom && !Unit.bRemovedFromPlay && (InStr(Caps(Unit.GetFullName()), Caps(Who)) != INDEX_NONE || InStr(Caps(string(Unit.GetSoldierClassTemplateName())), Caps(Who)) != INDEX_NONE))
+			// (*: the first soldier who has the ability.)
+			if (Unit.GetTeam() == eTeam_XCom && !Unit.bRemovedFromPlay && ((Who == "*" && Unit.FindAbility(AbilityName).ObjectID > 0) || (Who != "*" && (InStr(Caps(Unit.GetFullName()), Caps(Who)) != INDEX_NONE || InStr(Caps(string(Unit.GetSoldierClassTemplateName())), Caps(Who)) != INDEX_NONE))))
 				break;
 	if (Unit == none || `TACTICALRULES == none || !`TACTICALRULES.GetGameRulesCache_Unit(Unit.GetReference(), Cache))
 		return "ERR no such soldier in a mission";
