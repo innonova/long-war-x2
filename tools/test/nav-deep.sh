@@ -54,5 +54,7 @@ while IFS='|' read -r name room entry steps; do
     else tools/test/on.sh 'tools\test\click.ps1 96 1027' >/dev/null 2>&1; fi
     sleep 2
   done
+  # (EW: one back too many opens its pause menu, which then takes the next clicks: closed.)
+  tools/test/on.sh 'tools\test\ocr.ps1 -Invert' 2>/dev/null | grep -qi "PAUSE MENU" && { tools/test/on.sh 'tools\test\esc.ps1' >/dev/null 2>&1; sleep 2; }
 done <<< "$spec"
 echo "nav-deep $tag: done, $out"

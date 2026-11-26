@@ -326,7 +326,9 @@ export function makeFacilityWords({ strategyLoc, facilities }) {
     const name = strategyLoc.match(new RegExp(`^m_aFacilityNames\\[${f.enum}\\]="(.*)"\\s*$`, 'm'))?.[1]
     if (!name) continue
     named++
-    out.push(`[LWFacility_${f.id} X2TechTemplate]`, `DisplayName="${name}"`, '')
+    // (Its description as EW's chooser shows it: FacilityTypeSummary, its \n a line break.)
+    const summary = strategyLoc.match(new RegExp(`^FacilityTypeSummary\\[${f.enum}\\]="(.*)"\\s*$`, 'm'))?.[1]
+    out.push(`[LWFacility_${f.id} X2TechTemplate]`, `DisplayName="${name}"`, ...(summary ? [`Summary="${summary}"`] : []), '')
   }
   return { text: out.join('\r\n'), named }
 }
@@ -570,6 +572,19 @@ export function makeBuildWords({ strategyLoc }) {
     ['ErrNeedPower', inSection('XGBuildUI', 'm_strErrNeedPower')],
     ['ErrNeedSteam', inSection('XGBuildUI', 'm_strErrNeedSteam')],
     ['NoRequirements', inSection('UIChooseFacility', 'm_strNoReqLabel')],
+    // (The chooser's requirements as EW lists them, XGFacility_Engineering.GetFacilityCostSummary.)
+    ['CostPower', inSection('XGFacility_Engineering', 'm_strCostPower')],
+    ['CostScientists', inSection('XGFacility_Engineering', 'm_strCostScientists')],
+    ['CostEngineers', inSection('XGFacility_Engineering', 'm_strCostEngineers')],
+    ['CostSoldier', inSection('XGFacility_Engineering', 'm_strCostSoldier')],
+    ['CostElerium', inSection('XGFacility_Engineering', 'm_strCostElerium')],
+    ['CostAlloys', inSection('XGFacility_Engineering', 'm_strCostAlloys')],
+    ['ErrPower', inSection('XGFacility_Engineering', 'm_strErrInsufficientPower')],
+    ['ErrScientists', inSection('XGFacility_Engineering', 'm_strErrInsufficientScientists')],
+    ['ErrEngineers', inSection('XGFacility_Engineering', 'm_strErrInsufficientEngineers')],
+    ['ErrFunds', inSection('XGFacility_Engineering', 'm_strErrInsufficientFunds')],
+    ['ErrExperience', inSection('XGFacility_Engineering', 'm_strErrInsufficientExperience')],
+    ['BackLabel', inSection('UIChooseFacility', 'm_strBackLabel')],
     // (The chooser's BEGIN BUILD on the help bar, UIChooseFacility.UpdateButtonHelp: XGManufacturingUI's label.)
     ['BeginBuild', inSection('XGManufacturingUI', 'm_strLabelModifyBeginBuild')],
     // Removing a facility (XGBuildUI.UpdateCursor, ConfirmRemovalDialogue): the reasons by LWBase.RemoveBlock's codes.

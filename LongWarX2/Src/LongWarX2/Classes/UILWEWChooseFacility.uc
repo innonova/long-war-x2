@@ -32,6 +32,9 @@ simulated function OnInit()
 	B.Show();
 	B.LookAt(name("AddonCam_R" $ TileY $ "_C" $ (TileX + 1)), 1.0);
 	Fill();
+	// (EW's BACK and BEGIN CONSTRUCTION in the panel's own help bar, UIChooseFacility.UpdateButtonHelp.)
+	HelpButton("helpBarMC", false, 0, Caps(W(class'UILWEWBuildFacilities'.default.BackLabel, class'UIUtilities_Text'.default.m_strGenericBack)), "Icon_B_CIRCLE");
+	HelpButton("helpBarMC", true, 1, Caps(W(class'UILWEWBuildFacilities'.default.BeginBuild, "Begin Construction")), "Icon_START");
 	// (EW selects the option under the mouse as it moves, its list items' mouse-in; here read off the movie.)
 	SetTimer(0.1, true, nameof(HoverSelect));
 }
@@ -60,8 +63,11 @@ function Fill()
 
 	S = class'XComGameState_LWStrategy'.static.Get();
 	Type = S.TileType[TileY * class'LWBase'.const.W + TileX];
-	foreach class'LWBaseRules'.default.Facilities(F)
+	// (In EW's order, its facilities' numbers: Laboratory, Workshop, Satellite Uplink, Fission Generator …)
+	for (k = 0; k < 24; k++)
 	{
+		if (!class'LWBaseRules'.static.FacilityFor(k, F))
+			continue;
 		// (Not built on a tile: the starting rooms; the access lift, the shaft's own.)
 		if (F.Cash < 0 || F.Id == 6)
 			continue;
@@ -105,28 +111,74 @@ function Fill()
 function Select(int i)
 {
 	local LWBaseRules.LWFacilityDef F;
-	local string Info;
+	local X2TechTemplate Template;
+	local string Desc;
 
 	if (Choices.Length == 0)
 		return;
 	Selected = Clamp(i, 0, Choices.Length - 1);
 	class'LWBaseRules'.static.FacilityFor(Choices[Selected], F);
-	Info = class'UILWEWHub'.static.Word(class'UILWEWBuildFacilities'.default.Cost, "Cost:") @ class'LWStrategyRules'.static.Money(F.Cash);
-	if (F.Alloys > 0)
-		Info $= "," @ F.Alloys @ class'LWEngineering'.static.ItemName('AlienAlloy');
-	if (F.Elerium > 0)
-		Info $= "," @ F.Elerium @ class'LWEngineering'.static.ItemName('EleriumDust');
-	if (F.Item != '' && F.Items > 0)
-		Info $= "," @ F.Items @ class'LWEngineering'.static.ItemName(F.Item);
-	Info $= "\n" $ (F.Power >= 0 ? "Power +" $ F.Power : "Power" @ F.Power) $ "    Upkeep" @ class'LWStrategyRules'.static.Money(F.Upkeep) $ "/month    "
-		$ class'LWBonusEffects'.static.FacilityHours(F.Days) / 24 @ "days";
+	class'LWBonusEffects'.static.AdjustFacility(F);
+	Template = X2TechTemplate(class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager().FindStrategyElementTemplate(class'LWBaseRules'.static.FacilityTemplateFor(Choices[Selected])));
+	// (As EW's UIChooseFacility.UpdateInfoPanelData: what stops it in red above its description, FacilityTypeSummary.)
+	Desc = Whys[Selected] != "" ? class'UIUtilities_Text'.static.GetColoredText(Whys[Selected], eUIState_Bad) $ "\n" : "";
+	Desc $= Template != none ? Repl(Template.Summary, "\\n", "\n") : "";
 	MC.BeginFunctionOp("UpdateInfo");
-	MC.QueueString(Caps(class'LWBase'.static.FacilityName(Choices[Selected])));
-	MC.QueueString(Whys[Selected] != "" ? class'UIUtilities_Text'.static.GetColoredText(Whys[Selected], eUIState_Bad) : class'UILWEWBuildFacilities'.default.NoRequirements);
-	MC.QueueString(Info);
+	MC.QueueString(class'UIUtilities_Text'.static.GetColoredText(Caps(class'LWBase'.static.FacilityName(Choices[Selected])), Whys[Selected] == "" ? eUIState_Normal : eUIState_Disabled));
+	MC.QueueString(Requirements(F));
+	MC.QueueString(Desc);
 	MC.QueueString(class'UILWEWBuildFacilities'.static.FacilityIcon(Choices[Selected]));
 	MC.EndOp();
 	MC.FunctionString("setFocus", string(Selected));
+}
+
+/**
+ * What a facility takes, as EW's chooser lists it (XGFacility_Engineering.GetFacilityCostSummary, GetCostSummary):
+ * "Required to Build:" and, comma-separated, its power, the scientists or engineers Long War wants on staff, the money,
+ * elerium, alloys and items, each in its colour and red when XCOM is short; "No Build Requirements" when nothing.
+ */
+function string Requirements(LWBaseRules.LWFacilityDef F)
+{
+	local XComGameState_LWStrategy S;
+	local array<string> Parts;
+	local string Out, P;
+	local int Staff;
+
+	S = class'XComGameState_LWStrategy'.static.Get();
+	if (F.Power < 0)
+		Parts.AddItem(Colored(-F.Power @ W(class'UILWEWBuildFacilities'.default.CostPower, "Power"), eUIState_Warning,
+			-F.Power > class'LWBase'.static.PowerCapacity(S) - class'LWBase'.static.PowerUsed(S)));
+	Staff = class'LWBase'.static.StaffNeeded(S, F.Id);
+	if (F.Id == 7 && Staff > 0)
+		Parts.AddItem(Colored(Staff @ W(class'UILWEWBuildFacilities'.default.CostScientists, "Scientists"), eUIState_Warning, S.Scientists < Staff));
+	else if ((F.Id == 8 || F.Id == 9 || F.Id == 14) && Staff > 0)
+		Parts.AddItem(Colored(Staff @ W(class'UILWEWBuildFacilities'.default.CostEngineers, "Engineers"), eUIState_Warning, S.Engineers < Staff));
+	if (F.Cash > 0)
+		Parts.AddItem(Colored(class'LWStrategyRules'.static.Money(F.Cash), eUIState_Cash, class'UIUtilities_Strategy'.static.GetXComHQ().GetSupplies() < F.Cash));
+	if (F.Elerium > 0)
+		Parts.AddItem(Colored(F.Elerium $ "x" @ W(class'UILWEWBuildFacilities'.default.CostElerium, "Elerium"), eUIState_Psyonic, class'LWEngineering'.static.Held('EleriumDust') < F.Elerium));
+	if (F.Alloys > 0)
+		Parts.AddItem(Colored(F.Alloys $ "x" @ W(class'UILWEWBuildFacilities'.default.CostAlloys, "Alloys"), eUIState_Highlight, class'LWEngineering'.static.Held('AlienAlloy') < F.Alloys));
+	if (F.Item != '' && F.Items > 0)
+		Parts.AddItem(Colored(F.Items $ "x" @ class'LWEngineering'.static.ItemName(F.Item), eUIState_Normal, class'LWEngineering'.static.Held(F.Item) < F.Items));
+	if (Parts.Length == 0)
+		return W(class'UILWEWBuildFacilities'.default.NoRequirements, "No Build Requirements");
+	Out = W(class'UILWEWBuildFacilities'.default.RequiredBuild, "Required to Build:");
+	foreach Parts(P)
+		Out $= (Out == W(class'UILWEWBuildFacilities'.default.RequiredBuild, "Required to Build:") ? " " : ", ") $ P;
+	return Out;
+}
+
+static function string Colored(string Text, EUIState State, bool bShort)
+{
+	if (bShort)
+		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Bad);
+	return class'UIUtilities_Text'.static.GetColoredText(Text, State);
+}
+
+static function string W(string Localized, string Fallback)
+{
+	return Localized != "" ? Localized : Fallback;
 }
 
 /** The selected facility begun on the tile, back to the base. */
@@ -192,8 +244,18 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	{
 	case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP:
 	case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED:
-		// (A click on a facility builds it, as in EW (OnMouseEvent 398: RealizeSelected, OnAccept); the help bar's BEGIN
-		// BUILD builds the one selected, UILWEWStrategyHUD.)
+		// (The panel's BACK and BEGIN CONSTRUCTION; a click on a facility builds it, as in EW (OnMouseEvent 398:
+		// RealizeSelected, OnAccept).)
+		if (InStr(HelpButtonUnderMouse(), "buttonHelp_0") != INDEX_NONE)
+		{
+			CloseScreen();
+			return true;
+		}
+		if (InStr(HelpButtonUnderMouse(), "buttonHelp_1") != INDEX_NONE)
+		{
+			Accept();
+			return true;
+		}
 		i = OptionUnderMouse();
 		if (i >= 0)
 		{
