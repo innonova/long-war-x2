@@ -289,7 +289,9 @@ function int OptionUnderMouse()
 	local float MouseX, MouseY, W, H;
 	local int i;
 
-	for (i = 0; i < Choices.Length; i++)
+	// (From the last up, as the build screen's: a row's box can cover the next row's, and the first row then took every
+	// click; UILWEWEngineering.OptionUnderMouse.)
+	for (i = Choices.Length - 1; i >= 0; i--)
 	{
 		Path = MCPath $ ".itemList.theItems." $ i;
 		W = Movie.GetVariableNumber(Path $ "._width");
