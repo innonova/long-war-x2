@@ -183,5 +183,6 @@ dialog, a gray market item, a craft's weapon and ship cards, the order dialog, t
 - **The item cards** (WEAPON INFO, SHIP INFO) had no CLOSE: the port called a SetHelp the card's movie does not have
   (EW's: SetButtonNavHelp, UIItemCards.RefreshNavigationHelp). And EW keeps the craft summary in view behind the card;
   the port hid it. Both fixed.
-- **Order Interceptors, transfer mode, the gray market's item:** as EW's. Left: in transfer mode the chosen craft's button
-  reads CANCEL TRANSFER where EW keeps TRANSFER; EW keeps its corner arrow under the order dialog.
+- **Order Interceptors, transfer mode, the gray market's item:** as EW's (in transfer mode EW's code labels the craft
+  CANCEL TRANSFER too, UIShipList.UpdateData; its capture showed TRANSFER before its list redrew). Left: EW keeps its
+  corner arrow under the order dialog.
