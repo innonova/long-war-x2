@@ -16,7 +16,7 @@ function readIndex(dir) {
 }
 const slug = (s) => s.replace(/[ /:]/g, '_').replace(/[^A-Za-z0-9_-]/g, '')
 function labels(dir, room, entry) {
-  const f = join(dir, slug(room), (entry ? slug(entry) : '_room') + '.txt')
+  const f = room === '' ? join(dir, entry + '.txt') : join(dir, slug(room), (entry ? slug(entry) : '_room') + '.txt')
   if (!existsSync(f)) return []
   const out = new Set()
   for (const line of readFileSync(f, 'utf8').split('\n')) {
@@ -66,5 +66,17 @@ for (const room of rooms) {
     if (op.length) out.push(`  - only in the port: ${op.join(' · ')}`)
   }
   out.push('')
+}
+// The next level (tools/test/nav-deep.sh): each screen both walks read, the labels in one and not the other.
+const deepIndex = (dir) => (existsSync(join(dir, 'deep', 'index.tsv')) ? readFileSync(join(dir, 'deep', 'index.tsv'), 'utf8').trim().split('\n').slice(1).map((l) => l.split('\t')[0]) : [])
+const deepLabels = (dir, name) => labels(join(dir, 'deep'), '', name)
+const deepNames = deepIndex(ewDir).filter((n) => deepIndex(portDir).includes(n))
+if (deepNames.length) out.push('## The next level', '')
+for (const name of deepNames) {
+  const a = distinct(deepLabels(ewDir, name)), b = distinct(deepLabels(portDir, name))
+  out.push(`- **${name}** (${a.length} labels in EW, ${b.length} in the port)`)
+  const oe = onlyIn(a, b), op = onlyIn(b, a)
+  if (oe.length) out.push(`  - only in EW: ${oe.join(' · ')}`)
+  if (op.length) out.push(`  - only in the port: ${op.join(' · ')}`)
 }
 console.log(out.join('\n'))
