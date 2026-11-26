@@ -111,3 +111,12 @@ lw-gear.md).
 
 Still different, explained: the research menu's Change (EW's save has a project running), the memorial (the port's first
 mission lost a soldier), the soldiers' ranks (development builds promote the starting rookies, a test switch; the release keeps them PFCs as EW).
+
+## Report (2026-11-26, from the hangar's list)
+
+- **Four interceptors at the start, not two:** Long War grants four (XGFacility_Engineering.GrantInitialStores:
+  eItem_Interceptor x 4, +2 more with one start bonus, which the port had); the port gave two. EW's list on the person's
+  Game 56 at 1 March 2016 has RAVEN-1 to RAVEN-4. Now four.
+- **The craft's names as EW's:** RAVEN-<n> (XGFacility_Hangar's m_strCallsignInterceptor, its own counter); a Firestorm
+  takes the callsign and kills of the interceptor with the most kills, which gets a new RAVEN-<n> and none (AddFirestorm:
+  the pilot moves up), DEMON-<n> when there is no interceptor. The port had "Raven-<n>" and "Firestorm-<n>".
