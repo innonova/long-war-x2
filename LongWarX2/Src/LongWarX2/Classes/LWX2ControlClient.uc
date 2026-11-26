@@ -1580,7 +1580,8 @@ function string GiveTo(int Index, name ItemName)
 	local XComGameState_HeadquartersXCom XComHQ;
 	local XComGameState_Unit Unit;
 	local X2EquipmentTemplate Template;
-	local XComGameState_Item Item;
+	local XComGameState_Item Item, Held;
+	local array<XComGameState_Item> Utility;
 	local array<XComGameState_Unit> Soldiers;
 	local StateObjectReference Ref;
 	local EInventorySlot Slot;
@@ -1601,9 +1602,16 @@ function string GiveTo(int Index, name ItemName)
 	Item = Template.CreateInstanceFromTemplate(NewGameState);
 	if (Slot != eInvSlot_Utility && Unit.GetItemInSlot(Slot, NewGameState) != none)
 		Unit.RemoveItemFromInventory(XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Unit.GetItemInSlot(Slot, NewGameState).ObjectID)), NewGameState);
-	// (A full utility slot, a rookie's starting kit: its first item put back in the stores, as a player swaps it.)
-	if (Slot == eInvSlot_Utility && !Unit.CanAddItemToInventory(Template, Slot, NewGameState) && Unit.GetAllItemsInSlot(Slot, NewGameState).Length > 0)
-		Unit.RemoveItemFromInventory(XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Unit.GetAllItemsInSlot(Slot, NewGameState)[0].ObjectID)), NewGameState);
+	// (A full utility slot, a rookie's starting kit: its first item that takes room taken out, as a player swaps it; not the
+	// XPad, which takes none: removed, the slot stayed full and the give failed on a release campaign's rookies.)
+	if (Slot == eInvSlot_Utility && !Unit.CanAddItemToInventory(Template, Slot, NewGameState))
+		Utility = Unit.GetAllItemsInSlot(Slot, NewGameState);
+	foreach Utility(Held)
+		if (X2EquipmentTemplate(Held.GetMyTemplate()) != none && X2EquipmentTemplate(Held.GetMyTemplate()).iItemSize > 0)
+		{
+			Unit.RemoveItemFromInventory(XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', Held.ObjectID)), NewGameState);
+			break;
+		}
 	if (!Unit.AddItemToInventory(Item, Slot, NewGameState))
 	{
 		`XCOMHISTORY.CleanupPendingGameState(NewGameState);

@@ -18,7 +18,8 @@ run geoscape-mission
 tools/test/to-mission.sh 2>&1 | tail -1
 run ability-bar
 run shot
-# (The Motion Tracker, from a mission of its own with the item on the first soldier.)
-tools/test/to-mission.sh 'give-to 0 LWSmall_222' 'give-to 1 LWSmall_222' 'give-to 2 LWSmall_222' 2>&1 | tail -1
+# (The Motion Tracker, from a mission of its own with the item on the first ten soldiers: whoever the squad takes has one.)
+gives=(); for i in 0 1 2 3 4 5 6 7 8 9; do gives+=("give-to $i LWSmall_222"); done
+tools/test/to-mission.sh "${gives[@]}" 2>&1 | tail -1
 run motion-tracker
 echo "e2e-all: $fails journeys with failures"
