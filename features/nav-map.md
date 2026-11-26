@@ -162,7 +162,9 @@ From the pairs' pictures and EW's code (development build; built and checked on 
   facility (TintColor 0.14, 0.81, 0.85, brightened, black where nothing is drawn); the chooser shows the frame and adds
   the blueprint over the scene. Unchecked in the game until the base is converted again.
 - **The hangar's jets** read pale cyan-white in the port, grey in EW, on all three hangar pairs: the craft are placed as
-  EW's people are and so take the people's lights; open.
+  EW's people are and so take the people's lights. Measured live (`lightoff`): the cyan comes from Command1's directional
+  people light (LWX2PeopleLight); without it the jet turns warm brown, without the spot or point people lights it is
+  unchanged (logs/compare/hangar-jet-lights.png: as is, then each kind off). EW's grey lies between; open.
 - `nav-deep.sh` has six more screens for the next walk: an item's manufacture dialog, a gray market item, the craft's
   weapon and ship cards, the order and transfer dialogs.
 
