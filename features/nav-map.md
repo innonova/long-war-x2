@@ -120,3 +120,20 @@ mission lost a soldier), the soldiers' ranks (development builds promote the sta
 - **The craft's names as EW's:** RAVEN-<n> (XGFacility_Hangar's m_strCallsignInterceptor, its own counter); a Firestorm
   takes the callsign and kills of the interceptor with the most kills, which gets a new RAVEN-<n> and none (AddFirestorm:
   the pilot moves up), DEMON-<n> when there is no interceptor. The port had "Raven-<n>" and "Firestorm-<n>".
+
+## Report (2026-11-26, the next level)
+
+`tools/test/nav-deep.sh <port|ew>` walks the screens behind the rooms' screens (a soldier's summary and abilities, a
+craft's summary and loadout, a country on Launch Satellite, the research list, a tile's facility list) the same way in
+both games; nav-compare.mjs sets them side by side. On the person's Game 56 at 1 March 2016 against a fresh port campaign:
+
+- **The facility chooser** differed most: EW lists "Required to Build: 4 Power, 10 Scientists, §200" (each in its colour,
+  red when short: XGFacility_Engineering.GetFacilityCostSummary) and each facility's description (FacilityTypeSummary),
+  in EW's order, with BACK and BEGIN CONSTRUCTION in its panel. Now as EW's (logs/compare/facility-chooser.png). Still
+  missing: EW's holographic blueprint of the facility over the room (XComHQHUD.ShowFacilityTexture: Command1's
+  ChooseFacilities.Materials.M_<facility>, a texture channel each of Facility_1..9 in a material of its own).
+- **The research list** showed Alien Computers, which EW does not list until a UFO Flight Computer has ever been held
+  (Long War's EverHad: the port only asked for it on techs that cost no items). Now listed as Long War lists it.
+- **The craft loadout** lacks the weapon's description under its numbers (EW: "Stingray Missiles are small, fast
+  air-to-air missiles…"), and selects the craft's own weapon where EW selects the first; open.
+- Explained by the campaigns: names, ranks (development builds promote the starting rookies), the research in progress.
