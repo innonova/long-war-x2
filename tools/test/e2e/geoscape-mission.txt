@@ -21,6 +21,15 @@ see ABDUCTION SITE
 click Confirm
 expect SquadSelect
 shot squad-select
+# (A soldier's EDIT and back: the armory had waited on the Avenger's scene for its back, trapping the player, aek 2026-11-28.)
+at 1296 673
+wait 1
+at 1296 673
+wait 4
+expect Armory
+at 47 1037
+wait 4
+expect SquadSelect
 click LAUNCH
 waitfor DropShipBriefing 240
 wait 25
