@@ -7,12 +7,19 @@ class UILWEWManufacturing extends UILWEWScreen;
 
 /** EW's words (XGManufacturingUI, XGFacility_Engineering's ETA; lw-words.mjs, makeManufactureWords). */
 var localized string Duration, Immediate, Requirements, EngineersNeeded, QuantityLabel, Notes, CostHelp, SubmitOrder, BeginProject, BackLabel, ErrEngineers, ETADay, ETAHour;
+var localized string TimeToBuild, ETADays, NoteMaintenance, BeginBuild;
 
 var int Item;
 var int Quantity;
 var UILWEWEngineering From;
 /** A Foundry project (Item its id): no quantity, begun with LWEngineering.StartFoundry (EW's UIManufacturing.InitFoundry). */
 var bool bFoundry;
+/** A facility on a tile (Item its Long War facility id), from EW's facility chooser (EW's UIManufacturing.InitFacility,
+ *  XGManufacturingUI.UpdateManufactureFacility): its time to build, requirements and upkeep; BEGIN CONSTRUCTION builds it
+ *  (LWBase.Work) and closes the chooser too. */
+var bool bFacility;
+var int TileX, TileY;
+var UILWEWChooseFacility Chooser;
 
 static function Open(XComHQPresentationLayer HQPres, int ItemNumber, UILWEWEngineering Caller, optional bool bFoundryProject)
 {
@@ -29,13 +36,31 @@ static function Open(XComHQPresentationLayer HQPres, int ItemNumber, UILWEWEngin
 	HQPres.ScreenStack.Push(EWScreen);
 }
 
+/** EW's dialog for a facility chosen on a tile. */
+static function OpenFacility(XComHQPresentationLayer HQPres, int FacilityId, int AtX, int AtY, UILWEWChooseFacility From)
+{
+	local UILWEWManufacturing EWScreen;
+
+	DynamicLoadObject(default.UIPackage $ ".ewxManufacturing", class'Object', true);
+	EWScreen = HQPres.Spawn(class'UILWEWManufacturing', HQPres);
+	EWScreen.Package = name("/ package/ewxManufacturing/Manufacturing");
+	EWScreen.MCName = 'theManufacturingScreen';
+	EWScreen.Item = FacilityId;
+	EWScreen.Quantity = 1;
+	EWScreen.bFacility = true;
+	EWScreen.TileX = AtX;
+	EWScreen.TileY = AtY;
+	EWScreen.Chooser = From;
+	HQPres.ScreenStack.Push(EWScreen);
+}
+
 simulated function OnInit()
 {
 	super.OnInit();
 	// EW's buttons by their help (UI_FxsShellScreen.SetHelp, XGManufacturingUI.UpdateManButtons): 0 back, 3 SUBMIT ORDER
 	// (BEGIN PROJECT for the Foundry); 1 (delete an order) and 2 (Long War's Build Quickly) are not Long War X2's, hidden.
 	Help(0, Caps(W(BackLabel, "BACK")));
-	Help(3, Caps(bFoundry ? W(BeginProject, "Begin Project") : W(SubmitOrder, "Submit Order")));
+	Help(3, Caps(bFacility ? W(BeginBuild, "Begin Construction") : (bFoundry ? W(BeginProject, "Begin Project") : W(SubmitOrder, "Submit Order"))));
 	Help(1, "");
 	Help(2, "");
 	// Once the movie has laid them out: the two unused buttons and the second spinner (EW's engineers, not adjustable).
@@ -50,6 +75,40 @@ function HideUnused()
 	// (EW's spinners, option0 and option1, unused: the quantity on its line, Refresh.)
 	MC.ChildSetBool("option0", "_visible", false);
 	MC.ChildSetBool("option1", "_visible", false);
+}
+
+/** A facility's dialog (XGManufacturingUI.UpdateManufactureFacility): its name, picture, "Time to Build: ETA (days): n",
+ *  "Requirements:" and the chooser's costs, and its upkeep as EW's note; no engineers or quantity. */
+function RefreshFacility()
+{
+	local LWBaseRules.LWFacilityDef F;
+	local XGParamTag Tag;
+	local string Req;
+
+	if (!class'LWBaseRules'.static.FacilityFor(Item, F))
+		return;
+	class'LWBonusEffects'.static.AdjustFacility(F);
+	MC.FunctionString("SetTitle", class'UIUtilities_Text'.static.GetColoredText(Caps(class'LWBase'.static.FacilityName(Item)), eUIState_Warning));
+	MC.BeginFunctionOp("SetEngineerLine");
+	MC.QueueString("");
+	MC.QueueString("");
+	MC.EndOp();
+	MC.BeginFunctionOp("SetQuantityLine");
+	MC.QueueString("");
+	MC.QueueString("");
+	MC.QueueBoolean(true);
+	MC.EndOp();
+	Tag = XGParamTag(`XEXPANDCONTEXT.FindTag("XGParam"));
+	Tag.IntValue0 = F.Days;
+	Req = Chooser != none ? Chooser.Requirements(F) : "";
+	Req = Repl(Req, W(class'UILWEWBuildFacilities'.default.RequiredBuild, "Required to Build:"), class'UIUtilities_Text'.static.GetColoredText(W(Requirements, "Requirements:"), eUIState_Warning));
+	Tag.StrValue0 = class'LWStrategyRules'.static.Money(F.Upkeep);
+	MC.BeginFunctionOp("UpdateInfo");
+	MC.QueueString(class'UIUtilities_Text'.static.GetColoredText(W(TimeToBuild, "Time to Build:") @ `XEXPAND.ExpandString(W(ETADays, "ETA (days): <XGParam:IntValue0/>")), eUIState_Warning) $ "\n" $ Req);
+	MC.QueueString(F.Upkeep > 0 ? W(Notes, "Note(s):") @ `XEXPAND.ExpandString(W(NoteMaintenance, "Maintenance on this facility will cost <XGParam:StrValue0/> every month.")) : "");
+	// (EW's picture of it, GetStrategyImagePath: its FacilityIcons, named as its blueprints are.)
+	MC.QueueString(class'UILWEWChooseFacility'.static.BlueprintName(Item) != "" ? "img:///" $ class'UILWEWScreen'.const.EW_IMAGES $ ".FacilityIcons.ChooseFacility_" $ class'UILWEWChooseFacility'.static.BlueprintName(Item) : "");
+	MC.EndOp();
 }
 
 static function string W(string Localized, string Fallback)
@@ -123,6 +182,11 @@ function Refresh()
 	local int Needed, Hours, bShort;
 	local bool bFewEngineers;
 
+	if (bFacility)
+	{
+		RefreshFacility();
+		return;
+	}
 	if (bFoundry)
 	{
 		RefreshFoundry();
@@ -201,7 +265,7 @@ static function string Times(string One, int n)
 
 function Change(int By)
 {
-	if (bFoundry)
+	if (bFoundry || bFacility)
 		return;
 	Quantity = Clamp(Quantity + By, 1, 99);
 	Refresh();
@@ -212,6 +276,21 @@ function Submit()
 {
 	local string Why;
 
+	// (A facility: built on its tile, the chooser closed with this dialog, as EW's BEGIN CONSTRUCTION leaves both.)
+	if (bFacility)
+	{
+		if (!class'LWBase'.static.Work(TileX, TileY, Item, Why))
+		{
+			`log("LongWarX2: EW base building:" @ Why, , 'LongWarX2');
+			Movie.Pres.PlayUISound(eSUISound_MenuClose);
+			return;
+		}
+		Movie.Pres.PlayUISound(eSUISound_MenuSelect);
+		CloseScreen();
+		if (Chooser != none)
+			Chooser.CloseScreen();
+		return;
+	}
 	if (bFoundry ? !class'LWEngineering'.static.StartFoundry(Item, Why) : !class'LWEngineering'.static.Start(Item, Quantity, Why))
 	{
 		`log("LongWarX2: EW manufacturing:" @ Why, , 'LongWarX2');

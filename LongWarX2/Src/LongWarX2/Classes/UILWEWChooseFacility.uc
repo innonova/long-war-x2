@@ -262,24 +262,18 @@ static function string W(string Localized, string Fallback)
 	return Localized != "" ? Localized : Fallback;
 }
 
-/** The selected facility begun on the tile, back to the base. */
+/** The selected facility's dialog (EW's), whose BEGIN CONSTRUCTION begins it on the tile. */
 function Accept()
 {
-	local string Why;
-
 	if (Choices.Length == 0 || Whys[Selected] != "")
 	{
 		Movie.Pres.PlayUISound(eSUISound_MenuClose);
 		return;
 	}
-	if (!class'LWBase'.static.Work(TileX, TileY, Choices[Selected], Why))
-	{
-		`log("LongWarX2: EW base building:" @ Why, , 'LongWarX2');
-		Movie.Pres.PlayUISound(eSUISound_MenuClose);
-		return;
-	}
+	// (EW's dialog for it first, its time, costs and upkeep, whose BEGIN CONSTRUCTION builds it: XGBuildUI.OnChooseFacility,
+	// PRES().UIManufactureFacility; aek 2026-11-28: a click built it at once, with no dialog.)
 	Movie.Pres.PlayUISound(eSUISound_MenuSelect);
-	CloseScreen();
+	class'UILWEWManufacturing'.static.OpenFacility(XComHQPresentationLayer(Movie.Pres), Choices[Selected], TileX, TileY, self);
 }
 
 /** The option under the mouse, or -1 (EW's list items do not report their clicks to XCOM 2). */
@@ -325,10 +319,19 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		return super.OnUnrealCommand(cmd, arg);
 	switch (cmd)
 	{
+	case class'UIUtilities_Input'.const.FXS_L_MOUSE_DOUBLE_UP:
+		// (A double click on a facility: chosen, its dialog opened, as EW's OnMouseEvent 398: RealizeSelected, OnAccept.)
+		i = OptionUnderMouse();
+		if (i >= 0)
+		{
+			Select(i);
+			Accept();
+			return true;
+		}
+		break;
 	case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP:
 	case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED:
-		// (The panel's BACK and BEGIN CONSTRUCTION; a click on a facility builds it, as in EW (OnMouseEvent 398:
-		// RealizeSelected, OnAccept).)
+		// (The panel's BACK and BEGIN CONSTRUCTION; a click on a facility selects it, as EW's mouse-in does.)
 		if (InStr(HelpButtonUnderMouse(), "buttonHelp_0") != INDEX_NONE)
 		{
 			CloseScreen();
@@ -343,7 +346,6 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		if (i >= 0)
 		{
 			Select(i);
-			Accept();
 			return true;
 		}
 		break;

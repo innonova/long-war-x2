@@ -252,6 +252,8 @@ console.log(
     ].map(([screen, panel, camera]) => `+ScreenDisplays=(Screen=${screen}, Panel=${panel}, Camera=${camera})`),
     "; XCOM 2's head customization nearer the face, EW's panel still in view (forward, right, up from EW's customize camera).",
     '+ScreenCameraShifts=(Screen=UIBlueprint_CustomizeHead, Shift=(X=60, Y=0, Z=25))',
+    // (And its legs: nearer and lower, at the soldier's legs, aek 2026-11-28: the view stayed on the whole soldier.)
+    '+ScreenCameraShifts=(Screen=UIBlueprint_CustomizeLegs, Shift=(X=30, Y=0, Z=-22))',
     'ArmoryDistance=250',
     'SquadCamera=AwayTeam',
     "; (380 and the soldiers each over their card: at 600 and 80 apart they stood small in a huddle mid-screen, aek 2026-11-25.)",

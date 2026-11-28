@@ -18,6 +18,12 @@ see Each laboratory increases research
 see BEGIN CONSTRUCTION
 shot facility-chosen
 click BEGIN CONSTRUCTION
+# (EW's dialog for the facility first: its time to build, costs and upkeep; its own BEGIN CONSTRUCTION builds it.)
+expect Manufacturing
+see Time to Build
+see Maintenance on this facility
+shot facility-dialog
+click BEGIN CONSTRUCTION
 expect BuildFacilities
 lwsee base|LABORATORY 21d
 see Laboratory

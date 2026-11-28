@@ -1051,6 +1051,11 @@ export function makeManufactureWords({ strategyLoc }) {
     ['ErrEngineers', key('XGManufacturingUI', 'm_strErrEngineers')],
     ['ETADay', key('XGFacility_Engineering', 'm_strETADay')],
     ['ETAHour', key('XGFacility_Engineering', 'm_strETAHour')],
+    // (A facility's dialog, XGManufacturingUI.UpdateManufactureFacility.)
+    ['TimeToBuild', key('XGManufacturingUI', 'm_strLabelTimeToBuild')],
+    ['ETADays', key('XGManufacturingUI', 'm_strETADays')],
+    ['NoteMaintenance', key('XGManufacturingUI', 'm_strNoteMaintenanceCost')],
+    ['BeginBuild', key('XGManufacturingUI', 'm_strLabelModifyBeginBuild')],
   ].filter(([, v]) => v)
   return { text: ['[UILWEWManufacturing]', ...words.map(([k, v]) => `${k}="${v.replace(/"/g, "'")}"`), ''].join('\r\n'), named: words.length }
 }
