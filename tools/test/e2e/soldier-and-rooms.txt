@@ -30,7 +30,14 @@ unseen Can Appear as VIP
 see Save to Character Pool
 lwsee pov|fov 50
 shot customize
-esc
+# (Its own navigation, on XCOM 2's HUD: the next soldier on EW's pad, then its back arrow; aek 2026-11-28: "back button on
+# customize screen does not work", and the soldier after vanished from the pad.)
+at 1000 1030
+wait 3
+lwsee custpawn|LWX2ArmorySpot
+shot customize-next
+at 48 1035
+wait 2
 expect SoldierSummary
 rmb
 expect SoldierList

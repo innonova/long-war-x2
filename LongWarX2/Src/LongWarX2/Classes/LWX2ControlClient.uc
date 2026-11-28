@@ -258,6 +258,10 @@ function Handle(string Line, out array<string> Out)
 		// 'micset tex <name> <texture path>', 'micset scalar <name> <value>', 'micset vector <name> <r> <g> <b> <a>', 'micset parent <material>'.
 		Out.AddItem(MicSet(Args));
 		return;
+	case "custpawn":
+		// A test aid: XCOM 2's Customize's soldier (where, hidden) and the armory's spot (PointInSpace UIPawnLocation_Armory).
+		CustPawn(Out);
+		return;
 	case "reattach":
 		// A test aid: every static mesh component of the map re-attached (after a console 'set' of a property its scene proxy
 		// reads only when made, e.g. bCastHiddenShadow).
@@ -1639,6 +1643,28 @@ function string GiveTo(int Index, name ItemName)
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	return "ok" @ Unit.GetFullName() @ "carries" @ ItemName @ "in" @ Slot;
+}
+
+function CustPawn(out array<string> Out)
+{
+	local UICustomize C;
+	local PointInSpace P;
+	local Actor A;
+	local int i;
+
+	for (i = 0; i < `SCREENSTACK.Screens.Length; i++)
+		if (UICustomize(`SCREENSTACK.Screens[i]) != none)
+			C = UICustomize(`SCREENSTACK.Screens[i]);
+	if (C != none && C.CustomizeManager != none)
+	{
+		A = C.CustomizeManager.ActorPawn;
+		Out.AddItem("customize pawn" @ (A != none ? A.Name @ "at" @ A.Location @ "hidden" @ A.bHidden : "none") @ "unit" @ C.CustomizeManager.UpdatedUnitState.GetFullName());
+	}
+	else
+		Out.AddItem("no customize screen");
+	foreach AllActors(class'PointInSpace', P)
+		if (P.Tag == 'UIPawnLocation_Armory')
+			Out.AddItem(PathName(P) @ "at" @ P.Location @ "static" @ P.bStatic @ "movable" @ P.bMovable);
 }
 
 function int Reattach()

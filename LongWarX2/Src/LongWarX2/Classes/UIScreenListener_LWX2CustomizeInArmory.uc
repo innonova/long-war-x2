@@ -12,11 +12,17 @@ event OnInit(UIScreen Screen)
 	if (C == none || C.bInArmory || XComHQPresentationLayer(Screen.Movie.Pres) == none)
 		return;
 	C.bInArmory = true;
+	// And the armory's navigation (back, the soldiers before and after): InitScreen took the presentation layer's own help
+	// for a screen outside the armory, which the strategy layer does not draw, and kept it. (aek 2026-11-28: "back button
+	// on customize screen does not work"; the HUD's help, as UICustomize.InitScreen takes it in the armory.)
+	if (C.NavHelp != XComHQPresentationLayer(Screen.Movie.Pres).m_kAvengerHUD.NavHelp)
+	{
+		C.NavHelp.ClearButtonHelp();
+		C.NavHelp = XComHQPresentationLayer(Screen.Movie.Pres).m_kAvengerHUD.NavHelp;
+	}
 	C.UpdateData();
+	C.UpdateNavHelp();
 	`log("LongWarX2: XCOM 2's Customize told it is in the armory:" @ Screen.Class.Name, , 'LongWarX2');
-	// OPEN: straight from EW's soldier summary its navigation (back, the soldiers before and after, on XCOM 2's HUD's
-	// helpBarMC) is not drawn, though every clip up to the root is visible; after XCOM 2's loadout it is. Showing the HUD
-	// and the help and making the help again changed nothing (features/strategy-flow.md).
 }
 
 defaultproperties

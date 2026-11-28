@@ -79,6 +79,7 @@ function PlacePawn()
 	local rotator Rot;
 
 	class'LWX2EWBase'.static.Get(self).ArmorySpot(EWDisplayCamera, Loc, Rot);
+	ArmoryPlacementAt(Loc);
 	Pawn = Movie.Pres.GetUIPawnMgr().RequestPawnByID(self, UnitRef.ObjectID, Loc, Rot);
 	if (Pawn == none)
 		return;
@@ -88,6 +89,26 @@ function PlacePawn()
 		XComUnitPawn(Pawn).CreateVisualInventoryAttachments(Movie.Pres.GetUIPawnMgr(), Unit());
 	Pawn.SetLocation(Loc);
 	Pawn.SetRotation(Rot);
+}
+
+/** XCOM 2's armory spot (the PointInSpace tagged UIPawnLocation_Armory) on EW's pad: XCOM 2's Customize puts the soldier
+ *  before or after there (XComCharacterCustomization.CreatePawnVisuals), which left the pad empty (aek 2026-11-28, the
+ *  click test's shot after Previous Soldier). */
+function ArmoryPlacementAt(vector Loc)
+{
+	local PointInSpace P;
+	local bool bFound;
+
+	foreach AllActors(class'PointInSpace', P)
+		if (P.Tag == 'UIPawnLocation_Armory')
+		{
+			P.SetLocation(Loc);
+			bFound = true;
+		}
+	if (!bFound)
+	{
+		P = Spawn(class'LWX2ArmorySpot', , , Loc);
+	}
 }
 
 /** Long War's menu (XGSoldierUI.UpdateMainMenu, in its order), the soldier's panels. */

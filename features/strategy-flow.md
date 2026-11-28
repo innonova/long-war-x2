@@ -687,3 +687,23 @@ out" (logs/customize.png).
   buttons, on XCOM 2's HUD's helpBarMC) is not drawn, though the help and every clip above it report visible; reached
   after XCOM 2's loadout it is drawn. Esc and the right click still leave it. EW's HUD has a help bar of the same name; the
   lead is EW's layout classes taking XCOM 2's help bar over on that path.
+
+## Report (2026-11-28, Customize's navigation, the soldier after, the legs)
+
+aek, 2026-11-28: "back button on customize screen does not work"; "the customize screen does not move focus to the legs
+when choosing legs - what causes it to not just work normally?"
+
+- **Its back and previous/next buttons were never drawn from EW's summary.** `UICustomize.InitScreen` picks its
+  navigation help by `bInArmory`: the HUD's in XCOM 2's armory, otherwise the presentation layer's own, which the
+  strategy layer does not draw. Our listener told it it was in the armory only after `InitScreen`, so it kept the other.
+  The listener now gives it the HUD's help and builds it again. (The earlier lead, EW's Flash classes, was wrong.)
+- **The soldier before or after vanished from the pad.** XCOM 2's Customize puts the next soldier at the `PointInSpace`
+  tagged `UIPawnLocation_Armory` (`XComCharacterCustomization.CreatePawnVisuals`), which lives in the Avenger's levels;
+  EW's base has none, so the soldier stood at the world's origin. The soldier summary now keeps one (`LWX2ArmorySpot`, a
+  spawnable subclass: PointInSpace itself is placed only) on EW's pad.
+- **Why the legs didn't "just work":** XCOM 2 aims its legs camera from its own armory's layout, and in EW's room we place
+  its cameras from EW's customize camera plus a shift per screen (`ScreenCameraShifts`, as for the head). The legs' shift
+  was too small (the view moved only to the waist); now (20, 0, −50): knee to feet with the thighs, EW's panel with the
+  legs list still readable (lower, the list leaves the panel's view).
+- **Click test:** `soldier-and-rooms` clicks Next Soldier in Customize (`custpawn`, a new test aid: Customize's soldier and
+  the armory spot) and leaves by its back arrow. Passes.
