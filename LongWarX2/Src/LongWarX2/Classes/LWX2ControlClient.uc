@@ -248,6 +248,11 @@ function Handle(string Line, out array<string> Out)
 	case "screens":
 		Screens(Out);
 		return;
+	case "windows":
+		// A test aid: the map's windows (level actors flagged bIsWindow) and whether XCOM 2's path solver goes through each,
+		// from the tile on one side to the tile on the other (a path of 2 or 3 tiles: through; longer: round; none: no way).
+		Windows(Out);
+		return;
 	case "load":
 		// A test aid: an object loaded by its path (DynamicLoadObject, quietly), its class and full path, or none.
 		Out.AddItem(Args.Length > 1 ? (DynamicLoadObject(Args[1], class'Object', true) != none ? PathName(DynamicLoadObject(Args[1], class'Object', true)) @ DynamicLoadObject(Args[1], class'Object', true).Class.Name : "none") : "ERR load <path>");
@@ -1619,6 +1624,43 @@ function string GiveTo(int Index, name ItemName)
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);
 	return "ok" @ Unit.GetFullName() @ "carries" @ ItemName @ "in" @ Slot;
+}
+
+function Windows(out array<string> Out)
+{
+	local XComLevelActor A;
+	local XComGameState_Unit Unit;
+	local array<TTile> Path;
+	local TTile T1, T2;
+	local vector L, Axis, P1, P2;
+	local int n, k;
+	local string Line;
+
+	foreach `XCOMHISTORY.IterateByClassType(class'XComGameState_Unit', Unit)
+		if (Unit.GetTeam() == eTeam_XCom && Unit.IsSoldier() && !Unit.bRemovedFromPlay)
+			break;
+	foreach AllActors(class'XComLevelActor', A)
+	{
+		if (!A.VisibilityBlockingData.bIsWindow)
+			continue;
+		n++;
+		if (n > 12)
+			continue;
+		L = A.Location;
+		Line = "window" @ int(L.X) $ "," $ int(L.Y) $ "," $ int(L.Z) $ ":";
+		for (k = 0; k < 2; k++)
+		{
+			Axis = k == 0 ? vect(1, 0, 0) : vect(0, 1, 0);
+			P1 = L + Axis * 60 + vect(0, 0, 40);
+			P2 = L - Axis * 60 + vect(0, 0, 40);
+			T1 = `XWORLD.GetTileCoordinatesFromPosition(P1);
+			T2 = `XWORLD.GetTileCoordinatesFromPosition(P2);
+			Path.Length = 0;
+			Line @= (k == 0 ? "x" : "y") $ ":" $ (class'X2PathSolver'.static.BuildPath(Unit, T1, T2, Path, false) ? string(Path.Length) : "none");
+		}
+		Out.AddItem(Line);
+	}
+	Out.AddItem(n @ "windows");
 }
 
 /** In a mission: each of XCOM's units with the abilities it can use (and their charges). */
