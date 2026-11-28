@@ -22,7 +22,8 @@ click Confirm
 expect SquadSelect
 shot squad-select
 # (A soldier's EDIT and back: the armory had waited on the Avenger's scene for its back, trapping the player, aek 2026-11-28.)
-at 1296 673
+# (The fifth soldier's card, which shows EDIT above it while the mouse is over it, then EDIT.)
+at 1334 889
 wait 1
 at 1296 673
 wait 4

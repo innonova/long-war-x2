@@ -18,7 +18,8 @@ shot fight
 # (The panel's scan lines defeat OCR on the countdown; the report reads.)
 waitsee STATUS REPORT 60
 shot report
-lwsee hangar|~jet 0 RAVEN-1 .* (repairing|refuelling|lost|ready)
+# (Or shot down: then gone from the hangar, and RAVEN-2 is the first.)
+lwsee hangar|~(RAVEN-1 .* (repairing|refuelling|ready)|jet 0 RAVEN-2)
 click LEAVE REPORT
 wait 2
 escto MissionControl 2

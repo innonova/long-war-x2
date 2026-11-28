@@ -262,6 +262,11 @@ function Handle(string Line, out array<string> Out)
 		// A test aid: XCOM 2's Customize's soldier (where, hidden) and the armory's spot (PointInSpace UIPawnLocation_Armory).
 		CustPawn(Out);
 		return;
+	case "shadowcopies":
+		// shadowcopies <min z>: a shadow-only copy (LWX2ShadowPiece) of every piece of the map at or above that height (a test aid
+		// for the roofs' shadows under XCOM 2's floor hiding).
+		Out.AddItem(ShadowCopies(Args.Length > 1 ? float(Args[1]) : 150.0) @ "shadow copies");
+		return;
 	case "reattach":
 		// A test aid: every static mesh component of the map re-attached (after a console 'set' of a property its scene proxy
 		// reads only when made, e.g. bCastHiddenShadow).
@@ -1665,6 +1670,27 @@ function CustPawn(out array<string> Out)
 	foreach AllActors(class'PointInSpace', P)
 		if (P.Tag == 'UIPawnLocation_Armory')
 			Out.AddItem(PathName(P) @ "at" @ P.Location @ "static" @ P.bStatic @ "movable" @ P.bMovable);
+}
+
+function int ShadowCopies(float MinZ)
+{
+	local XComLevelActor A;
+	local LWX2ShadowPiece P;
+	local int n;
+
+	foreach AllActors(class'XComLevelActor', A)
+	{
+		if (A.StaticMeshComponent == none || A.StaticMeshComponent.StaticMesh == none || A.Location.Z < MinZ || LWX2ShadowPiece(A) != none)
+			continue;
+		P = Spawn(class'LWX2ShadowPiece', , , A.Location, A.Rotation);
+		if (P == none)
+			continue;
+		P.StaticMeshComponent.SetStaticMesh(A.StaticMeshComponent.StaticMesh);
+		P.SetDrawScale3D(A.DrawScale3D);
+		P.SetDrawScale(A.DrawScale);
+		n++;
+	}
+	return n;
 }
 
 function int Reattach()
