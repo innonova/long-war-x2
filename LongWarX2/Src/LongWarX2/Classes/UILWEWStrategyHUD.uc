@@ -29,6 +29,9 @@ var int MissionControlEvents;
 var UIMCController EventsTarget;
 /** Whether EW's resource panel is hidden (ShowForTop). */
 var bool bResourcesHidden;
+/** A scan's clock run (RunClock): from and to which hour, since when, over how long. */
+var int ClockRunFrom, ClockRunTo;
+var float ClockRunStart, ClockRunSeconds;
 /** Whether XCOM 2's navigation help is hidden (an EW screen on top, which has EW's own back arrow and help: ShowForTop). */
 var bool bNavHelpHidden;
 /** EW's build screen's item card button shown in the bar. */
@@ -627,13 +630,50 @@ static function int Days(int H) { return Max(0, (H + 23) / 24); }
 /** EW's clock (its theClock, as EW's UIStrategyComponent_Clock sets it for English): Long War's date and hour. */
 function SetClock(XComGameState_LWStrategy S)
 {
+	// (While a scan runs the clock forward, its hour, not the campaign's: ClockRun.)
+	SetClockHours(ClockRunTo > ClockRunFrom ? ClockRunHour() : S.Hours);
+}
+
+/** A scan's time shown passing (EW's clock racing while Mission Control scans): the clock run from one hour to another over
+ *  some real seconds; the campaign is already there. */
+function RunClock(int FromHours, int ToHours, float Seconds)
+{
+	ClockRunFrom = FromHours;
+	ClockRunTo = ToHours;
+	ClockRunStart = WorldInfo.RealTimeSeconds;
+	ClockRunSeconds = FMax(Seconds, 0.1);
+	SetTimer(0.05, true, nameof(ClockRunTick));
+	ClockRunTick();
+}
+
+function int ClockRunHour()
+{
+	return ClockRunFrom + int((ClockRunTo - ClockRunFrom) * FClamp((WorldInfo.RealTimeSeconds - ClockRunStart) / ClockRunSeconds, 0.0, 1.0));
+}
+
+function ClockRunTick()
+{
+	local int Hour;
+
+	Hour = ClockRunHour();
+	SetClockHours(Hour);
+	if (Hour >= ClockRunTo)
+	{
+		ClearTimer(nameof(ClockRunTick));
+		ClockRunFrom = 0;
+		ClockRunTo = 0;
+	}
+}
+
+function SetClockHours(int Hours)
+{
 	local TDateTime T;
 	local array<ASValue> Args;
 	local ASValue V;
 	local int Hour;
 
 	class'X2StrategyGameRulesetDataStructures'.static.SetTime(T, 0, 0, 0, 3, 1, class'XComGameState_LWStrategy'.const.LW_START_YEAR);
-	class'X2StrategyGameRulesetDataStructures'.static.AddHours(T, S.Hours);
+	class'X2StrategyGameRulesetDataStructures'.static.AddHours(T, Hours);
 	Hour = class'X2StrategyGameRulesetDataStructures'.static.GetHour(T);
 	V.Type = AS_String;
 	V.s = class'X2StrategyGameRulesetDataStructures'.static.GetDay(T) @ class'X2StrategyGameRulesetDataStructures'.static.GetMonthString(class'X2StrategyGameRulesetDataStructures'.static.GetMonth(T));

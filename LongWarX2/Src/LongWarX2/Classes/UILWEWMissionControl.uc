@@ -9,6 +9,8 @@
 // the strategy HUD's, under this screen; the movie's own are hidden, as for the alerts.
 class UILWEWMissionControl extends UILWEWScreen dependson(LWStrategyRules);
 
+/** A scan's time being shown passing (Scan). */
+var bool bScanning;
 /** The screen beneath, and the list's entries: the Geoscape's decision kind and index (kind 0: the scan). */
 var UILWGeoscape Geo;
 var array<int> EntryKinds, EntryIndexes;
@@ -305,17 +307,43 @@ function Focus()
 	Movie.Invoke(MCPath $ ".theMissionList.setFocus", Params);
 }
 
+/** SCAN FOR ACTIVITY: time run until something happens (a month at most), and shown passing as EW's clock races while it
+ *  scans, about half a second a day (at most 3 seconds); what happened shown once the clock is there (aek 2026-11-28: the
+ *  scan jumped to the next event at once). The campaign's time is run at once: hour by hour it would write a state of the
+ *  campaign for every hour into the save. */
+function Scan()
+{
+	local UILWEWStrategyHUD HUD;
+	local int Before, Hours;
+	local float Seconds;
+
+	Before = class'XComGameState_LWStrategy'.static.Get().Hours;
+	Hours = class'XComGameState_LWStrategy'.static.Run(30 * 24);
+	Seconds = FClamp(Hours / 24.0 * 0.5, 0.3, 3.0);
+	foreach AllActors(class'UILWEWStrategyHUD', HUD)
+		HUD.RunClock(Before, Before + Hours, Seconds);
+	bScanning = true;
+	SetTimer(Seconds + 0.1, false, nameof(ScanDone));
+}
+
+function ScanDone()
+{
+	bScanning = false;
+	Geo.Refresh();
+	Refresh();
+}
+
 /** An entry taken (XGMissionControlUI.OnMissionInput): the scan runs time until something happens (a month at most);
  *  a decision opens its EW alert, or, where EW has none here, the Geoscape takes it. */
 function Choose(int i)
 {
 	if (i < 0 || i >= EntryKinds.Length || Geo == none)
 		return;
+	if (bScanning)
+		return;
 	if (EntryKinds[i] == 0)
 	{
-		class'XComGameState_LWStrategy'.static.Run(30 * 24);
-		Geo.Refresh();
-		Refresh();
+		Scan();
 		return;
 	}
 	if (EntryKinds[i] >= 20 && class'UILWEWCouncilRequest'.static.Open(Geo, EntryIndexes[i]))
