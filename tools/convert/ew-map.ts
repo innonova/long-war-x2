@@ -58,6 +58,8 @@ export { CONVERTER_VERSION }
 // (93: the skin warmth less yellow, measured on Shen against EW)
 // (94: EW's static lights marked Baked (their light is in EW's light maps); the plot tags them, the mod lets them light the
 // units only, not the pieces a second time: a night map's doubled moonlight, aek 2026-11-25)
+// (100: nothing new in what ew-map.ts writes; raised so every map is written as a plot again: window frames, painted windows
+// and facade glass in EW's light maps like any piece (ew-plot.ts), no longer unlit black squares, aek 2026-11-28)
 // (99: nothing new in what ew-map.ts writes; raised so every map is written as a plot again: each light-mapped piece's
 // Tint white (ew-plot.ts), without which our lit material's light-map term was multiplied by its default black and EW's
 // baked light never drew on a mission: dark interiors, aek 2026-11-28)

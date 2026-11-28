@@ -424,7 +424,10 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
   const night = !!lm && (lm.everywhere || lm.nightMaps.includes(map.name))
   const lightmapMIC = (path: string, l: PieceLightmap): number => {
     const look = map.looks.get(path)
-    if (!lm || l.uv !== 1 || !look || look.kind !== 'Prop' || !look.diffuse || GLASS_MATERIAL.test(path) || RUNOFF_MATERIAL.test(path)) return 0
+    // (Window frames, EW's painted 'solid' windows and facade glass have their own picture and are lit as any piece: kept off
+    // the light maps by their names until converter 100, they drew unlit, nearly black squares at night, aek's
+    // dark-inside.png; glass with no picture of its own takes the translucent pane, above.)
+    if (!lm || l.uv !== 1 || !look || look.kind !== 'Prop' || !look.diffuse || RUNOFF_MATERIAL.test(path)) return 0
     const p = parse(pkg.data(sampleMIC), 4)
     const name = (n: string) => bin((x) => { const r = objName(n); x.i32(r.index).i32(r.number) })
     const param = (n: string, value: T) => serialize({ head: new Uint8Array(0), tags: [{ name: 'ParameterName', type: 'NameProperty', arrayIndex: 0, value: name(n) }, value], tail: new Uint8Array(0) })

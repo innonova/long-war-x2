@@ -302,3 +302,18 @@ aek, 2026-11-28: inside is very dark (`logs/dark-inside.png`), and in some state
   component (console `set`, the new `reattach` aid) did not bring it back. Leads: how XCOM 2's floor hiding draws
   (`XComFloorComponent`'s toggle-hidden renders to the Occluded channel only), XCOM 2's `bCutoutMaskFXS` usage for
   materials on cut-out primitives, or EW's dominant-light shadow maps carried as a texture of their own.
+
+## Report (2026-11-28, windows: frames in the light maps; a grenade through one)
+
+- **Window frames, EW's painted "solid" windows and facade glass** with a picture of their own were kept off the light
+  maps by their names (the plot writer's glass rule, /Glass|Window/), so they drew unlit, nearly black at night. Now lit
+  as any piece; only glass with no picture of its own takes the translucent pane (`ew-plot.ts`, converter 100).
+- **Checked on the convenience store (converter 98's windows):** a soldier put beside a ground-floor window in the
+  bookstore, the HE grenade aimed into the store beyond it: XCOM 2 takes the target, the throw goes through, the blast
+  wrecks the fridges and part of the wall, and the thrower takes friendly fire, as the blast circle warned (video not
+  committed). XCOM 2's path solver goes through those windows in 2 tiles (`windows`).
+- **Left as is:** the dark squares on the store's interior wall are those windows: not the glass (gone at opacity 0, no
+  change) nor the frame (light-mapped now); most likely the dark room behind seen through them with EW's baked shading
+  round the opening. The person did not flag them.
+- **Test aids:** `windows` now names each window's mesh, hidden state and materials, with the tiles either side;
+  `micset glass …` sets a parameter on the plot's glass panes.

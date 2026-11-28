@@ -1691,7 +1691,13 @@ function string MicSet(array<string> Args)
 	local Texture T;
 	local LinearColor V;
 	local int k, n;
+	local bool bGlass;
 
+	if (Args.Length > 1 && Args[1] == "glass")
+	{
+		bGlass = true;
+		Args.Remove(1, 1);
+	}
 	if (Args.Length < 3 || (Args.Length < 4 && Args[1] != "parent"))
 		return "ERR micset tex|scalar|vector <name> <value…> | parent <material>";
 	if (Args[1] == "tex")
@@ -1711,7 +1717,10 @@ function string MicSet(array<string> Args)
 			for (k = 0; k < C.GetNumElements(); k++)
 			{
 				MIC = MaterialInstanceConstant(C.GetMaterial(k));
-				if (MIC == none || MIC.Parent == none || Seen.Find(MIC) != INDEX_NONE || InStr(PathName(MIC.Parent), "LWX2Lightmap.") == INDEX_NONE)
+				// ('micset glass …': the plot's glass panes instead, LWX2Glass_*.)
+				if (MIC == none || MIC.Parent == none || Seen.Find(MIC) != INDEX_NONE)
+					continue;
+				if (bGlass != (InStr(string(MIC.Name), "LWX2Glass") == 0) || (!bGlass && InStr(PathName(MIC.Parent), "LWX2Lightmap.") == INDEX_NONE))
 					continue;
 				Seen.AddItem(MIC);
 				if (Args[1] == "parent")
@@ -1794,7 +1803,16 @@ function Windows(out array<string> Out)
 		if (n > 12)
 			continue;
 		L = A.Location;
-		Line = "window" @ int(L.X) $ "," $ int(L.Y) $ "," $ int(L.Z) $ ":";
+		Line = "window" @ int(L.X) $ "," $ int(L.Y) $ "," $ int(L.Z);
+		if (A.StaticMeshComponent != none)
+		{
+			Line @= string(A.StaticMeshComponent.StaticMesh.Name) @ "hidden" @ A.bHidden $ "/" $ A.StaticMeshComponent.HiddenGame;
+			if (A.StaticMeshComponent.GetMaterial(0) != none)
+				Line @= "mat0" @ A.StaticMeshComponent.GetMaterial(0).Name;
+			if (A.StaticMeshComponent.GetNumElements() > 1 && A.StaticMeshComponent.GetMaterial(1) != none)
+				Line @= "mat1" @ A.StaticMeshComponent.GetMaterial(1).Name;
+		}
+		Line $= ":";
 		for (k = 0; k < 2; k++)
 		{
 			Axis = k == 0 ? vect(1, 0, 0) : vect(0, 1, 0);
@@ -1803,7 +1821,8 @@ function Windows(out array<string> Out)
 			T1 = `XWORLD.GetTileCoordinatesFromPosition(P1);
 			T2 = `XWORLD.GetTileCoordinatesFromPosition(P2);
 			Path.Length = 0;
-			Line @= (k == 0 ? "x" : "y") $ ":" $ (class'X2PathSolver'.static.BuildPath(Unit, T1, T2, Path, false) ? string(Path.Length) : "none");
+			Line @= (k == 0 ? "x" : "y") $ ":" $ (class'X2PathSolver'.static.BuildPath(Unit, T1, T2, Path, false) ? string(Path.Length) : "none")
+				$ "(" $ T1.X $ "," $ T1.Y $ "," $ T1.Z $ "-" $ T2.X $ "," $ T2.Y $ "," $ T2.Z $ ")";
 		}
 		Out.AddItem(Line);
 	}
