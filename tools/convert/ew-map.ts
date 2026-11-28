@@ -58,6 +58,9 @@ export { CONVERTER_VERSION }
 // (93: the skin warmth less yellow, measured on Shen against EW)
 // (94: EW's static lights marked Baked (their light is in EW's light maps); the plot tags them, the mod lets them light the
 // units only, not the pieces a second time: a night map's doubled moonlight, aek 2026-11-25)
+// (99: nothing new in what ew-map.ts writes; raised so every map is written as a plot again: each light-mapped piece's
+// Tint white (ew-plot.ts), without which our lit material's light-map term was multiplied by its default black and EW's
+// baked light never drew on a mission: dark interiors, aek 2026-11-28)
 // (98: EW's window glass (its window kits' breakable panes) written as XCOM 2 windows: units climb through, grenades pass)
 // (97: EW's weather per map (Weather=: its storm level, for XCOM 2's weather actor); its fog's colours read B, G, R as a
 // Color is kept (they were swapped); a cyan copy per facility of EW's blueprints for the facility chooser, LWX2Blueprint_*)

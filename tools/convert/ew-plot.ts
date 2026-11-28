@@ -443,7 +443,9 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       tGuid('LightingGuid'),
       { name: 'TextureParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(textures.length); for (const [n, t] of textures) w.bytes(param(n, tObj('ParameterValue', t))) }) },
       { name: 'ScalarParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(scalars.length); for (const [n, v] of scalars) w.bytes(param(n, tFloat('ParameterValue', v))) }) },
-      { name: 'VectorParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(1); w.bytes(param('LMScaleBias', { name: 'ParameterValue', type: 'StructProperty', struct: 'LinearColor', arrayIndex: 0, value: bin((x) => [l.scale[0]!, l.scale[1]!, l.bias[0]!, l.bias[1]!].forEach((c) => x.f32(c))) })) }) },
+      // (Tint white: the light-map term is multiplied by it, and its default in our material is black. Without it EW's
+      // baked light never drew on a mission (converter 99, aek 2026-11-28: dark interiors); the base sets it in code.)
+      { name: 'VectorParameterValues', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(2); w.bytes(param('LMScaleBias', { name: 'ParameterValue', type: 'StructProperty', struct: 'LinearColor', arrayIndex: 0, value: bin((x) => [l.scale[0]!, l.scale[1]!, l.bias[0]!, l.bias[1]!].forEach((c) => x.f32(c))) })); w.bytes(param('Tint', { name: 'ParameterValue', type: 'StructProperty', struct: 'LinearColor', arrayIndex: 0, value: bin((x) => [1, 1, 1, 1].forEach((c) => x.f32(c))) })) }) },
     ]
     return addExport(sampleMIC, nextName('LWX2Lightmapped'), level, serialize({ head: objectHead(), tags, tail: p.tail }))
   }

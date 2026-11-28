@@ -248,6 +248,21 @@ function Handle(string Line, out array<string> Out)
 	case "screens":
 		Screens(Out);
 		return;
+	case "lmcheck":
+		// A test aid: a few of the mission's light-mapped materials (M_EWLightmappedLit's instances): their light map texture,
+		// its size, the second atlas and the brightness, as the shader gets them.
+		LMCheck(Out);
+		return;
+	case "micset":
+		// A test aid: on every light-mapped material of the mission (M_EWLightmappedLit's instances), a parameter set:
+		// 'micset tex <name> <texture path>', 'micset scalar <name> <value>', 'micset vector <name> <r> <g> <b> <a>', 'micset parent <material>'.
+		Out.AddItem(MicSet(Args));
+		return;
+	case "reattach":
+		// A test aid: every static mesh component of the map re-attached (after a console 'set' of a property its scene proxy
+		// reads only when made, e.g. bCastHiddenShadow).
+		Out.AddItem(Reattach() @ "components re-attached");
+		return;
 	case "windows":
 		// A test aid: the map's windows (level actors flagged bIsWindow) and whether XCOM 2's path solver goes through each,
 		// from the tile on one side to the tile on the other (a path of 2 or 3 tiles: through; longer: round; none: no way).
@@ -1626,6 +1641,112 @@ function string GiveTo(int Index, name ItemName)
 	return "ok" @ Unit.GetFullName() @ "carries" @ ItemName @ "in" @ Slot;
 }
 
+function int Reattach()
+{
+	local Actor A;
+	local StaticMeshComponent C;
+	local int n;
+
+	foreach AllActors(class'Actor', A)
+		foreach A.AllOwnedComponents(class'StaticMeshComponent', C)
+		{
+			A.ReattachComponent(C);
+			n++;
+		}
+	return n;
+}
+
+function string MicSet(array<string> Args)
+{
+	local Actor A;
+	local StaticMeshComponent C;
+	local MaterialInstanceConstant MIC;
+	local array<MaterialInstanceConstant> Seen;
+	local Texture T;
+	local LinearColor V;
+	local int k, n;
+
+	if (Args.Length < 3 || (Args.Length < 4 && Args[1] != "parent"))
+		return "ERR micset tex|scalar|vector <name> <value…> | parent <material>";
+	if (Args[1] == "tex")
+	{
+		T = Texture(DynamicLoadObject(Args[3], class'Texture', true));
+		if (T == none)
+			return "ERR no texture" @ Args[3];
+	}
+	if (Args[1] == "vector")
+	{
+		if (Args.Length < 7)
+			return "ERR micset vector <name> <r> <g> <b> <a>";
+		V.R = float(Args[3]); V.G = float(Args[4]); V.B = float(Args[5]); V.A = float(Args[6]);
+	}
+	foreach AllActors(class'Actor', A)
+		foreach A.AllOwnedComponents(class'StaticMeshComponent', C)
+			for (k = 0; k < C.GetNumElements(); k++)
+			{
+				MIC = MaterialInstanceConstant(C.GetMaterial(k));
+				if (MIC == none || MIC.Parent == none || Seen.Find(MIC) != INDEX_NONE || InStr(PathName(MIC.Parent), "LWX2Lightmap.") == INDEX_NONE)
+					continue;
+				Seen.AddItem(MIC);
+				if (Args[1] == "parent")
+					MIC.SetParent(MaterialInterface(DynamicLoadObject(Args[2], class'MaterialInterface', true)));
+				else if (Args[1] == "tex")
+					MIC.SetTextureParameterValue(name(Args[2]), T);
+				else if (Args[1] == "scalar")
+					MIC.SetScalarParameterValue(name(Args[2]), float(Args[3]));
+				else
+					MIC.SetVectorParameterValue(name(Args[2]), V);
+				n++;
+			}
+	return "ok" @ n @ "materials";
+}
+
+function LMCheck(out array<string> Out)
+{
+	local Actor A;
+	local StaticMeshComponent C;
+	local MaterialInstanceConstant MIC;
+	local Texture T, D;
+	local float V, G;
+	local int k, n, j;
+	local array<string> Parents;
+	local array<int> Counts;
+	local string Parent;
+
+	foreach AllActors(class'Actor', A)
+		foreach A.AllOwnedComponents(class'StaticMeshComponent', C)
+			for (k = 0; k < C.GetNumElements(); k++)
+			{
+				// (Every material counted by its parent.)
+				Parent = PathName(C.GetMaterial(k));
+				if (MaterialInstance(C.GetMaterial(k)) != none && MaterialInstance(C.GetMaterial(k)).Parent != none)
+					Parent = PathName(MaterialInstance(C.GetMaterial(k)).Parent);
+				j = Parents.Find(Parent);
+				if (j == INDEX_NONE)
+				{
+					Parents.AddItem(Parent);
+					Counts.AddItem(0);
+					j = Parents.Length - 1;
+				}
+				Counts[j]++;
+				if (n >= 6)
+					continue;
+				MIC = MaterialInstanceConstant(C.GetMaterial(k));
+				if (MIC == none || MIC.Parent == none || InStr(PathName(MIC.Parent), "Lightmapped") == INDEX_NONE)
+					continue;
+				T = none; D = none; V = -1; G = -1;
+				MIC.GetTextureParameterValue('LightMap', T);
+				MIC.GetTextureParameterValue('LightMapDir', D);
+				MIC.GetScalarParameterValue('LMBrightness', V);
+				MIC.GetScalarParameterValue('LMGamma', G);
+				Out.AddItem(PathName(C.StaticMesh) @ "<" $ PathName(MIC.Parent) @ "LM=" $ PathName(T) $ (Texture2D(T) != none ? "(" $ Texture2D(T).SizeX $ ")" : "") @ "Dir=" $ PathName(D) @ "x" $ V @ "gamma" @ G);
+				n++;
+			}
+	for (j = 0; j < Parents.Length; j++)
+		if (Counts[j] >= 20)
+			Out.AddItem(Counts[j] @ Parents[j]);
+}
+
 function Windows(out array<string> Out)
 {
 	local XComLevelActor A;
@@ -1975,6 +2096,8 @@ function EnvLights(out array<string> Out, string Mode)
 /** The probe aid: the line of sight through a point of the screen, and the static meshes' bounds it passes through. */
 function Probe(out array<string> Out, float SX, float SY, int Most)
 {
+	local Texture ProbeTex;
+	local float ProbeV;
 	local LocalPlayer LP;
 	local vector2D At;
 	local vector Origin, Dir, Lo, Hi;
@@ -2036,6 +2159,9 @@ function Probe(out array<string> Out, float SX, float SY, int Most)
 				Line @= "[" $ k $ "]" $ PathName(M);
 				if (MaterialInstance(M) != none && MaterialInstance(M).Parent != none)
 					Line @= "<" $ PathName(MaterialInstance(M).Parent);
+				// (And a light-mapped one's light map, as the shader gets it: its texture and brightness.)
+				if (MaterialInstanceConstant(M) != none && MaterialInstanceConstant(M).GetTextureParameterValue('LightMap', ProbeTex))
+					Line @= "LM=" $ PathName(ProbeTex) $ (MaterialInstanceConstant(M).GetScalarParameterValue('LMBrightness', ProbeV) ? "x" $ ProbeV : "");
 			}
 			// (Kept sorted by distance.)
 			for (i = 0; i < Dists.Length && Dists[i] <= TNear; i++);

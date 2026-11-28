@@ -275,3 +275,30 @@ Left open, measured:
   `ew-highway.png`); XCOM 2's rain is lit by its sun, which is off on EW's maps. Test aid: `storm <0-7>`.
 - **The soldiers' flashlight pools** (XCOM 2's at night) are XCOM 2's, not EW's.
 - After these, the port's ground on the _EWI map measures 21,35,53 (saturation 0.49) against EW's 29,37,49 (0.25).
+
+## Report (2026-11-28, dark interiors: EW's light maps had never drawn on a mission)
+
+aek, 2026-11-28: inside is very dark (`logs/dark-inside.png`), and in some states bright (`logs/random-bright.png`).
+
+- **The cause:** our lit material multiplies its light-map term by `Tint`, whose default is black; the base sets it
+  white in code, but the plot writer gave each mission piece only `LMScaleBias`. So on every mission map EW's baked
+  light was multiplied by zero, and only EW's live lights and XCOM 2's lit diffuse lit the pieces. It went unseen while
+  EW's static lamps were also placed as live lights; since converter 94 (25 November) they light the units only, their
+  light being "in the light maps", and the interiors went dark. Found with new test aids: `micset` (a texture, scalar,
+  vector or parent on every one of the mission's light-mapped materials) showed that Diffuse took effect while a white
+  light map at ×400 added nothing, and `micset vector Tint 1 1 1 1` brought EW's baked light in at once.
+- **Fixed:** the plot writer sets `Tint` white on each light-mapped piece (`ew-plot.ts`; converter 99, so every map is
+  written as a plot again).
+- **Recalibrated** (both had been tuned while the light maps did not draw): `PlotLightmapBrightness=0.04` (at the base's
+  0.4 interiors washed out white), measured on the plain store's lobby with the moon off against the person's EW save on
+  that map (save1658, Game 55; floor 31,41,76 against EW's 38,37,69); `EWSunScale` 2.2 → 1.0, EW's own brightness, as EW
+  draws its sun live over its light maps. The day store now reads in EW's tones (tan walls, dark asphalt, the lobby's
+  dark carpet).
+- **Also set, harmless:** `bUsedWithStaticMeshes` on `M_EWLightmappedLit` (SDK editor). A first suspect; XCOM 2's
+  Material.uc says it matters only with a particle usage. Kept, being right for what the material is used on.
+- **Open: the bright state.** Where XCOM 2 hides a building's roof (its floor hiding takes the roof away whole; the walls
+  stay at full height) EW's moon or sun falls into the room, with hard shadows, because the hidden roof casts none. In EW
+  the room keeps the roof's shadow (EW's dominant light has static shadow maps). `bCastHiddenShadow` set on every
+  component (console `set`, the new `reattach` aid) did not bring it back. Leads: how XCOM 2's floor hiding draws
+  (`XComFloorComponent`'s toggle-hidden renders to the Occluded channel only), XCOM 2's `bCutoutMaskFXS` usage for
+  materials on cut-out primitives, or EW's dominant-light shadow maps carried as a texture of their own.
