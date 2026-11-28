@@ -58,6 +58,7 @@ export { CONVERTER_VERSION }
 // (93: the skin warmth less yellow, measured on Shen against EW)
 // (94: EW's static lights marked Baked (their light is in EW's light maps); the plot tags them, the mod lets them light the
 // units only, not the pieces a second time: a night map's doubled moonlight, aek 2026-11-25)
+// (98: EW's window glass (its window kits' breakable panes) written as XCOM 2 windows: units climb through, grenades pass)
 // (97: EW's weather per map (Weather=: its storm level, for XCOM 2's weather actor); its fog's colours read B, G, R as a
 // Color is kept (they were swapped); a cyan copy per facility of EW's blueprints for the facility chooser, LWX2Blueprint_*)
 // (96: no normal or distortion map as an emitter's sprite (a smoke's normal map drew as a grey square))
@@ -181,7 +182,11 @@ const COVER_DEFAULTS: Record<string, Partial<Cover>> = {
  *  prefab and some sandbag piles set bCanClimbOnto, and XCOM 2 then makes their tops floors; a sandbag is low enough to be
  *  stepped onto without a climb, so their tops are no valid destination either). The person, 2026-11-03:
  *  "you should not be able to stand on the sandbags", nor "on the hood and trunk" of a car. */
-const notStoodOn = (mesh: string, c: Cover): Cover => (/^(VEH_|SandBag\.)/.test(mesh) ? { ...c, onto: false, destination: false } : c)
+const notStoodOn = (mesh: string, c: Cover): Cover => asWindow(mesh, /^(VEH_|SandBag\.)/.test(mesh) ? { ...c, onto: false, destination: false } : c)
+/** EW's window glass: its window kits' panes (ComKitWindows), seen through and no cover, with no window flag of their own;
+ *  EW's pathing and grenades go through them by breaking them. XCOM 2 needs the flag to let units climb through and
+ *  grenades pass: written as windows (aek 2026-11-28: no grenade through a window, no jump through one; converter 98). */
+const asWindow = (mesh: string, c: Cover): Cover => (!c.window && !c.sight && c.ignore && /ComKitWindow/i.test(mesh) ? { ...c, window: true } : c)
 function coverOf(index: number, own: Tag[]): Cover {
   const found: Partial<Cover> = {}
   const take = (tags: Tag[]) => {

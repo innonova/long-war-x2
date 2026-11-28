@@ -526,6 +526,10 @@ export function writePlot(template: Uint8Array, map: EWMap, settings: PlotSettin
       set(ctags, { name: 'Materials', type: 'ArrayProperty', arrayIndex: 0, value: bin((w) => { w.i32(mats.length); mats.forEach((m) => w.i32(m)) }) })
     if (piece.backdrop)
       for (const b of ['CollideActors', 'BlockActors', 'BlockZeroExtent', 'BlockNonZeroExtent', 'BlockRigidBody']) set(ctags, tBool(b, false))
+    // (A window's pane let through by traces, a grenade's arc among them: EW's glass broke as it was hit, ours is not
+    // breakable, and stopped the grenade. Units go by the tile data's window. aek 2026-11-28.)
+    else if (piece.cover.includes('Window=true'))
+      for (const b of ['BlockZeroExtent', 'BlockNonZeroExtent']) set(ctags, tBool(b, false))
     if (frac) {
       // The component's head names the class whose template it is: the frac actor's.
       const head = Uint8Array.from(meshSample.head)
