@@ -1680,7 +1680,7 @@ function int ShadowCopies(float MinZ)
 
 	foreach AllActors(class'XComLevelActor', A)
 	{
-		if (A.StaticMeshComponent == none || A.StaticMeshComponent.StaticMesh == none || A.Location.Z < MinZ || LWX2ShadowPiece(A) != none)
+		if (A.StaticMeshComponent == none || A.StaticMeshComponent.StaticMesh == none || A.Location.Z < MinZ)
 			continue;
 		P = Spawn(class'LWX2ShadowPiece', , , A.Location, A.Rotation);
 		if (P == none)

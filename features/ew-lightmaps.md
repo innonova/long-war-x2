@@ -317,3 +317,8 @@ aek, 2026-11-28: inside is very dark (`logs/dark-inside.png`), and in some state
   round the opening. The person did not flag them.
 - **Test aids:** `windows` now names each window's mesh, hidden state and materials, with the tiles either side;
   `micset glass …` sets a parameter on the plot's glass panes.
+- **2026-11-28, later: shadow-only copies of the upper pieces** (`LWX2ShadowPiece`, never drawn, always casting; test aid
+  `shadowcopies <min z>`) tried on the day store with a soldier in the bookstore: the floor and shelves measure the same with
+  and without (45,51,40 both), so the roof's shadow is not missing in that state, and the bright state did not come up. Not
+  put into the game blind; the aid stays for when the state is found (the person's shot is the night store "in very specific
+  circumstances").
