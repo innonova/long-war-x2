@@ -124,6 +124,7 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 
 simulated function bool OnUnrealCommand(int cmd, int arg)
 {
+	LogClick(self, cmd, arg);
 	if ((arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0)
 	{
 		switch (cmd)

@@ -221,3 +221,30 @@ panel: EW has no Mission Control alert for them (a cinematic, the Situation Room
 - **Checked on wingpu:** the globe turning in Mission Control; a UFO contact over the United States: the globe turned and held
   with the HQ and UFO markers before the camera, North America under them (`logs/wingpu_ew_globe_facing.png`).
 - **Not done:** EW's icons in place of spheres; the markers' own colours are lit (a plain stand-in tinted), not glowing.
+
+## Report (2026-11-28, the interception on EW's own screen)
+
+aek, 2026-11-28: "the air war is still using our old custom interface".
+
+- **`UILWEWInterception`**: EW's interception movie (`gfxInterception`, a package of its own in EW's install,
+  `gfxInterception_SF.upk`; the setup converts it into `EWInterceptionUI.upk` beside EW's other screens) on EW's
+  interception panel in Mission Control (`UIDisplay_Interception`), through EW's camera onto it
+  (`MissionControl_UIDisplayCam_Interception`), both already in the converted room. Driven as EW's
+  `UIInterceptionEngagement` drives it (read from Long War's `XComStrategyGame.upk`): `InitializeData` with the jet's and
+  the UFO's kinds (Long War's later UFOs drawn as EW's nearest, as EW does), `SetHP`, the intro, then Long War's air war
+  (`LWAirWar`: the shots rolled once, played back on the clock) as `AttackEvent`s, each hit's `SetHP` when it lands,
+  `MovementEvent`s for the UFO's escape and a cannon closing in, the contact-loss countdown, `DisplayEffectEvent` for Aim,
+  Dodge and Track (Long War's Boost; replayed from the moment used, as the old screen did), `ShowResults` with EW's report
+  in Long War's words (the setup copies EW's `[UIInterceptionEngagement]` words from the player's install). The campaign
+  is told as before (the jet's damage and kills, the consumables used, the UFO's fate). The UFO's damage shows only once
+  XCOM knows it (the Foundry's UFO analysis, or that UFO's research), as in EW.
+- **Ways out, as EW's:** ABORT (or Esc, a pad's B, a right click) breaks off; on the report LEAVE REPORT (or Enter, Esc).
+  Nothing closes the screen mid-fight. EW's corner arrow and the resource lines are hidden over it and over the contact
+  alert, as EW's Mission Control hides its HUD.
+- **Opened** from EW's contact alert (SCRAMBLE INTERCEPTORS, a jet and its stance) through `UILWGeoscape.Intercept`; the
+  old screen (`UILWInterception`) stays for the demo and for a setup without EW's screens.
+- **Click tests:** `interception` (a UFO detected, scrambled, the fight to EW's report, LEAVE REPORT, the jet's damage in
+  Long War's hangar) and `interception-abort` (Esc at once: "broke off"), each on a fresh campaign; both pass, in
+  `e2e-all.sh`. A video of a fight: `logs/e2e/interception/fight.mp4` (not committed).
+- **Not yet tried:** Aim, Dodge and Track in a fight (they need the Foundry's project and the items built); the panel's
+  framing through EW's camera cuts the top of the countdown a little, to compare with EW.

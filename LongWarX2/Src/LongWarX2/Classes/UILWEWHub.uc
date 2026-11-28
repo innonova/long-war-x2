@@ -768,6 +768,8 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 {
 	local int i;
 
+	class'UILWEWScreen'.static.LogClick(self, cmd, arg);
+
 	// (A right click: out of the room, as Esc and the corner arrow; at the base's view, nothing. Not the one that just closed
 	// a screen over the hub: its press and the hub's turn come within the same moment, and one click left two levels.)
 	if (cmd == class'UIUtilities_Input'.const.FXS_R_MOUSE_DOWN)

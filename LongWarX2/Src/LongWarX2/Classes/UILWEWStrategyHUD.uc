@@ -194,7 +194,9 @@ function ShowForTop()
 		// over gene mods, UISoldierGeneMods.)
 		|| UILWEWResearch(Top) != none || UILWEWScienceLabs(Top) != none || UILWEWGeneLab(Top) != none || UILWEWGeneMods(Top) != none
 		// (And over Mission Control, whose own screen hides EW's whole strategy HUD, UIMissionControl.GoToView.)
-		|| UILWEWMissionControl(Top) != none;
+		|| UILWEWMissionControl(Top) != none
+		// (And over the interception in Mission Control's room: EW's State_InterceptionEngagement, under Mission Control.)
+		|| UILWEWInterception(Top) != none || UILWEWAlert(Top) != none;
 	if (bHide == bResourcesHidden)
 		return;
 	bResourcesHidden = bHide;
@@ -377,7 +379,9 @@ function SetPanels(XComGameState_HeadquartersXCom XComHQ, XComGameState_LWStrate
 		&& UILWEWHiring(Movie.Pres.ScreenStack.GetCurrentScreen()) == none && UILWEWPendingRequests(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
 		&& UILWEWChooseFacility(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
 		// (Nor over the manufacture dialog, with its own BACK, as EW shows it: the deeper navigation map's pair.)
-		&& UILWEWManufacturing(Movie.Pres.ScreenStack.GetCurrentScreen()) == none);
+		&& UILWEWManufacturing(Movie.Pres.ScreenStack.GetCurrentScreen()) == none
+		// (Nor over the interception, whose ABORT and LEAVE REPORT are its ways out, as EW's.)
+		&& UILWEWInterception(Movie.Pres.ScreenStack.GetCurrentScreen()) == none);
 	// (EW's build screen's "?" beside the back arrow, UIBuildItem: its item card.)
 	bCardHelp = UILWEWEngineering(Movie.Pres.ScreenStack.GetCurrentScreen()) != none && !UILWEWEngineering(Movie.Pres.ScreenStack.GetCurrentScreen()).bFoundry;
 	// (The facility chooser's BEGIN BUILD on the right, UIChooseFacility.UpdateButtonHelp; aek 2026-11-25: no way to build.)

@@ -204,6 +204,7 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 {
 	local string B;
 
+	LogClick(self, cmd, arg);
 	if ((arg & class'UIUtilities_Input'.const.FXS_ACTION_RELEASE) != 0)
 	{
 		switch (cmd)

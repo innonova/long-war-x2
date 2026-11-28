@@ -1,0 +1,25 @@
+# EW's interception as a player meets it (aek 2026-11-28: "the air war is still using our old custom interface"): a UFO
+# detected (setup: time run until one is), Mission Control → UFO CONTACT → SCRAMBLE INTERCEPTORS → the first jet at BAL →
+# EW's interception screen on its panel in Mission Control (UILWEWInterception): the fight played out by Long War's air
+# war, EW's STATUS REPORT, LEAVE REPORT back to Mission Control, the jet's damage in Long War's hangar.
+# A new campaign at EW's base (new-campaign.sh 1 --begin).
+until decisions|INTERCEPT|run 12|40
+click MISSION CONTROL
+waitsee CONTACT 15
+click SCRAMBLE INTERCEPTORS
+see RAVEN-2
+shot jets
+# (The first jet's BAL, in the alert's jet list; its stance buttons show under the jet the mouse is over.)
+at 1651 378
+expect UILWEWInterception
+rec fight 25
+wait 3
+shot fight
+# (The panel's scan lines defeat OCR on the countdown; the report reads.)
+waitsee STATUS REPORT 60
+shot report
+lwsee hangar|~jet 0 RAVEN-1 .* (repairing|refuelling|lost|ready)
+click LEAVE REPORT
+wait 2
+escto MissionControl 2
+unseen STATUS REPORT

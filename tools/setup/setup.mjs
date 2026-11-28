@@ -267,6 +267,8 @@ async function convertEW(ew, target) {
     // Its game creation (new game, Second Wave: features/strategy-flow.md), from its shell and common screens.
     say(`Enemy Within's shell screens: ${convertUI(join(cooked, 'UICollection_Shell_SF.upk'), join(content, 'EWShellUI.upk'))}`)
     say(`Enemy Within's common screens: ${convertUI(join(cooked, 'UICollection_Common_SF.upk'), join(content, 'EWCommonUI.upk'))}`)
+    // Its interception (UILWEWInterception: the air war on EW's own screen in Mission Control), a package of its own.
+    say(`Enemy Within's interception screen: ${convertUI(join(cooked, 'gfxInterception_SF.upk'), join(content, 'EWInterceptionUI.upk'))}`)
     // Its tactical HUD, for its radar (the Motion Tracker's, Bioelectric Skin's: UILWEWRadar).
     say(`Enemy Within's tactical screens: ${convertUI(join(cooked, 'UICollection_Tactical_SF.upk'), join(content, 'EWTacticalUI.upk'))}`)
     // Long War's own pictures (its class icons, EW's flags by country) for EW's soldier list (UILWEWSoldierList).

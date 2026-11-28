@@ -614,9 +614,29 @@ simulated function OnMouseEvent(int cmd, array<string> args)
 	super.OnMouseEvent(cmd, args);
 }
 
+/**
+ * A diagnostic line for a left press or release (aek 2026-11-28: the first click on a button sometimes does nothing, on a
+ * 2560x1440 window, not seen on the test machine): where XCOM 2's cursor is (its presentation layer's mouse) and where
+ * Flash has the mouse on the stage (_level0._xmouse), which the screens' own hit tests read. One log line per click.
+ */
+static function LogClick(UIScreen S, int cmd, int arg)
+{
+	local Vector2D Cursor;
+	local bool bCursor;
+
+	if (cmd != class'UIUtilities_Input'.const.FXS_L_MOUSE_DOWN && cmd != class'UIUtilities_Input'.const.FXS_L_MOUSE_UP
+		&& cmd != class'UIUtilities_Input'.const.FXS_L_MOUSE_UP_DELAYED && cmd != class'UIUtilities_Input'.const.FXS_L_MOUSE_DOUBLE_UP)
+		return;
+	bCursor = S.Movie.Pres.GetMouseCoords(Cursor);
+	`log("LongWarX2: click" @ cmd @ "arg" @ arg @ "on" @ S.Class.Name @ "cursor" @ (bCursor ? (int(Cursor.X) $ "," $ int(Cursor.Y)) : "default")
+		@ "flash" @ int(S.Movie.GetVariableNumber("_level0._xmouse")) $ "," $ int(S.Movie.GetVariableNumber("_level0._ymouse")), , 'LongWarX2');
+}
+
 simulated function bool OnUnrealCommand(int cmd, int arg)
 {
 	local UILWEWHub Hub;
+
+	LogClick(self, cmd, arg);
 
 	// (Out by Esc, a pad's B or a right click, as EW's screens all take them; the right click only on some screens had made
 	// leaving a screen feel random, aek 2026-11-22, features/e2e-tests.md.)

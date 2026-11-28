@@ -410,6 +410,9 @@ simulated function bool Intercept(int Ufo, int Jet, int Stance)
 	Ready = class'LWHangar'.static.ReadyFor(Ufo);
 	if (Ready.Find(Jet) == INDEX_NONE)
 		return false;
+	// On EW's own interception screen in Mission Control where the setup converted it (aek 2026-11-28).
+	if (class'UILWEWInterception'.static.Available() && class'UILWEWInterception'.static.Open(XComHQPresentationLayer(Movie.Pres), Ufo, Jet, Stance))
+		return true;
 	Air = Spawn(class'UILWInterception', Movie.Pres);
 	Air.bCampaign = true;
 	Air.StrategyUfo = Ufo;

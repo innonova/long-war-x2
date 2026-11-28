@@ -1060,6 +1060,14 @@ export function makeManufactureWords({ strategyLoc }) {
   return { text: ['[UILWEWManufacturing]', ...words.map(([k, v]) => `${k}="${v.replace(/"/g, "'")}"`), ''].join('\r\n'), named: words.length }
 }
 
+/** EW's interception screen's words (UILWEWInterception): its [UIInterceptionEngagement] section, key for key. */
+export function makeInterceptionWords({ strategyLoc }) {
+  // (Its ability lines are keyed by EW's enum, eDisplayEffectType: made the numbers our array takes.)
+  const effects = { eEnhancedAccuracy: 0, eDodgeHits: 1, eTrack: 2 }
+  const loc = strategyLoc.replace(/^m_strAbilityDescriptions\[(\w+)\]/gm, (all, k) => (k in effects ? `m_strAbilityDescriptions[${effects[k]}]` : all))
+  return copySections(loc, [['UIInterceptionEngagement', 'UILWEWInterception']])
+}
+
 /** EW's operation names (LWOpNames: XGMission's two word lists, its "Operation …" and the story missions' own). */
 export function makeOpNameWords({ strategyLoc }) {
   return copySections(strategyLoc, [['XGMission', 'LWOpNames']])

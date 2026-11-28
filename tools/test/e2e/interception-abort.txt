@@ -1,0 +1,18 @@
+# Breaking off a fight (EW's ABORT, here by Esc as a player might): a UFO detected (setup: time run until one is), Mission
+# Control → UFO CONTACT → SCRAMBLE INTERCEPTORS → the first jet launched by Enter → Esc as soon as the fight shows → EW's
+# STATUS REPORT saying the jet broke off. A new campaign at EW's base (new-campaign.sh 1 --begin).
+until decisions|INTERCEPT|run 12|40
+click MISSION CONTROL
+waitsee CONTACT 15
+click SCRAMBLE INTERCEPTORS
+see RAVEN-2
+key Enter
+expect UILWEWInterception
+# (At once: an Esc in the intro breaks off at the fight's first moment; later, a short fight may be over first.)
+esc
+waitsee STATUS REPORT 30
+see broke off
+shot aborted
+click LEAVE REPORT
+wait 2
+escto MissionControl 2
